@@ -62,6 +62,7 @@ from aws_cdk import (
 from constructs import Construct
 
 from ._origin_auth import social_origin_verify_secret, web_origin_verify_secret
+from .profile import is_dev
 
 _APP_DOMAIN = "docsuri.org"  # viewer (browser-facing) — the app's public URL
 _ORIGIN_DOMAIN = "app-origin.docsuri.org"  # ALB origin name (distinct from backend's origin.*)
@@ -142,6 +143,7 @@ class FrontendStack(Stack):
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        dev = is_dev(self)
 
         # X-Origin-Verify secrets (web: our WebCdn→ALB; social: shared with the backend ALB for the
         # /auth/social/* edge). Read from SSM at deploy time so synth is deterministic — see
@@ -189,7 +191,7 @@ class FrontendStack(Stack):
             service_name="docsuri-frontend",
             cpu=512,
             memory_limit_mib=1024,
-            desired_count=2,
+            desired_count=1 if dev else 2,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
                 image=ecs.ContainerImage.from_ecr_repository(repo, tag="latest"),
                 container_port=3000,

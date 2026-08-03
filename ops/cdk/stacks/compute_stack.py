@@ -84,6 +84,7 @@ from aws_cdk import (
 from constructs import Construct
 
 from ._origin_auth import api_origin_verify_secret, social_origin_verify_secret
+from .profile import is_dev
 
 # Public DNS for the API origin (zone docsuri.org lives in this account's Route53). CloudFront
 # connects to this name over HTTPS so the ACM cert (issued for it) validates — ACM can't issue
@@ -103,6 +104,7 @@ class ComputeStack(Stack):
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        dev = is_dev(self)
 
         # X-Origin-Verify secrets (api: ApiCdn→ALB; social: shared w/ frontend's /auth/social/*
         # edge). Read from SSM at deploy time so synth is deterministic — see ._origin_auth.
@@ -132,14 +134,17 @@ class ComputeStack(Stack):
         self.db = rds.DatabaseInstance(
             self, "Postgres",
             engine=rds.DatabaseInstanceEngine.postgres(version=rds.PostgresEngineVersion.VER_16),
-            instance_type=ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.SMALL),
+            instance_type=ec2.InstanceType.of(
+                ec2.InstanceClass.T4G,
+                ec2.InstanceSize.MICRO if dev else ec2.InstanceSize.SMALL,
+            ),
             vpc=vpc,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
-            multi_az=True,
+            multi_az=not dev,
             allocated_storage=20,
             storage_type=rds.StorageType.GP3,
             backup_retention=Duration.days(7),
-            deletion_protection=True,
+            deletion_protection=not dev,
             removal_policy=RemovalPolicy.RETAIN,
             credentials=rds.Credentials.from_generated_secret("docsuri_admin"),
             database_name="docsuri",
@@ -184,9 +189,9 @@ class ComputeStack(Stack):
             engine="redis",
             engine_version="7.1",
             cache_node_type="cache.t4g.micro",
-            num_cache_clusters=2,  # primary + replica (Multi-AZ)
-            multi_az_enabled=True,
-            automatic_failover_enabled=True,
+            num_cache_clusters=1 if dev else 2,  # prod: primary + replica (Multi-AZ)
+            multi_az_enabled=not dev,
+            automatic_failover_enabled=not dev,
             cache_subnet_group_name=redis_subnet_group.ref,
             security_group_ids=[redis_sg.security_group_id],
             at_rest_encryption_enabled=True,
@@ -462,7 +467,7 @@ class ComputeStack(Stack):
             service_name="docsuri-api",
             cpu=1024,
             memory_limit_mib=2048,
-            desired_count=2,
+            desired_count=1 if dev else 2,
             # ECS Exec (SSM-backed): team assumes DocsuriCrossAccountDev → `aws ecs
             # execute-command` into this task → psql to the private RDS. No EC2 bastion.
             # CDK auto-grants the task role ssmmessages:*. ponytail: shell-in only; a
