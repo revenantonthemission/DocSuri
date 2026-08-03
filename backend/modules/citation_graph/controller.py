@@ -22,7 +22,8 @@ DOI_RE = re.compile(r"^10\.\d{4,9}/\S+$", re.I)
 
 
 def _max_visible_nodes() -> int:
-    return int(os.getenv("CITATION_GRAPH_MAX_VISIBLE_NODES", "30"))
+    # BR-CG4/NFR-U8-P3: default 50 with a HARD cap of 50 — env may lower it, never raise it.
+    return min(50, int(os.getenv("CITATION_GRAPH_MAX_VISIBLE_NODES", "50")))
 
 
 def _snapshot_ttl_seconds() -> int:
@@ -389,6 +390,13 @@ async def get_citation_tree(
 
     provider_status, items = await provider.references(parent, _max_visible_nodes() + 1)
     if provider_status in {"rate_limited", "unavailable"} and not items:
+        # FR-16/BR-CG9/BR-CG10: a failed refresh must not blank a tree the user could already
+        # see — this fallback read deliberately ignores the refresh flag and returns the
+        # still-valid snapshot; only when no snapshot exists does the response degrade empty.
+        if stale := await store.get(key):
+            stale = stale.model_copy(update={"providerStatus": provider_status})
+            _emit(request, stale, int((time.perf_counter() - started) * 1000), depth_requested)
+            return stale
         degraded = CitationTreeResponse(
             status="RateLimited" if provider_status == "rate_limited" else "Unavailable",
             rootPaperId=paper_id,

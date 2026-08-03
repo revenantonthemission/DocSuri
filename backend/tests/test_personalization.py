@@ -547,6 +547,130 @@ def test_personalization_repo_must_be_wired() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Review remediation (2026-08): BR-OB2/C-6 whitelist + BR-P4 list bounds on the
+# direct /events path, and the FR-10/BR-13 anonymous-pooling guard in wiring.
+# ---------------------------------------------------------------------------
+
+
+def test_interest_set_categories_must_be_on_corpus_whitelist() -> None:
+    # BR-OB2/C-6: a direct interest_set POST cannot bypass the onboarding category whitelist.
+    try:
+        validate_metadata(
+            BehaviorEventType.INTEREST_SET,
+            {"source": "onboarding_picker", "categories": ["cs.AI", "econ.EM"]},
+        )
+    except MetadataValidationError as exc:
+        assert "econ.EM" in str(exc)
+    else:  # pragma: no cover - failure path clarity
+        raise AssertionError("off-whitelist interest_set category must be rejected")
+
+
+def test_interest_set_categories_dedupe_and_clean_like_onboarding() -> None:
+    # Same treatment as onboarding's InterestSelection: strip, drop empties, dedupe (first
+    # occurrence wins) — so a repeated pick cannot double its seed weight.
+    validated = validate_metadata(
+        BehaviorEventType.INTEREST_SET,
+        {"source": "onboarding_picker", "categories": [" cs.AI ", "cs.AI", "", "cs.LG"]},
+    )
+    assert validated["categories"] == ["cs.AI", "cs.LG"]
+
+
+def test_interest_set_categories_must_be_a_string_list() -> None:
+    for bad in ("cs.AI", ["cs.AI", 3], 7):
+        try:
+            validate_metadata(BehaviorEventType.INTEREST_SET, {"categories": bad})
+        except MetadataValidationError:
+            continue
+        raise AssertionError(f"non string-list categories must be rejected: {bad!r}")
+
+
+def test_metadata_list_values_are_bounded() -> None:
+    # BR-P4: item count (>32) and per-item length (>64) are rejected for ALL list values.
+    for oversized in ([f"kw{i}" for i in range(33)], ["x" * 65]):
+        try:
+            validate_metadata(BehaviorEventType.SEARCH_EXECUTED, {"keywords": oversized})
+        except MetadataValidationError:
+            continue
+        raise AssertionError("oversized metadata list must be rejected")
+
+
+def test_legit_interest_set_and_search_metadata_pass() -> None:
+    interest = validate_metadata(
+        BehaviorEventType.INTEREST_SET,
+        {"source": "onboarding_picker", "categories": ["cs.AI"], "keywords": ["transformer"]},
+    )
+    assert interest["categories"] == ["cs.AI"]
+    search = validate_metadata(
+        BehaviorEventType.SEARCH_EXECUTED,
+        {"resultCount": 3, "topCategories": ["cs.AI", "cs.LG"], "keywords": ["bert"]},
+    )
+    assert search["topCategories"] == ["cs.AI", "cs.LG"]
+
+
+def test_onboarding_whitelist_is_single_sourced_from_personalization() -> None:
+    from backend.modules.onboarding.models import ALLOWED_CATEGORIES
+    from backend.modules.personalization.models import ALLOWED_INTEREST_CATEGORIES
+
+    assert ALLOWED_CATEGORIES is ALLOWED_INTEREST_CATEGORIES
+
+
+def test_api_rejects_off_whitelist_interest_set(monkeypatch) -> None:
+    client = _client(monkeypatch, _principal(), InMemoryPersonalizationRepository())
+    resp = client.post(
+        "/api/personalization/events",
+        json={
+            "eventType": "interest_set",
+            "subject": {"kind": "interest"},
+            "metadata": {"source": "onboarding_picker", "categories": ["econ.EM"]},
+            "dedupeKey": "interest_set:direct:1",
+        },
+    )
+    assert resp.status_code == 422
+
+
+def test_wiring_search_boosts_skip_anonymous(monkeypatch) -> None:
+    # FR-10/BR-13: the shared "anonymous" id (auth-optional /api/search) must never read the
+    # pooled profile; authenticated users keep their boosts unchanged.
+    monkeypatch.setenv("PERSONALIZATION_ENABLED", "true")
+    app = create_app(Settings(env="test", database_url="sqlite://"))
+    boosts_provider = app.state.personalization_search_boosts
+    record_event = app.state.personalization_record_event
+    user_id = str(uuid4())
+    record_event(
+        user_id,
+        BehaviorEventCreate(
+            eventType="library_added",
+            subject={"kind": "paper", "paperId": "p1", "category": "cs.AI"},
+            metadata={"paperCategory": "cs.AI", "savedSource": "library"},
+            dedupeKey="anon-guard:1",
+        ),
+    )
+
+    assert boosts_provider(user_id)  # authenticated path unchanged
+    assert boosts_provider("anonymous") == {}
+
+
+def test_direct_history_publisher_noops_for_anonymous() -> None:
+    # FR-10/BR-13: recording an anonymous SearchExecuted would pool every anonymous visitor's
+    # history under one id — the publisher must drop it before it reaches the executor.
+    from types import SimpleNamespace
+
+    from backend.wiring import _DirectHistoryPublisher
+
+    publisher = _DirectHistoryPublisher(session_factory=None, gateway=None, audit=None)
+    submitted: list = []
+    publisher._executor.submit = lambda _fn, event: submitted.append(event)  # type: ignore[method-assign]
+    try:
+        publisher.publish_search_executed(SimpleNamespace(userId="anonymous"))
+        assert submitted == []
+
+        publisher.publish_search_executed(SimpleNamespace(userId=str(uuid4())))
+        assert len(submitted) == 1
+    finally:
+        publisher.close()
+
+
+# ---------------------------------------------------------------------------
 # US-P1 AC3 (QA 2026-07-10 gap): behavior-event store failure must NOT fail the
 # caller — the event is dropped with a degrade signal (fail-open, FR-39/BR-P13).
 # ---------------------------------------------------------------------------

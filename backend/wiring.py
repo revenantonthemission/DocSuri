@@ -30,6 +30,14 @@ from .config import Settings
 
 log = logging.getLogger("docsuri.backend.wiring")
 
+# Server-controlled id for unauthenticated (auth-optional) requests. /api/search is listed in
+# the gateway's _AUTH_OPTIONAL_PREFIXES (backend/middleware/auth.py), and discovery resolves a
+# principal-less request to this fixed literal (discovery/api/router.py::_ANONYMOUS_USER_ID —
+# private there, so kept in sync here). Every anonymous visitor shares this one id, so per-user
+# reads/writes keyed on it would pool strangers together (FR-10/BR-13): the personalization
+# boost read and the direct history publisher below must no-op for it.
+ANONYMOUS_USER_ID = "anonymous"
+
 
 def _personalization_decision_timeout_ms() -> int:
     try:
@@ -54,6 +62,10 @@ class _DirectHistoryPublisher:
         )
 
     def publish_search_executed(self, event) -> None:
+        # FR-10/BR-13: anonymous searches share one server-controlled id — recording them
+        # would pool every anonymous visitor's history under a single "user". Drop silently.
+        if getattr(event, "userId", None) == ANONYMOUS_USER_ID:
+            return
         try:
             self._executor.submit(self._record, event)
         except RuntimeError:
@@ -583,7 +595,14 @@ def _mount_personalization(app: FastAPI, settings: Settings, result: MountResult
             def _record_event(user_id: str, dto):
                 return BehaviorEventRecorder(repo, observability).record(user_id, dto)
 
-        app.state.personalization_search_boosts = _search_boosts
+        def _user_scoped_search_boosts(user_id: str) -> dict[str, float]:
+            # FR-10/BR-13: "anonymous" is the shared id for every unauthenticated search — a
+            # profile keyed on it would pool all anonymous visitors. No boost, no DB round-trip.
+            if user_id == ANONYMOUS_USER_ID:
+                return {}
+            return _search_boosts(user_id)
+
+        app.state.personalization_search_boosts = _user_scoped_search_boosts
         # U14 onboarding resolves this from app.state at request time (degrades when absent),
         # so profile seeding stays event-path-only (BR-OB2/C-7) and behind the same flag.
         app.state.personalization_record_event = _record_event

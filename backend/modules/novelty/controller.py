@@ -180,7 +180,7 @@ async def upload_manuscript(
                 or (current.manuscript.fileName if current.manuscript else None)
                 or "manuscript.pdf"
             )
-            service.attach_manuscript_pdf(
+            await service.attach_manuscript_pdf(
                 principal.user_id,
                 job_id,
                 file_name=file_name,

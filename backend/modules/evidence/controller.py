@@ -302,8 +302,11 @@ async def upload_attachment(
         module='evidence',
     )
     try:
-        user_docmodel.upload_pdf(ref, data, file_name=file_name, content_type=content_type)
-        user_docmodel.enqueue_build(ref)
+        # boto3 is sync — keep S3/SQS I/O off the event loop (same pattern as the turn path above).
+        await run_in_threadpool(
+            user_docmodel.upload_pdf, ref, data, file_name=file_name, content_type=content_type
+        )
+        await run_in_threadpool(user_docmodel.enqueue_build, ref)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001 - hide storage internals at the API boundary.

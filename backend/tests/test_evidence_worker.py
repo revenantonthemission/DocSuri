@@ -15,9 +15,12 @@ from backend.modules.evidence.models import (
 from backend.modules.evidence.repository import InMemoryEvidenceRepository
 from backend.modules.evidence.worker import (
     JobProcessingFailed,
+    _Message,
+    drain_dlq_once,
     parse_received_messages,
     parse_sqs_payload,
     process_job,
+    run_worker,
 )
 
 # ---------------------------------------------------------------------------
@@ -166,6 +169,18 @@ def test_worker_polls_user_pdf_attachment_docmodel() -> None:
             self.refs.append(ref)
             return SimpleNamespace(fullText='PDF worker text', sections=[])
 
+    # paperId/recordRef는 업로드 엔드포인트가 실제로 발급하는 서버 파생값이어야 한다 —
+    # ref_from_attachment가 uuid5 재계산으로 임의(위조) paperId를 거부하기 때문.
+    from backend.modules.user_docmodel import user_docmodel_ref
+
+    minted = user_docmodel_ref(
+        owner_id='owner-1',
+        scope_id='att-1',  # evidence 업로드는 scope_id == attachment_id로 발급한다
+        attachment_id='att-1',
+        object_key='uploads/evidence/owner-1/att-1/att-1/scan.pdf',
+        module='evidence',
+    )
+
     process_job(
         repo,
         orchestrator=orchestrator,
@@ -179,19 +194,16 @@ def test_worker_polls_user_pdf_attachment_docmodel() -> None:
                 'id': 'att-1',
                 'name': 'scan.pdf',
                 'kind': 'pdf',
-                'objectKey': 'uploads/evidence/owner-1/att-1/att-1/scan.pdf',
-                'paperId': 'userdoc:11111111-1111-4111-8111-111111111111',
-                'recordRef': (
-                    'upload:owner-1:'
-                    'userdoc-11111111-1111-4111-8111-111111111111:att-1'
-                ),
+                'objectKey': minted.object_key,
+                'paperId': minted.paper_id,
+                'recordRef': minted.record_ref,
             },
         ],
         user_docmodel=_FakeUserDocModel(),
     )
 
     docs = orchestrator.contexts[0].attachment_docs
-    assert docs[0].paper_id == 'userdoc:11111111-1111-4111-8111-111111111111'
+    assert docs[0].paper_id == minted.paper_id
     assert docs[0].doc_model.fullText == 'PDF worker text'
 
 
@@ -267,3 +279,124 @@ def test_soft_deleted_session_turn_is_terminated_not_left_pending() -> None:
     resolved = next(t for t in turns if t.turn_id == turn_id)
     assert isinstance(resolved.result, TurnErrorResult)
     assert resolved.result.error_code == 'session_unavailable'
+
+
+# ---------------------------------------------------------------------------
+# BR-EV-12 DLQ 소비 + poison payload 즉시 ack
+# ---------------------------------------------------------------------------
+
+class _FakeSqs:
+    def __init__(self, messages: list[dict]) -> None:
+        self._messages = list(messages)
+        self.deleted: list[str] = []
+
+    def receive_message(self, **_kwargs) -> dict:
+        batch, self._messages = self._messages, []
+        return {'Messages': batch} if batch else {}
+
+    def delete_message(self, *, QueueUrl: str, ReceiptHandle: str) -> None:
+        del QueueUrl
+        self.deleted.append(ReceiptHandle)
+
+
+class _FakeObservability:
+    def __init__(self) -> None:
+        self.metrics: list[tuple[str, float, dict]] = []
+
+    def emit_metric(self, name: str, value: float, tags: dict) -> None:
+        self.metrics.append((name, value, tags))
+
+
+def _dlq_body(session_id: str, turn_id: str) -> str:
+    return json.dumps({
+        'ownerId': 'owner-1', 'sessionId': session_id, 'turnId': turn_id,
+        'jobId': 'job-1', 'topic': 'transformer attention',
+    })
+
+
+def test_run_worker_drains_dlq_message_into_job_failed_terminal_state() -> None:
+    """BR-EV-12 — 재시도 소진으로 DLQ에 빠진 잡은 turn을 job_failed로 종결하고 삭제한다."""
+    repo, session_id, turn_id = _seeded_repo()
+    sqs = _FakeSqs([{'Body': _dlq_body(session_id, turn_id), 'ReceiptHandle': 'rh-dead'}])
+    observability = _FakeObservability()
+    iterations = {'count': 0}
+
+    def should_stop() -> bool:
+        iterations['count'] += 1
+        return iterations['count'] > 1
+
+    run_worker(
+        repo_factory=lambda: repo,
+        orchestrator=_StubOrchestrator(),
+        receive=lambda: [],
+        ack=lambda _message: None,
+        should_stop=should_stop,
+        drain_dlq=lambda: drain_dlq_once(
+            sqs, 'https://sqs/dlq', lambda: repo, observability=observability
+        ),
+    )
+
+    from backend.modules.evidence.models import TurnErrorResult
+
+    resolved = repo.list_turns('owner-1', session_id)[0]
+    assert isinstance(resolved.result, TurnErrorResult)
+    assert resolved.result.error_code == 'job_failed'
+    assert sqs.deleted == ['rh-dead']
+    assert (
+        'evidence.job.dead_lettered', 1.0, {'errorCode': 'job_failed'}
+    ) in observability.metrics
+
+
+def test_dlq_message_for_already_resolved_turn_is_still_deleted() -> None:
+    """멱등성 — 이미 해소된 turn의 DLQ 메시지도 결과를 clobber하지 않고 ack된다."""
+    repo, session_id, turn_id = _seeded_repo()
+    first = TurnAbstainResult(
+        outcome=EvidenceAbstainResult(state='abstain', abstainReason='out_of_corpus')
+    )
+    repo.update_turn_result('owner-1', turn_id, first)
+    sqs = _FakeSqs([{'Body': _dlq_body(session_id, turn_id), 'ReceiptHandle': 'rh-dup'}])
+
+    drain_dlq_once(sqs, 'https://sqs/dlq', lambda: repo)
+
+    resolved = repo.list_turns('owner-1', session_id)[0]
+    assert isinstance(resolved.result, TurnAbstainResult)
+    assert sqs.deleted == ['rh-dup']
+
+
+def test_malformed_dlq_message_is_deleted_without_turn_update() -> None:
+    repo, session_id, _turn_id = _seeded_repo()
+    sqs = _FakeSqs([{'Body': 'not valid json', 'ReceiptHandle': 'rh-bad'}])
+
+    drain_dlq_once(sqs, 'https://sqs/dlq', lambda: repo)
+
+    assert sqs.deleted == ['rh-bad']
+    turn = repo.list_turns('owner-1', session_id)[0]
+    assert isinstance(turn.result, TurnPendingResult)
+
+
+def test_structurally_invalid_payload_is_acked_on_first_receipt() -> None:
+    """poison payload(유효 JSON, 잘못된 구조)는 재배달 ×3 없이 첫 수신에서 삭제된다."""
+    repo, session_id, _turn_id = _seeded_repo()
+    orchestrator = _StubOrchestrator()
+    message = _Message({'ownerId': 'owner-1', 'sessionId': session_id}, 'rh-poison')  # topic 없음
+    acked: list[_Message] = []
+    state = {'received': False}
+
+    def receive() -> list[_Message]:
+        if state['received']:
+            return []
+        state['received'] = True
+        return [message]
+
+    run_worker(
+        repo_factory=lambda: repo,
+        orchestrator=orchestrator,
+        receive=receive,
+        ack=acked.append,
+        should_stop=lambda: state['received'],
+    )
+
+    assert acked == [message]
+    assert orchestrator.calls == 0
+    turn = repo.list_turns('owner-1', session_id)[0]
+    assert isinstance(turn.result, TurnPendingResult)

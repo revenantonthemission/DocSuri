@@ -13,14 +13,18 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from backend.modules.personalization.models import ALLOWED_INTEREST_CATEGORIES
+
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
 
 
 # C-6 corpus slice — the ONLY categories the picker may submit (whitelist; outside → 422).
-# Single-sourced here and served by GET /onboarding/status so the FE needs no extra endpoint.
-ALLOWED_CATEGORIES: tuple[str, ...] = ("cs.AI", "cs.CL", "cs.CV", "cs.LG", "stat.ML")
+# Canonical tuple lives in U9 (personalization/models.py ALLOWED_INTEREST_CATEGORIES — U14
+# already depends on U9), so the picker and the direct /api/personalization/events path enforce
+# the SAME slice. Re-exported here and served by GET /onboarding/status (no extra FE endpoint).
+ALLOWED_CATEGORIES: tuple[str, ...] = ALLOWED_INTEREST_CATEGORIES
 
 _MAX_KEYWORDS = 20
 _MAX_RAW_ITEMS = 32  # raw-list bound enforced by Field before validators run (review SECURITY-05)

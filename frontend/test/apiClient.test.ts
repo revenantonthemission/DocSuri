@@ -409,6 +409,19 @@ describe('ApiClient agent chat mapping', () => {
     expect(t.calls).toBe(0);
   });
 
+  it('rejects a send whose mode mismatches the session-id mode (BR-AG-1 mode lock)', async () => {
+    const t = transportOf(async () => ({ status: 200, body: null }));
+    await expect(
+      new ApiClient(t, fast).sendAgentMessage('evidence:r1', {
+        content: 'cross-mode send',
+        mode: 'novelty',
+      }),
+    ).rejects.toMatchObject({
+      message: '세션 모드가 일치하지 않습니다. 새 대화를 시작해 주세요.',
+    });
+    expect(t.calls).toBe(0);
+  });
+
   it('blocks real novelty follow-up sends until the backend can re-dispatch jobs', async () => {
     const previous = process.env.NEXT_PUBLIC_DOCSURI_REAL_API;
     process.env.NEXT_PUBLIC_DOCSURI_REAL_API = '1';

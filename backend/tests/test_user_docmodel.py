@@ -146,6 +146,76 @@ def test_ref_from_attachment_rejects_cross_owner_evidence_object_key() -> None:
         )
 
 
+def test_ref_from_attachment_rejects_self_consistent_foreign_paper_id() -> None:
+    # SEC regression: an authenticated attacker echoes their own valid objectKey but a foreign
+    # tenant's paperId plus a recordRef crafted to match it. The old check only validated the
+    # supplied fields against each other (self-referential), so this passed; the server-side
+    # uuid5 recomputation must reject it before any poll or build touches the foreign namespace.
+    victim = user_docmodel_ref(
+        owner_id="acct-victim",
+        scope_id="att-9",
+        attachment_id="att-9",
+        object_key=object_key_for_upload(
+            module="evidence",
+            owner_id="acct-victim",
+            scope_id="att-9",
+            attachment_id="att-9",
+            file_name="doc.pdf",
+        ),
+        module="evidence",
+    )
+    own_object_key = object_key_for_upload(
+        module="evidence",
+        owner_id="acct-1",
+        scope_id="att-1",
+        attachment_id="att-1",
+        file_name="doc.pdf",
+    )
+
+    with pytest.raises(ValueError, match="identity"):
+        ref_from_attachment(
+            owner_id="acct-1",
+            scope_id="request-1",
+            attachment_id="att-1",
+            object_key=own_object_key,
+            module="evidence",
+            paper_id=victim.paper_id,
+            record_ref=f"upload:acct-1:{victim.job_id}:att-1",
+        )
+
+
+def test_ref_from_attachment_accepts_novelty_manuscript_reuse() -> None:
+    # Novelty mints with (owner, scope=novelty job id, attachment="manuscript"); the worker reuse
+    # path passes the original job id back as scope_id — recomputation must reproduce it.
+    object_key = object_key_for_upload(
+        module="novelty",
+        owner_id="acct-1",
+        scope_id="job-1",
+        attachment_id="manuscript",
+        file_name="paper.pdf",
+    )
+    ref = user_docmodel_ref(
+        owner_id="acct-1",
+        scope_id="job-1",
+        attachment_id="manuscript",
+        object_key=object_key,
+        module="novelty",
+    )
+
+    hydrated = ref_from_attachment(
+        owner_id="acct-1",
+        scope_id="job-1",
+        attachment_id="manuscript",
+        object_key=object_key,
+        module="novelty",
+        paper_id=ref.paper_id,
+        record_ref=ref.record_ref,
+    )
+
+    assert hydrated.paper_id == ref.paper_id
+    assert hydrated.record_ref == ref.record_ref
+
+
 def test_ref_from_attachment_rejects_wrong_attachment_evidence_object_key() -> None:
     object_key = object_key_for_upload(
         module="evidence",

@@ -203,6 +203,7 @@ def test_external_query_and_url_guards() -> None:
     assert is_safe_external_url("https://github.com.evil.example/x") is False
     assert is_safe_external_url("https://news.google.com/search?q=rag") is False
     assert is_safe_external_url("https://zenodo.org/records/123") is True
+    assert is_safe_external_url("https://huggingface.co/datasets/docsuri/rag-eval") is True
 
 
 def test_worker_processes_minimal_job_to_completion() -> None:
@@ -316,6 +317,17 @@ def test_similarity_adapter_reads_pdf_manuscript_from_user_docmodel() -> None:
             "scientific workflows with repeated evidence checking."
         )
     )
+    # paperId/recordRef는 attach_manuscript_pdf가 실제로 발급하는 서버 파생값이어야 한다 —
+    # ref_from_attachment가 uuid5 재계산으로 임의(위조) paperId를 거부하기 때문.
+    from backend.modules.user_docmodel import user_docmodel_ref
+
+    manuscript = user_docmodel_ref(
+        owner_id="u1",
+        scope_id="job",
+        attachment_id="manuscript",
+        object_key="novelty/u1/job/manuscript/scan.pdf",
+        module="novelty",
+    )
     result = S3ManuscriptSimilarityClient(
         bucket="papers",
         prefix="novelty/",
@@ -325,13 +337,11 @@ def test_similarity_adapter_reads_pdf_manuscript_from_user_docmodel() -> None:
     ).check(
         "u1",
         {
-            "objectKey": "novelty/u1/job/manuscript/scan.pdf",
+            "objectKey": manuscript.object_key,
             "contentType": "application/pdf",
             "jobId": "job",
-            "paperId": "userdoc:11111111-1111-4111-8111-111111111111",
-            "recordRef": (
-                "upload:u1:userdoc-11111111-1111-4111-8111-111111111111:manuscript"
-            ),
+            "paperId": manuscript.paper_id,
+            "recordRef": manuscript.record_ref,
         },
     )
 
@@ -560,7 +570,12 @@ def test_external_adapter_queries_public_api_sources() -> None:
                             "tags": ["rag", "evaluation"],
                             "downloads": 3,
                             "likes": 2,
-                        }
+                            "cardData": {"license": "mit"},
+                        },
+                        {
+                            "id": "docsuri/tagged-set",
+                            "tags": ["rag", "license:apache-2.0"],
+                        },
                     ]
                 )
             if host == "zenodo.org":
@@ -577,6 +592,7 @@ def test_external_adapter_queries_public_api_sources() -> None:
                                         "description": "<p>Dataset for RAG evaluation.</p>",
                                         "publication_date": "2026-06-30",
                                         "keywords": ["rag"],
+                                        "license": {"id": "cc-by-4.0"},
                                     },
                                 }
                             ]
@@ -596,6 +612,67 @@ def test_external_adapter_queries_public_api_sources() -> None:
     }
     assert {item["sourceType"] for item in result.items} == {"github_repo", "dataset"}
     assert all(item["sourceRefs"] for item in result.items)
+    # FR-31 — 데이터셋 라이선스 표면: GitHub spdx_id 경로처럼 HF/Zenodo도 license를 싣는다.
+    licenses = {item["title"]: item.get("license") for item in result.items}
+    assert licenses["docsuri/novelty-baseline"] == "MIT"
+    assert licenses["docsuri/rag-eval"] == "mit"  # cardData.license
+    assert licenses["docsuri/tagged-set"] == "apache-2.0"  # license:* 태그 fallback
+    assert licenses["RAG Evaluation Dataset"] == "cc-by-4.0"  # metadata.license.id
+
+
+def test_external_adapter_drops_urls_outside_shared_allowlist() -> None:
+    """BR-NV6/SEC-11 — 외부 API 응답이라도 allowlist 밖 호스트 URL은 sourceRef가 되지 못한다.
+    URL이 거부된 항목은 기존 저하 패턴대로 드랍되고 나머지 소스는 그대로 살아남는다."""
+
+    class Response:
+        status_code = 200
+
+        def __init__(self, payload):
+            self._payload = payload
+
+        def json(self):
+            return self._payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class FakeHttp:
+        def get(self, url: str, *, params: dict, headers: dict):
+            host = urlparse(url).hostname
+            if host == "api.github.com":
+                return Response(
+                    {
+                        "items": [
+                            {
+                                "full_name": "evil/exfil",
+                                "html_url": "https://github.com.evil.example/exfil",
+                                "description": "allowlist bypass bait",
+                            }
+                        ]
+                    }
+                )
+            if host == "huggingface.co":
+                return Response([{"id": "docsuri/rag-eval", "tags": ["rag"]}])
+            if host == "zenodo.org":
+                return Response(
+                    {
+                        "hits": {
+                            "hits": [
+                                {
+                                    "id": "123",
+                                    "links": {"html": "https://zenodo.org/records/123"},
+                                    "metadata": {"title": "RAG Evaluation Dataset"},
+                                }
+                            ]
+                        }
+                    }
+                )
+            raise AssertionError(f"unexpected external API call: {url}")
+
+    result = ExternalApiSearchClient(FakeHttp()).search("privacy preserving RAG")
+
+    assert {item["sourceName"] for item in result.items} == {"Hugging Face", "Zenodo"}
+    assert all("evil.example" not in item["url"] for item in result.items)
 
 
 def _stub_external_http():

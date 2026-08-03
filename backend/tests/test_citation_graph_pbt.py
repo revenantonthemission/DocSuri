@@ -89,7 +89,7 @@ def test_qt6_tree_assembly_invariants(items: list[dict]) -> None:
         first_seen.add(node.nodeId)
 
     # Bounded display + conservation: every input is a node, unresolved, or counted remainder.
-    assert len(tree.nodes) <= controller._max_visible_nodes()
+    assert len(tree.nodes) <= 50  # BR-CG4 hard cap — the literal, not the env-derived value
     assert len(tree.nodes) + len(tree.unresolved) + tree.remainingEstimate == len(items)
     assert tree.truncated is (tree.remainingEstimate > 0)
 

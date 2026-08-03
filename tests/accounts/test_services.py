@@ -148,6 +148,49 @@ async def test_authentication_backoff_on_failure(credential_repo, session_manage
 
 
 @pytest.mark.asyncio
+async def test_backoff_delay_parity_for_nonexistent_email(
+    credential_repo, session_manager, recaptcha_client, db_session, monkeypatch
+):
+    """SEC-BR-2/BR-A4: 부존재 이메일도 존재 계정과 동일한 백오프 지연을 받는다 — '즉시 401 vs
+    지연 401' 응답 시간 차이로 이메일 존재가 노출되는 열거 타이밍 오라클 회귀 가드.
+    4회차 실패 시 두 경로 모두 asyncio.sleep(2)이 호출되어야 한다(2^(4-3)=2초)."""
+    from backend.modules.accounts.services import auth as auth_module
+
+    # 프로세스 전역 TTL dict를 테스트 격리용 새 dict로 교체(교차 오염 방지)
+    monkeypatch.setattr(auth_module, "_unknown_email_failures", {})
+    auth_service = AuthenticationService(credential_repo, session_manager, recaptcha_client)
+
+    # 존재 계정: 실패 3회 누적 상태에서 4회차 실패 → 2초 지연
+    signup_svc = SignupService(credential_repo, MockEmailClient())
+    account_id = await signup_svc.register("real@docsuri.dev", "ValidPassword123!", "http://localhost")
+    account = credential_repo.get_by_id(account_id)
+    account.status = AccountStatus.ACTIVE.value
+    account.failure_count = 3
+    credential_repo.update_account(account)
+    db_session.commit()
+
+    with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        with pytest.raises(DomainException):
+            await auth_service.authenticate("real@docsuri.dev", "WrongPassword1!")
+        mock_sleep.assert_called_once()
+        existing_delay = mock_sleep.call_args.args[0]
+
+    # 부존재 이메일: 동일하게 실패 3회 누적 후 4회차 실패 → 동일 지연이어야 한다
+    with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        for _ in range(3):
+            with pytest.raises(DomainException):
+                await auth_service.authenticate("ghost@docsuri.dev", "WrongPassword1!")
+        mock_sleep.reset_mock()
+        with pytest.raises(DomainException):
+            await auth_service.authenticate("ghost@docsuri.dev", "WrongPassword1!")
+        mock_sleep.assert_called_once()
+        unknown_delay = mock_sleep.call_args.args[0]
+
+    # 핵심 단언: 동일 시도 횟수 → 동일 지연(경로 무관 단일 스케줄)
+    assert existing_delay == unknown_delay == 2
+
+
+@pytest.mark.asyncio
 async def test_authentication_recaptcha_enforcement(credential_repo, session_manager, recaptcha_client, db_session):
     """로그인 10회 실패 시 reCAPTCHA 검증 요구 및 Fail-Closed 작동 검증 (US-A2, BR-A4)"""
     auth_service = AuthenticationService(

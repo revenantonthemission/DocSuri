@@ -9,10 +9,12 @@ import type {
   AgentSessionSummary,
   AgentTimelineEvent,
 } from './types';
+import { MAX_AGENT_UPLOAD_BYTES } from './limits';
 
 export const MAX_AGENT_MESSAGE_CHARS = 4000;
 export const MAX_AGENT_ATTACHMENTS = 5;
-export const MAX_AGENT_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+// Single-sourced 10 MiB cap (limits.ts) — shared with apiClient's PDF upload guard.
+export const MAX_AGENT_ATTACHMENT_BYTES = MAX_AGENT_UPLOAD_BYTES;
 // US-EV4(#268)/US-NV2(#252) — 동봉 본문 상한. BE 계약(ATTACHMENT_TEXT_MAX_CHARS)과 동일.
 export const MAX_AGENT_ATTACHMENT_TEXT_CHARS = 262_144;
 

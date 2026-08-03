@@ -111,6 +111,19 @@ class RecentlyViewedList(BaseModel):
     items: list[RecentlyViewedItem]
 
 
+# C-6 corpus slice — the canonical 5-category allowlist for interest signals (BR-OB2).
+# Single-sourced HERE because U14 onboarding already depends on U9: onboarding/models.py
+# re-exports this as ALLOWED_CATEGORIES (picker whitelist + GET /onboarding/status), and
+# interest_set events posted directly to POST /api/personalization/events are validated
+# against the same tuple — so the direct path cannot bypass the onboarding whitelist.
+ALLOWED_INTEREST_CATEGORIES: tuple[str, ...] = ("cs.AI", "cs.CL", "cs.CV", "cs.LG", "stat.ML")
+
+# BR-P4 bounds for list-typed metadata values — mirror onboarding's _MAX_RAW_ITEMS /
+# _MAX_KEYWORD_LENGTH (onboarding/models.py) so the direct /events path cannot smuggle
+# larger payloads than the onboarding picker allows.
+_MAX_LIST_ITEMS = 32
+_MAX_LIST_ITEM_LENGTH = 64
+
 _ALLOWED_METADATA: dict[BehaviorEventType, set[str]] = {
     BehaviorEventType.SEARCH_EXECUTED: {"resultCount", "topCategories", "language", "keywords"},
     BehaviorEventType.PAPER_OPENED: {"entrySurface", "paperCategory", "title"},
@@ -139,6 +152,25 @@ _FORBIDDEN_KEY_PARTS = (
 )
 
 
+def _clean_interest_categories(value: Any) -> list[str]:
+    """BR-OB2/C-6: ``interest_set`` events posted directly to /events honor the SAME contract as
+    onboarding's ``InterestSelection`` (onboarding/models.py ``_dedupe_clean`` → whitelist):
+    strip, drop empties, dedupe keeping first occurrence, then reject off-corpus categories."""
+    if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+        raise MetadataValidationError("interest_set categories must be a list of strings")
+    seen: dict[str, None] = {}
+    for item in value:
+        cleaned = item.strip()
+        if cleaned:
+            seen.setdefault(cleaned, None)
+    unknown = [cat for cat in seen if cat not in ALLOWED_INTEREST_CATEGORIES]
+    if unknown:
+        raise MetadataValidationError(
+            f"categories outside the corpus slice: {', '.join(sorted(unknown))}"
+        )
+    return list(seen)
+
+
 def validate_metadata(event_type: BehaviorEventType, metadata: dict[str, Any]) -> dict[str, Any]:
     allowed = _ALLOWED_METADATA[event_type]
     extra = set(metadata) - allowed
@@ -150,7 +182,20 @@ def validate_metadata(event_type: BehaviorEventType, metadata: dict[str, Any]) -
             raise MetadataValidationError(f"forbidden metadata key: {key}")
         if isinstance(value, str) and len(value) > 240:
             raise MetadataValidationError(f"metadata value too long: {key}")
-    return dict(metadata)
+        if isinstance(value, list):
+            # BR-P4: every list-typed value is bounded (count + per-item length).
+            if len(value) > _MAX_LIST_ITEMS:
+                raise MetadataValidationError(
+                    f"too many metadata list items: {key} (max {_MAX_LIST_ITEMS})"
+                )
+            if any(isinstance(item, str) and len(item) > _MAX_LIST_ITEM_LENGTH for item in value):
+                raise MetadataValidationError(
+                    f"metadata list item too long: {key} (max {_MAX_LIST_ITEM_LENGTH} chars)"
+                )
+    validated = dict(metadata)
+    if event_type is BehaviorEventType.INTEREST_SET and "categories" in validated:
+        validated["categories"] = _clean_interest_categories(validated["categories"])
+    return validated
 
 
 class ValidatedBehaviorEventCreate(BehaviorEventCreate):
