@@ -8,9 +8,12 @@ from sqlalchemy.dialects import postgresql
 
 from backend.app import create_app
 from backend.config import Settings
-from backend.modules.novelty.repository import NoveltyJobTable
 from backend.modules.evidence.sessions import controller
-from backend.modules.evidence.sessions.repository import InMemoryResearchRepository, ResearchJobTable
+from backend.modules.evidence.sessions.repository import (
+    InMemoryResearchRepository,
+    ResearchJobTable,
+)
+from backend.modules.novelty.repository import NoveltyJobTable
 from backend.modules.user_docmodel import EVIDENCE_PDF_DEGRADED_NOTICE
 
 
