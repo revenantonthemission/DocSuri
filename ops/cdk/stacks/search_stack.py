@@ -40,7 +40,12 @@ class SearchStack(Stack):
             # RAM cut for full-body multi-chunk indexing, with NO app-side byte-vector plumbing.
             version=opensearch.EngineVersion.open_search("2.19"),
             vpc=vpc,
-            vpc_subnets=[ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED)],
+            vpc_subnets=[
+                # Single-node dev domain requires exactly one subnet (no zone awareness).
+                ec2.SubnetSelection(subnets=vpc.isolated_subnets[:1])
+                if dev
+                else ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED)
+            ],
             security_groups=[self._sg],
             capacity=opensearch.CapacityConfig(
                 data_node_instance_type="t3.small.search" if dev else "m6g.large.search",
