@@ -92,10 +92,10 @@ U2 동기 읽기 경로의 단일 도메인 오케스트레이터. 요청→응�
 - **역직렬화 견고성(per-record tolerance)** *(2026-07-01 개정 — 코드 견고성/스키마 드리프트 내성)*: 저장된 hit(`_source`)이 현재 `IndexRecord` 계약을 더는 만족하지 않으면(스키마 드리프트 — 예: 구 vector-spec으로 색인된 문서) 해당 hit을 **드롭+관측**하고 나머지 후보로 계속한다. 단일 불량 레코드가 검색 전체를 5xx로 침몰시키지 않으며(§3.7 카드 드롭 방어와 대칭), 드롭은 **WARNING 로그 + 호출당 드롭 수**로 표면화한다(값 비노출 — 필드 경로만, SEC-9). 드롭 수가 0으로 수렴하면 재색인 완료 신호. 스토어/쿼리 장애(전혀 다른 실패 모드)는 어댑터에서 `IndexUnavailable`로 fail-closed(INV-3)되며 이 드롭 경로와 무관하다. (조용한 누락 0(PBT-07)은 디덥 결정성 규칙이고, 본 항목은 *불량 데이터* 내성으로 관측 로그를 동반하므로 "조용한 누락"이 아니다.)
 - RRF 파라미터(k·가중)는 NFR/튜닝.
 
-### 3.5 RelevanceRanker — `rank(CandidateSet, QueryPlan, DegradationSignal, topN, PersonalizationDecision?) -> RankedResults` (Q3=A, Q10=A, PBT-03)
-- 병합 점수 산출 후, 전달된 `PersonalizationDecision`이 존재하고 `enabled=true`인 경우, 각 후보의 카테고리/키워드에 매칭되는 `searchBoosts`를 **기본 적합성 점수에 가산(additive)** 방식으로 적용한다.
-- **개인화 제약 준수(FR-20)**: U9가 강제하는 boost magnitude bounds(최대 총합 0.2 등)를 신뢰하여, 상위 30% 이내 후보 간의 미세 순위 변동만 발생하도록 가중치를 흡수한다.
-- 병합+부스트 조정 점수 기준 내림차순 정렬 → **상위 N=20 절단**(N 미만이면 가용분만, US-D3). **LLM 리랭킹 없음(baseline)**.
+### 3.5 RelevanceRanker — `rank(CandidateSet, QueryPlan, DegradationSignal, topN) -> RankedResults` (Q3=A, Q10=A, PBT-03)
+- 병합 점수 기준 내림차순 정렬 → **상위 N=20 절단**(N 미만이면 가용분만, US-D3). **LLM 리랭킹 없음(baseline)** — `rank` 자체는 개인화를 알지 못한다(baseline 순서만 생산).
+- **개인화 부스트는 rank 이후 별도 오케스트레이터 단계** *(구현 정합 개정 — US-P4/#345)*: 오케스트레이터가 `rank` 결과에 U9 boosts(`cached_search_boosts`)를 ranker 모듈의 순수 함수 **`apply_boosts`로 post-rank 가산(additive) 적용**한다. 라이브 순서 반영은 **`SEARCH_RERANK_LIVE` 게이트**로 제어 — 기본 OFF=**SHADOW**(`rerank_shadow` 메트릭만 발행, 사용자 노출 순서는 baseline 유지), ON일 때만 부스트 순서가 라이브로 나간다(no-redeploy 전환). 부스트 조회 실패/부재는 fail-open(무부스트, BR-P13).
+- **개인화 제약 준수(FR-20)**: U9가 강제하는 boost magnitude bounds(최대 총합 0.2 등)를 신뢰하여 미세 순위 변동만 발생하도록 가중치를 흡수한다.
 - **순서 안정성(PBT-03)**: 동률 안정 정렬, 동일 입력→동일 순서. **QT-2 관련도 평가셋 출력 표면**(한국어 질의 포함 — TD-3). raw 점수 비노출(SEC-9).
 
 ### 3.6 GroundingAdapter — `toGroundingInput` / `mapDecision` (INV-1, Q4=A, FR-5)

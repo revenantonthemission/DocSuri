@@ -85,6 +85,8 @@ class EvidenceStack(Stack):
                 'EVIDENCE_AGENT_ENABLED': 'true',
                 'DOCSURI_EVIDENCE_ASYNC_ENABLED': 'true',
                 'DOCSURI_EVIDENCE_JOB_QUEUE_URL': self.queue.queue_url,
+                # BR-EV-12: 워커가 DLQ를 소비해 죽은 잡의 turn을 job_failed로 종결한다.
+                'EVIDENCE_DLQ_URL': dlq.queue_url,
                 'DOCSURI_DOCMODEL_BUCKET': docmodel_bucket,
                 # U2 discovery 재사용 검색 경로 활성화에 필수 — 없으면 hosts=[None]으로
                 # OpenSearch 클라이언트가 만들어져 검색이 전부 실패한다(PR #338 리뷰 Blocking #6).
@@ -132,6 +134,8 @@ class EvidenceStack(Stack):
 
         self.queue.grant_consume_messages(task_def.task_role)
         dlq.grant_send_messages(task_def.task_role)
+        # BR-EV-12 EVIDENCE_DLQ_URL 소비 경로 — receive/delete 권한 없이는 drain이 AccessDenied.
+        dlq.grant_consume_messages(task_def.task_role)
 
         # S3 DocModel 읽기 (U1 소유 버킷 — GetObject only)
         task_def.add_to_task_role_policy(

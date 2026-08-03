@@ -384,6 +384,81 @@ def test_google_callback_success_issues_session_cookie_and_redirects(
     assert cleared and 'max-age=0' in cleared[0].lower()
 
 
+def _google_ok_handler(request: httpx.Request) -> httpx.Response:
+    """정상 토큰 교환 + tokeninfo 클레임(social@docsuri.org / google-sub-1)을 재현한다."""
+    if request.url.path == "/token":
+        return httpx.Response(200, json={"id_token": "stub.jwt.token"})
+    return httpx.Response(
+        200,
+        json={
+            "aud": "test-client-id",
+            "iss": "https://accounts.google.com",
+            "nonce": "n-123",
+            "sub": "google-sub-1",
+            "email": "social@docsuri.org",
+            "email_verified": "true",
+        },
+    )
+
+
+def _deactivated_social_account(db_session, *, grace_expired: bool):
+    """DEACTIVATED 소셜-only 계정 + GOOGLE LINKED 신원 + 삭제 유예 레코드를 심는다."""
+    repo = CredentialRepository(db_session)
+    account = repo.create_social_account("social@docsuri.org")
+    repo.create_social_identity("GOOGLE", "google-sub-1", account.id, account.email, status="LINKED")
+    account.status = AccountStatus.DEACTIVATED.value
+    repo.update_account(account)
+    delta = timedelta(days=-1) if grace_expired else timedelta(days=30)
+    purge_after = datetime.now(UTC).replace(tzinfo=None) + delta
+    repo.create_account_deletion(account.id, purge_after)
+    db_session.commit()
+    return account
+
+
+def test_google_callback_reactivates_deactivated_social_account_within_grace(
+    make_app, monkeypatch, db_session
+):
+    """FR-28/BR-A11: 소셜-only DEACTIVATED 계정은 유예 중이면 OIDC 콜백에서 복구되고 즉시
+    로그인된다 — 비밀번호 복구 경로(M1)와 동일 의미(ACTIVE 복원·삭제 레코드 제거·세션 발급)."""
+    account = _deactivated_social_account(db_session, grace_expired=False)
+    _install_google_transport(monkeypatch, _google_ok_handler)
+    monkeypatch.setenv("GOOGLE_OIDC_CLIENT_ID", "test-client-id")
+    monkeypatch.setenv("GOOGLE_OIDC_CLIENT_SECRET", "test-secret")
+    ctx = make_app()
+    client = _client(ctx.app)
+    state = _seed_oidc_state(client, ctx.state_store)
+
+    r = client.get(f"/auth/social/google/callback?code=good&state={state}", follow_redirects=False)
+
+    assert r.status_code == 302  # 401이 아니라 정상 로그인 리다이렉트
+    assert len(_session_cookies(r)) == 1  # 세션 발급(로그인 완료)
+    repo = CredentialRepository(db_session)
+    assert repo.get_by_id(account.id).status == AccountStatus.ACTIVE.value  # 복원됨
+    assert repo.get_account_deletion(account.id) is None  # 삭제 레코드 제거(M1 미러)
+    assert [p.user_id for p in ctx.session_manager.sessions.values()] == [account.id]
+
+
+def test_google_callback_keeps_401_for_deactivated_past_grace(make_app, monkeypatch, db_session):
+    """FR-28/BR-A11: 유예가 경과한 DEACTIVATED 계정은 소셜 로그인으로 복구되지 않는다 —
+    기존 401 유지·세션 미발급·계정/삭제 레코드 불변(파기 잡 대상으로 남는다)."""
+    account = _deactivated_social_account(db_session, grace_expired=True)
+    _install_google_transport(monkeypatch, _google_ok_handler)
+    monkeypatch.setenv("GOOGLE_OIDC_CLIENT_ID", "test-client-id")
+    monkeypatch.setenv("GOOGLE_OIDC_CLIENT_SECRET", "test-secret")
+    ctx = make_app()
+    client = _client(ctx.app)
+    state = _seed_oidc_state(client, ctx.state_store)
+
+    r = client.get(f"/auth/social/google/callback?code=good&state={state}", follow_redirects=False)
+
+    assert r.status_code == 401
+    assert _session_cookies(r) == []
+    assert ctx.session_manager.sessions == {}
+    repo = CredentialRepository(db_session)
+    assert repo.get_by_id(account.id).status == AccountStatus.DEACTIVATED.value
+    assert repo.get_account_deletion(account.id) is not None  # 레코드 보존(파기 잡 대상)
+
+
 # ── 4. 재설정 토큰 30분 만료 브랜치 (FR-26/BR-A8) ───────────────────────────────
 
 

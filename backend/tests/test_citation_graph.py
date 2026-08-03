@@ -195,6 +195,44 @@ def test_citation_tree_rate_limited_and_unavailable(monkeypatch) -> None:
     )
 
 
+@pytest.mark.parametrize("provider_status", ["rate_limited", "unavailable"])
+def test_refresh_provider_failure_falls_back_to_cached_snapshot(
+    monkeypatch, provider_status
+) -> None:
+    # FR-16/BR-CG9/BR-CG10: refresh=True skips the cache read, but when the provider then
+    # fails the still-valid snapshot must come back — not an empty degraded tree.
+    provider = FixtureProvider()
+    store = controller.InMemorySnapshotStore()
+    client = _client(monkeypatch, provider=provider, store=store)
+
+    first = client.get("/api/papers/root/citation-tree").json()
+    assert first["nodes"]
+
+    provider.status = provider_status
+    resp = client.get("/api/papers/root/citation-tree", params={"refresh": True})
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert provider.calls == 2  # the refresh really bypassed the cache and hit the provider
+    assert [n["nodeId"] for n in body["nodes"]] == [n["nodeId"] for n in first["nodes"]]
+    assert body["cacheHit"] is True
+    assert body["providerStatus"] == provider_status
+
+
+def test_refresh_provider_failure_without_snapshot_degrades_empty(monkeypatch) -> None:
+    provider = FixtureProvider("unavailable")
+
+    resp = _client(monkeypatch, provider=provider).get(
+        "/api/papers/root/citation-tree", params={"refresh": True}
+    )
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["status"] == "Unavailable"
+    assert body["nodes"] == []
+    assert provider.calls == 1
+
+
 def _raises_json_decode() -> None:
     raise json.JSONDecodeError("no json", "", 0)
 

@@ -427,6 +427,46 @@ def test_api_turn_rejects_invalid_pdf_identity_without_polling(monkeypatch) -> N
     assert fake_user_docmodel.polled == []
 
 
+def test_api_turn_rejects_self_consistent_foreign_paper_id_without_polling(monkeypatch) -> None:
+    """SEC 회귀 — 자기 소유 objectKey에 타 테넌트 paperId + 짝맞춘 recordRef를 실어 보내면
+    서버측 uuid5 재계산이 422로 거부한다(폴링/빌드 전에 차단)."""
+    from backend.modules.user_docmodel import user_docmodel_ref
+
+    principal = _principal()
+    repo = InMemoryEvidenceRepository()
+    client = _client(monkeypatch, principal, repo)
+    fake_user_docmodel = _FakeUserDocModel(_doc_model("PDF extracted text"))
+    client.app.dependency_overrides[controller.get_user_docmodel] = (
+        lambda: fake_user_docmodel
+    )
+
+    uploaded = client.post(
+        "/api/evidence/attachments?fileName=scan.pdf&id=att-1",
+        content=b"%PDF-1.4",
+        headers={"content-type": "application/pdf"},
+    )
+    assert uploaded.status_code == 200
+    attachment = uploaded.json()
+    foreign = user_docmodel_ref(
+        owner_id="other-user",
+        scope_id="att-1",
+        attachment_id="att-1",
+        object_key="uploads/evidence/other-user/att-1/att-1/scan.pdf",
+        module="evidence",
+    )
+    # objectKey는 자기 소유분 그대로 — paperId/recordRef만 서로 짝이 맞게 위조.
+    attachment["paperId"] = foreign.paper_id
+    attachment["recordRef"] = f"upload:{principal.user_id}:{foreign.job_id}:att-1"
+
+    turn = client.post(
+        "/api/evidence/turns",
+        json={"topic": "attachment handling", "attachments": [attachment]},
+    )
+
+    assert turn.status_code == 422
+    assert fake_user_docmodel.polled == []
+
+
 def test_api_turn_rejects_disallowed_attachment_kind_with_422(monkeypatch) -> None:
     client = _client(monkeypatch, _principal(), InMemoryEvidenceRepository())
 

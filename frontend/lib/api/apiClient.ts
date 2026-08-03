@@ -89,6 +89,7 @@ import type {
   AgentTimelineEvent,
 } from '@/lib/agentChat/types';
 import { streamAgentTurn, timelineDetail } from '@/lib/agentChat/sse';
+import { MAX_AGENT_UPLOAD_BYTES } from '@/lib/agentChat/limits';
 
 export interface ApiClientOptions {
   timeoutMs?: number;
@@ -365,11 +366,10 @@ function hasPdfSourceFile(
 }
 
 // Client-side guard mirroring the backend USER_DOCMODEL_MAX_BYTES (10 MiB): fail fast instead
-// of streaming a too-large PDF to the backend only to get a 422 back.
-const MAX_PDF_UPLOAD_BYTES = 10 * 1024 * 1024;
-
+// of streaming a too-large PDF to the backend only to get a 422 back. The cap is single-sourced
+// in agentChat/limits.ts, shared with the attachment intake guard (agentChat/state.ts).
 function assertPdfUploadSize(file: Blob): void {
-  if (file.size > MAX_PDF_UPLOAD_BYTES) {
+  if (file.size > MAX_AGENT_UPLOAD_BYTES) {
     throw new UserFacingError('unknown', 'PDF 파일은 10MB 이하만 업로드할 수 있습니다.');
   }
 }
@@ -900,6 +900,14 @@ export class ApiClient {
     onTimelineEvents?: (events: AgentTimelineEvent[]) => void,
   ): Promise<AgentSendMessageResult> {
     const target = parseAgentSessionId(sessionId, req.mode);
+    // BR-AG-1 모드 락: 세션 id에 인코딩된 모드와 요청 모드가 다르면 즉시 실패한다 —
+    // 세션의 모드는 생성 시점에 고정되며, 다른 모드로 보내면 서버 경로 자체가 갈라진다.
+    if (req.mode !== target.mode) {
+      throw new UserFacingError(
+        'unknown',
+        '세션 모드가 일치하지 않습니다. 새 대화를 시작해 주세요.',
+      );
+    }
     const created = sessionId.startsWith(`agent-${req.mode}-`);
     const sendReq =
       target.mode === 'evidence' ? await this.withUploadedResearchAttachments(req) : req;

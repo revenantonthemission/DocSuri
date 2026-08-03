@@ -1,5 +1,7 @@
 import asyncio
+import hashlib
 import logging
+import time
 from datetime import UTC, datetime
 
 from argon2.exceptions import InvalidHash, VerificationError
@@ -14,6 +16,43 @@ logger = logging.getLogger(__name__)
 
 # 봇 방지(CAPTCHA) 강제 시작 임계치 (BR-A4). 자동 계정 잠금(LOCKED)은 BR-A4에 의해 금지된다.
 CAPTCHA_THRESHOLD = 10
+
+# ── 부존재 이메일 실패 추적 (SEC-BR-2/BR-A4 — 계정 열거 타이밍 오라클 차단) ─────────────
+# 존재 계정만 백오프를 적용하면 '즉시 401 vs 지연 401' 응답 시간 차이로 이메일 존재가
+# 노출된다. 부존재 이메일도 동일 지연 스케줄을 밟도록 정규화 이메일의 SHA-256 키로 실패
+# 횟수를 프로세스-로컬 TTL dict에 누적한다. 한계: 단일 프로세스 워커 기준의 근사 방어로,
+# 멀티 워커/재시작 간에는 공유되지 않는다(DB/Redis 무의존이 의도된 트레이드오프).
+UNKNOWN_EMAIL_FAILURE_TTL_SECONDS = 900  # ~15분 후 만료
+UNKNOWN_EMAIL_FAILURE_MAX_ENTRIES = 10_000  # 무한 증가 방지 상한(바운디드 메모리)
+_unknown_email_failures: dict[str, tuple[int, float]] = {}  # sha256(email) -> (count, expires_at)
+
+
+def _backoff_delay_seconds(failure_count: int) -> int:
+    """실패 3회차부터 지수 백오프: 3회 1초, 4회 2초, 5회 4초 ... (최대 120초 상한) — BR-A4.
+    존재/부존재 이메일 경로가 반드시 이 단일 스케줄을 공유해야 한다(SEC-BR-2)."""
+    if failure_count < 3:
+        return 0
+    return min(2 ** (failure_count - 3), 120)
+
+
+def _record_unknown_email_failure(normalized_email: str) -> int:
+    """부존재 이메일의 실패 횟수를 TTL dict에 누적하고 현재 횟수를 반환한다."""
+    now = time.monotonic()
+    key = hashlib.sha256(normalized_email.encode("utf-8")).hexdigest()
+    for stale_key, (_, expires_at) in list(_unknown_email_failures.items()):
+        if expires_at <= now:
+            _unknown_email_failures.pop(stale_key, None)
+    count = _unknown_email_failures.get(key, (0, 0.0))[0] + 1
+    if (
+        key not in _unknown_email_failures
+        and len(_unknown_email_failures) >= UNKNOWN_EMAIL_FAILURE_MAX_ENTRIES
+    ):
+        # 상한 도달 시 가장 먼저 만료될 항목을 밀어내 신규 키 추적을 계속한다.
+        oldest = min(_unknown_email_failures, key=lambda k: _unknown_email_failures[k][1])
+        _unknown_email_failures.pop(oldest, None)
+    _unknown_email_failures[key] = (count, now + UNKNOWN_EMAIL_FAILURE_TTL_SECONDS)
+    return count
+
 
 class AuthenticationService:
     """로그인 자격증명 비교, 무차별 대입 방어(Exponential Backoff), reCAPTCHA 검증 및 해시 자동 업그레이드를 관리하는 서비스 (US-A2)"""
@@ -78,7 +117,6 @@ class AuthenticationService:
 
         if not is_verified:
             # 3. 인증 실패 처리 및 브루트포스 exponential backoff 지연 (BR-A4)
-            delay_seconds = 0
             if account:
                 account.failure_count += 1
                 account.last_failed_at = datetime.now(UTC)
@@ -86,11 +124,14 @@ class AuthenticationService:
                 # DoS를 유발하므로 금지(점진적 backoff + 10회차 CAPTCHA로 방어). LOCKED는 관리자 수동
                 # 잠금 경로에서만 설정될 수 있다.
                 self._repo.update_account(account)
+                failure_count = account.failure_count
+            else:
+                # SEC-BR-2: 부존재 이메일도 존재 계정과 동일한 백오프 스케줄을 밟게 해 응답 시간
+                # 차이로 이메일 존재가 노출되는 열거 타이밍 오라클을 차단한다.
+                failure_count = _record_unknown_email_failure(email)
 
-                # 실패 횟수 3회차부터 지수 백오프 지연 계산
-                # 3회: 1초, 4회: 2초, 5회: 4초, 6회: 8초 ... (최대 120초 상한 설정으로 무한 락 방어)
-                if account.failure_count >= 3:
-                    delay_seconds = min(2 ** (account.failure_count - 3), 120)
+            # 실패 횟수 3회차부터 지수 백오프 지연 계산 — 존재/부존재 경로 공용 단일 스케줄.
+            delay_seconds = _backoff_delay_seconds(failure_count)
 
             # 관측성 신호 수집(SEC-12): 어떤 자격증명이 틀렸는지/이메일 파생값을 싣지 않고,
             # shared/events/account-signals.schema.json 의 AuthFailureSignal 규약대로 일반화된 'reason'만 발행한다.

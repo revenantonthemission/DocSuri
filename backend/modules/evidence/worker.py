@@ -32,6 +32,7 @@ from docsuri_shared._generated.dtos.evidence_schema import EvidenceRequest, Evid
 from .models import AgentRunContext, EvidenceTurn, TurnErrorResult, TurnPendingResult
 from .orchestrator import EvidenceAgentOrchestrator
 from .repository import EvidenceRepository
+from .streaming import _metric
 
 # U16 BR-SB7 spend attribution — strictly best-effort: if the plans module is unavailable
 # the null context keeps this worker byte-for-byte equivalent to the pre-U16 behavior.
@@ -236,8 +237,11 @@ def run_worker(
     ack: Callable[[_Message], None],
     should_stop: Callable[[], bool],
     user_docmodel: Any = None,
+    drain_dlq: Callable[[], None] | None = None,
 ) -> None:
     while not should_stop():
+        if drain_dlq is not None:
+            drain_dlq()  # BR-EV-12 — DLQ로 빠진 잡의 turn을 pending에 방치하지 않는다
         for message in receive():
             repo = repo_factory()
             try:
@@ -255,6 +259,12 @@ def run_worker(
                 if commit is not None:
                     commit()
                 log.exception('evidence job failed; committed error state')
+            except InvalidWorkerPayload:
+                # poison payload: 구조가 잘못된 메시지는 재배달해도 영원히 실패한다 —
+                # on_poison의 JSON-decode 처리와 동일하게 즉시 ack(삭제)로 종결한다.
+                log.exception(
+                    'evidence worker: dropping poison message (invalid payload shape)'
+                )
             except Exception:  # noqa: BLE001 — leave unacked for retry/DLQ
                 rollback = getattr(repo, 'rollback', None)
                 if rollback is not None:
@@ -268,6 +278,75 @@ def run_worker(
             ack(message)
             if should_stop():
                 break
+
+
+def drain_dlq_once(
+    sqs: Any,
+    dlq_url: str,
+    repo_factory: Callable[[], EvidenceRepository],
+    *,
+    observability: Any = None,
+) -> None:
+    """BR-EV-12 — max_receive_count 소진으로 DLQ에 빠진 잡을 terminal로 전이.
+
+    DLQ 메시지의 turn에 TurnErrorResult(job_failed)를 기록하고 메시지를 삭제한다.
+    이미 해소된 turn은 repo의 idempotency guard가 중복 갱신을 거부하므로 그대로
+    ack(멱등). malformed 메시지는 기록 없이 삭제+로그. RDS 기록 실패 시에만 메시지를
+    남겨 다음 폴링에서 재시도한다(infra-design §DLQ).
+    """
+    resp = sqs.receive_message(QueueUrl=dlq_url, MaxNumberOfMessages=10, WaitTimeSeconds=0)
+    for msg in resp.get('Messages', []):
+        try:
+            fields = parse_sqs_payload(msg.get('Body') or '')
+        except Exception:  # noqa: BLE001 — malformed DLQ 메시지는 삭제+로그로 종결
+            log.exception(
+                'evidence DLQ: dropping malformed message, receiptHandle=%s',
+                msg.get('ReceiptHandle'),
+            )
+        else:
+            try:
+                _record_dead_lettered_turn(repo_factory, fields)
+            except Exception:  # noqa: BLE001 — 기록 실패는 메시지를 남겨 재시도
+                log.exception(
+                    'evidence DLQ: failed to record job_failed for turn %s; keeping message',
+                    fields['turn_id'],
+                )
+                continue
+            _metric(
+                observability,
+                'evidence.job.dead_lettered',
+                1.0,
+                {'errorCode': 'job_failed'},
+            )
+        receipt = msg.get('ReceiptHandle')
+        if receipt:
+            sqs.delete_message(QueueUrl=dlq_url, ReceiptHandle=receipt)
+
+
+def _record_dead_lettered_turn(
+    repo_factory: Callable[[], EvidenceRepository],
+    fields: dict[str, Any],
+) -> None:
+    repo = repo_factory()
+    try:
+        try:
+            repo.update_turn_result(
+                fields['owner_id'],
+                fields['turn_id'],
+                TurnErrorResult(error_code='job_failed'),
+            )
+        except KeyError:
+            # turn이 없거나 소유자가 다른 잔재 메시지 — 기록할 곳이 없으니 그대로 ack.
+            log.warning(
+                'evidence DLQ: turn %s unavailable; acking anyway', fields['turn_id']
+            )
+        commit = getattr(repo, 'commit', None)
+        if commit is not None:
+            commit()
+    finally:
+        close = getattr(repo, 'close', None)
+        if close is not None:
+            close()
 
 
 _shutdown = threading.Event()
@@ -339,6 +418,13 @@ def main(argv: list[str] | None = None) -> int:
         if message.receipt_handle:
             sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=message.receipt_handle)
 
+    # BR-EV-12: DLQ URL이 배선된 경우에만 소비한다(로컬·테스트 무영향).
+    dlq_url = os.getenv('EVIDENCE_DLQ_URL')
+    observability = _build_worker_observability() if dlq_url else None
+
+    def drain_dlq() -> None:
+        drain_dlq_once(sqs, dlq_url, repo_factory, observability=observability)
+
     log.info('evidence agent worker started; polling queue')
     run_worker(
         repo_factory=repo_factory,
@@ -347,9 +433,20 @@ def main(argv: list[str] | None = None) -> int:
         ack=ack,
         should_stop=_shutdown.is_set,
         user_docmodel=_build_user_docmodel(),
+        drain_dlq=drain_dlq if dlq_url else None,
     )
     log.info('evidence agent worker shut down gracefully')
     return 0
+
+
+def _build_worker_observability() -> Any:
+    """novelty worker의 _build_worker_ops와 동일 관례 — 관측 배선 실패는 워커를 막지 않는다."""
+    try:
+        from backend.app import _build_observability
+    except ImportError:
+        return None
+    observability, _telemetry_store = _build_observability()
+    return observability
 
 
 def _attachment_inputs(

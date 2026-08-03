@@ -90,6 +90,7 @@
 - 세션 삭제 시 해당 세션의 **모든 턴 이력과 결과를 함께 삭제**.
 - 소유권 검증(INV-EV-1) 통과 후 실행.
 - 삭제는 **소프트 삭제** (`status=deleted`). 영구 파기 방식은 NFR/Infra 이월.
+- *(구현 개정 — sessions 표면 carve-out)*: **sessions(구 research) 표면**(`/api/research` 잡·대화 이력 — `evidence/sessions/repository.py` `delete_job`/`delete_all_jobs`)은 SEC-14(**즉시 삭제**)에 따라 **하드 삭제**(행 물리 삭제)한다. `EvidenceSession`의 소프트 삭제(`status=deleted` — `evidence/repository.py` `soft_delete_session`)와 구분되는 의도된 예외.
 
 ### BR-EV-9 — 세션 초기화 (FR-38)
 - 전체 초기화는 **요청 사용자의 모든 세션**을 삭제.

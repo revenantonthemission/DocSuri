@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import timedelta, timezone
 from typing import Any
 
+from fastapi.concurrency import run_in_threadpool
+
 from backend.modules.user_docmodel import (
     USER_DOCMODEL_PDF_CONTENT_TYPE,
     object_key_for_upload,
@@ -216,7 +218,7 @@ class NoveltyService:
         _emit_metric(self._observability, "novelty.manuscript_uploaded")
         return updated
 
-    def attach_manuscript_pdf(
+    async def attach_manuscript_pdf(
         self,
         owner_id: str,
         job_id: str,
@@ -253,8 +255,11 @@ class NoveltyService:
             object_key=object_key,
             module="novelty",
         )
-        user_docmodel.upload_pdf(ref, pdf, file_name=file_name, content_type=content_type)
-        user_docmodel.enqueue_build(ref)
+        # boto3 is sync — keep S3/SQS I/O off the event loop (evidence controller pattern).
+        await run_in_threadpool(
+            user_docmodel.upload_pdf, ref, pdf, file_name=file_name, content_type=content_type
+        )
+        await run_in_threadpool(user_docmodel.enqueue_build, ref)
         manuscript = job.manuscript.model_copy(
             update={
                 "fileName": file_name,

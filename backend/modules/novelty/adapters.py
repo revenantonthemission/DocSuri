@@ -7,7 +7,6 @@ import re
 from dataclasses import dataclass, field
 from types import SimpleNamespace
 from typing import Any, Protocol
-from urllib.parse import urlparse
 from uuid import uuid4
 
 from backend.modules.user_docmodel import (
@@ -17,7 +16,7 @@ from backend.modules.user_docmodel import (
 )
 
 from .models import EvidenceStatus
-from .security import sanitize_external_query
+from .security import ALLOWED_EXTERNAL_HOSTS, is_safe_external_url, sanitize_external_query
 
 log = logging.getLogger(__name__)
 
@@ -387,6 +386,7 @@ class ExternalApiSearchClient:
                 downloads=dataset.get("downloads"),
                 likes=dataset.get("likes"),
                 updatedAt=dataset.get("lastModified"),
+                license=_hf_license(dataset),  # FR-31 — GitHub spdx_id와 동일한 표면
                 tags=dataset.get("tags") or [],
             )
             for dataset in payload[: self._per_source]
@@ -414,6 +414,7 @@ class ExternalApiSearchClient:
                 identifier=str(record.get("doi") or record.get("id") or ""),
                 provider="zenodo",
                 publishedAt=(record.get("metadata") or {}).get("publication_date"),
+                license=_zenodo_license(record),  # FR-31 — GitHub spdx_id와 동일한 표면
                 keywords=(record.get("metadata") or {}).get("keywords") or [],
             )
             for record in records[: self._per_source]
@@ -424,6 +425,10 @@ class ExternalApiSearchClient:
         실패 격리는 search()의 소스별 try/except가 기존 계약대로 보장한다(BR-WR6)."""
         if self._scholarly is None:
             return []
+        # scholarly URL은 U11이 이미 SCHOLARLY_ALLOWED_HOSTS로 검증한 표면 — 여기서는
+        # 같은 allowlist를 합집합으로 재적용한다(novelty 기본 allowlist에는 없는 호스트).
+        from backend.modules.evidence.web_search import SCHOLARLY_ALLOWED_HOSTS
+
         source_names = {"semantic_scholar": "Semantic Scholar", "openalex": "OpenAlex"}
         return [
             _external_item(
@@ -433,6 +438,7 @@ class ExternalApiSearchClient:
                 url=ref.url,
                 summary=_scholarly_summary(ref),
                 identifier=ref.doi or ref.url,
+                allowed_hosts=ALLOWED_EXTERNAL_HOSTS | SCHOLARLY_ALLOWED_HOSTS,
                 doi=ref.doi,
                 year=ref.year,
                 authors=list(ref.authors),
@@ -472,9 +478,13 @@ def _external_item(
     url: str,
     summary: str,
     identifier: str,
+    allowed_hosts: frozenset[str] | None = None,
     **extra: Any,
 ) -> dict[str, Any]:
-    if not title or not _safe_https_url(url):
+    # BR-NV6/SEC-11 — 외부 API가 돌려준 URL도 공유 호스트 allowlist를 통과해야 클릭 가능한
+    # sourceRef가 된다(evidence web_search._reference와 동일 계약). 실패 항목은 기존 저하
+    # 패턴대로 드랍된다(빈 dict → _dedupe_by_url에서 제거).
+    if not title or not is_safe_external_url(url, allowed_hosts):
         return {}
     source_ref = {
         "type": "url",
@@ -507,17 +517,34 @@ def _dedupe_by_url(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return deduped
 
 
-def _safe_https_url(url: str) -> bool:
-    parsed = urlparse(url)
-    return parsed.scheme == "https" and bool(parsed.hostname)
-
-
 def _summary_from_hf_dataset(dataset: dict[str, Any]) -> str:
     card = dataset.get("cardData") or {}
     description = card.get("description") if isinstance(card, dict) else None
     if description:
         return str(description)
     return ", ".join(str(tag) for tag in dataset.get("tags") or [])[:1000]
+
+
+def _hf_license(dataset: dict[str, Any]) -> str | None:
+    """FR-31 — cardData.license(문자열 또는 목록) 우선, 없으면 'license:*' 태그에서 추출."""
+    card = dataset.get("cardData")
+    value = card.get("license") if isinstance(card, dict) else None
+    if isinstance(value, list):
+        value = next((entry for entry in value if entry), None)
+    if value:
+        return str(value)
+    for tag in dataset.get("tags") or []:
+        if isinstance(tag, str) and tag.startswith("license:"):
+            return tag.removeprefix("license:") or None
+    return None
+
+
+def _zenodo_license(record: dict[str, Any]) -> str | None:
+    """FR-31 — metadata.license.id(구형 응답은 bare 문자열도 허용)."""
+    value = (record.get("metadata") or {}).get("license")
+    if isinstance(value, dict):
+        value = value.get("id")
+    return str(value) if value else None
 
 
 def _strip_html(text: str) -> str:

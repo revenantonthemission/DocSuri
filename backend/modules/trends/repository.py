@@ -17,6 +17,7 @@ from threading import RLock
 from typing import Protocol
 
 from sqlalchemy import JSON, Boolean, DateTime, Integer, String, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 from .models import (
@@ -91,6 +92,10 @@ class InMemoryTrendsRepository:
     def add_topic(self, user_id: str, topic: FollowedTopic) -> FollowedTopic:
         with self._lock:
             rows = self._topics.setdefault(user_id, [])
+            if any(row.topic.casefold() == topic.topic.casefold() for row in rows):
+                # mirror migration 002's unique index on (owner_id, lower(topic)) so the
+                # adapter — not the caller's check-then-act — is the duplicate arbiter
+                raise IntegrityError("duplicate followed topic", None, ValueError(topic.topic))
             rows.append(topic)
             return topic
 

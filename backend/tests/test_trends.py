@@ -14,6 +14,7 @@ from uuid import uuid4
 import pytest
 from docsuri_shared.authz import Principal, UserRole
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import IntegrityError
 
 from backend.app import create_app
 from backend.config import Settings
@@ -22,6 +23,7 @@ from backend.modules.trends.models import (
     MAX_TOPIC_LENGTH,
     MAX_TOPICS_PER_USER,
     DigestCadence,
+    FollowedTopic,
     PaperMatch,
 )
 from backend.modules.trends.repository import InMemoryTrendsRepository
@@ -573,6 +575,45 @@ def test_unsubscribe_endpoint_needs_no_login_and_never_5xx() -> None:
         response = client.post("/trends/unsubscribe", json={"token": bad})
         assert response.status_code == 400  # 4xx, never 5xx
     assert client.post("/trends/unsubscribe", json={}).status_code == 422
+
+
+def test_add_topic_duplicate_insert_raises_integrity_error() -> None:
+    """The in-memory adapter mirrors migration 002's unique index on (owner_id,
+    lower(topic)): a direct duplicate insert fails at the repo, not just at the service."""
+    repo = InMemoryTrendsRepository()
+    user = str(uuid4())
+    repo.add_topic(user, FollowedTopic(userId=user, topic="Alpha", embedding=[1.0]))
+
+    with pytest.raises(IntegrityError):
+        repo.add_topic(user, FollowedTopic(userId=user, topic="alpha", embedding=[1.0]))
+
+    # a different owner is unaffected — the uniqueness is per (owner, topic)
+    other = str(uuid4())
+    repo.add_topic(other, FollowedTopic(userId=other, topic="alpha", embedding=[1.0]))
+
+
+def test_follow_topic_maps_race_lost_insert_to_duplicate_409() -> None:
+    """FR-48/BR-TN5 race: the concurrent double-submit lands AFTER the service's
+    check-then-act read but BEFORE its insert — the unique-violation (IntegrityError) must
+    map to the same DuplicateTopic the check path raises (→ 409 at the controller)."""
+    user = str(uuid4())
+
+    class RacingRepository(InMemoryTrendsRepository):
+        def add_topic(self, user_id: str, topic: FollowedTopic) -> FollowedTopic:
+            # the racer wins the insert between the service's read and this write
+            super().add_topic(
+                user_id,
+                FollowedTopic(userId=user_id, topic=topic.topic.upper(), embedding=[1.0]),
+            )
+            return super().add_topic(user_id, topic)
+
+    repo = RacingRepository()
+    service = _service(repo)
+
+    with pytest.raises(DuplicateTopic):
+        service.follow_topic(user, _follow_dto("same topic"))
+
+    assert [row.topic for row in repo.list_topics(user)] == ["SAME TOPIC"]  # racer's row kept
 
 
 def test_service_raises_on_cap_and_duplicate() -> None:

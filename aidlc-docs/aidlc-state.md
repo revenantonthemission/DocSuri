@@ -917,3 +917,16 @@ _Resiliency 옵트인은 `requirements.md` 확정 전에 필수 요구사항 명
 - Verification: shared `uv run pytest` 전체 green + ruff clean; backend focused(연구/근거/유저독모델/novelty/app-shell) exit 0; `backend/tests` 전체 스윕 exit 0; touched ruff clean; compileall PASS.
 - 기록 갭(후속): 2026-07-02 이후 증분(U14 온보딩·U15 트렌드·U16 플랜 인셉션/빌드, v3 재임베드 컷오버, novelty 쿼리확장 개편, U9 US-P4 go-live v1.15.0)은 본 파일에 상태 항목 미기재 — 각 담당의 사후 기재 권장(레지스트리·audit.md에는 존재).
 - Current gate: 커밋 완료·push/PR 보류(사용자 승인 후).
+
+## 전 유닛 코드 리뷰 (All-Units Review) + 교정 — 적용 완료
+
+- Date: 2026-08-04
+- Stage: OPERATIONS / 전 유닛 aidlc-unit-review 스윕 (U1~U16, 리뷰어 11·유닛별 스펙 대조)
+- Verdicts: 11 유닛 APPROVE · 5 유닛 CHANGES REQUESTED(U1·U3·U8 blocking, U9·U11 should-fix). U12는 APPROVE + should-fix 1.
+- Branch: `fix/unit-review-remediation` (base develop `5bb6eef`)
+- Blocking 교정: ① U1 user_docmodel `ref_from_attachment` paperId 서버측 uuid5 재유도(교차 테넌트 DocModel 읽기/네임스페이스 오염 차단; 워커 미러는 페이로드에 mint scope 부재로 구조상 불가 — 백엔드 생산자 canonical-only로 방어) ② U3 로그인 백오프 타이밍 오라클(미존재 이메일도 동일 지연 — TTL 실패 카운터) ③ U8 refresh 실패 시 stale snapshot 폴백(FR-16) + 50노드 하드 상한.
+- Should-fix 교정: U3 소셜-only 계정 유예기간 OIDC 재활성화(BR-A11) · U11 DLQ 소비자(`EVIDENCE_DLQ_URL`→TurnErrorResult{job_failed}) + poison payload 즉시 ack · U2 익명 검색 boost/이력 스킵(공유 anonymous id 풀링 해소) · U9 interest_set 화이트리스트/dedup + 리스트 메타데이터 상한(allowlist SSOT=U9, U14가 import) · U15 팔로우 토픽 UNIQUE(owner_id, lower(topic)) 마이그레이션 002 + IntegrityError→409 · U12 novelty 외부 URL 호스트 allowlist 적용 + HF/Zenodo 라이선스 필드 · user_docmodel 호출 3개소 run_in_threadpool.
+- Nits: U13 mode-lock 가드 + 10MiB 상수 단일화(`frontend/lib/agentChat/limits.ts`) · 문서 3건(BR-13 auth-optional·U2 FD §3.5 apply_boosts·BR-EV-8 세션 hard-delete 카브아웃).
+- 이월(권고만): U3 controller.py 1152줄 분할(800줄 상한 위반 — 별도 refactor) · U15 10토픽 cap 레이스(중복만 DB 강제) · U16 grant 대상 존재 확인(SEC-9 열거방지 관점에서 의도된 동작으로 판단) · U9 category 택소노미 검증.
+- Verification: backend 전체 스윕 exit 0 · tests/accounts 134 passed · shared pytest green · ruff backend 전역 clean · compileall OK · frontend tsc(touched) + vitest 37 passed.
+- Current gate: PR → CI green → develop 머지(사용자 지시).

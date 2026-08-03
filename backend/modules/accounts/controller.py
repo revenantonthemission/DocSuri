@@ -412,6 +412,28 @@ def _principal_for_social_account(account_id: str, repo: CredentialRepository) -
     return Principal(user_id=account_id, role=role, mfa_verified=False)
 
 
+async def _reactivate_social_account_if_in_grace(
+    account_id: str,
+    repo: CredentialRepository,
+    deletion_svc: AccountDeletionService,
+) -> None:
+    """FR-28/BR-A11: 소셜-only DEACTIVATED 계정의 소유자 복구 경로.
+
+    비밀번호 계정은 /account/reactivate에서 자격증명 재증명으로 복구하지만(M1), 소셜-only
+    계정은 재증명할 비밀번호가 없어 복구 경로가 막힌다. 검증된 OIDC 신원은 동급의 소유권
+    증명이므로, 유예 중(미파기·purge_after 미경과) 삭제 레코드가 있으면 비밀번호 경로와
+    동일하게 ACTIVE 복원 + 삭제 레코드 제거(AccountReactivated 감사 로그 포함) 후 로그인을
+    진행한다. 유예 경과/PURGED 계정은 복구하지 않는다(기존 401 유지)."""
+    account = repo.get_by_id(account_id)
+    if account is None or account.status != AccountStatus.DEACTIVATED.value:
+        return
+    rec = repo.get_account_deletion(account_id)
+    now = datetime.now(UTC).replace(tzinfo=None)
+    if rec is None or rec.state != AccountStatus.DEACTIVATED.value or rec.purge_after <= now:
+        return
+    await deletion_svc.reactivate(account_id)
+
+
 def _clear_session_cookie(resp: Response) -> None:
     """세션 쿠키를 set_cookie와 동일한 속성(httponly/secure/samesite=lax)으로 삭제한다.
     삭제 시 속성을 비우면 일부 브라우저/프록시에서 set과 매칭되지 않아 쿠키가 남을 수 있어,
@@ -694,6 +716,7 @@ async def social_google_callback(
     session_mgr: SessionManager = Depends(get_session_manager),
     state_store: _OidcStateStore = Depends(get_oidc_state_store),
     repo: CredentialRepository = Depends(get_credential_repo),
+    deletion_svc: AccountDeletionService = Depends(get_account_deletion_service),
     db: Session = Depends(get_db_session),
 ):
     """소셜 로그인 콜백 (FR-27/BR-A9) — CSRF(state)·nonce 검증 → 신원 조정 → 세션 발급 →
@@ -709,6 +732,8 @@ async def social_google_callback(
             state_payload["code_verifier"],
         )
         account_id = social_svc.reconcile(OidcProvider.GOOGLE, claims)
+        # FR-28/BR-A11: 소셜-only DEACTIVATED 계정은 유예 중이면 여기서 복구 후 로그인한다.
+        await _reactivate_social_account_if_in_grace(account_id, repo, deletion_svc)
         db.commit()
     except SocialLinkConfirmationRequired:
         db.commit()  # PENDING_CONFIRMATION 신원 기록됨(추후 비밀번호 로그인 후 연결 — 이월).
@@ -771,6 +796,7 @@ async def social_orcid_callback(
     session_mgr: SessionManager = Depends(get_session_manager),
     state_store: _OidcStateStore = Depends(get_oidc_state_store),
     repo: CredentialRepository = Depends(get_credential_repo),
+    deletion_svc: AccountDeletionService = Depends(get_account_deletion_service),
     db: Session = Depends(get_db_session),
 ):
     """ORCID 소셜 로그인 콜백 (FR-27/BR-A13) — CSRF(state)·nonce 검증 → 이메일-없는 신원 조정 →
@@ -788,6 +814,8 @@ async def social_orcid_callback(
             state_payload["code_verifier"],
         )
         account_id = social_svc.reconcile(OidcProvider.ORCID, claims)
+        # FR-28/BR-A11: 소셜-only DEACTIVATED 계정은 유예 중이면 여기서 복구 후 로그인한다.
+        await _reactivate_social_account_if_in_grace(account_id, repo, deletion_svc)
         # ORCID 공개 프로필(소속) best-effort 캐시 — 이름은 id_token, 소속은 Public API.
         record = await fetch_orcid_public_record(claims.subject, pub_base=verifier.pub_base)
         repo.update_orcid_profile(claims.subject, claims.name, record.get("affiliation"))

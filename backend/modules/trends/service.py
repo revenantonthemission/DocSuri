@@ -30,6 +30,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Protocol
 
+from sqlalchemy.exc import IntegrityError
+
 from .models import (
     MAX_TOPICS_PER_USER,
     DigestCadence,
@@ -315,7 +317,12 @@ class TrendsService:
             topic=dto.topic,
             embedding=list(self._embedding.embed_topic(dto.topic)),
         )
-        return self._repo.add_topic(user_id, topic)
+        try:
+            return self._repo.add_topic(user_id, topic)
+        except IntegrityError as exc:
+            # FR-48/BR-TN5 race: a concurrent double-submit can slip past the read above; the
+            # 002 unique index on (owner_id, lower(topic)) then fires — same 409 as the check.
+            raise DuplicateTopic(dto.topic) from exc
 
     def unfollow_topic(self, user_id: str, topic_id: str) -> bool:
         return self._repo.delete_topic(user_id, topic_id)

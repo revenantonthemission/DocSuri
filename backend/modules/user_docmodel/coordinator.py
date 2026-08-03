@@ -44,6 +44,11 @@ class UserDocModelRef:
         }
 
 
+def _userdoc_uuid(owner_id: str, scope_id: str, clean_attachment_id: str) -> UUID:
+    """Single source of the userdoc identity derivation — (owner_id, mint scope, attachment)."""
+    return uuid5(NAMESPACE_URL, f"docsuri:userdoc:{owner_id}:{scope_id}:{clean_attachment_id}")
+
+
 def user_docmodel_ref(
     *,
     owner_id: str,
@@ -55,7 +60,7 @@ def user_docmodel_ref(
     if module not in USER_DOCMODEL_MODULES:
         raise ValueError("unsupported user doc-model module")
     clean_attachment_id = _handle(attachment_id, fallback="attachment")
-    doc_uuid = uuid5(NAMESPACE_URL, f"docsuri:userdoc:{owner_id}:{scope_id}:{clean_attachment_id}")
+    doc_uuid = _userdoc_uuid(owner_id, scope_id, clean_attachment_id)
     job_id = f"userdoc-{doc_uuid}"
     return UserDocModelRef(
         job_id=job_id,
@@ -87,6 +92,21 @@ def ref_from_attachment(
             raise ValueError("paperId and recordRef must be supplied together")
         clean_attachment_id = _handle(attachment_id, fallback="attachment")
         job_id = _job_id_from_paper_id(paper_id)
+        # SEC — re-derive the canonical paperId server-side with the exact uuid5 formula
+        # user_docmodel_ref uses, so a self-consistent but foreign userdoc identity is rejected.
+        # Legitimate mints derive from (owner_id, mint scope, attachment): the evidence upload
+        # endpoints mint with scope_id == attachment_id, while the novelty reuse path passes the
+        # original mint scope (the novelty job id) back as scope_id.
+        mint_scope = next(
+            (
+                scope
+                for scope in (attachment_id, scope_id)
+                if f"userdoc:{_userdoc_uuid(owner_id, scope, clean_attachment_id)}" == paper_id
+            ),
+            None,
+        )
+        if mint_scope is None:
+            raise ValueError("invalid user document identity")
         ref = UserDocModelRef(
             job_id=job_id,
             paper_id=paper_id,
@@ -97,7 +117,7 @@ def ref_from_attachment(
             record_ref=record_ref,
             attachment_id=clean_attachment_id,
         )
-        _validate_userdoc_ref(ref, validate_object_key=True)
+        _validate_userdoc_ref(ref, validate_object_key=True, scope_id=mint_scope)
         return ref
 
     ref = user_docmodel_ref(
@@ -107,7 +127,8 @@ def ref_from_attachment(
         object_key=object_key,
         module=module,
     )
-    _validate_userdoc_ref(ref, validate_object_key=True)
+    # Upload endpoints mint object keys with scope == attachment id — bind that explicitly.
+    _validate_userdoc_ref(ref, validate_object_key=True, scope_id=attachment_id)
     return ref
 
 
@@ -279,7 +300,9 @@ def build_default_user_docmodel_coordinator() -> UserDocModelCoordinator | None:
     )
 
 
-def _validate_userdoc_ref(ref: UserDocModelRef, *, validate_object_key: bool = False) -> None:
+def _validate_userdoc_ref(
+    ref: UserDocModelRef, *, validate_object_key: bool = False, scope_id: str = ""
+) -> None:
     if ref.module not in USER_DOCMODEL_MODULES:
         raise ValueError("unsupported user doc-model module")
     if not ref.job_id.startswith("userdoc-") or not ref.paper_id.startswith("userdoc:"):
@@ -290,26 +313,28 @@ def _validate_userdoc_ref(ref: UserDocModelRef, *, validate_object_key: bool = F
     if ref.record_ref != expected:
         raise ValueError("invalid upload recordRef")
     if validate_object_key:
-        _validate_userdoc_object_key(ref)
+        _validate_userdoc_object_key(ref, scope_id=scope_id)
 
 
-def _validate_userdoc_object_key(ref: UserDocModelRef) -> None:
-    expected_prefix = _expected_object_key_prefix(ref)
+def _validate_userdoc_object_key(ref: UserDocModelRef, *, scope_id: str) -> None:
+    expected_prefix = _expected_object_key_prefix(ref, scope_id=scope_id)
     if not ref.object_key.startswith(expected_prefix):
         raise ValueError("invalid upload objectKey")
 
 
-def _expected_object_key_prefix(ref: UserDocModelRef) -> str:
+def _expected_object_key_prefix(ref: UserDocModelRef, *, scope_id: str) -> str:
     owner = _handle(ref.owner_id)
-    attachment = _handle(ref.attachment_id, fallback="attachment")
     if ref.module == "novelty":
         prefix = os.getenv("DOCSURI_NOVELTY_ARTIFACT_PREFIX", "novelty/").strip("/")
         return f"{prefix}/{owner}/"
 
+    attachment = _handle(ref.attachment_id, fallback="attachment")
     prefix = os.getenv("DOCSURI_USER_DOCUMENT_PREFIX", "uploads/")
     if not prefix.rstrip("/").endswith(ref.module):
         prefix = f"{prefix.rstrip('/')}/{ref.module}/"
-    return f"{prefix.strip('/')}/{owner}/{attachment}/{attachment}/"
+    # Mirror object_key_for_upload: {prefix}/{owner}/{scope}/{attachment}/ — the scope segment is
+    # bound explicitly instead of relying on the scope_id == attachment_id minting coincidence.
+    return f"{prefix.strip('/')}/{owner}/{_handle(scope_id)}/{attachment}/"
 
 
 def _job_id_from_paper_id(paper_id: str) -> str:
