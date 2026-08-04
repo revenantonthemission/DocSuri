@@ -9,6 +9,8 @@ from aws_cdk import aws_iam as iam
 from aws_cdk import aws_opensearchservice as opensearch
 from constructs import Construct
 
+from .profile import is_dev
+
 _ES_HTTP_ACTIONS = [
     "es:ESHttpDelete",
     "es:ESHttpGet",
@@ -21,6 +23,7 @@ _ES_HTTP_ACTIONS = [
 class SearchStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, *, vpc: ec2.IVpc, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        dev = is_dev(self)
 
         domain_name = "docsuri-papers"
         self._sg = ec2.SecurityGroup(
@@ -37,25 +40,38 @@ class SearchStack(Stack):
             # RAM cut for full-body multi-chunk indexing, with NO app-side byte-vector plumbing.
             version=opensearch.EngineVersion.open_search("2.19"),
             vpc=vpc,
-            vpc_subnets=[ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED)],
+            vpc_subnets=[
+                # Single-node dev domain requires exactly one subnet (no zone awareness).
+                ec2.SubnetSelection(subnets=vpc.isolated_subnets[:1])
+                if dev
+                else ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED)
+            ],
             security_groups=[self._sg],
             capacity=opensearch.CapacityConfig(
-                data_node_instance_type="m6g.large.search",
-                data_nodes=2,  # Multi-AZ
+                data_node_instance_type="t3.small.search" if dev else "m6g.large.search",
+                data_nodes=1 if dev else 2,  # prod: Multi-AZ
             ),
-            ebs=opensearch.EbsOptions(
-                # Grown 50 -> 200 GiB/node after the corpus rebuild filled the domain past the
-                # flood-stage watermark (index went read-only, all bulk_upserts 403'd). gp3
-                # throughput floor scales with size: 200 GiB requires >=250 MB/s, so 125 (the
-                # implicit default) is invalid here and must be set explicitly or deploy fails
-                # with "Throughput must be between 250 and 593". iops pinned to the gp3 baseline.
-                volume_size=200,  # GB per node
-                volume_type=ec2.EbsDeviceVolumeType.GP3,
-                iops=3000,
-                throughput=250,
+            ebs=(
+                # dev: 50 GiB single node — gp3 defaults (3000 iops / 125 MB/s) are valid here.
+                opensearch.EbsOptions(
+                    volume_size=50,
+                    volume_type=ec2.EbsDeviceVolumeType.GP3,
+                )
+                if dev
+                else opensearch.EbsOptions(
+                    # Grown 50 -> 200 GiB/node after the corpus rebuild filled the domain past the
+                    # flood-stage watermark (index went read-only, all bulk_upserts 403'd). gp3
+                    # throughput floor scales with size: 200 GiB requires >=250 MB/s, so 125 (the
+                    # implicit default) is invalid here and must be set explicitly or deploy fails
+                    # with "Throughput must be between 250 and 593". iops pinned to gp3 baseline.
+                    volume_size=200,  # GB per node
+                    volume_type=ec2.EbsDeviceVolumeType.GP3,
+                    iops=3000,
+                    throughput=250,
+                )
             ),
-            zone_awareness=opensearch.ZoneAwarenessConfig(
-                availability_zone_count=2,
+            zone_awareness=(
+                None if dev else opensearch.ZoneAwarenessConfig(availability_zone_count=2)
             ),
             encryption_at_rest=opensearch.EncryptionAtRestOptions(enabled=True),
             node_to_node_encryption=True,

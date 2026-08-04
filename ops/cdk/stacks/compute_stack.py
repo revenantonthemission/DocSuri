@@ -84,6 +84,7 @@ from aws_cdk import (
 from constructs import Construct
 
 from ._origin_auth import api_origin_verify_secret, social_origin_verify_secret
+from .profile import is_dev
 
 # Public DNS for the API origin (zone docsuri.org lives in this account's Route53). CloudFront
 # connects to this name over HTTPS so the ACM cert (issued for it) validates — ACM can't issue
@@ -103,6 +104,7 @@ class ComputeStack(Stack):
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        dev = is_dev(self)
 
         # X-Origin-Verify secrets (api: ApiCdn→ALB; social: shared w/ frontend's /auth/social/*
         # edge). Read from SSM at deploy time so synth is deterministic — see ._origin_auth.
@@ -132,14 +134,17 @@ class ComputeStack(Stack):
         self.db = rds.DatabaseInstance(
             self, "Postgres",
             engine=rds.DatabaseInstanceEngine.postgres(version=rds.PostgresEngineVersion.VER_16),
-            instance_type=ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.SMALL),
+            instance_type=ec2.InstanceType.of(
+                ec2.InstanceClass.T4G,
+                ec2.InstanceSize.MICRO if dev else ec2.InstanceSize.SMALL,
+            ),
             vpc=vpc,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
-            multi_az=True,
+            multi_az=not dev,
             allocated_storage=20,
             storage_type=rds.StorageType.GP3,
             backup_retention=Duration.days(7),
-            deletion_protection=True,
+            deletion_protection=not dev,
             removal_policy=RemovalPolicy.RETAIN,
             credentials=rds.Credentials.from_generated_secret("docsuri_admin"),
             database_name="docsuri",
@@ -184,9 +189,9 @@ class ComputeStack(Stack):
             engine="redis",
             engine_version="7.1",
             cache_node_type="cache.t4g.micro",
-            num_cache_clusters=2,  # primary + replica (Multi-AZ)
-            multi_az_enabled=True,
-            automatic_failover_enabled=True,
+            num_cache_clusters=1 if dev else 2,  # prod: primary + replica (Multi-AZ)
+            multi_az_enabled=not dev,
+            automatic_failover_enabled=not dev,
             cache_subnet_group_name=redis_subnet_group.ref,
             security_group_ids=[redis_sg.security_group_id],
             at_rest_encryption_enabled=True,
@@ -200,6 +205,14 @@ class ComputeStack(Stack):
         # defaults on for Postgres), so a fresh RDS is provisioned on first deploy.
         redis_endpoint = self.redis.attr_primary_end_point_address
         redis_port = self.redis.attr_primary_end_point_port
+
+        # dev: no docsuri.org; the frontend WebCdn default domain can't be referenced here
+        # (stack cycle) — default localhost, override via -c dev_app_url=https://<webcdn>… .
+        app_url = (
+            (self.node.try_get_context("dev_app_url") or "http://localhost:3000")
+            if dev
+            else "https://docsuri.org"
+        )
 
         container_env = {
             "ENV": "production",
@@ -245,7 +258,7 @@ class ComputeStack(Stack):
             # public URL pointing at the frontend verify page (controller._verification_link_base
             # → {PUBLIC_APP_URL}/verify-email), which calls the backend via the BFF. Must match
             # the CloudFront alias.
-            "PUBLIC_APP_URL": "https://docsuri.org",
+            "PUBLIC_APP_URL": app_url,
             "OPENSEARCH_ENDPOINT": Fn.join("", [
                 "https://", opensearch_domain.domain_endpoint,
             ]),
@@ -338,14 +351,14 @@ class ComputeStack(Stack):
             # The browser must land first-party on docsuri.org for the session cookie to stick,
             # so this callback path is routed to the backend by a CloudFront behavior on the
             # frontend distribution (frontend_stack: /auth/social/* → backend origin — TODO).
-            "GOOGLE_OIDC_REDIRECT_URI": "https://docsuri.org/auth/social/google/callback",
+            "GOOGLE_OIDC_REDIRECT_URI": f"{app_url}/auth/social/google/callback",
             # --- U3 social login (FR-27/BR-A13, ORCID OIDC) ---
             # ORCID OIDC는 이메일을 반환하지 않아 email=NULL 계정을 만든다(BR-A13). client_id는
             # 공개값(plain env); 미설정이면 토큰 교환이 Fail-Closed로 실패해 ORCID 로그인만 비활성
             # (Google/이메일 로그인은 영향 없음). 활성화: `cdk deploy -c orcid_oidc_client_id=APP-…
             # -c orcid_oidc_secret_arn=<완전ARN>` (ORCID Developer Tools에서 클라이언트 등록 후).
             "ORCID_OIDC_CLIENT_ID": self.node.try_get_context("orcid_oidc_client_id") or "",
-            "ORCID_OIDC_REDIRECT_URI": "https://docsuri.org/auth/social/orcid/callback",
+            "ORCID_OIDC_REDIRECT_URI": f"{app_url}/auth/social/orcid/callback",
             "ORCID_OIDC_ENV": self.node.try_get_context("orcid_oidc_env") or "prod",
             # --- U3 account deletion cascade (FR-28/BR-A11) ---
             # AccountDeletedPublisher puts events here; subscribers (U4/U2/U11) attach bus rules.
@@ -405,14 +418,18 @@ class ComputeStack(Stack):
         )
 
         # --- TLS for the origin: Route53 zone + ACM cert for origin.docsuri.org ---
-        zone = route53.HostedZone.from_hosted_zone_attributes(
-            self, "Zone", hosted_zone_id=_ZONE_ID, zone_name=_ZONE_NAME,
-        )
-        origin_cert = acm.Certificate(
-            self, "OriginCert",
-            domain_name=_ORIGIN_DOMAIN,
-            validation=acm.CertificateValidation.from_dns(zone),  # auto CNAME in the zone
-        )
+        # dev: the docsuri.org zone/certs live in the old account — skip the estate entirely.
+        if dev:
+            zone = None
+        else:
+            zone = route53.HostedZone.from_hosted_zone_attributes(
+                self, "Zone", hosted_zone_id=_ZONE_ID, zone_name=_ZONE_NAME,
+            )
+            origin_cert = acm.Certificate(
+                self, "OriginCert",
+                domain_name=_ORIGIN_DOMAIN,
+                validation=acm.CertificateValidation.from_dns(zone),  # auto CNAME in the zone
+            )
 
         # --- SES: verify the docsuri.org domain so the app can send no-reply@docsuri.org ---
         # public_hosted_zone(zone) auto-writes the DKIM CNAMEs into Route53 → no mailbox needed.
@@ -439,9 +456,13 @@ class ComputeStack(Stack):
                 ses.EmailSendingEvent.REJECT,
             ],
         )
+        # dev: no zone → plain domain identity (no DKIM Route53 records; stays unverified).
+        ses_identity = (
+            ses.Identity.domain(_ZONE_NAME) if dev else ses.Identity.public_hosted_zone(zone)
+        )
         ses.EmailIdentity(
             self, "DomainIdentity",
-            identity=ses.Identity.public_hosted_zone(zone),
+            identity=ses_identity,
             configuration_set=email_config_set,
         )
         CfnOutput(
@@ -456,13 +477,24 @@ class ComputeStack(Stack):
         # --- ALB + Fargate service (deploy unit ①: 1 vCPU / 2 GB, min 2 max 6) ---
         # HTTPS :443 terminated on the ALB with the ACM cert + a Route53 alias (origin.docsuri.org
         # → ALB). CloudFront reaches the origin over HTTPS (below), so edge↔origin is encrypted.
+        # dev: no cert/alias estate — plain HTTP :80 listener (CloudFront still fronts it).
+        listener_kwargs = (
+            {"protocol": elbv2.ApplicationProtocol.HTTP}
+            if dev
+            else {
+                "protocol": elbv2.ApplicationProtocol.HTTPS,
+                "certificate": origin_cert,
+                "domain_name": _ORIGIN_DOMAIN,
+                "domain_zone": zone,
+            }
+        )
         self.service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self, "ApiService",
             cluster=cluster,
             service_name="docsuri-api",
             cpu=1024,
             memory_limit_mib=2048,
-            desired_count=2,
+            desired_count=1 if dev else 2,
             # ECS Exec (SSM-backed): team assumes DocsuriCrossAccountDev → `aws ecs
             # execute-command` into this task → psql to the private RDS. No EC2 bastion.
             # CDK auto-grants the task role ssmmessages:*. ponytail: shell-in only; a
@@ -476,10 +508,7 @@ class ComputeStack(Stack):
             ),
             assign_public_ip=True,  # NAT-free: public subnet + IGW outbound
             public_load_balancer=True,
-            protocol=elbv2.ApplicationProtocol.HTTPS,
-            certificate=origin_cert,
-            domain_name=_ORIGIN_DOMAIN,
-            domain_zone=zone,
+            **listener_kwargs,
             # Don't open the listener to 0.0.0.0/0 — the origin is reachable only via CloudFront
             # (prefix list below) AND only with the secret header (rule below).
             open_listener=False,
@@ -498,7 +527,8 @@ class ComputeStack(Stack):
             description="ALB inbound from CloudFront origin-facing prefix list only",
         )
         cf_origin_sg.add_ingress_rule(
-            ec2.Peer.prefix_list("pl-22a6434b"), ec2.Port.tcp(443),
+            # dev listener is :80 (no origin cert), prod :443.
+            ec2.Peer.prefix_list("pl-22a6434b"), ec2.Port.tcp(80 if dev else 443),
             description="CloudFront origin-facing only",
         )
         self.service.load_balancer.add_security_group(cf_origin_sg)
@@ -798,22 +828,33 @@ class ComputeStack(Stack):
         #   • ALLOW_ALL methods — login/library need POST/DELETE
         #   • CACHING_DISABLED — every response is dynamic/authenticated
         #   • ALL_VIEWER_EXCEPT_HOST_HEADER — forward cookies + headers, strip viewer Host
+        # read_timeout 60s(기본 30s에서 상향, 계정 기본 할당량 최대치) — evidence 턴은
+        # OpenSearch 검색 + 다건 S3 DocModel 로드 + Bedrock 추출을 동기로 거쳐 30초를
+        # 쉽게 넘긴다(로컬 재현: 37초 완료, 30초 CloudFront가 먼저 끊음). frontend_stack.py
+        # WebCdn에 적용한 것과 동일 완화(근본 해결은 비동기 job+폴링 전환 필요).
+        if dev:
+            # dev: no origin.docsuri.org — edge→ALB generated DNS, plain HTTP; header auth kept.
+            api_origin = origins.HttpOrigin(
+                self.service.load_balancer.load_balancer_dns_name,
+                protocol_policy=cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+                http_port=80,
+                custom_headers={"X-Origin-Verify": origin_verify},
+                read_timeout=Duration.seconds(60),
+            )
+        else:
+            api_origin = origins.HttpOrigin(
+                _ORIGIN_DOMAIN,
+                protocol_policy=cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+                https_port=443,
+                origin_ssl_protocols=[cloudfront.OriginSslPolicy.TLS_V1_2],
+                custom_headers={"X-Origin-Verify": origin_verify},
+                read_timeout=Duration.seconds(60),
+            )
         self.cdn = cloudfront.Distribution(
             self, "ApiCdn",
             comment="docsuri-api - trusted HTTPS edge + encrypted, authenticated origin",
             default_behavior=cloudfront.BehaviorOptions(
-                # read_timeout 60s(기본 30s에서 상향, 계정 기본 할당량 최대치) — evidence 턴은
-                # OpenSearch 검색 + 다건 S3 DocModel 로드 + Bedrock 추출을 동기로 거쳐 30초를
-                # 쉽게 넘긴다(로컬 재현: 37초 완료, 30초 CloudFront가 먼저 끊음). frontend_stack.py
-                # WebCdn에 적용한 것과 동일 완화(근본 해결은 비동기 job+폴링 전환 필요).
-                origin=origins.HttpOrigin(
-                    _ORIGIN_DOMAIN,
-                    protocol_policy=cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
-                    https_port=443,
-                    origin_ssl_protocols=[cloudfront.OriginSslPolicy.TLS_V1_2],
-                    custom_headers={"X-Origin-Verify": origin_verify},
-                    read_timeout=Duration.seconds(60),
-                ),
+                origin=api_origin,
                 # HTTPS_ONLY (not REDIRECT): refuse plaintext outright rather than 301 it —
                 # a redirected POST would still have sent its body over HTTP first.
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,

@@ -34,6 +34,7 @@ from aws_cdk import (
 from aws_cdk import (
     aws_opensearchservice as opensearch,
 )
+from aws_cdk import aws_rds as rds
 from aws_cdk import (
     aws_s3 as s3,
 )
@@ -50,6 +51,8 @@ from aws_cdk import (
     aws_sqs as sqs,
 )
 from constructs import Construct
+
+from .profile import is_dev
 
 # Bedrock text-embedding model for the worker (Cohere Embed v4, 1024-dim — matches the
 # discovery/search side). cohere.embed-v4:0 is NOT invokable on-demand by its bare id; it must
@@ -93,6 +96,7 @@ class IngestionStack(Stack):
         *,
         vpc: ec2.IVpc,
         opensearch_domain: opensearch.IDomain,
+        db: rds.IDatabaseInstance,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -210,20 +214,26 @@ class IngestionStack(Stack):
         userdoc_age_alarm.add_alarm_action(cw_actions.SnsAction(ops_alerts))
 
         # --- S3: full-text storage (infra-design §4) ---
-        self.bucket = s3.Bucket(
-            self, "FulltextBucket",
-            bucket_name=f"docsuri-papers-fulltext-{Stack.of(self).account}",
-            versioned=True,
-            encryption=s3.BucketEncryption.S3_MANAGED,
-            intelligent_tiering_configurations=[
-                s3.IntelligentTieringConfiguration(
-                    name="archive-cold",
-                    archive_access_tier_time=Duration.days(180),
-                    deep_archive_access_tier_time=Duration.days(365),
-                ),
-            ],
-            removal_policy=RemovalPolicy.RETAIN,
-        )
+        # dev: the migrated data bucket already exists outside CFN — reference, never create.
+        if is_dev(self):
+            self.bucket = s3.Bucket.from_bucket_name(
+                self, "FulltextBucket", f"docsuri-papers-fulltext-{Stack.of(self).account}"
+            )
+        else:
+            self.bucket = s3.Bucket(
+                self, "FulltextBucket",
+                bucket_name=f"docsuri-papers-fulltext-{Stack.of(self).account}",
+                versioned=True,
+                encryption=s3.BucketEncryption.S3_MANAGED,
+                intelligent_tiering_configurations=[
+                    s3.IntelligentTieringConfiguration(
+                        name="archive-cold",
+                        archive_access_tier_time=Duration.days(180),
+                        deep_archive_access_tier_time=Duration.days(365),
+                    ),
+                ],
+                removal_policy=RemovalPolicy.RETAIN,
+            )
 
         # --- EventBridge: daily arXiv schedule (infra-design §3.1) ---
         events.Rule(
@@ -262,10 +272,17 @@ class IngestionStack(Stack):
         # Control-plane DSN WITHOUT the password — libpq reads PGPASSWORD (injected as a secret
         # below) for any field absent from the conninfo. Keeps the DB credential out of the
         # plaintext task-def env, mirroring how the API injects DB_PASSWORD.
-        control_plane_dsn = f"postgresql://docsuri_admin@{_RDS_ENDPOINT}:{_RDS_PORT}/docsuri"
-        db_secret = secretsmanager.Secret.from_secret_complete_arn(
-            self, "DbSecret", _RDS_SECRET_ARN
-        )
+        # dev: derive endpoint/secret from the passed Compute db (fresh account); prod keeps
+        # the pinned literals (ponytail note above — avoids forcing a compute redeploy).
+        _endpoint = db.instance_endpoint.hostname if is_dev(self) else _RDS_ENDPOINT
+        control_plane_dsn = f"postgresql://docsuri_admin@{_endpoint}:{_RDS_PORT}/docsuri"
+        if is_dev(self):
+            assert db.secret is not None  # from_generated_secret always creates one
+            db_secret = db.secret
+        else:
+            db_secret = secretsmanager.Secret.from_secret_complete_arn(
+                self, "DbSecret", _RDS_SECRET_ARN
+            )
         ss_api_key_secret = secretsmanager.Secret.from_secret_complete_arn(
             self, "SsApiKeySecret", _SS_API_KEY_SECRET_ARN
         )
@@ -535,7 +552,14 @@ class IngestionStack(Stack):
         # change to the compute stack that owns it.
         self.service.connections.allow_to(opensearch_domain.connections, ec2.Port.tcp(443))
         rds_sg = ec2.SecurityGroup.from_security_group_id(
-            self, "RdsSg", _RDS_SECURITY_GROUP_ID, mutable=True
+            # dev: cross-stack ref (novelty pattern — survives Compute recreate); prod keeps the
+            # pinned literal so worker deploys never force a Compute redeploy (ponytail note).
+            self,
+            "RdsSg",
+            db.connections.security_groups[0].security_group_id
+            if is_dev(self)
+            else _RDS_SECURITY_GROUP_ID,
+            mutable=True,
         )
         self.service.connections.allow_to(rds_sg, ec2.Port.tcp(_RDS_PORT))
 

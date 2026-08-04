@@ -62,6 +62,7 @@ from aws_cdk import (
 from constructs import Construct
 
 from ._origin_auth import social_origin_verify_secret, web_origin_verify_secret
+from .profile import is_dev
 
 _APP_DOMAIN = "docsuri.org"  # viewer (browser-facing) — the app's public URL
 _ORIGIN_DOMAIN = "app-origin.docsuri.org"  # ALB origin name (distinct from backend's origin.*)
@@ -139,9 +140,13 @@ class FrontendStack(Stack):
         *,
         vpc: ec2.IVpc,
         gateway_url: str,  # backend CloudFront HTTPS URL — the BFF's DOCSURI_GATEWAY_URL
+        api_domain: str | None = None,  # dev only: API CF default domain for /auth/social/*
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        dev = is_dev(self)
+        if dev and not api_domain:
+            raise ValueError("profile=dev requires api_domain (API CloudFront default domain)")
 
         # X-Origin-Verify secrets (web: our WebCdn→ALB; social: shared with the backend ALB for the
         # /auth/social/* edge). Read from SSM at deploy time so synth is deterministic — see
@@ -158,15 +163,21 @@ class FrontendStack(Stack):
         repo = ecr.Repository.from_repository_name(self, "FrontendRepo", "docsuri-frontend")
         cluster = ecs.Cluster(self, "Cluster", cluster_name="docsuri-frontend", vpc=vpc)
 
-        zone = route53.HostedZone.from_hosted_zone_attributes(
-            self, "Zone", hosted_zone_id=_ZONE_ID, zone_name=_ZONE_NAME,
-        )
-        origin_cert = acm.Certificate(
-            self, "OriginCert",
-            domain_name=_ORIGIN_DOMAIN,
-            validation=acm.CertificateValidation.from_dns(zone),
-        )
-        viewer_cert = acm.Certificate.from_certificate_arn(self, "ViewerCert", _VIEWER_CERT_ARN)
+        # dev: the docsuri.org zone/certs live in the old account — skip the estate entirely.
+        if dev:
+            zone = None
+        else:
+            zone = route53.HostedZone.from_hosted_zone_attributes(
+                self, "Zone", hosted_zone_id=_ZONE_ID, zone_name=_ZONE_NAME,
+            )
+            origin_cert = acm.Certificate(
+                self, "OriginCert",
+                domain_name=_ORIGIN_DOMAIN,
+                validation=acm.CertificateValidation.from_dns(zone),
+            )
+            viewer_cert = acm.Certificate.from_certificate_arn(
+                self, "ViewerCert", _VIEWER_CERT_ARN,
+            )
 
         # The SSR server is stateless (session lives in the httpOnly cookie). NEXT_PUBLIC_*
         # flags are baked at image build; DOCSURI_GATEWAY_URL is server-only runtime config that
@@ -183,13 +194,24 @@ class FrontendStack(Stack):
         }
 
         # --- ALB + Fargate (HTTPS :443 with ACM cert + Route53 alias app-origin.docsuri.org) ---
+        # dev: no cert/alias estate — plain HTTP :80 listener (CloudFront still fronts it).
+        listener_kwargs = (
+            {"protocol": elbv2.ApplicationProtocol.HTTP}
+            if dev
+            else {
+                "protocol": elbv2.ApplicationProtocol.HTTPS,
+                "certificate": origin_cert,
+                "domain_name": _ORIGIN_DOMAIN,
+                "domain_zone": zone,
+            }
+        )
         self.service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self, "WebService",
             cluster=cluster,
             service_name="docsuri-frontend",
             cpu=512,
             memory_limit_mib=1024,
-            desired_count=2,
+            desired_count=1 if dev else 2,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
                 image=ecs.ContainerImage.from_ecr_repository(repo, tag="latest"),
                 container_port=3000,
@@ -197,10 +219,7 @@ class FrontendStack(Stack):
             ),
             assign_public_ip=True,
             public_load_balancer=True,
-            protocol=elbv2.ApplicationProtocol.HTTPS,
-            certificate=origin_cert,
-            domain_name=_ORIGIN_DOMAIN,
-            domain_zone=zone,
+            **listener_kwargs,
             open_listener=False,
             circuit_breaker=ecs.DeploymentCircuitBreaker(rollback=True),
             health_check_grace_period=Duration.seconds(60),
@@ -237,7 +256,8 @@ class FrontendStack(Stack):
             description="ALB inbound from CloudFront origin-facing prefix list only",
         )
         cf_origin_sg.add_ingress_rule(
-            ec2.Peer.prefix_list(_CLOUDFRONT_PREFIX_LIST), ec2.Port.tcp(443),
+            # dev listener is :80 (no origin cert), prod :443.
+            ec2.Peer.prefix_list(_CLOUDFRONT_PREFIX_LIST), ec2.Port.tcp(80 if dev else 443),
             description="CloudFront origin-facing only",
         )
         self.service.load_balancer.add_security_group(cf_origin_sg)
@@ -302,18 +322,29 @@ class FrontendStack(Stack):
         # OpenSearch 검색 + 다건 S3 DocModel 로드 + Bedrock 추출을 동기로 거쳐 30초를 쉽게
         # 넘긴다. 기본값이면 백엔드가 정상 완료돼도 CloudFront가 먼저 504를 반환해 사용자에게
         # "네트워크 연결" 에러로 보임(임시 완화 — 근본 해결은 비동기 job+폴링 전환 필요).
-        origin = origins.HttpOrigin(
-            _ORIGIN_DOMAIN,
-            protocol_policy=cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
-            https_port=443,
-            origin_ssl_protocols=[cloudfront.OriginSslPolicy.TLS_V1_2],
-            custom_headers={"X-Origin-Verify": origin_verify},
-            read_timeout=Duration.seconds(60),
-        )
+        if dev:
+            # dev: no app-origin.docsuri.org — edge→ALB generated DNS, plain HTTP; header auth kept.
+            origin = origins.HttpOrigin(
+                self.service.load_balancer.load_balancer_dns_name,
+                protocol_policy=cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+                http_port=80,
+                custom_headers={"X-Origin-Verify": origin_verify},
+                read_timeout=Duration.seconds(60),
+            )
+        else:
+            origin = origins.HttpOrigin(
+                _ORIGIN_DOMAIN,
+                protocol_policy=cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+                https_port=443,
+                origin_ssl_protocols=[cloudfront.OriginSslPolicy.TLS_V1_2],
+                custom_headers={"X-Origin-Verify": origin_verify},
+                read_timeout=Duration.seconds(60),
+            )
         # Backend origin for the social-login redirects only (Option A, FR-27). Sends the SHARED
         # verify secret (accepted as a 2nd value on the backend ALB rule in ComputeStack).
+        # dev: /auth/social/* rides the API CF default domain (HTTPS with the default cert).
         backend_origin = origins.HttpOrigin(
-            _BACKEND_ORIGIN_DOMAIN,
+            api_domain if dev else _BACKEND_ORIGIN_DOMAIN,
             protocol_policy=cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
             https_port=443,
             origin_ssl_protocols=[cloudfront.OriginSslPolicy.TLS_V1_2],
@@ -335,8 +366,8 @@ class FrontendStack(Stack):
         self.cdn = cloudfront.Distribution(
             self, "WebCdn",
             comment="docsuri frontend (U5) - trusted HTTPS edge + authenticated origin",
-            domain_names=[_APP_DOMAIN],
-            certificate=viewer_cert,
+            # dev: default *.cloudfront.net domain + cert (no docsuri.org viewer estate).
+            **({} if dev else {"domain_names": [_APP_DOMAIN], "certificate": viewer_cert}),
             # Access logs (#341) — same bucket as the ALB logs, under a cf/ prefix.
             enable_logging=True,
             log_bucket=edge_logs,
@@ -397,12 +428,17 @@ class FrontendStack(Stack):
         )
 
         # Apex docsuri.org → CloudFront (Route53 alias supports apex; CNAME would not).
-        route53.ARecord(
-            self, "AppAlias",
-            zone=zone,
-            target=route53.RecordTarget.from_alias(r53_targets.CloudFrontTarget(self.cdn)),
-        )
+        # dev: no alias — the app is reached at the WebCdn default domain.
+        if not dev:
+            route53.ARecord(
+                self, "AppAlias",
+                zone=zone,
+                target=route53.RecordTarget.from_alias(r53_targets.CloudFrontTarget(self.cdn)),
+            )
 
-        CfnOutput(self, "AppUrl", value=f"https://{_APP_DOMAIN}", description="Public app URL")
+        app_url = (
+            f"https://{self.cdn.distribution_domain_name}" if dev else f"https://{_APP_DOMAIN}"
+        )
+        CfnOutput(self, "AppUrl", value=app_url, description="Public app URL")
         CfnOutput(self, "CdnDomain", value=self.cdn.distribution_domain_name)
         CfnOutput(self, "LibraryEntryPath", value=_LIBRARY_ENTRY_PATH)

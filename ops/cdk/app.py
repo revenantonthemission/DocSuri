@@ -17,6 +17,7 @@ from stacks.frontend_stack import FrontendStack
 from stacks.ingestion_stack import IngestionStack
 from stacks.network_stack import NetworkStack
 from stacks.novelty_stack import NoveltyStack
+from stacks.profile import is_dev
 from stacks.search_stack import SearchStack
 from stacks.summarization_stack import SummarizationStack
 
@@ -37,6 +38,7 @@ ingestion = IngestionStack(
     app, "Docsuri-Ingestion",
     vpc=network.vpc,
     opensearch_domain=search.domain,
+    db=compute.db,
     env=env,
 )
 # Deploy unit ④ — U7 summarization worker (long-summary async jobs, BR-S6/BR-S12). Code/synth
@@ -44,6 +46,7 @@ ingestion = IngestionStack(
 summarization = SummarizationStack(
     app, "Docsuri-Summarization",
     vpc=network.vpc,
+    db=compute.db,
     env=env,
 )
 # Deploy unit ⑪ — novelty formation agent worker. Code/synth only; deploy remains
@@ -74,6 +77,8 @@ frontend = FrontendStack(
     app, "Docsuri-Frontend",
     vpc=network.vpc,
     gateway_url=f"https://{compute.cdn.distribution_domain_name}",
+    # dev: no docsuri.org — the /auth/social/* edge targets the API CF default domain.
+    api_domain=compute.cdn.distribution_domain_name if is_dev(app) else None,
     env=env,
 )
 

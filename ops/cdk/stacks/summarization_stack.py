@@ -39,6 +39,7 @@ from aws_cdk import (
 from aws_cdk import (
     aws_logs as logs,
 )
+from aws_cdk import aws_rds as rds
 from aws_cdk import (
     aws_secretsmanager as secretsmanager,
 )
@@ -52,6 +53,8 @@ from aws_cdk import (
     aws_sqs as sqs,
 )
 from constructs import Construct
+
+from .profile import is_dev
 
 # Existing control-plane RDS (created by Docsuri-Compute) referenced by concrete id rather than a
 # CFN cross-stack import (RETAIN → stable ids; avoids forcing a compute redeploy). Mirrors
@@ -75,6 +78,7 @@ class SummarizationStack(Stack):
         construct_id: str,
         *,
         vpc: ec2.IVpc,
+        db: rds.IDatabaseInstance,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -129,10 +133,15 @@ class SummarizationStack(Stack):
         task_def = ecs.FargateTaskDefinition(self, "WorkerTaskDef", cpu=512, memory_limit_mib=1024)
 
         # DSN WITHOUT the password — libpq reads PGPASSWORD (secret below) for the absent field.
-        database_url = f"postgresql://docsuri_admin@{_RDS_ENDPOINT}:{_RDS_PORT}/docsuri"
-        db_secret = secretsmanager.Secret.from_secret_complete_arn(
-            self, "DbSecret", _RDS_SECRET_ARN
-        )
+        _endpoint = db.instance_endpoint.hostname if is_dev(self) else _RDS_ENDPOINT
+        database_url = f"postgresql://docsuri_admin@{_endpoint}:{_RDS_PORT}/docsuri"
+        if is_dev(self):
+            assert db.secret is not None  # from_generated_secret always creates one
+            db_secret = db.secret
+        else:
+            db_secret = secretsmanager.Secret.from_secret_complete_arn(
+                self, "DbSecret", _RDS_SECRET_ARN
+            )
 
         task_def.add_container(
             "worker",
@@ -191,7 +200,14 @@ class SummarizationStack(Stack):
 
         # SG: worker → RDS (Postgres). RDS SG imported by id (mutable) so the ingress lands here.
         rds_sg = ec2.SecurityGroup.from_security_group_id(
-            self, "RdsSg", _RDS_SECURITY_GROUP_ID, mutable=True
+            # dev: cross-stack ref (novelty pattern — survives Compute recreate); prod keeps the
+            # pinned literal so worker deploys never force a Compute redeploy (ponytail note).
+            self,
+            "RdsSg",
+            db.connections.security_groups[0].security_group_id
+            if is_dev(self)
+            else _RDS_SECURITY_GROUP_ID,
+            mutable=True,
         )
         self.service.connections.allow_to(rds_sg, ec2.Port.tcp(_RDS_PORT))
 
