@@ -38,6 +38,10 @@ dependencies = [
     "pyotp>=2.9",
     # boto3 → SES (verification email) + CloudWatch observability adapter.
     "boto3>=1.34",
+    # Lambda Runtime Interface Client — lets the dev CDK profile run this same image as the
+    # scheduled-maintenance Lambdas (entrypoint `python -m awslambdaric` → backend.lambda_entry,
+    # serverless-plan Phase 1-②). Inert under uvicorn/ECS.
+    "awslambdaric>=3.0",
 ]
 
 [dependency-groups]

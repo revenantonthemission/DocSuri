@@ -19,3 +19,7 @@ cryptography>=42
 # boto3 → SES (account verification email) + the CloudWatch observability adapter. Without it
 # SESEmailClient/CloudWatchEventStore hit "No module named 'boto3'" and soft-fall-back.
 boto3>=1.34
+# awslambdaric → Lambda Runtime Interface Client. The dev CDK profile runs this SAME image as
+# the scheduled-maintenance Lambdas (entrypoint `python -m awslambdaric`, cmd
+# backend.lambda_entry.handler — serverless-plan Phase 1-②). Inert under uvicorn/ECS.
+awslambdaric>=3.0
