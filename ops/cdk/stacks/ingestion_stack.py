@@ -74,6 +74,7 @@ _RDS_ENDPOINT = (
     ".cpegcaqmu01d.ap-northeast-2.rds.amazonaws.com"
 )
 _RDS_PORT = 5432
+_RDS_SECURITY_GROUP_ID = "sg-0633ac0c0b8c7a052"
 _RDS_SECRET_ARN = (
     "arn:aws:secretsmanager:ap-northeast-2:028317349537:secret:"
     "DocsuriComputePostgresSecre-9qclXydED0pl-30WA1V"
@@ -551,8 +552,14 @@ class IngestionStack(Stack):
         # change to the compute stack that owns it.
         self.service.connections.allow_to(opensearch_domain.connections, ec2.Port.tcp(443))
         rds_sg = ec2.SecurityGroup.from_security_group_id(
-            # Cross-stack ref (novelty pattern) — a hardcoded sg id goes stale on Compute recreate.
-            self, "RdsSg", db.connections.security_groups[0].security_group_id, mutable=True
+            # dev: cross-stack ref (novelty pattern — survives Compute recreate); prod keeps the
+            # pinned literal so worker deploys never force a Compute redeploy (ponytail note).
+            self,
+            "RdsSg",
+            db.connections.security_groups[0].security_group_id
+            if is_dev(self)
+            else _RDS_SECURITY_GROUP_ID,
+            mutable=True,
         )
         self.service.connections.allow_to(rds_sg, ec2.Port.tcp(_RDS_PORT))
 
