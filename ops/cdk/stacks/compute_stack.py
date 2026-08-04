@@ -143,7 +143,9 @@ class ComputeStack(Stack):
                 description="Dev Aurora Serverless v2 Postgres cluster",
             )
             self.db = rds.DatabaseCluster(
-                self, "Postgres",
+                # New logical id — CFN can't morph the deployed DBInstance ("Postgres") into a
+                # DBCluster under the same id; the old instance resource is removed instead.
+                self, "PostgresCluster",
                 engine=rds.DatabaseClusterEngine.aurora_postgres(
                     # Newest PG16 the lib offers; 0-ACU auto-pause needs ≥16.3.
                     version=rds.AuroraPostgresEngineVersion.VER_16_13,
