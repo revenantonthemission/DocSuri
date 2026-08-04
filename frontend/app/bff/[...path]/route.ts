@@ -1,7 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { HttpTransport } from '@/lib/api/httpTransport';
 import { MockTransport } from '@/lib/api/mockTransport';
-import { binaryBody, type Transport, type TransportMethod } from '@/lib/api/transport';
+import {
+  binaryBody,
+  type Transport,
+  type TransportMethod,
+  type TransportResponse,
+} from '@/lib/api/transport';
 
 // BFF (Backend-for-Frontend) — the server-side seam between the browser and the
 // U6 gateway (LC-2, P-S1, SEC-3/12).
@@ -28,6 +33,15 @@ const EVIDENCE_GATEWAY_TIMEOUT_MS = 90000;
 // fail-closed/soft 하므로, 이 홉은 그보다 길게 잡아 완료된 응답을 버리지 않는다.
 // (CloudFront origin 타임아웃 30초가 실질 상한이라 그 이상은 의미 없음.)
 const SEARCH_GATEWAY_TIMEOUT_MS = 30000;
+// SQ3 mitigation (serverless-plan Phase 1-①): dev Aurora Serverless v2 pauses at 0 ACU, and
+// the first request during resume can die at the gateway (network error or 502/503/504).
+// GETs are safe to replay, so they retry ONCE after this pause; non-GET never retries.
+const DB_RESUME_RETRY_DELAY_MS = 1500;
+const DB_RESUME_RETRYABLE_STATUSES = new Set([502, 503, 504]);
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function isEvidenceHeavyPath(upstreamPath: string): boolean {
   return (
@@ -205,23 +219,39 @@ async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {
     );
   }
 
-  let res;
-  try {
-    res = await transport.send({
+  const sendUpstream = () =>
+    transport.send({
       method,
       path: upstreamPath,
       body,
       headers: forwardedHeaders(req),
       idempotent: method === 'GET',
     });
-  } catch {
-    // Gateway hang/timeout (HttpTransport AbortSignal.timeout) — fail fast so a slow
-    // upstream can't pin BFF sockets into an FE-wide outage (BR-U5-10, NFR-U5-R2).
-    return NextResponse.json(
+  const gatewayTimeoutResponse = () =>
+    NextResponse.json(
       { message: '요청 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.' },
       { status: 504 },
     );
+
+  let res: TransportResponse | null = null;
+  try {
+    res = await sendUpstream();
+  } catch {
+    // Gateway hang/timeout (HttpTransport AbortSignal.timeout) — fail fast so a slow
+    // upstream can't pin BFF sockets into an FE-wide outage (BR-U5-10, NFR-U5-R2).
+    // GET falls through to the single SQ3 resume retry below instead.
+    if (method !== 'GET') return gatewayTimeoutResponse();
   }
+  // SQ3 mitigation: one replay after the Aurora-resume pause, GET only (safe to repeat).
+  if (method === 'GET' && (res === null || DB_RESUME_RETRYABLE_STATUSES.has(res.status))) {
+    await delay(DB_RESUME_RETRY_DELAY_MS);
+    try {
+      res = await sendUpstream();
+    } catch {
+      return gatewayTimeoutResponse();
+    }
+  }
+  if (res === null) return gatewayTimeoutResponse();
 
   // 204 No Content / 304 Not Modified must not carry a body — NextResponse.json() always
   // attaches one, and the Response constructor then throws ("Invalid response status code

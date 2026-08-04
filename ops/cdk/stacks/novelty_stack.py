@@ -16,6 +16,8 @@ from aws_cdk import aws_rds as rds
 from aws_cdk import aws_sqs as sqs
 from constructs import Construct
 
+from .profile import db_endpoint, db_port_as_string
+
 
 class NoveltyStack(Stack):
     def __init__(
@@ -24,7 +26,7 @@ class NoveltyStack(Stack):
         construct_id: str,
         *,
         vpc: ec2.IVpc,
-        db: rds.DatabaseInstance,
+        db: rds.DatabaseInstance | rds.DatabaseCluster,
         queue: sqs.IQueue,
         opensearch_domain: opensearch.IDomain,
         **kwargs,
@@ -75,8 +77,8 @@ class NoveltyStack(Stack):
         task_def = ecs.FargateTaskDefinition(self, "WorkerTaskDef", cpu=512, memory_limit_mib=1024)
 
         database_url = (
-            f"postgresql://docsuri_admin@{db.db_instance_endpoint_address}:"
-            f"{db.db_instance_endpoint_port}/docsuri"
+            f"postgresql://docsuri_admin@{db_endpoint(db).hostname}:"
+            f"{db_port_as_string(db)}/docsuri"
         )
         assert db.secret is not None
 

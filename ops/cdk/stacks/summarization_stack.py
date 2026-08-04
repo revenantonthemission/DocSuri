@@ -54,7 +54,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-from .profile import is_dev
+from .profile import db_endpoint, is_dev
 
 # Existing control-plane RDS (created by Docsuri-Compute) referenced by concrete id rather than a
 # CFN cross-stack import (RETAIN → stable ids; avoids forcing a compute redeploy). Mirrors
@@ -78,7 +78,7 @@ class SummarizationStack(Stack):
         construct_id: str,
         *,
         vpc: ec2.IVpc,
-        db: rds.IDatabaseInstance,
+        db: rds.IDatabaseInstance | rds.IDatabaseCluster,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -133,7 +133,7 @@ class SummarizationStack(Stack):
         task_def = ecs.FargateTaskDefinition(self, "WorkerTaskDef", cpu=512, memory_limit_mib=1024)
 
         # DSN WITHOUT the password — libpq reads PGPASSWORD (secret below) for the absent field.
-        _endpoint = db.instance_endpoint.hostname if is_dev(self) else _RDS_ENDPOINT
+        _endpoint = db_endpoint(db).hostname if is_dev(self) else _RDS_ENDPOINT
         database_url = f"postgresql://docsuri_admin@{_endpoint}:{_RDS_PORT}/docsuri"
         if is_dev(self):
             assert db.secret is not None  # from_generated_secret always creates one
