@@ -1,6 +1,6 @@
 # 풀 서버리스 인프라 마이그레이션 계획 (Serverless Migration Plan)
 
-**작성일**: 2026-08-04 · **상태**: 🔶 질문 게이트 대기 (SQ1~SQ6) · **트리거**: 사용자 지시 "현행 AWS 아키텍처 → full serverless 이행 검토" · **대상**: `ops/cdk/app.py` + `stacks/{network,search,compute,frontend,ingestion,evidence,novelty,summarization}_stack.py` (8개 스택) · **방법론**: 감사 → 목표 매핑 → 컴포넌트별 경제성 분석 → 단계화 — **"서버리스가 이기는 곳만 옮기고, 최소 과금 바닥(floor)이 있는 곳은 정직하게 거부"**가 본 계획의 원칙.
+**작성일**: 2026-08-04 · **상태**: ✅ 게이트 답변 완료 (2026-08-04, **SQ1~SQ6 전부 A** — 관리형 OpenSearch 소형 노드 유지 · API=Lambda(LWA)+Function URL 스트리밍 · Aurora Sv2 min 0 ACU 수용 · 프런트=OpenNext · Redis 단일 노드 유지 · DB-먼저 순서). **Phase 0 종결 노트**: 프로파일 컨텍스트+구 계정 하드코딩 정정 = PR #12로 선반영 완료 · 시작 시 마이그레이션 분리 = 기구현(`backend/app.py` `RUN_MIGRATIONS_ON_STARTUP` 게이트 + `backend/migrations/__main__.py` 독립 러너 — Phase 1 Lambda 배포에서 off) · Cost Explorer 실측 보정 = 2026-08-04 dev 배포 기점 4주 수집 후 §4 갱신. **다음 = Phase 1-①**(RDS 스냅샷 → Aurora Sv2 min 0 ACU, SQ6=A DB-먼저) · **트리거**: 사용자 지시 "현행 AWS 아키텍처 → full serverless 이행 검토" · **대상**: `ops/cdk/app.py` + `stacks/{network,search,compute,frontend,ingestion,evidence,novelty,summarization}_stack.py` (8개 스택) · **방법론**: 감사 → 목표 매핑 → 컴포넌트별 경제성 분석 → 단계화 — **"서버리스가 이기는 곳만 옮기고, 최소 과금 바닥(floor)이 있는 곳은 정직하게 거부"**가 본 계획의 원칙.
 
 ---
 
