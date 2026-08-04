@@ -32,6 +32,7 @@ from docsuri_shared._generated.dtos.evidence_schema import EvidenceRequest, Evid
 from .models import AgentRunContext, EvidenceTurn, TurnErrorResult, TurnPendingResult
 from .orchestrator import EvidenceAgentOrchestrator
 from .repository import EvidenceRepository
+from .sessions.jobs import RESEARCH_JOB_SURFACE, parse_research_job_payload
 from .streaming import _metric
 
 # U16 BR-SB7 spend attribution — strictly best-effort: if the plans module is unavailable
@@ -58,10 +59,14 @@ class _Message:
         self.receipt_handle = receipt_handle
 
 
-def parse_sqs_payload(body: str | bytes | dict[str, Any]) -> dict[str, Any]:
+def _decode_payload(body: str | bytes | dict[str, Any]) -> dict[str, Any]:
     if isinstance(body, bytes):
         body = body.decode('utf-8')
-    payload: dict[str, Any] = json.loads(body) if isinstance(body, str) else body
+    return json.loads(body) if isinstance(body, str) else body
+
+
+def parse_sqs_payload(body: str | bytes | dict[str, Any]) -> dict[str, Any]:
+    payload = _decode_payload(body)
     owner_id = payload.get('ownerId') or payload.get('owner_id')
     turn_id = payload.get('turnId') or payload.get('turn_id')
     topic = payload.get('topic')
@@ -127,8 +132,28 @@ def process_sqs_payload(
     *,
     orchestrator: EvidenceAgentOrchestrator,
     user_docmodel: Any = None,
+    research_repo_factory: Callable[[], Any] | None = None,
 ) -> None:
-    fields = parse_sqs_payload(body)
+    payload = _decode_payload(body)
+    # serverless Phase 2/NFR-P6 — research(agent chat) 긴 분석 턴은 같은 큐를 공유하되
+    # `surface` 필드로 라우팅한다(sessions/jobs.py 계약).
+    if payload.get('surface') == RESEARCH_JOB_SURFACE:
+        if research_repo_factory is None:
+            raise InvalidWorkerPayload(
+                'research surface job received but research repo is not wired'
+            )
+        try:
+            fields = parse_research_job_payload(payload)
+        except ValueError as exc:
+            raise InvalidWorkerPayload(str(exc)) from exc
+        process_research_job(
+            research_repo_factory,
+            orchestrator=orchestrator,
+            user_docmodel=user_docmodel,
+            **fields,
+        )
+        return
+    fields = parse_sqs_payload(payload)
     process_job(repo, orchestrator=orchestrator, user_docmodel=user_docmodel, **fields)
 
 
@@ -229,6 +254,134 @@ def process_job(
     repo.update_turn_result(owner_id, turn_id, result)
 
 
+def _research_job_awaiting(job: Any, messages: list[Any], user_message_id: str) -> bool:
+    """멱등 가드 — 잡이 여전히 이 유저 메시지의 답변을 기다리는 상태인지.
+
+    API는 enqueue 전에 유저 메시지+ACTIVE 전이를 커밋하므로(sessions/service.py),
+    (a) 잡이 ACTIVE가 아니거나 (b) 페이로드의 유저 메시지가 마지막 메시지가 아니면
+    이미 처리된 중복 배달이다(SQS at-least-once).
+    """
+    from .sessions.models import ResearchJobState
+
+    if job.state != ResearchJobState.ACTIVE:
+        return False
+    last = messages[-1] if messages else None
+    return last is not None and last.messageId == user_message_id
+
+
+def process_research_job(
+    research_repo_factory: Callable[[], Any],
+    *,
+    orchestrator: EvidenceAgentOrchestrator,
+    owner_id: str,
+    job_id: str,
+    user_message_id: str,
+    content: str,
+    attachments: list[dict[str, Any]] | None = None,
+    prior_topics: tuple[str, ...] = (),
+    prior_paper_ids: tuple[str, ...] = (),
+    user_docmodel: Any = None,
+) -> None:
+    """serverless Phase 2/NFR-P6 — 긴 분석(첨부 동반) research 턴의 워커 실행.
+
+    동기 경로(sessions/service.add_message)와 동일한 결과 계약으로 assistant
+    메시지·첨부 안내·COMPLETED 전이를 기록한다. 잡/메시지가 안 보이면 커밋-후-enqueue
+    순서상 삭제(US-EV8)뿐이므로 멱등 스킵(ack)한다.
+    """
+    from .sessions.models import ChatRole, ResearchChatMessage
+    from .sessions.service import (
+        _attachment_notice,
+        _format_turn_result,
+        _resolved_paper_ids,
+        run_research_turn_sync,
+    )
+
+    repo = research_repo_factory()
+    try:
+        try:
+            job = repo.get_job(owner_id, job_id)
+            messages = repo.list_messages(owner_id, job_id)
+        except KeyError:
+            log.warning('research job %s: not found or wrong owner; skipping', job_id)
+            return
+        if not _research_job_awaiting(job, messages, user_message_id):
+            log.info(
+                'research job %s: message %s already handled; skipping duplicate delivery',
+                job_id, user_message_id,
+            )
+            return
+
+        attachment_inputs = _attachment_inputs(
+            owner_id=owner_id,
+            scope_id=job_id,
+            attachment_docs=list(attachments or []),
+            user_docmodel=user_docmodel,
+        )
+        try:
+            # U16 BR-SB7 — 턴의 Bedrock 지출 귀속(evidence 턴 경로와 동일 컨텍스트).
+            with spend_attribution(owner_id):
+                result = run_research_turn_sync(
+                    orchestrator,
+                    owner_id=owner_id,
+                    topic=content,
+                    prior_topics=tuple(prior_topics),
+                    attachment_inputs=attachment_inputs,
+                    prior_paper_ids=tuple(prior_paper_ids),
+                )
+        except Exception as exc:
+            log.exception('research job %s: orchestrator failed', job_id)
+            # 잡을 ACTIVE로 방치하면 FE가 영원히 폴링한다 — 동기 경로의 오류 계약
+            # ([error] evidence_unavailable, SEC-9 내부 상세 비노출)로 종결한다.
+            repo.add_message(
+                ResearchChatMessage(
+                    jobId=job_id,
+                    ownerId=owner_id,
+                    role=ChatRole.ASSISTANT,
+                    content=_format_turn_result(None),
+                    attachments=[],
+                )
+            )
+            repo.mark_completed(owner_id, job_id)
+            repo.commit()
+            raise JobProcessingFailed(str(exc)) from exc
+
+        repo.add_message(
+            ResearchChatMessage(
+                jobId=job_id,
+                ownerId=owner_id,
+                role=ChatRole.ASSISTANT,
+                content=_format_turn_result(result),
+                attachments=[],
+                resolvedPaperIds=list(_resolved_paper_ids(result)),
+            )
+        )
+        # US-EV4(#268) 2차 — 본문 없이 도착한 첨부는 비기술 문구로 별도 안내(동기 경로 동일).
+        notice = _attachment_notice(attachment_inputs)
+        if notice:
+            repo.add_message(
+                ResearchChatMessage(
+                    jobId=job_id,
+                    ownerId=owner_id,
+                    role=ChatRole.ASSISTANT,
+                    content=notice,
+                    attachments=[],
+                )
+            )
+        repo.mark_completed(owner_id, job_id)
+        repo.commit()
+    except JobProcessingFailed:
+        raise
+    except Exception:
+        rollback = getattr(repo, 'rollback', None)
+        if rollback is not None:
+            rollback()
+        raise
+    finally:
+        close = getattr(repo, 'close', None)
+        if close is not None:
+            close()
+
+
 def run_worker(
     *,
     repo_factory: Callable[[], EvidenceRepository],
@@ -238,6 +391,7 @@ def run_worker(
     should_stop: Callable[[], bool],
     user_docmodel: Any = None,
     drain_dlq: Callable[[], None] | None = None,
+    research_repo_factory: Callable[[], Any] | None = None,
 ) -> None:
     while not should_stop():
         if drain_dlq is not None:
@@ -250,6 +404,7 @@ def run_worker(
                     message.body,
                     orchestrator=orchestrator,
                     user_docmodel=user_docmodel,
+                    research_repo_factory=research_repo_factory,
                 )
                 commit = getattr(repo, 'commit', None)
                 if commit is not None:
@@ -286,41 +441,130 @@ def drain_dlq_once(
     repo_factory: Callable[[], EvidenceRepository],
     *,
     observability: Any = None,
+    research_repo_factory: Callable[[], Any] | None = None,
 ) -> None:
     """BR-EV-12 — max_receive_count 소진으로 DLQ에 빠진 잡을 terminal로 전이.
 
-    DLQ 메시지의 turn에 TurnErrorResult(job_failed)를 기록하고 메시지를 삭제한다.
-    이미 해소된 turn은 repo의 idempotency guard가 중복 갱신을 거부하므로 그대로
-    ack(멱등). malformed 메시지는 기록 없이 삭제+로그. RDS 기록 실패 시에만 메시지를
-    남겨 다음 폴링에서 재시도한다(infra-design §DLQ).
+    evidence 턴은 TurnErrorResult(job_failed)를, research 턴(serverless Phase 2)은
+    오류 assistant 메시지+COMPLETED 전이를 기록하고 메시지를 삭제한다. 이미 해소된
+    잡은 멱등 스킵 후 ack. malformed 메시지는 기록 없이 삭제+로그. RDS 기록 실패
+    시에만 메시지를 남겨 다음 폴링에서 재시도한다(infra-design §DLQ).
     """
     resp = sqs.receive_message(QueueUrl=dlq_url, MaxNumberOfMessages=10, WaitTimeSeconds=0)
     for msg in resp.get('Messages', []):
-        try:
-            fields = parse_sqs_payload(msg.get('Body') or '')
-        except Exception:  # noqa: BLE001 — malformed DLQ 메시지는 삭제+로그로 종결
-            log.exception(
-                'evidence DLQ: dropping malformed message, receiptHandle=%s',
-                msg.get('ReceiptHandle'),
-            )
-        else:
-            try:
-                _record_dead_lettered_turn(repo_factory, fields)
-            except Exception:  # noqa: BLE001 — 기록 실패는 메시지를 남겨 재시도
-                log.exception(
-                    'evidence DLQ: failed to record job_failed for turn %s; keeping message',
-                    fields['turn_id'],
-                )
-                continue
-            _metric(
-                observability,
-                'evidence.job.dead_lettered',
-                1.0,
-                {'errorCode': 'job_failed'},
-            )
+        if not _terminalize_dead_letter(
+            msg, repo_factory, research_repo_factory, observability
+        ):
+            continue  # 기록 실패 — 메시지를 남겨 다음 폴링에서 재시도
         receipt = msg.get('ReceiptHandle')
         if receipt:
             sqs.delete_message(QueueUrl=dlq_url, ReceiptHandle=receipt)
+
+
+def _terminalize_dead_letter(
+    msg: dict[str, Any],
+    repo_factory: Callable[[], EvidenceRepository],
+    research_repo_factory: Callable[[], Any] | None,
+    observability: Any,
+) -> bool:
+    """DLQ 메시지 1건을 terminal로 전이. False = 기록 실패(메시지 유지)."""
+    try:
+        payload = _decode_payload(msg.get('Body') or '')
+    except Exception:  # noqa: BLE001 — malformed DLQ 메시지는 삭제+로그로 종결
+        log.exception(
+            'evidence DLQ: dropping malformed message, receiptHandle=%s',
+            msg.get('ReceiptHandle'),
+        )
+        return True
+    if payload.get('surface') == RESEARCH_JOB_SURFACE:
+        try:
+            fields = parse_research_job_payload(payload)
+        except ValueError:
+            log.exception('evidence DLQ: dropping malformed research message')
+            return True
+        if research_repo_factory is None:
+            log.warning(
+                'evidence DLQ: research message but research repo not wired; dropping'
+            )
+            return True
+        try:
+            _record_dead_lettered_research_job(research_repo_factory, fields)
+        except Exception:  # noqa: BLE001 — 기록 실패는 메시지를 남겨 재시도
+            log.exception(
+                'evidence DLQ: failed to record job_failed for research job %s; keeping message',
+                fields['job_id'],
+            )
+            return False
+        _metric(
+            observability,
+            'evidence.job.dead_lettered',
+            1.0,
+            {'errorCode': 'job_failed', 'surface': RESEARCH_JOB_SURFACE},
+        )
+        return True
+    try:
+        fields = parse_sqs_payload(payload)
+    except Exception:  # noqa: BLE001 — malformed DLQ 메시지는 삭제+로그로 종결
+        log.exception(
+            'evidence DLQ: dropping malformed message, receiptHandle=%s',
+            msg.get('ReceiptHandle'),
+        )
+        return True
+    try:
+        _record_dead_lettered_turn(repo_factory, fields)
+    except Exception:  # noqa: BLE001 — 기록 실패는 메시지를 남겨 재시도
+        log.exception(
+            'evidence DLQ: failed to record job_failed for turn %s; keeping message',
+            fields['turn_id'],
+        )
+        return False
+    _metric(
+        observability,
+        'evidence.job.dead_lettered',
+        1.0,
+        {'errorCode': 'job_failed'},
+    )
+    return True
+
+
+def _record_dead_lettered_research_job(
+    research_repo_factory: Callable[[], Any],
+    fields: dict[str, Any],
+) -> None:
+    """research 턴 DLQ 종결 — 오류 assistant 메시지 + COMPLETED (동기 오류 계약)."""
+    from .sessions.models import ChatRole, ResearchChatMessage
+    from .sessions.service import _format_turn_result
+
+    repo = research_repo_factory()
+    try:
+        try:
+            job = repo.get_job(fields['owner_id'], fields['job_id'])
+            messages = repo.list_messages(fields['owner_id'], fields['job_id'])
+        except KeyError:
+            log.warning(
+                'evidence DLQ: research job %s unavailable; acking anyway',
+                fields['job_id'],
+            )
+            return
+        if not _research_job_awaiting(job, messages, fields['user_message_id']):
+            return  # 이미 해소 — 멱등 ack
+        repo.add_message(
+            ResearchChatMessage(
+                jobId=fields['job_id'],
+                ownerId=fields['owner_id'],
+                role=ChatRole.ASSISTANT,
+                content=_format_turn_result(None),
+                attachments=[],
+            )
+        )
+        repo.mark_completed(fields['owner_id'], fields['job_id'])
+        commit = getattr(repo, 'commit', None)
+        if commit is not None:
+            commit()
+    finally:
+        close = getattr(repo, 'close', None)
+        if close is not None:
+            close()
 
 
 def _record_dead_lettered_turn(
@@ -394,6 +638,12 @@ def main(argv: list[str] | None = None) -> int:
     def repo_factory() -> EvidenceRepository:
         return SqlEvidenceRepository(session_factory())
 
+    # serverless Phase 2/NFR-P6 — research(agent chat) 긴 분석 턴도 이 워커가 처리한다.
+    from .sessions.repository import SqlResearchRepository
+
+    def research_repo_factory() -> Any:
+        return SqlResearchRepository(session_factory())
+
     import boto3
 
     sqs = boto3.client(
@@ -423,7 +673,13 @@ def main(argv: list[str] | None = None) -> int:
     observability = _build_worker_observability() if dlq_url else None
 
     def drain_dlq() -> None:
-        drain_dlq_once(sqs, dlq_url, repo_factory, observability=observability)
+        drain_dlq_once(
+            sqs,
+            dlq_url,
+            repo_factory,
+            observability=observability,
+            research_repo_factory=research_repo_factory,
+        )
 
     log.info('evidence agent worker started; polling queue')
     run_worker(
@@ -434,6 +690,7 @@ def main(argv: list[str] | None = None) -> int:
         should_stop=_shutdown.is_set,
         user_docmodel=_build_user_docmodel(),
         drain_dlq=drain_dlq if dlq_url else None,
+        research_repo_factory=research_repo_factory,
     )
     log.info('evidence agent worker shut down gracefully')
     return 0

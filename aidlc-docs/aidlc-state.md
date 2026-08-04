@@ -962,3 +962,21 @@ _Resiliency 옵트인은 `requirements.md` 확정 전에 필수 요구사항 명
 - **미해결(카나리 보류)**: CloudFront OAC 경유 시 Function URL이 **403**(Lambda auth 계층 응답). 배제 완료: 리소스 정책 존재·SourceArn이 실제 서빙 배포(E10KAZ5I1PIFG9)와 일치·오리진이 Function URL·`allExcept[Authorization, Host]` 오리진 요청 정책 적용(SigV4 서명 헤더 충돌 제거)·전파 대기 후 재현. 잔여 용의선상: **OAC × RESPONSE_STREAM invoke mode 조합**, OAC signing behavior override 필요 여부. → dev CDN은 `api_origin` 기본값(alb)으로 **롤백 완료**(readyz 정상 확인).
 - 참고: dev `POST /api/search` 503은 신규 계정 OpenSearch 도메인이 **빈 인덱스**(코퍼스 재색인 미실행)여서 발생 — 카나리와 무관, Phase 3(SQ1=A 축소·재색인)에서 해소 예정.
 - 다음: 카나리 403 후속 조사(1-③ 잔여) 또는 Phase 2(NFR-P6 폴링 전환).
+- 후속: OAC 403의 원인 = CDK 2.260 `FunctionUrlOrigin.with_origin_access_control()`이 **FunctionUrlAuthType 미지정 permission**을 방출 — Function URL invoke를 인가하지 못함. 수정(자격 있는 `lambda:InvokeFunctionUrl` CfnPermission 명시) PR #21 develop 머지. 카나리 재검증은 다음 dev 배포에서.
+
+## 서버리스 Phase 2 — NFR-P6 폴링 전환 (research 턴 비동기화) 완료
+
+- Date: 2026-08-04
+- Gate: 설계 질문 1건 — **"NFR-P6 분기"** 채택(사용자 답변): 긴 분석(첨부 PDF 동반) research 턴만 비동기 잡+폴링, 짧은 질의는 EV2 동기 SSE 유지 + keepalive 하트비트. (대안 "전면 비동기"·"novelty 패턴 전면 이행"은 기각 — EV2 라이브 진행 타임라인 보존 우선.)
+- Branch: `feat/serverless-phase2-nfr-p6-research-async` (base origin/develop `13dfadd`)
+- Delivered:
+  - **SSE keepalive**(`evidence/streaming.py`): 진행 이벤트 침묵 구간(extracting 단일 Bedrock 호출 등)에 15s 간격 `: keepalive` SSE 코멘트 — CloudFront 60s idle read_timeout(양 스택 "임시 완화" 주석의 원인) 방어. FE 파서(parseSseBlock)는 data 없는 블록을 버리므로 FE 무변경.
+  - **research 턴 비동기 분기**(`evidence/sessions/{jobs,service,controller}.py`): 첨부 동반 + 워커 배선 시(`app.state.evidence_sqs_enqueue` — BR-EV-6와 동일 게이트·**동일 evidence-agent-job-queue 공유**) 유저 메시지 커밋→`mark_active`→enqueue 후 즉시 반환(잡 ACTIVE → FE AGENT_REFRESH_MS 스냅샷 폴링). SSE 협상에서도 비동기 적격 턴은 pending JSON(FE streamAgentTurn 'json' 아웃컴 기존 처리 — 재전송 없음). enqueue 실패는 `[error] evidence_unavailable`+COMPLETED로 종결(영원 폴링 방지). **커밋-후-enqueue** 순서로 워커 가시성 레이스 구조 차단.
+  - **워커 research surface**(`evidence/worker.py`): 같은 큐에서 `surface=research` 라우팅 — 동기 경로와 동일 결과 계약(assistant msg+resolvedPaperIds+첨부 안내+COMPLETED), 멱등 가드(잡 ACTIVE ∧ 페이로드 유저 메시지=최신), 오류는 오류 계약 종결 후 JobProcessingFailed(ack). DLQ 드레인 확장(BR-EV-12 — research 잡 terminal 전이 + `surface` 메트릭 태그).
+  - **`mark_active`**(ResearchRepository protocol+InMemory+SQL): 멀티턴 재진입 — COMPLETED 잡의 새 async 턴이 ACTIVE 복귀(FE 폴링 재가동). 페이로드 priorTopics는 최근 8건×2000자 캡(SQS 256KB 방어).
+  - **FE 변경 0** — 기존 폴링 루프·'json' 아웃컴·SSE 코멘트 무시로 전부 수용.
+- **docmodel-builder Lambda 이행 = 스킵 확정**: 계획 §5 조건("웨이크업 지연이 문제일 때만", 이득 ≈ $0 명시) — 관측된 웨이크업 지연 문제 없음. 필요해지면 후속 재심.
+- CDK 변경 0: `DOCSURI_EVIDENCE_ASYNC_ENABLED`+큐 URL 기배선(compute_stack) — **API·evidence 워커 이미지 재배포만으로 활성화**.
+- Verification: backend 전체 스윕 **449 passed/1 skipped** · 신규 `test_research_async_jobs.py` **22 passed** · `test_evidence_streaming.py` 12 passed(keepalive 2건 포함) · touched ruff clean(잔여 2건은 develop 기존: intent.py E501·streaming.py UP017) · compileall OK · FE vitest **251/251 passed**(9개 스위트 로드 실패는 로컬 mathjax-full 미설치 — 본 변경 무관 영역).
+- 남은 리스크: Lambda 경로의 동기 SSE 턴(짧은 질의)은 5min 캡 내 완결 전제 — 실질 비구속. dev 실배포 검증(이미지 재배포 + 첨부 턴 E2E)은 배포 시점에 수행.
+- 다음: dev 이미지 재배포+E2E(Phase 2 실증) → 1-③ 카나리 재검증(PR #21 반영분) 또는 Phase 3(SQ1=A 검색 축소·재색인).

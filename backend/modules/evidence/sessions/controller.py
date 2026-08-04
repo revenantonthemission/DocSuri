@@ -25,6 +25,7 @@ from backend.modules.user_docmodel import (
     user_docmodel_ref,
 )
 
+from .jobs import is_async_eligible
 from .models import (
     ResearchChatMessage,
     ResearchJobCreateRequest,
@@ -79,10 +80,17 @@ def get_user_docmodel(request: Request):
     return coordinator
 
 
+def get_sqs_enqueue(request: Request) -> Any:
+    # serverless Phase 2/NFR-P6 — U11 evidence와 동일 게이트·큐 공유(BR-EV-6 확장).
+    # wiring이 async_enabled + job_queue_url일 때만 콜백을 주입한다.
+    return getattr(request.app.state, "evidence_sqs_enqueue", None)
+
+
 PRINCIPAL_DEP = Depends(get_principal)
 REPO_DEP = Depends(get_repo)
 EVIDENCE_ORCHESTRATOR_DEP = Depends(get_evidence_orchestrator)
 USER_DOCMODEL_DEP = Depends(get_user_docmodel)
+SQS_ENQUEUE_DEP = Depends(get_sqs_enqueue)
 
 
 class AttachmentUploadOut(BaseModel):
@@ -113,9 +121,14 @@ async def create_job(
     repo: ResearchRepository = REPO_DEP,
     orchestrator: Any = EVIDENCE_ORCHESTRATOR_DEP,
     user_docmodel: Any = USER_DOCMODEL_DEP,
+    sqs_enqueue: Any = SQS_ENQUEUE_DEP,
 ) -> Any:
     # US-EV2/NFR-P6 — Accept: text/event-stream 협상 시 동기 SSE 스트리밍으로 완료.
-    if wants_event_stream(request.headers.get("accept")):
+    # 비동기 적격(긴 분석 — 첨부 동반 + 워커 배선) 턴은 SSE 표면에서도 pending JSON을
+    # 반환한다(serverless Phase 2; FE streamAgentTurn 'json' 아웃컴 — 재전송 없음).
+    if wants_event_stream(request.headers.get("accept")) and not is_async_eligible(
+        dto, sqs_enqueue
+    ):
         return _stream_create_job(request, dto, principal, repo, orchestrator, user_docmodel)
     try:
         return await ResearchService(repo).create_job(
@@ -123,6 +136,7 @@ async def create_job(
             dto,
             orchestrator,
             user_docmodel,
+            sqs_enqueue=sqs_enqueue,
         )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail="첨부 PDF 정보가 올바르지 않습니다.") from exc
@@ -246,9 +260,14 @@ async def add_message(
     repo: ResearchRepository = REPO_DEP,
     orchestrator: Any = EVIDENCE_ORCHESTRATOR_DEP,
     user_docmodel: Any = USER_DOCMODEL_DEP,
+    sqs_enqueue: Any = SQS_ENQUEUE_DEP,
 ) -> Any:
     # US-EV2/NFR-P6 — Accept: text/event-stream 협상 시 동기 SSE 스트리밍으로 완료.
-    if wants_event_stream(request.headers.get("accept")):
+    # 비동기 적격(긴 분석 — 첨부 동반 + 워커 배선) 턴은 SSE 표면에서도 pending JSON을
+    # 반환한다(serverless Phase 2; FE streamAgentTurn 'json' 아웃컴 — 재전송 없음).
+    if wants_event_stream(request.headers.get("accept")) and not is_async_eligible(
+        dto, sqs_enqueue
+    ):
         try:
             repo.get_job(principal.user_id, job_id)  # 스트림 전 소유권/존재 검증(404 유지)
         except KeyError as exc:
@@ -263,6 +282,7 @@ async def add_message(
             dto,
             orchestrator,
             user_docmodel,
+            sqs_enqueue=sqs_enqueue,
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="job not found") from exc

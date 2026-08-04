@@ -27,6 +27,9 @@ class ResearchRepository(Protocol):
     # active로 남으면 FE가 이를 running으로 매핑해 답변이 이미 저장돼도 폴링을
     # 멈추지 않는다.
     def mark_completed(self, owner_id: str, job_id: str) -> None: ...
+    # 비동기 턴 재진입(serverless Phase 2/NFR-P6) — COMPLETED 잡에 새 async 턴이
+    # 들어오면 ACTIVE로 되돌려 FE 폴링 루프가 다시 돌게 한다.
+    def mark_active(self, owner_id: str, job_id: str) -> None: ...
     def commit(self) -> None: ...
     def rollback(self) -> None: ...
     def close(self) -> None: ...
@@ -82,6 +85,13 @@ class InMemoryResearchRepository:
             job = self.get_job(owner_id, job_id)
             self._jobs[job_id] = job.model_copy(
                 update={"state": ResearchJobState.COMPLETED, "updatedAt": utc_now()}
+            )
+
+    def mark_active(self, owner_id: str, job_id: str) -> None:
+        with self._lock:
+            job = self.get_job(owner_id, job_id)
+            self._jobs[job_id] = job.model_copy(
+                update={"state": ResearchJobState.ACTIVE, "updatedAt": utc_now()}
             )
 
     def list_messages(self, owner_id: str, job_id: str) -> list[ResearchChatMessage]:
@@ -241,6 +251,14 @@ class SqlResearchRepository:
         if row is None or row.owner_id != owner_id:
             raise KeyError(job_id)
         row.state = ResearchJobState.COMPLETED.value
+        row.updated_at = utc_now()
+        self._s.flush()
+
+    def mark_active(self, owner_id: str, job_id: str) -> None:
+        row = self._s.get(ResearchJobTable, job_id)
+        if row is None or row.owner_id != owner_id:
+            raise KeyError(job_id)
+        row.state = ResearchJobState.ACTIVE.value
         row.updated_at = utc_now()
         self._s.flush()
 

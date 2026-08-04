@@ -8,6 +8,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from backend.modules.user_docmodel import EVIDENCE_PDF_DEGRADED_NOTICE
 
+from .jobs import build_research_job_payload, is_async_eligible
 from .models import (
     ChatRole,
     ResearchChatMessage,
@@ -16,7 +17,6 @@ from .models import (
     ResearchJobCreateResponse,
     ResearchJobDetailResponse,
     ResearchJobListResponse,
-    ResearchJobState,
     ResearchJobSummary,
     ResearchMessageCreateRequest,
     ResearchMessageListResponse,
@@ -35,15 +35,20 @@ class ResearchService:
         dto: ResearchJobCreateRequest,
         orchestrator: Any = None,
         user_docmodel: Any = None,
+        sqs_enqueue: Any = None,
     ) -> ResearchJobCreateResponse:
         job = self._repo.create_job(
             ResearchJob(ownerId=owner_id, title=title_from_content(dto.content))
         )
-        await self.add_message(owner_id, job.jobId, dto, orchestrator, user_docmodel)
-        # add_message가 처리 완료 후 항상 COMPLETED로 전이시키므로(PR #338 Blocking #3)
-        # 응답도 그 최종 상태를 반영해야 한다 — job은 create_job 호출 시점의 스냅샷이라
-        # 그대로 두면 항상 ACTIVE로 보고된다.
-        return ResearchJobCreateResponse(jobId=job.jobId, state=ResearchJobState.COMPLETED)
+        await self.add_message(
+            owner_id, job.jobId, dto, orchestrator, user_docmodel, sqs_enqueue=sqs_enqueue
+        )
+        # 동기 턴은 add_message가 COMPLETED로 전이 완료(PR #338 Blocking #3), 비동기
+        # 턴(serverless Phase 2/NFR-P6)은 ACTIVE로 남아 FE 폴링을 유도한다 — job은
+        # create_job 호출 시점의 스냅샷이라 처리 후 실제 상태를 재조회해 반영한다.
+        return ResearchJobCreateResponse(
+            jobId=job.jobId, state=self._repo.get_job(owner_id, job.jobId).state
+        )
 
     def list_jobs(self, owner_id: str, limit: int = 50) -> ResearchJobListResponse:
         jobs = self._repo.list_jobs(owner_id, max(1, min(limit, 100)))
@@ -80,6 +85,7 @@ class ResearchService:
         orchestrator: Any = None,
         user_docmodel: Any = None,
         on_progress: Any = None,
+        sqs_enqueue: Any = None,
     ) -> ResearchChatMessage:
         self._repo.get_job(owner_id, job_id)
         history = self._repo.list_messages(owner_id, job_id)
@@ -105,6 +111,43 @@ class ResearchService:
         )
         if orchestrator is None:
             self._repo.mark_completed(owner_id, job_id)
+            return user_msg
+        if is_async_eligible(dto, sqs_enqueue):
+            # serverless Phase 2/NFR-P6 — 긴 분석(첨부 PDF 동반) 턴은 요청 경로에서
+            # 실행하지 않고 evidence 워커로 넘긴다. FE는 running 잡을 스냅샷 폴링으로
+            # 따라온다(AgentChatScreen AGENT_REFRESH_MS). 첨부 DocModel 해석(S3 프로브)
+            # 역시 워커로 미뤄 요청 경로를 즉시 반환시킨다.
+            self._repo.mark_active(owner_id, job_id)
+            # 워커가 커밋 전 상태(유저 메시지·ACTIVE 전이 미가시)를 보지 못하도록
+            # enqueue 전에 커밋한다 — 요청 종료 시점의 세션 커밋은 이후 no-op.
+            self._repo.commit()
+            payload = build_research_job_payload(
+                owner_id=owner_id,
+                job_id=job_id,
+                user_message_id=user_msg.messageId,
+                content=dto.content,
+                attachments=dto.attachments,
+                prior_topics=prior_topics,
+                prior_paper_ids=prior_paper_ids,
+            )
+            try:
+                # boto3는 동기 I/O — 이벤트 루프 밖에서 보낸다(turn 경로와 동일 패턴).
+                await run_in_threadpool(sqs_enqueue, payload)
+            except Exception:
+                # enqueue 실패 시 잡을 ACTIVE로 방치하면 FE가 영원히 폴링한다 —
+                # 동기 경로의 오류 계약([error] evidence_unavailable)으로 종결 후 전파.
+                self._repo.add_message(
+                    ResearchChatMessage(
+                        jobId=job_id,
+                        ownerId=owner_id,
+                        role=ChatRole.ASSISTANT,
+                        content=_format_turn_result(None),
+                        attachments=[],
+                    )
+                )
+                self._repo.mark_completed(owner_id, job_id)
+                self._repo.commit()
+                raise
             return user_msg
         attachment_inputs = await run_in_threadpool(
             _attachment_inputs,
@@ -156,8 +199,9 @@ class ResearchService:
         return ResearchMessageListResponse(messages=self._repo.list_messages(owner_id, job_id))
 
 
-async def _run_evidence(
+def run_research_turn_sync(
     orchestrator: Any,
+    *,
     owner_id: str,
     topic: str,
     prior_topics: tuple[str, ...] = (),
@@ -165,6 +209,8 @@ async def _run_evidence(
     prior_paper_ids: tuple[str, ...] = (),
     on_progress: Any = None,
 ) -> Any:
+    """동기 실행 코어 — API의 to_thread 경로(_run_evidence)와 비동기 워커
+    (serverless Phase 2/NFR-P6, worker.process_research_job)가 한 벌로 공유한다."""
     from docsuri_shared._generated.dtos.evidence_schema import EvidenceRequest, EvidenceScope
     from pydantic import ValidationError
 
@@ -191,8 +237,29 @@ async def _run_evidence(
     )
     if on_progress is None:
         # 2-인자 호출 유지 — on_progress를 모르는 기존 테스트 스텁/구버전 orchestrator 호환.
-        return await asyncio.to_thread(orchestrator.run, ctx, request)
-    return await asyncio.to_thread(orchestrator.run, ctx, request, on_progress)
+        return orchestrator.run(ctx, request)
+    return orchestrator.run(ctx, request, on_progress)
+
+
+async def _run_evidence(
+    orchestrator: Any,
+    owner_id: str,
+    topic: str,
+    prior_topics: tuple[str, ...] = (),
+    attachment_inputs: tuple[Any, ...] = (),
+    prior_paper_ids: tuple[str, ...] = (),
+    on_progress: Any = None,
+) -> Any:
+    return await asyncio.to_thread(
+        run_research_turn_sync,
+        orchestrator,
+        owner_id=owner_id,
+        topic=topic,
+        prior_topics=prior_topics,
+        attachment_inputs=attachment_inputs,
+        prior_paper_ids=prior_paper_ids,
+        on_progress=on_progress,
+    )
 
 
 def _resolved_paper_ids(result: Any) -> tuple[str, ...]:
