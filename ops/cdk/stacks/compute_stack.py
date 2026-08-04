@@ -84,7 +84,7 @@ from aws_cdk import (
 from constructs import Construct
 
 from ._origin_auth import api_origin_verify_secret, social_origin_verify_secret
-from .profile import is_dev
+from .profile import db_endpoint, db_port_as_string, is_dev
 
 # Public DNS for the API origin (zone docsuri.org lives in this account's Route53). CloudFront
 # connects to this name over HTTPS so the ACM cert (issued for it) validates — ACM can't issue
@@ -130,25 +130,57 @@ class ComputeStack(Stack):
         # --- ECS cluster ---
         cluster = ecs.Cluster(self, "Cluster", cluster_name="docsuri", vpc=vpc)
 
-        # --- RDS PostgreSQL (U3 spec: db.t4g.small Multi-AZ, 20 GB gp3) ---
-        self.db = rds.DatabaseInstance(
-            self, "Postgres",
-            engine=rds.DatabaseInstanceEngine.postgres(version=rds.PostgresEngineVersion.VER_16),
-            instance_type=ec2.InstanceType.of(
-                ec2.InstanceClass.T4G,
-                ec2.InstanceSize.MICRO if dev else ec2.InstanceSize.SMALL,
-            ),
-            vpc=vpc,
-            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
-            multi_az=not dev,
-            allocated_storage=20,
-            storage_type=rds.StorageType.GP3,
-            backup_retention=Duration.days(7),
-            deletion_protection=not dev,
-            removal_policy=RemovalPolicy.RETAIN,
-            credentials=rds.Credentials.from_generated_secret("docsuri_admin"),
-            database_name="docsuri",
-        )
+        # --- RDS PostgreSQL (prod, U3 spec: db.t4g.small Multi-AZ, 20 GB gp3) ---
+        # dev (serverless-plan Phase 1-①, SQ3=A): Aurora Serverless v2 with min 0 ACU so the
+        # idle personal-account DB scales to zero instead of billing a t4g.micro 24/7. The
+        # instance L2 auto-creates its SG, so dev mirrors it with an explicit one (no inline
+        # ingress — ECS access is granted via `allow_from` below, same as prod) and hands the
+        # SAME construct to the cluster, keeping `db.connections.security_groups[0]` coherent
+        # for the worker stacks that import it by id.
+        if dev:
+            db_sg = ec2.SecurityGroup(
+                self, "PostgresSecurityGroup", vpc=vpc,
+                description="Dev Aurora Serverless v2 Postgres cluster",
+            )
+            self.db = rds.DatabaseCluster(
+                self, "Postgres",
+                engine=rds.DatabaseClusterEngine.aurora_postgres(
+                    # Newest PG16 the lib offers; 0-ACU auto-pause needs ≥16.3.
+                    version=rds.AuroraPostgresEngineVersion.VER_16_13,
+                ),
+                serverless_v2_min_capacity=0,  # scale-to-zero: cluster pauses when idle
+                serverless_v2_max_capacity=2,
+                writer=rds.ClusterInstance.serverless_v2("Writer"),
+                vpc=vpc,
+                vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
+                security_groups=[db_sg],
+                credentials=rds.Credentials.from_generated_secret("docsuri_admin"),
+                default_database_name="docsuri",
+                deletion_protection=False,
+                # Dev data is reproducible (fresh DB; the app self-migrates on boot).
+                removal_policy=RemovalPolicy.DESTROY,
+            )
+        else:
+            self.db = rds.DatabaseInstance(
+                self, "Postgres",
+                engine=rds.DatabaseInstanceEngine.postgres(
+                    version=rds.PostgresEngineVersion.VER_16
+                ),
+                instance_type=ec2.InstanceType.of(
+                    ec2.InstanceClass.T4G,
+                    ec2.InstanceSize.SMALL,
+                ),
+                vpc=vpc,
+                vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
+                multi_az=True,
+                allocated_storage=20,
+                storage_type=rds.StorageType.GP3,
+                backup_retention=Duration.days(7),
+                deletion_protection=True,
+                removal_policy=RemovalPolicy.RETAIN,
+                credentials=rds.Credentials.from_generated_secret("docsuri_admin"),
+                database_name="docsuri",
+            )
 
         # ponytail: queues already exist in prod; import them until a separate CDK import migrates
         # ownership. Creating same-name queues in this stack would fail the next Compute deploy.
@@ -222,10 +254,14 @@ class ComputeStack(Stack):
             # alarms below data to alarm on.
             "CLOUDWATCH_NAMESPACE": "DocSuri/Production",
             "CLOUDWATCH_LOG_GROUP": "/docsuri/ops",
-            "DB_HOST": self.db.db_instance_endpoint_address,
-            "DB_PORT": self.db.db_instance_endpoint_port,
+            "DB_HOST": db_endpoint(self.db).hostname,
+            "DB_PORT": db_port_as_string(self.db),
             "DB_NAME": "docsuri",
             "DB_USER": "docsuri_admin",  # matches rds.Credentials.from_generated_secret above
+            # Scale-to-zero pooling (serverless-plan Phase 1-①): per-request connections so
+            # idle API tasks hold nothing open and the 0-ACU Aurora cluster can actually
+            # pause. Gated in backend/db.py make_engine; prod keeps the sized QueuePool.
+            **({"DB_POOL_MODE": "null"} if dev else {}),
             "REDIS_HOST": redis_endpoint,
             "REDIS_PORT": redis_port,
             "REDIS_TLS": "1",  # ElastiCache transit_encryption_enabled=True → client TLS required

@@ -17,6 +17,8 @@ from aws_cdk import aws_rds as rds
 from aws_cdk import aws_sqs as sqs
 from constructs import Construct
 
+from .profile import db_endpoint, db_port_as_string
+
 
 class EvidenceStack(Stack):
     def __init__(
@@ -25,7 +27,7 @@ class EvidenceStack(Stack):
         construct_id: str,
         *,
         vpc: ec2.IVpc,
-        db: rds.DatabaseInstance,
+        db: rds.DatabaseInstance | rds.DatabaseCluster,
         opensearch_domain: opensearch.IDomain,
         **kwargs,
     ) -> None:
@@ -70,8 +72,8 @@ class EvidenceStack(Stack):
 
         assert db.secret is not None
         database_url = (
-            f'postgresql://docsuri_admin@{db.db_instance_endpoint_address}:'
-            f'{db.db_instance_endpoint_port}/docsuri'
+            f'postgresql://docsuri_admin@{db_endpoint(db).hostname}:'
+            f'{db_port_as_string(db)}/docsuri'
         )
 
         task_def.add_container(

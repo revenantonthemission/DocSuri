@@ -10,9 +10,12 @@ modules receive short-lived sessions via the FastAPI dependency.
 
 from __future__ import annotations
 
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import NullPool
 
 
 def make_engine(database_url: str) -> Engine:
@@ -38,6 +41,12 @@ def make_engine(database_url: str) -> Engine:
             "pool_recycle": 1800,
         }
     )
+    # Scale-to-zero pooling (serverless-plan Phase 1-①): DB_POOL_MODE=null swaps the sized
+    # QueuePool for NullPool — every session opens/closes a real connection, so an idle API
+    # task holds nothing and the dev Aurora Serverless v2 cluster (min 0 ACU) can pause.
+    # Unset (or any other value) keeps the default pool above; SQLite keeps its StaticPool.
+    if not is_sqlite and os.getenv("DB_POOL_MODE") == "null":
+        pool_kwargs = {"poolclass": NullPool}
     return create_engine(
         database_url,
         future=True,

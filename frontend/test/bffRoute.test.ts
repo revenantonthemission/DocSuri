@@ -39,6 +39,7 @@ describe('BFF proxy (app/bff/[...path]/route)', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it('relays an upstream 204 as a body-less 204 (not a 500)', async () => {
@@ -142,6 +143,80 @@ describe('BFF proxy (app/bff/[...path]/route)', () => {
     // 스텁 MockTransport는 204를 돌려준다 — 핵심은 SSE 홉이 아니라 일반 proxy로 갔다는 것.
     expect(res.status).toBe(204);
     expect(res.headers.get('content-type') ?? '').not.toContain('text/event-stream');
+  });
+
+  it('retries a GET once after ~1.5s when the upstream returns 503 (SQ3 Aurora resume)', async () => {
+    process.env.DOCSURI_GATEWAY_URL = 'https://api.example.test';
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ message: 'db resuming' }), {
+          status: 503,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ items: [] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    vi.useFakeTimers();
+
+    const req = new NextRequest('http://localhost/bff/api/search?q=x', { method: 'GET' });
+    const resPromise = GET(req, { params: Promise.resolve({ path: ['api', 'search'] }) });
+    await vi.advanceTimersByTimeAsync(1500);
+    const res = await resPromise;
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ items: [] });
+  });
+
+  it('retries a GET once when the upstream fetch throws a network error', async () => {
+    process.env.DOCSURI_GATEWAY_URL = 'https://api.example.test';
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockRejectedValueOnce(new TypeError('fetch failed'))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    vi.useFakeTimers();
+
+    const req = new NextRequest('http://localhost/bff/api/library/items', { method: 'GET' });
+    const resPromise = GET(req, { params: Promise.resolve({ path: ['api', 'library', 'items'] }) });
+    await vi.advanceTimersByTimeAsync(1500);
+    const res = await resPromise;
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(res.status).toBe(200);
+  });
+
+  it('never retries a non-GET: an upstream 503 is relayed as-is after one attempt', async () => {
+    process.env.DOCSURI_GATEWAY_URL = 'https://api.example.test';
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ message: 'db resuming' }), {
+        status: 503,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { POST } = await import('@/app/bff/[...path]/route');
+    const req = new NextRequest('http://localhost/bff/api/library/items', {
+      method: 'POST',
+      body: JSON.stringify({ paperId: 'p1' }),
+      headers: { 'content-type': 'application/json' },
+    });
+    const res = await POST(req, { params: Promise.resolve({ path: ['api', 'library', 'items'] }) });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(503);
   });
 
   it('fails closed in production when the gateway URL is missing', async () => {
