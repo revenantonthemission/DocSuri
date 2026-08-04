@@ -38,6 +38,7 @@ ingestion = IngestionStack(
     app, "Docsuri-Ingestion",
     vpc=network.vpc,
     opensearch_domain=search.domain,
+    db=compute.db,
     env=env,
 )
 # Deploy unit ④ — U7 summarization worker (long-summary async jobs, BR-S6/BR-S12). Code/synth
@@ -45,6 +46,7 @@ ingestion = IngestionStack(
 summarization = SummarizationStack(
     app, "Docsuri-Summarization",
     vpc=network.vpc,
+    db=compute.db,
     env=env,
 )
 # Deploy unit ⑪ — novelty formation agent worker. Code/synth only; deploy remains

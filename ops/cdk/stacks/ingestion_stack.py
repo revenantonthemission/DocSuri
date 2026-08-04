@@ -34,6 +34,7 @@ from aws_cdk import (
 from aws_cdk import (
     aws_opensearchservice as opensearch,
 )
+from aws_cdk import aws_rds as rds
 from aws_cdk import (
     aws_s3 as s3,
 )
@@ -73,7 +74,6 @@ _RDS_ENDPOINT = (
     ".cpegcaqmu01d.ap-northeast-2.rds.amazonaws.com"
 )
 _RDS_PORT = 5432
-_RDS_SECURITY_GROUP_ID = "sg-0633ac0c0b8c7a052"
 _RDS_SECRET_ARN = (
     "arn:aws:secretsmanager:ap-northeast-2:028317349537:secret:"
     "DocsuriComputePostgresSecre-9qclXydED0pl-30WA1V"
@@ -95,6 +95,7 @@ class IngestionStack(Stack):
         *,
         vpc: ec2.IVpc,
         opensearch_domain: opensearch.IDomain,
+        db: rds.IDatabaseInstance,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -270,10 +271,17 @@ class IngestionStack(Stack):
         # Control-plane DSN WITHOUT the password — libpq reads PGPASSWORD (injected as a secret
         # below) for any field absent from the conninfo. Keeps the DB credential out of the
         # plaintext task-def env, mirroring how the API injects DB_PASSWORD.
-        control_plane_dsn = f"postgresql://docsuri_admin@{_RDS_ENDPOINT}:{_RDS_PORT}/docsuri"
-        db_secret = secretsmanager.Secret.from_secret_complete_arn(
-            self, "DbSecret", _RDS_SECRET_ARN
-        )
+        # dev: derive endpoint/secret from the passed Compute db (fresh account); prod keeps
+        # the pinned literals (ponytail note above — avoids forcing a compute redeploy).
+        _endpoint = db.instance_endpoint.hostname if is_dev(self) else _RDS_ENDPOINT
+        control_plane_dsn = f"postgresql://docsuri_admin@{_endpoint}:{_RDS_PORT}/docsuri"
+        if is_dev(self):
+            assert db.secret is not None  # from_generated_secret always creates one
+            db_secret = db.secret
+        else:
+            db_secret = secretsmanager.Secret.from_secret_complete_arn(
+                self, "DbSecret", _RDS_SECRET_ARN
+            )
         ss_api_key_secret = secretsmanager.Secret.from_secret_complete_arn(
             self, "SsApiKeySecret", _SS_API_KEY_SECRET_ARN
         )
@@ -543,7 +551,8 @@ class IngestionStack(Stack):
         # change to the compute stack that owns it.
         self.service.connections.allow_to(opensearch_domain.connections, ec2.Port.tcp(443))
         rds_sg = ec2.SecurityGroup.from_security_group_id(
-            self, "RdsSg", _RDS_SECURITY_GROUP_ID, mutable=True
+            # Cross-stack ref (novelty pattern) — a hardcoded sg id goes stale on Compute recreate.
+            self, "RdsSg", db.connections.security_groups[0].security_group_id, mutable=True
         )
         self.service.connections.allow_to(rds_sg, ec2.Port.tcp(_RDS_PORT))
 
