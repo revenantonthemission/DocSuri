@@ -55,6 +55,9 @@ from aws_cdk import (
     aws_iam as iam,
 )
 from aws_cdk import (
+    aws_lambda as lambda_,
+)
+from aws_cdk import (
     aws_logs as logs,
 )
 from aws_cdk import (
@@ -777,34 +780,113 @@ class ComputeStack(Stack):
         # Idempotent command; failures emit `personalization.retention_purge_failure`, alarmed
         # below. Uses the same backend image/env/secrets as the API task.
         api_container = self.service.task_definition.default_container
+
+        # dev (serverless-plan Phase 1-②): the two maintenance crons run as container-image
+        # Lambdas built from the SAME docsuri-api image instead of one-off ECS Fargate tasks —
+        # no per-run task spin-up keeping the 0-ACU Aurora awake longer than the job itself.
+        # awslambdaric (in the image, requirements-deploy.txt) adapts it to the Lambda runtime
+        # API; cmd points at backend.lambda_entry.handler, which dispatches on event["job"].
+        # DB creds: Lambda env can't reference Secrets Manager the way ECS `secrets=` does, so
+        # the functions get DB_SECRET_ARN + a read grant and lambda_entry injects DB_PASSWORD
+        # (and assembles DATABASE_URL) at cold start. They run in the dev-only
+        # PRIVATE_WITH_EGRESS subnets (NAT — network_stack) so boto3 reaches Secrets Manager /
+        # CloudWatch / EventBridge while still reaching the isolated-subnet RDS over 5432.
+        maintenance_fn: lambda_.DockerImageFunction | None = None
+        purge_fn: lambda_.DockerImageFunction | None = None
+        if dev:
+            assert self.db.secret is not None
+            lambda_env = {
+                **container_env,  # mirror the ECS scheduled-task env (incl. DB_POOL_MODE=null,
+                # ACCOUNT_EVENTS_BUS and the CLOUDWATCH_* observability pair)
+                "DB_SECRET_ARN": self.db.secret.secret_arn,
+            }
+
+            def _job_lambda(cid: str, description: str) -> lambda_.DockerImageFunction:
+                fn = lambda_.DockerImageFunction(
+                    self,
+                    cid,
+                    code=lambda_.DockerImageCode.from_ecr(
+                        self.api_repo,
+                        tag_or_digest="latest",
+                        cmd=["backend.lambda_entry.handler"],
+                        entrypoint=["python", "-m", "awslambdaric"],
+                    ),
+                    description=description,
+                    timeout=Duration.minutes(10),
+                    memory_size=1024,
+                    vpc=vpc,
+                    vpc_subnets=ec2.SubnetSelection(
+                        subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+                    ),
+                    environment=lambda_env,
+                )
+                self.db.secret.grant_read(fn)
+                # SG: Lambda → RDS 5432, same pattern as the other Postgres consumers below.
+                self.db.connections.allow_from(fn, ec2.Port.tcp(5432))
+                # Observability parity with the ECS task role: the jobs emit metrics/logs via
+                # CLOUDWATCH_NAMESPACE (the adapter swallows AccessDenied — grant or lose them).
+                fn.add_to_role_policy(
+                    iam.PolicyStatement(
+                        actions=["cloudwatch:PutMetricData"],
+                        resources=["*"],
+                        conditions={
+                            "StringEquals": {"cloudwatch:namespace": "DocSuri/Production"}
+                        },
+                    )
+                )
+                ops_log_group.grant_write(fn)
+                fn.add_to_role_policy(
+                    iam.PolicyStatement(
+                        actions=["logs:CreateLogGroup"],
+                        resources=[ops_log_group.log_group_arn],
+                    )
+                )
+                return fn
+
+            maintenance_fn = _job_lambda(
+                "PersonalizationMaintenanceFn",
+                "Dev Lambda cron: U9 personalization retention purge (Phase 1-②)",
+            )
+            purge_fn = _job_lambda(
+                "AccountPurgeFn",
+                "Dev Lambda cron: U3 account grace purge (FR-28, Phase 1-②)",
+            )
+
         if api_container is not None:
+            if dev:
+                maintenance_target = targets.LambdaFunction(
+                    maintenance_fn,
+                    event=events.RuleTargetInput.from_object(
+                        {"job": "personalization_maintenance"}
+                    ),
+                )
+            else:
+                maintenance_target = targets.EcsTask(
+                    cluster=cluster,
+                    task_definition=self.service.task_definition,
+                    task_count=1,
+                    subnet_selection=ec2.SubnetSelection(
+                        subnet_type=ec2.SubnetType.PUBLIC
+                    ),
+                    assign_public_ip=True,
+                    security_groups=self.service.service.connections.security_groups,
+                    container_overrides=[
+                        targets.ContainerOverride(
+                            container_name=api_container.container_name,
+                            command=[
+                                "python",
+                                "-m",
+                                "backend.modules.personalization.maintenance",
+                            ],
+                        )
+                    ],
+                )
             events.Rule(
                 self,
                 "PersonalizationRetentionCleanup",
                 description="Daily purge of expired U9 behavior events",
                 schedule=events.Schedule.cron(hour="18", minute="0"),
-                targets=[
-                    targets.EcsTask(
-                        cluster=cluster,
-                        task_definition=self.service.task_definition,
-                        task_count=1,
-                        subnet_selection=ec2.SubnetSelection(
-                            subnet_type=ec2.SubnetType.PUBLIC
-                        ),
-                        assign_public_ip=True,
-                        security_groups=self.service.service.connections.security_groups,
-                        container_overrides=[
-                            targets.ContainerOverride(
-                                container_name=api_container.container_name,
-                                command=[
-                                    "python",
-                                    "-m",
-                                    "backend.modules.personalization.maintenance",
-                                ],
-                            )
-                        ],
-                    )
-                ],
+                targets=[maintenance_target],
             )
 
         # --- U3 account deletion cascade (FR-28/BR-A11) ---
@@ -815,32 +897,40 @@ class ComputeStack(Stack):
             self, "AccountEventsBus", event_bus_name="docsuri-account-events"
         )
         account_events_bus.grant_put_events_to(self.service.task_definition.task_role)
+        if dev and purge_fn is not None:
+            # Mirror the ECS task-role grant above: the purge Lambda publishes AccountDeleted.
+            account_events_bus.grant_put_events_to(purge_fn)
 
         # Grace-purge worker (FR-28): daily scan of DEACTIVATED accounts past purge_after →
         # AccountDeleted + permanent delete. Same image/env/secrets as the API task; reuses the
         # personalization-cleanup pattern. Idempotent — a missed/extra run is harmless.
         if api_container is not None:
+            if dev:
+                purge_target = targets.LambdaFunction(
+                    purge_fn,
+                    event=events.RuleTargetInput.from_object({"job": "account_purge"}),
+                )
+            else:
+                purge_target = targets.EcsTask(
+                    cluster=cluster,
+                    task_definition=self.service.task_definition,
+                    task_count=1,
+                    subnet_selection=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
+                    assign_public_ip=True,
+                    security_groups=self.service.service.connections.security_groups,
+                    container_overrides=[
+                        targets.ContainerOverride(
+                            container_name=api_container.container_name,
+                            command=["python", "-m", "backend.modules.accounts.purge_worker"],
+                        )
+                    ],
+                )
             events.Rule(
                 self,
                 "AccountPurgeWorker",
                 description="Daily grace purge of soft-deleted (DEACTIVATED) accounts (FR-28)",
                 schedule=events.Schedule.cron(hour="3", minute="30"),
-                targets=[
-                    targets.EcsTask(
-                        cluster=cluster,
-                        task_definition=self.service.task_definition,
-                        task_count=1,
-                        subnet_selection=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
-                        assign_public_ip=True,
-                        security_groups=self.service.service.connections.security_groups,
-                        container_overrides=[
-                            targets.ContainerOverride(
-                                container_name=api_container.container_name,
-                                command=["python", "-m", "backend.modules.accounts.purge_worker"],
-                            )
-                        ],
-                    )
-                ],
+                targets=[purge_target],
             )
 
         # SG: allow ECS → OpenSearch (HTTPS). Direction: egress from ECS → avoids cycle.
