@@ -1100,6 +1100,20 @@ class ComputeStack(Stack):
                 origin_request_policy=api_origin_request_policy,
             ),
         )
+        if dev and api_fn is not None and self.node.try_get_context("api_origin") == "lambda":
+            # CDK 2.260's FunctionUrlOrigin.with_origin_access_control() emits a permission
+            # WITHOUT FunctionUrlAuthType, so the statement never authorizes *function URL*
+            # invokes and the URL auth layer 403s every OAC-signed request. Add the qualified
+            # permission explicitly (verified: policy/OAC/SourceArn were all otherwise correct).
+            lambda_.CfnPermission(
+                self, "ApiCdnInvokeFunctionUrl",
+                action="lambda:InvokeFunctionUrl",
+                function_name=api_fn.function_arn,
+                principal="cloudfront.amazonaws.com",
+                source_arn=self.cdn.distribution_arn,
+                function_url_auth_type="AWS_IAM",
+            )
+
         CfnOutput(
             self, "ApiCdnUrl",
             value=f"https://{self.cdn.distribution_domain_name}",
