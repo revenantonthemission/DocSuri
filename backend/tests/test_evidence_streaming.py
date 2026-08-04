@@ -358,6 +358,56 @@ def test_stream_client_abort_emits_abort_metric() -> None:
     assert 'evidence.stream.completed' not in hub.names()
 
 
+def test_stream_emits_keepalive_during_progress_silence() -> None:
+    """serverless Phase 2/NFR-P6 — 진행 이벤트가 없는 침묵 구간(예: extracting 단계의
+    단일 Bedrock 호출)에도 keepalive 코멘트 바이트를 흘려 CloudFront 60s idle
+    read_timeout이 스트림을 끊지 않게 한다. 코멘트 프레임은 data가 없어 FE 파서가
+    조용히 버린다(parseSseBlock → null)."""
+
+    async def scenario() -> list[str]:
+        release = asyncio.Event()
+
+        async def run(emit):
+            emit('extracting', {'paperCount': 3})
+            await release.wait()
+            return {'ok': True}
+
+        chunks: list[str] = []
+        stream = turn_sse_stream(run, lambda r: r, keepalive_interval_s=0.02)
+        async for chunk in stream:
+            chunks.append(chunk)
+            if chunk.startswith(':') and not release.is_set():
+                release.set()
+        return chunks
+
+    chunks = asyncio.run(scenario())
+
+    keepalives = [chunk for chunk in chunks if chunk.startswith(':')]
+    assert keepalives, '침묵 구간에서 keepalive 코멘트가 흘러야 한다'
+    # SSE 코멘트 규격: data 라인이 없어야 FE 파서가 버린다 — 블록 종료(\n\n) 포함.
+    assert keepalives[0] == ': keepalive\n\n'
+    assert chunks[-1].startswith('event: result')
+
+
+def test_stream_no_keepalive_when_events_flow_promptly() -> None:
+    """진행 이벤트가 keepalive 간격보다 빨리 흐르면 코멘트는 끼어들지 않는다."""
+
+    async def scenario() -> list[str]:
+        async def run(emit):
+            emit('papers_fetched', {'count': 2})
+            return {'ok': True}
+
+        return [
+            chunk
+            async for chunk in turn_sse_stream(run, lambda r: r, keepalive_interval_s=5.0)
+        ]
+
+    chunks = asyncio.run(scenario())
+
+    assert not any(chunk.startswith(':') for chunk in chunks)
+    assert chunks[-1].startswith('event: result')
+
+
 def test_stream_failure_yields_error_frame_without_internals() -> None:
     """fail-closed(SEC-9/INV-EV-5) — 내부 예외는 비기술 error 프레임으로만 노출."""
     hub = _Hub()

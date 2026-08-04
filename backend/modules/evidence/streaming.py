@@ -38,6 +38,11 @@ ProgressFn = Callable[[str, dict[str, Any]], None]
 
 _DONE = object()
 
+# serverless Phase 2/NFR-P6 — CloudFront read_timeout(60s)은 오리진의 "다음 바이트"
+# 대기 시간이라, 진행 이벤트가 없는 침묵 구간(extracting의 단일 Bedrock 호출 등)이
+# 60초를 넘으면 엣지가 스트림을 끊는다. 그 1/4 간격으로 SSE 코멘트를 흘려 방어한다.
+_KEEPALIVE_INTERVAL_S = 15.0
+
 # asyncio는 태스크를 약참조로만 유지한다 — 중단(abort) 후에도 백엔드가 턴을 끝까지
 # 완결하도록(영속·과금 정합, PR #338 교훈) 강참조를 붙잡는다.
 _background_runs: set[asyncio.Task] = set()
@@ -66,6 +71,7 @@ async def turn_sse_stream(
     initial_events: list[dict[str, Any]] | None = None,
     observability: Any = None,
     surface: str = 'evidence_turns',
+    keepalive_interval_s: float = _KEEPALIVE_INTERVAL_S,
 ) -> AsyncIterator[str]:
     """동기 턴 실행을 SSE로 중계 — progress 이벤트 스트림 + 검증 후 터미널 result 1건.
 
@@ -109,7 +115,13 @@ async def turn_sse_stream(
             _mark_first_token()
             yield encode_sse('progress', event)
         while True:
-            item = await queue.get()
+            try:
+                item = await asyncio.wait_for(queue.get(), timeout=keepalive_interval_s)
+            except TimeoutError:
+                # SSE 코멘트 프레임 — data 라인이 없어 FE parseSseBlock이 버리고,
+                # CloudFront/BFF는 바이트 수신으로 read_timeout을 리셋한다.
+                yield ': keepalive\n\n'
+                continue
             if item is _DONE:
                 break
             _mark_first_token()
