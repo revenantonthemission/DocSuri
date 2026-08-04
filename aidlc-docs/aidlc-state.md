@@ -953,3 +953,12 @@ _Resiliency 옵트인은 `requirements.md` 확정 전에 필수 요구사항 명
 - 검증: prod 10 템플릿 byte-parity · 실 invoke 양쪽 200(`account_purge` status ok — Aurora 0-ACU wake 포함) · CI 전체 green.
 - 교훈: ① buildx 기본 OCI index+provenance는 Lambda 이미지 미지원 — `--provenance=false --sbom=false` 필수 ② 수동 생성 ECR 리포는 lambda.amazonaws.com pull 정책 선부여 필요.
 - 다음: Phase 1-③(API Lambda(LWA)+Function URL 카나리 — NAT 기설), Phase 2(NFR-P6 폴링 전환), Phase 3(SQ1=A 검색 축소).
+
+## 서버리스 Phase 1-③ — API Lambda 카나리 (부분 완료 · 카나리 보류)
+
+- Date: 2026-08-04
+- Delivered (머지·기본 OFF): `docsuri-api` 이미지에 LWA 확장 + `backend/lambda_web.py` 부트스트랩, dev `ApiLambda`(2048MB/5min, PrivateEgress, **task-role 14 statements 패리티**), IAM+RESPONSE_STREAM Function URL, CloudFront OAC 오리진 **카나리 플래그 `-c api_origin=lambda`(기본 alb)**. ALB/Fargate 상시 유지 = 롤백 경로. PR #19 머지(`cae58bc`) + OAC 헤더 정책 후속 커밋.
+- **검증됨**: Function URL 직접 SigV4 호출 → `/readyz` **200, 14 모듈 0 blocking** (LWA·시크릿 부트스트랩·VPC 이그레스·Aurora 연결 전부 정상).
+- **미해결(카나리 보류)**: CloudFront OAC 경유 시 Function URL이 **403**(Lambda auth 계층 응답). 배제 완료: 리소스 정책 존재·SourceArn이 실제 서빙 배포(E10KAZ5I1PIFG9)와 일치·오리진이 Function URL·`allExcept[Authorization, Host]` 오리진 요청 정책 적용(SigV4 서명 헤더 충돌 제거)·전파 대기 후 재현. 잔여 용의선상: **OAC × RESPONSE_STREAM invoke mode 조합**, OAC signing behavior override 필요 여부. → dev CDN은 `api_origin` 기본값(alb)으로 **롤백 완료**(readyz 정상 확인).
+- 참고: dev `POST /api/search` 503은 신규 계정 OpenSearch 도메인이 **빈 인덱스**(코퍼스 재색인 미실행)여서 발생 — 카나리와 무관, Phase 3(SQ1=A 축소·재색인)에서 해소 예정.
+- 다음: 카나리 403 후속 조사(1-③ 잔여) 또는 Phase 2(NFR-P6 폴링 전환).
