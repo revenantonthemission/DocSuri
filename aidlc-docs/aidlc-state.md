@@ -937,3 +937,11 @@ _Resiliency 옵트인은 `requirements.md` 확정 전에 필수 요구사항 명
 - Gate: `serverless-migration-plan.md` SQ1~SQ6 **전부 A**(사용자 답변) — 관리형 OpenSearch 유지·API Lambda(LWA)·Aurora Sv2 0-ACU·OpenNext·Redis 단일 노드·DB-먼저.
 - Phase 0: 프로파일 컨텍스트·구 계정 하드코딩 정정(PR #12 선반영)·마이그레이션 분리(`RUN_MIGRATIONS_ON_STARTUP` 기구현) — 잔여는 Cost Explorer 4주 실측 보정뿐.
 - Current gate: **Phase 1-① 착수 대기**(RDS 스냅샷 → Aurora Serverless v2 min 0 ACU; dev 환경 559352512800).
+
+## 서버리스 Phase 1-① — Aurora Serverless v2 컷오버 완료
+
+- Date: 2026-08-04
+- Delivered: dev 환경(559352512800) DB = **Aurora PG 16.13 Serverless v2, min 0 / max 2 ACU** (t4g.micro 대체). `DB_POOL_MODE=null`(유휴 커넥션 해제 — 0-ACU pause 성립)·BFF GET 1회 재시도(SQ3) 이미지 반영. PR #14(구현)+#15(logical id 픽스) 머지.
+- 검증: 8 스택 전부 CREATE_COMPLETE · `/readyz` 14 모듈 0 blocking(Aurora 위 자가 마이그레이션) · 클러스터 MinCapacity 0.0 확인. 신규 엔드포인트: API `d1xjb785lmqp2v.cloudfront.net` · Web `dg5irndt67zg4.cloudfront.net`.
+- 교훈(런북 후보): ① CFN은 동일 logical id의 리소스 타입 변경 불가 — 신규 construct id 필수 ② `continue-update-rollback --resources-to-skip` 좀비 리소스는 이후 모든 업데이트를 오염 — dev는 스택 전체 재생성이 최단 경로(임포트 역순 삭제) ③ 명명 SQS 큐는 재생성 60s 쿨다운+고아 잔존 주의 ④ RemovalPolicy.RETAIN 인스턴스는 교체 전 수동 선삭제(ENI/SG 잠금 예방).
+- 다음: Phase 1-②(스케줄 ECS 2종→Lambda cron)·1-③(API Lambda 카나리+NAT) — 별도 착수. 0-ACU 실제 pause는 유휴 ~15분 후 `ServerlessDatabaseCapacity` 메트릭으로 확인.
