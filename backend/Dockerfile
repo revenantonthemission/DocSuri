@@ -35,5 +35,9 @@ USER docsuri
 # PYTHONPATH = /app so `backend.*` and top-level `discovery` resolve. Port 8000.
 ENV PYTHONPATH=/app
 EXPOSE 8000
+# Lambda Web Adapter (serverless-plan Phase 1-③): shipped as a Lambda EXTENSION so the same
+# image serves both platforms — on Lambda the runtime loads /opt/extensions/lambda-adapter and
+# proxies Function URL invokes to the HTTP server; on ECS nothing reads /opt/extensions (inert).
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
 # Use CMD so ECS command overrides can run background/maintenance modules from this shared image.
 CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -605,12 +605,20 @@ class ComputeStack(Stack):
         # 404 → target marked unhealthy → deployment circuit breaker rolls the stack back.
         self.service.target_group.configure_health_check(path="/readyz")
 
+        # Task-role policy statements are captured so the dev ApiLambda canary can replay
+        # them for role parity (Phase 1-③) — same statements, two principals.
+        _api_statements: list[iam.PolicyStatement] = []
+
+        def _grant_api(statement: iam.PolicyStatement) -> None:
+            self.service.task_definition.task_role.add_to_principal_policy(statement)
+            _api_statements.append(statement)
+
         # Grant the task role permission to read the RDS secret (for runtime DB connection)
         if self.db.secret:
             self.db.secret.grant_read(self.service.task_definition.task_role)
 
         # Allow the task to send verification email via SES, scoped to the docsuri.org identity.
-        self.service.task_definition.task_role.add_to_principal_policy(
+        _grant_api(
             iam.PolicyStatement(
                 actions=["ses:SendEmail", "ses:SendRawEmail"],
                 resources=[
@@ -632,7 +640,7 @@ class ComputeStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
         )
         ops_log_group.grant_write(self.service.task_definition.task_role)
-        self.service.task_definition.task_role.add_to_principal_policy(
+        _grant_api(
             iam.PolicyStatement(
                 # PutMetricData has no resource-level scoping; restrict by namespace instead.
                 actions=["cloudwatch:PutMetricData"],
@@ -640,7 +648,7 @@ class ComputeStack(Stack):
                 conditions={"StringEquals": {"cloudwatch:namespace": "DocSuri/Production"}},
             )
         )
-        self.service.task_definition.task_role.add_to_principal_policy(
+        _grant_api(
             iam.PolicyStatement(
                 # The adapter calls create_log_group on startup; AlreadyExists against the
                 # pre-created group above is harmless.
@@ -653,7 +661,7 @@ class ComputeStack(Stack):
         # Single papers bucket (Docsuri-Ingestion owns it) — referenced by ARN-by-name to avoid a
         # cross-stack export. API reads built doc-model/assets and read/writes the summary cache.
         _papers_bucket = f"arn:aws:s3:::docsuri-papers-fulltext-{self.account}"
-        self.service.task_definition.task_role.add_to_principal_policy(
+        _grant_api(
             iam.PolicyStatement(
                 actions=["s3:GetObject"],
                 resources=[f"{_papers_bucket}/doc-model/*", f"{_papers_bucket}/assets/*"],
@@ -664,7 +672,7 @@ class ComputeStack(Stack):
         # a hard 503 (correctly, to surface config faults), so every miss 503s AND the lazy
         # doc-model build never fires (the read raises before the enqueue) → bodies/summaries stay
         # "no source". Granting ListBucket makes a miss read as a miss → 404 → None → build.
-        self.service.task_definition.task_role.add_to_principal_policy(
+        _grant_api(
             iam.PolicyStatement(
                 actions=["s3:ListBucket"],
                 resources=[_papers_bucket],
@@ -673,13 +681,13 @@ class ComputeStack(Stack):
         # Full-text source (S3FullTextSource reads full-text/{paperId}/v{n}.txt) — the source-
         # selector fallback for summary/full-translation when the doc-model is absent. Without
         # this the fallback hits AccessDenied instead of degrading to abstract.
-        self.service.task_definition.task_role.add_to_principal_policy(
+        _grant_api(
             iam.PolicyStatement(
                 actions=["s3:GetObject"],
                 resources=[f"{_papers_bucket}/full-text/*"],
             )
         )
-        self.service.task_definition.task_role.add_to_principal_policy(
+        _grant_api(
             iam.PolicyStatement(
                 actions=["s3:GetObject", "s3:PutObject"],
                 # Store writes under ``summaries/`` (plural — SummaryCacheKey.object_path,
@@ -689,7 +697,7 @@ class ComputeStack(Stack):
                 resources=[f"{_papers_bucket}/summaries/*"],
             )
         )
-        self.service.task_definition.task_role.add_to_principal_policy(
+        _grant_api(
             iam.PolicyStatement(
                 actions=["s3:GetObject", "s3:PutObject"],
                 resources=[f"{_papers_bucket}/novelty/*"],
@@ -697,7 +705,7 @@ class ComputeStack(Stack):
         )
         # SendMessage: doc-model build and long-summary jobs. Novelty uses the real queue object
         # below so CloudFormation owns the dependency instead of a hand-built ARN string.
-        self.service.task_definition.task_role.add_to_principal_policy(
+        _grant_api(
             iam.PolicyStatement(
                 actions=["sqs:SendMessage"],
                 resources=[
@@ -717,7 +725,7 @@ class ComputeStack(Stack):
         # 4.6 / Haiku 4.5 are invoked via global inference profiles — the bare foundation-model ids
         # aren't on-demand invokable; a global profile can route the FM to any region, so grant the
         # FM across regions (mirrors the Cohere grant below) + the in-region profile.
-        self.service.task_definition.task_role.add_to_principal_policy(
+        _grant_api(
             iam.PolicyStatement(
                 actions=["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
                 resources=[
@@ -729,7 +737,7 @@ class ComputeStack(Stack):
         # U2 reader query-embedding: Bedrock invoke on the SAME model the writer uses (Cohere
         # v4). Must match DOCSURI_BEDROCK_MODEL_ID above and ingestion_stack._BEDROCK_MODEL_ID.
         # Without this the real read path 500s on the first search (AccessDenied at embed time).
-        self.service.task_definition.task_role.add_to_principal_policy(
+        _grant_api(
             iam.PolicyStatement(
                 actions=["bedrock:InvokeModel"],
                 resources=[
@@ -752,7 +760,7 @@ class ComputeStack(Stack):
         # baseline RRF order (a safe no-op). ACTIVATION is a deploy-time step the team owns: set
         # DOCSURI_RERANK_MODEL_ARN (Tokyo ARN) [+ DOCSURI_RERANK_REGION] and enable model access in
         # that region.
-        self.service.task_definition.task_role.add_to_principal_policy(
+        _grant_api(
             iam.PolicyStatement(
                 actions=["bedrock:Rerank"],
                 resources=[
@@ -761,7 +769,7 @@ class ComputeStack(Stack):
                 ],
             )
         )
-        self.service.task_definition.task_role.add_to_principal_policy(
+        _grant_api(
             iam.PolicyStatement(
                 actions=[
                     "es:ESHttpGet",
@@ -946,6 +954,77 @@ class ComputeStack(Stack):
             self.service.service.connections.security_groups[0], ec2.Port.tcp(6379)
         )
 
+        # dev (serverless-plan Phase 1-③): the API itself as a container-image Lambda from the
+        # SAME docsuri-api image. cmd boots backend.lambda_web, which injects the DB password
+        # (DB_SECRET_ARN — same constraint as the cron fns above) and then exec's the SAME
+        # uvicorn command as the image CMD. NO entrypoint override: the Lambda Web Adapter is
+        # baked into the image as an extension (/opt/extensions/lambda-adapter, Dockerfile) and
+        # proxies Function URL invokes to the uvicorn server on :8000 (PORT). The ALB/Fargate
+        # service above is KEPT regardless of the canary flag — it is the rollback path.
+        api_fn_url: lambda_.FunctionUrl | None = None
+        if dev:
+            assert self.db.secret is not None
+            api_fn = lambda_.DockerImageFunction(
+                self,
+                "ApiLambda",
+                code=lambda_.DockerImageCode.from_ecr(
+                    self.api_repo,
+                    tag_or_digest="latest",
+                    cmd=["python", "-m", "backend.lambda_web"],
+                ),
+                description="Dev API on Lambda (LWA + streaming Function URL, Phase 1-③)",
+                timeout=Duration.minutes(5),
+                memory_size=2048,
+                vpc=vpc,
+                vpc_subnets=ec2.SubnetSelection(
+                    subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+                ),
+                environment={
+                    **container_env,  # same mirror the cron fns use (incl. DB_POOL_MODE=null)
+                    "DB_SECRET_ARN": self.db.secret.secret_arn,
+                    # ECS keeps doing startup migrations — never race a second migrator here.
+                    "RUN_MIGRATIONS_ON_STARTUP": "0",
+                    "DB_POOL_MODE": "null",  # explicit: per-request conns for 0-ACU pause
+                    "PORT": "8000",  # where the LWA extension finds the uvicorn server
+                    "AWS_LWA_INVOKE_MODE": "response_stream",  # match the URL invoke mode
+                },
+            )
+            self.db.secret.grant_read(api_fn)
+            # SG allowances mirroring the API Fargate service: RDS 5432 (allow_from, as the
+            # cron fns), Redis 6379 (redis_sg ingress, as the ECS rule above), OpenSearch 443
+            # (egress allow_to, same direction trick as the ECS→OS rule).
+            self.db.connections.allow_from(api_fn, ec2.Port.tcp(5432))
+            # Role parity with the ECS task (Bedrock/S3/SQS/SES/ES/EventBridge etc.).
+            for _stmt in _api_statements:
+                api_fn.add_to_role_policy(_stmt)
+            redis_sg.add_ingress_rule(
+                api_fn.connections.security_groups[0], ec2.Port.tcp(6379)
+            )
+            api_fn.connections.allow_to(opensearch_domain.connections, ec2.Port.tcp(443))
+            # Observability parity with the cron fns (the adapter swallows AccessDenied).
+            api_fn.add_to_role_policy(
+                iam.PolicyStatement(
+                    actions=["cloudwatch:PutMetricData"],
+                    resources=["*"],
+                    conditions={
+                        "StringEquals": {"cloudwatch:namespace": "DocSuri/Production"}
+                    },
+                )
+            )
+            ops_log_group.grant_write(api_fn)
+            api_fn.add_to_role_policy(
+                iam.PolicyStatement(
+                    actions=["logs:CreateLogGroup"],
+                    resources=[ops_log_group.log_group_arn],
+                )
+            )
+            # Streaming Function URL, IAM-auth'd — never public. CloudFront reaches it with
+            # sigv4 via OAC when the canary flag below flips the CDN origin.
+            api_fn_url = api_fn.add_function_url(
+                auth_type=lambda_.FunctionUrlAuthType.AWS_IAM,
+                invoke_mode=lambda_.InvokeMode.RESPONSE_STREAM,
+            )
+
         # --- CloudFront: browser-trusted HTTPS, encrypted edge→origin, origin-authenticated ---
         # Viewer side uses the default *.cloudfront.net cert (no custom domain needed for the BFF).
         # Origin = origin.docsuri.org over HTTPS_ONLY so the edge→origin hop is encrypted and the
@@ -961,14 +1040,27 @@ class ComputeStack(Stack):
         # 쉽게 넘긴다(로컬 재현: 37초 완료, 30초 CloudFront가 먼저 끊음). frontend_stack.py
         # WebCdn에 적용한 것과 동일 완화(근본 해결은 비동기 job+폴링 전환 필요).
         if dev:
-            # dev: no origin.docsuri.org — edge→ALB generated DNS, plain HTTP; header auth kept.
-            api_origin = origins.HttpOrigin(
-                self.service.load_balancer.load_balancer_dns_name,
-                protocol_policy=cloudfront.OriginProtocolPolicy.HTTP_ONLY,
-                http_port=80,
-                custom_headers={"X-Origin-Verify": origin_verify},
-                read_timeout=Duration.seconds(60),
-            )
+            # Canary switch (Phase 1-③): `-c api_origin=lambda` points the CDN default
+            # behavior at the streaming Function URL via OAC (CloudFront sigv4-signs origin
+            # requests; the construct auto-adds the lambda:InvokeFunctionUrl permission scoped
+            # to this distribution). Default "alb" keeps the ALB origin EXACTLY as today —
+            # rollback is a context flag away, and the ALB/Fargate service exists either way.
+            if self.node.try_get_context("api_origin") == "lambda":
+                assert api_fn_url is not None
+                api_origin = origins.FunctionUrlOrigin.with_origin_access_control(
+                    api_fn_url,
+                    read_timeout=Duration.seconds(60),
+                )
+            else:
+                # dev: no origin.docsuri.org — edge→ALB generated DNS, plain HTTP; header
+                # auth kept.
+                api_origin = origins.HttpOrigin(
+                    self.service.load_balancer.load_balancer_dns_name,
+                    protocol_policy=cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+                    http_port=80,
+                    custom_headers={"X-Origin-Verify": origin_verify},
+                    read_timeout=Duration.seconds(60),
+                )
         else:
             api_origin = origins.HttpOrigin(
                 _ORIGIN_DOMAIN,
