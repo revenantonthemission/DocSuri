@@ -945,3 +945,11 @@ _Resiliency 옵트인은 `requirements.md` 확정 전에 필수 요구사항 명
 - 검증: 8 스택 전부 CREATE_COMPLETE · `/readyz` 14 모듈 0 blocking(Aurora 위 자가 마이그레이션) · 클러스터 MinCapacity 0.0 확인. 신규 엔드포인트: API `d1xjb785lmqp2v.cloudfront.net` · Web `dg5irndt67zg4.cloudfront.net`.
 - 교훈(런북 후보): ① CFN은 동일 logical id의 리소스 타입 변경 불가 — 신규 construct id 필수 ② `continue-update-rollback --resources-to-skip` 좀비 리소스는 이후 모든 업데이트를 오염 — dev는 스택 전체 재생성이 최단 경로(임포트 역순 삭제) ③ 명명 SQS 큐는 재생성 60s 쿨다운+고아 잔존 주의 ④ RemovalPolicy.RETAIN 인스턴스는 교체 전 수동 선삭제(ENI/SG 잠금 예방).
 - 다음: Phase 1-②(스케줄 ECS 2종→Lambda cron)·1-③(API Lambda 카나리+NAT) — 별도 착수. 0-ACU 실제 pause는 유휴 ~15분 후 `ServerlessDatabaseCapacity` 메트릭으로 확인.
+
+## 서버리스 Phase 1-② — 스케줄 태스크 Lambda 이행 완료
+
+- Date: 2026-08-04
+- Delivered: U9 retention cleanup(18:00 UTC)·계정 퍼지(03:30 UTC) = **docsuri-api 이미지 기반 Lambda cron**(awslambdaric, 10min/1024MB, PrivateEgress 서브넷) — dev EcsTask 타깃 대체. **dev NAT 1기 신설**(1-③ API Lambda와 공유). PR #17 머지(`d76a901`).
+- 검증: prod 10 템플릿 byte-parity · 실 invoke 양쪽 200(`account_purge` status ok — Aurora 0-ACU wake 포함) · CI 전체 green.
+- 교훈: ① buildx 기본 OCI index+provenance는 Lambda 이미지 미지원 — `--provenance=false --sbom=false` 필수 ② 수동 생성 ECR 리포는 lambda.amazonaws.com pull 정책 선부여 필요.
+- 다음: Phase 1-③(API Lambda(LWA)+Function URL 카나리 — NAT 기설), Phase 2(NFR-P6 폴링 전환), Phase 3(SQ1=A 검색 축소).
