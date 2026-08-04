@@ -1070,6 +1070,23 @@ class ComputeStack(Stack):
                 custom_headers={"X-Origin-Verify": origin_verify},
                 read_timeout=Duration.seconds(60),
             )
+        # OAC signs the origin request with SigV4 over the Host + Authorization headers, so
+        # forwarding the viewer's copies of either invalidates the signature (Function URL then
+        # 403s). DocSuri authenticates by session cookie, so dropping Authorization costs nothing.
+        api_origin_request_policy: cloudfront.IOriginRequestPolicy = (
+            cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER
+        )
+        if dev and self.node.try_get_context("api_origin") == "lambda":
+            api_origin_request_policy = cloudfront.OriginRequestPolicy(
+                self, "ApiLambdaOriginRequestPolicy",
+                comment="all viewer except Authorization/Host (OAC signs both)",
+                header_behavior=cloudfront.OriginRequestHeaderBehavior.deny_list(
+                    "Authorization", "Host",
+                ),
+                cookie_behavior=cloudfront.OriginRequestCookieBehavior.all(),
+                query_string_behavior=cloudfront.OriginRequestQueryStringBehavior.all(),
+            )
+
         self.cdn = cloudfront.Distribution(
             self, "ApiCdn",
             comment="docsuri-api - trusted HTTPS edge + encrypted, authenticated origin",
@@ -1080,9 +1097,23 @@ class ComputeStack(Stack):
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
                 allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
                 cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
-                origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+                origin_request_policy=api_origin_request_policy,
             ),
         )
+        if dev and api_fn is not None and self.node.try_get_context("api_origin") == "lambda":
+            # CDK 2.260's FunctionUrlOrigin.with_origin_access_control() emits a permission
+            # WITHOUT FunctionUrlAuthType, so the statement never authorizes *function URL*
+            # invokes and the URL auth layer 403s every OAC-signed request. Add the qualified
+            # permission explicitly (verified: policy/OAC/SourceArn were all otherwise correct).
+            lambda_.CfnPermission(
+                self, "ApiCdnInvokeFunctionUrl",
+                action="lambda:InvokeFunctionUrl",
+                function_name=api_fn.function_arn,
+                principal="cloudfront.amazonaws.com",
+                source_arn=self.cdn.distribution_arn,
+                function_url_auth_type="AWS_IAM",
+            )
+
         CfnOutput(
             self, "ApiCdnUrl",
             value=f"https://{self.cdn.distribution_domain_name}",
