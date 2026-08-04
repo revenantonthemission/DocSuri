@@ -51,6 +51,8 @@ from aws_cdk import (
 )
 from constructs import Construct
 
+from .profile import is_dev
+
 # Bedrock text-embedding model for the worker (Cohere Embed v4, 1024-dim — matches the
 # discovery/search side). cohere.embed-v4:0 is NOT invokable on-demand by its bare id; it must
 # go through the global cross-region inference profile. The adapter pins output_dimension to the
@@ -210,20 +212,26 @@ class IngestionStack(Stack):
         userdoc_age_alarm.add_alarm_action(cw_actions.SnsAction(ops_alerts))
 
         # --- S3: full-text storage (infra-design §4) ---
-        self.bucket = s3.Bucket(
-            self, "FulltextBucket",
-            bucket_name=f"docsuri-papers-fulltext-{Stack.of(self).account}",
-            versioned=True,
-            encryption=s3.BucketEncryption.S3_MANAGED,
-            intelligent_tiering_configurations=[
-                s3.IntelligentTieringConfiguration(
-                    name="archive-cold",
-                    archive_access_tier_time=Duration.days(180),
-                    deep_archive_access_tier_time=Duration.days(365),
-                ),
-            ],
-            removal_policy=RemovalPolicy.RETAIN,
-        )
+        # dev: the migrated data bucket already exists outside CFN — reference, never create.
+        if is_dev(self):
+            self.bucket = s3.Bucket.from_bucket_name(
+                self, "FulltextBucket", f"docsuri-papers-fulltext-{Stack.of(self).account}"
+            )
+        else:
+            self.bucket = s3.Bucket(
+                self, "FulltextBucket",
+                bucket_name=f"docsuri-papers-fulltext-{Stack.of(self).account}",
+                versioned=True,
+                encryption=s3.BucketEncryption.S3_MANAGED,
+                intelligent_tiering_configurations=[
+                    s3.IntelligentTieringConfiguration(
+                        name="archive-cold",
+                        archive_access_tier_time=Duration.days(180),
+                        deep_archive_access_tier_time=Duration.days(365),
+                    ),
+                ],
+                removal_policy=RemovalPolicy.RETAIN,
+            )
 
         # --- EventBridge: daily arXiv schedule (infra-design §3.1) ---
         events.Rule(
