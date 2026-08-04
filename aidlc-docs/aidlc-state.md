@@ -930,3 +930,10 @@ _Resiliency 옵트인은 `requirements.md` 확정 전에 필수 요구사항 명
 - 이월(권고만): U3 controller.py 1152줄 분할(800줄 상한 위반 — 별도 refactor) · U15 10토픽 cap 레이스(중복만 DB 강제) · U16 grant 대상 존재 확인(SEC-9 열거방지 관점에서 의도된 동작으로 판단) · U9 category 택소노미 검증.
 - Verification: backend 전체 스윕 exit 0 · tests/accounts 134 passed · shared pytest green · ruff backend 전역 clean · compileall OK · frontend tsc(touched) + vitest 37 passed.
 - Current gate: PR → CI green → develop 머지(사용자 지시).
+
+## 서버리스 마이그레이션 — 게이트 확정 + Phase 0 종결
+
+- Date: 2026-08-04
+- Gate: `serverless-migration-plan.md` SQ1~SQ6 **전부 A**(사용자 답변) — 관리형 OpenSearch 유지·API Lambda(LWA)·Aurora Sv2 0-ACU·OpenNext·Redis 단일 노드·DB-먼저.
+- Phase 0: 프로파일 컨텍스트·구 계정 하드코딩 정정(PR #12 선반영)·마이그레이션 분리(`RUN_MIGRATIONS_ON_STARTUP` 기구현) — 잔여는 Cost Explorer 4주 실측 보정뿐.
+- Current gate: **Phase 1-① 착수 대기**(RDS 스냅샷 → Aurora Serverless v2 min 0 ACU; dev 환경 559352512800).
