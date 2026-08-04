@@ -559,6 +559,17 @@ def test_worker_rejects_research_payload_without_wired_repo() -> None:
         )
 
 
+def test_worker_rejects_non_object_json_body_as_poison() -> None:
+    """배열/스칼라 JSON body는 재배달해도 영원히 실패 — poison(ack) 분류."""
+    with pytest.raises(InvalidWorkerPayload):
+        process_sqs_payload(
+            InMemoryEvidenceRepository(),
+            json.dumps(['not', 'an', 'object']),
+            orchestrator=_StubOrchestrator(),
+            research_repo_factory=InMemoryResearchRepository,
+        )
+
+
 def test_worker_rejects_malformed_research_payload() -> None:
     with pytest.raises(InvalidWorkerPayload):
         process_sqs_payload(
@@ -647,6 +658,21 @@ def test_dlq_drain_skips_already_resolved_research_job() -> None:
     # 이미 해소된 잡 — 추가 기록 없이 멱등 ack.
     assert len(repo.list_messages(owner, job_id)) == 1
     assert sqs.deleted == ['rh-2']
+
+
+def test_dlq_drain_drops_non_object_body_without_crashing() -> None:
+    """리뷰 발견 회귀 — 배열 JSON body가 .get() AttributeError로 드레인 루프를
+    죽이면 안 된다(구 코드는 parse가 catch-all 안에 있어 드롭됐다)."""
+    sqs = _FakeSqs([{'Body': json.dumps([1, 2, 3]), 'ReceiptHandle': 'rh-3'}])
+
+    drain_dlq_once(
+        sqs,
+        'dlq-url',
+        InMemoryEvidenceRepository,
+        research_repo_factory=InMemoryResearchRepository,
+    )  # no raise
+
+    assert sqs.deleted == ['rh-3']
 
 
 # ---------------------------------------------------------------------------

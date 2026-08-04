@@ -135,6 +135,10 @@ def process_sqs_payload(
     research_repo_factory: Callable[[], Any] | None = None,
 ) -> None:
     payload = _decode_payload(body)
+    if not isinstance(payload, dict):
+        # JSON이지만 객체가 아닌 body(배열·스칼라) — 재배달해도 영원히 실패하는
+        # poison이므로 즉시 종결(ack)되게 InvalidWorkerPayload로 분류한다.
+        raise InvalidWorkerPayload('payload must be a JSON object')
     # serverless Phase 2/NFR-P6 — research(agent chat) 긴 분석 턴은 같은 큐를 공유하되
     # `surface` 필드로 라우팅한다(sessions/jobs.py 계약).
     if payload.get('surface') == RESEARCH_JOB_SURFACE:
@@ -473,6 +477,14 @@ def _terminalize_dead_letter(
     except Exception:  # noqa: BLE001 — malformed DLQ 메시지는 삭제+로그로 종결
         log.exception(
             'evidence DLQ: dropping malformed message, receiptHandle=%s',
+            msg.get('ReceiptHandle'),
+        )
+        return True
+    if not isinstance(payload, dict):
+        # 객체가 아닌 JSON body — 여기서 걸러야 아래 .get()이 AttributeError로
+        # 드레인 루프(run_worker의 drain_dlq 호출)를 죽이지 않는다.
+        log.error(
+            'evidence DLQ: dropping non-object message, receiptHandle=%s',
             msg.get('ReceiptHandle'),
         )
         return True
