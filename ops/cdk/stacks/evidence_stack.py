@@ -93,6 +93,13 @@ class EvidenceStack(Stack):
                 # U2 discovery 재사용 검색 경로 활성화에 필수 — 없으면 hosts=[None]으로
                 # OpenSearch 클라이언트가 만들어져 검색이 전부 실패한다(PR #338 리뷰 Blocking #6).
                 'DOCSURI_OPENSEARCH_ENDPOINT': f'https://{opensearch_domain.domain_endpoint}',
+                # 같은 이유의 짝 (serverless Phase 2 E2E 발견): 임베더 model_id가 None이면
+                # build_evidence_orchestrator가 기동에서 TypeError로 죽어 워커가 크래시루프
+                # 한다 — API(compute_stack.py)와 동일 값을 미러링한다. Cohere v3는
+                # ap-northeast-2 미제공이라 Bedrock 리전은 교차 리전(ap-northeast-1).
+                'DOCSURI_BEDROCK_MODEL_ID': 'cohere.embed-multilingual-v3',
+                'DOCSURI_BEDROCK_REGION': 'ap-northeast-1',
+                'DOCSURI_OPENSEARCH_INDEX': 'docsuri-corpus-c3ml',
                 'CLOUDWATCH_NAMESPACE': 'DocSuri/Production',
                 'CLOUDWATCH_LOG_GROUP': '/docsuri/ops',
             },

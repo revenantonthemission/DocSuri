@@ -980,3 +980,14 @@ _Resiliency 옵트인은 `requirements.md` 확정 전에 필수 요구사항 명
 - Verification: backend 전체 스윕 **449 passed/1 skipped** · 신규 `test_research_async_jobs.py` **22 passed** · `test_evidence_streaming.py` 12 passed(keepalive 2건 포함) · touched ruff clean(잔여 2건은 develop 기존: intent.py E501·streaming.py UP017) · compileall OK · FE vitest **251/251 passed**(9개 스위트 로드 실패는 로컬 mathjax-full 미설치 — 본 변경 무관 영역).
 - 남은 리스크: Lambda 경로의 동기 SSE 턴(짧은 질의)은 5min 캡 내 완결 전제 — 실질 비구속. dev 실배포 검증(이미지 재배포 + 첨부 턴 E2E)은 배포 시점에 수행.
 - 다음: dev 이미지 재배포+E2E(Phase 2 실증) → 1-③ 카나리 재검증(PR #21 반영분) 또는 Phase 3(SQ1=A 검색 축소·재색인).
+
+## 서버리스 Phase 2 — dev 실배포 검증 (첨부 턴 E2E) 완료
+
+- Date: 2026-08-05 (KST 새벽) · develop `e63f011`(PR #23) 기준
+- 배포: `docsuri-api` 이미지 재빌드(linux/amd64, digest `b05f9c7a`) → API Fargate force redeploy(rollout COMPLETED · CDN `/readyz` 200) + 이미지 Lambda 3종 update-function-code(ApiLambda·계정 퍼지·U9 정리). evidence 워커는 scale-to-zero라 다음 기동에서 자동 승계.
+- E2E(첨부 턴 — E2E 계정은 `seed_admin` 1회성 ECS RunTask로 생성, 종료 후 소프트 삭제):
+  POST `/api/research/jobs` (Accept: text/event-stream + degraded PDF 첨부) → **즉시 pending JSON `{state: active}`** (스트리밍 아님 — NFR-P6 분기 실증) → 큐 1건 → 스케일업(0→1) → 워커 `surface=research` 처리 → **completed + 메시지 3건**(user · `[abstain] out_of_corpus` · 첨부 안내) → 큐 드레인 0 · DLQ 무유입. abstain은 신규 계정 OpenSearch **빈 인덱스**(Phase 3 재색인 전) 때문 — 비동기 배관 검증에는 무영향(orchestrator 완주·동기 계약 그대로).
+- **발견 ① (blocking · 본 브랜치 수정 + dev 반영 완료)**: EvidenceStack 워커 env에 `DOCSURI_BEDROCK_MODEL_ID`/`DOCSURI_BEDROCK_REGION`/`DOCSURI_OPENSEARCH_INDEX` 부재 → `build_evidence_orchestrator`가 기동 TypeError(`model_id=None`)로 **크래시루프**. 신규 계정에서 이 워커의 최초 실 기동이라 잠복해 있던 갭. compute_stack 값 미러링(`evidence_stack.py`), dev `Docsuri-Evidence` UPDATE_COMPLETE(task def rev 3 확인).
+- **발견 ② (UX 후속 권고)**: 워커 스케일업 알람 = **300s 메트릭 주기 × 1평가** — 콜드 큐에서 첫 응답까지 **~6분**(알람 대기 + 이미지 풀 + 기동). 배치 워커엔 무해하나 **대화형 첨부 턴**엔 길다. 후속 옵션: ① 알람 60s 주기 ② enqueue 시 API가 desired-count 부스트 ③ 업무시간 min 1. Phase 2 설계 자체는 폴링이라 UX가 깨지진 않음(진행 표시 유지).
+- 교훈: dev CDK 배포는 반드시 **`-c profile=dev`** — 없으면 prod 형상으로 synth되어 크로스스택 export 불일치(`Docsuri-Compute:...Postgres...`)로 즉시 롤백된다(무해·검증됨).
+- 다음: 1-③ 카나리 재검증(PR #21 반영분) 또는 Phase 3(SQ1=A 검색 축소·재색인 — abstain 해소).
