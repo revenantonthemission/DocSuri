@@ -1113,6 +1113,16 @@ class ComputeStack(Stack):
                 source_arn=self.cdn.distribution_arn,
                 function_url_auth_type="AWS_IAM",
             )
+            # 2025-10부터 AWS는 OAC→Function URL에 InvokeFunctionUrl 외에 InvokeFunction도
+            # 요구한다(신규 계정/URL은 유예 없음 — 카나리 재검증 2026-08-05에서 실측:
+            # 위 두 statement가 전부 있어도 403, 이 permission 추가 즉시 200).
+            lambda_.CfnPermission(
+                self, "ApiCdnInvokeFunction",
+                action="lambda:InvokeFunction",
+                function_name=api_fn.function_arn,
+                principal="cloudfront.amazonaws.com",
+                source_arn=self.cdn.distribution_arn,
+            )
 
         CfnOutput(
             self, "ApiCdnUrl",

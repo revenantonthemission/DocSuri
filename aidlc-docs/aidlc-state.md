@@ -991,3 +991,16 @@ _Resiliency 옵트인은 `requirements.md` 확정 전에 필수 요구사항 명
 - **발견 ② (UX 후속 권고)**: 워커 스케일업 알람 = **300s 메트릭 주기 × 1평가** — 콜드 큐에서 첫 응답까지 **~6분**(알람 대기 + 이미지 풀 + 기동). 배치 워커엔 무해하나 **대화형 첨부 턴**엔 길다. 후속 옵션: ① 알람 60s 주기 ② enqueue 시 API가 desired-count 부스트 ③ 업무시간 min 1. Phase 2 설계 자체는 폴링이라 UX가 깨지진 않음(진행 표시 유지).
 - 교훈: dev CDK 배포는 반드시 **`-c profile=dev`** — 없으면 prod 형상으로 synth되어 크로스스택 export 불일치(`Docsuri-Compute:...Postgres...`)로 즉시 롤백된다(무해·검증됨).
 - 다음: 1-③ 카나리 재검증(PR #21 반영분) 또는 Phase 3(SQ1=A 검색 축소·재색인 — abstain 해소).
+
+## 서버리스 Phase 1-③ 잔여 — OAC 카나리 재검증 **성공** (403 근본원인 2건 확정)
+
+- Date: 2026-08-05 · 카나리 배포: `-c profile=dev -c api_origin=lambda` (Compute UPDATE_COMPLETE 56s)
+- **검증됨 (CloudFront → OAC SigV4 → 스트리밍 Function URL → LWA → API 전 구간)**:
+  - GET `/readyz` → **200, 14 모듈 mounted·0 blocking** (Lambda 서빙)
+  - POST `/auth/login`(오답 자격증명) + `x-amz-content-sha256` 헤더 → **앱 401** (전 구간 정상)
+- **403 근본원인은 2건이 겹쳐 있었다**:
+  1. CDK 2.260 `FunctionUrlOrigin.with_origin_access_control()`이 FunctionUrlAuthType 미지정 permission 방출 → PR #21로 자격 있는 `lambda:InvokeFunctionUrl` 명시(선행 수정).
+  2. **AWS 2025-10 요건 변경**: OAC→Function URL은 CloudFront principal에 `lambda:InvokeFunctionUrl` **외에 `lambda:InvokeFunction`도** 요구(구 URL은 유예, 신규 계정·URL은 즉시 적용 — 본 dev 계정 해당). 실측: 1번 수정 후에도 403 → InvokeFunction permission 추가 즉시 200. 본 브랜치에서 CDK 코드화(`ApiCdnInvokeFunction`, 카나리 게이트 내).
+- **컷오버 전제조건 발견 (POST/PUT 페이로드 해시)**: OAC 서명은 본문 있는 요청에 클라이언트 `x-amz-content-sha256` 헤더를 요구 — 미동봉 POST는 403 signature mismatch. **BFF(HttpTransport)가 요청 본문 SHA-256을 계산해 동봉해야 Lambda 오리진 실사용 가능** — 그 전까지 카나리는 검증 후 ALB로 원복(로그인·검색·턴 전부 POST라 실사용 즉시 파손). 이 헤더는 ALB 오리진에는 무해(무시됨) — BFF 선반영 후 컷오버 재개 권장.
+- 정리: 카나리 검증 완료 후 CDN 오리진 **ALB 원복**(기본 플래그 재배포) + CLI 프로브 statement(`ApiCdnInvokeFunctionCanaryProbe`) 제거 — 코드화된 permission이 카나리 모드에서 대체.
+- 다음: BFF `x-amz-content-sha256` 동봉(작은 FE 변경) → Lambda 오리진 상시 전환 재심 · Phase 3(검색 축소·재색인).
