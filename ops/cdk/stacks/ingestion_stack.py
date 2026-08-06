@@ -572,6 +572,15 @@ class IngestionStack(Stack):
         self.queue.grant_send_messages(task_def.task_role)
         dlq.grant_send_messages(task_def.task_role)
         self.bucket.grant_read_write(task_def.task_role)
+        # B3 raw_backfill(재색인 벌크 프라임): arXiv requester-pays 벌크 버킷 접근 —
+        # 계정 이전에서 누락돼 있던 grant(Phase 3 재색인 첫 실행에서 ListObjectsV2
+        # AccessDenied로 실측 발견, 2026-08-06). RequestPayer는 코드가 동봉한다.
+        task_def.task_role.add_to_principal_policy(
+            iam.PolicyStatement(
+                actions=["s3:GetObject", "s3:ListBucket"],
+                resources=["arn:aws:s3:::arxiv", "arn:aws:s3:::arxiv/*"],
+            )
+        )
         self.docmodel_queue.grant_consume_messages(docmodel_task_def.task_role)
         docmodel_dlq.grant_send_messages(docmodel_task_def.task_role)
         self.bucket.grant_read_write(docmodel_task_def.task_role)
