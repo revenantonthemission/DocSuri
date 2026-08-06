@@ -9,8 +9,7 @@ vi.mock('server-only', () => ({}));
 import { HttpTransport } from '@/lib/api/httpTransport';
 import { binaryBody } from '@/lib/api/transport';
 
-const EMPTY_PAYLOAD_SHA256 =
-  'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+const EMPTY_PAYLOAD_SHA256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
 
 function sha256Hex(data: string | Uint8Array): string {
   return createHash('sha256').update(data).digest('hex');

@@ -36,6 +36,10 @@ _PUBLIC_PREFIXES = (
     # FR-28 email-change confirm — clicked from the verification mail (no session).
     # NOT "/auth/email-change/request" which is logged-in.
     "/auth/email-change/confirm",
+    # FR-28/BR-A11 M1 계정 복구 — 소프트 삭제가 모든 세션을 무효화하므로 이 요청은
+    # 구조상 세션을 가질 수 없다(자격증명 재증명이 곧 소유권 입증). 미등재 시 유일한
+    # 대상 사용자에게 도달 불가(컷오버 검증 중 실측 발견, 2026-08-06).
+    "/auth/account/reactivate",
     "/docs",
     "/openapi.json",
 )

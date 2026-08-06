@@ -1004,3 +1004,13 @@ _Resiliency 옵트인은 `requirements.md` 확정 전에 필수 요구사항 명
 - **컷오버 전제조건 발견 (POST/PUT 페이로드 해시)**: OAC 서명은 본문 있는 요청에 클라이언트 `x-amz-content-sha256` 헤더를 요구 — 미동봉 POST는 403 signature mismatch. **BFF(HttpTransport)가 요청 본문 SHA-256을 계산해 동봉해야 Lambda 오리진 실사용 가능** — 그 전까지 카나리는 검증 후 ALB로 원복(로그인·검색·턴 전부 POST라 실사용 즉시 파손). 이 헤더는 ALB 오리진에는 무해(무시됨) — BFF 선반영 후 컷오버 재개 권장.
 - 정리: 카나리 검증 완료 후 CDN 오리진 **ALB 원복**(기본 플래그 재배포) + CLI 프로브 statement(`ApiCdnInvokeFunctionCanaryProbe`) 제거 — 코드화된 permission이 카나리 모드에서 대체.
 - 다음: BFF `x-amz-content-sha256` 동봉(작은 FE 변경) → Lambda 오리진 상시 전환 재심 · Phase 3(검색 축소·재색인).
+
+## 서버리스 Phase 1-③ 완결 — dev API 오리진 Lambda 컷오버 **완료**
+
+- Date: 2026-08-06 · Branch: `feature/bff-oac-payload-hash`
+- **BFF 페이로드 해시**: `HttpTransport` — 비-GET 요청에 전송 바이트의 SHA-256을 `x-amz-content-sha256`으로 상시 동봉(JSON=직렬화 문자열, 바이너리=바이트, 본문 없음=빈 페이로드 해시; 해시와 body가 같은 바이트를 가리키도록 전송 바이트를 선확정). `proxyEventStream`(SSE POST) 동일 계약. ALB 오리진은 무시하므로 오리진과 무관하게 안전. 테스트 4종(`httpTransportPayloadHash.test.ts`) + FE 전체 338 passed.
+- **컷오버 영구화**: `cdk.json`에 `api_origin: lambda` 기본값(dev 전용 — `if dev:` 게이트, prod 무영향). 롤백 = `-c api_origin=alb` 1회 배포(ALB/Fargate 상시 대기).
+- **검증(실 브라우저 경로 — web CDN → BFF → API CDN → OAC → Lambda)**: ① GET `/readyz` 200(14 모듈) ② POST `/bff/auth/login` 200 + 세션 발급 ③ **SSE 턴 `text/event-stream` — progress×2 → result, 2.5s** (Lambda RESPONSE_STREAM 스트리밍 관통) ④ POST 계정 삭제 200(정리). E2E 계정은 seed_admin 멱등 재승격으로 복구 후 재삭제.
+- **운영 실수 기록**: 첫 컷오버 배포를 stale base(PR #25 미포함) 브랜치에서 실행 → `ApiCdnInvokeFunction` 누락으로 403 재현 — rebase 후 재배포로 해소. 교훈: **배포 전 브랜치가 최신 develop을 포함하는지 확인**(gh 머지 후 로컬 fetch 필수).
+- **발견(선행 버그, 본 브랜치 1-line 수정)**: `/auth/account/reactivate`가 auth 미들웨어 `_PUBLIC_PREFIXES`에 미등재 — 소프트 삭제가 전 세션을 무효화하므로 이 요청은 구조상 세션이 없어 **유일한 대상 사용자에게 도달 불가**(FR-28 복구 플로우 전면 불통, 오리진 무관 선행 결함). 수정 반영·middleware 16 passed — 단 **dev 백엔드 이미지 미재배포**(다음 이미지 배포에 승계).
+- 상태: **Phase 1-③ 종결** — dev API는 Lambda(LWA) 상시 서빙. 남은 축: 워커 콜드 6분 UX(Phase 2 후속) · Phase 3(검색 축소·재색인).
