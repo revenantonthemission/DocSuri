@@ -1,6 +1,8 @@
 {
   "app": "python3 app.py",
   "context": {
+    "_comment_api_origin": "serverless 1-3 cutover (2026-08-05): dev API CDN origin defaults to the Lambda Function URL (OAC). Only read inside `if dev:` in compute_stack.py - prod ignores it. Rollback = deploy with `-c api_origin=alb` (the ALB/Fargate service stays warm).",
+    "api_origin": "lambda",
     "@aws-cdk/aws-ecs:enableExecuteCommand": true,
     "_comment_orcid": "ORCID OIDC (FR-27) durable config so EVERY deploy (manual + cd.yml auto cdk-deploy) wires it — was -c-flag-only, which made a context-less deploy silently REVERT ORCID (client_id -> '', secret unwired). client_id is public (embedded in the auth URL); secret_arn is a reference (the secret value stays in Secrets Manager).",
     "orcid_oidc_client_id": "APP-VX2DFHARHVUC09Z5",

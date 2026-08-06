@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { HttpTransport } from '@/lib/api/httpTransport';
 import { MockTransport } from '@/lib/api/mockTransport';
@@ -138,7 +139,15 @@ async function proxyEventStream(
 
   const method = options?.method ?? 'GET';
   const headers = new Headers({ accept: 'text/event-stream' });
-  if (options?.body !== undefined) headers.set('content-type', 'application/json');
+  if (options?.body !== undefined) {
+    headers.set('content-type', 'application/json');
+    // OAC(Lambda Function URL) 오리진의 본문 요청 요건 — HttpTransport와 동일 계약
+    // (미동봉 POST → 403 signature mismatch, 1-③ 카나리 실측). ALB 오리진은 무시.
+    headers.set(
+      'x-amz-content-sha256',
+      createHash('sha256').update(options.body).digest('hex'),
+    );
+  }
   const cookie = req.headers.get('cookie');
   if (cookie) headers.set('cookie', cookie);
 
