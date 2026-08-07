@@ -1014,3 +1014,19 @@ _Resiliency 옵트인은 `requirements.md` 확정 전에 필수 요구사항 명
 - **운영 실수 기록**: 첫 컷오버 배포를 stale base(PR #25 미포함) 브랜치에서 실행 → `ApiCdnInvokeFunction` 누락으로 403 재현 — rebase 후 재배포로 해소. 교훈: **배포 전 브랜치가 최신 develop을 포함하는지 확인**(gh 머지 후 로컬 fetch 필수).
 - **발견(선행 버그, 본 브랜치 1-line 수정)**: `/auth/account/reactivate`가 auth 미들웨어 `_PUBLIC_PREFIXES`에 미등재 — 소프트 삭제가 전 세션을 무효화하므로 이 요청은 구조상 세션이 없어 **유일한 대상 사용자에게 도달 불가**(FR-28 복구 플로우 전면 불통, 오리진 무관 선행 결함). 수정 반영·middleware 16 passed — 단 **dev 백엔드 이미지 미재배포**(다음 이미지 배포에 승계).
 - 상태: **Phase 1-③ 종결** — dev API는 Lambda(LWA) 상시 서빙. 남은 축: 워커 콜드 6분 UX(Phase 2 후속) · Phase 3(검색 축소·재색인).
+
+## 서버리스 Phase 3 — SQ1=A 재색인 (⏸ 중단 · 사용자 비용 결정)
+
+- Date: 2026-08-06~07 · 중단: **2026-08-07, 사용자 결정("재색인 비용 과다")** — ~1k/87k papers 시점
+- 실행 체인(B3): `raw_backfill` → `reembed_provision` → `reparse`(4분기 샤드) — finalize/cutover 미도달
+- **raw_backfill 완료**: 87,006/87,395 코퍼스-월 PDF 캐시 프라임(6h). 과정 실측 2건 — ① **계정 이전 갭: `s3://arxiv` IAM grant 부재**(ListObjectsV2 AccessDenied) → `ingestion_stack.py` 수정 **PR #27 머지** ② 무필터 실행은 12,055 tar 전량 스캔(~21h/전송 ~$94) 함정 — `DOCSURI_RAW_BACKFILL_MONTHS` 샤딩(도구 자체 설계)으로 2,276 tar/~6h/~$23. 하베스트 타깃 110,454 중 코퍼스 월 밖 ~23k(2024-12 이전 제출·2025 갱신분)는 의도적 제외(~0.4% 손실 수용).
+- **reparse 블로커 3건 — 전부 계정 이전 갭, 전부 해소**:
+  1. **dev Aurora에 ingestion 마이그레이션 001~003 전무**(`canonical_dedup_state` → `dedup_state` 순차 실측 발견). 백엔드 startup 마이그레이션은 ingestion 경로를 의도적으로 제외("ingestion ships in its own image")하므로 신규 DB엔 풀 마이그레이터가 별도 필요. API 이미지 one-off RunTask(`python -c` + DDL env)로 001+002+003 적용, `_migrations` 원장 기록 — **신규 환경 셋업 절차에 풀 마이그레이터 단계 추가 필요**.
+  2. **Bedrock `cohere.embed-multilingual-v3` Marketplace agreement 부재**(ap-northeast-1) — 전 페이퍼 임베드 AccessDenied. `aws bedrock create-foundation-model-agreement`로 구독(사용량 과금 $0.10/1M tokens, 유휴 $0).
+  3. **워커 태스크 8GB OOM**(grobid+worker 공유·per-container 무제한) — 4샤드 전부 시간차 exit 137. run-task `"memory":"16384"` 오버라이드로 안정. **CDK 후속: 태스크데프 메모리 상향 또는 per-container limit**.
+- **파이프라인 실증**: cached docmodel → dedup → chunk → embed → index 완주(~8s/paper/샤드, 118/32/89 청크 샘플). 샤딩 = `DOCSURI_BACKFILL_START/END` 분기 4개(reparse.py 설계대로).
+- **비용 실측 → 중단 결정**: CloudWatch 실측 **~25k embed-tokens/paper**(19.8M tokens/~800 papers) → 완주 예상 **~$330**(embedding ~$220 지배 + 전송 $50 + Fargate ~$42 + Aurora ~$11). 디스크 리스크 동시 확인: 50GB 볼륨에 초기 raw 소모 ~3MB/paper — 병합 반영해도 full-body 멀티청크 87k는 45~90GB로 **§3.3의 "재색인·프루닝 필요" 전제 재확인**. 침몰 ~$65-70 · 회피 ~$270.
+- **잔존 자산(재개 시 잔여 ~$270, 전부 멱등)**: raw cache 87k PDFs(`docsuri-papers-fulltext`, ~$5-6/mo) · 부분 인덱스 ~2.3GB(`docsuri-corpus-c3ml`) · 마이그레이션/IAM/Bedrock 구독 영구. 재개 = 4샤드 16GB run-task → `reembed_finalize` → `reembed_cutover`.
+- **설계 갭 발견(후속)**: reparse asset 경로가 cache-only 모드에서도 arXiv 라이브 페치(ar5iv html·`/src`·`/pdf`) — `reparse.py` 독스트링("NO arXiv per-paper fetch")과 불일치.
+- 참고: `docsuri-backups-559352512800`엔 PG dump 10.6MB×2(2026-07-23)뿐 — 코퍼스 아티팩트 없음(재색인 대체 불가). 코퍼스 백업은 완주 후 OpenSearch 스냅샷으로만 생성 가능.
+- 다음(재개 조건): **청크 프루닝 결정**(embedding $와 디스크를 동시에 축소) 또는 볼륨 200GB(+$20/mo) 채택 후 재개 · 또는 로컬 이행(완주 후 스냅샷/복원이 최저비용 경로).

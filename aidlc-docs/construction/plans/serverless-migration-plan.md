@@ -95,7 +95,7 @@
 | **0 준비** | dev/prod 프로파일 컨텍스트 도입, 구 계정 하드코딩 3건 정정(§1 노트), 시작 시 마이그레이션 분리 | 전 유닛 / 전 스택 | 커밋 리버트 (무중단) |
 | **1 퀵윈** | ① RDS 스냅샷 → **Aurora Sv2**(min 0 ACU) ② 스케줄 ECS 2종 → **Lambda cron** ③ API → **Lambda(LWA)+Function URL+CloudFront** 카나리(NAT 신설 포함) — 기존 ALB/Fargate 병행 유지 | U2·U3·U4·U7·U8·U9·U10·U11 API 슬라이스 / Compute(분할: Db/ApiLambda), Evidence·Novelty·Summarization·Ingestion(DSN 참조 갱신) | ① 스냅샷 복원 역방향 ② EventBridge 타깃 원복 ③ CloudFront 오리진을 ALB로 즉시 스위치백 |
 | **2 워커 선별** | docmodel-builder Lambda 이행은 **웨이크업 지연이 문제일 때만**(이득 $0 명시); NFR-P6 폴링 전환(evidence 턴 비동기화) — 60s 엣지 타임아웃 완화의 근본 해결. **✅ 완료(2026-08-04)**: NFR-P6 분기 — 첨부 동반 research 턴 = 비동기 잡+폴링(evidence 워커 큐 공유), 짧은 질의 = EV2 SSE + 15s keepalive; docmodel-builder = **스킵 확정**(웨이크업 지연 문제 미관측). 상세: aidlc-state.md "서버리스 Phase 2" | U1·U11·U13 / Ingestion·Evidence·Frontend | SQS 컨슈머 스위치(이벤트소스 매핑 disable → Fargate desired 복원) |
-| **3 검색/벡터 결정** | SQ1 확정 실행: 관리형 축소(재색인·코퍼스 프루닝) 또는 pgvector 파일럿. AOSS는 코퍼스/트래픽이 OCU 바닥을 정당화할 때만 재심 | U1·U2 / Search·Ingestion·Compute | 인덱스 alias 스왑 원복(`docsuri-corpus` alias 패턴 기존 보유) |
+| **3 검색/벡터 결정** | SQ1 확정 실행: 관리형 축소(재색인·코퍼스 프루닝) 또는 pgvector 파일럿. AOSS는 코퍼스/트래픽이 OCU 바닥을 정당화할 때만 재심. **⏸ 중단(2026-08-07, 사용자 비용 결정)**: raw cache 프라임 완료(87k PDFs)·파이프라인 실증(~1k papers) 후 완주 예상 ~$330(임베딩 지배)로 중단 — 잔존 자산으로 재개 시 잔여 ~$270, 재개 전제 = 청크 프루닝 결정 또는 볼륨 증설. 상세: aidlc-state.md "서버리스 Phase 3" | U1·U2 / Search·Ingestion·Compute | 인덱스 alias 스왑 원복(`docsuri-corpus` alias 패턴 기존 보유) |
 | **Fargate 잔류 (최종)** | harvester·userdoc(GROBID 20GB/80GB disk), novelty(600s×2+재시도), evidence(900s+DLQ 드레인), summarization(map-reduce) — **이미 유휴 $0이므로 잔류가 곧 서버리스 경제성** | U1·U7·U11·U12 | — |
 
 ## §6 질문 게이트 (SQ — 답변 후 Phase 착수)
