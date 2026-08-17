@@ -140,6 +140,24 @@ def test_build_publisher_failfast_in_prod(monkeypatch):
     assert isinstance(build_account_deleted_publisher(), EventBridgeAccountDeletedPublisher)
 
 
+def test_build_publisher_explicit_none_allows_logging_in_prod(monkeypatch):
+    """구독자 부재를 명시 선언한 경우(풀-로컬 서빙)에는 프로덕션에서도 Logging을 허용한다.
+
+    페일패스트가 막으려는 위험은 '구독자가 있는데 env 누락으로 조용히 발행이 끊기는 것'이므로,
+    미설정(=사고)과 "none"(=선언)은 반드시 다르게 동작해야 한다. 두 경로를 한 테스트에서
+    대조해 둔다 — 누군가 sentinel을 지우면 위쪽 페일패스트 단언이 먼저 깨진다.
+    """
+    monkeypatch.setenv("ENV", "production")
+
+    monkeypatch.delenv("ACCOUNT_EVENTS_BUS", raising=False)
+    with pytest.raises(RuntimeError):  # 미설정은 여전히 사고로 취급
+        build_account_deleted_publisher()
+
+    for sentinel in ("none", "NONE", " none "):
+        monkeypatch.setenv("ACCOUNT_EVENTS_BUS", sentinel)
+        assert isinstance(build_account_deleted_publisher(), LoggingAccountDeletedPublisher)
+
+
 # ── S6: TOTP 시크릿 at-rest 암호화 ─────────────────────────────────────────────
 def test_totp_secret_encrypted_at_rest(monkeypatch, session):
     monkeypatch.setenv("TOTP_SECRET_KEY", Fernet.generate_key().decode())

@@ -1,7 +1,15 @@
 # Full-local backend dependencies (deploy unit ① support services).
-# Optional: the app-shell boots without these (SQLite, no Redis). Bring them up when you
-# need the accounts (U3) module's real persistence + session store, or the discovery (U2)
-# real search read path (OpenSearch).
+#
+# This machine IS the server (AWS decommissioned 2026-08-17), so these are no longer
+# optional dev conveniences — they are the production data plane. Three consequences,
+# each load-bearing:
+#
+#   1. restart: unless-stopped — OrbStack restarts these when the daemon starts at login,
+#      which is what makes the service survive a reboot. Without it nothing comes back.
+#   2. Every port is bound to 127.0.0.1, NOT 0.0.0.0. The app runs natively on this host,
+#      so loopback is sufficient; publishing on 0.0.0.0 would expose Postgres (docsuri/
+#      docsuri), Redis and MinIO to every device on the LAN with no meaningful auth.
+#   3. OpenSearch disk watermarks are set explicitly — see the opensearch service.
 #
 #   docker compose -f backend/docker-compose.yml up -d
 #   export DATABASE_URL=postgresql+psycopg://docsuri:docsuri@localhost:5432/docsuri
@@ -15,12 +23,13 @@
 services:
   postgres:
     image: postgres:16
+    restart: unless-stopped
     environment:
       POSTGRES_USER: docsuri
       POSTGRES_PASSWORD: docsuri
       POSTGRES_DB: docsuri
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - docsuri-pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -31,10 +40,11 @@ services:
 
   redis:
     image: redis:7
+    restart: unless-stopped
     # accounts/U3 is Fail-Closed on session-store loss (NFR-Design) — multi-AZ in prod;
     # a single node is fine for local dev.
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -46,17 +56,28 @@ services:
   # and U2 reader share ONE index (docsuri-corpus-v1, vector-spec §4).
   opensearch:
     image: opensearchproject/opensearch:2.13.0
+    restart: unless-stopped
     environment:
       discovery.type: single-node
       DISABLE_SECURITY_PLUGIN: "true"
       OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
       bootstrap.memory_lock: "true"
+      # Disk-based shard allocation is designed to shuffle shards BETWEEN nodes. On a
+      # single node there is nowhere to relocate to, so the default watermarks (85/90/95%)
+      # only produce failure modes: above 90% the node refuses new shards, and at 95%
+      # flood_stage flips every index to read-only and ingestion silently stops writing.
+      # This host runs at ~92% by design (24 GB of paper artifacts on an internal disk),
+      # so the thresholds are raised to leave flood_stage as a genuine last-resort brake.
+      cluster.routing.allocation.disk.threshold_enabled: "true"
+      cluster.routing.allocation.disk.watermark.low: "96%"
+      cluster.routing.allocation.disk.watermark.high: "97%"
+      cluster.routing.allocation.disk.watermark.flood_stage: "98%"
     ulimits:
       memlock:
         soft: -1
         hard: -1
     ports:
-      - "9200:9200"
+      - "127.0.0.1:9200:9200"
     volumes:
       - docsuri-osdata:/usr/share/opensearch/data
     healthcheck:
@@ -72,13 +93,14 @@ services:
   # ~25 GB of irreplaceable parse/embed artifacts must stay visible to host backups.
   minio:
     image: minio/minio:latest
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: docsuri
       MINIO_ROOT_PASSWORD: docsuri-local
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - ${HOME}/DocSuriData/minio:/data
     healthcheck:
@@ -91,8 +113,9 @@ services:
   # evidence/novelty). Queue names mirror the deleted AWS queues 1:1 — see elasticmq.conf.
   elasticmq:
     image: softwaremill/elasticmq-native:latest
+    restart: unless-stopped
     ports:
-      - "9324:9324"
+      - "127.0.0.1:9324:9324"
     volumes:
       - ./elasticmq.conf:/opt/elasticmq.conf:ro
 
