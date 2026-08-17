@@ -449,7 +449,13 @@ def get_email_client(
     """환경변수/스위치에 따라 이메일 클라이언트를 반환한다.
 
     우선순위: ``SES_MOCK=true`` 또는 ``env=local`` → Mock; ``EMAIL_PROVIDER=resend``(+``RESEND_API_KEY``)
-    → Resend; 그 외 → SES. Resend로 지정됐는데 키가 없으면 크게 경보하고 SES로 폴백한다."""
+    → Resend; 그 외 → SES.
+
+    Resend로 지정됐는데 키가 없으면 **즉시 예외**를 던진다. 과거에는 SES로 폴백했으나, AWS 폐기
+    (2026-08-17) 이후 SES 아이덴티티가 존재하지 않으므로 그 폴백은 '조용히 아무 메일도 보내지 않는'
+    경로가 된다 — 가입자는 201을 받고 인증 메일을 영영 못 받으며 PENDING으로 방치된다. 본 팩토리는
+    요청 단위 DI(get_signup_service 등)에서 호출되므로, 예외는 부팅을 막지 않고 해당 엔드포인트만
+    500으로 실패시킨다(= 조용한 유실 대신 눈에 띄는 실패). SES가 필요하면 EMAIL_PROVIDER=ses로 둘 것."""
     is_mock = os.getenv("SES_MOCK", "false").lower() == "true" or env.lower() == "local"
     if is_mock:
         logger.info("Using MockEmailClient for account verification link.")
@@ -461,7 +467,11 @@ def get_email_client(
         if api_key:
             logger.info("Using Resend email client for account verification link.")
             return ResendEmailClient(api_key=api_key, sender_email=sender_email, observability_hub=observability_hub)
-        logger.error("EMAIL_PROVIDER=resend 이지만 RESEND_API_KEY 미설정 — SES로 폴백합니다.")
+        raise RuntimeError(
+            "EMAIL_PROVIDER=resend 이지만 RESEND_API_KEY가 비어 있습니다. SES 폴백은 제거됐습니다 "
+            "(AWS 폐기로 아이덴티티 부재 → 조용한 메일 유실). 키를 설정하거나, 의도적으로 메일을 "
+            "끄려면 SES_MOCK=true(로그로 링크 출력) 또는 EMAIL_PROVIDER=ses를 사용하십시오."
+        )
 
     logger.info("Using production SESEmailClient for account verification link.")
     return SESEmailClient(sender_email=sender_email, region_name=region, observability_hub=observability_hub)
