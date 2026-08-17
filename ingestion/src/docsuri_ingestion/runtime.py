@@ -21,6 +21,7 @@ from .adapters.local import (
     InMemoryVectorIndex,
     sample_metadata,
 )
+from .adapters.openai_compat import OpenAICompatEmbeddingPort
 from .adapters.postgres import PostgresControlPlaneStore
 from .application import IngestionPipelineService, RefreshOrchestrationService
 from .corpus_sources import CorpusSourceAdapterSet
@@ -193,10 +194,19 @@ def build_production_runtime(settings: IngestionSettings) -> RuntimeServices:
     pipeline = IngestionPipelineService(
         arxiv=arxiv,
         full_text_store=S3FullTextStore(bucket=settings.s3_bucket or ""),
-        embedding=BedrockCohereEmbeddingPort(
-            model_id=settings.bedrock_model_id or "",
-            # embed region decoupled from aws_region (OpenSearch SigV4): Cohere v3 isn't in apne2.
-            region_name=settings.embed_region or settings.aws_region,
+        embedding=(
+            # Full-local serving: OpenAI-compatible server (Ollama /v1, rapid-mlx, …).
+            OpenAICompatEmbeddingPort(
+                api_base=settings.embedding_api_base or "http://localhost:11434/v1",
+                model=settings.embedding_model,
+            )
+            if settings.embedding_provider_resolved == "openai"
+            else BedrockCohereEmbeddingPort(
+                model_id=settings.bedrock_model_id or "",
+                # embed region decoupled from aws_region (OpenSearch SigV4):
+                # Cohere v3 isn't available in apne2.
+                region_name=settings.embed_region or settings.aws_region,
+            )
         ),
         vector_index=OpenSearchVectorIndex(
             endpoint=settings.opensearch_endpoint or "",

@@ -332,17 +332,29 @@ def test_verification_link_base_prefers_public_app_url(monkeypatch):
 
 
 def test_email_factory_selects_resend_when_configured(monkeypatch):
-    """EMAIL_PROVIDER=resend + RESEND_API_KEY → ResendEmailClient; 키 없으면 SES로 폴백."""
+    """EMAIL_PROVIDER=resend + RESEND_API_KEY → ResendEmailClient; 키가 없으면 페일패스트.
+
+    과거에는 키 부재 시 SES로 폴백했다. AWS 폐기 후 SES 아이덴티티가 없으므로 그 폴백은
+    '가입은 201인데 인증 메일은 영영 안 오는' 조용한 유실 경로였다 — 그래서 예외로 바꿨다.
+    EMAIL_PROVIDER=ses를 명시하면 SES 경로는 그대로 살아 있다(이식성 유지).
+    """
     from backend.modules.accounts.integrations import email as email_mod
 
     monkeypatch.setenv("EMAIL_PROVIDER", "resend")
     monkeypatch.setenv("RESEND_API_KEY", "re_test_key")
-    client = email_mod.get_email_client(env="production", sender_email="no-reply@docsuri.org")
+    client = email_mod.get_email_client(env="production", sender_email="no-reply@mail.rvnnt.dev")
     assert isinstance(client, email_mod.ResendEmailClient)
 
     monkeypatch.delenv("RESEND_API_KEY", raising=False)
-    fallback = email_mod.get_email_client(env="production", sender_email="no-reply@docsuri.org")
-    assert isinstance(fallback, email_mod.SESEmailClient)
+    with pytest.raises(RuntimeError, match="RESEND_API_KEY"):
+        email_mod.get_email_client(env="production", sender_email="no-reply@mail.rvnnt.dev")
+
+    # 명시적 SES 선택은 계속 SES를 준다 — 페일패스트는 resend 경로에만 적용된다.
+    monkeypatch.setenv("EMAIL_PROVIDER", "ses")
+    assert isinstance(
+        email_mod.get_email_client(env="production", sender_email="no-reply@mail.rvnnt.dev"),
+        email_mod.SESEmailClient,
+    )
 
 
 @pytest.mark.asyncio

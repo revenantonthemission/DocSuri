@@ -1,22 +1,21 @@
 #!/usr/bin/env bash
-# DocSuri local-serving Postgres backup — dump inside the compose container → verify → S3.
+# DocSuri local-serving Postgres backup — dump inside the compose container → verify → iCloud.
 #
 # The Mac mini serves DocSuri from backend/docker-compose.yml with no Multi-AZ safety net,
 # so this script IS the durability story: dump, prove the archive is readable
-# (pg_restore --list), then ship it off-machine to the personal-account bucket.
+# (pg_restore --list), then ship it off-machine via iCloud Drive (AWS decommissioned
+# 2026-08-17 — no S3 anymore).
 #
 # Cron (daily 03:30):
 #   30 3 * * * $HOME/Projects/DocSuri/ops/local/backup-db.sh >> $HOME/Library/Logs/docsuri-backup.log 2>&1
 #
-# Requires: the compose stack's postgres service running, and an AWS profile allowed
-# s3:PutObject on the bucket (docsuri-dev). No host pg_dump needed — dump and verify both
-# run inside the postgres:16 container, so client/server versions can never drift.
+# Requires: the compose stack's postgres service running, and iCloud Drive signed in.
+# No host pg_dump needed — dump and verify both run inside the postgres:16 container,
+# so client/server versions can never drift.
 set -euo pipefail
 
 DOCSURI_REPO="${DOCSURI_REPO:-$(cd "$(dirname "$0")/../.." && pwd)}"
 COMPOSE_FILE="$DOCSURI_REPO/backend/docker-compose.yml"
-BUCKET="${DOCSURI_BACKUP_BUCKET:-docsuri-backups-559352512800}"
-export AWS_PROFILE="${AWS_PROFILE:-docsuri-dev}"
 DB_USER="${DOCSURI_DB_USER:-docsuri}"
 DB_NAME="${DOCSURI_DB_NAME:-docsuri}"
 
@@ -37,6 +36,12 @@ docker compose -f "$COMPOSE_FILE" exec -T postgres bash -c "
 docker compose -f "$COMPOSE_FILE" cp postgres:/tmp/docsuri-backup.dump "$DUMP"
 docker compose -f "$COMPOSE_FILE" exec -T postgres rm -f /tmp/docsuri-backup.dump
 
-KEY="postgres/docsuri-$STAMP.dump"
-aws s3 cp "$DUMP" "s3://$BUCKET/$KEY" --sse AES256 --no-progress
-echo "[$(date '+%F %T')] backup ok: s3://$BUCKET/$KEY ($(du -h "$DUMP" | cut -f1))"
+# Off-machine copy = iCloud Drive (AWS decommissioned 2026-08-17; the old docsuri-backups
+# S3 bucket is gone). iCloud syncs the file off this Mac, which is the durability point —
+# the local Docker volume and this dump must not share a single failure domain.
+DEST_DIR="${DOCSURI_BACKUP_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs/DocSuriBackups/postgres}"
+mkdir -p "$DEST_DIR"
+cp "$DUMP" "$DEST_DIR/docsuri-$STAMP.dump"
+# Mirror the old S3 lifecycle: keep 30 days of dailies, prune older.
+find "$DEST_DIR" -name 'docsuri-*.dump' -mtime +30 -delete
+echo "[$(date '+%F %T')] backup ok: $DEST_DIR/docsuri-$STAMP.dump ($(du -h "$DUMP" | cut -f1))"

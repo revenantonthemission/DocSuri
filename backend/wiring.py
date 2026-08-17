@@ -189,7 +189,7 @@ def _mount_discovery(app: FastAPI, settings: Settings, result: MountResult) -> N
             observability=observability,
             cost_guard=cost_guard,
         )
-        read_path = "real(opensearch+bedrock)"
+        read_path = f"real(opensearch+{discovery_settings.embedding_provider_resolved})"
     else:
         from discovery.mocks.wiring import build_mock_orchestrator
 
@@ -675,12 +675,21 @@ def _build_trends_embedding_port():
         ds = DiscoverySettings.from_env()
         if not ds.search_enabled:
             return None
-        from discovery.adapters.bedrock_embedding import BedrockCohereQueryEmbedder
+        if ds.embedding_provider_resolved == "openai":
+            # Full-local serving: same OpenAI-compatible server/space as the U2 reader.
+            from discovery.adapters.openai_embedding import OpenAICompatQueryEmbedder
 
-        embedder = BedrockCohereQueryEmbedder(
-            model_id=ds.bedrock_model_id,
-            region_name=ds.bedrock_region or ds.aws_region,
-        )
+            embedder = OpenAICompatQueryEmbedder(
+                api_base=ds.embedding_api_base or "http://localhost:11434/v1",
+                model=ds.embedding_model,
+            )
+        else:
+            from discovery.adapters.bedrock_embedding import BedrockCohereQueryEmbedder
+
+            embedder = BedrockCohereQueryEmbedder(
+                model_id=ds.bedrock_model_id,
+                region_name=ds.bedrock_region or ds.aws_region,
+            )
 
         class _TopicEmbeddingAdapter:
             def embed_topic(self, text: str) -> list[float]:

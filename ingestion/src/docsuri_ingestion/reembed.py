@@ -25,6 +25,7 @@ from docsuri_shared.index_spec import papers_index_body
 from docsuri_shared.vector_spec import EMBEDDING_SPEC
 
 from .adapters.aws import BedrockCohereEmbeddingPort, build_opensearch_client, collect_bulk_failures
+from .adapters.openai_compat import OpenAICompatEmbeddingPort
 from .resilience import RetryPolicy, TokenBucket, is_retriable
 from .settings import IngestionSettings
 
@@ -177,16 +178,29 @@ def reembed(settings: IngestionSettings | None = None) -> int:
     the target). Fan-out gives no speedup against an account-wide token/day cap, so a capped run is
     one continuous paced task; the pacing to <cap/min inherently keeps a day under the daily cap."""
     settings = settings or IngestionSettings.from_env()
-    if not settings.bedrock_model_id:
-        raise SystemExit("DOCSURI_BEDROCK_MODEL_ID is required for re-embed")
+    provider = settings.embedding_provider_resolved
+    if provider is None:
+        raise SystemExit(
+            "an embedder is required for re-embed "
+            "(DOCSURI_BEDROCK_MODEL_ID or DOCSURI_EMBEDDING_API_BASE)"
+        )
     client = _client(settings)
-    embedding = BedrockCohereEmbeddingPort(
-        model_id=settings.bedrock_model_id,
-        # Embed region can differ from the OpenSearch region for multi-region fan-out (each region
-        # is a separate on-demand bucket). Falls back to the OpenSearch/signing region.
-        region_name=settings.reembed_embed_region or settings.aws_region,
-        output_dimension=settings.reembed_dimension,
-    )
+    if provider == "openai":
+        # Full-local serving: OpenAI-compatible server (Ollama /v1, rapid-mlx, …) — the
+        # bge-m3 cutover ran through this path (2026-08-17).
+        embedding = OpenAICompatEmbeddingPort(
+            api_base=settings.embedding_api_base or "http://localhost:11434/v1",
+            model=settings.embedding_model,
+            output_dimension=settings.reembed_dimension,
+        )
+    else:
+        embedding = BedrockCohereEmbeddingPort(
+            model_id=settings.bedrock_model_id,
+            # Embed region can differ from the OpenSearch region for multi-region fan-out (each
+            # region is a separate on-demand bucket). Falls back to the OpenSearch/signing region.
+            region_name=settings.reembed_embed_region or settings.aws_region,
+            output_dimension=settings.reembed_dimension,
+        )
     src, dst = _source_index(settings), settings.opensearch_index_reembed
     page_size = min(96, max(1, settings.reembed_batch_size))
     # Paced mode: cap token throughput below the Bedrock quota + skip already-written docs. None →

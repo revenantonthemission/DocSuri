@@ -124,6 +124,17 @@ def build_account_deleted_publisher() -> AccountDeletedPublisher:
     (사일런트 크로스모듈 데이터 고아화·GDPR 파기 누락). 따라서 프로덕션에선 페일패스트한다 — 로컬/
     테스트(ENV in {local,test,dev})에서만 Logging 발행자를 허용한다."""
     bus = os.getenv("ACCOUNT_EVENTS_BUS", "").strip()
+    # 명시적 "none" — 구독자가 존재하지 않는 토폴로지(풀-로컬 서빙, EventBridge 폐기)에서 Logging
+    # 발행자를 *의도적으로* 선택한다. 아래 페일패스트가 막으려는 위험은 "구독자가 있는데 env 누락으로
+    # 조용히 발행이 끊기는 것"이므로, 구독자 부재를 선언한 경우는 그 위험에 해당하지 않는다.
+    # (SqlOwnerDataPurger가 동일 Postgres의 owner-scoped 테이블을 동기 파기하는 백스톱이다.)
+    # 단순 미설정은 여전히 페일패스트 → 실수로 비운 경우를 계속 잡아낸다.
+    if bus.lower() == "none":
+        logger.warning(
+            "ACCOUNT_EVENTS_BUS=none — AccountDeleted는 로그로만 발행된다(비동기 구독자 없음 선언). "
+            "구독자를 추가하면 반드시 실제 버스로 교체할 것."
+        )
+        return LoggingAccountDeletedPublisher()
     if bus:
         return EventBridgeAccountDeletedPublisher(event_bus_name=bus, region=os.getenv("AWS_REGION") or None)
     env = os.getenv("ENV", "local").strip().lower()

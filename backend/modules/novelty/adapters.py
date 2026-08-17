@@ -743,6 +743,80 @@ class BedrockNoveltyLlmClient:
             raise
 
 
+# 선행 <think> 블록만 벗긴다. 닫는 태그가 없으면(생각 중 잘림) 답이 시작되지 않은
+# 것이므로 그대로 두고 _parse_json_object 실패 → 기존 저하 경로를 탄다.
+_THINK_RE = re.compile(r"^\s*<think>.*?</think>\s*", re.DOTALL)
+
+
+def _strip_think(text: str) -> str:
+    """qwen3 계열의 선행 ``<think>...</think>`` 블록 제거 — JSON 파싱 전에 반드시 벗긴다."""
+    return _THINK_RE.sub("", text, count=1)
+
+
+class OpenAICompatNoveltyLlmClient(BedrockNoveltyLlmClient):
+    """NoveltyLlmPort — OpenAI 호환 로컬 서버(Ollama /v1, rapid-mlx 등)용 형제 어댑터.
+
+    plan_search/draft의 폴백·정규화·비용 게이트는 부모 그대로, LLM 전송(_invoke_json)만
+    교체한다. Bedrock의 forced tool(구조화 JSON 출력 모드) 대신 response_format=json_object
+    를 싣는다 — JSON 계약 자체는 양 경로 프롬프트의 <json_contract>가 이미 전달한다.
+    로컬 추론은 USD 지출이 없어 Bedrock spend 계측은 생략. boto3 미사용.
+    """
+
+    def __init__(
+        self,
+        *,
+        model: str,
+        api_base: str,
+        client: Any,
+        max_tokens: int = 8192,
+        search_plan_max_tokens: int = 4096,
+        cost_guard: Any = None,
+    ) -> None:
+        super().__init__(
+            model_id=model,
+            client=client,  # httpx.Client — 모듈이 이미 쓰는 HTTP 클라이언트 재사용
+            max_tokens=max_tokens,
+            search_plan_max_tokens=search_plan_max_tokens,
+            cost_guard=cost_guard,
+        )
+        self._api_base = api_base.rstrip("/")
+
+    def _invoke_json(
+        self, system: str, user: str, tool: dict[str, Any], *, max_tokens: int
+    ) -> dict[str, Any]:
+        # tool은 시그니처 유지용 — JSON 형상은 user 프롬프트의 <json_contract>가 전달한다.
+        body = {
+            "model": self._model_id,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            "stream": False,
+            "max_tokens": max_tokens,
+            "response_format": {"type": "json_object"},
+        }
+        response = self._client.post(f"{self._api_base}/chat/completions", json=body)
+        response.raise_for_status()
+        parsed = response.json()
+        choices = parsed.get("choices") or []
+        if not choices:
+            # 서버는 살아 있으나 생성이 없다 — 일시 장애로 간주(호출자가 저하로 수렴).
+            raise RuntimeError("chat/completions returned no choices")
+        first = choices[0] or {}
+        text = _strip_think(str((first.get("message") or {}).get("content") or ""))
+        try:
+            return _parse_json_object(text)
+        except (json.JSONDecodeError, ValueError):
+            log.warning(
+                "novelty local LLM JSON parse failed; finishReason=%s outputLength=%d "
+                "rawPreview=%r",
+                first.get("finish_reason"),
+                len(text),
+                _safe_log_preview(text),
+            )
+            raise
+
+
 def _source_ref_catalog(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     refs: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -1677,7 +1751,46 @@ def _build_scholarly_client() -> Any | None:
     return build_scholarly_web_search(EvidenceSettings.from_env())
 
 
+def _openai_compat_llm_selected() -> bool:
+    """앱 전체 공통 LLM 프로바이더 스위치(one switch) — summarization/evidence와 동일 규칙.
+
+    DOCSURI_LLM_PROVIDER=openai|bedrock 명시가 최우선("openai" = OpenAI 호환 로컬 서버).
+    미지정 시: 이 모듈의 Bedrock 모델 env(DOCSURI_NOVELTY_LLM_MODEL_ID)가 설정된 배포는
+    Bedrock 그대로, 아니면 DOCSURI_LLM_API_BASE가 설정된 경우에만 openai 호환 경로.
+    """
+    provider = os.getenv("DOCSURI_LLM_PROVIDER", "").strip().lower()
+    if provider == "openai":
+        return True
+    if provider:
+        return False
+    if os.getenv("DOCSURI_NOVELTY_LLM_MODEL_ID"):
+        return False
+    return bool(os.getenv("DOCSURI_LLM_API_BASE"))
+
+
+# 로컬 8B 추론은 느리다 — 비스트리밍이라 전체 생성이 끝날 때까지 응답이 없다.
+_LOCAL_LLM_CONNECT_TIMEOUT_S = 3.0
+_LOCAL_LLM_READ_TIMEOUT_S = 300.0
+
+
 def build_llm_adapter(cost_guard: Any = None) -> NoveltyLlmPort:
+    if _openai_compat_llm_selected():
+        import httpx
+
+        return OpenAICompatNoveltyLlmClient(
+            model=os.getenv("DOCSURI_LLM_MODEL", "qwen3:8b"),
+            api_base=os.getenv("DOCSURI_LLM_API_BASE", "http://localhost:11434/v1"),
+            client=httpx.Client(
+                timeout=httpx.Timeout(
+                    _LOCAL_LLM_READ_TIMEOUT_S, connect=_LOCAL_LLM_CONNECT_TIMEOUT_S
+                ),
+                headers={"User-Agent": "DocSuri-Novelty/1.0"},
+            ),
+            max_tokens=_env_int("DOCSURI_NOVELTY_LLM_MAX_TOKENS", 8192),
+            search_plan_max_tokens=_env_int("DOCSURI_NOVELTY_QUERY_PLAN_MAX_TOKENS", 4096),
+            cost_guard=cost_guard,
+        )
+
     import boto3
     from botocore.config import Config
 

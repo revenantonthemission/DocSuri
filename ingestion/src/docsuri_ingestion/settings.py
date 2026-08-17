@@ -20,6 +20,12 @@ class IngestionSettings(BaseModel):
     s3_bucket: str | None = Field(default=None, alias="DOCSURI_S3_BUCKET")
     bedrock_model_id: str | None = Field(default=None, alias="DOCSURI_BEDROCK_MODEL_ID")
     bedrock_model_id_v2: str | None = Field(default=None, alias="DOCSURI_BEDROCK_MODEL_ID_V2")
+    # Full-local serving (2026-08-17): OpenAI-compatible embedding server (Ollama /v1 or
+    # rapid-mlx). SAME env names as the U2 reader (settings convention: shared resources
+    # share env names) so writer and reader stay in one space by construction.
+    embedding_provider: str | None = Field(default=None, alias="DOCSURI_EMBEDDING_PROVIDER")
+    embedding_api_base: str | None = Field(default=None, alias="DOCSURI_EMBEDDING_API_BASE")
+    embedding_model: str = Field(default="bge-m3", alias="DOCSURI_EMBEDDING_MODEL")
     opensearch_endpoint: str | None = Field(default=None, alias="DOCSURI_OPENSEARCH_ENDPOINT")
     opensearch_index: str = Field(default="docsuri-corpus-v1", alias="DOCSURI_OPENSEARCH_INDEX")
     opensearch_index_v2: str = Field(
@@ -131,13 +137,24 @@ class IngestionSettings(BaseModel):
         values = {name: os.environ[name] for name in os.environ if name.startswith("DOCSURI_")}
         return cls.model_validate(values)
 
+    @property
+    def embedding_provider_resolved(self) -> str | None:
+        """Which embedder to wire (mirrors the U2 reader): explicit provider wins; else
+        bedrock when its model id is set; else "openai" when an api base is set."""
+        if self.embedding_provider:
+            return self.embedding_provider
+        if self.bedrock_model_id:
+            return "bedrock"
+        if self.embedding_api_base:
+            return "openai"
+        return None
+
     def require_production(self) -> None:
         missing = [
             field
             for field in (
                 "aws_region",
                 "s3_bucket",
-                "bedrock_model_id",
                 "opensearch_endpoint",
                 "control_plane_dsn",
                 "sqs_queue_url",
@@ -145,6 +162,10 @@ class IngestionSettings(BaseModel):
             )
             if getattr(self, field) in (None, "")
         ]
+        # An embedder is required, but it may be EITHER Bedrock or a local OpenAI-compatible
+        # server (full-local serving) — so neither env var is individually mandatory.
+        if self.embedding_provider_resolved is None:
+            missing.append("bedrock_model_id|embedding_api_base")
         if missing:
             raise RuntimeError(f"missing required production settings: {', '.join(missing)}")
 

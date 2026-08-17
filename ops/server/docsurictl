@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+# DocSuri server control. One place to answer "is it up, and if not, why".
+#
+#   docsurictl status              full health sweep (agents, containers, endpoints, tunnel)
+#   docsurictl logs <role> [-f]    tail a role's log
+#   docsurictl restart <role|all>  kickstart via launchd
+#   docsurictl stop|start          whole stack (agents only; containers keep running)
+#   docsurictl rebuild             rebuild the frontend and reload the web agent
+#   docsurictl rotate-logs         size-based rotation (also runs daily via launchd)
+set -euo pipefail
+
+REPO="${DOCSURI_REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+LOG_DIR="$HOME/Library/Logs/DocSuri"
+UID_NUM="$(id -u)"
+ROLES=(api web worker-ingestion worker-summarization worker-evidence worker-novelty worker-purge tunnel)
+COMPOSE=(docker compose -f "$REPO/backend/docker-compose.yml")
+
+# Rotate at 50 MB, keep 3 generations. launchd holds its StandardOutPath descriptor
+# open and writes by offset, so a plain `mv` would leave it writing into the rotated
+# inode and the live log would appear frozen. Copy-then-truncate keeps the inode.
+ROTATE_BYTES=$((50 * 1024 * 1024))
+ROTATE_KEEP=3
+
+c_ok()   { printf '\033[32m%s\033[0m' "$1"; }
+c_bad()  { printf '\033[31m%s\033[0m' "$1"; }
+c_warn() { printf '\033[33m%s\033[0m' "$1"; }
+
+cmd_status() {
+  echo "── launchd agents ──────────────────────────────────────────"
+  for role in "${ROLES[@]}"; do
+    line="$(launchctl list 2>/dev/null | awk -v l="dev.docsuri.$role" '$3==l {print $1" "$2}')"
+    if [ -z "$line" ]; then
+      printf '  %-24s %s\n' "$role" "$(c_bad 'not loaded')"; continue
+    fi
+    pid="${line%% *}"; last="${line##* }"
+    if [ "$pid" != "-" ]; then
+      printf '  %-24s %s (pid %s)\n' "$role" "$(c_ok 'running')" "$pid"
+    elif [ "$last" = "0" ]; then
+      # Expected for periodic jobs (worker-purge) between runs.
+      printf '  %-24s %s\n' "$role" "$(c_warn 'idle (last exit 0)')"
+    else
+      printf '  %-24s %s\n' "$role" "$(c_bad "stopped (exit $last)")"
+    fi
+  done
+
+  echo
+  echo "── containers ──────────────────────────────────────────────"
+  "${COMPOSE[@]}" ps --format '  {{.Service}}	{{.Status}}' 2>/dev/null || echo "  $(c_bad 'docker unavailable')"
+
+  echo
+  echo "── endpoints ───────────────────────────────────────────────"
+  probe() {
+    local name="$1" url="$2" code
+    code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$url" 2>/dev/null || echo 000)"
+    if [ "$code" = "200" ]; then printf '  %-24s %s  %s\n' "$name" "$(c_ok "$code")" "$url"
+    else printf '  %-24s %s  %s\n' "$name" "$(c_bad "$code")" "$url"; fi
+  }
+  probe "api"        "http://127.0.0.1:${DOCSURI_API_PORT:-8000}/health"
+  probe "web"        "http://127.0.0.1:${DOCSURI_WEB_PORT:-3000}/"
+  probe "opensearch" "http://127.0.0.1:9200/_cluster/health"
+  probe "minio"      "http://127.0.0.1:9000/minio/health/live"
+  probe "ollama"     "http://127.0.0.1:11434/v1/models"
+
+  local host
+  host="$(python3 - <<'PY' 2>/dev/null || true
+import os,re
+p=os.path.expanduser("~/.cloudflared/config.yml")
+try: print(re.search(r"hostname:\s*(\S+)", open(p).read()).group(1))
+except Exception: pass
+PY
+)"
+  if [ -n "$host" ]; then probe "public" "https://$host/"; else
+    echo "  $(c_warn 'public                   no tunnel configured (ops/server/tunnel-setup.sh)')"
+  fi
+
+  echo
+  echo "── disk ────────────────────────────────────────────────────"
+  df -h /System/Volumes/Data | tail -1 | awk '{printf "  %s used of %s (%s full), %s free\n",$3,$2,$5,$4}'
+}
+
+cmd_logs() {
+  local role="${1:?usage: docsurictl logs <role> [-f]}"; shift || true
+  local f="$LOG_DIR/$role.log"
+  [ -f "$f" ] || { echo "no log at $f" >&2; exit 1; }
+  if [ "${1:-}" = "-f" ]; then tail -f "$f"; else tail -n 100 "$f"; fi
+}
+
+cmd_restart() {
+  local target="${1:?usage: docsurictl restart <role|all>}"
+  local list=("$target"); [ "$target" = "all" ] && list=("${ROLES[@]}")
+  for role in "${list[@]}"; do
+    launchctl kickstart -k "gui/$UID_NUM/dev.docsuri.$role" 2>/dev/null \
+      && echo "restarted $role" || echo "skip $role (not loaded)"
+  done
+}
+
+cmd_stop()  { for r in "${ROLES[@]}"; do launchctl bootout "gui/$UID_NUM/dev.docsuri.$r" 2>/dev/null && echo "stopped $r" || true; done; }
+cmd_start() { bash "$REPO/ops/server/install.sh"; }
+
+cmd_rebuild() {
+  # NEXT_PUBLIC_* are inlined at BUILD time, so they must be passed here — setting
+  # them at runtime in run.sh would have no effect on the client bundle.
+  ( cd "$REPO/frontend" && NODE_ENV=production \
+      NEXT_PUBLIC_DOCSURI_REAL_API=1 \
+      NEXT_PUBLIC_DOCSURI_RESEARCH_AGENT_ENABLED=true \
+      NEXT_PUBLIC_ORCID_LOGIN_ENABLED="${NEXT_PUBLIC_ORCID_LOGIN_ENABLED:-false}" \
+      pnpm build )
+  bash "$REPO/ops/server/install.sh" >/dev/null
+  launchctl kickstart -k "gui/$UID_NUM/dev.docsuri.web" 2>/dev/null || true
+  echo "frontend rebuilt and web agent reloaded"
+}
+
+cmd_rotate_logs() {
+  shopt -s nullglob
+  for f in "$LOG_DIR"/*.log; do
+    size=$(stat -f%z "$f" 2>/dev/null || echo 0)
+    [ "$size" -lt "$ROTATE_BYTES" ] && continue
+    for ((i=ROTATE_KEEP-1; i>=1; i--)); do
+      [ -f "$f.$i" ] && mv "$f.$i" "$f.$((i+1))"
+    done
+    cp "$f" "$f.1"
+    : > "$f"            # truncate in place — preserves launchd's open descriptor
+    echo "rotated $(basename "$f") (${size} bytes)"
+  done
+  # Drop generations beyond the keep count.
+  for f in "$LOG_DIR"/*.log.[0-9]*; do
+    gen="${f##*.}"
+    [ "$gen" -gt "$ROTATE_KEEP" ] && rm -f "$f"
+  done
+}
+
+case "${1:-status}" in
+  status)      cmd_status ;;
+  logs)        shift; cmd_logs "$@" ;;
+  restart)     shift; cmd_restart "$@" ;;
+  stop)        cmd_stop ;;
+  start)       cmd_start ;;
+  rebuild)     cmd_rebuild ;;
+  rotate-logs) cmd_rotate_logs ;;
+  *) sed -n '2,12p' "$0"; exit 64 ;;
+esac
