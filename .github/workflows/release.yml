@@ -52,11 +52,22 @@ jobs:
           NEW_TAG: ${{ steps.tag.outputs.new_tag }}
         run: gh release create "$NEW_TAG" --title "$NEW_TAG" --generate-notes --verify-tag
 
-  deploy:
-    name: Deploy the release
-    needs: release
-    if: needs.release.outputs.released == 'true'
-    # Reusable call — no PAT needed. cd.yml runs in this push:main context, so its OIDC sub is
-    # repo:.../ref:refs/heads/main; the CD role trust (cicd_stack.py) allows that sub.
-    uses: ./.github/workflows/cd.yml
-    secrets: inherit
+  # The `deploy` job was removed 2026-08-18. It called cd.yml, which deploys to AWS account
+  # 559352512800 — now fully decommissioned (0 stacks, 0 ECR repos, no CDK bootstrap). Left in
+  # place it would make every develop→main promotion fail at sts:AssumeRoleWithWebIdentity,
+  # turning a routine release into a red build for a deployment nobody wants any more.
+  #
+  # Tagging and the GitHub Release above are deliberately KEPT: they are pure GitHub, cost
+  # nothing, and remain the record of what shipped. Promotion to main still cuts vX.Y.Z.
+  #
+  # The service now runs on a single machine (ops/server/README.md) and deploys by pulling
+  # this branch and running `ops/server/docsurictl rebuild` — it does not consume these tags.
+  #
+  # TO RE-ENABLE, restore:
+  #   deploy:
+  #     name: Deploy the release
+  #     needs: release
+  #     if: needs.release.outputs.released == 'true'
+  #     uses: ./.github/workflows/cd.yml
+  #     secrets: inherit
+  # and restore the `push:tags` / `workflow_call` triggers in cd.yml.
