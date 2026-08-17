@@ -20,8 +20,8 @@ from docsuri_shared.ports import CostGuardCircuitBreaker, ObservabilityHub
 
 from .adapters.bedrock_embedding import BedrockCohereQueryEmbedder
 from .adapters.bedrock_rerank import BedrockRerankAdapter
-from .adapters.openai_embedding import OpenAICompatQueryEmbedder
 from .adapters.event_publisher import EventBridgeEventPublisher
+from .adapters.openai_embedding import OpenAICompatQueryEmbedder
 from .adapters.opensearch_index import (
     OpenSearchClientFactory,
     OpenSearchLexicalIndexAdapter,

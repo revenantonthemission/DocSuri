@@ -203,7 +203,8 @@ def build_production_runtime(settings: IngestionSettings) -> RuntimeServices:
             if settings.embedding_provider_resolved == "openai"
             else BedrockCohereEmbeddingPort(
                 model_id=settings.bedrock_model_id or "",
-                # embed region decoupled from aws_region (OpenSearch SigV4): Cohere v3 isn't in apne2.
+                # embed region decoupled from aws_region (OpenSearch SigV4):
+                # Cohere v3 isn't available in apne2.
                 region_name=settings.embed_region or settings.aws_region,
             )
         ),
