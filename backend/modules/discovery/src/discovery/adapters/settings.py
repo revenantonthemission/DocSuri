@@ -24,6 +24,9 @@ _DEFAULT_INDEX = "docsuri-corpus"
 _DEFAULT_USE_SSL = True
 _DEFAULT_VERIFY_CERTS = True
 _DEFAULT_CACHE_TTL_SECONDS = 300.0
+# Full-local serving (2026-08-17): bge-m3 via an OpenAI-compatible server (Ollama /v1 today,
+# rapid-mlx tomorrow — env swap only). Same 1024-dim space contract as the Bedrock path.
+_DEFAULT_EMBEDDING_MODEL = "bge-m3"
 
 
 def _flag(name: str, default: bool) -> bool:
@@ -53,6 +56,12 @@ class DiscoverySettings:
     opensearch_use_ssl: bool = _DEFAULT_USE_SSL
     opensearch_verify_certs: bool = _DEFAULT_VERIFY_CERTS
     bedrock_model_id: str | None = None
+    # OpenAI-compatible local embedding server (full-local serving). Provider selection:
+    # explicit ``DOCSURI_EMBEDDING_PROVIDER`` wins; else bedrock when its model id is set;
+    # else "openai" when an api base is set. See :meth:`embedding_provider_resolved`.
+    embedding_provider: str | None = None
+    embedding_api_base: str | None = None
+    embedding_model: str = _DEFAULT_EMBEDDING_MODEL
     aws_region: str | None = None
     # Bedrock embedding region, decoupled from aws_region (used for OpenSearch SigV4). Needed
     # because Cohere Embed Multilingual v3 is NOT available in ap-northeast-2 (the domain region),
@@ -78,9 +87,22 @@ class DiscoverySettings:
         return self.rerank_region or _region_from_arn(self.rerank_model_arn) or self.aws_region
 
     @property
+    def embedding_provider_resolved(self) -> str | None:
+        """Which embedder to wire: explicit ``DOCSURI_EMBEDDING_PROVIDER``, else "bedrock"
+        when its model id is configured, else "openai" when a local api base is configured,
+        else None (no real embedder available — mock-first)."""
+        if self.embedding_provider:
+            return self.embedding_provider
+        if self.bedrock_model_id:
+            return "bedrock"
+        if self.embedding_api_base:
+            return "openai"
+        return None
+
+    @property
     def search_enabled(self) -> bool:
-        """True when the real read path can be wired (cluster + model configured)."""
-        return bool(self.opensearch_endpoint and self.bedrock_model_id)
+        """True when the real read path can be wired (cluster + an embedder configured)."""
+        return bool(self.opensearch_endpoint and self.embedding_provider_resolved)
 
     @classmethod
     def from_env(cls) -> DiscoverySettings:
@@ -93,6 +115,9 @@ class DiscoverySettings:
             opensearch_use_ssl=_flag("DOCSURI_OPENSEARCH_USE_SSL", _DEFAULT_USE_SSL),
             opensearch_verify_certs=_flag("DOCSURI_OPENSEARCH_VERIFY_CERTS", _DEFAULT_VERIFY_CERTS),
             bedrock_model_id=os.getenv("DOCSURI_BEDROCK_MODEL_ID") or None,
+            embedding_provider=os.getenv("DOCSURI_EMBEDDING_PROVIDER") or None,
+            embedding_api_base=os.getenv("DOCSURI_EMBEDDING_API_BASE") or None,
+            embedding_model=os.getenv("DOCSURI_EMBEDDING_MODEL", _DEFAULT_EMBEDDING_MODEL),
             aws_region=os.getenv("DOCSURI_AWS_REGION") or None,
             bedrock_region=os.getenv("DOCSURI_BEDROCK_REGION") or None,
             search_event_bus=os.getenv("DOCSURI_SEARCH_EVENT_BUS") or None,

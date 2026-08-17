@@ -20,6 +20,7 @@ from docsuri_shared.ports import CostGuardCircuitBreaker, ObservabilityHub
 
 from .adapters.bedrock_embedding import BedrockCohereQueryEmbedder
 from .adapters.bedrock_rerank import BedrockRerankAdapter
+from .adapters.openai_embedding import OpenAICompatQueryEmbedder
 from .adapters.event_publisher import EventBridgeEventPublisher
 from .adapters.opensearch_index import (
     OpenSearchClientFactory,
@@ -59,10 +60,12 @@ def build_real_orchestrator(
     omitted (standalone/tests) → the no-op stub. This is the seam that routes U2 app metrics
     to CloudWatch — without it (the old default) the orchestrator emitted into the void.
     """
-    if not settings.opensearch_endpoint or not settings.bedrock_model_id:
+    provider = settings.embedding_provider_resolved
+    if not settings.opensearch_endpoint or not provider:
         raise ValueError(
-            "build_real_orchestrator requires DOCSURI_OPENSEARCH_ENDPOINT + "
-            "DOCSURI_BEDROCK_MODEL_ID (use build_mock_orchestrator otherwise)"
+            "build_real_orchestrator requires DOCSURI_OPENSEARCH_ENDPOINT + an embedder "
+            "(DOCSURI_BEDROCK_MODEL_ID or DOCSURI_EMBEDDING_API_BASE; use "
+            "build_mock_orchestrator otherwise)"
         )
 
     client = OpenSearchClientFactory.build(
@@ -73,12 +76,20 @@ def build_real_orchestrator(
         use_ssl=settings.opensearch_use_ssl,
         verify_certs=settings.opensearch_verify_certs,
     )
-    embedding = BedrockCohereQueryEmbedder(
-        model_id=settings.bedrock_model_id,
-        # Bedrock region decoupled from aws_region (OpenSearch SigV4): Cohere v3 isn't in
-        # ap-northeast-2, so the reader embeds queries cross-region. Falls back to aws_region.
-        region_name=settings.bedrock_region or settings.aws_region,
-    )
+    if provider == "openai":
+        # Full-local serving: any OpenAI-compatible server (Ollama /v1, rapid-mlx, …) —
+        # endpoint/model are env-driven, so swapping servers is a config change, not code.
+        embedding = OpenAICompatQueryEmbedder(
+            api_base=settings.embedding_api_base or "http://localhost:11434/v1",
+            model=settings.embedding_model,
+        )
+    else:
+        embedding = BedrockCohereQueryEmbedder(
+            model_id=settings.bedrock_model_id,
+            # Bedrock region decoupled from aws_region (OpenSearch SigV4): Cohere v3 isn't in
+            # ap-northeast-2, so the reader embeds queries cross-region. Falls back to aws_region.
+            region_name=settings.bedrock_region or settings.aws_region,
+        )
     cache = EmbeddingCache(embedding, ttl_seconds=settings.embedding_cache_ttl_seconds)
 
     # The bus is shared infra (system/U6 EventBridge). Until provisioned, keep events

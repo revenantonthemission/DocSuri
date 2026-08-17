@@ -11,10 +11,12 @@ Summarization(U7) 어댑터 재사용:
 
 신규:
   EvidenceExtractor → Bedrock Sonnet 4.6 (claude-sonnet-4-6)
+  또는 OpenAICompatEvidenceExtractor → OpenAI 호환 로컬 LLM (env 선택, openai_llm.py)
 """
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 
 from .assembler import EvidenceComparisonAssembler
@@ -33,6 +35,24 @@ from .web_search import (
 class EvidenceBundle:
     orchestrator: EvidenceAgentOrchestrator
     settings: EvidenceSettings
+
+
+def _openai_compat_selected() -> bool:
+    """앱 전체 공통 LLM 프로바이더 스위치(one switch) — summarization/novelty와 동일 규칙.
+
+    DOCSURI_LLM_PROVIDER=openai|bedrock 명시가 최우선("openai" = OpenAI 호환 로컬 서버,
+    Ollama /v1·rapid-mlx 등). 미지정 시: 이 모듈의 Bedrock 모델 env
+    (DOCSURI_EVIDENCE_MODEL_ID)가 설정된 배포는 Bedrock 그대로, 아니면
+    DOCSURI_LLM_API_BASE가 설정된 경우에만 openai 호환 경로.
+    """
+    provider = os.environ.get('DOCSURI_LLM_PROVIDER', '').strip().lower()
+    if provider == 'openai':
+        return True
+    if provider:
+        return False
+    if os.environ.get('DOCSURI_EVIDENCE_MODEL_ID'):
+        return False
+    return bool(os.environ.get('DOCSURI_LLM_API_BASE'))
 
 
 def build_evidence_orchestrator(
@@ -63,12 +83,21 @@ def build_evidence_orchestrator(
         verify_certs=d_settings.opensearch_verify_certs,
     )
 
-    embedding = BedrockCohereQueryEmbedder(
-        model_id=d_settings.bedrock_model_id,
-        # Bedrock region decoupled from region_name (OpenSearch SigV4): Cohere v3 isn't in
-        # ap-northeast-2, so query embedding must go cross-region. Mirrors discovery real_wiring.
-        region_name=d_settings.bedrock_region or settings.region_name,
-    )
+    if d_settings.embedding_provider_resolved == "openai":
+        # Full-local serving: same OpenAI-compatible server/space as the U2 reader.
+        from discovery.adapters.openai_embedding import OpenAICompatQueryEmbedder
+
+        embedding = OpenAICompatQueryEmbedder(
+            api_base=d_settings.embedding_api_base or "http://localhost:11434/v1",
+            model=d_settings.embedding_model,
+        )
+    else:
+        embedding = BedrockCohereQueryEmbedder(
+            model_id=d_settings.bedrock_model_id,
+            # Bedrock region decoupled from region_name (OpenSearch SigV4): Cohere v3 isn't in
+            # ap-northeast-2, so query embedding must go cross-region. Mirrors discovery real_wiring.
+            region_name=d_settings.bedrock_region or settings.region_name,
+        )
     vector_store = OpenSearchVectorStoreAdapter(os_client, d_settings.opensearch_index)
     lexical_index = OpenSearchLexicalIndexAdapter(os_client, d_settings.opensearch_index)
     paper_lookup = OpenSearchPaperLookupAdapter(os_client, d_settings.opensearch_index)
@@ -89,12 +118,29 @@ def build_evidence_orchestrator(
     )
     doc_model_tool = EvidenceDocModelTool(doc_model_reader=doc_model_reader)
 
-    # --- EvidenceExtractor (Bedrock Sonnet 4.6) ---
-    extractor = EvidenceExtractor(
-        model_id=settings.model_id,
-        region_name=settings.region_name,
-        cost_guard=cost_guard,
-    )
+    # --- EvidenceExtractor (Bedrock Sonnet 4.6 | OpenAI 호환 로컬 LLM — env 선택) ---
+    if _openai_compat_selected():
+        import httpx  # lazy: web_search 배선과 같은 모듈 기존 HTTP 의존성
+
+        from .openai_llm import (
+            CONNECT_TIMEOUT_S,
+            READ_TIMEOUT_S,
+            OpenAICompatEvidenceExtractor,
+        )
+
+        extractor = OpenAICompatEvidenceExtractor(
+            model=os.environ.get('DOCSURI_LLM_MODEL', 'qwen3:8b'),
+            api_base=os.environ.get('DOCSURI_LLM_API_BASE', 'http://localhost:11434/v1'),
+            client=httpx.Client(
+                timeout=httpx.Timeout(READ_TIMEOUT_S, connect=CONNECT_TIMEOUT_S),
+            ),
+        )
+    else:
+        extractor = EvidenceExtractor(
+            model_id=settings.model_id,
+            region_name=settings.region_name,
+            cost_guard=cost_guard,
+        )
 
     # --- Assembler & Orchestrator ---
     assembler = EvidenceComparisonAssembler()

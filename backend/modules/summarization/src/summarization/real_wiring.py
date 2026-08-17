@@ -1,12 +1,14 @@
 """real_wiring — assemble the orchestrator from real adapters (TD-S12, real-first).
 
-The single shipped wiring: Bedrock LLM + S3/Redis store + S3 full-text + RDS glossary,
-with the U6 cost-guard / observability hubs injected (single authority). No mock wiring
-ships; tests build the orchestrator directly with Fixtures/Stubs.
+The single shipped wiring: LLM(Bedrock 또는 OpenAI 호환 로컬 서버 — env 선택) + S3/Redis
+store + S3 full-text + RDS glossary, with the U6 cost-guard / observability hubs injected
+(single authority). No mock wiring ships; tests build the orchestrator directly with
+Fixtures/Stubs.
 """
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -39,6 +41,51 @@ class SummarizationBundle:
     grounding_registry: GroundingValidatorRegistry
 
 
+# 앱 전체 공통 LLM 프로바이더 스위치(one switch) — evidence/novelty 배선과 동일 규칙:
+#   DOCSURI_LLM_PROVIDER=openai|bedrock  (명시가 최우선; "openai" = OpenAI 호환 로컬 서버)
+#   미지정 시: 이 모듈의 Bedrock 모델 env가 설정된 배포는 Bedrock 그대로, 아니면
+#   DOCSURI_LLM_API_BASE가 설정된 경우에만 openai 호환 경로.
+_BEDROCK_MODEL_ENVS = ("DOCSURI_SUMMARY_MODEL_ID", "DOCSURI_TRANSLATE_MODEL_ID")
+
+
+def _openai_compat_selected() -> bool:
+    provider = os.environ.get("DOCSURI_LLM_PROVIDER", "").strip().lower()
+    if provider == "openai":
+        return True
+    if provider:
+        return False
+    if any(os.environ.get(name) for name in _BEDROCK_MODEL_ENVS):
+        return False
+    return bool(os.environ.get("DOCSURI_LLM_API_BASE"))
+
+
+def _build_llm_gateway(settings: SummarizationSettings) -> tuple[object, str]:
+    """env로 LLM 게이트웨이 선택 → (gateway, model_ver).
+
+    modelVer는 불변 캐시 키의 일부(INV-5, adapters/settings.py 주석)라 프로바이더 전환 시
+    Bedrock 산출물과 캐시가 섞이지 않도록 로컬 모델명에서 파생한다. Bedrock env가 설정된
+    기존 배포는 기존 경로·기존 model_ver 그대로(무변경).
+    """
+    if _openai_compat_selected():
+        from .adapters.openai_llm import OpenAICompatLlmGateway  # lazy: 선택된 경로만 로드
+
+        model = os.environ.get("DOCSURI_LLM_MODEL", "qwen3:8b")
+        gateway = OpenAICompatLlmGateway(
+            model=model,
+            api_base=os.environ.get("DOCSURI_LLM_API_BASE", "http://localhost:11434/v1"),
+        )
+        model_ver = "local-" + "".join(
+            ch if ch.isalnum() else "-" for ch in model.lower()
+        ).strip("-")
+        return gateway, model_ver
+    gateway = BedrockLlmGateway(
+        summary_model_id=settings.summary_model_id,
+        translate_model_id=settings.translate_model_id,
+        region_name=settings.region_name,
+    )
+    return gateway, settings.model_ver
+
+
 def build_grounding_registry(validator: GroundingValidator) -> GroundingValidatorRegistry:
     """Register U7's ``GroundingValidator`` in the shared grounding registry as the ``summary``
     domain with ``advisory`` authority (D3 / ports.md §2.1).
@@ -67,11 +114,7 @@ def build_real_orchestrator(
 ) -> SummarizationBundle:
     assert settings.s3_bucket is not None  # noqa: S101 — gated by summarization_enabled
 
-    llm = BedrockLlmGateway(
-        summary_model_id=settings.summary_model_id,
-        translate_model_id=settings.translate_model_id,
-        region_name=settings.region_name,
-    )
+    llm, model_ver = _build_llm_gateway(settings)
     store = S3RedisSummaryStore(
         bucket=settings.s3_bucket,
         ttl_seconds=settings.redis_ttl_seconds,
@@ -148,7 +191,7 @@ def build_real_orchestrator(
         assembler=ResultAssembler(),
         cost_guard=cost_guard,
         observability=observability,
-        model_ver=settings.model_ver,
+        model_ver=model_ver,
         asset_reader=asset_reader,
         doc_model_reader=doc_model_reader,
         doc_model_build_queue=doc_model_build_queue,
