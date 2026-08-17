@@ -9,10 +9,26 @@
 # Docsuri-CICD` (the CD role cannot widen its own permissions — chicken-and-egg).
 name: CD
 
+# DISABLED 2026-08-18 — there is no AWS account left to deploy to. Every resource in
+# 559352512800 was destroyed (0 stacks, 0 ECR repos, no CDK bootstrap), and the service now
+# runs on a single machine behind a Cloudflare Tunnel (see ops/server/README.md). Left intact
+# rather than deleted: this file is the record of how the ECS/CDK deployment worked, and is
+# the starting point if the service ever moves back to a cloud account.
+#
+# BOTH automatic entry points are removed on purpose:
+#   • push:tags ["v*"] — a manually pushed v* tag would otherwise deploy. (The tag that
+#     release.yml creates never triggered this: GitHub's anti-recursion rule suppresses
+#     workflow triggers for refs created with GITHUB_TOKEN.)
+#   • workflow_call   — release.yml's `deploy` job, which is removed there in the same commit.
+# workflow_dispatch is kept so the deployment can still be invoked deliberately by a human
+# who has re-provisioned an account; it will fail at assume-role until one exists.
+#
+# TO RE-ENABLE: restore `push: tags: ["v*"]` and `workflow_call: {}` here, restore the
+# `deploy` job in release.yml, and re-run the manual `cdk deploy Docsuri-CICD` bootstrap
+# described in the header above (the CD role cannot widen its own permissions).
 on:
-  push:
-    tags: ["v*"] # manual/hotfix path — pushing a v* tag deploys that tagged release
-  workflow_call: {} # auto path — release.yml calls this after auto-tagging a push to main
+  workflow_dispatch: {}
+  workflow_call: {} # retained so a restored release.yml deploy job works without editing here
 
 # Two entry points, both 1:1 with a release:
 #   • push a v* tag directly (hotfix) → OIDC sub = repo:...:ref:refs/tags/v*
