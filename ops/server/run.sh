@@ -16,7 +16,7 @@
 #
 set -euo pipefail
 
-ROLE="${1:?usage: run.sh <api|web|worker-ingestion|worker-summarization|worker-evidence|worker-novelty|worker-purge>}"
+ROLE="${1:?usage: run.sh <api|web|worker-ingestion|worker-summarization|worker-evidence|worker-novelty|worker-purge|logrotate|heartbeat>}"
 REPO="${DOCSURI_REPO:-$HOME/Projects/DocSuri}"
 cd "$REPO"
 
@@ -88,6 +88,12 @@ case "$ROLE" in
     # Housekeeping, not an app process. launchd appends to StandardOutPath forever;
     # without this a chatty worker would fill the disk that OpenSearch shares.
     exec /bin/bash "$REPO/ops/server/docsurictl" rotate-logs
+    ;;
+
+  heartbeat)
+    # Probe the serving chain and ping healthchecks.io, then exit — scheduling
+    # belongs to launchd (StartInterval), delivery semantics to heartbeat.sh.
+    exec /bin/bash "$REPO/ops/server/heartbeat.sh"
     ;;
 
   *)

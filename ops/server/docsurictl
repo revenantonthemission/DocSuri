@@ -12,7 +12,7 @@ set -euo pipefail
 REPO="${DOCSURI_REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 LOG_DIR="$HOME/Library/Logs/DocSuri"
 UID_NUM="$(id -u)"
-ROLES=(api web worker-ingestion worker-summarization worker-evidence worker-novelty worker-purge tunnel)
+ROLES=(api web worker-ingestion worker-summarization worker-evidence worker-novelty worker-purge tunnel heartbeat backup)
 COMPOSE=(docker compose -f "$REPO/backend/docker-compose.yml")
 
 # Rotate at 50 MB, keep 3 generations. launchd holds its StandardOutPath descriptor

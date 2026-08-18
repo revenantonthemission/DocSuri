@@ -130,6 +130,33 @@ means the packets never arrived** (routing/firewall/wrong address), so stop look
 and sshd config. Note a private address like `172.30.1.25` is unroutable from outside the
 LAN — from a remote network it can only ever time out.
 
+## Monitoring
+
+A dead-man's switch on [healthchecks.io](https://healthchecks.io) (free tier), two checks:
+
+| Check | Fed by | Configure as |
+|---|---|---|
+| `docsuri-heartbeat` | `dev.docsuri.heartbeat` → `heartbeat.sh`, every 5 min | Period **5 min**, Grace **5 min** |
+| `docsuri-backup` | `dev.docsuri.backup` → `docsuri-backup-db.sh`, daily 03:30 | Cron **`30 3 * * *`**, TZ **Asia/Seoul**, Grace **2 h** |
+
+The heartbeat probes local API `/health`, local web `/`, and public `/bff/health`
+(the full edge→tunnel→web chain). All pass → plain ping; any probe fails → `/fail`
+ping naming it (immediate alert); machine dead → no ping, and the grace period raises
+the alert. The last path is the point: an on-box monitor cannot report its own host's
+death, so the alerting authority is the *absence* of a ping, judged off-machine.
+
+Ping URLs are capabilities — anyone holding one can fake a healthy signal — so they
+live outside the repo in `~/.config/docsuri/monitoring.env`:
+
+```
+DOCSURI_HEARTBEAT_PING_URL=https://hc-ping.com/<uuid>
+DOCSURI_BACKUP_PING_URL=https://hc-ping.com/<uuid>
+```
+
+Until both are set, the heartbeat still probes but logs `NO PING SENT (monitoring is
+blind)` to `~/Library/Logs/DocSuri/heartbeat.log`, and the backup script skips its
+pings — the plumbing is inert without the URLs, and there is no alerting at all.
+
 ## Server-mode configuration that is easy to get wrong
 
 Set in `backend/.env` (gitignored):
@@ -157,8 +184,16 @@ Set in `backend/.env` (gitignored):
 - **Search rerank (US-P4) is off.** It was Bedrock Cohere-Rerank with no local
   equivalent; search falls back to baseline RRF ordering.
 - **Single point of failure.** One machine, one disk, no redundancy. The daily
-  `pg_dump` to iCloud is the only recovery path — MinIO's 24 GB of parse/embed
-  artifacts under `~/DocSuriData` are **not** backed up offsite.
+  `pg_dump` (local tier `~/Backups/docsuri/postgres` + iCloud copy) is the only
+  recovery path — MinIO's 24 GB of parse/embed artifacts under `~/DocSuriData` are
+  **not** backed up offsite.
+- **iCloud pruning needs a granted context.** Under launchd, TCC lets the backup job
+  *write* into `~/Library/Mobile Documents` but denies listing and deleting there, so
+  expired iCloud dumps survive until a retry runs in a granted context: run
+  `docsuri-backup-db.sh` from a terminal occasionally, or grant Full Disk Access to
+  `/bin/bash` (broad — every launchd bash script inherits it) so the nightly retry
+  succeeds on its own. The local tier prunes itself either way, and un-pruned entries
+  are retried every night, never orphaned.
 - **Disk is the binding constraint** (~93% full). OpenSearch watermarks are raised to
   96/97/98% in `backend/docker-compose.yml` precisely because the defaults would flip
   indices read-only here. Watch `docsurictl status`.

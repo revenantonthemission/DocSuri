@@ -16,7 +16,7 @@ AGENT_DIR="$HOME/Library/LaunchAgents"
 LOG_DIR="$HOME/Library/Logs/DocSuri"
 UID_NUM="$(id -u)"
 
-# role:ProcessType:schedule
+# role:ProcessType:schedule[:interval-seconds]
 #   api/web are latency-sensitive → Interactive keeps launchd from throttling them.
 #   Queue consumers are long-running poll loops → keepalive, Adaptive priority.
 #   worker-purge is NOT a daemon: purge_worker.main() runs one sweep and returns
@@ -24,6 +24,8 @@ UID_NUM="$(id -u)"
 #   would relaunch it every ThrottleInterval forever, hammering Postgres. It gets
 #   StartInterval instead — one sweep per day, which matches the purge_after grace
 #   period semantics.
+#   heartbeat is periodic too, but every 5 minutes: its healthchecks.io check judges
+#   this box dead when pings stop, so the interval bounds detection latency.
 PERIODIC_INTERVAL_SECONDS=86400
 ROLES=(
   "api:Interactive:keepalive"
@@ -34,6 +36,7 @@ ROLES=(
   "worker-novelty:Adaptive:keepalive"
   "worker-purge:Background:periodic"
   "logrotate:Background:periodic"
+  "heartbeat:Background:periodic:300"
 )
 
 mkdir -p "$AGENT_DIR" "$LOG_DIR"
@@ -54,13 +57,14 @@ else
 fi
 
 write_plist() {
-  local role="$1" ptype="$2" sched="$3" label="dev.docsuri.$role" plist="$AGENT_DIR/dev.docsuri.$role.plist"
+  local role="$1" ptype="$2" sched="$3" interval="${4:-$PERIODIC_INTERVAL_SECONDS}"
+  local label="dev.docsuri.$role" plist="$AGENT_DIR/dev.docsuri.$role.plist"
   local lifecycle
   if [ "$sched" = "periodic" ]; then
     # RunAtLoad fires one sweep at login, then StartInterval repeats it. No KeepAlive:
     # a clean exit is the expected outcome, not a fault.
     lifecycle="  <key>RunAtLoad</key><true/>
-  <key>StartInterval</key><integer>$PERIODIC_INTERVAL_SECONDS</integer>"
+  <key>StartInterval</key><integer>$interval</integer>"
   else
     # Restart on ANY exit, including a clean one: for a server, exiting is always a
     # fault. ThrottleInterval keeps a misconfigured role from spin-looping; launchd
@@ -108,8 +112,8 @@ PLIST
 }
 
 for entry in "${ROLES[@]}"; do
-  IFS=':' read -r role ptype sched <<< "$entry"
-  write_plist "$role" "$ptype" "$sched"
+  IFS=':' read -r role ptype sched interval <<< "$entry"
+  write_plist "$role" "$ptype" "$sched" "$interval"
   # A changed plist is only re-read after a bootout. bootout is ASYNCHRONOUS: it
   # returns before the job is gone, and bootstrapping into a label that is still
   # tearing down fails with "Bootstrap failed: 5: Input/output error". So bootout,
