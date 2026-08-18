@@ -80,6 +80,56 @@ ops/server/tunnel-setup.sh docsuri.rvnnt.dev
 `NEXT_PUBLIC_*` are **inlined at build time**. Changing them requires a rebuild, not a
 restart — `docsurictl rebuild` does both.
 
+## SSH access
+
+**On the LAN:** `ssh <user>@172.30.1.25`. That is `en0` (Ethernet), which is *manually*
+configured and has never moved. `en1` (Wi-Fi) is DHCP **and uses a randomised MAC**
+(macOS Private Wi-Fi Address), so its lease changes and a DHCP reservation cannot bind
+to it — don't use the Wi-Fi address for anything durable.
+
+**From outside:** through the same Cloudflare tunnel, gated by Cloudflare Access.
+
+```bash
+DOCSURI_SSH_HOSTNAME=ssh.rvnnt.dev ops/server/tunnel-setup.sh docsuri.rvnnt.dev
+```
+
+Client side, one-time:
+
+```
+Host ssh.rvnnt.dev
+  ProxyCommand /opt/homebrew/bin/cloudflared access ssh --hostname %h
+  User <user>
+```
+
+Or use Access → Browser rendering → SSH for a terminal in the browser with nothing
+installed locally.
+
+**Two preconditions, both able to fail silently:**
+
+1. **The Access application must exist before the DNS record.** DNS is what makes the
+   hostname reachable; publish it first and sshd is briefly open to anyone who runs
+   `cloudflared access ssh`. Cloudflare gives no warning — a gated and an ungated tunnel
+   look identical from here. Verify:
+   `curl -sI https://ssh.rvnnt.dev/ | grep -i '^location'` must redirect to
+   `<team>.cloudflareaccess.com`. A `200` or a hang means it is **ungated**.
+2. **sshd must be key-only.** macOS ships `PasswordAuthentication yes` + `UsePAM yes`.
+   The hardening lives in `/etc/ssh/sshd_config.d/200-docsuri-hardening.conf`:
+   ```
+   PasswordAuthentication no
+   KbdInteractiveAuthentication no
+   PermitRootLogin no
+   ```
+   Two traps: sshd is **first-match-wins**, so the `200-` prefix matters only because
+   nothing earlier (`100-macos.conf`) sets those keywords — check before renaming. And
+   under PAM, disabling `PasswordAuthentication` alone is *not* enough; keyboard-interactive
+   still accepts passwords, which is why the second line is there. No restart is needed —
+   macOS sshd is socket-activated and re-reads config per connection.
+
+Debugging a timeout: `log show --last 30m --predicate 'process == "sshd"'`. **No entries
+means the packets never arrived** (routing/firewall/wrong address), so stop looking at keys
+and sshd config. Note a private address like `172.30.1.25` is unroutable from outside the
+LAN — from a remote network it can only ever time out.
+
 ## Server-mode configuration that is easy to get wrong
 
 Set in `backend/.env` (gitignored):

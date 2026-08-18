@@ -15,6 +15,26 @@ set -euo pipefail
 
 HOSTNAME_ARG="${1:-docsuri.rvnnt.dev}"
 TUNNEL_NAME="${DOCSURI_TUNNEL_NAME:-docsuri}"
+
+# Optional SSH-over-tunnel hostname. Empty by default: publishing sshd is opt-in, because
+# unlike the web app it is a login surface. Set DOCSURI_SSH_HOSTNAME=ssh.rvnnt.dev to enable.
+#
+# TWO PRECONDITIONS, both non-obvious and both able to fail silently:
+#  1. A Cloudflare ACCESS application must already cover the hostname. Without it the
+#     tunnel happily serves sshd to anyone who runs `cloudflared access ssh`. Cloudflare
+#     does not warn you; the tunnel looks identical either way.
+#  2. sshd must be key-only. macOS defaults to PasswordAuthentication yes with UsePAM yes,
+#     so an unhardened host behind Access is one policy mistake away from brute-forceable.
+#     Note sshd is FIRST-match-wins: a drop-in only takes effect if nothing earlier set the
+#     same keyword, and disabling PasswordAuthentication alone is insufficient under PAM —
+#     KbdInteractiveAuthentication must go too. See ops/server/README.md.
+SSH_HOSTNAME="${DOCSURI_SSH_HOSTNAME:-}"
+if [ -n "$SSH_HOSTNAME" ]; then
+  SSH_INGRESS="  - hostname: $SSH_HOSTNAME
+    service: ssh://localhost:22"
+else
+  SSH_INGRESS=""
+fi
 CF_DIR="$HOME/.cloudflared"
 WEB_PORT="${DOCSURI_WEB_PORT:-3000}"
 AGENT_DIR="$HOME/Library/LaunchAgents"
@@ -64,14 +84,28 @@ originRequest:
 ingress:
   - hostname: $HOSTNAME_ARG
     service: http://127.0.0.1:$WEB_PORT
+$SSH_INGRESS
   - service: http_status:404
 YAML
 echo "wrote $CF_DIR/config.yml  ($HOSTNAME_ARG -> 127.0.0.1:$WEB_PORT)"
 
 # --- DNS ---------------------------------------------------------------------------
 # Creates/updates a proxied CNAME <hostname> -> <uuid>.cfargotunnel.com in the zone.
+# Order matters for the SSH hostname: the DNS record is what makes it reachable, so it
+# is created LAST and only when the operator has confirmed an Access policy exists.
 "$CLOUDFLARED" tunnel route dns "$TUNNEL_NAME" "$HOSTNAME_ARG" 2>&1 | tail -2 || \
   echo "(route dns reported an existing record — continuing)"
+
+if [ -n "$SSH_HOSTNAME" ]; then
+  "$CLOUDFLARED" tunnel route dns "$TUNNEL_NAME" "$SSH_HOSTNAME" 2>&1 | tail -2 || \
+    echo "(route dns reported an existing record — continuing)"
+  echo
+  echo "VERIFY Access is gating $SSH_HOSTNAME before trusting it:"
+  echo "  curl -sI https://$SSH_HOSTNAME/ | grep -i '^location'"
+  echo "  -> must redirect to <team>.cloudflareaccess.com. A 200 or a hang means the"
+  echo "     hostname is UNGATED and sshd is exposed to the internet - remove the DNS"
+  echo "     record immediately and fix the Access application."
+fi
 
 # --- launchd agent -----------------------------------------------------------------
 cat > "$AGENT_DIR/dev.docsuri.tunnel.plist" <<PLIST
