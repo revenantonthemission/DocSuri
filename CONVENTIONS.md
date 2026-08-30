@@ -5,7 +5,7 @@ lifecycle; AIDLC is deliberately silent on git, so the git workflow is documente
 
 ## Branches (git-flow)
 
-- **`main`** — production. What's deployed at https://docsuri.org. Advanced only by promoting `develop`.
+- **`main`** — production. What's deployed at https://docsuri.rvnnt.dev. Advanced only by promoting `develop`.
 - **`develop`** — integration target. All work merges here first, via GitHub PR.
 - Working branches are short-lived and merge into `develop` through a PR.
 

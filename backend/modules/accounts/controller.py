@@ -86,7 +86,7 @@ def _verification_link_base(request: Request) -> str:
 
     프로덕션: 브라우저는 백엔드 호스트를 알 수 없고 `request.base_url`은 CloudFront/BFF/ALB
     뒤의 내부 호스트라 메일에 그대로 넣으면 클릭 불가 링크가 된다. 따라서 공개 앱 URL
-    (`PUBLIC_APP_URL`, 예: https://docsuri.org)의 **프런트엔드 인증 페이지**(`/verify-email`)로
+    (`PUBLIC_APP_URL`, 예: https://docsuri.rvnnt.dev)의 **프런트엔드 인증 페이지**(`/verify-email`)로
     링크한다 → 사용자가 클릭하면 프런트 페이지가 BFF 경유로 백엔드 GET /auth/verify-email를
     호출하고 친화적 결과 UI를 보여준다(원시 JSON 노출 금지). 로컬/개발: `PUBLIC_APP_URL`
     미설정 시 백엔드를 직접 부르는 기존 동작으로 폴백."""
@@ -134,7 +134,7 @@ def get_signup_service(
     observability = getattr(request.app.state, "observability", None)
     email_client = get_email_client(
         env=os.getenv("ENV", "local"),
-        sender_email=os.getenv("SES_SENDER_EMAIL", "no-reply@docsuri.org"),
+        sender_email=os.getenv("SES_SENDER_EMAIL", "no-reply@mail.rvnnt.dev"),
         region=os.getenv("SES_REGION", "ap-northeast-2"),
         observability_hub=observability,
     )
@@ -172,7 +172,7 @@ def get_password_reset_service(
     observability = getattr(request.app.state, "observability", None)
     email_client = get_email_client(
         env=os.getenv("ENV", "local"),
-        sender_email=os.getenv("SES_SENDER_EMAIL", "no-reply@docsuri.org"),
+        sender_email=os.getenv("SES_SENDER_EMAIL", "no-reply@mail.rvnnt.dev"),
         region=os.getenv("SES_REGION", "ap-northeast-2"),
         observability_hub=observability,
     )
@@ -205,7 +205,7 @@ def get_account_management_service(
     observability = getattr(request.app.state, "observability", None)
     email_client = get_email_client(
         env=os.getenv("ENV", "local"),
-        sender_email=os.getenv("SES_SENDER_EMAIL", "no-reply@docsuri.org"),
+        sender_email=os.getenv("SES_SENDER_EMAIL", "no-reply@mail.rvnnt.dev"),
         region=os.getenv("SES_REGION", "ap-northeast-2"),
         observability_hub=observability,
     )

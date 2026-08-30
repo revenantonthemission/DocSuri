@@ -159,7 +159,7 @@ def _build_email_port():
 
     client = get_email_client(
         env=os.getenv("ENV", "local"),
-        sender_email=os.getenv("SES_SENDER_EMAIL", "no-reply@docsuri.org"),
+        sender_email=os.getenv("SES_SENDER_EMAIL", "no-reply@mail.rvnnt.dev"),
         region=os.getenv("SES_REGION", "ap-northeast-2"),
     )
     return EmailSeamDigestAdapter(client)

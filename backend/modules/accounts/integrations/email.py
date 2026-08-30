@@ -348,7 +348,7 @@ class SESEmailClient(EmailClientInterface):
 class ResendEmailClient(EmailClientInterface):
     """Resend (https://resend.com) 트랜잭셔널 이메일 클라이언트.
 
-    SES와 달리 '프로덕션 액세스' 심사 게이트가 없다 — 발신 도메인(docsuri.org)을 Resend에서 DNS로
+    SES와 달리 '프로덕션 액세스' 심사 게이트가 없다 — 발신 도메인(mail.rvnnt.dev)을 Resend에서 DNS로
     검증하면 즉시 임의 수신자에게 발송 가능. HTTPS API에 API 키(Bearer)로 발송하며, httpx는 이미
     의존성(reCAPTCHA 클라이언트)이라 새 패키지가 필요 없다. 실패 시 소프트 폴백."""
 

@@ -106,7 +106,8 @@ Ship a live, end-to-end grounded discovery product on mobile, then layer underst
 ### Features In Scope (MVP — live)
 
 - Discovery (U2), Library (U4), Accounts (U3), Frontend (U5), Reliability/Ops (U6),
-  Corpus ingestion (U1). **Product is E2E live** (`docsuri.org`, since 2026-06-18).
+  Corpus ingestion (U1). **Product is E2E live** (`docsuri.rvnnt.dev`; originally at
+  `docsuri.org` since 2026-06-18, domain relinquished after the AWS teardown).
 
 ### Features Explicitly Out of Scope (this cycle)
 

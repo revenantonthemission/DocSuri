@@ -2,7 +2,7 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 
 const apiUrl = (__ENV.DOCSURI_API_URL || 'https://d2bsni6xhpvbw1.cloudfront.net').replace(/\/$/, '');
-const appUrl = (__ENV.DOCSURI_APP_URL || 'https://docsuri.org').replace(/\/$/, '');
+const appUrl = (__ENV.DOCSURI_APP_URL || 'https://docsuri.rvnnt.dev').replace(/\/$/, '');
 const skipSearch = __ENV.DOCSURI_SKIP_SEARCH === '1';
 
 export const options = {

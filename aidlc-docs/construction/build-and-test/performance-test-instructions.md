@@ -51,7 +51,7 @@ Use the checked-in k6 script for the public frontend and API gateway:
 
 ```bash
 brew install k6
-DOCSURI_APP_URL=https://docsuri.org \
+DOCSURI_APP_URL=https://docsuri.rvnnt.dev \
 DOCSURI_API_URL=https://d2bsni6xhpvbw1.cloudfront.net \
 DOCSURI_VUS=20 \
 DOCSURI_HOLD=2m \

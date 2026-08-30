@@ -1,5 +1,10 @@
 # DocSuri 운영 런북 (Operations Runbook)
 
+> ⚠️ **HISTORICAL — AWS 에스테이트 해체됨.** 이 문서는 구 AWS 배포(CloudFront @ docsuri.org,
+> ECS Fargate 등)를 기술한다. docsuri.org 도메인은 구 계정과 함께 접근 불가·방치 상태.
+> **현행 프로덕션은 Cloudflare 터널 뒤 단일 서버(`docsuri.rvnnt.dev`)** — 현행 런북은
+> [`ops/server/README.md`](../../ops/server/README.md) 참조.
+
 > AWS account `028317349537` · region `ap-northeast-2` (Seoul)
 > CONSTRUCTION 종료·프로덕션 배포 2026-06-18. 본 문서는 OPERATIONS 단계 산출물.
 > 모든 값은 코드에서 추출한 ground-truth. 코드가 바뀌면 이 문서도 갱신할 것.
