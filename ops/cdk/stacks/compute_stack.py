@@ -94,7 +94,9 @@ from .profile import db_endpoint, db_port_as_string, is_dev
 # for the ALB's *.elb.amazonaws.com name, so a controlled domain is mandatory for origin TLS.
 _ORIGIN_DOMAIN = "origin.docsuri.org"
 _ZONE_NAME = "docsuri.org"
-_ZONE_ID = "Z0084324NUV4EPLJ7JH9"
+# Zone in account 559352512800; the registrar NS delegation must point at this zone's
+# name servers or nothing deployed into it (origin alias, ACM validation, SES DKIM) resolves.
+_ZONE_ID = "Z01838052MFR28NGE6XV1"
 
 class ComputeStack(Stack):
     def __init__(
