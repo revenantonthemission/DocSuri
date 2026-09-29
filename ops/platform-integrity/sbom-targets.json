@@ -1,0 +1,95 @@
+{
+  "version": 2,
+  "images": {
+    "postgres": "docsuri/postgres-alpine-16.15-nosu@sha256:ccbe2a110992a5b602afdd4a28a45f184de67308d4e80284c0b2329a10cb0e2e",
+    "postgresUpstreamBase": "postgres@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea",
+    "postgresSuperseded": {
+      "digest": "postgres@sha256:a3b7f434b2dc57ce85a67e171163eb8ab1a1ebcb39d27484661f26b1dfbe30d6",
+      "components": 7384,
+      "findings": 323,
+      "blockingFindings": 98,
+      "rejectedBecause": "Debian trixie base layer carried 74 blocking OS/distro advisories (libxml2, util-linux, gnupg, libacl, glibc, libperl) with no upstream fix state, plus the gosu Go stdlib set"
+    },
+    "redis": "redis@sha256:c6eabf748fc7a61dbb5a705c78bcf3d6377b1127a97d0ce965c11c44ba46896f",
+    "opensearch": "opensearchproject/opensearch@sha256:4ee82ecb35d837a6186c81aaa64c8a5bce71aa956edbd87f1f684ab56af52c44",
+    "minio": "quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+    "elasticmq": "softwaremill/elasticmq-native@sha256:e4580ab9ad1bd5cd37b4ba04911bc5ccc8cd2d9ab4de56ece65acee71c24e05c"
+  },
+  "derivedImages": {
+    "postgres": {
+      "base": "postgresUpstreamBase",
+      "digest": "docsuri/postgres-alpine-16.15-nosu@sha256:ccbe2a110992a5b602afdd4a28a45f184de67308d4e80284c0b2329a10cb0e2e",
+      "dockerfile": "ops/platform-integrity/images/postgres-alpine-nosu.Dockerfile",
+      "change": "Remove /usr/local/bin/gosu and run as the unprivileged postgres uid so the entrypoint never needs it",
+      "rationale": "gosu is a Go binary whose go1.24.6 stdlib carries 24 High/Critical advisories in every upstream tag",
+      "components": 865,
+      "findings": 4,
+      "blockingFindings": 1,
+      "remaining": "CVE-2026-85091 alpine zlib 1.3.2-r0 High with no fix state; needs an alpine base refresh or a documented time-boxed exception",
+      "verified": "280 passed / statement coverage 89% / actual loopback mTLS against this image on 2026-09-26",
+      "status": "CANDIDATE_PENDING_OPERATOR_MAINTENANCE_WINDOW"
+    }
+  },
+  "nativeRuntimes": {
+    "clockObserver": {
+      "subject": "r1t-clock-20260927",
+      "components": 51,
+      "findings": 8,
+      "blockingFindings": 1,
+      "chrony": "4.9 built from the pinned 4924c6f5 source tarball",
+      "python": "3.13.15+20260924 built from the pinned 064afb7c standalone archive",
+      "remaining": "Grype reports CVE-2026-82049 High via nvd:cpe and lists 3.14.0b1 as fixed. This candidate contains the exact PSF 3.13 backport b8f23e307097552eaea2604383a12ab280520d0d with installer-enforced preimage/postimage pins. The sealed-runtime regression passes for data and tar filters without repairing the candidate. Raw findings and incomplete role/freshness coverage remain visible; remediation review and physical acceptance are pending.",
+      "verified": "2248 files / 97622694 bytes / manifest 509b5074da51eebe58cadb8b4527d3ab6c2c961f4bf15e6e2f3f971e75da1752 / system Python plan-only verified / prior unprivileged chronyd rehearsal observed 400 executable mappings and authenticated NTS on 2026-09-27",
+      "installerSha256": "efb6145be5dff0f3ab0d087fe27c0c3e9b12746574342cba6a59d3f1cef3eb67",
+      "scan": {
+        "capture": "r1clock-20260927/scan-handoff",
+        "observedAt": "2026-09-27T16:21:38.032174+00:00",
+        "timeQuality": "host-unverified",
+        "sbomSha256": "a2e73aa849c0f53c1b02c674fe0da12708c5561d851f9262151109fa51e30dfa",
+        "reportSha256": "46cde20ff1aea8bd996f38965f969973574bf16a0209e076749d4d8a851ea427",
+        "state": "BLOCKED",
+        "ignoredFindings": 0
+      },
+      "status": "NATIVE_CLOCK_PROBED_RECEIPT_PENDING",
+      "installation": {
+        "profile": "test",
+        "state": "NATIVE_CLOCK_PROBED",
+        "deploymentManifestSha256": "ac0c16bb5bf6baa5a502464a4a1f0807b0395eabe6a768abd3d06df0c47bdd26",
+        "probeState": "NATIVE_CLOCK_PROBED",
+        "reason": "signed_capability_receipt_pending",
+        "capabilityReceiptIssued": false,
+        "reader": {
+          "state": "CLOCK_READ_VERIFIED",
+          "lower": "1790599834753553",
+          "upper": "1790599834989279",
+          "clockWriteDenied": true,
+          "commandSocketDenied": true
+        },
+        "observerUid": 608,
+        "observerGid": 608,
+        "publisherLastExitCode": 0,
+        "inspectorClockReadsPassed": 5,
+        "observedManifestMode": "0444",
+        "protectedProvisioner": "/private/var/root/docsuri-clock.dAZVUkTy/provision_clock.py",
+        "nextDiagnostic": "ops/platform-integrity/diagnose_clock_launch.sh",
+        "diagnosticSha256": "410016041adc71e2a503848446ee3ac1a222d73571976e0bf2202ef41869ecbe",
+        "diagnosticKernelGroups": [608, 12, 61, 100],
+        "nextRepair": "ops/platform-integrity/repair_clock_groups.py",
+        "repairSha256": "9fc69cb3b2ec72bcd30b5eea4770b58de8e6455617ce750a9d4a6dabec3e3812",
+        "repairBootstrapUid": 0,
+        "repairTargetUid": 608,
+        "repairedPlistSha256": {
+          "nts-observer": "e9eb9bc34a23bee0c77e9b3c8aec3ec04413c1f24cf6f97cf37d78d8898ca653",
+          "clock-sample": "d751260ff3599fc2f71c7412c55c143e4bfb7ec885525441a7c010bfaa8e319a"
+        }
+      }
+    }
+  },
+  "pythonProjects": ["backend", "ingestion", "ops", "shared/python", "backend/modules/discovery", "backend/modules/summarization", "platform_integrity"],
+  "nativeCoverage": {
+    "macOS": "Apple platform update/provenance evidence required; Linux OS feed results are not macOS coverage",
+    "chrony": "Native test clock probe passed: live collection, isolated reader validation and frame/socket write denials. Signed host/release receipt and remaining expiry/reboot acceptance are pending",
+    "python": "Interpreter and installed role closure must be bound to the release manifest",
+    "node": "Node runtime and frozen production/build-tool dependency closures are separate subjects"
+  }
+}

@@ -1,5 +1,7 @@
 # unit-of-work-dependency.md — 유닛 의존성 매트릭스
 
+> **현재 산출물**: 하단 `2026-09-19 REM Dependency Model`이 UGP1=A/DAD1/WPR2에 따른 현재 모델이다. 상단의 배포·통신 설명은 이전 product 구성을 기록한 이력이며, 새 모델은 merge/source/runtime/data/activation 의존을 구분한다.
+
 **단계**: INCEPTION → Units Generation · **일자**: 2026-06-15
 **근거**: `application-design/component-dependency.md`. 종류: **sync**(동기 호출/REST), **event**(이벤트 백본, 비동기), **lib**(빌드 시 공유 계약/인터페이스 의존).
 
@@ -98,3 +100,81 @@ source별 스케줄/backfill/rebuild ──> U1 워커 ──> (source fetch→F
 U2 ──SearchExecuted(event)──> U4 SearchHistory
 U2/U6 ──근거화 위반/비용 급증/반쪽짜리(event)──> U6 탐지기 ──> IncidentEventPublisher ──> Ops 대시보드
 ```
+
+---
+
+## 2026-09-19 REM Dependency Model
+
+**입력**: UGP1=A, DAD1=A 및 WPR2=A. unit 정의와 component primary는 `unit-of-work.md`, story/finding/인수 책임은 `unit-of-work-story-map.md`의 현재 절을 따른다.
+
+**상태**: 생성·검증 및 UGR1=A 승인 완료 (2026-09-19). 승인 기록은 `../plans/unit-of-work-plan.md`다.
+
+### 의존 종류
+
+| Kind | 의미 |
+|---|---|
+| C - contract/build | schema/port/binding 및 frozen artifact 지원 version 의존. REM-1이 조정하지만 REM-1 daemon HTTP 가용성에 의존한다는 뜻은 아님 |
+| M - merge/integration | 승인된 선행 merge 및 isolated integration checkpoint |
+| R - runtime sync | bounded 접수, 인가/직접 control, 준비된 event/result/asset/health 요청. 업무 완료를 기다리는 RPC가 아님 |
+| E - durable async | operation/outbox/worker, domain command/receipt 및 lifecycle signal. parent/version/grant에 결속 |
+| D - data/projection | domain-owned current authority/context, immutable source/report/command projection 등 읽기 의존 |
+| A - activation | public route/정책 집행을 켜기 위한 안전 조건. source import나 merge 선행과 별개 |
+
+### Merge / isolated integration matrix
+
+행 unit이 열 unit의 checkpoint를 선행 조건으로 소비한다. 표시한 전이/전이적 의존은 모두 낮은 순서에서 높은 순서로 전진한다.
+
+| Consumer | REM-1 | REM-2 | REM-3 | REM-4 |
+|---|---|---|---|---|
+| REM-1 | — | — | — | — |
+| REM-2 | G1 | — | — | — |
+| REM-3 | G1 | REM-2 isolated integration/신규 data inventory | — | — |
+| REM-4 | G1 | 선행 integration | REM-3 isolated integration | — |
+
+순서는 **REM-1 -> REM-2 -> REM-3 -> REM-4**다. 공통 계약이 동결된 독립 구현은 병렬 조정할 수 있다. 각 unit은 자신의 Functional/NFR Requirements/NFR Design/Infrastructure/Code loop와 리뷰를 완료하고, 실제 provider를 미구현 상태로 남긴 mock 성공을 integration 완료로 인정하지 않는다.
+
+### Contract, runtime 및 data edges
+
+| Consumer | Provider | Kind | 계약 및 경계 |
+|---|---|---|---|
+| REM-2/3/4, 기존 backend/frontend | shared/domain 계약 및 REM-1 검증 artifact | C | public/server/internal DTO, registry/compatibility, offline build-consumed bindings |
+| U5/U13 frontend | BFF -> U6/U3 gateway -> 고정 REM-2/3 route | R | 접수/직접 SSE/result/asset relay. browser의 REM/store 직접 접근과 임의 proxy target 금지 |
+| REM-2 content workers | U1 source/build/asset 및 U7 business core | C/D/E | source current/immutable version 소비, 필요 build는 durable command/receipt |
+| REM-2 private context | U11/U12 context authority 및 U1 user_docmodel | D | 기존 owner context를 검증하며 public `userdoc:` fallback 없음 |
+| 모든 REM 및 기존 owner writer | U3/resource owner의 AUTH, EXEC 계약 | C/D | current grant/owner/run fence. stale event-cache 또는 gateway 역호출로 대체하지 않음 |
+| REM-3 purge | U3 직접 lifecycle producer | E/D | 유예/재활성화/파기 epoch의 목적 한정 신호. 계정 비활성화/session 철회는 직접 U3 경로 |
+| REM-3 purge | 각 owner domain 및 REM-2/4 EXEC | E/D | quiesce/manifest-bound purge/receipt/residue. recipient는 자기 store와 inbox만 수정 |
+| Domain executor | 지정 recipient의 CommandProjection | D/E | immutable 입력 읽기, 자기 receipt 발행. sender 일반 mutable table write/임의 callback 없음 |
+| REM-3 opt-out | U15 consent/settings/sender | C/D/E | 직접 suppression/공통 handoff barrier, 후속 ApplyOptOut/receipt. observer 권한과 System completion 목적 분리 |
+| U5/U6/U3 ingress | REM-3의 versioned edge policy | C/D | 로컬 identity/limiter 집행. 매 request의 REM-3 API 호출 의존이 아님 |
+| REM-4 audit/repair | U1 corpus read/fenced mutation | D/E/목적 한정 실행 | 읽기/검증은 worker, mutation은 exact approval/backup 증거가 있는 runner |
+| U2/U5/U6 SEARCH/health | REM-4 report 및 current generation head | D | generation/model/freshness 검증 후 로컬 집행. 검색 hot path의 REM-4 RPC 없음 |
+| 모든 entry/worker | U6 OBS 계약 및 자기 local instance | C/R/E | 구조화 correlation, redaction, 단계 latency, queue와 독립된 health |
+| REM-1 daemon/runner | domain-owned schemas/registry/lock/evidence | C/D/목적 한정 실행 | daemon은 read-only; runner만 명시 승인 작업. bootstrap의 live daemon 순환 없음 |
+
+### 초기 provider와 공동 activation
+
+- REM-2의 AUTH/current projection 및 write-fence provider는 REM-2의 U3/U1 등 원 domain 변경으로 함께 제공한다. EXEC의 전체 통합 primary가 REM-3이라는 이유로 초기 provider 구현을 미루지 않는다.
+- REM-2 public job 활성화는 REM-3의 lifecycle/consent/identity 보호와 G4 browser/compatibility 검증 이후다. REM-3가 REM-2 operation/event/result inventory를 소비하는 역방향 관계는 E/D/A이며 M 순서를 뒤집지 않는다.
+- REM-1의 G1은 기반의 local 완료다. US-R4/5와 RJ-AC12의 service-local 구현 및 최종 integration은 후속 REM과 통합 Build and Test에서 확인한다. 전체 인수 pending을 기반 작업의 미착수 전제로 해석하지 않는다.
+- 초기 schema/core envelope 이후의 domain 계약 변경은 원 owner와 REM-1 shared review를 거쳐 versioned artifact로 배포한다. 사용자 권한 의미를 공유 toolkit 코드의 임의 변경으로 바꾸지 않는다.
+
+### Activation 및 별도 data gate
+
+| 활성화 대상 | 필요한 증거 | 의존 종류 |
+|---|---|---|
+| REM-1 evidence/runner 기능 | G1, 역할별 credential/registry/compatibility, mutation의 별도 권한 | A |
+| REM-2 public job 및 asset/result | G2 + REM-3 보호(G3) + 관련 browser/신구 contract 인수(G4) | A |
+| REM-3 opt-out/purge | G3, U15 sender barrier 및 전체 domain EXEC/REM state inventory, 관련 G4/G5 | A/D |
+| REM-4 relevance enforcement | 검증된 corpus generation/audit/calibration 및 shadow/정책 증거 | A/D |
+| safe targeted live repair | 격리 검증, G5 backup/restore, exact count/hash/manifest, rollback 및 사후 불변식 | A/D |
+| full rebuild/bulk reparse/reembed/live alias cutover | 별도 명시 실행 승인 | 별도 실행 gate |
+
+### Dependency 검증 모델
+
+1. **M graph**는 위 matrix의 순서로 비순환이다. A의 REM-2/3 공동 보호를 역방향 M edge로 합치지 않는다.
+2. **Source graph**의 import 방향은 DAD1의 C3 composition -> C2 adapters/C1 domain-core/C0 contracts, C2 -> C1/C0, C1 -> C0다. 상위가 하위를 소비하고 domain이 다른 REM controller/entry point를 import하지 않는다.
+3. **Sync graph**는 browser/BFF/gateway -> 고정 service -> local core/projection/I/O 방향이다. AUTH/consent adapter가 gateway를 역호출하거나 health끼리 순환 probe하지 않는다.
+4. **E feedback**은 의도된 outbox/worker/publication 및 command/receipt 흐름이다. 전체 runtime 통신을 DAG라고 선언하지 않는다. parent/run fence 및 version/grant 검증으로 새로운 사용자 job/재귀 status chain이 생기지 않게 한다.
+5. 공유 physical store는 cross-domain admin write를 허용하지 않는다. ordinary writer와 domain-owned privileged executor, immutable projection의 권한을 구분한다.
+6. 이 모델의 검증은 설계/분해의 정합성이다. 실제 import/consumer/queue/role/version 및 failure behavior는 per-unit Construction과 G0~G5에서 입증한다.

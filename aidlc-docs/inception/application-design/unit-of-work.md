@@ -1,5 +1,7 @@
 # unit-of-work.md — 유닛 정의 (Units of Work)
 
+> **현재 산출물**: 하단 `2026-09-19 Deployable-Service Units`가 UGP1=A에 따른 현재 unit 정의다. 상단의 초기 배포 번호/AWS/동기-only 설명과 Greenfield tree는 이력이며, 현재 runtime/계약은 승인된 DAD1/WPR2 및 아래 정의를 따른다.
+
 **단계**: INCEPTION → Units Generation · **일자**: 2026-06-15
 **근거**: `application-design/`(U1~U6), UQ1=A(6 유닛), UQ2=A(모노레포), UQ3=A(4 배포 단위), UQ4=A(데모 우선), UQ5=A(공유 계약 `shared/`). 2026-06-26 U1 Corpus 리뷰: 신규 유닛 없이 기존 U1 확장.
 **2026-08-03 유닛 재구성**(`inception/plans/unit-recomposition-plan.md`, UQ1~5 답변 완료): U10·U13 정식 등재, U11/U12 코드 위치 정정, 구 `research` 모듈 U11 흡수(`backend/modules/evidence/sessions/`), `user_docmodel` U1 소유 확정(포트 `docsuri_shared.ports.UserDocModelCoordinatorPort`).
@@ -100,3 +102,154 @@
 * **[확장 / 2026-06-24 → 2026-06-28 재구성] 연구 에이전트**: 구 통합 "U11 Research Agent"는 폐기되고 **문헌탐색·근거형성 / 연구아이디어 2개 유닛으로 분리**(재인셉션 차터 §4). 유닛 번호·경계·선행 의존(2유닛 간 의존 포함)은 **신규 인셉션 사이클의 units-generation에서 재부여**한다.
 
 > 각 유닛은 CONSTRUCTION의 유닛별 루프(Functional/NFR/Infra Design → Code Generation)로 진행한다.
+
+---
+
+## 2026-09-19 Deployable-Service Units
+
+**입력**: UGP1=A, DAD1=A, WPR2=A, RJR1=A, RJS2=A.
+**상태**: 생성·검증 및 UGR1=A 승인 완료 (2026-09-19). 승인 기록은 `../plans/unit-of-work-plan.md`다.
+**정의**: 이번 Construction delivery unit은 **REM-1~REM-4 네 service**다. 기존 U1~U16은 canonical product/domain 참조 체계이며, 16개 product를 다시 구현하는 추가 loop로 계산하지 않는다.
+
+- product story owner는 사용자 가치/인수의 책임, REM primary는 이번 구현/통합의 책임이다. 실제 코드·business rule·data authority는 DAD1의 domain/ordinary-writer/maintenance 배치를 따른다.
+- 각 REM은 독립 versioned artifact와 daemon/worker/허용 one-shot role, credential/health/재시작 경계를 갖는다. 공통 RK/AUTH/DELIVERY/EXEC/OBS는 library/port 또는 local instance이며 별도 REM service가 아니다.
+- 현재 배포 기준은 single Mac + launchd + OrbStack + Cloudflare Tunnel + Ollama다. 기존 API/BFF/ingestion/agent 역할과의 연결도 각 REM의 vertical slice에 포함한다.
+
+### REM delivery unit 정의
+
+| Unit | 독립 runtime 역할 | Primary component / finding | 필수 산출과 완료 경계 |
+|---|---|---|---|
+| REM-1 Platform Integrity | read-only evidence daemon, 별도 승인 build/CLI/privileged runner | R1C/R1R/OBS; F06/F08/F13 | ordered registry/ledger, offline public/server bindings, pinned/frozen artifact·audit·SBOM, compatibility/관측 규약. G1 기반 검증을 제공하고 US-R4/5 및 RJ-AC12의 최종 통합 증거 조정을 담당 |
+| REM-2 Private Content | content admission/observation daemon, content/status-query worker | EDGE/UI/AUTH/RK/DELIVERY/R2A/R2W; F01/F02/F05/F07 | current authority/context, canonical source/cache, durable 접수, queued status, SSE/result/asset 전달과 UI. 실제 U1/U3/U7/U11/U12 provider 및 consumer 연결을 G2로 검증 |
+| REM-3 Lifecycle and Edge Trust | opt-out/policy/observation daemon, purge/consent/status worker | EXEC/R3C/R3P/R3E; F04/F09/F10 | owner/run fence, domain quiescence/manifest/receipt, control copy 포함 파기, token observer/즉시 suppression, trusted client identity. G3와 관련 G4/G5 인수 |
+| REM-4 Corpus Integrity | report/운영 admission daemon, audit/calibration worker, 별도 privileged repair runner | R4A/R4R/SEARCH; F03/F11/F12 | production seed fence, generation/source/completeness/calibration evidence, U2/U5의 degraded-empty/no-match, 승인된 exact repair. G2/G4/G5와 corpus data gate |
+
+중요도는 DAD1을 계승한다: REM-1/4 High, REM-2/3 Critical. 각 unit의 장애 영향/직접 health/복구 범위는 DAD1 및 NFR-A1/RES-2를 따른다. single-host best-effort, persistent state의 RPO ≤24h 및 수 시간 RTO 목표를 재사용하며 상세 role별 수치는 Construction NFR에서 검증한다.
+
+### 기존 canonical product와 기여 경로
+
+아래 경로는 기존 source의 기여 위치다. service별 새 packaging/entry path와 physical credential/port는 per-unit NFR/Infrastructure/Code plan에서 확정한다.
+
+| Product | 현재 유지할 authority | 이번 REM 연결 / 기존 source |
+|---|---|---|
+| U1 | corpus, source/private DocModel·asset 및 user_docmodel 의미 | REM-2 source/context/build/fence, REM-3 owner purge, REM-4 corpus/repair; `ingestion/`, `backend/modules/user_docmodel/` |
+| U2 | 검색/retrieval/outcome/relevance 의미 | REM-2 metadata 소비, REM-4 정책/분류; `backend/modules/discovery/` |
+| U3 | account/session/current authority와 직접 lifecycle | REM-2 최초 AUTH projection, REM-3 system purpose/purge/revocation; `backend/modules/accounts/` |
+| U4 | library/saved search/history | REM-3의 domain-owned purge 참여; `backend/modules/library/` |
+| U5 | 공통 웹/BFF 및 사용자 job 경험 story | REM-2 bridge/UI, REM-3 token UX, REM-4 search classifier; `frontend/` |
+| U6 | ingress/관측/health 및 운영 정책 | REM-1 공통 규약, 각 REM local 계측, REM-3 trust 집행; `backend/middleware/`, `ops/` |
+| U7 | summary/translation/source·glossary 규칙 | REM-2-hosted generation과 단일 writer 전환, owner variant 분류; `backend/modules/summarization/` |
+| U8 | citation graph/caches/저장 연동 | 원 계약 유지; owner data 존재 시 REM-3 inventory/EXEC 참여; `backend/modules/citation_graph/` |
+| U9 | 행동/profile/개인화 의미 | REM-2의 필요한 owner preference 소비, REM-3 purge; `backend/modules/personalization/` |
+| U10 | 마이페이지의 얇은 UI/backend 연결 | U3/U16 authority를 유지하는 UI contributor, 특히 US-A6; `backend/modules/mypage/`, `frontend/` |
+| U11 | evidence/context/session 및 evidence port | REM-2 private context/하위 job, REM-3 purge; `backend/modules/evidence/` 및 `sessions/` |
+| U12 | novelty/context/결과 및 agent 단계 | REM-2 하위 job, REM-3 purge; `backend/modules/novelty/` |
+| U13 | agent chat frontend | REM-2 sub-job timeline/첨부 및 현재 권한; `frontend/`의 agent chat/transport |
+| U14 | onboarding 입력/시딩 이벤트 | owner state의 REM-3 inventory/EXEC; `backend/modules/onboarding/` |
+| U15 | digest token/consent/settings/sender 의미 | REM-3의 suppression/command/receipt 및 handoff barrier; `backend/modules/trends/` |
+| U16 | plan/쿼터/spend 의미 | owner state의 REM-3 inventory/EXEC; `backend/modules/plans/` |
+
+U10은 현재 story map의 primary story가 없더라도 U3 설정 UI 등의 contributor다. product owner가 없다는 뜻이 아니다. U8 등 실제 owner data 보유 여부는 registry inventory로 검증하며 추정으로 누락하지 않는다.
+
+### Component primary 및 local instance 책임
+
+| Component | Primary REM | 필수 contributor / canonical 경계 |
+|---|---|---|
+| EDGE | REM-2 | REM-3 F10/token; U5/U6/U3 ingress 권위 |
+| UI | REM-2 | REM-3 해지 UX, U5/U13; 검색 분류는 REM-4 SEARCH |
+| AUTH | REM-2 | U3/resource owner의 최초 current projection과 소비 연결; REM-3 lifecycle/system-purpose 강화, REM-4 operator 소비 |
+| RK | REM-2 | REM-1 계약/검증; REM-3/4의 독립 instance와 각 realm persistence |
+| DELIVERY | REM-2 | REM-3 token observer, REM-4 operator 결과 instance |
+| EXEC | REM-3 | REM-2에 필요한 초기 write-fence/provider, REM-4 repair; 실제 구현은 각 data owner |
+| R1C | REM-1 | U6 운영 및 platform evidence consumer |
+| R1R | REM-1 | domain schema/migration/lock owner, CI/deploy 경계 |
+| R2A | REM-2 | U1/U3/U7/U11/U12 context 및 U5 bridge |
+| R2W | REM-2 | U7 core, U1 source consumer, current authority |
+| R3C | REM-3 | U15 consent/sender/settings와 U5 observer |
+| R3P | REM-3 | U3 lifecycle 및 모든 등록된 domain EXEC |
+| R3E | REM-3 | U5/U6/U3의 로컬 identity/limiter 집행 |
+| R4A | REM-4 | U1 corpus 및 U2 eval/calibration |
+| R4R | REM-4 | U1 purpose-bound mutation, U6 backup/restore |
+| SEARCH | REM-4 | U2 outcome/policy, U5 classifier |
+| OBS | REM-1 | U6 계약 선행; 각 REM이 자기 role의 실제 telemetry/health 구현 |
+
+초기 AUTH/current projection와 EXEC write fence 등 REM-2의 필수 provider는 REM-2 slice에서 원 domain owner와 함께 구현한다. component primary가 후속 REM이라는 이유로 미구현 dependency를 남겨 G2를 통과했다고 판정하지 않는다. 후속 lifecycle/purge/consent 연결은 REM-3가 검증하며 공개 job activation은 G3/G4 이후다.
+
+### Construction 문서 위치 및 단계
+
+| Unit | 문서 root | 자기 loop |
+|---|---|---|
+| REM-1 | `aidlc-docs/construction/rem-1-platform-integrity/` | Functional Design -> NFR Requirements -> NFR Design -> Infrastructure Design -> Code Generation |
+| REM-2 | `aidlc-docs/construction/rem-2-private-content/` | 동일 loop, 필요한 기존 domain/frontend/provider 포함 |
+| REM-3 | `aidlc-docs/construction/rem-3-lifecycle-edge-trust/` | 동일 loop, 모든 owner-data domain contributor 포함 |
+| REM-4 | `aidlc-docs/construction/rem-4-corpus-integrity/` | 동일 loop, verified corpus 및 policy consumer 포함 |
+
+애플리케이션 code는 workspace root의 승인된 package 경로에 둔다. 위 root는 문서용이다. Brownfield이므로 Greenfield 디렉터리 전략을 새로 강제하지 않으며, 독립 release를 위한 packaging 변경은 DAD1의 C0~C3 layering과 per-unit 계획으로 검증한다.
+
+### Unit-local 완료와 최종 인수
+
+- REM-1의 첫 unit-local 완료는 G1 platform 기반이다. 후속 service-local 구현이 필요한 US-R4/5 및 RJ-AC12의 전체 인수를 그 시점에 통과로 표시하지 않는다. REM-1은 최종 통합 증거의 primary 조정을 유지한다.
+- REM-2/3/4의 각 loop는 자기 source 변경과 실제 provider/consumer/role 연결 증거를 제출한다. local 완료와 public activation, 전체 F/RJ-AC 인수는 별도 판정한다.
+- 최종 story/RJ-AC 성공은 primary와 필수 contributor의 증거를 함께 확인한 G4/G5 결과다. 이 구분으로 후속 service를 모두 구현해야 REM-1 기반 작업을 시작/마칠 수 있는 순환 전제를 피한다.
+- actor/domain/store inventory, primary별 인수, 실제 failure/recovery scenario, consumer binding, backup/rollback 및 unresolved gate를 unit summary에 남긴다.
+- Units 산출물 승인 후 첫 Construction 단계는 **REM-1 Functional Design**이다. 통합 Build and Test는 네 loop의 결과를 연결한다. full corpus rebuild/bulk reparse/reembed/live alias cutover는 별도 명시 승인이다.
+
+### Unit별 확장 적용과 후속 검증
+
+| Unit | Security Full 적용 초점 | Resiliency custom 적용 초점 | PBT Full 후속 표면 |
+|---|---|---|---|
+| REM-1 | registry/bindings/lock/pin/SBOM, runner 최소 권한 및 evidence 무결성 | artifact/version 호환, startup/CLI 검증, 공통 telemetry/복구 증거 | registry/reference model, offline schema round-trip, generation 실패 원자성 |
+| REM-2 | 전 경계 owner/current grant, public/private namespace, source/cache, SSE/asset | durable 접수, outbox/consumer, timeout/backpressure, reconnect/rollback | caller/source 격리, retry/publication 멱등성, status/event 시퀀스 |
+| REM-3 | direct lifecycle/consent 보호, 목적 제한 system/token grant, identity | quiescence/receipt/resume, late write, consent handoff, control-data cleanup | purge/재활성화/해지 경쟁, 다른 owner 보존, token/status scope |
+| REM-4 | production fixture 방어, 검증된 report/policy, 승인 mutation | generation/freshness, dependency readiness, restore/rollback 및 별도 corpus gate | fixture/reference oracle, generation binding, degraded-empty/no-match |
+
+모든 unit은 DAD1 §8.7 및 WPR2 G0~G5의 적용 규칙을 계승한다. single-Mac의 RESILIENCY-08 예외와 RESILIENCY-09 bounded-capacity 대체를 유지한다. PBT의 실행 검증은 Units Generation에 N/A이며 Functional/NFR/Code/Build의 Full 요구로 연결한다.
+
+### 확장 규칙의 unit-level 배정 검토
+
+Compliant는 해당 제약/검증 책임이 unit과 contributor에 배정됐다는 뜻이다. 실제 runtime 설정/테스트 합격은 Construction의 증거로 판정한다.
+
+| Rule | 상태 | 배정 / 후속 검증 |
+|---|---|---|
+| SECURITY-01 | Compliant | 모든 REM 및 store owner의 NFR/Infrastructure; 새 operation/result/backup 암호화/TLS와 G5 |
+| SECURITY-02 | Compliant | REM-2/3 EDGE, U5/U6 및 각 listener의 접근 로그; Infrastructure/G4 |
+| SECURITY-03 | Compliant | REM-1 OBS 규약, 모든 REM local logger/correlation/redaction |
+| SECURITY-04 | Compliant | REM-2 U5 BFF/UI의 same-origin/CSP/safe binary headers, G4 |
+| SECURITY-05 | Compliant | REM-1 schema 검증 및 각 REM의 kind/context/token/cursor/manifest 입력 검증 |
+| SECURITY-06 | Compliant | 각 REM 및 domain owner의 role/grant/single-writer/maintenance 분리 |
+| SECURITY-07 | Compliant | 각 REM Infrastructure와 U5/U6 ingress; private listener/고정 routing |
+| SECURITY-08 | Compliant | REM-2 current AUTH/DELIVERY, REM-3 lifecycle/token, 모든 resource owner |
+| SECURITY-09 | Compliant | REM-4 production seed fence, 모든 REM의 일반화 오류/내부 locator 비노출 |
+| SECURITY-10 | Compliant | REM-1 lock/pin/audit/SBOM gate 및 모든 후속 artifact 재검증 |
+| SECURITY-11 | Compliant | REM-3 trusted identity, REM-2 admission/observer 제한, 모든 role backpressure |
+| SECURITY-12 | Compliant | U3/REM-2 current grant, REM-3 즉시 철회/목적 제한 token/System 권한 |
+| SECURITY-13 | Compliant | REM-1 bindings/registry, REM-2 canonical publication, REM-3 manifest/receipt, REM-4 evidence |
+| SECURITY-14 | Compliant | REM-1/U6 감사 규약, 각 REM 신호/보존/경보, REM-3 private control-data 정리 |
+| SECURITY-15 | Compliant | 모든 REM의 fail-closed/명시적 실패/cleanup 및 G2~G4 |
+| RESILIENCY-01 | Compliant | 네 unit 중요도 및 C/M/R/E/D/A 의존/장애 경계 |
+| RESILIENCY-02 | Compliant | 모든 unit이 승인된 NFR-A1/RES-2를 계승하고 새 state에 매핑 |
+| RESILIENCY-03 | Compliant | REM별 리뷰 + 원 domain/shared owner sign-off, 기존 GitHub review/git-flow |
+| RESILIENCY-04 | Compliant | REM-1 artifact/registry, 각 REM version/진행 중 job/단일 writer rollback |
+| RESILIENCY-05 | Compliant | REM-1 공통 OBS와 REM-2/3/4의 실제 role 계측, U6 통합 |
+| RESILIENCY-06 | Compliant | 각 REM 직접 shallow/deep/compatibility health, G4 synthetic 확인 |
+| RESILIENCY-07 | Compliant | 모든 unit의 queue/backup/disk/model/report age 및 처리 지연 경보 |
+| RESILIENCY-08 | N/A | 승인된 single-Mac 단일 장애 도메인 예외 |
+| RESILIENCY-09 | Compliant replacement | horizontal scaling N/A; unit별 bounded concurrency/backpressure/capacity gate |
+| RESILIENCY-10 | Compliant | 각 service의 worker/observer/authority/health 격리 및 bounded I/O |
+| RESILIENCY-11 | Compliant | 새 persistent state를 기존 backup-and-restore 전략에 포함 |
+| RESILIENCY-12 | Compliant | REM-2/3/4 및 원 store owner의 backup/retention/purge, G5 restore |
+| RESILIENCY-13 | Compliant | REM-1 compatibility evidence와 각 REM consumer/job/receipt 복구 runbook |
+| RESILIENCY-14 | Compliant | 각 REM local fault scenario 및 RJ-AC12의 통합 G4/G5 |
+| RESILIENCY-15 | Compliant | U6/각 REM의 실패 증거와 기존 RES-11 COE/수정 추적 |
+| PBT-01 | N/A - Units Generation | 모든 REM Functional Design에서 domain property 식별 |
+| PBT-02 | N/A - Units Generation | REM-1 bindings 및 각 REM DTO/event/manifest round-trip |
+| PBT-03 | N/A - Units Generation | REM-2 owner/source, REM-3 파기/consent, REM-4 generation/저하 불변식 |
+| PBT-04 | N/A - Units Generation | REM-1 migration, REM-2 submit/publication, REM-3 purge/해지, REM-4 repair의 멱등성 |
+| PBT-05 | N/A - Units Generation | registry/상태/권한/corpus-policy reference model |
+| PBT-06 | N/A - Units Generation | REM-2/3/4의 crash/revoke/reconnect/purge/rollback 시퀀스 |
+| PBT-07 | N/A - Units Generation | 각 domain/REM의 의미 있는 input/owner/grant/version generator |
+| PBT-08 | N/A - Units Generation | REM-1 CI 규약 및 각 unit Code/Build shrinking/seed 재현성 |
+| PBT-09 | N/A - Units Generation | per-unit NFR Requirements의 Hypothesis/fast-check 매핑 |
+| PBT-10 | N/A - Units Generation | F01~F13/RJ-AC 예시 회귀와 각 unit property 병행 |
+
+현재 unit 배정 수준의 적용 규칙에는 blocking finding이 없다. 이 표의 N/A는 활성 확장 해제를 뜻하지 않는다.

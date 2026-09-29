@@ -1,0 +1,41 @@
+[project]
+name = "docsuri-platform-integrity"
+version = "0.1.0"
+description = "REM-1 read-only evidence and explicit integrity tooling"
+requires-python = ">=3.13"
+dependencies = ["pydantic>=2.13.4,<3", "rfc8785>=0.1.4,<1", "cryptography>=50,<51"]
+
+[project.optional-dependencies]
+api = ["fastapi>=0.138,<1", "uvicorn>=0.49,<1"]
+postgres = ["psycopg[binary]>=3.3.4,<4"]
+tools = ["jsonschema>=4.26,<5", "psutil>=7,<8", "docsuri-shared==0.1.0"]
+
+[tool.uv.sources]
+docsuri-shared = { path = "../shared/python", editable = true }
+
+[dependency-groups]
+dev = ["pytest>=9,<10", "hypothesis>=6.155,<7", "pytest-cov>=7,<8", "httpx>=0.28,<1", "ruff>=0.15,<1"]
+
+[project.scripts]
+docsuri-integrity = "docsuri_platform_integrity.cli.__main__:main"
+
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/docsuri_platform_integrity"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"migrations" = "docsuri_platform_integrity/migrations"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = ["integration: isolated live services required"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

@@ -98,6 +98,29 @@ class SessionManager:
             mfa_verified=session.mfa_verified,  # BR-A7: 세션에 보존된 MFA 통과 여부 복원
         )
 
+    async def inspect(self, session_token: str) -> Principal:
+        """Non-renewing session observation for background authority projections.
+
+        This only establishes session identity/expiry. Resource ownership, current account role
+        and mutation/revocation linearization remain the caller's owner-domain guard duties.
+        Unlike verify(), it never saves, touches TTL or deletes expired records.
+        """
+        if not session_token:
+            raise UnauthorizedException("인증 토큰이 누락되었습니다.")
+        try:
+            session = await self._repo.get(session_token)
+        except SessionStoreUnavailableException as exc:
+            raise UnauthorizedException("세션을 확인할 수 없습니다.") from exc
+        now = datetime.now(UTC)
+        if (session is None or now >= session.expires_at
+                or now >= session.last_active_at + timedelta(hours=self._idle_timeout_hours)):
+            raise SessionExpiredException("세션이 유효하지 않거나 만료되었습니다.")
+        try:
+            role = UserRole(session.role)
+        except ValueError as exc:
+            raise UnauthorizedException("세션 권한을 확인할 수 없습니다.") from exc
+        return Principal(user_id=session.user_id, role=role, mfa_verified=session.mfa_verified)
+
     async def elevate_mfa(self, session_token: str) -> Principal:
         """BR-A7: TOTP 검증 통과 후 현재 세션을 MFA 통과 상태로 승격한다 (2단계 인증).
         세션을 먼저 재검증(만료/sliding 갱신)한 뒤 mfa_verified=True로 저장한다."""

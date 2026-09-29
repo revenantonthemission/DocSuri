@@ -72,9 +72,9 @@
 ## 확장 구성 (Extension Configuration)
 | 확장 | 활성 | 모드 | 결정 시점 |
 |---|---|---|---|
-| Security Baseline | 예 | Full(15개 규칙 전부 차단성) | Requirements Analysis (2026-06-15) |
-| Resiliency Baseline | 예 | Full(15개 규칙 전부 차단성) | Requirements Analysis (2026-06-15) |
-| Property-Based Testing | 예 | Partial(PBT-02/03/07/08/09만 차단성; 01/04/05/06/10 권고) | Requirements Analysis (2026-06-15); Full→Partial 변경 2026-06-15(팀원 권고, 기술 스택 확정 후 재평가) |
+| Security Baseline | 예 | Full(15개 규칙 전부 차단성) | Requirements Analysis (2026-06-15); 재확인 2026-09-18 |
+| Resiliency Baseline | 예 | Custom single-Mac profile(RESILIENCY-08 multi-zone fault-isolation 면제; RESILIENCY-09 horizontal autoscale N/A/로컬 capacity gate 대체; 나머지 적용 규칙 차단성) | Requirements Analysis (2026-06-15); single-Mac 재기준 2026-09-18 |
+| Property-Based Testing | 예 | Full(10개 규칙 전부 차단성) | Requirements Analysis (2026-06-15); Partial→Full 변경 2026-09-18 |
 
 _Resiliency 옵트인은 `requirements.md` 확정 전에 필수 요구사항 명확화를 유발: RTO/RPO + DR 전략(RESILIENCY-02), 변경 관리(RESILIENCY-03), 장애 대응(RESILIENCY-15). `inception/requirements/requirement-clarification-questions.md`에서 질의함. 후속 단계로 보류: CI/CD + 롤백 + 배포 방식(RESILIENCY-04 → NFR Design), 리전 토폴로지(RESILIENCY-08 → Infra Design), 복원력 테스트(RESILIENCY-14 → NFR Design)._
 
@@ -1030,3 +1030,683 @@ _Resiliency 옵트인은 `requirements.md` 확정 전에 필수 요구사항 명
 - **설계 갭 발견(후속)**: reparse asset 경로가 cache-only 모드에서도 arXiv 라이브 페치(ar5iv html·`/src`·`/pdf`) — `reparse.py` 독스트링("NO arXiv per-paper fetch")과 불일치.
 - 참고: `docsuri-backups-559352512800`엔 PG dump 10.6MB×2(2026-07-23)뿐 — 코퍼스 아티팩트 없음(재색인 대체 불가). 코퍼스 백업은 완주 후 OpenSearch 스냅샷으로만 생성 가능.
 - 다음(재개 조건): **청크 프루닝 결정**(embedding $와 디스크를 동시에 축소) 또는 볼륨 200GB(+$20/mo) 채택 후 재개 · 또는 로컬 이행(완주 후 스냅샷/복원이 최저비용 경로).
+
+## 전체 기능 및 요구사항 검증 — 감사 완료 / CHANGES REQUIRED (2026-09-18)
+
+- 사용자 요청으로 기존 구현의 아키텍처 이해·요구사항 추적·Build and Test 검증을 재개한다.
+- 기준: `develop` / `32a424d`, 시작 시 clean. 계획: `construction/plans/project-verification-2026-09-18-plan.md`.
+- 기존 요구사항/설계와 실제 런타임 사이의 드리프트도 검증한다. 현재 운영 형태는 `ops/server/README.md`의 로컬 Mac 서버 방식이며, 본 파일의 이전 AWS 기록은 당시 이력이다.
+- 운영 경로와 분리한 detached worktree에서 테스트·빌드를 실행했다. 기존 Python 1,504개, frontend Vitest 338개, WebKit E2E 3개 통과; 추가 합성 반례 4개 실패. 공개 검색 corpus에는 허구 fixture가 노출되고 현재 distinct paper IDs는 11개다.
+- **판정: CHANGES REQUIRED.** SECURITY-08/13(private 문서·공유 생성물 격리), SECURITY-10(dependency audit), FR-5/6(corpus 진실성/범위), FR-28/38(파기) 등 미해결. 감사 완료를 제품 전면 합격/Operations 승인으로 해석하지 않는다.
+- 결과: `construction/build-and-test/project-verification-2026-09-18.md` — 활성 FR 47건, NFR/QT/제약, 확장 규칙, 13개 우선순위별 확인 사항, 실환경 미검증 범위.
+- 반례 기록: `construction/build-and-test/project-verification-2026-09-18-reproductions.md`.
+
+## 검증 결함 교정 — INCEPTION 진행 상태 (2026-09-18~19)
+
+- 사용자 요청: 이전 세션에서 확인한 오류 교정.
+- Workspace Detection: 기존 코드와 최신 감사 산출물이 있는 brownfield. 기존 reverse-engineering 기준선과 2026-09-18 실측 보고서를 입력으로 재사용한다.
+- 후보 범위: `project-verification-2026-09-18.md`의 F01~F13. 네 합성 반례 외에 live corpus, dependency, migration, asset serving, digest, search-quality 교정을 포함할지는 요구사항 게이트에서 확정한다.
+- 현재 단계: `inception/requirements/requirement-verification-questions-verification-remediation-2026-09-18.md` 답변 대기.
+- 답변: Q1=A(F01~F13 전부), Q2=C(백업·롤백 후 안전한 live repair 허용, full corpus rebuild는 별도 승인), Q3=B(current local runtime으로 전면 재기준), Q4=A(Security Full), Q5=A(Resiliency Full), Q6=A(PBT Full).
+- clarification=A: single-Mac production을 기준으로 전면 재기준하고 RESILIENCY-08 multi-zone fault-isolation을 명시 면제한다.
+- Requirements 산출물: `inception/requirements/verification-remediation-2026-09-18.md`; master `requirements.md` single-Mac 조항 개정. **승인 완료 2026-09-18**.
+- User Stories: 신규 사용자 흐름이 없는 결함 교정이므로 skip.
+- Workflow Planning 산출물: `inception/plans/verification-remediation-2026-09-18-workflow-plan.md`.
+- Workflow 결정: Application Design amendment, Units Generation, Functional Design, NFR Requirements/Design, Infrastructure Design, Code Generation, Build and Test 실행. four remediation units(REM-1 platform/contracts, REM-2 private content/generation, REM-3 lifecycle/edge trust, REM-4 corpus/search)로 순차 수행한다.
+- 확장 적용: Security Full, Resiliency custom single-Mac profile(RESILIENCY-08 면제, RESILIENCY-09 horizontal autoscale N/A/대체 capacity gate), PBT Full.
+- full corpus rebuild/reparse/reembed/alias cutover는 본 계획 밖 별도 명시 승인 게이트다.
+- Workflow Planning 승인: 사용자 `Approve & Continue` (2026-09-19).
+- Application Design 결정: RQ1~RQ7 모두 A(2026-09-19). 기존 도메인 소유, context-bound private read, repeat-request polling, immutable purge manifest, loopback-only trusted identity, standalone corpus audit/repair, explicit migration registry를 확정했다.
+- Application Design 산출물: `inception/application-design/`의 mandatory 5문서에 REM-1~REM-4 컴포넌트, 메서드, 서비스, 의존성/데이터 흐름, F01~F13 추적성과 extension compliance를 개정했다.
+- Application Design 검증: Security design 15/15 compliant; Resiliency 13 compliant + RESILIENCY-08 N/A + RESILIENCY-09 replacement; PBT-01~10은 상세 rule의 stage applicability에 따라 Application Design N/A이며 downstream test surface를 추적했다. Markdown 구조와 `git diff --check` 통과.
+- Application Design 승인: 사용자 `Approve & Continue` (2026-09-19).
+- Units Generation 1차 답변: UQR1=A, UQR2=A, UQR3=A, UQR4=B, UQR5=A (사용자 표기 UQ1~UQ5).
+- 충돌: UQR4=B의 장기 deployable remediation services는 승인된 RQ1=A/Workflow와 UQR5=A의 temporary overlay/canonical product ownership에 모순된다.
+- UQRF1=B: 사용자가 네 장기 deployable remediation services를 의도적으로 선택했다. 기존 planning-overlay Workflow/Application Design은 superseded됐고 Units Generation Part 1/Part 2는 중지됐다.
+- Workflow Replan: `inception/plans/verification-remediation-2026-09-18-workflow-plan.md`에 critical deployment transformation, comprehensive service design/construction stages, revised Mermaid, extension compliance를 추가했다.
+- Workflow 승인 게이트: `inception/plans/verification-remediation-2026-09-19-workflow-replan-approval.md` WPR1=A로 완료.
+- Workflow Replan 승인: 사용자 WPR1=A (2026-09-19). Security Full, Resiliency custom, PBT Full을 유지한 four-service comprehensive workflow를 확정했다.
+- Application Design redesign 답변: DSRQ1=A, DSRQ2=A, DSRQ3=A, DSRQ4=C, DSRQ5=A, DSRQ6=A, DSRQ7=A (사용자 표기 DQ1~DQ7; 2026-09-19).
+- 답변 분석: 여섯 A 선택은 정합적이다. DSRQ4=C의 공개 job 계약 범위, 비동기 status/result 전달 및 health/REM-1 evidence 경계는 추가 결정이 필요하다. 공개 사용자 흐름 변경 시 Requirements/User Stories/Workflow 재평가가 선행된다.
+- 명확화 확정: DSRQF1=A, DSRQF2=A (2026-09-19). REM 이관 대상 사용자 업무 read/status에 공개 job 계약을 적용하고 접수 확인/event 구독/결과 전달/health/REM-1 evidence는 직접 경로로 구분한다.
+- 선행 단계 영향: 공개 사용자 흐름 변경으로 Requirements 재사용/User Stories skip 근거가 대체됐다. 제한적 Requirements -> User Stories -> Workflow 개정/승인 후 Application Design을 재개한다.
+- 공개 job 요구사항 개정: `inception/requirements/requirements.md` FR-52/NFR-R4/QT-12/C-13 및 §14, `inception/requirements/verification-remediation-2026-09-18.md` §10. RJ-AC01~12와 scope/timeout/owner/lifecycle/cutover 인수를 작성했다.
+- 검증: 신규 ID 충돌 없음, 답변·인수·참조·Markdown 검토 및 tracked/new-file whitespace check 통과. Security 01~15 요구사항 수준 Compliant; Resiliency 01~07/10~15 Compliant, 08 N/A(single-Mac), 09 bounded-capacity replacement; PBT 01~10은 Requirements Analysis N/A이고 downstream Full 추적 유지.
+- 공개 job 요구사항 승인: 사용자 "Approve & continue"를 RJR1=A로 기록했다 (2026-09-19). FR-52/NFR-R4/QT-12/C-13 및 RJ-AC01~12가 승인된 입력이다.
+- User Stories 평가/계획: `inception/plans/user-stories-assessment.md`와 `inception/plans/story-generation-plan.md`의 2026-09-19 개정. 기존 P1/P2/OP와 형식을 계승하고 공통 US-RJ1~3 및 기존 domain story 개정을 제안했다. RJ-AC01~12 전수 매핑과 질문/참조/whitespace 검증을 완료했다.
+- User Stories 계획 승인: 사용자 "RJS1: A" (2026-09-19). 공통 US-RJ1~3, 기존 domain story 개정, P1/P2/OP 및 coverage 갱신 계획을 확정했다.
+- User Stories 산출물: `inception/user-stories/stories.md`에 에픽 16/US-RJ1~3을 추가하고 기존 15개 story를 개정했다. 전체 85개 story/17개 에픽이며 `personas.md`의 P1/P2/OP와 persona/요구사항/RJ-AC01~12 coverage를 갱신했다.
+- User Stories 검증: INVEST, 85개 story ID 유일성, 12개 인수 coverage, 3 persona, Markdown 및 `git diff --check` 통과. `story-generation-plan.md`에 Security/Resiliency/PBT per-rule Compliant/N/A 및 후속 추적을 기록했다. 현 단계 적용 규칙 blocking finding 없음.
+- User Stories 산출물 승인: 사용자 "RJS2: A" (2026-09-19). 공개 job story/persona와 RJ-AC01~12 coverage를 승인했다.
+- Workflow WPR2 산출물: `inception/plans/verification-remediation-2026-09-18-workflow-plan.md`의 Public Job Workflow Amendment 및 `execution-plan.md` 인덱스를 갱신했다. Application Design 재개, Units 재시작, 네 service loop, frontend 포함 package sequence와 G0~G5의 F01~F13/RJ-AC01~12 검증을 정의했다.
+- Workflow 검증: 현재 `develop`/`32a424d` 및 manifests/launcher 대조, 저장된 Mermaid 3개 렌더, RJ-AC 12행, 질문/참조/표 및 tracked/untracked whitespace check 통과. Security 01~15와 적용 Resiliency 규칙은 계획 수준 Compliant, Resiliency 08 N/A/09 replacement; PBT 01~10은 Workflow Planning N/A이며 downstream Full 매핑 유지.
+- Workflow WPR2 승인: 사용자 "WPR2: A" (2026-09-19). 공개 job/네 service 실행 계획을 승인하고 Application Design을 재개했다.
+- Application Design 산출물: `inception/application-design/`의 components/component-methods/services/component-dependency/application-design에 새 Deployable Services and Public Jobs 절을 생성했다. 네 service/17개 component, public/internal HTTP/SSE와 typed ports, DS-1~8, writer/actor/control 경계, current authority/consent/purge/복구를 정의했다.
+- Application Design 검증: F01~F13 13행 및 RJ-AC01~12 12행 trace, source/sync DAG와 의도된 async feedback 검토, Mermaid 2개 작성 전/후 렌더, 5개 Markdown Prettier debug-check 및 `git diff --check` 통과. Security 15개 design-level Compliant; Resiliency 13개 Compliant + 08 N/A + 09 replacement; PBT 10개 Application Design N/A 및 downstream Full 매핑. 현 설계 blocking finding 없음.
+- Application Design 승인: 사용자 "DAD1: A" (2026-09-19). 5개 신규 설계 절과 component/contract/authority/flow/인수 추적성을 승인했다.
+- Units Generation 재시작 계획: `inception/plans/unit-of-work-plan.md`의 Deployable-Service Units Restart Plan. 기존 UQR/DSRQ 결정을 계승하고 네 REM/17 component/13 finding/12 RJ-AC/18개 신규·개정 story의 primary/contributor 및 전체 85개 product-story owner 정합화 계획을 작성했다.
+- Unit plan 검증: 합계/배치/의존성/현재 authority, UGP1 단일 미답변, Markdown Prettier debug-check 및 `git diff --check` 통과. 기존 story map의 core 45행과 후속 일부 주석을 Part 2에서 85개 current 행으로 완결한다.
+- Units Generation 계획 승인: 사용자 "UGP1: A" (2026-09-19). 네 REM 및 product/delivery ownership, 85개 story 정합화와 component/finding/RJ-AC 배치를 승인했다.
+- Units Generation 산출물: `inception/application-design/unit-of-work.md`, `unit-of-work-dependency.md`, `unit-of-work-story-map.md`에 네 REM 정의, 17 component, C/M/R/E/D/A 의존, 85개 개별 current product-story owner와 18개 REM delivery primary, 13 finding/12 RJ-AC를 반영했다.
+- Units 검증: 실제 story ID/title 집합 및 core 45 owner 보존, 승인 계획 대비 18 story/17 component/13 finding/12 RJ-AC primary 집합 일치, 중복/누락 없음, product owner 합계 85, dependency/activation 정합 확인. 세 산출물/plan Prettier debug-check와 `git diff --check` 통과. unit-level Security/Resiliency 배정 Compliant 및 승인 예외 유지; PBT Units Generation N/A와 downstream Full 추적 유지.
+- Units Generation 승인: 사용자 "UGR1: A" (2026-09-19). 세 unit 산출물과 current story/component/finding/RJ-AC 배치를 승인했다.
+- REM-1 Functional Design 계획: `construction/plans/rem-1-platform-integrity-functional-design-plan.md`에 R1C/R1R/OBS 범위, 현재 migration/generator/CI 관찰, 8개 질문 범주, 6개 결정 질문 및 PBT-01 후보를 작성했다. ledger/check의 mutation, frontend skip-success와 Python publication의 remove/copy 경계를 코드에서 확인했다.
+- REM-1 Functional Design 답변: 사용자 "Use A for R1FD1–R1FD6" (2026-09-19). 여섯 답변 A를 기록하고 legacy assurance/step atomicity/generated wire/evidence/exception/run identity의 정합성을 확인했다.
+- REM-1 Functional Design 산출물: `construction/rem-1-platform-integrity/functional-design/`의 domain-entities/business-logic-model/business-rules를 작성·검증했다. E-R1-01~24, FL-R1-01~08, BR-R1-01~22, PROP-R1-01~16과 15개 시나리오, DAD1 port 및 F06/F08/F13/US-R4/5/RJ-AC12 추적성을 포함한다.
+- REM-1 Functional Design 검증: ID 유일성/연속성/참조, 여섯 결정/11행 trace, Markdown Prettier debug-check 및 tracked/new-file whitespace 통과. effect UNKNOWN 전이, read-only/adoption 분리, CompatibilityManifest, current evidence revision 및 관측 규약을 보정했다. Security 11 Compliant/4 stage-N/A, Resiliency 10 Compliant/09 replacement/4 N/A(08 승인 예외 포함), PBT-01 Compliant/02~10 stage-N/A. 현재 기능 설계 적용 규칙의 미해결 blocking finding 없음.
+- Markdown 검증 범위: 세 설계 산출물/plan/audit와 state 추가 내용은 debug-check 통과. 전체 state는 기존 2026-06-24 FR-27 항목의 formatter 재출력 불안정으로 실패하며 HEAD에서도 동일하게 재현됐다. 상세 검사/범위는 REM-1 plan §9와 audit에 기록했다.
+- REM-1 Functional Design 승인: 사용자 `R1FDR1: A` (2026-09-19T14:57:39Z). 세 설계 산출물과 Testable Properties를 승인했다.
+- REM-1 NFR Requirements 계획: `construction/plans/rem-1-platform-integrity-nfr-requirements-plan.md`에 8개 범주/13개 결정 질문, inherited constraints 및 Hypothesis/fast-check의 PBT-09 매핑을 작성했다. current manifests/CI/launcher/backup을 대조하고 read-only host 관측에서 24 GiB/14 CPU, data volume 97%·약 15.5 GiB free, FileVault Off를 확인했다. 수치/기술 선택지는 답변 전 제안이다.
+- NFR 계획 검증: 질문/빈 답변/A/B/Other 각 13개, FD 참조/승인 및 형식 정합 확인. Prettier debug-check와 tracked/new-file whitespace 통과. encryption/unlock, disk/capacity, bootstrap/control storage, freshness/승인/보존/복구와 검증 강도를 질문에 연결했다. Security Full/Resiliency custom/PBT Full 유지; 현 단계 적용 PBT-09는 두 NFR 산출물에서 확정 기록한다.
+- REM-1 NFR 답변: 사용자 `Use A for R1NFR1–R1NFR13` (2026-09-19T15:39:41Z). 13개 A를 기록하고 capacity/timeout/승인, bootstrap/control store, transport/signing key, FileVault/복구, freshness/보존/PBT의 정합성을 확인했다.
+- REM-1 NFR 산출물: `construction/rem-1-platform-integrity/nfr-requirements/`에 `nfr-requirements.md`와 `tech-stack-decisions.md`를 작성·검증했다. NFR-R1-01~24, TD-R1-01~17, EV-R1-01~09와 각 13행의 결정 trace 및 PBT-09 양 언어 framework/dependency 근거를 포함한다.
+- NFR 검증: 정의 유일성/연속성/FD 포함 참조, 29개 선택값 행 및 PBT profile, 40개 확장 규칙, Markdown/whitespace 통과. Security 13 Compliant/02·04 N/A, Resiliency 13 Compliant/09 replacement/08 N/A, PBT-09 Compliant/다른 9개 stage-N/A. 현 NFR 명세의 미해결 blocking finding 없음; 실제 목표 달성은 EV-R1 및 후속 단계로 확인한다.
+- REM-1 NFR Requirements 승인: 사용자 `Continue to next stage`를 R1NFRR1=A로 기록했다 (2026-09-19T16:59:36Z). 두 산출물의 NFR/기술/검증 profile을 승인했다.
+- REM-1 NFR Design 계획: `construction/plans/rem-1-platform-integrity-nfr-design-plan.md`에 다섯 필수 범주, R1ND1~9 패턴 질문, 14개 내부 logical component 후보 및 NFR/TD/EV/property trace를 작성했다. target lock, 단일 publication head/consumer pin, bootstrap journal, supervisor/bulkhead/cache, 목적별 권한/clock, durable audit와 backup cut을 구체화한다.
+- NFR Design 계획 검증: 질문/빈 답변/A/B/Other 각 9개, 범주 5개, 후보 14개, trace 9행 및 승인 FD/NFR 참조 46개 확인. 현재 source의 sliding session verify와 optional audit hook을 non-renewing current-authority/durable receipt 계약과 구분했다. Markdown 및 tracked/new-file whitespace 통과. Security Full/Resiliency custom/PBT Full의 기존 결정·제약을 계승한다.
+- REM-1 NFR Design 답변: 사용자 `Use A for R1ND1-R1ND9` (2026-09-20T13:14:58Z). 아홉 A를 기록하고 session lock/FS head/journal/supervisor/cache/authority/clock/audit/backup의 정합성을 확인했다.
+- REM-1 NFR Design 산출물: `construction/rem-1-platform-integrity/nfr-design/`에 `nfr-design-patterns.md`와 `logical-components.md`를 작성·검증했다. PAT-R1-01~12, LC-R1-01~17, VAL-R1-01~18, 전체 24개 NFR coverage, 두 9행 선택 trace와 native guard/durability/clock/OS·역할의 Infrastructure proof obligations를 포함한다.
+- NFR Design 검증: 정의 유일성/연속성/승인 FD·NFR 포함 참조 및 17-node/56-edge component DAG 통과. R1C에서 helper/tool로의 의존 경로 없음. single FS head/CP receipt, current authority/clock, orphan/quiescence, generation pin/backup/GC 및 수치 경계를 대조했고 Markdown/whitespace가 통과했다. Security 13 Compliant/02·04 N/A, Resiliency 13 Compliant/09 replacement/08 N/A, PBT 10개 stage-N/A와 Full 후속 요구 유지. 현 설계의 미해결 blocking finding 없음.
+- REM-1 NFR Design 승인: 사용자 `Continue to the next stage`를 R1NDR1=A로 기록했다 (2026-09-20T14:27:39Z). 두 산출물의 패턴/컴포넌트/권한·복구/검증 경계를 승인했다.
+- Infrastructure 추가 제약: 사용자 `The infrastructure should be zero-cost and everything should be served from this mac mini.` (2026-09-20T14:47:00Z). master requirements에 C-14 및 NFR-C1 참조를 등재했다. 유료 인프라/과금 전환/새 장비 구매를 전제하지 않고 application serving은 이 Mac mini에 한정한다. 기존 무료 보조 경계와 실제 off-host 자원을 확인하며, 내부 복제본을 off-host backup으로 간주하지 않는다.
+- REM-1 Infrastructure 계획: `construction/plans/rem-1-platform-integrity-infrastructure-design-plan.md`에 C-14 local/zero-cost 경계, 7개 필수 범주, R1IF1~10 및 17개 LC의 실제 배치 후보를 작성했다. 기존 installer/launcher/compose/backup/heartbeat/CI, shared 문서 부재와 공식 runtime/license/launchd/Postgres TLS/chrony NTS/free monitoring 자료를 대조했다.
+- Infrastructure 계획 검증: 질문/빈 답변/A/B/Other 각 10개, factual R1IF1/2와 권장 R1IF3~10 8개, 범주 7개, component coverage 17개, 질문 trace 10행/승인 ID 참조 50개 및 C-14 유일성 확인. Markdown/whitespace 통과. 실제 OrbStack Free 자격 및 기존 off-host backup 자원/용량은 사용자 확인 대상이다.
+- 현재 단계: **Construction / REM-1 Code Generation Part 2 — 기반 구현·검증 반영, native provider/host 인수 미완료 (G1 미통과)**.
+
+## REM-1 Infrastructure Design — 산출물 생성·검증 완료 (2026-09-22)
+
+- 답변: **R1IF1=B**(OrbStack Free 자격 미전제, Colima/Lima + Docker Engine/CLI로 data plane 전환 · 원 VM 볼륨은 복원 검증까지 유지), **R1IF2=A**(이동식 드라이브 encrypted off-host backup · 별칭/용량/회수 시간은 설치 operator fact), **R1IF3~10=A**.
+- 산출물: `construction/rem-1-platform-integrity/infrastructure-design/infrastructure-design.md`(roots/port/UID/keychain/CA/Postgres realm/clock/backup/monitoring + LC 17 전수 매핑)·`deployment-architecture.md`(single-Mac 토폴로지, boot/unlock 순서, P0~P4 전환·롤백·복구, zero-cost 경계)·`construction/shared-infrastructure.md`(신규 — shared resource 소유자/최소 권한/변경 순서/REM별 검증 책임).
+- C-5 부대 개정(container manager: OrbStack→Colima)은 shared 문서와 master requirements 참조에 기록했다.
+- 검증: 승인 LC/PAT/NFR/EV ID 참조 및 결정 trace 대조, Prettier 3파일 통과, `git diff --check` 통과. Mermaid는 로컬 headless 브라우저 부재로 렌더 대신 파서 실패(DOMPurify 환경) — 보수적 quoted-label 구성과 텍스트 대안을 문서에 수록했다.
+- 확장: Security 01/03/05~15 Compliant, 02/04 N/A(신규 외부 intermediary/HTML 없음); Resiliency 01~07/10~15 Compliant, 08 N/A(승인 single-Mac 예외), 09 bounded-capacity replacement; PBT 01~10 stage-N/A(Code/Build로 Full 이월). 현재 인프라 설계의 blocking finding 없음; 실제 배치/인수 합격은 EV-R1-01~09의 실행 증거로만 판정한다.
+- Infrastructure Design 승인: 사용자 `continue to next stage`를 R1IFR1=A로 기록했다 (2026-09-24T02:46:30Z). 다음: REM-1 Code Generation Part 1 상세 계획 작성 및 별도 승인 게이트.
+
+### 공개 job 계약 선행 개정 진행 (2026-09-19)
+
+- [x] Application Design 명확화 DSRQF1=A/DSRQF2=A 기록 및 정합성 해소
+- [x] Requirements 공개 job 개정 작성/검증
+- [x] Requirements 개정 승인 (RJR1=A, 2026-09-19)
+- [x] User Stories 필요성 평가 및 공개 job 개정 계획 작성/검증
+- [x] User Stories 개정 계획 승인 (RJS1=A, 2026-09-19)
+- [x] User Stories story/persona 개정 및 검증
+- [x] User Stories 산출물 승인 (RJS2=A, 2026-09-19)
+- [x] Workflow Planning WPR2 개정 작성 및 검증
+- [x] Workflow Planning WPR2 승인 (WPR2=A, 2026-09-19)
+- [x] Application Design 5개 redesigned artifact 작성 및 검증
+- [x] Application Design 산출물 승인 (DAD1=A, 2026-09-19)
+- [x] Units Generation Part 1 재개
+- [x] Units Generation 재개 계획 작성 및 검증
+- [x] Units Generation 재개 계획 승인 (UGP1=A, 2026-09-19)
+- [x] Units Generation 세 산출물 생성 및 검증
+- [x] Units Generation 산출물 승인 (UGR1=A, 2026-09-19)
+- [x] Construction REM-1 Functional Design 착수
+
+## CONSTRUCTION — REM-1 Platform Integrity (2026-09-19)
+
+- **Unit 문서 root**: `construction/rem-1-platform-integrity/`.
+- **Functional Design 계획/승인**: `construction/plans/rem-1-platform-integrity-functional-design-plan.md`.
+- **NFR Requirements 계획/승인**: `construction/plans/rem-1-platform-integrity-nfr-requirements-plan.md`.
+- **NFR Design 계획/승인**: `construction/plans/rem-1-platform-integrity-nfr-design-plan.md`.
+- **Infrastructure 계획/질문**: `construction/plans/rem-1-platform-integrity-infrastructure-design-plan.md`.
+- [x] 승인 unit/context 및 Functional Design 규칙 로드
+- [x] migration/contract/supply-chain 구현 근거와 6개 질문/PBT-01 후보 작성
+- [x] 질문 형식/수량, scope/근거, Prettier debug-check 및 tracked/new-file whitespace 검증
+- [x] R1FD1~R1FD6=A 답변 수집 및 모호성 해소
+- [x] Functional Design 3개 산출물/Testable Properties 생성·검증
+- [x] R1FDR1 산출물 리뷰 및 확장 per-rule 근거 제시
+- [x] Functional Design 산출물 승인 (R1FDR1=A, 2026-09-19)
+- [x] NFR Requirements 착수 및 상세 규칙 로드
+- [x] NFR 입력/host 관측/8개 범주 분석 및 13개 질문/PBT-09 매핑 작성·검증
+- [x] R1NFR1~R1NFR13=A 답변 수집 및 정합성 분석
+- [x] NFR Requirements 두 산출물 생성·검증 및 R1NFRR1 완료 리뷰 준비
+- [x] NFR Requirements 산출물 승인 (R1NFRR1=A, 2026-09-19)
+- [x] NFR Design 착수 및 상세 규칙 로드
+- [x] NFR Design 다섯 범주/9개 질문/내부 component 후보 작성·검증
+- [x] R1ND1~R1ND9=A 답변 수집 및 정합성 분석
+- [x] NFR Design 두 산출물 생성·검증 및 R1NDR1 완료 리뷰 준비
+- [x] NFR Design 산출물 승인 (R1NDR1=A, 2026-09-20)
+- [x] Infrastructure Design 착수 및 상세 규칙 로드
+- [x] C-14 zero-cost/local serving 및 7개 범주/10개 질문/LC 물리 후보 작성·검증
+- [x] R1IF1~R1IF10 답변/실제 license·backup 자원 수집 및 정합성 분석 (2026-09-22: R1IF1=B, R1IF2=A, R1IF3~10=A. R1IF2는 이동식 드라이브를 채택하고 별칭/용량/일일 회수 시간은 설치 시 operator fact로 기록 — 모순·모호성 없음)
+- [x] Infrastructure 두 산출물/shared 문서 생성·검증 (`infrastructure-design.md`, `deployment-architecture.md`, `construction/shared-infrastructure.md`)
+- [x] Infrastructure Design 산출물 승인 (R1IFR1=A, 2026-09-24)
+- [x] Code Generation Part 1 상세 계획 작성·검증 (`construction/plans/rem-1-platform-integrity-code-generation-plan.md`, 17단계; 2026-09-24)
+- [x] Code Generation Part 1 계획 승인 (R1CGR1=A, 2026-09-24)
+- [ ] Code Generation Part 2 구현·검증
+
+### REM-1 Part 2 구현 체크포인트 (2026-09-24)
+
+- R1CGR1=A에 따라 격리 worktree에서 신규 `platform_integrity/`, owner-qualified migration registry/readonly startup+CLI, explicit legacy adoption, offline build-consumed TS 및 immutable Python binding, patched locks/image pins/CI 검사를 구현했다. 기존 주 checkout 문서 변경을 보존하고 소스 patch를 적용했다.
+- 검증: 레인별 누적 Python 고유 **1,681 passed**(REM-1 127, shared 112, 기존 backend 463 및 disposable PG 포함), frontend 338+generator 29, 이전 WebKit 3, TS/build/drift/lint. REM-1 87% coverage는 이전 current-evidence 측정값이다. 최신 schema 후속 실행은 shared/REM-1/frontend 및 두 wheel이며 다른 레인과 dependency audit는 앞선 실행 기록을 유지한다.
+- **미완료**: native current-authority/revoke/commit/fence/checkpoint 통합, 실제 NTS/Keychain/role 설치, privileged launcher/backup/restore, 모든 wire inventory와 image/OS SBOM audit, 전체 PROP/VAL/G1 성능/복구 인수. 기본 privileged apply는 BLOCKED다. 남은 plan 체크박스는 미완료로 유지했다.
+- preflight에서 1 GiB 추가 peak 기준 disk reserve 부족(관측 free 약 11 GiB), removable drive/FileVault/native guard/clock/key/TLS/restore 증거 누락. Docker context `colima`는 관측했지만 이번 작업에서 전환하거나 실제 migration proof를 수립하지 않았다.
+- 상세: `construction/rem-1-platform-integrity/code/code-summary.md`. 코드 작성/부분 검증을 Infrastructure 배포 또는 전체 F01~F13 교정 완료로 확대하지 않는다.
+
+### REM-1 Run/control recovery 후속 구현 (2026-09-24T12:42:25Z)
+
+- Step 3의 stable RunIntent/ordered plan, exact effect binding, 보수적 reconciliation 및 독립 stateful model을 구현했다. 확인된 abort와 충돌하는 native commit 반례를 실패로 재현하고 UNKNOWN 유지로 교정했다.
+- Step 6의 내부 `PostgresRunStore`와 additive `002_run_protocol.sql`을 구현했다. UNKNOWN/checkpoint·audit·outbox·projection 원자 기록, CAS/immutable history, 반복 submission/attempt의 의미 보존, history gap 차단을 15개 실제 control-DB 시험으로 확인했다. 전체 REM-1 80건 및 release-profile subset 25건(seed 20260924) 통과; repeat 결과를 고유 합계에 중복 계산하지 않는다.
+- 두 wheel의 non-editable import와 control SQL 패키징을 검증했다. 주 checkout 반영 뒤 source diff 역적용 check 통과. 작업 전용 Postgres 컨테이너는 중지·자동 제거했고 worktree/patch는 보존했다.
+- **Code Generation Part 2와 G1은 계속 미완료**다. control 기록은 실제 current-authority/native guard의 대체물이 아니다. role 제한 command function, 실제 effect dispatcher/proof provider, clock/key/host 설치와 전체 consumer/SBOM/복구 인수를 연결해야 한다. 완료한 하위 항목만 plan에 체크했다.
+
+### REM-1 Current evidence 후속 구현 (2026-09-24T15:09:17Z)
+
+- Step 3의 reservation/current selection, current record/key/exception 검증, mutable-target state binding, 안전한 평가 입력 fingerprint 및 독립 verification-history model을 구현했다. checksum-only PASS, 도중 key 철회, `revoked=None`, 다른 scope의 head 및 history conflict의 실패 회귀를 고정했다.
+- Step 6의 `PostgresEvidenceStore`/`003_verification_protocol.sql`로 PENDING 예약, immutable 결과/late history, audit/outbox 원자성, 단조 head 및 같은 transaction의 reservation floor를 구현했다. Step 11의 read coherence/current trust와 실제 I/O 종료까지의 8-worker admission을 추가했다.
+- REM-1 **127 passed/coverage 87%**, release property subset **48 passed**(seed 20260924; 2,000-example/200×100-stateful profile), Ruff 통과. 새 실제 PG publication 시험 11건, real Ed25519 검증과 signed store→readonly service 조합을 포함한다. owner/clock/key 권한의 physical provider는 synthetic 대역과 구분한다.
+- non-editable wheel 확인에서 같은 wheel 경로의 cached uv 환경 재사용을 발견했고 `--no-cache` fresh 설치로 신규 verifier와 packaged migration 003을 검증했다. 주 checkout 소스 반영 및 최신 worktree patch의 역적용 check 통과; 작업 전용 PG 컨테이너는 중지·자동 제거했다.
+- **Part 2/G1은 미완료**다. production current-provider/권한·Keychain·NTS·native guard·scoped command role 배선, 남은 pure model/consumer inventory/SBOM/installer/backup/restore/성능 인수를 계속해야 한다. 구현된 내부 context/서명 primitive를 production capability의 증명으로 사용하지 않는다.
+
+### REM-1 Offline schema 후속 구현 (2026-09-24T16:28:11Z)
+
+- Step 3/8의 13-file 명시 catalog와 Python/internal·TypeScript/public generation roots, schema-position 기반 local ref/anchor/recursion/visibility 검증을 구현했다. bootstrap-independent `docsuri_schema`를 Python generator와 REM-1 tools가 공유하며 Node 구현과 공통 20개 conformance 사례를 대조한다.
+- keyword-shaped literal data, URI/null 처리 차이, 하위 TS ref-parser의 literal 해석 및 percent-encoded path, export collision과 실패 후 publication 보존을 검증했다. Python 생성물 drift 없음; TypeScript 생성물은 fingerprint banner만 갱신됐다.
+- shared **112 passed**, release catalog subset **39 passed**, frontend contract **29 passed**/UI **338 passed**, tsc/Next build/drift/Ruff, REM-1 **127 passed**(격리 PG 포함) 및 fresh/no-cache non-editable 두 wheel import가 통과했다. 추가 의존은 REM-1 tools의 first-party shared package이며 third-party lock 버전은 바꾸지 않았다.
+- 기존 미커밋 작업을 보존하고 source parity를 확인했다. test 전용 PG 컨테이너는 중지·자동 제거했다. 실제 wire/import/view-adapter 목록 및 privileged publication/native provider/설치·복구·SBOM/G1 의무는 여전히 미완료다.
+
+### REM-1 Consumer/domain/native harness 후속 구현 (2026-09-25T06:38:59Z)
+
+- 실제 TypeScript 185 import/64 body cast/17 adapter, Python 217 import/97 local model 후보와 source digest를 inventory로 관리한다. adapter 등록 누락·shadowing·drift 회귀를 확인했다. 기존 frontend wire 57개를 14번째 shared schema로 승격하고 두 언어 생성물을 갱신했다. 전체 backend-owner parity는 아직 별도 의무다.
+- registry/compatibility/SafeObservation/inventory 모델과 operator source의 target-transaction finalization을 구현했다. 충돌/다른 scope scanner report에서 finding이 사라지는 회귀와 unknown exception-authority coercion을 수정했다. 실제 PG의 revoke/commit 순서·stale epoch·clock 불능 및 control/audit dump/restore를 검증했다.
+- REM-1 **190 passed / statement coverage 88%**, 새 domain release subset **23 passed**(seed 20260925), shared **115 passed**, frontend **340 UI + 32 generator/inventory**, backend migration subset **12 passed**, type/drift/Ruff 및 fresh/no-cache 두 wheel import 통과. 최종 authority review에서 다른 목적의 grant로 apply가 가능했던 회귀와 invalid clock/unknown revoke coercion을 실패 재현 후 차단했다. 반복 실행은 고유 합계에 가산하지 않는다.
+- Syft/Grype reader/runner/validation capture에서 각각 67/64/135 components와 zero matches를 관측했으나 final artifact/current freshness 인수는 아니다. PostgreSQL image는 **323 matches, 96 High + 2 Critical**로 BLOCKED다. blocking match fix 상태는 fixed 24/not-fixed 12/wont-fix 62이며 자동 suppress/예외 승격하지 않았다.
+- 9월 25일 source 67파일을 검증한 incremental Git patch로 통합한 뒤 최종 authority 교정을 apply_patch로 반영했다(총 69파일). 신규 Python generation `aa0015fc61158f5a29e79505ec4c2bae691992cbb91e948e5d4a4ac5c926069c`와 head를 함께 포함했다. 기존 사용자 문서/변경을 보존했다.
+- operator 선택 R1OP1=A/R1OP2=A와 `code/operator-handoff.md`를 기록했다. role 준비는 PLAN_ONLY만 실행했다. 실제 administrator/FileVault/암호화 volume mount·접근시간, NTS/Keychain/command role 및 물리 recovery/load 인수는 미완료다. **Part 2/G1은 계속 열린 상태**다.
+- 최종 source parity/whitespace 검사 통과 후 작업 전용 PG 컨테이너를 중지·자동 제거했다(2026-09-25T06:40:50Z). 보존 worktree/patch/report에서 재개할 수 있다.
+
+### REM-1 Backup volume operator 입력 및 관측 (2026-09-26)
+
+- 사용자 입력: mount alias `DocSuri_Backup`, 일일 연결/회수 시간 `03:00`. `/Volumes/DocSuri_Backup`에서 USB APFS 암호화·마운트·unlocked/writable 상태를 실제 확인했다. UUID `BB384D60-46AF-4A06-B6F7-95710B3B7A3C`, SSD01과 공유하는 container 여유 `1,537,204,109,312` bytes다.
+- R1OP3=A 확정(2026-09-26T02:36:28Z): **매일 03:00 Asia/Seoul(UTC+9) 백업 시작, volume 상시 연결**. operator가 소유권 적용을 완료했고 후속 OS 관측에서 `GlobalPermissionsEnabled=true`를 확인했다. host FileVault 준비와 scheduler 설정은 남아 있다.
+- readonly preflight는 drive 존재/다른 filesystem 검사를 통과했으나 `ready=false`다. 1 GiB 추가 peak 가정에서 local free `12,882,644,992` bytes < 필요 `12,884,901,888` bytes이며 FileVault/native guard/NTS/Keychain/TLS/restore receipt도 미충족이다. volume 관측을 물리 backup/restore·G1 통과로 확대하지 않는다.
+
+### REM-1 Native 준비 결과 대조 및 검사기 보정 (2026-09-26)
+
+- operator는 원 hash `94d73055dc46ea97db04275e3c99a81a054f1efdc3ba9989f9ed826fe511bbb5`의 보호된 복사본으로 `--apply`를 실행했다. UID/GID 600~608, non-login shell/home/hidden, root 0711·role 0700·receipt 0600을 실제 OS 조회로 대조했다. 준비 결과는 `PREPARED_NOT_ACCEPTED`다.
+- native `IsHidden` namespace와 macOS directory group 12/61/100을 확인했다. namespace parser를 보정하고 readonly `--check`가 `METADATA_VERIFIED`, `ready=false`를 반환함을 실제 확인했다. strict 초기화 경로의 group 제한은 유지하며 directory metadata를 실제 process 권한 증명으로 확대하지 않는다.
+- 현대 macOS CPython의 `os.getgroups`와 kernel group list가 다르므로, fixed worker의 libSystem `getgroups`와 실제 파일 접근을 함께 확인하는 `--probe`를 준비했다. root-owned staging, fixed test realm, dropped supplementary groups, role별 5초 제한 및 fixture 보존을 적용한다. focused native tests **16 passed**, Ruff/system Python 3.9 worker parsing 통과, unprivileged `--probe`는 BLOCKED다.
+- 첫 검증판 hash `90aa58859bdfcd922f9aa2fe9a8a49a93a9e87b07be0a769b125585976ebac7f`의 operator 실행은 9개 `TimeoutExpired`로 BLOCKED였다. 원 `role-probe-su4773zc`를 보존했다. 실제 파일 격리·installed launcher/NTS/Keychain/DB/FileVault/backup/load 및 G1은 미통과다.
+- 후속 진단판 hash `2e310b60c37e0398f18c9c4351398d49cf4857d5c46c2addc744126be00e4e23`는 `proc_pidpath`로 관측한 interpreter image 직접 실행, allowlisted phase, timeout group cleanup, `--role reader`/partial coverage를 구현했다. focused **22 passed**, Ruff/system Python 3.9 parsing 및 일반 UID startup smoke 통과. 원 timeout의 정확한 내부 근인은 미확정이며 상세 failure capture는 `code/native-probe-debug.md`다.
+- operator의 r2 실제 reader 결과를 수신했다(2026-09-26T03:54:02Z 기록): **PARTIAL_ROLE_FILE_ISOLATION_VERIFIED**, UID/GID/groups=600/600/[600], ownReadWrite=true, crossReadDenied=8/crossWriteDenied=8/directoryGroupReadDenied=3, 0.052초/complete/returncode=0/parentReaped=true. probe root `role-probe-e_0w5ja7`; interpreter hash `07470fa2e1aec690aa62061af6e0f65fe9bf3169a74a16384592fb1ff1cb320f`를 현재 파일과 대조했다. reader scope의 timeout 해소/격리를 기록하고 다음은 동일 r2 전체 9-role probe다. 전체 coverage/G1은 미완료다.
+- 후속 전체 결과 수신(2026-09-26T04:03:22Z 기록): **ROLE_FILE_ISOLATION_VERIFIED / completeRoleCoverage=true**. `role-probe-236g0xrp`에서 9개 role(UID/GID 600~608) 모두 해당 primary GID만 보유하고 own read/write, 교차 read 72/write 72 및 ambient-group read 27건 거부를 통과했다. 전 worker가 0.044~0.051초에 complete/exit 0/no timeout/parentReaped로 끝났다. 이 **synthetic-file scope의 인수는 완료**다. 현재 source/interpreter hash를 대조했으며 installed launcher 정책·Keychain/NTS/DB 권한·FileVault/실제 backup/restore/load와 G1은 계속 미완료다.
+
+### REM-1 Native runtime 배선 + 실제 DB mTLS 인수 (2026-09-26T14:20:00Z)
+
+- `deployment/launchd.py`, `host.py`, `adapters/{credentials,postgres_tls,nts,read_authority}.py`, `migrations/005_reader_access.sql`과 7개 신규 test를 구현해 **main에 통합**했다. 통합 전후로 worktree와 main의 `platform_integrity` 트리가 바이트 동일함을 확인했고, 기존 사용자 변경은 건드리지 않았다. commit/push는 하지 않았다.
+- launcher는 immutable manifest allowlist, role-scoped plist(`InitGroups=false`, `Umask=0o077`, `env -i`), frozen artifact digest 검증, `setgroups([])`→gid→uid 순 privilege drop과 실행 직전 uid/gid/supplementary group 재검증을 수행한다. `host.py`는 credential byte가 아니라 Keychain handle만 받고, clock observer는 고정 non-adjusting `chronyd -x -d -f`만 허용한다.
+- **실제 PostgreSQL mTLS 인수 통과**: loopback TLS, `cert clientname=CN` 기반 `session_user=r1_tls_probe` 로그인, read-only transaction 강제, wrong-CA 거부(오류가 certificate 관련인지 확인). 격리 CA/루프백 전용이며 운영 Keychain/8101/TLS role 인수 증거로 대체하지 않는다.
+- 장기 미해결이던 mTLS fixture 실패는 코드가 아니라 세 가지 독립 결함이었다: (1) 열린 psycopg 컨텍스트 안의 `docker restart`로 인한 `AdminShutdown`, (2) 256M `HostConfig.Tmpfs` PGDATA로 restart마다 `ALTER SYSTEM SET ssl=on` 소실, (3) `hostssl ... cert` 규칙이 image 전역 `scram-sha-256` 뒤에 있어 first-match password 요구. `pg_ctl restart`는 postmaster가 PID 1이라 container를 종료시키므로 채택하지 않았다.
+- 검증 전용 container `rem1-test-pg-20260924`를 named volume `rem1-pgdata-20260926`으로 재생성했다. image entrypoint가 시작마다 `pg_hba.conf`를 다시 쓰므로 test는 restart 후 HBA를 복사하고 reload한다. teardown 후 `ssl=off`, probe 규칙 0건, `postgresql.auto.conf` 초기화를 확인했다.
+- 신규 모듈 statement coverage를 launchd 54%→**92%**, host 58%→**99%**, nts 67%→**93%**, read_authority 75%→**100%**로 올렸다. 전체는 82%로 하락했다가 **89%**로 회복했고(9월 25일 190/88% 상회), **main 재검증 280 passed**, Ruff 통과다. evidence log는 `rem1-main-suite.log`와 `rem1-cov3.log`다.
+- Step 10은 **미체크**를 유지한다. 실제 Keychain ACL, 8101 serving mTLS, live chrony NTS daemon, U3 current-authority guard는 미완료다.
+
+## REM-1 Code Generation Part 1 — 상세 계획 완료 (2026-09-24)
+
+- 기존 구현 대조: `backend/migrations/__init__.py`는 SQL filename만으로 ledger를 식별하고 read-side `pending_migrations`가 DDL을 수행한다. startup/CLI registry 목록 불일치(F08); `frontend/scripts/gen-types.mjs`가 실패를 skip/exit 0으로 처리(F13); Python generator는 remove/copy publication이며 현재 CI는 PR dependency diff 중심(F06). 전부 계획의 failing regression에 연결했다.
+- 승인된 R1IF1=B에 따라 master `requirements.md`의 C-5/NFR-A1/RES-10에 **현재 OrbStack 사실과 Colima 전환 목표**를 구분해 back-sync했다. 실제 volume/host 전환은 backup·복원·디스크 증거 전까지 보류한다.
+- 신규 `platform_integrity/` 독립 패키지 및 기존 migration/shared/frontend/CI/ops seam에 대한 순차 17-step 계획을 작성했다. PROP-R1-01~16, VAL-R1-01~18, EV-R1-01~09와 US-R4/5, F06/F08/F13, RJ-AC12를 연결한다. REM-1 local G1과 후속 REM G4/G5를 구분한다.
+- 검증: Plan Prettier debug-check, 17 numbered steps, 10개 R1IF 답변 유지, tracked whitespace `git diff --check` 통과. Security Full, Resiliency single-host custom, PBT Full 계획 수준 적용/N/A는 계획 §6에 기록했다.
+- **다음**: R1CGR1 계획 명시 승인 후 Code Generation Part 2. 앱 코드/운영 환경은 본 Planning 단계에서 변경하지 않았다.
+
+### REM-1 PostgreSQL image 후보 + ops dependency 결함 교정 (2026-09-26T13:12:40Z)
+
+- operator가 "digest 교체"를 승인해 pinning image `postgres@sha256:a3b7f434…`(98 blocking)를 재평가했다. 정밀 분해 결과 24건은 `gosu` 단일 바이너리의 go1.24.6 stdlib, 74건은 Debian trixie OS 계층이며 잔여 OS 건은 전부 upstream fix가 없다. Alpine 16.15는 OS 계층을 1건까지 줄였고, gosu를 제거하고 비특권 uid로 실행하는 derived image(`ops/platform-integrity/images/postgres-alpine-nosu.Dockerfile`)로 **865 components / 4 findings / 1 blocking**까지 도달했다. 잔여 1건은 alpine zlib `CVE-2026-85091`(High, fix 없음)다.
+- derived image는 `SOURCE_DATE_EPOCH` 고정 + `--provenance=false`로만 재현 가능하다(미고정 시 config digest가 매 build 변경). 재현 digest `sha256:ccbe2a110992a5b602afdd4a28a45f184de67308d4e80284c0b2329a10cb0e2e`로 **280 passed / 89% / Ruff 통과 / 실제 loopback mTLS**를 확인했고 `sbom-targets.json`에 superseded image와 근거를 기록했다. 운영 compose 교체는 operator maintenance window 대기다.
+- 부수 발견 결함 두 건을 교정했다. (1) `ops/platform-integrity/scan_sbom.py`가 `psutil`을 import하지만 `ops/pyproject.toml`에 미선언이라 runner가 원인을 `ModuleNotFoundError`로만 남기고 조용히 INCOMPLETE를 반환했다. `psutil>=7,<8`을 선언하고 lock을 갱신했으며(추가 package 1개) 공식 scan이 정상 동작한다. (2) mTLS test가 `docker exec` chown/chmod을 기본 user로 호출해 비root container에서 실패했다. `install_hba`와 동일하게 `--user root`를 명시했다.
+- 교정 전 잠깐 "Alpine은 High/Critical 1건"이라는 직접 grype 실행 결과를 보고했으나, 이는 **틀렸고 공식 runner가 옳았다.** SBOM 경유 scan은 image 직접 scan과 달리 `/usr/local/bin/gosu`의 Go stdlib 24건을 검출한다. image 직접 scan 결과만으로는 release 판단을 하면 안 된다.
+
+### REM-1 FileVault 활성화 확인 및 preflight 재측정 (2026-09-26T13:05:12Z)
+
+- operator가 승인한 대로 root 볼륨 FileVault을 활성화했다. `fdesetup status` = `FileVault is On.`, `diskutil info /`에서 `Macintosh HD`(`/dev/disk3s1s1`) `FileVault: Yes`를 독립 확인했다.
+- readonly preflight 재실행 결과 `filevault_unverified`가 해소됐다. 잔여 이유는 `native_commit_guard_missing`, `nts_clock_missing`, `keychain_roles_missing`, `tls_roles_missing`, `restore_receipt_missing` 5개뿐이다. `disk_reserve`와 `removable_drive_unverified`도 통과 상태를 유지한다(free `37,906,464,768` bytes ≥ 필요 `10,737,418,240` bytes).
+- `preflight()`는 evidence 키가 있어도 항상 `<capability>_requires_receipt_verification`를 붙이므로 `ready=true`가 구조적으로 불가능하다. 이 결함은 코드 측 미구현 receipt verifier이며 operator 입력으로 해소되지 않는다. 다음 구현 대상이다.
+
+### REM-1 signed capability receipt verifier 구현 (2026-09-26T13:36:10Z)
+
+- `preflight()`의 구조적 결함을 해소했다. 이전에는 evidence 키가 있어도 `<capability>_requires_receipt_verification`가 항상 추가되어 `ready=true`가 불가능했다.
+- `platform_integrity/src/docsuri_platform_integrity/deployment/receipt.py` 신규: Ed25519 서명, `IOPlatformUUID` host 결합, release 결합, 7일 상한 `ValidityWindow`, artifact/evidence digest, `revoked`/`validity`를 가진 manifest 신뢰 키. 미해결 capability는 proven이 아니며 사유가 항상 반환된다.
+- `ops/platform-integrity/preflight.py`가 `--evidence`로 실제 검증한 capability만 `provenCapabilities`에 넣는다. **trust는 evidence와 분리**되어 같은 디렉터리 밖 키를 거부한다.
+- 실제 CLI로 5개 capability 검증 receipt에서 `ready: true` / exit 0을 확인했다(임시 self-signed 키, 즉시 폐기 — acceptance 근거 아님).
+- 구현 중 결함 3건을 교정했다: strict mode에서 `model_validate(dict)`가 enum 문자열을 거부함(관례대로 `model_validate_json(canonical(...))` 사용), `bytes` 필드는 JSON 직렬화 불가(공개키를 canonical base64url text로 변경), `ValidityWindow.contains`의 `upper < valid_until` 경계.
+- `ops`에 `docsuri-platform-integrity` dependency를 추가했다. 새 dependency가 3.13 이상이므로 `requires-python`을 `>=3.11` → `>=3.13`으로 올렸다.
+- **검증**: `platform_integrity` 308 passed / 0 skipped / coverage 89% / Ruff 통과(실제 loopback mTLS 포함 실행), `ops` 68 passed / Ruff 통과. 6개 파일을 preserved WT에 byte-identical 동기화하고 트리 전체 parity 재확인.
+- **남음**: receipt를 발급하는 installer, launchd installer/manifest, purpose Keychain, live chrony NTS, backup/archive 명령과 scheduler, native commit guard. 5개 capability의 실제 증거와 image 잔여 finding(`CVE-2026-85091`)은 그대로다. G1 미통과.
+
+### REM-1 readonly capability probe 및 receipt issuer 구현 (2026-09-26T14:05:00Z)
+
+- `deployment/capability.py`를 추가했다. verifier에 짝을 이루는 readonly probe 5종(keychain roles / tls roles / nts clock / native commit guard / restore receipt)과 `ProbeSet` dispatcher, `receipt_from()`이다. 전부 절대 raise하지 않으며 불가하면 `proven=False` + 사유를 반환한다.
+- probe는 기존 adapter 코드 경로(`ProtectedClock`, `PostgresTLS`, `KeychainReader`, `validate_bundle`, `OperatorAuthority.guard`)를 재사용한다. 중복 구현이 없다.
+- `ops/platform-integrity/issue_receipt.py`를 추가했다. 설정 문서는 reference만 담고 credential을 읽지 않으며, `--probe-only`는 key도 파일도 건드리지 않는다. **하나라도 proven이 아니면 run 전체를 거부하고 receipt를 하나도 쓰지 않는다**(부분 성공이 acceptance로 오인될 수 있으므로).
+- 서명 키는 읽기 전에 symlink/소유자/mode(0o077)/nlink/크기를 확인하고, receipt는 0600 atomic write로 남긴다.
+- `native_commit_guard`는 live operator authority가 필요한 Step 6 영역이라 이 issuer에서 발급하지 않고 `notIssuableHere`로 명시했다.
+- **교정한 결함 2건**: (1) `probe_restore_receipt`가 `lower <= completed`를 요구해 방금 끝난 정상 복원을 `restore_stale`로 거부했다 — 관측 창이 한 순간이므로 "미래가 아니고 30일 이내"가 올바른 조건이다. (2) `build_probe_set`가 잘못된 타입의 섹션에서 `TypeError`로 crash했다 — 명시적 `ValueError` 검증으로 fail-closed 한다.
+- **실제 round trip 검증**: probe-only → 발급(`ISSUED`) → `preflight.py --evidence`가 `provenCapabilities: ["restore_receipt"]` 확인. capability 계열 잔여 사유 0건. 임시 키이며 즉시 삭제했으므로 acceptance 근거가 아니다.
+- **검증 결과**: `platform_integrity` 340 passed / 0 skipped / statement coverage 89% / Ruff 통과(`capability.py` 97%), `ops` 86 passed / Ruff 통과. 신규 테스트 32건 + 18건.
+- WT 동기화: 신규 4개 파일과 이전 세션에서 main에만 있던 `images/postgres-alpine-nosu.Dockerfile`, `sbom-targets.json`까지 byte-identical. 트리 전체 parity 재확인.
+- **남음**: `native_commit_guard` 발급 경로, launchd installer/manifest, purpose Keychain 실제 생성, live chrony NTS, 실제 DB mTLS role, backup/archive 명령과 scheduler. 실제 operator 증거 0건이며 G1 미통과.
+
+### REM-1 launchd installer/manifest 구현 (2026-09-26T14:40:00Z)
+
+- `deployment/launchd.py`에 `install` / `uninstall` 추가. 이전에는 `render` + `exec`만 있었고 plist를 launchd에 올리는 경로가 없었다.
+- `install`은 root·darwin·launchctl 무결성 → realm → 계정/uid/gid → role 작업 디렉터리 소유자 → **모든 frozen artifact digest**를 확인한 뒤에야 쓴다. 검증 실패 시 plist 0개.
+- `is_published()`가 (manifest digest) + (plist 바이트가 재계산 결과와 일치) + (`launchctl print`가 실제 잡음) 3중 확인. 이전의 `deployment.json` 존재만으로는 반쯤 해제된 설치를 '설치됨'으로 오인하는 결함이 있었다.
+- drifted/half-removed 상태는 **bootout 먼저 → 고쳐 쓰기**로 복구한다. 고장 난 job을 고치는 동안 돌게 두지 않는다.
+- `--replace` 없이는 다른 manifest로 교체 불가(되돌릴 수 없는 조용한 변경 금지). 교체 시에도 이전 deployment를 먼저 bootout한다.
+- `uninstall`은 bootout 후에도 launchd가 잡고 있는 job이 있으면 **삭제하지 않고 실패**한다 — 실행 중 job의 plist를 지우면 stop 수단이 없는 고아가 된다. Label 불일치 plist도 foreign로 거부.
+- `write_root_file`은 symlink 거부, root 비소유 파일 거부, 임시 파일→fsync→`os.replace`→디렉터리 fsync 원자적 쓰기(plist 0644 / manifest 0400). recursive delete·glob 없음.
+- **self-correction**: (1) `ALREADY_INSTALLED` 오인 결함, (2) 리팩터링 중 떨어뜨린 refuse-silent-replacement 가드, (3) uninstall orphan 방지 부재, (4) `require_root`가 root 소유를 검사해 비권한 테스트가 불가능 → symlink/쓰기가능 검사로 변경(실제로 검증 가능한 속성).
+- **검증**: `test_launch_policy.py` 24 → 34건(신규 10). 전체 350 passed / 0 skipped / statement 89% / Ruff 통과(`launchd.py` 88%). 비root install/uninstall → BLOCKED exit 2, render 정상, `/Library/LaunchDaemons` 무변경. **root 실제 install은 하지 않았고 테스트 launchctl는 recorder다.** WT 동기화 후 34 passed, `git diff --check` 통과.
+- **남음**: `_docsuri_r1t_*` 계정 9종 생성, toolchain/artifact 배치, 실제 test-profile rehearsal, production install(maintenance window). G1 미통과.
+
+### REM-1 Step 6 native commit guard 발급 경로 구현 (2026-09-26T16:20:00Z)
+
+- `native_commit_guard`의 `notIssuableHere` 결정을 뒤집고 **live `PostgresOperatorAuthority`에서 발급**하도록 바꿨다. 5개 capability를 기본 요청하므로, 선언되었지만 구성할 수 없는 guard는 fallback으로 "여기서 발급 불가"가 아니라 **미증명 capability**로 보고한다(전체 발급 차단).
+- `deployment/operator_plan.py`를 추가했다. frozen plan은 digest pin을 반드시 받아야 하고, root/현재 사용자 소유·group/world write 금지·단일 link·심볼릭 링크 아님·크기 상한을 모두 검사한다. 승인서가 이미 알고 있는 digest와 어긋나면 재적용 후에도 plan을 못 읽는다.
+- probe는 이제 **양방향**을 입증한다. plan에 없는 identity는 정확히 `effect is outside the frozen operator plan`으로 거절되어야 하고, 계획된 identity는 guarded region에 **효과 없이** admitted되어야 한다. adapter가 body 이후에 finalization을 거절하므로 body 안에서 세는 flag만이 거절과 admitted를 구분한다.
+- live 시험 중 probe 판정 2건을 바로잡았다. ① `MutationUnavailable`이 `PermissionError`의 하위 클래스라 폐기/범위초과 승인이 내부 오류로 보고됐다 → 정상 거절로 수정. ② admitted 후 사후 거절하는 guard와 처음부터 거절하는 guard가 같은 예외를 던지므로, 예외 메시지보다 `entered` flag를 먼저 봐야 한다.
+- `tests/test_guard_receipt.py` 10건을 추가했다. migration `001~004`를 실제 재현하고 `r1_control.authority` 행과 `r1_control.target_identity`를 삽입한 뒤, 폐기된 승인/잘못된 operator role/다른 plan을 가리키는 DB 행/다른 incarnation fence/만료된 decision deadline에서 거절을 확인하고, 계획된 효과의 admitted, 일반 서명 receipt가 기존 `verify_capability`로 통과, audit·outbox가 비어 있고 connection이 `IDLE`인 것을 확인한다. 이 receipt는 다른 capability와 동일하게 같은 signer·verifier·trust·validity 규칙을 쓴다.
+- `issue_receipt.py`의 `nativeCommitGuard`(`plan`, `planDigest`, `operatorDatabase`, `operatorTls`, `approval`, `fence`, `deadlineSeconds`, 선택 `identity`)는 `actor_role`을 `operatorDatabase.user`에서 유도하고, 인증된 `ProtectedClock`을 필수로 하며, readonly/autocommit `PostgresTLS`를 쓰고, 승인의 `plan`이 pin된 `planDigest`와 같아야 하고, authority와 fence target이 일치해야 한다.
+- **검증**: `main` 전체 **382 passed / 89%** statement, Ruff 통과. `ops` **98 passed**, Ruff 통과. (`ops`는 `ops/`에서 실행한다 — `ops/platform-integrity/`는 CLI 패키지이고 테스트가 없다.)
+- Step 6은 **미체크 유지**. 위 증명은 전부 폐기 가능한 disposable realm 증명이지 9개 물리 operator capability 증명이 아니기 때문이다. purpose Keychain, live chrony NTS, production 동일 DB role, 암호화 backup·restore, 03:00 Asia/Seoul scheduler, 127.0.0.1:18101 5 rps x 600초 native 수용 시험, launchd test/production rehearsal, registry publication, `CVE-2026-85091`은 그대로 열려 있다. G1 미통과.
+
+### REM-1 Step 6 target effect adapter 구현 (2026-09-26T18:05:00Z)
+
+- Step 6의 핵심 산출물이 실제로 **없었**음을 확인했고 구현했다. control plane이 `UNKNOWN`을 durable하게 기록하고 authority가 admitted 해도, 효과를 실제로 수행하고 그 ledger 행을 **같은 target transaction**에 기록하는 경로가 없었다.
+- `migrations/006_target_effects.sql`을 추가했다. `r1_control`과 의도적으로 분리한 `r1_target` 평면에, compare-and-set이 움직이는 정확한 native digest를 가진 `state` 행과 run/step/attempt/fence epoch에 묶인 append-only `effect_ledger` 행을 둔다. `(run_id, step, fence_epoch)` 유니크 인덱스가 세션 lock 뒤에서도 중복을 DB가 거부한다.
+- `adapters/target_effect.py::PostgresTargetExecutor`를 추가했다. 효과마다 전용 physical autocommit connection을 열고 session-level `pg_advisory_lock`을 효과 전체 동안 잡고, guard의 프로토콜을 그대로 구동한다: `guard()` → target transaction 하나 → `expected_before` compare-and-set → state write → ledger 행 → `before_commit()`. finalizer의 `FOR SHARE` 재조회가 **효과를 쥔 transaction 안에서** 일어나므로 이것이 revoke와 commit을 직렬화한다. lock이 session 수준이라 crash 시 해제되고, unlock 실패는 `close()`가 해제하므로 삼켜서 실제 결과를 가리지 않는다.
+- 실패 분류가 이 어댑터의 존재 이유이므로 명시했다. 거절된 statement·`MutationUnavailable` 거절·stale precondition은 **증명 가능한** 미적용이므로 그대로 전파하고, 연결 상실(`OperationalError`)만 `TargetOutcomeUnknown`이 된다 — 그 경우 효과는 durable일 수 있어 성공도 실패도 말하면 안 된다. 해소는 `observe()`뿐이고 read-only(`SET TRANSACTION READ ONLY`)다. ledger 행은 commit을 증명하고, 대상이 그대로면 조용한 abort를 증명하며, 그 외 digest는 아무것도 증명하지 못하므로 `UNKNOWN`을 유지한다.
+- `tests/test_target_effects.py` 16건으로 Step 6 fault case 4종을 cover했다: 동시 target writer 2개(정확히 하나만 적용, loser는 분류된 사유로 거절 — crash나 두 번째 ledger 행이 아님), 갱신된 fence epoch이 이미 이동한 precondition을 다시 무장시키지 못함, index가 위조된 중복을 거부, 효과 이전 revoke, **transaction 중간에落地한 revoke**, 효과 write 뒤 rollback이 state와 ledger를 함께 되돌림, rollback 후 session lock 누수 없음, commit reply 상실 시 효과가 durable한 채 호출자는 UNKNOWN을 받고 이후 맹목적 재시도가 불가능함, 그리고 drift한 대상이 UNKNOWN을 유지하는 관측 3종.
+- mid-transaction revoke 시험은 mutation으로 load-bearing임을 확인했다. finalizer 재조회를 삭제하면 **이미 폐기된 authority로 효과가 commit**되고 시험이 실패한다. 이것이 step이 금지한 privileged-apply 위험이며 이제 회귀시험으로 고정했다.
+- 내 시험 버그 2건도 실제 동작에 맞춰 바로잡았다. ① `check_binding`이 `PermissionError`를 raise하고 이는 `MutationUnavailable`의 **상위** 클래스라 단언은 상위 클래스를 기대해야 했다. ② target이 인정하지 않은 fence epoch은 out-of-scope로 거절되므로, "새 fence" 시험이 진짜 compare-and-set을 검사하려면 먼저 `r1_control.target_identity.epoch`을 올려야 한다.
+- **검증**: `main` **398 passed / 89%** statement(`target_effect.py` 96%), Ruff 통과. `ops` 98 passed. Step 6은 여전히 **미체크** — target executor도 폐기 가능한 disposable realm에서만 증명됐고 물리 operator capability는 그대로다. G1 미통과.
+
+### Step 6 append-only 강제와 scoped DB command role (2026-09-26)
+
+- Step 6이 요구한 "append-only critical events/outbox와 scoped DB command role"은 둘 다 **주석일 뿐
+  메커니즘이 아니었다.** `001`/`006`은 "append-only"라고 적어두었지만 session role이 자유롭게
+  `UPDATE`/`DELETE`할 수 있었고, 프로세스가 테이블에 직접 쓰는 것을 막는 장치도 없었다.
+- `migrations/007_command_roles.sql` 추가. NOLOGIN group role `r1_target_owner`/`r1_target_operator`/
+  `r1_target_auditor`를 만들고, `r1_target_operator`는 어떤 테이블에도 INSERT/UPDATE/DELETE/TRUNCATE
+  권한이 없고 `r1_control`에는 아무 권한도 없다. 유일한 write 경로는 `SECURITY DEFINER` 함수 하나의
+  EXECUTE뿐이다.
+- `r1_target.effect_ledger`와 `r1_control.outbox`이 `UPDATE`/`DELETE`뿐 아니라 **`TRUNCATE`도 거부**한다.
+  row-level trigger는 `TRUNCATE`에 아예 발동하지 않으므로 statement-level guard가 추가로 필요하다. 이것이
+  없으면 append-only 속성이 조용히 거짓이었고 mutation으로 확인했다.
+- `r1_target.apply_effect(...)`는 scalar만 받고 compare-and-set 대상을 고정하며 row lock을 자신이 取한다.
+  그리고 **authority를 스스로 재검증한다.** Python guard는 defense in depth이지 강제 경계가 아니다 —
+  이 migration의 첫 버전은 guard 없이 scoped role이 **폐기된(revoked) authority로 효과를 적용**할 수
+  있게 했다. 이제 DB가 폐기/비-apply/retarget/out-of-epoch grant를 직접 거부한다(`R1T02`),
+  compare-and-set 실패는 `R1T01`. 거절 사유는 명시적 SQLSTATE로 두고 어댑터는 메시지 문자열이 아니라
+  코드로 분류한다.
+- 의도적으로 **guard에 남겨 둔** 검사 2건이 있고, 이를 migration과 operator handoff에 명시했다(누락이
+  아니라 설계): ① **만료** — SQL에서 판정하면 보호된 chrony/NTS clock이 아니라 `clock_timestamp()`을
+  신뢰하게 된다. ② **어느 DB role이 어떤 approval을 쓸 수 있는지** — Step 10이 아직 제공할 role mapping이
+  필요하다. cross-target escape는 완전히 막혔지만 session↔approval identity 바인딩은 아직 없다.
+- `adapters/target_effect.py`가 Python에서 ledger digest와 `applied_at`을 계산하지 않는다 — DB가 둘 다
+  기록한다. CAS가 SQL로 옮겨가면서 try 블록 안에서 raise될 수 없게 된 `except TargetStateChanged`는
+  죽은 코드라 삭제했다.
+- `tests/test_target_effects.py`는 **28건**, `adapters/target_effect.py`는 statement **100%**. ledger/outbox의
+  UPDATE/DELETE/TRUNCATE 거부, operator role의 write 권한 전무, auditor read-only, cross-target/
+  cross-incarnation 거부, 비-apply grant 거부, stale epoch 거부, **guard가 읽은 뒤에落地한 revoke**를
+  command가 잡는 것, scoped read-only reconciliation, unlock 실패가 실제 결과를 가리지 않음을 함께 고정한다.
+- 새 강제 장치는 전부 **mutation으로 확인**했다. `revoked`/`target`/`namespace`/`incarnation`/`purpose`/
+  `epoch` 술어를 하나씩 지우면 각각 이름 있는 시험이 실패하고, scoped grant나 TRUNCATE guard를 지워도
+  실패한다. 이 과정에서 글로는 놓친 실제 구멍 2개를 찾아 막았다: 어떤 시험도 덮지 않던 cross-target
+  escape, 그리고 시험이 없던 `purpose` 술어.
+- test hygiene 결함도 우회하지 않고 고쳤다: `tests/test_reader_roles_postgres.py`는 모든 migration을
+  적용하면서 `r1_control`/`r1_audit`만 지워서 `r1_target` 잔여물과 충돌했다.
+- **검증**: `main` **413 passed / 90%** statement(`target_effect.py` 100%), Ruff 통과. `ops` **98 passed**,
+  Ruff 통과. `git diff --check` 통과. Step 6은 여전히 **미체크** — 물리 operator capability와 Step 10의
+  role mapping이 그대로다. G1 미통과.
+
+### REM-1 Step 6 durable dispatch / conservative reconciliation (2026-09-27)
+
+- Migration 008과 `application/dispatch.py::RunDispatcher`를 추가했다. control UNKNOWN/audit/outbox의
+  commit 응답 뒤에만 target apply를 호출하고, 결과 기록과 명시적 read-only reconciliation을 연결한다.
+  어떤 실패에서도 자동 재실행하지 않는다.
+- 이전 observer가 미commit writer를 abort로 판정하고, 다른 plan/effect에 ledger를 재사용하며,
+  ledger 존재를 과거 authorization 증거로 승격하는 결함을 재현·수정했다. direct SQL commit 직전의
+  revoke도 deferred constraint/SHARE lock으로 차단한다. 초기 회귀시험 9건이 이전 코드에서 실패했다.
+- v2 receipt는 target/namespace/incarnation/plan/approval과 전체 effect를 결속한다. 기존 행은 수정하지
+  않고 미확인 provenance로 남긴다. target-wide exclusion, epoch rewind 거부, bounded lock wait,
+  read-only repeatable snapshot을 적용했다. 부재만으로 abort를 단정하지 않는다.
+- 응답 유실 뒤 실제 commit을 확인해도 과거 권한 증거가 없으면 COMMITTED/PAUSED다. 확인된 live guarded
+  commit만 verified completion을 기록할 수 있고, reconciliation은 별도 current purpose 권한을 재확인한다.
+- 검증: platform **456 passed / 90%**, target adapter와 dispatcher **100%**; ops **98 passed**;
+  Ruff/`git diff --check` 통과. Hypothesis seed **20260927**, 신규 failure-cut property release profile
+  (2,000-example limit) 통과. 기존 Starlette/httpx deprecation warning 1건.
+- Step 6/G1 미완료: native protected clock/current source, session-to-approval role mapping 및 실제
+  non-superuser helper composition 인수가 남아 있다. 현재 control-purpose port/시계는 시험용 공급자이며
+  실제 operator capability receipt로 계산하지 않는다. 구체 경계와 확장별 상태는 최신 code summary 참조.
+- Preserved WT에 변경 13개 파일의 byte parity를 확인했고, WT platform **456 passed** 및 Ruff 통과를
+  재현했다. 이번 세 하위 구현/기록 항목은 완료, 상위 Step 6은 인수 미완료 상태를 유지한다.
+
+### REM-1 Step 6 current-source / login binding (2026-09-27)
+
+- Migration 009: approval revision/actor를 실제 login 이름과 PostgreSQL role OID에 불변 결속한다.
+  owner/member/table-write 권한을 가진 login은 provisioning에서 거부하고, 동일 revision 재할당 및
+  role 삭제·재생성으로 기존 권한을 재사용하는 경로를 차단했다. bind/revoke와 audit/outbox는 원자적이다.
+- `PostgresOperatorAuthority`가 scoped source read/finalization 함수를 사용한다. process role에
+  authority-table UPDATE를 주지 않고, function owner가 SHARE lock을 수행한다. 직접 target SQL도
+  mapping을 insert/commit에서 확인한다.
+- `PostgresCommandAuthority`로 run/reconcile의 현재 source·scope·revision·protected time을 재확인하고,
+  `build_operator_dispatcher`가 frozen step/precondition/postcondition, TLS identity, 원 deadline을
+  묶는다. `PostgresTLS.open`은 temporary credential 정리 후 caller-owned physical connection을 제공한다.
+- 초기 actual-login 회귀시험 2건(정상 helper 거부, 타 login의 승인 재사용)이 이전 코드에서 실패했고
+  수정 후 통과했다. 실제 non-superuser login으로 revoke 순서/감사 rollback/OID/revision/clock 실패를 검증했다.
+- 검증: platform **496 passed / 90%**, helper/TLS adapter **100%**, command authority **97%**;
+  ops **98 passed**; Ruff/`git diff --check` 통과. 신규 source-scope property release profile
+  (2,000-example limit), seed **20260927** 통과. 기존 Starlette/httpx warning 1건.
+- Step 6/G1 미완료: control checkpoint store의 scoped command 및 helper preparation provenance 강제,
+  실제 purpose Keychain/NTS/mTLS 배포 인수가 남아 있다. 새 시험의 target/source login은 실제 비관리자이나,
+  control store는 owner-backed fixture이고 시계는 synthetic protected frame이다.
+- Preserved WT에 17개 변경 파일의 byte parity를 확인했고 platform **496 passed** 및 Ruff 성공을 재현했다.
+  이번 세 하위 구현/검증 항목을 완료로 표시했다. 상위 Step 6과 G1은 계속 미완료다.
+
+### REM-1 Step 6 scoped coordination / prepared execution (2026-09-27)
+
+- Migration 010/011 및 `ScopedPostgresRunStore`/`build_scoped_operator_dispatcher` 추가. register,
+  attempt, prepare, reconcile/read를 고정 native command로 수행하고 process raw table write를 거부한다.
+- UNKNOWN/audit/outbox의 synchronous COMMIT 응답 뒤에만 private dispatch secret을 내보낸다. DB에는
+  hash만 보존하며 readonly history/repr/일반 직렬화에서 복구할 수 없다. Target은 독립 commit된 exact
+  checkpoint/audit/outbox, executor OID/revision, secret을 검증한다. Legacy apply signature는 제거했다.
+- 보호된 helper의 guard 뒤 동일 effect transaction에 finalization witness를 기록한다. Witness 없는
+  commit은 거부하고, coordinator의 성공/인가 boolean 대신 native evidence로 완료를 판정한다. Reply 유실도
+  witness가 보존됐으면 명시적 reconciliation으로 복구한다. Source epoch CAS도 비관리자 admin command로
+  감사와 원자 처리한다. 등록부터 다단계 완료/펜싱 복구까지 runtime owner credential이 필요 없다.
+- 검증: platform **522 passed / 90%**, ops **98 passed**, Ruff/`git diff --check` 통과. SQL codec과
+  Python RFC8785 oracle 및 dispatcher failure-cut property release profile 통과, seed **20260927**.
+  새 profile의 synchronous commit/보호된 helper provenance가 내구성 근거이며 global WAL pointer를 특정
+  commit 증거로 오인하지 않는다.
+- Readonly host preflight(증거 bundle 미제공, peak=0): ready=false, provenCapabilities=[] 및 receipt
+  malformed 5건. FileVault/drive/최소 10 GiB 여유 검사는 통과했다. 공급자 부재나 실제 배포 peak의 증명이
+  아니다. Owner-reviewed 설치/실제 Keychain/NTS/mTLS/receipt 인수가 남아 Step 6/G1 미체크를 유지한다.
+- 변경 19개 파일의 preserved WT byte parity를 확인하고 WT **522 passed**/Ruff 성공을 재현했다.
+  Scoped coordination/prepared execution 코드 하위 항목은 완료, 물리 인수 항목은 미완료로 분리했다.
+
+### REM-1 물리 clock 번들 준비 및 CVE-2026-82049 수정 (2026-09-27)
+
+- `ops/platform-integrity/provision_clock.py`의 `fetch/build/refresh/seal/backport/rehearse/install/probe/uninstall`으로
+  pinned Darwin arm64 clock bundle을 root 없이 준비했다. 최종 provisioner를 반영해 다시 seal한 결과는
+  **2248 files / 97,622,694 bytes**, manifest
+  `98e91b42351467fd8ae3d3275a662b36753280631caea72ac275f1cdd2975a99`, installer
+  `fef411e86c5eb427cee969b71713b0c5063058c5d7959dda4f5208fef4bb9cad`. Plan-only `install`은
+  `PLAN_ONLY`/`ready=false`를 반환하며, seal 후 provisioner 바이트가 바뀌면 `invalid reviewed clock bundle`로
+  거부한다. (직전 stale manifest `f8410079…`/`5805b315…`는 폐기됐다.)
+- Fresh Grype capture가 High 1건 `CVE-2026-82049`(python 3.13.15, fix는 3.14.0b1만)을 보고했다. PSF
+  advisory와 backport `b8f23e307097552eaea2604383a12ab280520d0d`를 받아 pinned preimage에 byte-for-byte로
+  적용하고 stale `tarfile` bytecode를 제거했다. 부팅 extraction은 이제 hard-link member 자체를 거부하므로
+  patch 이전의 취약 경로도 닫는다. Upstream 회귀가 `data`/`tar` 양쪽에서 통과하며 backport는 idempotent,
+  미인정 staged module·검증 불가 preimage·root 실행을 거부한다.
+- Grype은 CPE version string으로만 판정해 backport를 인식하지 못한다. 그래서 finding을 억제하지 않고
+  `sbom-targets.json`에 `PREPARED_NOT_INSTALLED_PENDING_OPERATOR_ACCEPTANCE`로 남겨 operator 승인을 받는다.
+- 검증: `main` ops **125 passed**/Ruff 통과. 부팅 non-root rehearsal은 `time.cloudflare.com`의 authenticated
+  NTS까지 도달하고 400개 실행 image가 frozen closure 안에 있음을 확인했지만 `NTS_OBSERVED_NOT_ACCEPTED`로
+  종료했다(의도된 결과).
+- **미완료**: root `install --apply`/`probe`, NTS 서명 receipt, purpose Keychain, mTLS role, backup/restore,
+  03:00 scheduler, 5 rps load, registry publication. `CVE-2026-85091`도 그대로 blocker다. Step 6/G1 미체크.
+- 계획/audit/handoff 문서를 갱신했지만 현재 manifest와 preimage refactor는 아직 preserved WT에 동기화되지 않았다.
+
+### REM-1 clock 설치 인계 보정 (2026-09-28 local)
+
+- 위 2026-09-27 checkpoint의 manifest는 superseded다. 현재 값은
+  `509b5074da51eebe58cadb8b4527d3ab6c2c961f4bf15e6e2f3f971e75da1752`, installer는
+  `efb6145be5dff0f3ab0d087fe27c0c3e9b12746574342cba6a59d3f1cef3eb67`이다.
+  2248 files / 97,622,694 bytes이며 SBOM의 2251-file 오기를 바로잡았다.
+- Installer가 독립 pin으로 PSF patch metadata/postimage와 bytecode 부재를 검사한다. `backport` 검증은
+  candidate를 고치지 않고 실행 전후 manifest를 검증하며 proof에 manifest/release를 결속한다.
+- 검증한 system CA와 별개로 mutable staging CA를 설치하던 race를 실패 재현 후 수정했다. 실제 root
+  설치 시험은 아니며 root-only 복사/설치/probe/rollback 명령을 handoff §12에 정확히 기록했다.
+- Main ops **137 passed**, clock **39 cases**, 생성 property 2개 각 2,000 examples, seed **20260928**,
+  Ruff 성공. System Python plan-only와 실제 frozen-runtime PSF 회귀도 통과했다.
+- Raw scan-handoff: 51 components / 8 findings / 1 High / 0 ignored / BLOCKED. PSF 수정 증거는 별도이며
+  release 승인/예외를 만들지 않았다. 이전 400 executable mappings는 chronyd의 관측이며 설치된 Python의
+  관측으로 해석하지 않는다.
+- 현재 변경 8개 파일의 preserved-WT byte parity를 확인했고 WT도 **137 passed**/Ruff 성공을 재현했다.
+  Artifact/scan/proof digest, Bash/Zsh 명령 구문, Markdown/JSON 및 git diff --check 통과. Local sudo
+  인증과 실제 install/probe/서명 receipt가 다음 단계이며 Step 6/10과 G1은 계속 미체크다.
+
+### REM-1 clock 설치 완료 / native probe 차단 원인 확인 (2026-09-28)
+
+- Operator가 기존 manifest `509b5074…`/installer `efb6145b…`로 실제 root 설치를 수행했다.
+  `INSTALLED_NOT_ACCEPTED`, deployment digest `ac0c16bb…`, clock job 2개 등록을 보고했고 readonly
+  OS 관측으로 등록을 확인했다. 보호된 실행본은 `/private/var/root/docsuri-clock.dAZVUkTy/provision_clock.py`다.
+- Probe는 `native_runtime_unavailable`로 실패했다. Observer/periodic job의 exit 2와 UNAVAILABLE frame을
+  확인했다. 원인은 UID 608 launcher가 읽어야 하는 `deployment.json`을 root:wheel 0400으로 설치한 코드
+  결함이다. 설치된 Python의 non-root read가 EACCES로 실패하는 것도 재현했다.
+- Source는 root-owned 0444 metadata를 발행하고 installed-state 검사에 mode를 포함하도록 수정했다.
+  Owner/reader를 분리한 회귀 4개가 수정 전 실패/후 통과했다. Platform **528 passed / 90.33%**,
+  ops **137 passed**, Ruff 및 wheel build 통과. 기존 frozen bundle/installer는 복구용으로 유지한다.
+- 다음 operator 작업은 handoff §13의 checksum 검증 → 해당 manifest만 0444 → observer kickstart →
+  기존 protected installer의 probe다. Agent는 sudo 인증이 없어서 이 복구를 실행하지 않았다.
+- Native probe/clock capability receipt는 미완료, Step 6/10/G1도 계속 미체크다. 변경 8개 파일의 WT byte
+  parity 및 launcher 39 tests/Ruff를 확인했다. 복구 명령의 Bash/Zsh 구문·digest, Markdown/JSON과
+  git diff --check도 통과했으며 다음 입력은 operator 복구/probe 결과다.
+
+### REM-1 mode 복구 후 잔여 launch 실패 — 진단 준비 (2026-09-28)
+
+- Operator가 §13 checksum/mode/kickstart를 실행했다. 실제 manifest mode는 0444이고 checksum은 모두
+  일치한다. Observer는 run 2/exit 2, sampler도 exit 2이며 public frame은 계속 UNAVAILABLE다.
+- 설치된 interpreter로 manifest/account/2247 artifact(97,140,890 bytes)를 UID 501에서 검증했다.
+  이 성공은 실제 UID 608의 kernel group/launch 동작 증명이 아니다. 잔여 원인은 아직 확정하지 않았다.
+- `diagnose_clock_launch.sh`를 준비했다(SHA256 `410016041adc71e2a503848446ee3ac1a222d73571976e0bf2202ef41869ecbe`).
+  실제 observer의 다음 launch만 진단으로 대체해 UID/GID/kernel groups와 guard exception을 출력하고
+  target exec 직전에 중단한다. Root 실행 거부/15초 한도/오류 길이 제한과 accepted=false를 적용했다.
+- Helper 회귀 4개 및 ops **141 passed**/Ruff/shell syntax 통과. 실제 UID-501 smoke는 예상된 role-boundary
+  refusal을 출력했다. 실제 UID-608 결과는 operator의 handoff §14 실행을 기다린다.
+- 진단 산출물/문서 8개 파일의 WT byte parity와 WT helper 4 tests/Ruff를 확인했다. Script/digest,
+  Bash/Zsh handoff 구문, Markdown/JSON 및 git diff --check 통과. 다음 작업은 operator의 실제 launch-context
+  JSON 수집이다. 물리 probe/receipt 및 Step 6/10/G1은 계속 미완료다.
+
+### REM-1 diagnostic 실행 순서 보정 (2026-09-28)
+
+- Operator의 diagnostic copy SHA 검증과 debug 설정은 성공했다. 실제 `launchctl debug` PID 72641은
+  foreground에서 대기 중이고 observer runs는 여전히 2다. 뒤에 `&&`로 연결했던 kickstart는 실행되지 않았다.
+- Handoff §14를 두 Terminal로 수정했다. 기존 Terminal A를 유지하고 Terminal B에서
+  `sudo /bin/launchctl kickstart -p system/org.docsuri.rem1.test.nts-observer`만 실행하면 된다.
+  Diagnostic JSON은 Terminal A에서 수집한다. 실제 서비스-context 결과와 native clock 인수는 계속 pending이다.
+
+### REM-1 native group 원인 확정 / root bootstrap 복구 준비 (2026-09-28)
+
+- 실제 diagnostic PID 69943: UID/EUID/GID/EGID 608, kernel groups `[608,12,61,100]`, launch_guard에서
+  `runtime role boundary not established`. InitGroups=false만으로는 이 host의 group 격리가 성립하지 않았다.
+- Renderer를 root:wheel bootstrap + Python -I -B로 수정했다. 기존 frozen launcher에 이미 존재하는
+  manifest/artifact 검증 → setgroups([]) → setgid → setuid → native 재검증 → target exec 경로를 사용한다.
+  허용 group을 늘리지 않았고 실제 clock target은 UID/GID 608로만 실행된다.
+- 기본 PLAN_ONLY인 `repair_clock_groups.py`는 기존 bundle/provisioner/deployment와 두 plist preimage에
+  고정된다. 원 설치의 모든 artifact/CA를 검증하고 두 job 중지 후 세 필드만 변경하며 bootstrap 실패/중단은
+  미확정 start를 포함해 두 label 모두 정리한다. 수리 script SHA256:
+  `9fc69cb3b2ec72bcd30b5eea4770b58de8e6455617ce750a9d4a6dabec3e3812`.
+- 실제 설치에 대한 System-Python plan-only가 통과했고 renderer와 repair의 새 plist digest가 일치한다.
+  Platform **534 passed / 90.42%**, ops **156 passed**, repair 15 cases/2,000-example property, Ruff 통과.
+- 다음 operator 작업은 기존 debug Terminal에서 Ctrl+C 후 handoff §15의 보호된 repair copy/plan/apply/probe다.
+  Root apply/실제 clock probe/서명 receipt는 아직 미완료다. 변경 10개 파일의 WT byte parity와 launcher
+  45/repair 15 targeted tests, Ruff, wheel build, handoff 구문/문서/digest 검증을 마쳤다.
+
+### REM-1 group 복구 적용 / reader 재확인 대기 (2026-09-28)
+
+- Operator의 root repair는 REPAIRED_NOT_ACCEPTED로 완료됐다. 두 plist hash가 정확히 일치하고
+  chronyd PID 87325의 실제/effective UID/GID는 608이다. Periodic publisher도 exit 0이며 NTS frame은
+  authenticated/AVAILABLE 상태다.
+- 첫 probe는 collector와 reader identity/group 검사를 통과한 후 ProtectedClock에서 실패했다.
+  해당 실패 frame은 보존되지 않아 정확한 원인은 미확정이다. Startup uncertainty/publication race는
+  가능성일 뿐 확정 원인으로 기록하지 않는다.
+- 현재 installed ProtectedClock는 inspector UID 501에서 20초간 5/5 통과했다. Window width는
+  498018~602966 us로 약 ±0.25~0.30초다. Config/boot/resume, 파일 writer/mode/link도 일치한다.
+- Handoff §16의 기존 protected probe만 재실행해 UID 600의 current-read/쓰기·socket 거부를 확인한다.
+  재설치/repair 재실행은 필요하지 않으며 최종 native reader/서명 receipt와 Step 6/10/G1은 pending이다.
+
+### REM-1 live NTS / isolated reader 인수 통과 (2026-09-28)
+
+- Operator 재실행이 **NATIVE_CLOCK_PROBED**로 통과했다. Collector OBSERVED, reader CLOCK_READ_VERIFIED,
+  frame write 및 chrony command socket 접근 거부가 모두 true다. Window는
+  `[1790599834753553,1790599834989279]` us (폭 235726 us, ±117863 us)다.
+- `capabilityReceiptIssued=false`를 유지한다. Live collection/reader isolation checkpoint는 완료했지만
+  signed receipt와 남은 expiry/reboot 및 전체 Step 6/10/G1 인수는 별도다.
+- `clock-receipt.test.json` reference-only 설정을 준비하고 issuer --probe-only를 실측했다. nts_clock은
+  proven=true/verified, 나머지는 설정 미제공으로 not_configured, 전체 exit 2다. 키/서명은 사용하지 않았다.
+- 다음 구현은 role-scoped Keychain signer/frozen issuer, ProtectedClock 기반 validity, 독립 release-trust
+  anchor 배선이다. 현 bootstrap CLI의 PEM/local-wall-time/evidence-named-trust 경로를 production 인수로
+  간주하지 않는다. 그 후 fresh probe 기반 nts_clock receipt를 발급/검증한다.
+- 이번 reference/evidence 문서 7개 파일의 WT byte parity, installed clock reference/reader-window 검증,
+  Markdown/JSON/shell parsing 및 git diff --check를 확인했다. Runtime 코드 변경이나 추가 repair 실행은 없다.
+
+### REM-1 보호된 receipt 서명 경로 완성 / 실제 발급은 operator 대기 (2026-09-29)
+
+- **PEM 절차는 폐기되었다.** `--key`/`--key-id`/`--out`은 probe-only가 아닌 실행에서
+  `protected_signing_required`로 거부되고 파일이 생기지 않는다. trust는 evidence가 아니라 **root 소유
+  0444 policy**에서만 오며, evidence 안의 `trustKeys`는 `evidence_invalid_or_contains_trust`로 거절된다.
+  서명 키는 purpose Keychain 안에만 존재한다.
+- **root-side provisioner**(`ops/platform-integrity/provision_receipts.py`)를 추가했다. NTS artifact
+  digest를 설치된 root 소유 `deployment.json`에서 유도하고(설치 바이트가 manifest와 다르면 거절), Ed25519
+  키를 메모리에서 생성해 ACL이 issuer interpreter로 묶인 Keychain에 넣고, policy는 root 0444로 atomic
+  기록한다. trust window는 배포된 인증 clock 기준(now − 1일, 최대 7일)이다. 비밀번호는 `getpass` 2회.
+  인자 오류는 비밀번호를 묻기 **전에** `stage=arguments`로 거절한다.
+- **issuer에 `--keychain-password-stdin`**을 추가했다. provisioner가 남긴 locked Keychain을 서명
+  동안만 signer role로 unlock하고 `finally`에서 다시 lock한다. 비밀번호는 stdin 한 줄(12..1024 B)이며
+  argv·환경·로그에 나타나지 않는다.
+- **실제 macOS Keychain end-to-end이 증명됐다**: `SecKeychainItemCreateFromContent`로 ACL을 생성 시점에
+  부여해 interactive authorization 대기가 사라졌고, locked 상태 서명은 `purpose signing key`로 거부되며,
+  올바른 비밀번호로 unlock 후 실제 서명 → 0444 publication → **독립 policy가 `verified`로 수락**한다.
+  같은 purpose 슬롯의 다른 키는 거부되고 잘못된 비밀번호로는 unlock되지 않는다.
+- **테스트**: ops 179 passed, platform 382 passed + 185 skipped(전부 기존 격리 DB integration skip),
+  양쪽 Ruff clean. 이번에 추가한 것은 provisioner 11개(인자 선검증, 링크/쓰기 가능/크기 제한 거부,
+  다른 release·drift 거절, 다른 소유자 경로 거절), issuer 2개(stdin 비밀번호 경계, unlock→lock 순서와
+  비밀번호 없을 때 무접촉), native 3개이다.
+- **남음(전부 operator)**: FileVault On 확인, sudo provisioner 실행, 실제 `nts_clock` 발급과 preflight
+  검증. 이 호스트에는 signer Keychain·key·trust policy·서명 receipt가 하나도 없어
+  `capabilityReceiptIssued=false`를 유지한다. Step 6/10/G1 미체크 유지. clock scan `BLOCKED`
+  (`CVE-2026-82049`)와 `CVE-2026-85091`은 별개로 열려 있다.
+- 기록: handoff 8절에 폐기 고지를 넣고 8A절에 3단계 operator runbook(소유권·mode 표 포함)을 추가했다.
+  `sbom-targets.json`은 python **project** 단위라 `provision_receipts.py` 추가로 변경이 없다.
+
+### REM-1 reaped 임시 디렉터리 복구 (2026-09-29)
+
+- macOS가 `/var/folders/.../T/opencode/`를 정리해 prepared bundle, `scan-handoff`, 보존 worktree가
+  사라졌다. `git worktree prune`로 stale 등록만 제거했다. worktree reflog가 **단 한 줄**(초기 checkout
+  `32a424d1`, commit 0개, branch 0개)이므로 git 쪽에 잃을 고유 내용은 없었다. 같은 경로에 worktree를
+  재생성했다.
+- **주의:** `platform_integrity/`와 `ops/platform-integrity/` 구현 전체가 **untracked**다. `32a424d1`은
+  그 이전 커밋이라 worktree checkout만으로는 코드가 없다. 디렉터리를 만들어 24개 파일을 복사했고
+  **parity 불일치 0건**이다.
+- **설치본은 살아 있고 이제 repo 안에 증명이 있다.** root 소유 `deployment.json`을
+  `aidlc-docs/construction/rem-1-platform-integrity/code/installed-deployment-manifest.json`(0444)으로
+  회수했다. digest가 기록값 `ac0c16bb…`과 **정확히 일치**하고 **2247/2247** artifact digest가 설치
+  파일과 재검증됐다. launch entry `nts-observer`/`clock-sample`(608/608)도 정상이고
+  `receipt-policy/`·`receipt-public/`는 여전히 부재해 provisioner 미실행이 확인된다.
+- **bundle은 사라진 게 아니라 재생성 가능하다.** builder가 repo 안에 있고 입력 digest가 고정되어 있다.
+  2026-09-29 `fetch` 재실행으로 chrony `4924c6f5…`·CPython `064afb7c…`가 재다운로드·재검증되었다.
+  handoff에 fetch→build→refresh→seal 순서와 `509b5074…` manifest gate를 기록했다. gate가 통과해야
+  검토된 artifact로 인정하고, 아니면 **설치 금지**다.
+- **`scan-handoff/`는 영구 손실이다.** 51 components / 8 findings / High `CVE-2026-82049` / 0 ignored는
+  `audit.md` 산문으로만 남았고 재생성에는 network·Grype·derived image가 필요하다. scan은 **미재현**으로
+  기록한다.
+- **여전히 막힘:** `probe()`가 `verify_bundle(work, …)`를 호출하므로 bundle 없이는 native probe를 돌릴
+  수 없다. 무거운 `build` 단계(CPython 컴파일, 여유 디스크 20 GiB/용량 96%)는 승인 없이 실행하지 않고
+  확인 대기한다. FileVault·root provisioner·실제 발급은 그대로 operator 대기이며 Step 6/10/G1은
+  미체크를 유지한다.
+
+### REM-1 bundle 재구성 시도 — manifest gate에서 거부 (2026-09-29, 위 「재생성 가능」 진술 정정)
+
+- **아래는 내가 앞에서 남긴 「bundle은 재생성 가능하다」는 기록을 정정한다. 재생성되지 않는다.**
+- `fetch`는 여전히 동작한다. chrony `4924c6f5…`·CPython `064afb7c…`는 digest 고정이라 재다운로드·재검증에
+  성공했다. **그러나 CPython 입력은 source compile이 아니라 prebuilt python-build-standalone 아카이브**라
+  `build`는 15초 만에 끝났고, 내가 미리 말한 "CPython 컴파일·수 GiB·장시간"은 틀렸다.
+- **gate 실패**: `build` `3749899e…`(2056 files/93,252,270 B) → `refresh`·`seal` `290aa5e0…`
+  (93,252,271 B). 검토본은 `509b5074…`(2248 files/97,622,694 B). **설치는 시도하지 않았다.**
+- 회수한 설치 manifest와 diff한 결과가 결정적이었다. (1) `runtime/lib/python3.13/**/__pycache__/*.pyc`
+  **196개 결손** — 원본은 precompiled bytecode를 포함했고 rebuild는 하나도 없다. (2) **5개 신규** —
+  `config/deployment.json`과 오늘 작성한 receipt 소스 4개. (3) **digest 9개 상이** — `native/chronyd`,
+  `native/chronyc`(재컴파일), `cffi`/`docsuri_platform_integrity` `RECORD`, `direct_url.json`,
+  `uv_cache.json`, 수정된 소스 2개.
+- **원인**: bundle은 이 repo의 소스 트리와 bytecode cache를 품는 **시점 고정본**이라, 이후 트리에서
+  재구성하면 반드시 다른 artifact가 된다. `install`는 전달된 digest만 확인하므로 rebuild 자신의
+  `290aa5e0…`를 넘기면 **검토되지 않은 바이트가 설치된다.** 293 MB짜리 non-conforming rebuild은 삭제했다.
+- **인수 영향(영구)**: `probe()`가 `verify_bundle(work, …)`로 시작하므로 **이 release의 native clock probe는
+  이제 재실행할 수 없고 `509b5074…` pin은 다시 충족될 수 없다.** 기록된 `NATIVE_CLOCK_PROBED`는 실행된
+  증거로 남지만 재현·재검증은 불가능하다. 향후 clock 재설치는 **새로 build하고 새 pin을 검토한 뒤**
+  새 manifest digest와 새 `tarfile-remediation` 증명이 필요하다. 옛 pin으로 re-seal하지 말 것.
+- FileVault·root provisioner·실제 발급은 그대로 operator 대기이고 Step 6/10/G1은 미체크를 유지한다.
+
+## CONSTRUCTION / Step 11 — R1C 읽기 표면 보강 (2026-09-29)
+
+`api/app.py`를 80줄짜리 골격으로 두고 "다음 미착수 unit"으로 적어 두었으나, 실제로는 Step 11의
+요구사항 여러 개가 구현되지 않은 상태였다. 이번에 그 결함을 닫았다.
+
+- **인증이 우연한 404였다**: 앱은 `scope`의 `client_certificate_fingerprint`를 *읽기만* 했고
+  거부하지 않았다. 인증 게이트가 없어 무인증 호출자는 `service.read(None, …)`로 내려갔고,
+  `CurrentReadAuthority.permits`가 우연히 거절해서 404가 됐다. 즉 fail-closed는 설계가 아니라
+  우연이었다. 이제 `/internal/**`는 64자 소문자 hex 지문을 **요구**하고 아니면 401을 준다.
+  `X-Client-Cert`·`X-SSL-Client-Cert`·`X-Forwarded-Client-Cert`·query parameter 네 경로 모두
+  401로 테스트로 고정했다. 값이 비었거나 대문자·오길이·non-string이면 동일하게 401.
+- **loopback 강제**: non-loopback peer는 고정 `not_found`로 응답한다. 데몬이 자기 존재를
+  off-host에 확인해 주지 않기 위해 알 수 없는 경로와 구분되지 않아야 한다.
+- **readiness가 세 층으로 나뉘지 않았다**: `subjectEligible`이 하드코딩 `null`이었다. 이제
+  `shallow`(clock·reader 응답), `deep`(실제 bounded 관측 완주), `subjectEligible`(그 caller의
+  grant) 를 분리 보고한다. subject 미지정 시에도 `False`이며 `null`이 되지 않는다 — readiness로
+  subject 존재를 추론할 수 없다.
+- **compatibility에 API가 아예 없었다**: `domain/compatibility.py`의 `evaluate_compatibility`는
+  반환값이 `(verdict, reasons)` 튜플이라 직렬화할 수 없었다. `CompatibilityResult` value를 추가하고
+  `/internal/v1/compatibility/{release}`로 노출했다. owner port 미provision이면 **503으로 fail-closed**이며
+  관대한 기본값이 없다. verdict는 ELIGIBLE/STALE/BLOCKED/INCOMPLETE를 구분한다.
+- **100-item 상한이 없었다**: 바이트 상한(1 MiB)만 있었고 항목 수가 없었다. 모든 항목을 가진
+  필드(`evidence_ids`·`exception_ids`·`diagnostics`·`selections`·`reasons`) 합으로 상한을 건다.
+- **실버그 2건 (작업 중 발견·수정)**:
+  (1) `{subject}`는 `/`를 가로지르지 못하는데 `Ref` 패턴은 `/`를 허용한다(`repo/one`). 즉 그
+  경로는 **어떤 subject에도 매칭되지 않았다** — `{param:path}`로 고쳤다. 값은 policy 키로만 쓰이고
+  파일 경로가 되지 않는다.
+  (2) 생성자 port와 메서드를 둘 다 `compatibility`로 지어 **인스턴스 속성이 메서드를 가렸다.**
+  앱이 `service.compatibility(fp, release)`를 호출하면 port가 2인자로 호출돼 전부 503이었다.
+  저장 이름을 `compatibility_source`로 분리했다.
+- **테스트**: `tests/test_read_api.py` 24개 신설. platform **406 passed** + 185 skipped
+  (기존 격리 DB skip, 전부 사전 존재), ops **179 passed** 불변, 양쪽 Ruff clean.
+  기존 `test_readonly_api_does_not_trust_headers_or_fake_health`는 404 기대를 401로 교정했고
+  TestClient의 기본 `testclient` host 대신 실제 loopback peer를 쓰도록 바꿨다.
+- **남음(전부 operator/실물)**: 물리 mTLS Handshake, 512 MiB RSS + 64 MiB LRU 부하 검증,
+  격리 실 store에 대한 실 endpoint 점검, native role acceptance. Step 11은 acceptance 미체크 유지.
+
+## REM-1 Code Generation — Steps 7, 12, 14, 15 (2026-09-29)
+
+Implementation obligations for four steps are now complete and verified. No step box is checked,
+because each retains a physical or operator-gated acceptance item; the open items are named below
+rather than left implied by a green test run.
+
+- **Step 7 — generation/journal 경계**: `domain/generation.py` 신설, `adapters/filesystem.py`에
+  `GenerationBoundary`·`PinRegistry`·durability receipt·검증된 metadata-only import·pin 보호
+  collection·`_erase_tree` 추가. receipt/seal 중단, torn tail, stale head, 늦은 쓰기 descriptor,
+  reader/backup pin, GC, import 검증, symlink 탈출, 복구를 테스트로 고정. 남음: **격리 APFS
+  root**에서의 실측과 native durability 증명.
+- **Step 12 — R1R + scoped helper**: `domain/actions.py` 신설(닫힌 action 어휘, role matrix,
+  금지 request kind, 기계가독 실패 상태). `cli/__main__.py`는 명시적 action만 노출하고 기본
+  apply 없음. `application/supervisor.py`는 이미 one-shot 의무를 모두 만족해 **변경하지 않았다**.
+  남음: native role 바인딩, 실제 lost-receipt/중복 시도 rehearsal, 물리 mTLS handshake.
+- **Step 14 — observability/retention/backup evidence**: `domain/retention.py`
+  (request/run/effect 상관, 단조 relay cursor, 14일 ordinary/90일 critical, approval-bound GC —
+  managed 집합 밖 레코드는 절대 삭제하지 않음), `domain/backup.py` (`BackupEvidence`,
+  `evaluate_backup`, `cut_is_exact`). **모든 backup 신호는 미증명 값이 기본값**이라 archive 없음,
+  원격 사본 미검증, clock/key 잠김, 미해결 writer, restore 미수행은 모두 `INCOMPLETE`이 된다 —
+  부분 성공으로 흡수되지 않는다. 남음: `ops/server/`·`ops/local/` seam 배선, 암호화
+  이동식 드라이브 archive, 새 target incarnation으로의 격리 restore.
+- **Step 15 — CI/재현성**: `.github/workflows/ci.yml`에 nightly + `workflow_dispatch` 트리거,
+  `rem1-closure-audit`(전체 — PR-diff가 아님 — closure 감사, 미처분 project는 조용히 버리지 않고
+  경고로 표면화, digest 고정 검증), `pbt-full`(release 프로파일 2,000 / 200×100),
+  `rem1-isolated`(harness 계약의 container를 provision해 185개 skip을 실제 실행으로 전환 +
+  anti-vacuous-pass 가드), `macos-filesystem`(Linux 레인이 관측할 수 없는 APFS hardlink/symlink/
+  rename 의미). 새 `ops/platform-integrity/validate_supply_chain.py`는 테스트로 고정되어 있다.
+  남음: **closure 감사는 이 sandbox에서 실행 검증 불가**(`uvx pip-audit`이 `ensurepip` SIGABRT로
+  중단)이므로 신규 포함 project는 CVE 처분 전까지 blocking이 아니라 report로 둔다.
+
+### 작성 중 발견·수정한 결함 4건 (Step 15)
+1. 커밋된 `sbom-targets.json`의 `images`/`derivedImages`는 **list가 아니라 dict** — 처음 인라인으로
+   쓴 검사는 실행 시 `TypeError`로 죽는다. 테스트된 스크립트로 교체.
+2. digest 키가 **아예 없는** 선언 이미지가 false negative로 통과 — "고정이 없다는 것"은 실패다.
+   이제 `<no digest declared>`로 보고한다.
+3. `addopts`의 `-q`에 명시적 `-q`가 더해져 `-qq`가 되고 summary 줄이 **통째로 사라져** 가드가
+   발동하지 않을 뻔했다. `-o addopts=""`로 실제 출력 형식을 확인해 고정.
+4. 격리 테스트의 skipif는 **런타임**에 평가되므로 collection 개수만 세는 가장은 아무것도
+   증명하지 못한다(DSN이 죽어도 전부 collect된 뒤 skip된다). 실제 실행 후 **skip 0건**을 요구로
+   바꿨고, 로컬에서 DSN 없이 103 skipped → exit 1로 발동을 확인했다.
+
+### 검증
+platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed** (+13), 양쪽 Ruff clean.

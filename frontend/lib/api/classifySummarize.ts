@@ -19,6 +19,19 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
 
+function isSummaryPayload(value: unknown): value is SummaryVM {
+  return isRecord(value) && typeof value.tldr === 'string' &&
+    Array.isArray(value.contributions) && value.contributions.every((item) => typeof item === 'string') &&
+    typeof value.method === 'string' && typeof value.results === 'string' &&
+    typeof value.limitations === 'string' && isRecord(value.reproducibility) && Array.isArray(value.anchors);
+}
+
+function isTranslationPayload(value: unknown): value is TranslationVM {
+  return isRecord(value) && isRecord(value.docModel) && isRecord(value.docModel.meta) &&
+    typeof value.docModel.fullText === 'string' && Array.isArray(value.docModel.sections) &&
+    Array.isArray(value.keptTerms) && value.keptTerms.every((item) => typeof item === 'string');
+}
+
 export function classifySummarizeResponse(body: unknown): SummarizeOutcome {
   if (!isRecord(body)) {
     return { kind: 'error', message: '결과를 해석할 수 없습니다.' };
@@ -27,11 +40,11 @@ export function classifySummarizeResponse(body: unknown): SummarizeOutcome {
     case 'ok': {
       const meta = (isRecord(body.meta) ? body.meta : {}) as SummaryMeta;
       const cached = Boolean(body.cached);
-      if ('summary' in body) {
-        return { kind: 'summary', summary: body.summary as SummaryVM, meta, cached };
+      if (body.task === 'summary' && isSummaryPayload(body.summary) && !('translation' in body)) {
+        return { kind: 'summary', summary: body.summary, meta, cached };
       }
-      if ('translation' in body) {
-        return { kind: 'translation', translation: body.translation as TranslationVM, meta, cached };
+      if (body.task === 'translate' && isTranslationPayload(body.translation) && !('summary' in body)) {
+        return { kind: 'translation', translation: body.translation, meta, cached };
       }
       // ponytail: unreachable — backend always sets summary or translation on status:ok.
       // Explicit contract-drift message so the issue surfaces clearly to QA, not as a generic error.

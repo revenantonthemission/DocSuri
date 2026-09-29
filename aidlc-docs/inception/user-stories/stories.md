@@ -3,8 +3,13 @@
 **단계**: INCEPTION → 사용자 스토리 · **일자**: 2026-06-15 · **깊이**: Comprehensive
 **접근**: 에픽 기반, 여정 순서(PQ1) · INVEST · Given/When/Then 인수 기준(PQ3) · 얇은 슬라이스 + 단일 히어로 스토리(PQ4) · NFR 하이브리드 표현(PQ5).
 **페르소나**: P1(박지훈), P2, OP — `personas.md` 참조.
+**2026-09-19 산출물 현황**: 총 85개 story / 17개 에픽. 이번 공개 job 개정은 신규 3개(US-RJ1~3)와 기존 15개 story의 인수/연결을 반영했고 RJS2=A로 승인됐다. 승인 기록은 `../plans/story-generation-plan.md` RJS2다.
 
 > 추적(traces)은 `requirements.md`의 ID(FR/NFR/SEC/RES/QT/C)를 참조한다. (C = §9 제약)
+>
+> **공개 job 개정 (2026-09-19, RJR1=A / RJS1=A)**: REM으로 이관되는 F01~F13 관련 업무에는 FR-52/NFR-R4/QT-12/C-13 및 `verification-remediation-2026-09-18.md` §10의 RJ-AC01~12를 적용한다. 업무 read/명시적 status는 job이고 접수 확인, event 구독/재연결, 완료 결과/asset bytes와 health는 새 업무 job 없는 직접 경로다. 아래 개정 인수는 이관 경로에 한정하며 미전환 경로는 호환 기간의 기존 계약을 따른다. 산출물 완료 리뷰는 계획 승인과 별도로 기록한다.
+>
+> **Runtime 기준**: 초기 story의 AWS 서비스명·cloud 비용 수치는 당시 설계 맥락이다. 현재 배포/용량/비용의 인수는 `requirements.md`의 2026-09-18 single-Mac 개정과 NFR-C1/RES-2/C-4/C-5를 적용한다.
 
 ---
 
@@ -106,11 +111,14 @@
 - **Given** 이메일 변경, **When** 새 주소를 제출하면, **Then** 새 주소로 검증 링크가 발송되고 **검증 완료 전까지 로그인 식별자에 반영되지 않으며** 이미 사용 중 이메일은 거부된다.
 - **Traces**: FR-28, SEC-8, SEC-12
 
-### US-A6 — 계정 삭제(탈퇴) *(2026-06-24 편입)*
+### US-A6 — 계정 삭제(탈퇴) *(2026-06-24 편입; 2026-09-19 job 데이터 파기 보강)*
 **As** 로그인 사용자(P1/P2), **I want** 계정을 삭제하기를, **so that** 내 데이터를 서비스에서 제거한다.
-- **Given** 삭제 확인, **When** 탈퇴를 실행하면, **Then** 계정이 즉시 비활성화되고 **전 세션이 무효화**된다(소프트 삭제).
-- **Given** 유예 기간(N일) 경과, **When** 파기 잡이 실행되면, **Then** **owner-scoped 데이터**(라이브러리·저장검색·이력)가 캐스케이드 파기되고 작업이 감사 로그에 남는다(멱등·재시도·DLQ).
-- **Traces**: FR-28, SEC-8, SEC-14
+- **Given** 삭제 확인, **When** 탈퇴를 실행하면, **Then** 계정이 즉시 비활성화되고 **전 세션이 무효화**된다. queue 대기를 이유로 이 보호를 늦추거나 파기 작업이 끝날 때까지 기존 접근을 허용하지 않는다.
+- **Given** 유예 기간(N일) 경과, **When** 파기 작업이 완료되면, **Then** 해당 owner의 라이브러리·저장검색·이력·private 문서/자산 및 job 입력/결과/event/구독 권한이 파기되고 대상 데이터는 0건이며 다른 owner의 데이터와 작업은 불변이다.
+- **Given** 비활성화되거나 파기된 owner의 대기/실행 작업, **When** 뒤늦은 처리 또는 결과 전달이 시도되면, **Then** 현재 권한 없이 private 데이터를 새로 만들거나 다시 노출하지 않는다. 기존 job 참조도 접근 권한을 복구하지 않는다.
+- **Given** 파기 중 장애, **When** 허용된 운영 경로에서 재시도하면, **Then** 중복 효과 없이 파기를 이어가며 미완료를 완료로 표시하지 않는다. 운영 증거는 private payload와 재식별 가능한 owner 참조를 제거한 보존 정책을 따른다.
+- **Given** 탈퇴로 session이 무효화된 사용자, **When** 기존 job 구독/결과 경로에 접근하면, **Then** private 접근은 차단되며 별도 private 파기 진행 화면 권한을 자동으로 부여하지 않는다.
+- **Traces**: FR-28, FR-38, FR-52, NFR-R4, C-13, SEC-8, SEC-12, SEC-14, QT-12, RJ-AC09, RJ-AC11
 
 ### US-A7 — 인증 실패의 명확한 표면화 & 입력 견고화 *(2026-06-24 편입)*
 **As** 사용자(P1/P2), **I want** 로그인·가입 실패 이유가 명확히 보이기를, **so that** 무엇이 잘못됐는지 알고 복구한다.
@@ -177,7 +185,11 @@
 **As** 운영자(OP), **I want** 시스템이 우아하게 저하되고 반쪽짜리 결과를 표시하기를, **so that** 사용자가 조용한 반쪽 답변을 받지 않는다.
 - **Given** 의존성 장애, **When** 검색이 실행되면, **Then** 저하되었으나 표시된 결과 또는 명시적 실패를 제공한다 — 조용한 오답/반쪽 답변은 절대 아님.
 - **Given** 불완전/반쪽짜리 결과, **When** 탐지되면, **Then** **반쪽짜리 결과 인시던트** 신호가 발생한다.
-- **Traces**: NFR-R1, NFR-R2, RES-9, FR-11, RES-11(c), QT-3
+- **Given** 결과가 없는 작업에 알려진 저하 사유가 있는 상황, **When** 결과를 표시하면, **Then** 저하와 provenance를 유지하고 정상 무매치로 표시하지 않는다.
+- **Given** 접수된 REM 작업의 queue 유실/중단 또는 worker 재시작, **When** 복구/재조정 또는 처리 한도 판정이 끝나면, **Then** 중복 업무 효과 없이 작업을 이어가거나 terminal failure를 명시한다. 미접수 요청, 진행 중 작업, 복구 불가능한 실패를 서로 구분한다.
+- **Given** 부분 배포/rollback으로 호환되지 않는 작업, **When** 처리/관측을 재개하면, **Then** 작업을 조용히 폐기하거나 권한 검증을 우회하지 않고 명시적 실패/보류를 표시하며 원 작업의 중복 실행을 막는다.
+- **연결**: 사용자 화면의 상태와 재연결 경험은 US-RJ1/US-RJ2를 따른다.
+- **Traces**: NFR-R1, NFR-R2, NFR-R4, RES-4, RES-9, FR-11, FR-52, RES-11(c), RES-12, SEC-15, QT-3, QT-12, RJ-AC03, RJ-AC12
 
 ### US-R3 — 비용 상한 서킷 브레이커 + 비용 폭발 탐지
 **As** 운영자(OP), **I want** 지출이 자동으로 상한되기를, **so that** 비용이 폭주하지 않는다.
@@ -190,12 +202,18 @@
 **As** 운영자(OP), **I want** 메트릭/로그/트레이스와 인시던트 경보를, **so that** 경량 IR + COE 프로세스에 따라 탐지·대응할 수 있다.
 - **Given** 운영 중 서비스, **When** 대시보드를 열면, **Then** 지연·에러율·처리량·검색/근거화 건강도·지출·source별 watermark·DLQ 적체를 본다.
 - **Given** 세 AI 인시던트 클래스(비용/할루시네이션/반쪽짜리 결과) 중 하나, **When** 신호가 발생하면, **Then** 경보가 장애 대응 프로세스로 라우팅되고 COE 후속이 따른다.
-- **Traces**: NFR-O1, RES-5, RES-7, RES-11
+- **Given** REM 공개 job을 관측할 권한이 있는 OP, **When** 운영 지표를 확인하면, **Then** 접수 latency, queue 대기, 실행, 결과 전달과 사용자 종단 완료 시간을 구분한다. 접수 확인만 빠른 작업을 업무 완료가 빠른 것으로 집계하지 않는다.
+- **Given** queue 적체, 장기 pending, worker/전달 실패, 권한 거부 또는 host disk/model saturation, **When** 운영 신호를 확인하면, **Then** request/job/event correlation 및 service 간 trace로 허용된 범위의 원인을 추적하고 기존 경보/COE 경로에 연결한다.
+- **Given** job 관련 로그/감사 증거, **When** OP가 조회하면, **Then** timestamp/correlation/level 및 일반화된 오류로 추적할 수 있고 토큰/private 본문/내부 저장 key는 노출되지 않는다. 핵심 변경 증거는 추가 전용 감사 경로와 승인된 보존 정책을 따른다.
+- **Traces**: NFR-O1, NFR-R4, NFR-C1, RES-5, RES-7, RES-11, SEC-3, SEC-13, SEC-14, QT-12, RJ-AC12
 
 ### US-R5 — 헬스 체크
-**As** 운영자(OP), **I want** 얕은 + 깊은 헬스 체크를, **so that** 비정상 인스턴스로의 라우팅을 우회한다.
-- **Given** 배포된 인스턴스, **When** 건강도를 프로빙하면, **Then** 얕은 체크가 생존을 확인하고 깊은 체크가 arXiv/LLM/인덱스 연결을 검증하며; 비정상 인스턴스는 로테이션에서 제거된다.
-- **Traces**: RES-6
+**As** 운영자(OP), **I want** 프로세스 생존과 실제 처리 가능 여부를 따로 확인하기를, **so that** 단일 Mac에서 의존 장애를 식별하고 처리 불가능한 경로의 트래픽을 제한한다.
+- **Given** 배포된 service, **When** 건강도를 점검하면, **Then** shallow check는 생존을, deep readiness는 해당 datastore/queue/model 및 필요한 corpus 검증 상태를 반영한다. 실패한 핵심 의존성을 정상으로 보고하지 않는다.
+- **Given** queue 중단 또는 업무 적체, **When** health/readiness 또는 권한 있는 REM-1 evidence 조회를 요청하면, **Then** 새 업무 job을 만들지 않는 bounded 직접 응답으로 생존/의존 실패/알 수 없음의 상태를 판정할 수 있다.
+- **Given** 실제 의존 장애가 있는 공개 경로, **When** synthetic probe와 readiness를 확인하면, **Then** 부팅 여부만으로 정상 처리 가능하다고 판정하지 않고 영향 경로의 실패/저하를 드러낸다. 단일 host 장애 시 다른 host로의 자동 failover를 약속하지 않는다.
+- **Given** health 또는 evidence 조회, **When** 상태를 읽으면, **Then** 업무 실행, migration, repair 또는 corpus alias 변경을 자동 시작하지 않는다.
+- **Traces**: RES-6, RES-9, NFR-A1, NFR-R4, C-4, C-13, QT-12, RJ-AC12
 
 ---
 
@@ -207,24 +225,27 @@
 
 ### US-S1 — AI 구조화 요약
 **As** 연구자(P1), **I want** 검색한 논문의 전문을 구조화 요약으로 받기를, **so that** 초록에 안 나오는 결과 수치·한계·재현성을 빠르게 파악한다.
-- **Given** 결과 카드, **When** [AI 요약]을 탭하면, **Then** 선택 논문의 **eager 생성된 DocModel(v1) 전문**을 기반으로 핵심주장·기여·방법·결과·한계·재현성 구조의 요약이 표시된다.
+- **Given** 결과 카드에서 선택한 논문, **When** [AI 요약]을 요청해 검증된 결과가 준비되면, **Then** 해당 논문의 **eager 생성된 DocModel(v1) 전문**을 기반으로 핵심주장·기여·방법·결과·한계·재현성 구조의 요약이 표시된다.
 - **Given** 요약 내용, **When** 읽으면, **Then** 초록에 잘 안 나오는 결과 수치·한계·재현성이 본문/표에서 도출돼 포함된다(제네릭 요약 아님).
-- **Given** 한 번 생성된 요약, **When** 저장되면, **Then** S3 영구저장+캐시되어 동일 키로 재사용된다(재생성·추가비용 0).
-- **Traces**: FR-12, FR-5, C-2, QT-5
+- **Given** 한 번 생성된 요약, **When** 같은 canonical source/version으로 다시 요청하면, **Then** 영구저장+캐시 결과를 재사용하고 model을 다시 실행하지 않는다.
+- **연결**: REM 이관 경로의 접수/진행/결과 수신은 US-S5와 US-RJ1~3을 따른다.
+- **Traces**: FR-12, FR-5, FR-52, C-2, C-13, QT-5, RJ-AC07
 
 ### US-S2 — 한국어 번역 (초록 / 전문) *(2026-06-29 개정 — 페이즈 3: 전문 번역)*
 **As** 연구자(P1), **I want** 논문 초록 또는 전문을 한국어로 번역받기를, **so that** 영어 부담 없이 빠르게 핵심을 파악하거나 본문까지 정독한다.
-- **Given** 결과 카드, **When** [한국어로](기본·초록)를 탭하면, **Then** 초록(Metadata Abstract)의 한국어 번역이 표시된다.
-- **Given** 리치 뷰어/상세, **When** **전문 번역**(scope=full)을 요청하면, **Then** DocModel(v1)을 미러한 **동일 구조/id의 번역본 doc-model**이 같은 리치 뷰어로 표시된다(섹션·문단·캡션 번역; 표 셀·수식 LaTeX·코드·id·그림 assetRef는 원어/원본 보존).
+- **Given** 결과 카드, **When** [한국어로](기본·초록)를 요청해 검증된 결과가 준비되면, **Then** 서버가 확인한 초록(Metadata Abstract)의 한국어 번역이 표시된다.
+- **Given** 리치 뷰어/상세, **When** **전문 번역**(scope=full)의 검증된 결과가 준비되면, **Then** DocModel(v1)을 미러한 **동일 구조/id의 번역본 doc-model**이 같은 리치 뷰어로 표시된다(섹션·문단·캡션 번역; 표 셀·수식 LaTeX·코드·id·그림 assetRef는 원어/원본 보존).
 - **Given** 전문용어(모델명·약어), **When** 번역되면, **Then** 용어집의 미번역 리스트 용어(Transformer·BERT 등)는 영어로 유지되고 용어가 일관되게 번역된다.
-- **Given** 한 번 생성된 번역(초록·전문), **When** 다시 요청하면, **Then** S3 영구저장+캐시에서 동일 키로 재사용된다.
-- **Traces**: FR-13, C-2
+- **Given** 한 번 생성된 번역(초록·전문), **When** 같은 canonical source/version으로 다시 요청하면, **Then** 영구저장+캐시 결과를 재사용한다.
+- **연결**: REM 이관 경로의 cache-backed job과 전달은 US-S5 및 US-RJ1~3을 따른다.
+- **Traces**: FR-13, FR-52, C-2, C-13, SEC-13, RJ-AC07
 
 ### US-S3 — 출처 보기 & 근거 부족 시 기권 *(2026-06-29 개정 — 페이즈 3: D3·앵커 입도)*
 **As** 연구자(P1), **I want** 요약 각 항목의 원문 근거를 확인하고 근거가 없으면 지어내지 않기를, **so that** 재현이 어려운 논문 맥락에서도 결과를 신뢰·검증할 수 있다.
-- **Given** 구조화 요약, **When** 항목의 "출처 보기"를 탭하면, **Then** 앵커(`target∈{section\|table\|figure}`·`label`)가 가리키는 원문 위치가 리치 뷰어에서 하이라이트된다(**검증 통과 앵커만** 노출; 검증 불가 앵커는 드롭).
+- **Given** 구조화 요약, **When** 항목의 "출처 보기"를 탭해 준비된 원문을 열면, **Then** 앵커(`target∈{section\|table\|figure}`·`label`)가 가리키는 원문 위치가 리치 뷰어에서 하이라이트된다(**검증 통과 앵커만** 노출; 검증 불가 앵커는 드롭).
 - **Given** 원문에 근거가 없는 주장, **When** 요약/번역이 생성되면, **Then** **U7 자체 결정론 Validator**(앵커 존재 SOFT·수치 HARD·스키마·절단; LLM-judge 미사용; 검색 U6 enforce와 별개·공유 레지스트리)가 1회 재시도 후에도 실패면 날조 대신 **기권**하고 "근거 부족"을 명시한다(날조 0건, fail-closed).
-- **Traces**: FR-12, FR-5, QT-5, FR-11
+- **연결**: REM 이관 경로의 문서 read 접수는 US-RJ1, 준비된 DocModel/자산의 인가된 직접 전달은 US-RJ3을 따른다. 자산 준비와 기존 결과 전달을 구분한다.
+- **Traces**: FR-12, FR-5, FR-17, FR-18, FR-52, QT-5, FR-11, SEC-8, C-13, RJ-AC08
 
 ### US-S4 — 요약/번역 개인화 (수준·용어 선호) *(2026-06-29 개정 — 페이즈 3: 뷰 프리셋 폐기)*
 **As** 연구자(P1), **I want** 요약 수준을 고르고 용어 선호를 저장하기를, **so that** 내 수준에 맞게 보고 전문용어가 일관되게 번역된다.
@@ -233,12 +254,14 @@
 - _(뷰 프리셋(전체/3줄/관점별)·커뮤니티 공유 용어집(P3)은 폐기 — 코드 부재/미구현, FR-14·§12.)_
 - **Traces**: FR-14, SEC-8
 
-### US-S5 — 온디맨드 즉시/스트리밍 응답
-**As** 연구자(P1), **I want** 이미 만든 요약은 즉시, 처음 보는 논문은 점진적으로 받기를, **so that** 기다림이 길게 느껴지지 않는다.
-- **Given** 이전에 생성된 요약/번역, **When** 다시 요청하면, **Then** 캐시(Redis hot)/S3 영구저장에서 즉시 표시된다(재생성·추가비용 0).
-- **Given** 처음 처리하는 논문, **When** 요약을 요청하면, **Then** 결과가 스트리밍으로 점진 렌더된다(검색 SLA NFR-P1 대상 아님).
-- **Given** 초장문 전문 번역(map-only)·초장문 요약(map-reduce), **When** 요청하면, **Then** 비동기 백그라운드 잡으로 처리되고 진행(pending)·폴링 상태가 노출된다(게이트웨이 타임아웃 회피).
-- **Traces**: NFR-P2, FR-12, FR-13
+### US-S5 — 온디맨드 job 진행과 요약/번역 결과 수신 *(2026-09-19 개정)*
+**As** 연구자(P1/P2), **I want** 요청의 진행을 알면서 이미 만든 요약/번역은 빠르게 다시 받기를, **so that** 기다림을 이해하고 불필요한 재생성을 피한다.
+- **Given** REM으로 이관된 요약/번역 경로, **When** 요청하면, **Then** US-RJ1의 job 접수/상태 경험으로 진행하고 검증된 결과가 준비되면 전달받는다. 접수 응답을 완성된 요약/번역으로 표시하지 않는다.
+- **Given** 서버가 확인한 canonical source/version에 맞는 캐시 또는 영구 결과, **When** 다시 요청하면, **Then** cache-backed job으로 기존 결과를 빠르게 완료/전달하고 model을 재실행하지 않는다. client가 제공한 본문은 공유 결과나 job identity를 바꾸지 못한다.
+- **Given** 최초 생성 또는 긴 요약/번역, **When** 정상 처리 예산 안에서 작업이 진행되면, **Then** event로 진행/대기를 확인하고 준비된 결과를 수신한다. 기존 HTTP 요청의 임의 10초 제한 때문에 유효한 12초 이상 생성이 504로 잘리지 않으며 실제 hang은 정해진 한도에서 명시적으로 실패한다.
+- **Given** 완료된 요약/번역 또는 기권/저하 결과, **When** 결과를 전달받으면, **Then** US-S1~US-S3의 내용/근거 인수를 보존한다. 결과 수신·재연결은 US-RJ2, private 결과 전달 권한은 US-RJ3을 따른다.
+- **Given** 아직 전환되지 않은 route와 client의 호환 기간, **When** 호출하면, **Then** 해당 경로의 기존 즉시 결과/스트리밍/pending·poll 계약이 유지되며 versioned 전환 후에만 공개 job 계약을 적용한다.
+- **Traces**: NFR-P2, NFR-R4, FR-12, FR-13, FR-52, C-13, SEC-13, RES-9, QT-5, QT-12, RJ-AC03, RJ-AC07
 
 ### US-S6 — 요약 비용 게이트 + 근거화 운영 *(페르소나 OP; 2026-06-29 개정 — 페이즈 3)*
 **As** 운영자(OP), **I want** 요약 LLM 비용이 상한 안에서 통제되고 요약/번역 근거화가 지속 검증되기를, **so that** 비용 폭주·할루시네이션을 막는다.
@@ -395,7 +418,9 @@
 - **Given** novelty job이 생성되면, **When** 프론트가 상태를 조회하거나 구독하면, **Then** `queued`, `retrieving_corpus`, `searching_external`, `summarizing_prior_work`, `checking_similarity`, `forming_ideas`, `planning_experiment`, `exporting_notion`, `completed`, `failed`, `degraded` 중 하나를 표시한다.
 - **Given** 각 단계가 진행되면, **When** UI가 업데이트되면, **Then** 현재 tool, 검색 질의, 발견한 출처 수, 부분 결과, 실패/저하 상태를 보여준다.
 - **Given** 일부 source가 실패하면, **When** job이 계속 가능하면, **Then** source별 `degraded`를 표시하고 성공한 source만으로 부분 산출물을 제공한다.
-- **Traces**: FR-35, NFR-P5, NFR-R3
+- **Given** novelty 처리 중 REM으로 이관된 문서 read/결과 하위 작업, **When** 그 접수/진행/완료를 표시하면, **Then** US-RJ1/US-RJ2를 따라 관측하고 하위 작업의 접수 또는 완료를 전체 novelty 분석의 완료로 오인하지 않는다.
+- **적용 범위**: 이 연결은 REM 하위 작업에 한정한다. 기존 novelty 단계 enum과 전체 Agent lifecycle은 유지한다.
+- **Traces**: FR-35, FR-52, NFR-P5, NFR-R3, NFR-R4, C-13
 
 ### US-NV8 — 내부 저장 후 Notion export
 **As** 연구자(P1), **I want** novelty 결과를 검토한 뒤 Notion에 저장하기를, **so that** 연구 계획을 내 작업 공간으로 옮긴다.
@@ -440,7 +465,8 @@
 **As** 연구자(P1), **I want** 아직 인덱싱되지 않은 내 논문 초안이나 PDF를 첨부해 근거형성 입력으로 사용하기를, **so that** Corpus 바깥의 문서도 비교 근거에 포함한다.
 - **Given** 사용자가 문서를 첨부해 근거형성 질문을 하면, **When** Agent가 실행되면, **Then** 첨부 문서를 doc-model 파이프라인으로 처리해 근거 추출 대상에 포함한다.
 - **Given** 첨부 문서가 허용 형식·크기 한도를 초과하면, **When** 처리 전 검증하면, **Then** 즉시 에러 안내를 표시하고 처리를 시작하지 않는다.
-- **Traces**: FR-37, FR-18, Q6=A
+- **Given** REM으로 이관된 첨부 private DocModel read, **When** 첨부를 근거형성에 사용하면, **Then** US-RJ1~3의 준비/결과/현재 owner 권한 경계를 따르고 다른 owner의 job이나 문서를 입력 근거로 사용하지 않는다.
+- **Traces**: FR-37, FR-18, FR-52, SEC-8, C-13, Q6=A
 
 ### US-EV5 — 멀티턴 후속 질문
 **As** 연구자(P1), **I want** 이전 근거형성 응답 맥락을 유지하며 후속 질문을 이어가기를, **so that** 한 세션 안에서 주제를 점진적으로 심화한다.
@@ -458,13 +484,16 @@
 **As** 연구자(P1), **I want** 이전 근거형성 세션을 다시 열어 결과를 재확인하기를, **so that** 나중에 검토할 때 처음부터 재실행하지 않아도 된다.
 - **Given** 사용자가 세션 목록을 열면, **When** 이전 세션을 선택하면, **Then** 해당 세션의 근거형성 결과와 대화 이력이 표시된다.
 - **Given** 세션이 내 계정에만 저장되어 있으면, **When** 다른 사용자가 접근하면, **Then** 해당 세션을 절대 볼 수 없다.
-- **Traces**: FR-38, SEC-8
+- **Given** 과거 세션에 연결된 REM 이관 문서/결과, **When** 다시 열람하면, **Then** US-RJ2/US-RJ3에 따라 보존 중인 결과를 현재 권한으로 확인한다. 준비된 결과 전달만을 위해 업무를 재실행하지 않는다.
+- **적용 범위**: 기존 세션 목록/대화 저장 전체를 공개 job API로 전환하는 인수가 아니다.
+- **Traces**: FR-38, FR-52, SEC-8, NFR-R4, C-13
 
 ### US-EV8 — 세션 삭제·초기화
 **As** 연구자(P1), **I want** 근거형성 세션과 결과를 삭제하거나 초기화하기를, **so that** 개인 데이터를 직접 통제한다.
 - **Given** 사용자가 특정 세션 삭제를 요청하면, **When** 삭제가 완료되면, **Then** 해당 세션의 대화 이력과 근거형성 결과가 삭제된다.
 - **Given** 사용자가 전체 세션 초기화를 요청하면, **When** 초기화가 완료되면, **Then** 모든 근거형성 세션이 삭제되고 기본 상태로 돌아간다.
-- **Traces**: FR-38, SEC-8, SEC-14
+- **Given** 계정 파기에 이 세션의 REM job/event/result가 포함된 상황, **When** 대기/실행 작업의 늦은 결과가 도착하면, **Then** US-A6의 삭제 보호를 적용해 파기된 private 자료를 다시 저장하거나 전달하지 않는다.
+- **Traces**: FR-38, FR-28, FR-52, SEC-8, SEC-14, QT-12, RJ-AC09
 
 ### US-EV9 — 근거형성 근거화·불변식 운영 *(페르소나 OP)*
 **As** 운영자(OP), **I want** 근거형성 Agent의 날조 0건·abstain 경로·스트리밍 지연을 지속 검증하기를, **so that** 할루시네이션·반쪽짜리 결과를 조기 탐지한다.
@@ -505,14 +534,16 @@
 - **Given** Agent 작업이 진행 중이면, **When** 단계 이벤트가 도착하면, **Then** 검색, 근거 정리, 외부 탐색, 아이디어 형성 등 단계가 시간순 timeline으로 표시된다.
 - **Given** timeline 항목이 길면, **When** 사용자가 펼치거나 접으면, **Then** 주요 상태는 유지하면서 상세 내용만 확장/축소된다.
 - **Given** 일부 source가 실패했지만 결과 생성이 가능하면, **When** timeline을 보면, **Then** 해당 source의 저하 상태와 계속 진행 중인 단계를 함께 표시한다.
-- **Traces**: FR-42, NFR-P7, QT-11
+- **Given** timeline에 REM 이관 작업의 진행이 포함된 상황, **When** 접수 확인이나 재연결 후 event를 받으면, **Then** US-RJ1/US-RJ2의 구분과 ordering을 적용한다. 하위 작업의 접수만으로 전체 답변을 완료 처리하지 않는다.
+- **Traces**: FR-42, FR-52, NFR-P7, NFR-R4, QT-11, C-13
 
 ### US-AG5 — 파일 첨부와 상태 UX
 **As** 연구자(P1/P2), **I want** 채팅 입력창 왼쪽 `+` 버튼으로 문서를 첨부하기를, **so that** 원고나 참고 문서를 Agent 입력에 포함할 수 있다.
 - **Given** 사용자가 `+` 버튼을 누르면, **When** 첨부 drawer가 열리면, **Then** PDF, Markdown, TXT 파일만 선택할 수 있거나 허용되지 않는 형식은 즉시 거부된다.
 - **Given** 첨부가 있는 상태에서 메시지를 전송하면, **When** 요청이 생성되면, **Then** 첨부 목록과 처리 상태가 채팅 화면에 표시된다.
 - **Given** 첨부 검증 또는 처리에 실패하면, **When** 오류가 표시되면, **Then** 내부 오류나 원문 민감정보 없이 재시도/삭제 경로를 제공한다.
-- **Traces**: FR-43, SEC-5, SEC-9, QT-11
+- **Given** 첨부의 REM 이관 private read/자산 결과, **When** 처리 상태를 보거나 준비된 결과를 열면, **Then** US-RJ1~3에 따라 접수/실패/결과를 구분하고 현재 owner 권한으로만 열람한다. 내부 저장 URL/key나 다른 caller의 job 정보는 화면에 노출하지 않는다.
+- **Traces**: FR-43, FR-52, SEC-5, SEC-8, SEC-9, QT-11, C-13
 
 ### US-AG6 — mock/real transport 경계와 실패·저하 처리
 **As** 연구자(P1/P2), **I want** mock preview와 실제 API 연동 모두에서 같은 채팅 UX를 보기를, **so that** 구현 단계별로 화면 동작이 흔들리지 않는다.
@@ -573,11 +604,14 @@
 - **Traces**: FR-48, SEC-8
 
 ### US-TN2 — 옵트인과 수신 해지
-**As** 연구자(P1), **I want** 다이제스트 이메일을 내가 켜기 전에는 받지 않기를, **so that** 원치 않는 메일이 오지 않는다.
+**As** 연구자(P1/P2), **I want** 다이제스트 이메일을 내가 켜기 전에는 받지 않고 원할 때 해지하기를, **so that** 원치 않는 메일이 오지 않는다.
 - **Given** 옵트인하지 않은 사용자가, **When** 다이제스트 발송 시각이 되어도, **Then** 어떤 이메일도 발송되지 않는다(기본 미발송).
 - **Given** 사용자가 설정 UI에서 옵트인하면, **When** 다음 발송 주기가 되면, **Then** 다이제스트가 발송되기 시작한다.
-- **Given** 수신 중인 사용자가, **When** 다이제스트 내 수신 해지 경로 또는 설정 토글로 해지하면, **Then** 즉시 반영되어 이후 발송이 중단된다.
-- **Traces**: FR-47, FR-48, SEC-8
+- **Given** 로그인하지 않은 수신자와 유효한 해지 token, **When** 다이제스트의 명시적 public 해지 경로로 요청하면, **Then** token을 검증하고 해당 해지 요청만 접수한다. 설정 토글은 기존 사용자 인증을 거치며 두 경로 모두 durable 수락 시점부터 이후 발송을 차단한다.
+- **Given** 접수된 해지 작업이 대기 중이거나 재시도되는 상황, **When** 다음 발송을 시도하면, **Then** 해당 수신자에게 추가 발송하지 않는다. 사용자에게는 접수와 처리 완료를 구분하고 후속 처리 지연/실패를 이유로 발송 차단을 풀지 않는다.
+- **Given** 해지 요청의 관측 권한, **When** 상태/event/완료 결과를 확인하면, **Then** 그 해지 요청에 한정된 일반화된 결과만 받는다. 다른 job/계정 정보를 열거나 일반 사용자 session 권한을 얻지 못한다.
+- **Given** invalid/expired token, **When** 해지를 요청하면, **Then** 요청을 거부하고 private 계정 정보를 노출하지 않는다. 동일한 유효 요청의 재전달은 해지를 중복 적용하거나 발송을 재개하지 않는다.
+- **Traces**: FR-47, FR-48, FR-52, NFR-R4, C-13, SEC-5, SEC-8, SEC-12, SEC-15, QT-12, RJ-AC10
 
 ### US-TN3 — 신규 논문 다이제스트 수신
 **As** 연구자(P1), **I want** 팔로우 주제의 신규 논문을 이메일로 모아 받기를, **so that** 매일 arXiv를 뒤지지 않아도 트렌드를 놓치지 않는다.
@@ -629,12 +663,48 @@
 - **Given** 만료 전환이 일어나면, **When** 처리되면, **Then** 감사 로그가 남는다(SEC-14).
 - **Traces**: FR-51, SEC-14
 
+## 에픽 16 — 공개 job 경험 *(2026-09-19 편입, REM 이관 경로)*
+
+> 접수/진행, 재연결, private 결과 열람을 독립된 사용자 가치로 나눈다. 각 story는 필요한 작업/권한/결과 상태를 Given으로 설정해 개별 검증할 수 있다. 공통 경험은 이 에픽이 정의하고, 요약/번역의 결과 의미는 US-S5, 삭제는 US-A6, token 수신 해지는 US-TN2, 운영 관측은 US-R2/4/5가 담당한다.
+
+### US-RJ1 — 업무 접수와 진행·상태 확인
+**As** 연구자(P1/P2), **I want** 내 요청이 접수됐는지와 실제 처리 상태를 구분하기를, **so that** 완료되지 않은 결과를 믿거나 같은 작업을 불필요하게 반복하지 않는다.
+- **Given** 허용된 REM 업무 처리 또는 read 요청, **When** 제출하면, **Then** 작업과 발행 의도가 지속적으로 기록된 뒤 job 참조와 접수 확인을 받고 화면은 접수/대기를 완료와 구분한다.
+- **Given** 접수 기록에 실패한 요청, **When** 응답을 받으면, **Then** 접수 실패와 재시도 가능 여부를 비기술적으로 안내하고 accepted/pending 또는 결과 성공으로 표시하지 않는다.
+- **Given** 이미 접수된 작업, **When** 명시적으로 상태 확인을 요청하면, **Then** 그 조회도 job으로 접수되고 조회 결과는 대상 작업과 관측 시점을 식별해 전달된다. 그 조회 결과를 읽기 위한 추가 status job은 생성하지 않는다.
+- **Given** 작업의 진행 또는 최종 결과, **When** 상태가 전달되면, **Then** 대기/처리/완료/실패를 구분하고 도메인의 기권·저하·정상 무매치 의미를 보존한다. 결과가 0개여도 알려진 저하를 정상 빈 결과로 바꾸지 않는다.
+- **Given** 접수 응답 유실 후 동일 제출 재시도 또는 작업 재전달, **When** 같은 논리 요청이 다시 처리되면, **Then** 중복 업무 효과 없이 해당 작업을 확인할 수 있다. 사용자가 의도한 새 read/status 요청은 이전 제출의 재시도와 구분된다.
+- **Given** 잘못된 입력, 권한 없는 요청 또는 사용 한도 초과, **When** 접수 전 검증하면, **Then** 새 업무를 접수하기 전에 제한을 집행하고 내부 정보 없는 오류를 안내한다. 처리 용량 부족도 접수 실패와 이미 접수된 대기를 구분해 표시한다.
+- **Traces**: FR-52, FR-11, NFR-R1, NFR-R4, C-13, SEC-5, SEC-8, SEC-11, SEC-15, QT-12, RJ-AC01, RJ-AC02, RJ-AC03, RJ-AC06, RJ-AC11
+
+### US-RJ2 — 재연결 후 같은 작업의 결과 확인
+**As** 연구자(P1/P2), **I want** 연결이 끊겨도 진행 중이던 작업의 결과를 다시 확인하기를, **so that** 재실행 비용과 결과 유실 걱정 없이 연구를 이어간다.
+- **Given** 내가 관측할 권한이 있는 접수된 작업, **When** 진행/결과를 구독하거나 완료된 status 조회의 결과를 수신하면, **Then** 원 작업 또는 조회 결과를 전달받으며 구독·결과 전달 자체는 새 업무 job을 만들지 않는다.
+- **Given** 작업 처리 중 연결 단절, **When** 화면에 전달이 멈추면, **Then** 마지막으로 확인한 상태와 연결 문제를 구분해 표시하고 단절만으로 작업 완료/실패를 단정하지 않는다.
+- **Given** 연결이 끊긴 동안 원 작업이 완료됐고 결과가 보존 중인 상황, **When** 권한을 확인하고 재연결하면, **Then** 같은 작업의 완료 결과를 알 수 있으며 업무를 다시 실행하거나 status job을 연쇄 생성하지 않는다.
+- **Given** 중복 또는 역순 진행/완료 event, **When** 다시 전달되면, **Then** 동일 결과를 중복 적용하지 않고 이미 확인한 terminal 상태를 이전 대기/처리 상태로 되돌리지 않는다.
+- **Given** 보존 기간이 지난 결과 또는 더 이상 유효하지 않은 관측 권한, **When** 재연결/결과 수신을 시도하면, **Then** 결과 만료 또는 재인증/재요청 가능 여부를 명시하고 무기한 대기시키거나 private 내용을 반환하지 않는다.
+- **Given** 접수 이후 queue 유실/중단, worker 재시작 또는 부분 배포, **When** 복구나 정해진 처리 한도에 따른 판정이 끝나면, **Then** 원 작업이 중복 업무 효과 없이 이어지거나 명시적 실패가 전달된다. 접수 사실과 이미 완료된 결과를 조용히 잃거나 성공으로 꾸미지 않는다.
+- **Given** 전환/복귀 중 호환되지 않는 client/service 조합, **When** 해당 작업을 관측하면, **Then** 명시적인 실패/보류와 복구 안내를 표시하고 재시도가 기존 작업을 이중 실행하지 않는다.
+- **Traces**: FR-52, NFR-R1, NFR-R4, NFR-U1, NFR-X1, C-13, SEC-8, SEC-12, SEC-15, RES-4, RES-9, RES-12, QT-12, RJ-AC02, RJ-AC04, RJ-AC12
+
+### US-RJ3 — 권한 안에서 문서·자산 결과 열람
+**As** 연구자(P1/P2), **I want** 준비된 문서와 자산을 내 현재 권한 안에서 열람하기를, **so that** private 연구 자료를 다른 사용자에게 노출하지 않고 결과를 활용한다.
+- **Given** owner context가 있는 private 문서 요청, **When** 제출·실행·상태 확인·구독/재연결·결과 수신 중 어느 경계를 통과하든, **Then** 현재 caller와 대상 권한이 검증된다. job 참조만 알아서는 내용을 열거나 관측할 수 없다.
+- **Given** 다른 사용자의 private job/resource 또는 존재하지 않는 참조, **When** 접근하면, **Then** 존재 여부를 구분할 수 없는 일반화된 거부를 받고 metadata/event/result/bytes는 노출되지 않는다.
+- **Given** public paper 경로에 `userdoc:` 참조를 제출, **When** 접수를 시도하면, **Then** owner-context private 경로로 자동 우회하지 않고 거부한다. private 열람은 해당 owner context의 검증을 통과해야 한다.
+- **Given** 현재 권한과 라이선스가 허용하는 준비된 DocModel/결과/자산, **When** 결과를 열면, **Then** 인가된 직접 경로로 내용이 전달되고 자산 bytes는 인증된 same-origin URL에서 표시된다. 이 전달은 새 업무 job을 만들지 않으며 내부 저장 URL/key를 브라우저에 노출하지 않는다.
+- **Given** 접수 후 session/delegated 권한이 만료되거나 철회된 상황, **When** 대기 작업의 실행 또는 추가 상태/event/result 전달을 시도하면, **Then** 현재 권한 검증에 실패한 private 접근/전달은 차단된다. queue 대기가 권한을 연장하지 않으며 필요한 재인증을 안내한다.
+- **Given** 여러 사용자가 같은 canonical 공개 artifact를 재사용, **When** 각자의 job 결과를 받으면, **Then** 공유해도 되는 결과만 재사용하고 다른 caller의 job 참조/metadata/권한은 공유하지 않는다.
+- **연결**: 계정 삭제 중 작업의 데이터 재생성 차단은 US-A6, token-authorized 익명 수신 해지는 US-TN2의 한정된 예외를 따른다.
+- **Traces**: FR-52, FR-17, FR-18, FR-38, C-1, C-13, SEC-5, SEC-8, SEC-9, SEC-12, SEC-15, QT-12, RJ-AC05, RJ-AC06, RJ-AC08
+
 ## 페르소나 → 스토리 맵
 | 페르소나 | 스토리 |
 |---|---|
-| P1 (박지훈) | US-H1, US-D1..D7, US-A1..A7, US-L1, US-L2, US-L3, US-I2, US-S1..S5, US-CG1..CG5, US-P1..P6, US-NV1..NV8, US-EV1..EV8, US-AG1..AG6 |
-| P2 | US-H1, US-D1, US-A1..A7, US-P4, US-P5, US-P6, US-NV1, US-NV3, US-NV6, US-NV7, US-AG1..AG6 |
-| OP | US-I1, US-I2, US-I3, US-R1, US-R2, US-R3, US-R4, US-R5, US-S6, US-CG6, US-P7, US-NV9, US-EV9, US-AG7 |
+| P1 (박지훈) | US-H1, US-D1..D7, US-A1..A7, US-L1, US-L2, US-L3, US-I2, US-S1..S5, US-CG1..CG5, US-P1..P6, US-NV1..NV8, US-EV1..EV8, US-AG1..AG6, US-OB1..OB4, US-TN1..TN3, US-WR1..WR2, US-SB1, US-SB3, US-RJ1..RJ3 |
+| P2 | US-H1, US-D1, US-A1..A7, US-P4, US-P5, US-P6, US-NV1, US-NV3, US-NV6, US-NV7, US-AG1..AG6, US-S5, US-TN2, US-RJ1..RJ3 |
+| OP | US-I1, US-I2, US-I3, US-R1, US-R2, US-R3, US-R4, US-R5, US-S6, US-CG6, US-P7, US-NV9, US-EV9, US-AG7, US-SB2 (ADMIN 권한 필요) |
 
 ## FR → 스토리 커버리지
 | 요구사항 | 스토리 |
@@ -659,10 +729,13 @@
 | NFR-O1 | US-R4 |
 | NFR-P1 | US-H1 (인수 기준) |
 | SEC-4 | US-D4 |
-| SEC-8 | US-A2, US-L1, US-L2, US-L3 |
-| SEC-9 | US-D7 |
-| SEC-11 | US-A1 |
-| SEC-12 | US-A1, US-A2 |
+| SEC-8 | US-A2, US-L1, US-L2, US-L3, US-RJ3, US-A6, US-TN2 |
+| SEC-9 | US-D7, US-RJ1, US-RJ2, US-RJ3 |
+| SEC-11 | US-A1, US-RJ1 |
+| SEC-12 | US-A1, US-A2, US-A6, US-RJ3, US-TN2 |
+| SEC-13 (공개 job source/관측 무결성) | US-S5, US-R4 |
+| SEC-14 (공개 job 감사/삭제 정책) | US-A6, US-R4 |
+| SEC-15 (공개 job fail-closed/명시적 오류) | US-RJ1, US-RJ2, US-RJ3, US-R2, US-TN2 |
 | NFR-U1 | US-H1, US-D1, US-D4 |
 | NFR-U2 | US-D4 |
 | RES-6 | US-R5 |
@@ -675,6 +748,7 @@
 | QT-3 | US-D7, US-R2 |
 | QT-4 (PBT) | 스토리 비매핑 — Functional/NFR Design 보류(RES-4/RES-12와 동일) |
 | FR-18 (DocModel 리치뷰/phase-1 eager 생성) [U1/U7/U5] | US-I1, US-I2, US-S3 |
+| FR-17 (REM 이관 자산 전달 경계) | US-S3, US-RJ3 |
 | QT-9 (U1 Corpus 품질/불변식) [U1] | US-I1, US-I2, US-I3 |
 | FR-12 (AI 요약) [U7] | US-S1, US-S3, US-S5 |
 | FR-13 (한국어 번역) [U7] | US-S2, US-S5 |
@@ -719,5 +793,28 @@
 | FR-49 (웹검색 레퍼런스 도구) [U11/U12] | US-WR1, US-WR2 |
 | FR-50 (플랜/티어 시스템) [U16] | US-SB1, US-SB2 |
 | FR-51 (플랜 부여/만료 관리) [U16] | US-SB2, US-SB3 |
+| FR-52 (REM 공개 job 계약/상태 UX) | US-RJ1, US-RJ2, US-RJ3, US-S5, US-A6, US-TN2; 이관 경로 연결: US-EV4/7/8, US-NV7, US-AG4/5 |
+| NFR-R4 (공개 job 수명주기) | US-RJ1, US-RJ2, US-R2, US-R4, US-R5, US-S5, US-A6, US-TN2 |
+| QT-12 (공개 job 불변식/인수) | US-RJ1, US-RJ2, US-RJ3, US-A6, US-TN2, US-R2, US-R4, US-R5 |
+| C-13 (job 적용 범위/직접 전달 예외) | US-RJ1, US-RJ2, US-RJ3, US-S5, US-A6, US-TN2, US-R5 |
+
+## RJ-AC → 공개 job story 인수 커버리지 (2026-09-19)
+
+| 인수 | Story | 본문의 검증 지점 |
+|---|---|---|
+| RJ-AC01 | US-RJ1 | durable 접수 후 확인, 접수 실패를 pending/성공으로 위장하지 않음 |
+| RJ-AC02 | US-RJ1, US-RJ2 | queued 명시적 status, 대상/관측 시점, 결과 전달의 비재귀성 |
+| RJ-AC03 | US-RJ1, US-S5, US-R2 | 접수/완료/실패 구분, domain outcome과 degraded-empty 보존 |
+| RJ-AC04 | US-RJ2 | 연결 단절과 작업 실패 구분, 재연결 완료 수신, 중복/역순/만료 |
+| RJ-AC05 | US-RJ3 | 모든 접근 경계의 현재 caller 권한, non-owner 존재 비노출, 만료/철회 |
+| RJ-AC06 | US-RJ1, US-RJ3 | 동일 제출 재시도/재전달의 멱등 효과, 새 read 구분, caller job 격리 |
+| RJ-AC07 | US-S5, US-S1, US-S2 | cache-backed job, canonical source/version, model 재실행과 오염 방지 |
+| RJ-AC08 | US-RJ3, US-S3 | 준비된 DocModel/result/asset의 직접 전달, same-origin, 현재 owner/license 권한 |
+| RJ-AC09 | US-A6, US-EV8 | owner job/event/result 파기, 늦은 작업의 재생성/전달 차단, 다른 owner 보존 |
+| RJ-AC10 | US-TN2 | 익명 token 검증, 해지 결과에 한정된 관측, durable 수락 후 발송 차단 |
+| RJ-AC11 | US-RJ1, US-A6 | 접수 전 제한/인가, 즉시 계정 비활성화와 session 무효화 |
+| RJ-AC12 | US-RJ2, US-R2, US-R4, US-R5 | queue loss/crash/partial deploy 복구·실패, 직접 health, 완료 latency 관측 |
+
+2026-09-19 개정은 FR-52/NFR-R4/QT-12/C-13과 RJ-AC01~12를 위 story에 연결한다. SEC-13/14 및 RES-4/12의 사용자·운영 관측 인수도 연결했으며, 아래 초기 커버리지 기록의 기술 설계 이월 항목과 구분한다. 실제 저장소/배포/보안 설정 및 property test 구현은 후속 설계·검증 단계에서 다룬다.
 
 _FR-1..11 전부 커버됨(표 본문 대조 검증). **FR-12..14·NFR-P2·QT-5 = U7 에픽 6(US-S1..S6) 커버(2026-06-18 편입, 팀 합의). FR-15..16·NFR-P3·QT-6 = U8 에픽 7(US-CG1..CG6) 커버(2026-06-19 편입). FR-18·QT-9 = U1 Corpus/DocModel eager 개정(US-I1..I3 + US-S3) 커버(2026-06-26 편입). FR-39·FR-19·FR-20·NFR-P4·QT-7 = U9 에픽 8(US-P1..P7) 커버(2026-06-23 편입; FR-39=행동 이벤트 기록은 구 FR-18, FR-22~25 폐기 ID 회피로 신규 FR-39 재번호 2026-06-30). FR-26..29 = 계정 에픽 2 보강(US-A3..A7) 커버(2026-06-24 편입 — 재설정·소셜 OIDC·라이프사이클·입력 견고화). FR-30..35·NFR-P5/R3·QT-10 = U12 에픽 9(US-NV1..NV9) 커버(2026-06-29 편입 — 차별화(novelty) 형성 Agent). FR-36~38·NFR-P6·QT-8 = U11 에픽 10(US-EV1..EV9) 커버(2026-06-29 편입 — 문헌탐색·근거형성 Agent; requirements 초안 `[U4]` 오기 → `[U11]` 정정 2026-06-30). FR-40~43·NFR-P7·QT-11 = U13 에픽 11(US-AG1..AG7) 커버(2026-07-01 편입 — 에이전트 채팅 프론트엔드). FR-44~46·C-7/C-8 = U14 에픽 12(US-OB1..OB4) 커버(2026-07-23 편입 — 온보딩; US-P5는 본 트랙 선행 실행). FR-47~48·C-9/C-10 = U15 에픽 13(US-TN1..TN3) 커버(2026-07-23 편입 — 트렌드/알림; daily harvest 일시 중지 종속). FR-49·C-11 = U11 확장 에픽 14(US-WR1..WR2) 커버(2026-07-23 편입 — 웹검색 레퍼런스; 신규 유닛 없음, 외부검색 포트는 U12 novelty 공유). FR-50~51·C-12 = U16 에픽 15(US-SB1..SB3) 커버(2026-07-24 편입 — 구독제; v1 결제 카브아웃, plus 수치는 spend 리포트 게이트로 설계 단계 확정).** SEC/RES의 인프라·설계 단계 항목(SEC-1/2/6/7/10/13/14, RES-1/2/3/4/10/12)은 스토리에 비매핑하고 NFR/Infra Design에서 다룬다. 적대적 비평 패스 완료(2026-06-15, 7/7 critic)._

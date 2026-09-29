@@ -33,6 +33,12 @@
 
 > **개정 (2026-07-01) — Agent Chat Frontend 요구사항 편입 [U13]**: `requirement-verification-questions-agent-chat-frontend.md`와 `requirement-question-answer.md`를 반영해 **FR-40~43·NFR-P7·QT-11 등재**. 프론트 v1은 `/agent` 단일 route와 하단 네비 `에이전트` 탭을 제공하고, 새 채팅에서 `문헌탐색&근거형성` 또는 `novelty` mode를 선택한 뒤 해당 세션에서는 mode 변경을 막는다. 왼쪽 drawer로 과거 세션 목록/새 채팅/삭제를 제공하고, 메시지 사이에 접을 수 있는 탐구 과정 timeline을 표시한다. 파일 첨부는 `+` 버튼과 별도 drawer로 관리하며 PDF/Markdown/TXT만 허용한다. Notion export UI는 v1 제외. Security/Resiliency 적용, PBT는 frontend 로직에도 Full 적용(Q14=A, Q15=A, Q16=B).
 
+> **개정 (2026-09-18) — single-Mac production 재기준선 + 검증 결함 교정**: AWS는 2026-08-17 폐기됐고 현재 프로덕션은 **단일 Mac + launchd + OrbStack + Cloudflare Tunnel + Ollama**다. 아래 2026-09-18 개정 조항이 AWS·multi-AZ·Bedrock/Cohere·고정 cloud-cost 가정과 충돌할 경우 본 개정이 우선한다. `project-verification-2026-09-18.md`의 **F01~F13 전부**를 교정 범위로 채택하며, 상세 인수 기준은 `verification-remediation-2026-09-18.md`가 정의한다. Security와 PBT는 Full, Resiliency는 single-host 예외 프로필(`RESILIENCY-08` fault-isolation 면제, 나머지 적용 가능한 규칙 유지)이다. 안전한 live repair는 백업·롤백 검증 후 허용하되 **full corpus rebuild는 별도 명시 승인 전 실행하지 않는다**.
+>
+> **개정 (2026-09-19) — REM 공개 job 계약, RJR1=A 승인**: DSRQ4=C와 DSRQF1=A/DSRQF2=A에 따라 F01~F13 때문에 REM으로 이관되는 사용자 업무 read/status에 공개 job 계약을 도입한다. **FR-52, NFR-R4, QT-12, C-13과 §14는 승인된 요구사항**이며, 상세 인수는 `verification-remediation-2026-09-18.md` §10이다. 사용자 "Approve & continue"를 `requirement-review-questions-remediation-public-jobs-2026-09-19.md` RJR1=A로 기록했다.
+>
+> **개정 (2026-09-24) — REM-1 인프라 R1IFR1 승인**: 사용자 R1IF1=B로 무상 OSS인 Colima/Lima+Docker Engine/CLI 전환을 선택했다. **현재 OrbStack 운영 사실과 전환 목표를 구분**한다. 저장소 export·검증된 백업/복원·롤백·디스크 여유가 확인되기 전에는 현재 런타임을 대체하거나 기존 volume을 삭제하지 않는다. R1IF2=A로 이미 보유한 이동식 드라이브의 암호화 백업을 선택했으며 별칭/가용 용량/일일 회수 가능 시간은 설치 전 operator fact로 검증한다. 비용 0원·Mac mini 서빙 제약(C-14)과 별도 corpus rebuild 승인 경계는 유지한다.
+>
 > 정량 목표는 **(제안)** 으로 표기 — 리뷰 게이트에서 확정/조정한다. 요구사항 ID는 고정이며 후속 단계에서 참조된다.
 
 ---
@@ -65,14 +71,14 @@ DocSuri v1은 **프로덕션 수준의, 공개 이용 가능한 모바일 웹 �
 | **FR-3** | 관련도순으로 정렬해 상위 N건을 빠르게 반환한다. *(2026-07-06 개정 — 페이즈 7)* 융합 상위 M 후보를 cross-encoder 재랭킹으로 재정렬해 순서 품질을 높인다. | 상위 N건(제안: 20) 반환, 문서화된 관련도 점수순 정렬. **재랭킹**: 예산 저하/어댑터 실패 시 융합점수(RRF) 순서로 fail-soft(응답 비차단). 정량 품질 평가(nDCG/MRR/라벨셋)는 클릭로그·라벨 데이터 확보 후 수행; 현 단계=기능 검증 + 대표 질의 정성 비교. M은 보수적 시작값. |
 | **FR-4** | 각 결과를 **폰 화면**에 최적화해 제시: 제목, 저자, 연도, 식별자, 초록 스니펫, 관련도 신호, **소스 표기(sourceName) + 소스 중립 resolvable 링크** *(2026-06-29 개정 — 페이즈 2/Q2; arXiv=arXiv 링크, 비-arXiv=sourceUrl/DOI 링크)*. | 360–430px 너비에서 가로 스크롤 없이 완전히 가독·조작 가능; 비-arXiv 결과도 실재 링크로 연결(FR-5). |
 | **FR-5** | **엄격한 근거화(strict grounding)** *(2026-06-29 개정 — 페이즈 2; 페이즈 3 D3 통합 확정)*: 노출되는 모든 논문은 인덱스의 실재 레코드; AI 생성 텍스트(관련도 설명/요약)는 검색된 논문에서만 도출; 근거가 없으면 날조 대신 **기권(abstain)**("관련 논문 없음"). 실재 링크 검증은 **소스 중립**(arXiv=arxivUrl, 비-arXiv=sourceUrl/DOI; Q2). **Grounding Framework 통합(D3 — 페이즈 3 Q2 확정)**: 단일 철학(fail-closed·기권≠빈결과·날조0·verdict={pass/block/abstain})과 **공유 추상 Validator 인터페이스 + 레지스트리**(Search/Summary/Agent) 아래, **검증 로직은 도메인별**이다 — `GroundingEnforcementHook.enforce`(candidate↔retrieved record set)는 **검색 한정 U6 단일권위(FROZEN, 시그니처 무변경)**, **요약은 U7 자체 결정론 Validator**(요약↔단일 논문 refined source = 문서충실도 검증; 검증 종류가 달라 별도), Agent Validator는 페이즈 4 자리만 확보. enforce 호출 지점은 각 도메인 seam 유지(검색=U6 게이트웨이, 요약=U7 오케스트레이터). DocModel Block 앵커(`blockRefs`)는 근거 매칭에 **내부 활용**하되 검색 결과 외부 노출은 페이즈 3·4로 이월(Q3). | 평가셋 전반에서 날조 논문/인용 0건; 코퍼스 밖 질의에 기권 경로 동작; 비-arXiv 결과도 소스별 실재 링크로 검증. (QT-1) "단일권위"의 의미는 **검색 grounding 한정**으로 명문화(`shared/ports.md`); 도메인 Validator 추상·레지스트리는 shared 계약 PR + U6 사인오프. |
-| **FR-6** | **Corpus 생성 파이프라인 [U1]**: AI/ML 논문을 멀티소스로 수집하고, 소스 우선순위 기반 중복 제거 후 FullText→DocModel 완성형→Chunk→Embedding→OpenSearch/S3 저장까지 자동 구축한다. 수집 우선순위는 **arXiv(HTML 우선, 없으면 PDF) → Semantic Scholar(PDF→GROBID) → OpenAlex(PDF→GROBID)** 이며, dedup 키는 **DOI → arXiv id → 정규화(title+1저자+연도)** 순으로 판정하고 상위 소스/품질 좋은 전문을 승자로 삼는다. DocModel은 Section/Block·표(rows/cols)·수식(LaTeX/MathML)·그림 AssetRef·Provenance/SourceTier를 포함하는 구조 완성형이며, 비전 추론은 제외한다. | 초기 코퍼스는 **최근 AI/ML 1년·OA/인덱싱 허용 라이선스·eager 비용 상한 내**로 구축한다. 수집 시점에 `(paperId, version)`별 DocModel을 eager 생성하고, **DocModel(Block) 기반 청킹**(Block 경계 존중+길이 상한+섹션 컨텍스트)으로 Cohere Embed v4/specVersion v2 임베딩을 생성한다. DocModel 기반 신규 index generation/alias를 블루/그린으로 만들고 컷오버한다. source별 watermark로 incremental update하고, scheduler·단계별 retry·DLQ·재처리 경로·ObservabilityHub `emitMetric`/`emitLog` 실패 신호를 제공한다. |
+| **FR-6** | **Corpus 생성 파이프라인 [U1]**: AI/ML 논문을 멀티소스로 수집하고, 소스 우선순위 기반 중복 제거 후 FullText→DocModel 완성형→Chunk→Embedding→OpenSearch/오브젝트 스토리지 저장까지 자동 구축한다. 수집 우선순위는 **arXiv(HTML 우선, 없으면 PDF) → Semantic Scholar(PDF→GROBID) → OpenAlex(PDF→GROBID)** 이며, dedup 키는 **DOI → arXiv id → 정규화(title+1저자+연도)** 순으로 판정하고 상위 소스/품질 좋은 전문을 승자로 삼는다. DocModel은 Section/Block·표(rows/cols)·수식(LaTeX/MathML)·그림 AssetRef·Provenance/SourceTier를 포함하는 구조 완성형이며, 비전 추론은 제외한다. | 초기 코퍼스는 **최근 AI/ML 1년·OA/인덱싱 허용 라이선스·single-host 디스크/처리 예산 내**로 구축한다. 수집 시점에 `(paperId, version)`별 DocModel을 eager 생성하고 DocModel(Block) 기반 청킹 후 로컬 Ollama `bge-m3` 1024차원 임베딩을 생성한다. 로컬 OpenSearch의 generation index를 검증한 후 `docsuri-corpus` read alias를 원자적으로 전환하고, MinIO에 DocModel/자산을 저장한다. source별 watermark, scheduler, 단계별 retry, ElasticMQ DLQ, 재처리 경로와 실패 신호를 제공한다. 운영 fixture 금지와 원출처 메타데이터 일치 검사를 배포 게이트로 둔다. |
 | **FR-7** | **사용자 계정**: 공개 셀프 가입, 로그인, 로그아웃, 인증 세션. | 신규 사용자가 셀프 가입·로그인·세션 유지 가능; 자격증명은 SEC-12 준수. |
 | **FR-8** | **검색 저장**: 질의 저장, 목록, 재실행, 삭제(사용자별 비공개). | 저장 검색이 세션 간 지속, 소유자에게만 노출(SEC-8). |
 | **FR-9** | **라이브러리 저장**: 논문을 개인 라이브러리에 추가/삭제·목록. | 라이브러리가 사용자별 지속·비공개(SEC-8). |
 | **FR-10** | 사용자별 **검색 이력**. | 최근 질의가 목록·재실행 가능, 사용자에게 비공개. |
 | **FR-11** | **빈 결과 & 실패 UX**: 빈 검색, 업스트림(arXiv/LLM/인덱스) 장애, 저하(degraded) 모드에 대한 명확한 구분 상태. | 각 상태가 구체적·비기술적 메시지 표시; 빈 화면·스택 트레이스 없음; 오류 시 fail closed·일반화된 프로덕션 에러(SEC-9, SEC-15, NFR-R1). |
 | **FR-12** | **AI 요약(요약 액션) [U7]** *(2026-06-29 앵커 입도 정정 — 페이즈 3/Q4)*: 검색 결과 카드에서 선택한 **단일 논문의 구조화 doc-model**(전문을 arXiv HTML 결정적 파싱한 섹션/블록·표=데이터·수식=LaTeX·그림 참조; 평문 아님 — 2026-06-23 개정)을 페르소나 질문 기반 **구조화 요약**(핵심주장·기여·방법·결과·한계·재현성)으로 생성. 요약 *수준* 선택(전문가용/입문자용). 각 항목에 원문 근거 **앵커** 부기 — 현행 앵커 계약은 `{field, target∈{section\|table\|figure}, span(원문 인용), label(예: "Section 3.1")}`이며 **검증 통과 앵커(kept_anchors)만 노출**. (DocModel **block-level id** 정밀 앵커는 페이즈 4 evidence 계약과 함께 — 후속 이월.) | 선택 논문 1편에 구조화 요약 반환; 입력은 doc-model(표 숫자·수식이 요약·근거화에 가시); 각 주장에 검증 가능한 원문 앵커("출처 보기" → target/label 실재성, FR-18 리치뷰로 점프); 근거 없으면 날조 대신 기권(FR-5·QT-5); 수준(전문/입문) 선택이 출력에 반영. 온디맨드(NFR-P2)·캐시+S3 영구저장. 생성·근거화·캐시 로직 불변(입력만 업그레이드). |
-| **FR-13** | **한국어 번역(번역 액션) [U7]** *(2026-06-24 본문 번역 구조화, PR-2; 2026-06-29 정합 확인 — 페이즈 3/Q6)*: 선택한 논문의 **초록 번역**(scope=abstract, 기본 — Metadata Abstract 사용) 또는 **전문(全文) 번역**(scope=full — DocModel(v1) 사용)을 한국어로 번역. 전문 번역의 출력은 **source와 동일한 구조화 형식**(번역본 doc-model — 섹션 트리·문단·표/그림 캡션 단위 번역; 표 셀·수식 LaTeX·코드·block/section id·그림 assetRef는 원어/원본 보존)으로, 원본 본문과 **동일한 리치 뷰어**로 렌더. 도메인 용어집(미번역 리스트 포함) 적용으로 전문용어 일관. | 초록/전문 한국어 번역 반환; 전문 번역은 구조화(DocModel(v1) 미러·동일 구조/id 재조립)되어 동일 뷰어로 표시(BR-S18); 용어집의 미번역 용어(모델명·약어)는 영어 유지; 표 숫자·수식은 번역하지 않고 보존(D8); 긴 본문은 섹션별 map-only로 처리하고 진행(pending) 표시·폴링(게이트웨이 타임아웃 회피), 초극단(>입력상한)은 거절; 사용자 용어 선호 저장 시 이후 일관 적용(SEC-8). **온디맨드**(버튼 클릭 시 eager s3 doc-model 번역; NFR-P2)이며 **번역본은 S3 영구저장+Redis 캐시**(immutable key, 동일 키 재사용) — 요약·초록번역·전문번역 3종 모두 동일. |
+| **FR-13** | **한국어 번역(번역 액션) [U7]** *(2026-06-24 본문 번역 구조화, PR-2; 2026-09-18 local runtime 정합)*: 선택한 논문의 초록 또는 DocModel 전문을 한국어로 번역하고 source와 동일한 구조화 형식으로 렌더한다. 표 셀·수식 LaTeX·코드·block/section id·그림 assetRef는 원본을 보존하고 도메인 용어집을 적용한다. | 긴 본문 또는 local model 동기 예산을 넘는 생성은 비동기 job+polling으로 전환하고 초극단 입력은 거절한다. 사용자 용어 선호는 owner-scoped로 지속한다. 서버가 검증한 canonical source identity에만 공유 캐시를 결속하고, 번역본은 MinIO 영구본+Redis 캐시로 저장한다. |
 | **FR-14** | **요약/번역 개인화 [U7]** *(2026-06-29 개정 — 페이즈 3/Q9; 뷰 프리셋·커뮤니티 용어집 폐기)*: persona 생성 변형(전문가용/입문자용)·용어집(P1 도메인 시드 + P2 개인 오버라이드). **용어집 적용**: 기본은 번역 출력 위 **결정론적 post-substitution 덮어쓰기**(LLM 재호출 없음·전체단어·긴것우선·한국어 조사 보존·멱등; `prompt_enforced=False`), 옵션으로 LLM 프롬프트 강제(`prompt_enforced=True`). | persona는 **요약 전용** 논문당 최대 2벌(전문/입문) 생성(번역은 persona-agnostic 단일); 개인 용어 선호가 사용자별 지속(SEC-8), 개인 용어집 조회 실패 시 seed-only로 저하(전체 기권 안 함). **뷰 프리셋(코드 부재)·커뮤니티 공유 용어집(P3)은 폐기**, 자유입력 per-user는 범위 제외(§12). |
 | **FR-15** | **각주 트리 / 인용 그래프 [U8]**: 논문 상세보기 페이지에서 선택 논문의 backward references(이 논문이 인용한 논문)를 트리로 표시한다. 기본 1-hop, 사용자 펼침 시 최대 2-hop, 화면당 최대 50노드. | 논문 상세보기 페이지에 요약·초록 번역·전문 번역·각주 트리 4개 액션 중 각주 트리 진입점이 존재한다(상세보기 FE 자체는 별도 분기 책임). 각 노드는 제목·연도·인용수를 표시한다. 중복 노드는 "이미 표시됨"으로 접고, unresolved 항목은 확정 노드로 승격하지 않는다. |
 | **FR-16** | **인용 노드 저장/연동 [U8]**: 각주 트리 노드는 라이브러리 저장 액션과 연결된다. 전체 인용 그래프 기능은 로그인 필수이며 U3/U6 인증·인가 경로를 통과한다. | 모든 표시 노드에서 "라이브러리에 저장" 가능; 저장 시 U4 `LibraryItemMeta` 스냅샷을 재사용한다. 외부 인용 API 장애 시 캐시된 snapshot을 우선 표시하고, 없으면 루트 논문은 유지한 채 "인용 정보를 불러올 수 없음" 상태를 보여준다. |
@@ -80,7 +86,7 @@ DocSuri v1은 **프로덕션 수준의, 공개 이용 가능한 모바일 웹 �
 | **FR-18** | **자체 리치뷰 (doc-model 렌더) [U1/U7/U5]** *(2026-06-23 신규 — D4; 2026-06-26 U1 Corpus D6 정정)*: 논문 **doc-model**을 앱 안에서 콘텐츠 충실하게 재렌더하는 **목적지 표면**(요약/번역/주석/에이전트 통합 + 로그수집·개인화 표면). 섹션 **목차(TOC)·앵커 점프**, **수식 KaTeX/MathJax(LaTeX)**, **표 구조화 컴포넌트(rows/cols)**, **그림 webp**(FR-17 자산 재사용). **PDF.js 픽셀 재현 아님**(arXiv HTML/GROBID 기반 콘텐츠 재렌더). U1 phase-1 Corpus에 편입된 논문은 **수집 시점 eager 생성 + `(paperId, version)` 캐시**가 기본이며, lazy/on-demand 빌드는 누락분·재빌드·백필·phase-1 밖 논문 보강 경로로만 남긴다. | phase-1 코퍼스 논문은 첫 열람 전 DocModel이 준비되어야 하며, 누락 시 빌드 큐로 보강하고 `building`/재시도 상태를 노출한다. version 변경 시 DocModel·청크·인덱스·S3를 같은 버전으로 재빌드/재색인한다. 리치뷰가 목차·수식·표·그림·앵커를 렌더; 요약 출처 앵커(doc-model id) 클릭 시 해당 위치로 스크롤·하이라이트; **라이선스 미허용 → 리치뷰 미제공 + 원문 링크아웃**(BR-SF-11); 외부 콘텐츠 이스케이프·신뢰 렌더러(KaTeX·표 컴포넌트) 경유(원시 HTML 주입 금지, SEC-5); PDF 원문 저장·다운로드 없음(§12, D3). |
 | **FR-19** | **개인 관심사 프로필 집계 [U9]**: 행동 이벤트를 기반으로 사용자별 관심 arXiv 카테고리, 키워드 가중치, 저장/반복 조회 논문, 요약 persona 선호, 번역 scope 선호, 용어집 버전을 집계한다. | 원본 행동 이벤트는 기본 90일 보관 후 삭제하고, 집계 프로필만 유지한다. 사용자는 개인화 켜기/끄기, 행동 로그 삭제, 개인화 프로필 초기화를 할 수 있다. 프로필 갱신은 가벼운 온디맨드/배치 집계로 수행하며 실시간 ML 파이프라인은 만들지 않는다. |
 | **FR-20** | **개인화 적용 [U9]**: 기존 검색 관련도 점수는 유지하고 사용자 관심사 기반 작은 boost로 rerank한다. 요약/번역은 최근 선택을 기본값으로 기억하되 사용자가 매번 바꿀 수 있게 한다. | 검색 결과에 과도한 순위 변경 없이 개인화 boost를 적용하고, "내 관심 주제 반영" 정도의 짧은 표시와 개인화 끄기 토글을 제공한다. v1은 별도 추천 논문 목록을 만들지 않는다. 개인화 저장/분석 실패 시 기본 검색·요약·번역으로 저하한다. |
-| **FR-21** | **인제스천 파이프라인 v4 듀얼 라이트 (마이그레이션) [U1]** *(구 FR-18 — develop 리치뷰와 충돌로 재번호)*: 마이그레이션 기간 동안 신규 문서는 기존 v3 인덱스(`docsuri-corpus-v1`)와 신규 v4 인덱스(`docsuri-corpus-v2`) 양쪽에 모두 기록(dual-write)된다. | 마이그레이션 완료 시점까지 두 인덱스 모두 최신 상태 유지. |
+| **FR-21** | **인덱스/임베딩 계약 마이그레이션 [U1/U2]** *(2026-09-18 single-Mac 재기준)*: 현재 로컬 계약은 Ollama `bge-m3` 1024차원과 `docsuri-corpus` read alias다. 임베딩 모델, 차원, parser/specVersion 변경은 기존 generation을 덮어쓰지 않고 신규 generation으로 구축한다. | writer/reader 계약 동치와 corpus 진실성 검사를 통과한 generation만 alias로 원자 전환한다. 지속 쓰기가 있는 migration에만 bounded dual-write를 사용한다. 실패 시 이전 alias로 되돌릴 수 있어야 하며 full rebuild 실행은 별도 승인 대상이다. |
 | **FR-39** | **행동 이벤트 기록 [U9]** *(2026-06-23 신규 — 본래 FR-18; doc-model 자체 리치뷰가 FR-18 선점으로 2026-06-30 **신규 FR-39** 재번호; FR-22~25는 폐기된 구 research-agent 초안 ID라 회피)*: 의미 있는 사용자 행동(검색 실행, 결과 클릭, 라이브러리 저장/해제, 요약/번역 액션, persona/scope 선택, **관심사 설정**[온보딩 픽커·ORCID 유도 승인 — FR-44~46, 2026-07-23 개정])을 owner-scoped 행동 이벤트로 **비차단 기록**한다. 단순 hover·scroll·체류시간·임의 클릭은 기록하지 않는다(§12 U9 제외). | 행동 이벤트는 사용자별 비공개(SEC-8)·기본 90일 보관 후 삭제(집계 프로필만 유지, FR-19); 이벤트 기록 저장소 실패는 본 기능 요청 실패로 승격하지 않고 비개인화 경로로 저하(NFR-P4·NFR-R*); 이벤트 DTO 라운드트립·dedupe key 안정성 자동 테스트(QT-7). |
 | **FR-26** | **비밀번호 재설정(분실 복구) [U3]** *(2026-06-24 신규 — 계정 프로덕션화 Q1-A/Q6-A)*: 로그인 불가 사용자가 이메일로 비밀번호를 자가 재설정한다. | 재설정 요청 시 **Resend** 이메일로 **단일 사용·30분 만료** 토큰 링크 발송; 토큰 검증 후 새 비밀번호 설정(BR-A1 정책 재적용); 성공 시 **해당 계정 전 세션 무효화**(BR-A8); **계정 열거 방지** — 가입/상태와 무관하게 항상 동일 일반 응답(SEC-9); 요청에 레이트 리밋(SEC-11); 사용·만료 토큰 재사용 거부. _↪ 토큰 저장·만료 메커니즘 = Functional/NFR Design._ |
 | **FR-27** | **소셜 로그인 (OIDC) [U3]** *(2026-06-24 신규 — Q1-B/Q3=Google/Q4-A · 2026-06-30 개정 — ORCID 추가, `requirement-verification-questions-orcid-login.md`)*: 외부 신원공급자로 가입/로그인한다. **프로바이더 = Google · ORCID**(GitHub·Apple 차기 사이클). | OIDC Authorization Code 흐름 — **`state`/`nonce`로 CSRF·replay 방어**(SEC-5/SEC-12); **(이메일 제공 프로바이더, 예: Google)** 프로바이더 **검증된 이메일**을 정규화해 기존 계정에 **자동 연결**, 미존재 시 **ACTIVE 계정 신규 생성**(이메일 PENDING 우회, BR-A9); 프로바이더 **미검증** 이메일은 자동 연결 금지(BR-A9 — 계정 탈취 방어); **(이메일 미제공 프로바이더, 예: ORCID — OIDC가 이메일 클레임을 반환하지 않음)** `(provider, subject)` 신원으로 **ACTIVE 계정 신규 생성**(`accounts.email` NULL 허용·자동 연결/병합 없음, BR-A13), id_token은 **로컬 JWKS/RS256** 검증(tokeninfo 엔드포인트 부재); 성공 시 기존 로그인과 **동일한 secure/httpOnly/sameSite 세션 쿠키** 발급(SEC-12); 부여 권한은 항상 **USER**(권한상승 금지); 프로바이더 장애 시 명시적 에러(NFR-R1). 연구자 ORCID iD는 마이페이지(U10)에 실표시(`GET /mypage/orcid-profile`). _↪ OIDC 라이브러리·연결 테이블(provider/subject)·이메일 nullable 마이그레이션·시크릿 보관 = Functional/NFR/Infra Design._ |
@@ -102,11 +108,12 @@ DocSuri v1은 **프로덕션 수준의, 공개 이용 가능한 모바일 웹 �
 | **FR-44** | **가입 시 관심사 수집 [U14/U5]** *(2026-07-23 신규 — Phase 3 온보딩, `requirements/onboarding.md`)*: 신규 사용자 가입 플로우에서 **arXiv 카테고리 픽커**로 연구 관심사를 수집한다. 입력은 **스킵 가능**(가입 완료를 막지 않음). 기존 사용자에게도 **다음 로그인 시** 동일 픽커를 프롬프트한다. | 가입/차기 로그인에서 픽커 노출, 선택 결과가 FR-45 시딩 입력으로 전달. 스킵 시 정상 완료 + 비개인화 경로 동작. |
 | **FR-45** | **U9 프로필 시딩 [U9/U14]** *(2026-07-23 신규)*: 수집된 관심사를 **관심사 설정 행동 이벤트**(FR-39 개정)로 기록해 기존 FR-19 집계 경로로 프로필(`categoryWeights`+`keywordWeights`)을 시딩 — 개인화 콜드스타트 해소. 시드는 고정 반영이 아니며 이후 행동 이벤트가 자연히 우세(raw 90일 보관 = 자연 감쇠). **US-P5(키워드 부스트 라이브 소비)를 본 트랙에 묶어 선행**한다. | 시딩 신호가 비어 있지 않고 FR-20 적용 경로가 랭킹 기계 신설 없이 소비(카테고리=US-P4 라이브, 키워드=선행 US-P5). 시딩 이벤트도 FR-19 사용자 통제·QT-7 불변식에 그대로 적용 — **직접 프로필 기록 금지**(TTL/재집계 소실). |
 | **FR-46** | **ORCID 관심사 유도 시딩 [U14/U3]** *(2026-07-23 신규)*: ORCID 로그인 사용자(#347 라이브)는 ORCID **프로필·저작**에서 관심사를 유도해 FR-45 시딩 경로에 공급한다. | ORCID 유도 관심사가 관심사 설정 이벤트로 기록·반영. owner-scoped(SEC-8), ORCID 조회 실패 시 픽커-only 저하(가입/로그인 무영향, NFR-P4). |
-| **FR-47** | **트렌드/알림 이메일 다이제스트 [U15]** *(2026-07-23 신규 — Phase 3, `requirements/trends-notifications.md`)*: **옵트인** 사용자에게 팔로우 주제(FR-48)의 **신규 논문 plain list**(제목·초록 링크, LLM 무포함)를 **기본 daily**(사용자 설정 가능) 주기로 발송. 소스=기존 daily harvest 산출물(C-9 — 현재 일시 중지), 매칭=키워드/임베딩 유사도, 발송=기존 `EMAIL_PROVIDER` 경로(SES on `559352512800`). | 미옵트인 무발송. 수록 논문은 코퍼스 정책(C-1/C-6) 내 harvest 신규분 중 유사도 매칭분. 모든 다이제스트에 즉시 반영되는 수신 해지 경로. LLM 무포함 → NFR-C1 비대상. |
+| **FR-47** | **트렌드/알림 이메일 다이제스트 [U15]** *(2026-07-23 신규, 2026-09-18 runtime 재기준)*: **옵트인** 사용자에게 팔로우 주제(FR-48)의 신규 논문 plain list를 기본 daily 주기로 발송한다. 소스는 기존 daily harvest 산출물, 매칭은 키워드/임베딩 유사도, 발송은 local API가 설정된 `EMAIL_PROVIDER` 어댑터를 사용한다. | 미옵트인 무발송. 모든 다이제스트는 실제 `/paper/{id}` route 링크와 인증 없이 token 검증으로 동작하는 즉시 수신 해지 링크를 포함한다. email provider나 harvest가 비활성이면 발송하지 않고 운영 상태에 명시한다. |
 | **FR-48** | **팔로우 주제 목록 관리 [U15/U5]** *(2026-07-23 신규)*: 사용자가 **명시적 팔로우 목록**(U14/U9 관심 프로필과 별개)을 만들고 **설정 UI**에서 팔로우 주제·발송 주기·이메일 옵트인/해지를 관리한다. | 팔로우 목록·구독 상태 owner-scoped(SEC-8) CRUD. 옵트인 전 기본 미발송. 주기 변경·옵트아웃 즉시 반영. |
 | **FR-49** | **웹검색 레퍼런스 도구 [U11/U12]** *(2026-07-23 신규 — Phase 3, `requirements/web-references.md`)*: evidence 에이전트(U11)가 턴 처리 중 **학술 공개 API**(Semantic Scholar·OpenAlex — 무키)로 외부 검색을 수행해, corpus 근거를 보완하는 **웹 레퍼런스 목록**(제목·실재 URL 링크백 — claims 불참여, C-11)을 결과에 동봉한다. 같은 외부검색 포트는 novelty(U12)에도 노출한다. 질의는 최소 질의 규칙(카브아웃 Q9/Q25=A — `sanitize_external_query` 수준) 준수, 호출은 기존 evidence 쿼터(30/day)에 흡수(NFR-C1 별도 한도 없음). | 웹 레퍼런스는 프로바이더가 반환한 **실재 URL/DOI만**(무날조 — URL 조립·요약 생성 금지, https·호스트 검증). claims의 supporting/conflicting에 웹 출처 불참여 — `SourceRef` 실재성 검증 체계는 corpus/userdoc 전용 유지. 프로바이더 장애·미설정 시 **Noop 저하**(웹 레퍼런스 없이 corpus-only 정상 결과, abstain 아님). 공유계약 확장은 링크백 표시 필드만. |
 | **FR-50** | **플랜/티어 시스템 [U16]** *(2026-07-24 신규 — Phase 3, `requirements/subscription.md`)*: 사용자마다 플랜(2단 — **free/plus**)이 있고, 플랜이 **에이전트 daily 쿼터**(evidence·novelty)를 결정한다 — 유료 경계는 쿼터 상향뿐, 기타 기능은 전 티어 동일. 기본값 free = 현행 쿼터(무회귀). plus 수치는 **CostGuard 실측 per-user spend 리포트 검토 후 확정**(실행 게이트 — 그 전까지 TBD). | 플랜 상태 owner-scoped(SEC-8) 조회. 미부여 사용자 free 동작 — 기존 쿼터 값·집행 경로 무변경(CostGuard 계약 불변, NFR-C1). 플랜 변경 감사 로그(SEC-14). 쿼터 외 기능 차등 없음. |
 | **FR-51** | **플랜 부여/만료 관리 [U16]** *(2026-07-24 신규)*: v1은 결제 없이 **ADMIN 수동 부여**로 plus 개시(C-12). 부여는 **월 단위 기간**, 해지/미갱신 시 **기간 만료까지 plus 유지 후 free 자동 다운그레이드**(paid-through-period). 다운그레이드는 쿼터 값만 변경. | ADMIN만 부여/회수(authz). 기간 만료 시 무개입 자동 free 전환. 만료 전 회수도 기간 말까지 유지. 부여/회수/만료 전환 감사 로그(SEC-14). 결제·PG 코드 없음(C-12). |
+| **FR-52** | **REM 공개 job 계약과 사용자 상태 UX** *(2026-09-19 승인, §14)*: F01~F13 때문에 REM으로 이관되는 사용자 업무 처리/read/명시적 status 조회를 job으로 접수하고 queue/event로 처리한다. frontend는 접수, 대기, 처리, 완료, 실패 및 결과 수신을 구분한다. | durable 접수 확인, caller별 job 인가, 비재귀 event/subscription 및 재연결, 완료 결과의 직접 인가 전달, terminal failure와 재시도, queue 재시작 복구를 검증한다. 완료된 자산 bytes는 인증된 same-origin endpoint에서 제공한다. 상세 인수는 `verification-remediation-2026-09-18.md` §10.3 RJ-AC01~RJ-AC12를 따른다. |
 
 ## 5. 비기능 요구사항 (Non-Functional Requirements)
 
@@ -119,16 +126,18 @@ DocSuri v1은 **프로덕션 수준의, 공개 이용 가능한 모바일 웹 �
 - **NFR-P6 [U11]** 근거형성(FR-37)은 **온디맨드 액션**으로 검색 SLA(NFR-P1) **대상이 아니다**. 짧은 질의는 **스트리밍 우선**(빠른 TTFB)으로 체감 응답 제공; 긴 다논문 분석은 **비동기 잡**(U7 잡 패턴 재사용) + 진행 상태·부분 결과 폴링으로 타임아웃을 방지한다. *(제안 — 구체 TTFB·잡 전환 임계는 NFR Requirements에서 확정.)*
 - **NFR-P7 [U13]** Agent Chat Frontend는 채팅 입력, mode 선택, 세션 drawer, timeline expand/collapse가 즉시 반응해야 한다. backend가 mock/real 어느 쪽이든 로딩·실패·degraded 상태는 화면 전환 없이 표시하고, 긴 작업은 polling/streaming seam으로 부분 진행을 갱신한다.
 **확장성 & 비용(Scalability & Cost)**
-- **NFR-S1** 근시일 규모: 등록 사용자 수백 명 내외(제안: ~3,000 상한), 동시 수십 명(제안: ~50); 아키텍처는 재설계 없이 **저(低)천 명대까지 확장** 가능해야 함. *(제안)* 확장 헤드룸은 **아키텍처 요건**이며, NFR-C1 비용 상한은 **현재 티어 기준 근시일 가드레일**로 규모 증가 시 재설정한다(상한을 그대로 유지하지 않음).
-- **NFR-S2** 임베딩 모델 v4 컷오버: 검색 및 인제스천에 사용하는 임베딩 모델을 `embed-multilingual-v3.0`에서 `embed-multilingual-v4.0`(차원: 1024)로 업그레이드한다. U2 검색 API는 신규 인덱스 준비 완료 시 A/B 테스트 없이 즉각 컷오버(Instant Cutover)된다.
-- **NFR-C1** **월 비용 상한(hard cap) (제안: $300/월)**. **준실시간 지출/사용량 텔레메트리 + 임계 경보(제안: 80% 도달 시 경보)** 로 상한 초과 **이전에** 우아하게 저하하는 서킷 브레이커(제안: 100% 도달 전 LLM 리랭킹 비활성화 → lexical 검색 폴백). 이 텔레메트리/경보가 **RES-11(a) 비용 폭발 탐지 신호**를 제공한다(월 단위 청구가 아닌 인트라데이 폭주 포착). 이전 사이클의 CostGuard 패턴 계승. **[U1 Corpus 보강]** eager DocModel·GROBID·임베딩·OpenSearch/S3 저장은 사용량 비례가 아니라 코퍼스 전량 비용이므로, phase-1은 **최근 AI/ML 1년·OA/인덱싱 허용 라이선스·명시적 빌드 예산**으로 제한하고, 비용 임계치 도달 시 수집 우선순위(최신성/인용·팀 지정 seed) 밖 작업은 보류·DLQ/백필 큐로 이월한다. GROBID/임베딩/OpenSearch bulk/S3 저장 사용량은 U1 별도 비용 라인으로 계상한다. **[U7 보강]** 요약(FR-12)은 Sonnet 호출로 비용표에 없던 신규 라인(건당 ≈$0.1~0.2)이나, 온디맨드+영구저장으로 "distinct 논문×1회"만 과금되어 bounded → **기존 $1,600 상한 내 흡수**하되 U7 비용을 텔레메트리 **별도 라인으로 계상**하고 U6 CostGuard 게이트(예산 초과 시 요약 일시 기권, FR-11) 적용. **[U8 보강]** citation API는 U6 레이트리밋/CostGuard 신호와 U8 전용 쿼터 카운터를 사용하며, 임계 초과 시 캐시만 제공하거나 일시 기권한다. Infrastructure Design 비용표에 U1/U7/U8 라인 추가.
+- **NFR-S1** 프로덕션 용량은 단일 Mac의 CPU, 메모리, 디스크와 Ollama 동시성에 의해 제한된다. API는 한 uvicorn worker를 유지하고, 긴 생성/인제스천은 ElasticMQ worker queue로 격리하며, queue·디스크·model saturation에서 무제한 수락 대신 backpressure/429/명시적 pending을 사용한다. 동시 사용자 수치는 부하 시험으로 입증하기 전 보장하지 않는다.
+- **NFR-S2** writer와 reader는 로컬 Ollama `bge-m3` 1024차원 임베딩 계약을 공유한다. model/dimension/specVersion이 다르면 시작 또는 컷오버를 fail closed하고, 변경은 FR-21 generation+alias 절차를 따른다.
+- **NFR-C1** 로컬 Ollama 경로의 per-token cloud 비용 가정은 폐기한다. 운영 가드는 **호스트 디스크, OpenSearch watermark, CPU/메모리, queue depth, 모델 동시성 및 명시적으로 활성화한 외부 유료 API 예산**을 감시한다. cloud model spend 기본 목표는 $0이며, 유료 provider는 별도 한도와 자격증명이 없으면 비활성이다. full corpus rebuild는 예상 디스크/시간/외부 비용을 산출하고 별도 승인을 받아야 한다.
+  - **2026-09-20 인프라 제약**: infrastructure 선택/운영에는 C-14의 비용 0원 및 Mac mini 서빙 제약을 적용한다. free-tier의 자동 초과 과금이나 유료 trial 이후 전환을 운영 전제로 삼지 않는다.
   - **[novelty Agent 보강]** U6 CostGuard와 rate limit을 재사용하고, U2 `full` 검색·LLM·tool call·Agent-Browser·Notion MCP에 per-job budget을 둔다. 초과 시 전체 실패가 아니라 부분 결과와 `degraded` 상태를 반환한다. novelty Agent 전용 CostGuard는 만들지 않는다.
 
 **가용성 & 신뢰성(Availability & Reliability)** *(주 품질 속성: Q14=C)*
-- **NFR-A1** 가용성 목표 **~99.5%**, 단일 리전 멀티 AZ. *(제안)*
+- **NFR-A1** 단일 Mac 프로덕션은 **best-effort 단일 장애 도메인**이며 가용성 백분율 SLA를 주장하지 않는다. 호스트/전원/디스크/로그인 세션 장애와 계획 재부팅 동안 중단을 허용하되, launchd/검증된 컨테이너 런타임의 재시작, 외부 dead-man heartbeat, 일일 백업과 문서화된 복구로 중단 시간을 제한한다. 현재 런타임은 OrbStack이고 검증된 전환 후에는 Colima다.
 - **NFR-R1** **조용한 오답 금지(no silent wrong answers)**: 모든 실패는 명시적 상태로 표면화; 시스템은 fail closed(SEC-15).
 - **NFR-R2** 업스트림 장애(arXiv API, LLM, 벡터 스토어) 시 우아한 저하: 명시적 타임아웃, 폴백 경로, 저하 모드 메시지(RES-10).
 - **NFR-R3 [U12]** novelty Agent 외부 의존성(U2 `full`, EvidenceFormationPort, Agent-Browser, GitHub, 데이터셋 사이트, Notion MCP, LLM)은 source별 실패/저하를 분리한다. 한 source 실패가 전체 job 실패로 전파되지 않으며, 성공한 source만으로 부분 산출물을 제공한다.
+- **NFR-R4 — 공개 job 수명주기** *(2026-09-19 승인)*: 접수 성공은 durable operation 및 발행 의도 저장 이후에만 확인한다. 중복 제출/재전달/재연결은 논리적 중복 효과를 만들지 않고, queue 유실과 worker 재시작에서 accepted 작업을 복구한다. 완료 결과 전달 및 health/readiness는 새 업무 job을 만들지 않으며 queue 장애를 bounded하게 관측한다. stage별 timeout/retry/retention 수치와 backpressure 한도는 service별 NFR 단계에서 확정하고 배포 전 검증한다.
 
 **사용성(Usability)**
 - **NFR-U1** **폰 우선 모바일 웹**: 폰 뷰포트가 유일한 1급 레이아웃; 모든 흐름이 폰에서 한 손 사용 가능.
@@ -138,21 +147,21 @@ DocSuri v1은 **프로덕션 수준의, 공개 이용 가능한 모바일 웹 �
 - **NFR-X1** 핵심 흐름에 대해 가능 범위에서 WCAG 2.1 AA 지향; v1 차단 게이트는 아님(NFR-R* 우선으로 후순위).
 
 **관측성 & 유지보수성(Observability & Maintainability)**
-- **NFR-O1** 메트릭·구조화 로그·트레이스 + 운영 대시보드(RES-5).
+- **NFR-O1** 로컬 서비스는 timestamp/request ID/level을 포함한 구조화 로그, latency/error/queue/disk/model 지표, 외부 healthchecks.io dead-man 신호와 운영 상태 화면을 제공한다. 단일 프로세스 내부 호출은 분산 trace N/A로 문서화할 수 있으나 worker/queue 경계의 correlation ID는 유지한다.
 - **NFR-M1** 모듈형 아키텍처, 문서화된 컴포넌트; 기술 스택은 Construction에서 선정.
-- **NFR-M2** 무중단 데이터 마이그레이션 (Blue/Green): 기존 인덱스(`docsuri-corpus-v1`)는 유지한 채 신규 인덱스(`docsuri-corpus-v2`)를 생성 및 백필(re-embed)한 후, 완료 시점에 alias를 스위칭하여 검색 중단 시간(downtime) 없이 v4로 마이그레이션한다.
+- **NFR-M2** 로컬 OpenSearch migration은 기존 generation을 유지한 채 신규 generation을 구축·검증하고 `docsuri-corpus` alias를 원자 전환한다. 실패 시 이전 generation으로 rollback하며, migration 중 디스크 여유와 full rebuild 승인 게이트를 확인한다.
 
 ## 6. 보안 요구사항 *(Security 베이스라인 활성 — 15개 규칙 전부 차단성)*
 
 | ID | 요구사항(규칙) |
 |---|---|
 | **SEC-1** | 모든 데이터 저장소(계정, 검색 저장/라이브러리, 벡터 인덱스, 오브젝트 스토리지)에 저장 시 암호화 + 전송 시 TLS 1.2+. (SECURITY-01) |
-| **SEC-2** | 모든 네트워크 중간자(LB/API 게이트웨이/CDN)에 액세스 로깅. (SECURITY-02) |
+| **SEC-2** | Cloudflare edge/tunnel과 공개 choke point인 Next.js BFF에 액세스 로깅을 적용하고, 원격 client identity와 request ID를 FastAPI까지 신뢰 경계 검증 후 전달한다. (SECURITY-02) |
 | **SEC-3** | 애플리케이션 레벨 구조화 로깅(타임스탬프, 요청 ID, 레벨); **로그에 PII/시크릿 금지**. (SECURITY-03) |
 | **SEC-4** | HTTP 보안 헤더 + 제한적 CSP. **자기-프레이밍 예외**: 데스크톱에서 앱이 폰 목업 안에 스스로를 프레이밍하므로 `X-Frame-Options`/`frame-ancestors`는 동일 출처 자기-프레이밍을 허용해야 함(전면 `DENY` 아님). 단, 이 카브아웃은 `frame-ancestors`/`X-Frame-Options`에만 적용되며 `script-src`/`connect-src`/`default-src` 등 나머지 제한적 CSP와 SEC-13 SRI는 그대로 유지. (SECURITY-04) |
 | **SEC-5** | 모든 API 파라미터 입력 검증(타입, 길이, 형식, 새니타이즈, 파라미터화 질의). (SECURITY-05) |
-| **SEC-6** | 최소 권한 IAM(문서화된 예외 없이는 와일드카드 액션/리소스 금지). (SECURITY-06) |
-| **SEC-7** | 기본 거부(deny-by-default) 네트워크 구성; 공개 인그레스는 80/443만. (SECURITY-07) |
+| **SEC-6** | Mac service account, 파일/디렉터리 권한, container capability와 외부 provider credential을 최소 권한으로 제한한다. cloud credential을 사용할 때만 resource/action-scoped IAM을 적용한다. (SECURITY-06) |
+| **SEC-7** | Cloudflare Tunnel→BFF만 공개하고 API, Postgres, Redis, OpenSearch, MinIO, ElasticMQ, Ollama는 `127.0.0.1`에만 bind한다. LAN SSH는 key-only, 외부 SSH는 Cloudflare Access 뒤에 둔다. (SECURITY-07) |
 | **SEC-8** | 애플리케이션 레벨 인가: 기본 거부 라우트, 사용자 데이터(검색 저장/라이브러리/이력)에 **객체 단위 소유권**, 서버측 토큰 검증, 제한적 CORS. (SECURITY-08) |
 | **SEC-9** | 하드닝: 기본 자격증명 금지, 일반화된 프로덕션 에러, 공개 오브젝트 스토리지 차단. (SECURITY-09) |
 | **SEC-10** | 공급망: 락파일, 의존성 취약점 스캔, SBOM, 핀 고정 이미지(`latest` 금지). (SECURITY-10) |
@@ -162,43 +171,44 @@ DocSuri v1은 **프로덕션 수준의, 공개 이용 가능한 모바일 웹 �
 | **SEC-14** | 경보 + 모니터링; **추가 전용(append-only) 감사 로그**, 90일+ 보존. (SECURITY-14) |
 | **SEC-15** | 페일세이프 예외 처리: 모든 외부 호출 처리, fail closed, 전역 에러 핸들러, 일반화된 사용자 에러. (SECURITY-15) |
 
-## 7. 복원력 요구사항 *(Resiliency 베이스라인 활성 — 15개 규칙 전부 차단성)*
+## 7. 복원력 요구사항 *(single-Mac 예외 프로필 — RESILIENCY-08 fault-isolation 면제, 나머지 적용 규칙 차단성)*
 
 | ID | 요구사항(규칙) |
 |---|---|
 | **RES-1** | 워크로드 중요도 분류 및 비즈니스 영향 + 의존성 맵 문서화(arXiv API, LLM/임베딩, 벡터 스토어). (RESILIENCY-01) |
-| **RES-2** | **RTO/RPO + DR (CQ4=E)**: 단일 리전, 멀티 AZ; **교차 리전 DR 없음**. 자동 암호화 DB 백업; **계정/검색 저장 메타데이터**에 대해 RPO ~24h 이내 허용, RTO는 IaC 재배포 + 복원으로 수 시간. **공유 Corpus 벡터/DocModel 인덱스는 FR-6 인제스천 파이프라인에서 재생성 가능(rebuildable) 자산으로 취급 — RTO는 재구축 시간(제안: 수 시간~수일, phase 크기에 따름), RPO는 마지막 source별 watermark 성공 시점**(별도 백업 불요, 재구축 런북 문서화). AZ 장애에 대한 정적 안정성. (RESILIENCY-02/08/12) |
+| **RES-2** | **RTO/RPO + 복구**: single-Mac 장애 도메인을 수용한다. Postgres 및 owner-private MinIO 데이터는 암호화된 일일 off-host backup으로 RPO ≤24h를 목표로 하고, 교체/복구 host에서 container+launchd 재설치와 restore를 수 시간 RTO 목표로 연습한다. 공개 Corpus index는 검증된 source/MinIO backup에서 재생 가능한 자산이며 대규모 재구축은 수일이 걸릴 수 있다. (RESILIENCY-02/11/12) |
 | **RES-3** | **변경 관리(CQ5=A)**: 기존 프로세스 준수 — **GitHub PR 리뷰 + git-flow(feature → develop → main) + GitHub Projects**. 새로 만들지 않음. (RESILIENCY-03) |
-| **RES-4** | CI/CD, 롤백 메커니즘, 배포 방식 — **NFR Design으로 보류**(RESILIENCY-04). |
-| **RES-5** | 메트릭/로그/트레이스 모니터링 + 운영 대시보드. (RESILIENCY-05) |
-| **RES-6** | 얕은(shallow) + 깊은(deep) 헬스 체크와 라우팅 연동; 공개 엔드포인트 합성 모니터링. (RESILIENCY-06) |
-| **RES-7** | 복원력 모니터링 + 경보(예: 인제스천 갱신 실패, source별 watermark 지연, GROBID/DocModel/Embedding 단계 실패, DLQ 적체, 단일 AZ 운영, 용량). (RESILIENCY-07) |
-| **RES-8** | 오토스케일링 / 서버리스 동시성 한도 + 클라우드 서비스 쿼터 인지(arXiv·Semantic Scholar·OpenAlex 레이트 한도, GROBID 처리량, LLM/임베딩 처리량). (RESILIENCY-09) |
+| **RES-4** | 배포는 GitHub review 후 single-host `docsurictl rebuild/restart`를 사용하는 in-place 방식이다. 실패 시 이전 검증 commit/artifact 재배포, migration 전 DB backup 및 schema-compatible rollback 절차를 둔다. (RESILIENCY-04) |
+| **RES-5** | 로컬 metrics/structured logs, queue/disk/model 상태, healthchecks.io 외부 heartbeat와 운영 상태 화면을 사용한다. (RESILIENCY-05) |
+| **RES-6** | `/healthz` shallow와 datastore/queue/model을 확인하는 deep readiness를 분리하고, public BFF synthetic probe가 실제 검색/embedding 핵심 의존성 실패를 탐지한다. (RESILIENCY-06) |
+| **RES-7** | backup 실패, heartbeat 부재, 디스크 watermark, queue/DLQ 적체, ingestion watermark 지연, embedding/model 실패와 datastore health를 경보한다. (RESILIENCY-07) |
+| **RES-8** | 수평 auto-scaling은 single-host 제약으로 N/A다. 대신 uvicorn/worker/model 동시성 상한, queue backpressure, disk watermark와 외부 API rate quota를 명시하고 saturation을 경보한다. (RESILIENCY-09 적용형) |
 | **RES-9** | 의존성 격리: 명시적 타임아웃, 서킷 브레이커, arXiv/Semantic Scholar/OpenAlex/GROBID/LLM/벡터 스토어 장애에 대한 **정의된 저하 모드 동작**. (RESILIENCY-10) |
-| **RES-10** | DR 전략 문서화(Backup & Restore, RES-2 기준): **교차 리전 페일오버 없음** — AZ 수준 복원 + 백업/인덱스 재구축 복구 절차(복원·재구축 런북). (RESILIENCY-11/13) |
+| **RES-10** | 교체 또는 재설치한 Mac에서 현재 OrbStack 또는 검증된 전환 후 Colima data plane, launchd app/worker, tunnel, Postgres/MinIO restore, OpenSearch snapshot/rebuild와 검증 순서를 다루는 backup-and-restore runbook을 유지한다. 자동 failover는 없고 복구 후 수동 traffic 재개를 사용한다. (RESILIENCY-11/13) |
 | **RES-11** | **장애 대응(CQ6=B+)**: **경량 장애 대응 + 오류 교정(COE)** 프로세스 제안; RES-5 경보를 연동. 장애 분류 체계는 **AI/에이전트 특화 클래스**를 명시적으로 포함하며 각각 탐지 신호·경보·COE 후속을 가져야 함: **(a) 비용 폭발** — 폭주하는 LLM/API 비용(→ NFR-C1 비용 상한 서킷 브레이커, SEC-11 레이트 리미팅); **(b) 할루시네이션** — 날조된 논문/인용/주장(→ FR-5 / QT-1 엄격 근거화); **(c) 반쪽짜리 결과(partial/half-baked)** — 불완전·은밀히 저하된 답변(→ NFR-R1/R2, FR-11). (RESILIENCY-15) |
-| **RES-12** | 복원력 테스트 방식 — **NFR Design으로 보류**(RESILIENCY-14). |
+| **RES-12** | 정기적으로 fresh-host에 준하는 격리 환경에서 DB/object backup restore, datastore/model 장애, queue redrive와 이전 artifact rollback을 검증하고 결과를 감사 로그에 남긴다. (RESILIENCY-14) |
 
-## 8. 품질 & 테스트 요구사항 *(Property-Based Testing 활성 — **Partial**: PBT-02/03/07/08/09만 차단성, 나머지(01/04/05/06/10) 권고)*
+## 8. 품질 & 테스트 요구사항 *(Property-Based Testing 활성 — **Full**: PBT-01~10 전부 차단성)*
 
 - **QT-1 — 엄격 근거화 인수**: 보류된 평가셋 전반에서 날조 논문/인용 0건; 코퍼스 밖 질의에 올바른 기권 동작. 평가셋(제안: in-corpus 질의 ≥30건, 의도적 코퍼스 밖/적대적 질의 ≥10건에 100% 기권; 동결·held-out). **평가셋 구축은 Functional Design 산출물이며 소유자는 OP/팀.** (Q13=A)
 - **QT-2 — 관련도 평가셋**: 기대 관련 논문이 있는 보류 질의셋; 평가셋 대비 디스커버리 품질 측정(부팅 여부를 넘는 테스트 가능성 게이트). **지표(제안): 대표 질의 N건에서 Recall@10 ≥ 0.7.** FR-2/FR-3가 이 게이트를 참조. *(Q14=C 신뢰성과 보완)*
 - **QT-3 — 신뢰성/우아한 저하 인수**: 모든 업스트림 장애·빈 결과 경로에 정의·테스트된 동작. (Q14=C, NFR-R*)
-- **QT-4 — Property-Based Testing**: Functional Design에서 테스트 가능 속성 식별(PBT-01); 라운드트립(질의/결과 DTO·arXiv 메타데이터 직렬화), 불변식(랭킹 순서, 디덥 멱등성, 결과셋 크기/원소 보존), 도메인 제너레이터·shrinking·시드 재현성 적용; 프레임워크는 NFR Requirements에서 선정(Python→Hypothesis / TS→fast-check), 예시 기반 테스트와 보완. **Partial 모드**: PBT-02/03/07/08/09 차단성, PBT-01/04/05/06/10 권고(기술 스택 확정 후 재평가). (PBT-02/03/07/08/09 blocking)
+- **QT-4 — Property-Based Testing**: Functional Design에서 테스트 가능 속성 식별(PBT-01); 라운드트립, 불변식, 멱등성, oracle/model 비교, stateful sequence, 도메인 제너레이터, shrinking과 seed 재현성을 적용한다. Python은 Hypothesis, TypeScript는 fast-check를 사용하며 예시 기반 회귀와 함께 CI에서 실행한다. **PBT-01~10 전부 차단성**이다.
 - **QT-5 — 요약/번역 근거화 인수 [U7]** *(2026-06-29 개정 — 페이즈 3/Q2·Q3·Q4)*: U7 요약/번역(FR-12/13) 출력도 엄격 근거화 적용 — 보류 평가셋에서 날조 주장/인용 **0건**; 원문에 근거 없는 항목은 **기권**. **검증은 U7 자체 결정론 Validator**(D3 — U6 검색 enforce 재사용 아님으로 확정; 문서충실도 검증은 검색 candidate↔record set과 종류가 달라 별도, 공유 추상 인터페이스/레지스트리 아래 등재): ① **앵커 존재**(SOFT — 검증 불가 앵커는 드롭, 본문+검증 통과 앵커는 노출), ② **수치 일치**(HARD), ③ **스키마 완전성**(HARD), ④ **빈/절단**(HARD). 1차 실패→1회 재시도→재실패→기권(fail-closed). LLM-judge 미사용. **앵커 계약**: `{field, target∈{section\|table\|figure}, span, label}`(block-level id 정밀 앵커는 페이즈 4 이월; Q4). **수치 임계 재보정(Q3 — 실질 갭)**: 현행 수치 가드는 fraction-based 임계 `0.5`(결과 수치의 50% 초과가 원문 부재 시에만 기권)인데 이는 **충실도 평가셋 없이 정한 추정값**(matcher 노이즈—반올림·단위·표 재렌더—를 임계로 덮음). → **QT-1 충실도 평가셋 신설(grounded/날조 라벨 케이스 + `run_eval_set` 구현)·matcher 정밀화(반올림·단위 정규화)·임계 strict 재보정(false-abstain↔false-pass 곡선 기반)** 을 **페이즈 3 산출물**로 한다. **QT-1 평가셋에 요약/번역 케이스 추가.** (FR-12/13/18, FR-5와 일관.)
 - **QT-6 — 인용 엣지 정확도 + 그래프 불변식 [U8]**: 날조 인용 0건. 해소 가능한 ID가 있는 엣지만 확정 표시하고, ID 해소 실패 항목은 unresolved로 분리한다. 그래프 불변식(깊이≤2, 화면당 노드≤50, 중복 접기, 순환 방지, DTO 라운드트립)을 PBT 또는 동등한 자동 테스트로 검증한다.
-- **QT-7 — 개인화 이벤트/프로필 불변식 [U9]**: 행동 이벤트 DTO 라운드트립, 이벤트 dedupe key 안정성, owner-scoped 접근, raw event 90일 보관 정책, 프로필 집계 불변식(동일 입력 이벤트 집합 → 동일 프로필, 삭제/초기화 후 개인화 신호 제거)을 자동 테스트한다. PBT는 기존 Partial 모드(PBT-02/03/07/08/09)를 유지한다.
-- **QT-8 — 근거형성 근거화·불변식 [U11]** *(2026-06-29 신규)*: 근거 출력에 날조 주장·인용 **0건**(논문 원문에 없는 statement 생성 금지, C-2·FR-5); 근거 0건·범위 밖 질의에서 **state=abstain 경로 동작**(날조 없이 기권); `EvidenceItem` DTO 라운드트립(schema.json 일치); conflicting[] 배열 상충 표현 정확성; owner-scoped 접근 불변식(다른 사용자 세션 접근 불가, SEC-8); 멀티턴 맥락 누적 불변식(이전 턴 근거 재참조 가능). **QT-1 평가셋에 문헌탐색 케이스 추가.** PBT Partial 모드(PBT-02/03/07/08/09 차단성) 유지.
-- **QT-9 — U1 Corpus 품질/불변식 [U1]**: 멀티소스 dedup 멱등성(DOI→arXiv id→정규화 title/author/year), source별 watermark 단조 증가, `(paperId, version)`별 DocModel·청크·인덱스·S3 참조 정합, DocModel schema roundtrip/negative validation, 모든 인덱스 record의 DocModel Block id 실재성, retry/DLQ 재처리 멱등성, 라이선스 미허용 원문/원시 PDF 미저장 불변식을 자동 테스트한다. PBT Partial 모드에서 PBT-02/03/07/08/09는 차단성으로 적용하고 Python 구현은 Hypothesis 기반 generator/shrinking/seed 재현성을 사용한다.
-- **QT-10 — novelty Agent 품질/불변식 [U12]**: `EvidenceFormationPort`/`SourceRef` 무결성, U2 `full` 검색 결과의 SourceRef 정합, 유사 논문 적중, GitHub/데이터셋 출처 보존, 원고 유사도/AI 어투 경고의 false positive 관리, 실험 계획 필수 필드, job state transition, Notion export 무결성을 자동 테스트한다. PBT는 Partial 적용(Q32=B)으로 pure function, DTO round-trip, source normalization, job-state invariant에 한정한다.
+- **QT-7 — 개인화 이벤트/프로필 불변식 [U9]**: 행동 이벤트 DTO 라운드트립, dedupe key 안정성, owner-scoped 접근, raw event 90일 보관, 동일 입력 집합의 동일 profile 및 삭제 후 신호 제거를 Full PBT와 예시 회귀로 자동 검증한다.
+- **QT-8 — 근거형성 근거화·불변식 [U11]** *(2026-09-18 Full PBT)*: 날조 주장·인용 0건, 근거 0건의 abstain, EvidenceItem roundtrip, conflicting 표현, owner-scoped 접근과 멀티턴 누적을 예시 회귀와 적용 가능한 Full PBT로 검증한다.
+- **QT-9 — U1 Corpus 품질/불변식 [U1]**: 멀티소스 dedup 멱등성, source watermark 단조 증가, `(paperId, version)`별 DocModel·청크·인덱스·MinIO 참조 정합, schema roundtrip/negative validation, block id 실재성, retry/DLQ 멱등성, 운영 fixture 부재와 원출처 메타데이터 일치를 Full PBT·oracle·예시 회귀로 검증한다.
+- **QT-10 — novelty Agent 품질/불변식 [U12]**: `EvidenceFormationPort`/`SourceRef` 무결성, U2 `full` 결과 정합, 외부 출처 보존, 원고 위험 신호, 실험 계획 필수 field, job state transition, Notion export 무결성을 적용 가능한 Full PBT와 예시 회귀로 자동 검증한다.
 - **QT-11 — Agent Chat Frontend 품질/불변식 [U13]**: mode는 세션 생성 후 변경되지 않음, 세션 목록 정렬/상태 표시, timeline event ordering, 첨부 형식 allowlist, failure/degraded classifier, mock/real transport response normalization을 자동 테스트한다. Q16=B에 따라 frontend pure helper와 상태 reducer에는 fast-check 기반 Full PBT를 적용하고, UI rendering은 예시 기반 테스트로 보완한다.
+- **QT-12 — 공개 job 인수** *(2026-09-19 승인)*: 접수/실행/조회/전달의 caller 격리, 권한 만료/철회, 중복/역순 event, 재연결, queue 유실/worker crash, 논리적 멱등성, terminal 상태 보존과 비재귀 관측을 예시 회귀·integration 및 적용 가능한 Full PBT로 검증한다. F01~F13 회귀를 함께 유지한다.
 
 ## 9. 제약 (Constraints)
 - **C-1** 콘텐츠: **오픈액세스/인덱싱 허용 라이선스 전용**(phase-1은 arXiv·Semantic Scholar·OpenAlex의 최근 AI/ML 1년). OA 전문만 저장. (Q12=A) **[개정 2026-06-25 — U1 리뷰, 커밋 `86ade36` 추인]** 인덱싱 허용 라이선스 = CC-BY/CC-BY-SA/CC0 **+ arXiv 비독점 배포 라이선스**(`arxiv.org/licenses/nonexclusive-distrib`). 근거: 디스커버리 용도(원문 링크백 + 초록 스니펫 표시)는 **대량 재배포가 아니며** arXiv 공개 열람과 동등 → arXiv 인덱스 가능 코퍼스를 CC 전용에서 사실상 전 arXiv로 확장. **[U1 Corpus 2026-06-26]** Semantic Scholar/OpenAlex PDF는 OA/라이선스 허용 신호가 확인되는 경우에만 transient fetch→GROBID 추출에 사용하고, 원시 PDF는 저장·다운로드하지 않는다. 저장 대상은 정규화 FullText/DocModel/자산/인덱스 record와 source provenance이며, 재배포 금지·미표기·불명 라이선스는 계속 NON_OA 배제(BR-1). 전문 S3 보관은 공개 차단 유지(SEC-9, BR-20).
 - **C-2** 이번 사이클에서 **AI 생성 글쓰기(원고·문헌리뷰 산문 작성/합성)는 범위 제외**(Q11=D). v1의 AI 텍스트는 **검색된 레코드에서 도출된 근거 기반 관련도 신호/추출 요약**(FR-5)으로 한정하며, 사용자 본인 글을 위한 생성·합성 산문은 만들지 않는다. (§2·§12와 동일 정의 적용.) **[U7 경계 — Q1=A]** 요약/번역(FR-12/13)은 **검색돼 사용자가 선택한 단일 논문의 추출**(요약=전문 구조화, 번역=초록 번역)에 해당하여 본 추출 경계 **안**이다 → 허용. **[novelty Agent 경계 — Q14/Q15=A]** bounded 실험 아이디어와 실험 계획은 근거 기반 연구 보조 산출물로 허용하되, 원고 문단·문헌리뷰 산문·"새로움 확정" 판정·논문화 가능성 점수·코드 skeleton 생성은 제외한다.
 - **C-3** **폰 전용 모바일 웹**(Q8/CQ3); 데스크톱 = 폰 목업 프레임. 네이티브 앱·PWA 설치 없음(v1).
-- **C-4** **단일 리전, 멀티 AZ** 배포(CQ4=E).
-- **C-5** AWS 지향(팀 경험 + 이전 사이클)이나 구체적 기술 스택은 Construction 전까지 **미확정**.
+- **C-4** **단일 Mac production / 단일 장애 도메인**을 명시적으로 수용한다. multi-zone/multi-region 및 자동 failover는 범위 밖이며, 이 예외는 접근제어·백업·복구·모니터링 요구를 면제하지 않는다.
+- **C-5** 런타임은 launchd native app/worker + 단일 Mac의 컨테이너 data plane(Postgres/Redis/OpenSearch/MinIO/ElasticMQ) + Ollama(`bge-m3`, `qwen3:8b`) + outbound-only Cloudflare Tunnel이다. **현재** 컨테이너 매니저는 OrbStack이고 **R1IF1=B/R1IFR1 승인 목표**는 무상 Colima/Lima+Docker Engine/CLI다. 백업·복원·롤백·디스크 여유 검증 후 명시적 수동 전환 전까지는 OrbStack이 실제 운영 런타임이다. 브라우저에는 BFF만 공개한다.
 - **C-6** v1 분야 범위는 **AI/ML 전용**(Q5=A).
 - **C-7** *(technical, 2026-07-23 — 온보딩)* 프로필 시딩은 기존 U9 이벤트·집계 계약 안에서만 수행한다(직접 프로필 기록 금지 — TTL/재집계에 소실). §12 U9 제외 항목을 재도입하지 않는다.
 - **C-8** *(business, 2026-07-23 — 온보딩)* Phase 3 실행 순서상 온보딩(U14)이 첫 항목 — 트렌드/알림·구독제에 앞서 개인화 콜드스타트 해소 선행. US-P5는 온보딩 트랙에 포함해 선행한다.
@@ -206,12 +216,14 @@ DocSuri v1은 **프로덕션 수준의, 공개 이용 가능한 모바일 웹 �
 - **C-10** *(business, 2026-07-23 — 트렌드/알림)* 트렌드/알림은 온보딩 다음·구독제 앞 — 목적은 구독제가 전제하는 리텐션 루프 구축.
 - **C-11** *(technical, 2026-07-23 — 웹검색 레퍼런스)* 웹 레퍼런스는 **링크백 전용** — 페이지 본문 fetch·저장·재배포 금지, 프로바이더 검색 결과 메타(제목·URL/DOI·저자·연도 등)만 사용·표시. 근거(claims) 참여 금지.
 - **C-12** *(business/technical, 2026-07-24 — 구독제)* **v1 결제 카브아웃** — PG 연동·청구·결제 코드 없음, plus 부여는 ADMIN 수동만. 티어 도메인은 결제 도입 시 PG 어댑터 추가만으로 승격 가능하게 설계(플랜 도메인↔결제 수단 분리). PG 선택은 결제 도입 시 재방문.
+- **C-13** *(2026-09-19 공개 job 계약 승인)*: 적용 범위는 F01~F13 때문에 REM으로 이관되는 업무 경로로 한정한다. 접수 확인, 인가된 event/subscription/재연결, 완료 결과/asset bytes, health/readiness, REM-1 read-only evidence는 새 업무 job 없는 직접 경로다. 인증·rate-limit 선행 집행, 계정 비활성화/세션 무효화, 수신 해지 보호를 queue 대기로 미루지 않는다. 전체 제품 API 전환과 임의 신규 업무 endpoint는 포함하지 않는다.
+- **C-14 — 비용 0원 / Mac mini 서빙** *(2026-09-20 사용자 명시)*: application/API/worker/inference 및 serving data·운영 화면은 제공된 이 Mac mini에서 실행·제공한다. 인프라도입에 유료 hosting/managed service/license/계량 과금 또는 새 장비 구매를 요구하지 않는다. 기존 장비/인터넷을 사용하고 무료 사용 자격·용량을 확인하며, 불명확한 license/trial/free-tier 초과를 0원으로 간주하지 않는다. 기존 free ingress/외부 dead-man 신호/공개 package·advisory·time source 및 passive off-host backup은 serving과 구분해 허용 범위·실제 무상 자원을 확인한다. RES-2/10/12의 off-host 복구 요구를 같은 Mac 내부 복제본으로 충족했다고 표시하지 않는다.
 
 ## 10. 가정 & 조정 (Assumptions & Reconciliations)
 - **A-1 (CQ1)**: "프로덕션 출시" + "공개 셀프 가입"을 중간 비용 티어와 조정 → **공개 프로덕션, 단계적 규모** — 프로덕션 수준으로 구축하되 근시일 수백 명, 강한 비용 가드레일.
 - **A-2 (CQ2)**: 벡터 스토어는 모두가 검색하는 **공유 AI/ML 학술 Corpus 인덱스**다. phase-1은 arXiv 중심에서 Semantic Scholar/OpenAlex OA PDF 보강까지 확장하되, 사용자별 데이터는 검색 저장/라이브러리/이력으로 한정한다. 사용자별 문서 코퍼스 아님(개인 코퍼스 RAG는 §12 로드맵 후보).
 - **A-3 (CQ3)**: 플랫폼은 **모바일 웹 앱**("폰 전용 + 데스크톱 폰 목업" 해석).
-- **A-4**: 정량 NFR 목표(P1/A1/S1/C1)는 이전 사이클을 따른 **제안**이며 확정 대상.
+- **A-4**: AWS 비용·multi-AZ·Bedrock/Cohere 기반 정량 목표는 폐기한다. 성능 목표 NFR-P1은 single-host cold/warm 분리 부하 시험으로 재검증하고, 가용성·용량·비용은 NFR-A1/S1/C1의 local resource 기준을 따른다.
 - **A-5**: arXiv 전문은 arXiv 약관 내에서 인덱싱/검색에 대해 오픈액세스·재배포 가능으로 취급.
 
 ## 11. 성공 기준 / 인수 (Success Criteria)
@@ -226,6 +238,7 @@ DocSuri v1은 **프로덕션 수준의, 공개 이용 가능한 모바일 웹 �
 9. novelty Agent는 자연어 또는 업로드 원고 입력에서 공유 Evidence 계약과 U2 `full` 검색을 사용해 유사 연구·차별화 후보·실험 계획을 생성하고, 탐구 과정을 프론트에 단계별로 표시하며, Notion export는 사용자 승인 후에만 수행한다. 외부 source 실패는 `degraded` 부분 결과로 표면화된다. (FR-30..35, NFR-P5/R3, QT-10)
 10. 사용자가 연구 질문을 채팅으로 입력하면 관련 논문들에서 **핵심 주장·방법·결과·한계를 추출·비교 정리**해 받고, 근거가 없으면 날조 없이 기권한다. 세션이 owner-scoped로 영속되어 재열람 가능하다. (FR-36~38, NFR-P6, QT-8)
 11. 사용자가 하단 네비의 `에이전트` 탭에서 mode를 선택해 멀티턴 채팅을 시작하고, 과거 세션을 drawer에서 다시 열며, agent 탐구 과정을 timeline으로 확인할 수 있다. 실패/저하/첨부 제한은 명확한 사용자 메시지와 재시도 경로로 처리된다. (FR-40~43, NFR-P7, QT-11)
+12. F01~F13 회귀가 모두 통과하고, live data repair는 backup/rollback 검증 후 수행되며, full corpus rebuild는 별도 명시 승인 없이는 시작되지 않는다. (`verification-remediation-2026-09-18.md`)
 
 ## 12. 범위 제외 (v1)
 근거 합성 Q&A; 라이브러리 저장을 넘는 레퍼런스 관리; forward citations 기반 trace 내비게이션; AI 생성 글쓰기/작성; 비(非)AI/ML 분야; 비(非)오픈액세스/유료 콘텐츠; 멀티 리전 DR; 네이티브 모바일 앱; 협업/공유(랩, 지도교수-학생); 오프라인 사용.
@@ -299,12 +312,13 @@ DocSuri v1은 **프로덕션 수준의, 공개 이용 가능한 모바일 웹 �
 | QT-5 앵커 보강(doc-model id 실재성·결정적) [U7] | doc-model 명확화 Q6=A; 게이트 Q3 스키마 |
 | doc-model 생성 eager+캐시 / lazy 보강 경로 정정 [U1] | U1 Corpus Q5=A, Q9=A, Q12=A (2026-06-26); `reinception-2026-06-charter.md` D6. 구 doc-model Q7=A(lazy)는 phase-1 Corpus 범위에서 대체됨 |
 | FR-13 개정(본문 번역 = 구조화 번역본 doc-model; 긴 번역 map-only·비동기) [U7] | PR-2 게이트 (2026-06-24); `docmodel-foundation-pivot-plan.md` PR-2 절·BR-S18 |
-| FR-21 듀얼 라이트 (v4 마이그레이션, 구 FR-18) [U1] | v4 마이그레이션 Q3=A |
-| NFR-M2 Blue/Green 마이그레이션 전략 | v4 마이그레이션 Q1=A |
-| NFR-S2 v4 컷오버 및 모델 설정 | v4 마이그레이션 Q2=A, Q4=A |
+| FR-21 인덱스/임베딩 generation migration [U1/U2] | 2026-09-18 single-Mac 재기준; remediation Q3=B, clarification=A |
+| NFR-M2 local OpenSearch generation+alias migration | 2026-09-18 single-Mac 재기준; remediation Q3=B |
+| NFR-S2 local Ollama `bge-m3` writer/reader 계약 | 2026-09-18 single-Mac 재기준; remediation Q3=B |
 | DocModel(Block) 기반 인덱싱 / index generation·alias 전환 [U1/U2] | U1 Corpus Q6/Q7/Q8=A (2026-06-26) |
 | NFR-C1 U1 Corpus eager 비용 게이트 [U1] | U1 Corpus Q5/Q8/Q12=A (2026-06-26) |
-| QT-9 U1 Corpus 품질/불변식 [U1] | U1 Corpus Q2/Q6/Q7/Q9/Q10/Q11=A (2026-06-26); PBT Partial PBT-02/03/07/08/09 |
+| QT-9 U1 Corpus 품질/불변식 [U1] | U1 Corpus Q2/Q6/Q7/Q9/Q10/Q11=A (2026-06-26); PBT Full 재확인 2026-09-18 |
+| 2026-09-18 single-Mac runtime 재기준 + F01~F13 교정 | `requirement-verification-questions-verification-remediation-2026-09-18.md` Q1=A/Q2=C/Q3=B/Q4=A/Q5=A/Q6=A; clarification=A; `verification-remediation-2026-09-18.md` |
 | RES-7 U1 Scheduler/Retry/DLQ/watermark 실패 신호 [U1/U6] | U1 Corpus Q10/Q11=A (2026-06-26) |
 | FR-30..35, NFR-P5/R3, QT-10 (novelty Agent 입력·검색·아이디어·실험계획·원고위험·진행상태·Notion export) [U12] | Novelty Agent Q1~Q7=A, Q8=B, Q9~Q28=A, Q29=C, Q30=A, Q31=A, Q32=B (2026-06-29); `requirement-verification-questions-novelty-agent.md`; `requirement-verification-questions-u11-novelty-agent.md`(재스코핑); 원답변 `…-answer-1.md`은 미커밋 임시 입력(인라인 반영); `EvidenceFormationPort`/`SourceRef` 공유계약; 구현 `construction/novelty-agent/` |
 | FR-36~38 (문헌탐색·근거형성 세션·추출·영속) [U11] | U11 질문지 Q1~Q10 전수 확정 (2026-06-29); `requirement-verification-questions-literature-evidence-agent.md`; `reinception-2026-06-charter.md` 페이즈 4·D2·D5 |
@@ -313,3 +327,16 @@ DocSuri v1은 **프로덕션 수준의, 공개 이용 가능한 모바일 웹 �
 | D5 계약 게이트 (EvidenceItem·EvidenceFormationPort 동결) [U11→U12] | `shared/dtos/evidence.schema.json`·`shared/ports/README.md` (2026-06-29); `reinception-2026-06-charter.md` D5 |
 | §12 U11 제외 (재현성 판정·confidence·생성 산문·연구아이디어·전 분야) [U11] | U11 Q1=A (재현성 제외), Q3=B (confidence 제외), C-2, D2 |
 | FR-40~43, NFR-P7, QT-11 (Agent Chat Frontend 진입·mode lock·세션 drawer·timeline·첨부·상태 UX) [U13] | Agent Chat Frontend Q1~Q16 확정 (2026-07-01); `requirement-verification-questions-agent-chat-frontend.md`; `requirement-question-answer.md` |
+| FR-52, NFR-R4, QT-12, C-13 및 §14 (공개 job 계약) | Application Design DSRQ4=C, DSRQF1=A, DSRQF2=A (2026-09-19); `verification-remediation-2026-09-18.md` §10; 요구사항 승인 RJR1=A (사용자 "Approve & continue") |
+| C-14, NFR-C1 인프라 비용 제약 | Infrastructure Design 중 사용자 원문: "The infrastructure should be zero-cost and everything should be served from this mac mini." (2026-09-20). 실제 runtime license와 기존 off-host 자원은 Infrastructure 질문에서 확인 |
+
+## 14. 2026-09-19 공개 job 계약 개정
+
+**상태**: Requirements Analysis 개정 승인 완료 - RJR1=A (2026-09-19). 아래 범위의 응답 계약에는 본 개정이 우선한다.
+
+- **의도/깊이**: 네 장기 deployable REM services의 공개 API 전환에 따른 사용자 흐름 개정. Multiple Components / High / Comprehensive이며 상세 범위는 REM 이관 경로에 한정한다.
+- **확정 입력**: DSRQ1/2/3/5/6/7=A, DSRQ4=C, DSRQF1/2=A. 업무 read/status까지 비동기로 처리하고 공개 frontend가 job 수명주기를 소비한다.
+- **우선순위(승인됨)**: 이관된 versioned route에는 FR-52와 `verification-remediation-2026-09-18.md` §10을 적용한다. FR-13/F05의 repeat-request polling 전제는 해당 경로에서 queued status query 및 event 결과 전달로 대체한다. NFR-P2의 cache-hit 즉시 HTTP 결과 반환 전제는 빠른 cache-backed job 완료/전달로 대체하되 불필요한 model 재실행은 허용하지 않는다. 기존 미전환 route는 호환 기간의 원 계약을 따른다.
+- **기존 인수 정합성**: NFR-P1의 검색 결과 도달 목표, F01/F02 owner/source 격리, F07 same-origin 자산 전달, FR-28 즉시 비활성화/세션 무효화, FR-47/48 수신 해지 보호를 유지한다. job 접수 응답 시간을 업무 완료 시간으로 측정하지 않는다.
+- **후속 단계**: 공개 사용자 흐름 변경으로 User Stories를 실행한다. 기존 US-S5, private 문서/자산 열람, 상태 재연결/실패, US-TN2, US-R5의 영향을 검토하고 Workflow를 개정한 뒤 Application Design을 재개한다.
+- **리뷰 파일**: `requirement-review-questions-remediation-public-jobs-2026-09-19.md` RJR1.

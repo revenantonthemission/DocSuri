@@ -125,42 +125,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
 
 def _apply_startup_migrations(database_url: str) -> None:
-    """Self-migrate on boot — Postgres only (the DDL is Postgres-specific: SERIAL/TIMESTAMPTZ).
+    """Verify Postgres registry readiness without DDL; explicit R1R owns application.
 
-    Idempotent via the runner's ``_migrations`` ledger, so every task re-running it is safe.
-    Only the modules in THIS image (accounts + library); ingestion ships in its own image.
-    Fail-closed: a migration error propagates → the container never serves a half-schema'd DB.
-
-    Ceiling (ponytail): fine for the single-task API. If the API ever fans out to many tasks
-    against a *fresh* DB, move this to a one-off migrate job / add an advisory lock — concurrent
-    first-run CREATEs could otherwise race.
+    The legacy function name is retained for callers. RUN_MIGRATIONS_ON_STARTUP no longer
+    authorizes writes or bypasses schema checks. Fresh/legacy databases need the explicit runner.
     """
-    import os
-
-    if os.getenv("RUN_MIGRATIONS_ON_STARTUP", "1").lower() in {"0", "false", "no"}:
-        return
     if not database_url.startswith(("postgresql://", "postgresql+psycopg://", "postgres://")):
         return  # sqlite / local — nothing to migrate
     # The migration runner uses psycopg.connect directly, which wants a libpq DSN — strip the
     # SQLAlchemy `+psycopg` dialect tag that make_engine relies on.
     dsn = database_url.replace("postgresql+psycopg://", "postgresql://", 1)
-    from backend.migrations import apply_migrations
+    from backend.migrations import MigrationBlocked, inspect_migrations
 
-    applied = apply_migrations(
-        dsn,
-        [
-            "backend/modules/accounts/migrations",
-            "backend/modules/library/migrations",
-            "backend/modules/personalization/migrations",
-            "backend/modules/onboarding/migrations",
-            "backend/modules/trends/migrations",
-            "backend/modules/plans/migrations",
-            "backend/modules/mypage/migrations",
-            "backend/modules/evidence/sessions/migrations",
-            "backend/modules/novelty/migrations",
-        ],
-    )
-    log.info("startup migrations: applied=%s", applied or "(none pending)")
+    status = inspect_migrations(dsn)
+    if status.state != "READY":
+        raise MigrationBlocked(f"schema readiness: {status.state}; run explicit reconciliation")
+    log.info("startup migration registry verified (read-only)")
 
 
 def _build_observability():

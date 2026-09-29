@@ -3,11 +3,13 @@ name = "docsuri-ops"
 version = "0.1.0"
 description = "DocSuri U6 Reliability/Ops worker for observability, cost guard, incident detection, and health evaluation."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 license = "MIT"
 dependencies = [
     "docsuri-shared",
+    "docsuri-platform-integrity==0.1.0",
     "pydantic>=2.7,<3",
+    "psutil>=7,<8",
 ]
 
 [dependency-groups]
@@ -19,6 +21,7 @@ dev = [
 
 [tool.uv.sources]
 docsuri-shared = { path = "../shared/python", editable = true }
+docsuri-platform-integrity = { path = "../platform_integrity", editable = true }
 
 [project.scripts]
 docsuri-ops = "docsuri_ops.cli:main"

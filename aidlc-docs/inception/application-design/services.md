@@ -1,5 +1,7 @@
 # services.md — 서비스 정의·오케스트레이션 (Application Design)
 
+> **현재 승인 설계**: 하단 `2026-09-19 Deployable Services and Public Jobs`의 durable service orchestration이 DAD1=A로 승인됐다. 이전 superseded in-process 흐름은 이력이다.
+
 > 각 서비스의 책임 + 오케스트레이션을 **동기 읽기(sync)** vs **이벤트 백본(event)** 으로 구분 명시한다(DQ6 재조정).
 > 동기 경로: 사용자向 디스커버리 READ(NFR-P1 P50<3s), 계정, 라이브러리 CRUD.
 > 이벤트 백본: 인제스천, 이력 쓰기, 비용/인시던트 탐지, 관측성 팬아웃.
@@ -185,3 +187,177 @@
 - **책임**: 스트리밍 SLA를 초과하는 긴 다논문 분석을 비동기 잡으로 오프로드(NFR-P6, Q9=A, U7 잡 패턴 재사용).
 - **오케스트레이션**: 요청 수신 → 즉시 `jobId` 응답(폴링 URL 포함) → `EvidenceAgentOrchestrator` 실행을 비동기 잡 큐에 발행(event) → 워커가 결과 완료 후 `EvidenceSessionRepository`에 저장 → 클라이언트는 `GET /api/evidence/jobs/:id`로 상태/결과 폴링.
 - **Trace**: NFR-P6, Q9=A, US-EV9
+
+---
+
+## 2026-09-19 F01-F13 교정 서비스 개정
+
+> **SUPERSEDED - 2026-09-19 UQRF1=B**: 아래 orchestration은 REM planning-overlay 전제의 이력이다. 네 장기 deployable remediation services의 runtime orchestration은 재개된 Application Design에서 다시 정의한다.
+>
+> RQ1=A: 아래 서비스는 기존 package/deploy boundary 안의 orchestration이다. REM 전용 runtime 서비스는 없다. 모든 destructive/live 단계는 isolated verification과 별도 실행 승인을 통과하기 전 호출되지 않는다.
+
+### REM-1 - Platform and Contract Integrity
+
+#### MigrationApplicationService (startup + CLI 공통)
+- **책임**: backend startup과 migration CLI가 동일 ordered registry와 ledger identity를 사용하도록 한다. 빈 DB, 재실행, 실패 rollback에서 같은 결과를 보장한다.
+- **오케스트레이션**: startup 또는 CLI → `OrderedMigrationRegistry.entries/validate` → validation 성공 시 기존 migration runner에 ordered specs 전달 → script별 transaction 안에서 DDL+ledger 기록 → 실패 시 해당 script transaction rollback. startup/CLI identity set 불일치는 실행 전 차단한다.
+- **Trace**: F08, NFR-M1, RESILIENCY-04, PBT-04/05/06
+
+#### ContractGenerationPipeline (build-time)
+- **책임**: local JSON schema 전체를 offline fail-closed 방식으로 build-consumed Python/TypeScript binding으로 생성하고 CI drift gate를 제공한다.
+- **오케스트레이션**: schema roots 자동 발견 → `$id -> local file` registry 구성 → local `$ref` closure 검증 → temporary output tree 생성 → 전체 target parse/typecheck 성공 → committed generated tree 원자 교체 또는 `checkDrift`; 어느 단계든 실패하면 non-zero로 종료하고 기존 tree를 보존한다.
+- **Trace**: F13, SEC-5/13, NFR-M1, PBT-02/10
+
+#### SupplyChainVerificationPipeline (build/deploy preflight)
+- **책임**: production runtime, lock closure, container digest, advisory, SBOM을 deploy unit별로 검증한다.
+- **오케스트레이션**: shared runtime compatibility manifest 로드 → native launchd/CI/local/Docker version 대조 → committed frozen lock audit → approved exception expiry/reachability 검증 → digest pin 검사 → deploy unit별 SBOM 생성/보관. 차단 finding이 남으면 build/deploy를 중지한다.
+- **Trace**: F06, SEC-10, RESILIENCY-03/04
+
+### REM-2 - Private Content and Generation
+
+#### SummaryRequestOrchestrationService (기존 summarization orchestration 개정)
+- **책임**: public/private namespace 격리, canonical source identity, cache lookup, durable async generation을 한 순서로 조정한다. 기존 `{status: "pending"}`와 repeat-request polling 외부 계약은 유지한다.
+- **오케스트레이션**: authenticated public summary 요청 → `PublicPaperNamespacePolicy.requirePublicPaperRef` → `CanonicalSummarySourceResolver.resolveCanonicalSource/sourceIdentity` → source-bound cache key 구성 → cache hit 즉시 반환 → miss면 `SummaryGenerationJobRegistry.ensureJob` → active/new job은 enqueue 결과를 durable 기록하고 `pending` 반환 → repeat POST는 cache 또는 marker를 조회해 success/terminal failure/pending을 반환한다. client abstract는 canonical source 선택에 사용하지 않는다.
+- **worker 흐름**: queue delivery → durable lease/running 기록 → model execution bounded timeout/visibility heartbeat → artifact write → succeeded marker; retriable failure는 attempt budget 안에서 redelivery, 소진/비재시도 오류는 terminal failure. enqueue 실패를 pending으로 위장하지 않는다.
+- **Trace**: F01, F02, F05, FR-5/12/13, NFR-P2/R2, SEC-8/13/15, RESILIENCY-10
+
+#### PrivateDocumentContextService (evidence/novelty context-bound)
+- **책임**: authenticated owner가 이미 확정된 evidence attachment 또는 novelty manuscript 경로에서만 `userdoc:` DocModel/asset을 제공한다. public paper controller와 공유하지 않는다.
+- **오케스트레이션**: context controller의 authenticated owner → `UserDocModelCoordinator.validateOwnedRef` → owner-bound object/asset read → caller domain에 block/stream 반환. mismatch와 missing은 동일 NotFound로 일반화한다. public summarization/DocModel/asset route는 이 서비스로 자동 전환하지 않고 `userdoc:`를 거부한다.
+- **Trace**: F01, F07, FR-18/38, SEC-8/9/15
+
+#### SameOriginAssetDeliveryService (authenticated sync stream)
+- **책임**: paper asset의 auth, public namespace, license, manifest, object access와 browser same-origin relay를 묶되 storage endpoint/key를 외부에 노출하지 않는다.
+- **오케스트레이션**: browser same-origin request → `SameOriginAssetProxy`가 session/trusted identity 전달 → `AuthenticatedPaperAssetController.streamAsset` → public namespace + license + manifest 검증 → backend-only object stream → BFF가 safe content/cache headers와 bytes를 relay. `userdoc:`는 public route에서 거부하고 private context service로만 읽는다.
+- **Trace**: F07, SEC-4/8/9, RESILIENCY-10
+
+### REM-3 - Owner Lifecycle and Edge Trust
+
+#### DurableOwnerPurgeService (AccountDeletionService 개정)
+- **책임**: SQL과 private objects/cache를 immutable manifest에 결속해 완전하고 멱등이며 재개 가능한 account purge를 수행한다.
+- **오케스트레이션**: deletion grace 만료 → `OwnerPurgeRegistry.validateCoverage/inventoryOwner` → `PurgeManifestRepository.createManifest` commit → 기존 deterministic deletion event 발행/단계 기록 → manifest object/cache targets 삭제 → owner SQL+credentials transaction → `verifyResidue`로 대상 owner 0건과 비대상 owner 불변 확인 → complete. 실패는 stage/error를 기록하고 동일 manifest에서 resume한다. registry 누락과 zero-residue 실패는 complete를 금지한다.
+- **Trace**: F04, FR-28/38, SEC-8, RESILIENCY-02/04/12/14, PBT-04/06
+
+#### DigestLinkService (token-authorized public mutation)
+- **책임**: 이메일의 실제 `/paper/{id}` link를 생성하고, exact public unsubscribe path에서 expiring signed grant로 opt-out을 원자 적용한다.
+- **오케스트레이션**: digest render 시 route-safe paper ID와 실제 frontend route 생성 + `DigestLinkTokenVerifier.issue` → unsubscribe request는 gateway exact-path public exception → verifier가 signature/age/settings version 검증 → repository conditional update(owner, opted-in, settings version) → 이미 opted-out이면 동일 성공. concurrent settings 변경은 stale token으로 거부한다.
+- **Trace**: F09, FR-47, SEC-5/8/12/13/15
+
+#### TrustedEdgeIdentityService (BFF + ingress middleware)
+- **책임**: Cloudflare tunnel 경계에서 검증한 한 client identity를 JSON/PDF/SSE 전 경로와 rate-limit/abuse control에 일관되게 공급한다.
+- **오케스트레이션**: BFF가 browser-supplied internal header 제거 → production ingress의 단일 `CF-Connecting-IP` parse/canonicalize → private header overwrite → FastAPI ingress가 raw socket peer loopback 여부 검증 → `TrustedClientIdentityResolver`가 request-scoped identity 한 번 설정 → gateway `RateLimiter`와 accounts reCAPTCHA/email limiter가 같은 identity 소비. non-loopback private header와 malformed/multiple production identity는 거부한다.
+- **Trace**: F10, SEC-2/11/15
+
+### REM-4 - Corpus and Search Integrity
+
+#### CorpusIntegrityAuditService (standalone read-only)
+- **책임**: production corpus generation의 fixture, source metadata, 최근 AI/ML 365일 범위, generation identity를 mutation 없이 평가하고 immutable readiness report를 생성한다.
+- **오케스트레이션**: `ProductionSeedGuard`로 production seed 차단 → operator/scheduled audit가 active alias/backing generation snapshot → `CorpusIntegrityAuditor.auditGeneration/writeReport` → report hash/freshness와 expected/indexed/missing/extra를 publish → `CorpusReadinessProvider`는 현재 generation과 report만 비교해 readiness reason을 노출한다. startup/readiness가 OpenSearch 문서를 수정하는 경로는 없다.
+- **Trace**: F03, FR-2/5/6, QT-1/9, SEC-9, RESILIENCY-05/06/07
+
+#### TargetedCorpusRepairService (standalone, approval-gated)
+- **책임**: exact fixture fingerprint cleanup을 backup-first generation copy/cutover 방식으로 수행하고 rollback generation을 보존한다. full corpus rebuild는 이 서비스의 묵시적 fallback이 아니다.
+- **오케스트레이션**: fresh audit report + verified backup → `CorpusRepairCoordinator.planRepair` dry-run manifest(count/IDs/hash/source+target/rollback alias) → 별도 repair authorization 확인 → fixture 제외 candidate generation 생성 → count/source/fixture 검증 → atomic alias cutover → post-audit. 실패 또는 post-check mismatch는 manifest로 alias rollback한다. 최근 1년 completeness가 rebuild를 요구하면 중지하고 별도 승인 게이트로 전환한다.
+- **Trace**: F03, RESILIENCY-02/04/12/14
+
+#### SearchOutcomeIntegrityService (sync read + frontend state)
+- **책임**: degradation provenance와 no-match 의미를 backend response union부터 frontend view state까지 보존한다.
+- **오케스트레이션**: retrieval 결과 0건 → `ResultAssembler.assembleEmpty(degradation, provenance)` → normal no-match는 empty page, known degradation은 empty degraded DTO → frontend `SearchStateClassifier.classifySearchResponse`가 degradation을 count보다 먼저 판정 → StateView가 degraded-empty/retry를 normal no-match와 구분해 렌더한다.
+- **Trace**: F11, FR-11, NFR-R1/R2, SEC-15
+
+#### RelevancePolicyService (offline calibration + sync enforcement)
+- **책임**: fixture-free/source-verified generation에서 범위 밖 질의의 relevance floor를 측정하고 generation/model-bound 승인 정책만 검색 경로에 적용한다.
+- **오케스트레이션**: fresh corpus audit → labeled in/out-of-scope eval set → `RelevanceFloorEvaluator.evaluateFloors`가 raw score, false-abstain, false-pass, retrieved IDs를 report → shadow mode 관측/승인 → `RelevanceFloorPolicy.loadPolicy`가 generation/model binding 검증 → search read가 `classifyBestMatch`로 match/no-match/abstain 결정. stale/malformed/zero policy는 조용히 비활성화하지 않고 readiness/config failure로 처리한다.
+- **Trace**: F12, FR-5/11, QT-1, SEC-15
+
+---
+
+## 2026-09-19 Deployable Services and Public Jobs
+
+**입력**: WPR2=A, DSRQ 결정, RJR1=A 및 RJS2=A. 아래 경계/불변식은 Application Design이며 정확한 상태 enum, transaction primitive, TTL/retry 수치와 schema는 Functional/NFR Design에서 확정한다. component ID와 typed port는 동명 companion 문서를 따른다.
+
+### DS-1. Service bootstrap 및 platform integrity
+
+- REM-1~4는 각각 독립 versioned artifact와 launchd daemon/worker/허용 one-shot 역할을 가진다. role별 자격증명과 resource budget을 구분한다.
+- startup은 local CompatibilityManifest, 지원 schema/operation version, 단일 ordered migration registry/ledger, 필수 설정과 consumer binding을 검증한다. 누락을 silent module skip으로 정상 처리하지 않는다.
+- REM-1 R1C는 evidence 조회만 수행한다. R1R은 명시적으로 실행된 build/CI/privileged runner이며 ordered migration apply, binding generation, dependency/pin/SBOM 검사와 승인된 promotion을 수행한다. 모든 local schema ref를 offline 해소하고 어떤 생성 실패도 전체 non-zero/미공개로 처리한다.
+- 빈 DB provisioning과 migration은 승인 runner가 수행하고 API startup은 같은 registry의 완료/호환성을 확인한다. live daemon이 실행돼야 build/migration을 시작할 수 있는 bootstrap 순환을 만들지 않는다.
+- **Trace**: F06/F08/F13, WPR2 G1, SECURITY-10/13, RESILIENCY-04.
+
+### DS-2. Content job 접수·실행·publication
+
+1. EDGE가 신뢰 ingress의 client identity, 현재 session/delegation, 입력과 rate-limit을 검증한다. public-paper와 owner-context route를 고정 dispatch하고 raw key/임의 URL을 routing 입력으로 사용하지 않는다.
+2. R2A는 public `userdoc:`를 거부하고 private context는 원 domain의 AUTH binding을 확인한다. 요청 kind/options와 caller별 submission key를 검증해 RK에 OperationIntent를 넘긴다. 접수 검증은 내용 read/model 실행과 구분된다.
+3. RK가 operation + outbox intent를 원자 저장한 후 AcceptedJobReceipt를 반환한다. broker publish 성공 자체가 접수의 유일 근거가 아니다. commit 여부가 불명확한 응답은 같은 submission으로 재조정하며 새 작업을 무작정 만들지 않는다.
+4. dispatcher는 opaque operation/command reference와 version/correlation만 queue에 보낸다. worker는 메시지의 owner/payload를 신뢰하지 않고 자기 realm의 durable record와 current authority를 다시 확인한다. 원 session cookie나 오래된 signed envelope를 queue credential로 저장하지 않는다.
+   - cross-domain command는 지정 recipient만 읽을 수 있는 immutable CommandProjection으로 입력을 해소한다. recipient가 자기 inbox에 받아 실행하고 자기 outbox로 receipt를 발행한다. 이 내부 view/copy도 owner/run fence와 보존/파기 분류를 따른다.
+5. R2W는 server source를 해결하고 SourceIdentity를 최초 실행에서 고정한 뒤 GenerationIdentity로 cache를 검사한다. 재시도는 고정 source/version을 유지한다. 해당 revision을 더 이상 검증할 수 없으면 명시적 실패이며 다른 source로 조용히 바꾸지 않는다.
+6. cache hit는 기존 artifact를 reuse하고 miss만 bounded U7 생성으로 처리한다. U1 source 준비가 필요하면 versioned 내부 BuildSource command/receipt에 맡기며 새로 생성된 private source도 원 context와 owner fence를 검증한다.
+7. 결과 blob을 준비하고 EXEC의 현재 fence/permit 안에서 result reference + terminal event/state를 publish한다. publish되지 않은 staging object도 cleanup/purge inventory 대상이다. private write가 불명확한 실패는 성공으로 공개하지 않는다.
+8. UI는 접수/진행과 domain 결과를 구분한다. queue/model 지연은 HTTP 요청을 계속 점유하지 않으며 실제 hang/retry 소진은 terminal failure로 공개한다.
+
+**Trace**: F01/F02/F05/F07, RJ-AC01/03/05/06/07/08/12, US-RJ1/US-S5.
+
+### DS-3. Queued status와 직접 관측·결과 전달
+
+- 명시적 status 확인은 대상 업무의 current owner 검증 후 독립 StatusQuery operation으로 접수한다. worker가 한 target revision/observedAt의 JobObservation을 완료 결과로 publish한다. query operation을 다시 target으로 삼는 query-of-query와 자동 polling job 연쇄는 허용하지 않는다.
+- DELIVERY는 이미 publish된 event/result를 제공한다. 연결/재연결은 새 업무를 실행하지 않는다. cursor는 actor/job/stream version에 결속되고 유효 보존 범위의 terminal 또는 알려진 진행을 재전달한다.
+- 직접 result endpoint는 준비된 artifact 또는 안전한 NotReady/Expired 응답만 제공한다. 현재 source를 새로 계산하거나 live status의 business query를 수행하는 우회 경로가 아니다.
+- 각 event dispatch/reconnect/result/asset open은 현재 권한을 검증한다. 권한을 더 확인할 수 없으면 추가 private 전달을 중지한다. binary response 시작 이후의 오류는 stream을 안전하게 종료하고 structured signal을 남기며 내부 오류를 bytes에 섞지 않는다.
+- BFF는 safe response header 및 bytes/event를 같은 origin으로 중계한다. private/observer response는 공유 cache에 남기지 않는다. UI는 disconnect를 작업 실패로 단정하지 않고 중복/역순 event가 terminal 상태를 되돌리지 않도록 한다.
+- **Trace**: RJ-AC02/03/04/05/08/12, F07/F11, US-RJ1~3.
+
+### DS-4. Current authority와 writer fencing
+
+- U3가 account/session/lifecycle authority를, 각 resource domain이 context/owner/license binding을 소유한다. REM은 검증된 read-only projection과 domain 정책을 소비한다. projection은 immutable revision과 current head/철회 여부의 일관된 조회이며 event-cache만으로 유효성을 보증하지 않는다.
+- live delegation의 transport expiry와 실제 caller의 source grant를 구분한다. queue에는 검증된 intent/reference만 남기고 실행 시 unexpired source grant 및 current resource 권한으로 ExecutionPermit을 얻는다. 제출 시점 허가나 service identity만으로 만료된 사용자 권한을 연장하지 않는다.
+- 계정 비활성화/session 무효화는 U3 직접 제어 경로다. revocation/deletion epoch의 durable 변경을 우선 적용해 session cache cleanup 또는 lifecycle event 전달이 늦어져도 새 private 작업이 허용되지 않게 한다. 알려지지 않은 authority 상태는 거부다.
+- 모든 owner writer 및 결과 publication은 EXEC fence 계약에 참여한다. 일반 user 작업은 닫힌 epoch로 commit할 수 없고, system purge/repair는 별도 purpose-bound grant로만 해당 범위를 처리한다.
+- admission 자체도 owner-bound write다. RK의 operation/outbox, opt-out suppression 및 recipient control copy는 commit 경계에서 현재 owner/run fence를 확인한다. 요청 초기에만 권한을 검사해 비활성화/파기와 경쟁하는 새 row를 뒤늦게 만드는 경로는 허용하지 않는다.
+- **Trace**: F01/F04/F10, RJ-AC05/09/11, SECURITY-08/12/15.
+
+### DS-5. Owner purge saga
+
+1. U3의 유예 관리가 current lifecycle epoch에서 유예 취소/재활성화와 파기 진입을 원자적으로 조정하고 durable LifecyclePurgeDue를 발행한다. 취소된 이전 epoch의 신호는 거부하며 파기 진입이 확정된 epoch를 뒤늦은 재활성화가 덮어쓰지 못한다. REM-3 R3P는 current system purpose와 registry coverage를 검증한다. 기존 logging-only 이벤트 또는 부분 SQL 목록을 파기 완료의 근거로 사용하지 않는다.
+2. R3P가 domain-owned EXEC에 QuiesceOwner를 보낸다. domain은 신규 write를 차단하고 진행 중 SQL/object/model 결과 publication을 정리한다. 불명확한 외부 I/O는 quiescence 완료로 응답하지 않으며 lease 만료만으로 완료를 추정하지 않는다.
+3. quiescence 확인 후 SQL/object/cache 및 REM job/outbox/event/result/staging/observer data의 exact inventory를 manifest로 고정한다. purge 진행 중 생기는 자체 receipt/progress는 미리 선언한 purge-run control namespace로 한정하고 최종 정리 대상으로 둔다. 기존 도메인마다 manifest-bound ApplyPurge를 소비하고 자기 데이터만 삭제한다. 공유 public artifact와 다른 owner variant는 보존한다.
+4. domain mutation과 receipt 발행 의도는 같은 domain의 durable 단위로 기록한다. REM-3는 command 전송/queue ack가 아니라 검증된 실행 receipt와 residue 증거를 집계한다. 재전달은 동일 command/manifest에 멱등이다.
+5. 필요한 모든 domain receipt, 대상 0건 및 비대상 owner 보존이 확인돼야 완료한다. 누락/실패는 같은 manifest에서 재개하며 immutable inventory를 조용히 재계산하지 않는다. 범위가 바뀌면 별도 검증된 후속 manifest가 필요하다.
+6. 마지막으로 command materialization/receipt의 run fence를 닫고 그 private I/O도 quiesce한다. REM-3 자체 manifest/intent/observer/receipt, recipient inbox/outbox의 private command copy 및 U3 lifecycle 잔여 데이터까지 정책에 맞게 삭제/비식별화해야 완료다. 완료 audit는 private payload와 재식별 owner 참조를 보존하지 않는다. 이후 늦은 메시지/receipt는 missing/closed parent와 authority로 거부하며 inbox upsert로 삭제된 작업/control data를 다시 만들지 않는다.
+
+**Trace**: F04, RJ-AC09/11/12, US-A6/US-EV8, RESILIENCY-12/13/14.
+
+### DS-6. Token unsubscribe와 즉시 발송 차단
+
+1. 이메일의 `/paper/{id}` 및 `/unsubscribe` landing을 유지한다. token은 U15 규칙으로 서명/issued-at/expiry/consent revision을 검증하고 production key 부재 시 fail closed한다.
+2. EDGE의 exact token-authorized 경로에서 R3C로 넘긴다. 로그인 session 대신 목적 제한 token actor를 사용하며 입력/사용량/요청 출처 검증은 생략하지 않는다.
+3. R3C와 모든 U15 sender는 같은 ConsentBarrier 계약에 참여한다. valid revision을 확인하고 suppression intent + operation + outbox를 durable하게 수락하는 경계를 provider handoff와 직렬화한다. successful receipt 이후 새 handoff가 시작될 수 없다. 진행 중 handoff가 불명확하거나 fence를 얻지 못하면 성공 접수를 추정하지 않고 bounded 실패/재조정한다.
+4. 수락된 suppression은 canonical settings의 비동기 반영보다 먼저 발송을 veto한다. 후속 ApplyOptOut은 그 suppression receipt/consent revision을 완결하는 목적 한정 System command로 U15 executor에 전달하고 version-bound receipt를 기다린다. 이미 수락된 효과의 완결 권한과 새 user/token admission 또는 결과 관측 권한은 별개이며 queue/worker 실패나 observer 만료가 suppression을 해제하지 않는다.
+5. 사용자의 이후 명시적 opt-in/설정 변경도 U15 consent revision과 barrier에 참여한다. 오래된 token/command가 새 consent를 덮어쓰지 않으며, 새 opt-in의 처리 규칙과 idempotent 재전달은 U15 Functional Design에서 명세한다.
+6. observer credential은 해당 해지와 허용된 status-query child만 관측한다. 일반 계정 정보나 다른 job으로 확대할 수 없다. 유효한 관측 권한으로 기존 receipt를 재전달할 수 있지만 만료된 token으로 새 suppression/권한을 발급하지 않는다.
+
+**Trace**: F09, RJ-AC10, US-TN2, SECURITY-05/08/12/15.
+
+### DS-7. Edge trust와 corpus 정책
+
+- R3E는 versioned edge policy를 배포한다. 실제 Cloudflare ingress proof/단일 client identity 검증과 spoof header 제거는 BFF, authenticated BFF hop/raw peer 확인은 gateway, 동일 request identity 소비는 gateway/accounts limiter에서 수행한다. REM-3 daemon 응답을 매 요청의 필수 network hop으로 두지 않는다. origin proof의 실제 배선은 Infrastructure gate다.
+- R4A는 production seed를 차단하고 current corpus generation/index identity를 read-only audit한다. source/fixture/completeness와 freshness가 포함된 immutable report를 발행한다. calibration은 검증된 generation/eval set에 결속하고 false-pass/false-abstain evidence를 남긴다.
+- SEARCH/U6 health는 immutable report와 현재 generation/model head를 함께 확인한다. missing/stale/mismatch/잘못된 floor를 조용히 zero/off로 바꾸지 않는다. 알려진 장애가 있는 0건 결과는 정상 no-match와 분리한다.
+- R4R은 exact manifest, source/target generation, verified backup/restore와 MutationApproval을 확인한 privileged U1 runner다. 새 admission/health/report read가 repair를 자동 시작하지 않는다. full rebuild/reparse/reembed/live alias cutover는 별도 승인이 필요하다.
+- **Trace**: F03/F10/F11/F12, RJ-AC03/11/12, US-R2/4/5.
+
+### DS-8. Deployment, failure isolation 및 복구
+
+| 실패/전환 상황 | 외부 및 내부 동작 |
+|---|---|
+| durable store/authority 불가 | 새 요청은 accepted로 위장하지 않음. 기존 private 전달/쓰기의 권한 확인 불가 시 차단. 직접 health는 degraded/unready와 이유의 안전한 요약을 제공 |
+| broker 유실/중단 | durable outbox/operation에서 재발행/재조정. UI는 접수 사실과 대기를 유지하되 한도 초과는 terminal로 판정. health/read-only evidence는 새 job 없이 응답 |
+| worker crash/redelivery | operation/command lease와 멱등 effect/publication을 재확인. staged 결과를 조사하고 이미 성공한 효과를 중복 실행하지 않음 |
+| REM-1/3/4 policy daemon 중단 | 검증된 local artifact/projection의 유효 범위에서 consumer가 동작. freshness/권한 증명 불가 시 해당 capability를 제한하며 arbitrary fallback은 없음 |
+| observer 단절/순서 역전 | durable published event/result를 현재 권한으로 재전달. terminal 회귀 및 query job 연쇄 없음 |
+| schema/operation version 비호환 | 지원 조합의 worker/observer를 유지하거나 명시적 보류/실패. 처리 불가 job을 drop하거나 unknown field로 권한을 확장하지 않음 |
+| 부분 배포/rollback | expand-compatible schema와 frozen artifact, writer epoch 및 versioned route를 함께 전환. 같은 source namespace에 legacy/new worker를 동시에 writer로 두지 않음 |
+
+기존 API에서 새 route를 켜기 전에 REM-2 데이터의 REM-3 purge coverage/즉시 제어 및 browser 인수를 검증한다. rollback도 같은 owner/source/삭제/해지 보호를 만족하는 artifact로만 수행한다. 안전한 호환 경로가 없으면 영향 route를 명시적으로 중지한다. backup/restore에는 새 operation/event/result/manifest가 포함되며 복구 후 accepted 작업을 재조정한다. gate는 WPR2 G0~G5를 따른다.
+
+호환 기간의 legacy public controller/EDGE adapter도 동일한 namespace/current authority/canonical source 검증을 거친다. 검증된 기존 response 계약으로 표현할 수 있는 결과만 변환하고 202 접수를 완료 DTO로 cast하지 않는다. 지원하지 않는 조합은 명시적으로 거부/업그레이드 안내하며 old unsafe handler로 되돌아가지 않는다. 필요한 caller-bound compatibility link도 owner purge와 version inventory에 포함한다.

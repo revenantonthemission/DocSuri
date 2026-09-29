@@ -78,3 +78,6 @@ if (typeof window.matchMedia !== 'function') {
 if (typeof Element.prototype.scrollIntoView !== 'function') {
   Element.prototype.scrollIntoView = () => {};
 }
+import fc from 'fast-check';
+
+fc.configureGlobal({ seed: 20260924, numRuns: process.env.R1_TEST_PROFILE === 'release' ? 2000 : 200 });

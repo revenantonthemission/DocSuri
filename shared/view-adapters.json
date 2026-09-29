@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "adapters": [
+    { "file": "frontend/lib/agentChat/sse.ts", "symbol": "mapProgressEvent", "schema": "dtos/extended.schema.json", "fixtures": ["frontend/test/agentSse.test.ts"], "kind": "wire-progress-to-timeline" },
+    { "file": "frontend/lib/agentChat/sse.ts", "symbol": "mapTimelineState", "schema": "dtos/extended.schema.json", "fixtures": ["frontend/test/agentSse.test.ts"], "kind": "wire-state-to-view-state" },
+    { "file": "frontend/lib/agentChat/state.ts", "symbol": "classifyAttachmentKind", "fixtures": ["frontend/test/agentChatReducer.test.ts"], "kind": "view-only" },
+    { "file": "frontend/lib/api/apiClient.ts", "symbol": "mapAgentAttachments", "schema": "dtos/extended.schema.json", "fixtures": ["frontend/test/apiClient.test.ts"], "kind": "wire-to-agent-view" },
+    { "file": "frontend/lib/api/apiClient.ts", "symbol": "mapAgentMessage", "schema": "dtos/extended.schema.json", "fixtures": ["frontend/test/apiClient.test.ts"], "kind": "wire-to-agent-view" },
+    { "file": "frontend/lib/api/apiClient.ts", "symbol": "mapNoveltyEvent", "schema": "dtos/extended.schema.json", "fixtures": ["frontend/test/apiClient.test.ts", "frontend/test/agentSse.test.ts"], "kind": "wire-to-agent-view" },
+    { "file": "frontend/lib/api/apiClient.ts", "symbol": "mapNoveltyJob", "schema": "dtos/extended.schema.json", "fixtures": ["frontend/test/apiClient.test.ts"], "kind": "wire-to-agent-view" },
+    { "file": "frontend/lib/api/apiClient.ts", "symbol": "mapNoveltyResultMessage", "schema": "dtos/extended.schema.json", "fixtures": ["frontend/test/apiClient.test.ts"], "kind": "wire-to-agent-view" },
+    { "file": "frontend/lib/api/apiClient.ts", "symbol": "mapNoveltyState", "schema": "dtos/extended.schema.json", "fixtures": ["frontend/test/apiClient.test.ts"], "kind": "wire-to-agent-view" },
+    { "file": "frontend/lib/api/apiClient.ts", "symbol": "mapResearchJob", "schema": "dtos/extended.schema.json", "fixtures": ["frontend/test/apiClient.test.ts", "frontend/test/agentSse.test.ts"], "kind": "wire-to-agent-view" },
+    { "file": "frontend/lib/api/apiClient.ts", "symbol": "mapResearchState", "schema": "dtos/extended.schema.json", "fixtures": ["frontend/test/apiClient.test.ts", "frontend/test/agentSse.test.ts"], "kind": "wire-to-agent-view" },
+    { "file": "frontend/lib/api/apiClient.ts", "symbol": "mapTimelineState", "schema": "dtos/extended.schema.json", "fixtures": ["frontend/test/apiClient.test.ts", "frontend/test/agentSse.test.ts"], "kind": "wire-to-agent-view" },
+    { "file": "frontend/lib/api/classify.ts", "symbol": "classifySearchResponse", "schema": "dtos/search.schema.json", "fixtures": ["frontend/test/classify.test.ts"], "kind": "generated-wire-to-outcome" },
+    { "file": "frontend/lib/api/classifySummarize.ts", "symbol": "classifySummarizeResponse", "schema": "dtos/summarization.schema.json", "fixtures": ["frontend/test/classifySummarize.test.ts", "frontend/test/viewAdapters.test.ts"], "kind": "generated-wire-to-outcome" },
+    { "file": "frontend/lib/api/classifySummarize.ts", "symbol": "classifyDocModelResponse", "schema": "dtos/docmodel.schema.json", "fixtures": ["frontend/test/classifyDocModel.test.ts"], "kind": "generated-wire-to-outcome" },
+    { "file": "frontend/lib/api/classifySummarize.ts", "symbol": "classifyAssetsResponse", "schema": "dtos/summarization.schema.json", "fixtures": ["frontend/test/classifyAssets.test.ts"], "kind": "generated-wire-to-outcome" },
+    { "file": "frontend/lib/library/cardFromMeta.ts", "symbol": "cardFromMeta", "schema": "dtos/library.schema.json", "fixtures": ["frontend/test/libraryScreens.test.tsx", "frontend/test/viewAdapters.test.ts"], "kind": "opaque-library-snapshot-to-card" }
+  ],
+  "promotedWireSchema": "dtos/extended.schema.json",
+  "promotedOwners": ["U2", "U7", "U8", "U9", "U10", "U11", "U12", "U14", "U15", "U16"],
+  "viewOnlyModules": ["frontend/lib/agentChat/types.ts"],
+  "mockTransport": "frontend/lib/api/mockTransport.ts"
+}

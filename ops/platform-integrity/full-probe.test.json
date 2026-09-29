@@ -1,0 +1,18 @@
+{
+  "keychainRoles": [
+    {"keychain": "/Library/Application Support/DocSuri/rem-1-test/sign/r1t-clock-20260927-r3--k1.keychain-db", "service": "org.docsuri.rem1.test.receipt-signing", "account": "r1t-clock-20260927-r3/k1"},
+    {"keychain": "/Library/Application Support/DocSuri/rem-1-test/keys/reader.keychain-db", "service": "docsuri.rem1", "account": "reader"},
+    {"keychain": "/Library/Application Support/DocSuri/rem-1-test/keys/runner.keychain-db", "service": "docsuri.rem1", "account": "runner"},
+    {"keychain": "/Library/Application Support/DocSuri/rem-1-test/keys/tool.keychain-db", "service": "docsuri.rem1", "account": "tool"},
+    {"keychain": "/Library/Application Support/DocSuri/rem-1-test/keys/bundle.keychain-db", "service": "docsuri.rem1", "account": "bundle"},
+    {"keychain": "/Library/Application Support/DocSuri/rem-1-test/keys/audit.keychain-db", "service": "docsuri.rem1", "account": "audit"},
+    {"keychain": "/Library/Application Support/DocSuri/rem-1-test/keys/journal.keychain-db", "service": "docsuri.rem1", "account": "journal"},
+    {"keychain": "/Library/Application Support/DocSuri/rem-1-test/keys/backup.keychain-db", "service": "docsuri.rem1", "account": "backup"},
+    {"keychain": "/Library/Application Support/DocSuri/rem-1-test/keys/clock.keychain-db", "service": "docsuri.rem1", "account": "clock"}
+  ],
+  "database": {"database": "rem1", "user": "r1_reader", "port": 5432},
+  "databaseTls": {"keychain": "/Library/Application Support/DocSuri/rem-1-test/keys/db-tls.keychain-db", "service": "docsuri.rem1", "account": "r1_tls_probe", "runtimeRoot": "/Library/Application Support/DocSuri/rem-1-test/reader"},
+  "clock": {"frame": "/Library/Application Support/DocSuri/rem-1-test/clock-public/current.json", "writerUid": 608, "configDigest": "sha256:0f0e16c09299e7d7768d1db50bde805e5598a59e535bc0cd18d86757b1990b05"},
+  "operatorTls": {"keychain": "/Library/Application Support/DocSuri/rem-1-test/keys/operator-tls.keychain-db", "service": "docsuri.rem1", "account": "docsuri_r1t_operator"},
+  "restoreReceipt": "/Library/Application Support/DocSuri/rem-1-test/receipts/restore.json"
+}

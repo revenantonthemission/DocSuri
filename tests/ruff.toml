@@ -1,0 +1,6 @@
+# Make the root-suites CI policy explicit. Ruff 0.16 expanded its default rule set;
+# these are the E4/E7/E9/F correctness checks that previously guarded this tree.
+line-length = 100
+
+[lint]
+select = ["E4", "E7", "E9", "F"]

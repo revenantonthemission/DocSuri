@@ -22,16 +22,18 @@
 
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16@sha256:a3b7f434b2dc57ce85a67e171163eb8ab1a1ebcb39d27484661f26b1dfbe30d6
     restart: unless-stopped
     environment:
       POSTGRES_USER: docsuri
-      POSTGRES_PASSWORD: docsuri
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       POSTGRES_DB: docsuri
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
       - docsuri-pgdata:/var/lib/postgresql/data
+    secrets:
+      - postgres_password
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U docsuri"]
       interval: 5s
@@ -39,7 +41,7 @@ services:
       retries: 10
 
   redis:
-    image: redis:7
+    image: redis:7.4.11@sha256:c6eabf748fc7a61dbb5a705c78bcf3d6377b1127a97d0ce965c11c44ba46896f
     restart: unless-stopped
     # accounts/U3 is Fail-Closed on session-store loss (NFR-Design) — multi-AZ in prod;
     # a single node is fine for local dev.
@@ -55,7 +57,7 @@ services:
   # 9200 (set DOCSURI_OPENSEARCH_USE_SSL=0). k-NN (cosine, 1024-dim) is bundled. The U1 writer
   # and U2 reader share ONE index (docsuri-corpus-v1, vector-spec §4).
   opensearch:
-    image: opensearchproject/opensearch:2.13.0
+    image: opensearchproject/opensearch:2.19.5@sha256:4ee82ecb35d837a6186c81aaa64c8a5bce71aa956edbd87f1f684ab56af52c44
     restart: unless-stopped
     environment:
       discovery.type: single-node
@@ -92,12 +94,15 @@ services:
   # Data lives on the HOST at ~/DocSuriData/minio (bind mount), not inside the Docker VM:
   # ~25 GB of irreplaceable parse/embed artifacts must stay visible to host backups.
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: docsuri
-      MINIO_ROOT_PASSWORD: docsuri-local
+      MINIO_ROOT_USER_FILE: /run/secrets/minio_user
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_password
+    secrets:
+      - minio_user
+      - minio_password
     ports:
       - "127.0.0.1:9000:9000"
       - "127.0.0.1:9001:9001"
@@ -112,7 +117,7 @@ services:
   # Local SQS replacement for the async workers (ingest/docmodel/userdoc/summary/
   # evidence/novelty). Queue names mirror the deleted AWS queues 1:1 — see elasticmq.conf.
   elasticmq:
-    image: softwaremill/elasticmq-native:latest
+    image: softwaremill/elasticmq-native@sha256:e4580ab9ad1bd5cd37b4ba04911bc5ccc8cd2d9ab4de56ece65acee71c24e05c
     restart: unless-stopped
     ports:
       - "127.0.0.1:9324:9324"
@@ -122,3 +127,13 @@ services:
 volumes:
   docsuri-pgdata:
   docsuri-osdata:
+
+# Materialized by the operator's purpose-scoped credential provider. No default credentials.
+# Keep these files outside source and use 0600 permissions; never commit or print their contents.
+secrets:
+  postgres_password:
+    file: ${DOCSURI_POSTGRES_PASSWORD_FILE:?protected PostgreSQL password file required}
+  minio_user:
+    file: ${DOCSURI_MINIO_USER_FILE:?protected MinIO user file required}
+  minio_password:
+    file: ${DOCSURI_MINIO_PASSWORD_FILE:?protected MinIO password file required}

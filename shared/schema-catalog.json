@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "excludedDirectories": [
+    { "path": "python", "reason": "Binding implementation, build environments and tests; not source schemas." }
+  ],
+  "resources": [
+    { "id": "https://docsuri.dev/shared/dtos/accounts.schema.json", "path": "dtos/accounts.schema.json", "visibility": "public" },
+    { "id": "https://docsuri.dev/shared/dtos/docmodel.schema.json", "path": "dtos/docmodel.schema.json", "visibility": "public" },
+    { "id": "https://docsuri.dev/shared/dtos/evidence.schema.json", "path": "dtos/evidence.schema.json", "visibility": "public" },
+    { "id": "https://docsuri.dev/shared/dtos/extended.schema.json", "path": "dtos/extended.schema.json", "visibility": "public" },
+    { "id": "https://docsuri.dev/shared/dtos/library.schema.json", "path": "dtos/library.schema.json", "visibility": "public" },
+    { "id": "https://docsuri.dev/shared/dtos/mypage.schema.json", "path": "dtos/mypage.schema.json", "visibility": "public" },
+    { "id": "https://docsuri.dev/shared/dtos/search.schema.json", "path": "dtos/search.schema.json", "visibility": "public" },
+    { "id": "https://docsuri.dev/shared/dtos/summarization.schema.json", "path": "dtos/summarization.schema.json", "visibility": "public" },
+    { "id": "https://docsuri.dev/shared/events/account-signals.schema.json", "path": "events/account-signals.schema.json", "visibility": "internal" },
+    { "id": "https://docsuri.dev/shared/events/incidents.schema.json", "path": "events/incidents.schema.json", "visibility": "internal" },
+    { "id": "https://docsuri.dev/shared/events/ingestion.schema.json", "path": "events/ingestion.schema.json", "visibility": "internal" },
+    { "id": "https://docsuri.dev/shared/events/paper-retracted.schema.json", "path": "events/paper-retracted.schema.json", "visibility": "internal" },
+    { "id": "https://docsuri.dev/shared/events/search-executed.schema.json", "path": "events/search-executed.schema.json", "visibility": "internal" },
+    { "id": "https://docsuri.dev/shared/vector-spec/index-record.schema.json", "path": "vector-spec/index-record.schema.json", "visibility": "internal" }
+  ],
+  "consumers": {
+    "python": {
+      "visibility": "internal",
+      "roots": [
+        "https://docsuri.dev/shared/dtos/accounts.schema.json",
+        "https://docsuri.dev/shared/dtos/docmodel.schema.json",
+        "https://docsuri.dev/shared/dtos/evidence.schema.json",
+        "https://docsuri.dev/shared/dtos/extended.schema.json",
+        "https://docsuri.dev/shared/dtos/library.schema.json",
+        "https://docsuri.dev/shared/dtos/mypage.schema.json",
+        "https://docsuri.dev/shared/dtos/search.schema.json",
+        "https://docsuri.dev/shared/dtos/summarization.schema.json",
+        "https://docsuri.dev/shared/events/account-signals.schema.json",
+        "https://docsuri.dev/shared/events/incidents.schema.json",
+        "https://docsuri.dev/shared/events/ingestion.schema.json",
+        "https://docsuri.dev/shared/events/paper-retracted.schema.json",
+        "https://docsuri.dev/shared/events/search-executed.schema.json",
+        "https://docsuri.dev/shared/vector-spec/index-record.schema.json"
+      ]
+    },
+    "typescript": {
+      "visibility": "public",
+      "roots": [
+        "https://docsuri.dev/shared/dtos/accounts.schema.json",
+        "https://docsuri.dev/shared/dtos/docmodel.schema.json",
+        "https://docsuri.dev/shared/dtos/evidence.schema.json",
+        "https://docsuri.dev/shared/dtos/extended.schema.json",
+        "https://docsuri.dev/shared/dtos/library.schema.json",
+        "https://docsuri.dev/shared/dtos/mypage.schema.json",
+        "https://docsuri.dev/shared/dtos/search.schema.json",
+        "https://docsuri.dev/shared/dtos/summarization.schema.json"
+      ]
+    }
+  }
+}

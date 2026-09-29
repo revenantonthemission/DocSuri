@@ -1,0 +1,1299 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docsuri.dev/shared/dtos/extended.schema.json",
+  "title": "Existing owner HTTP contracts promoted to shared wire",
+  "description": "Existing U2/U7/U8/U9/U10/U11/U12/U14/U15/U16 transport shapes. View projections remain explicit adapters. No new endpoint or behavior is introduced.",
+  "$defs": {
+    "GlossaryTermUpsertDTO": {
+      "title": "GlossaryTermUpsertDTO",
+      "type": "object",
+      "properties": {
+        "termFrom": {
+          "type": "string"
+        },
+        "termTo": {
+          "type": "string"
+        },
+        "promptEnforced": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "termFrom",
+        "termTo"
+      ],
+      "additionalProperties": false
+    },
+    "GlossaryUpsertResultDTO": {
+      "title": "GlossaryUpsertResultDTO",
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        },
+        "glossaryVer": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "status",
+        "glossaryVer"
+      ],
+      "additionalProperties": false
+    },
+    "GlossaryTermDTO": {
+      "title": "GlossaryTermDTO",
+      "type": "object",
+      "properties": {
+        "termFrom": {
+          "type": "string"
+        },
+        "termTo": {
+          "type": "string"
+        },
+        "promptEnforced": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "termFrom",
+        "termTo"
+      ],
+      "additionalProperties": false
+    },
+    "GlossaryListDTO": {
+      "title": "GlossaryListDTO",
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GlossaryTermDTO"
+          }
+        }
+      },
+      "required": [
+        "status",
+        "terms"
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorEventType": {
+      "title": "BehaviorEventType",
+      "enum": [
+        "search_executed",
+        "paper_opened",
+        "library_added",
+        "library_removed",
+        "summary_translation_requested",
+        "source_anchor_clicked",
+        "glossary_updated",
+        "read_completed"
+      ]
+    },
+    "BehaviorSubject": {
+      "title": "BehaviorSubject",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "paper",
+            "search",
+            "summary",
+            "translation",
+            "source_anchor",
+            "glossary"
+          ]
+        },
+        "paperId": {
+          "type": "string"
+        },
+        "queryHash": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "anchorId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorEventCreate": {
+      "title": "BehaviorEventCreate",
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "$ref": "#/$defs/BehaviorEventType"
+        },
+        "subject": {
+          "$ref": "#/$defs/BehaviorSubject"
+        },
+        "occurredAt": {
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "backend",
+            "frontend_anchor"
+          ]
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "dedupeKey": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventType",
+        "subject",
+        "dedupeKey"
+      ],
+      "additionalProperties": false
+    },
+    "EventRecordResult": {
+      "title": "EventRecordResult",
+      "type": "object",
+      "properties": {
+        "recorded": {
+          "type": "boolean"
+        },
+        "duplicate": {
+          "type": "boolean"
+        },
+        "reason": {
+          "enum": [
+            "recorded",
+            "duplicate",
+            "disabled",
+            "degraded"
+          ]
+        }
+      },
+      "required": [
+        "recorded",
+        "duplicate",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "PersonalizationSettings": {
+      "title": "PersonalizationSettings",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "rawEventsDeletedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "profileResetAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "userId",
+        "enabled",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "DeletePersonalizationEventsResult": {
+      "title": "DeletePersonalizationEventsResult",
+      "type": "object",
+      "properties": {
+        "deletedEvents": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "deletedEvents"
+      ],
+      "additionalProperties": false
+    },
+    "ResetPersonalizationProfileResult": {
+      "title": "ResetPersonalizationProfileResult",
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "reset"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "OnboardingState": {
+      "title": "OnboardingState",
+      "enum": [
+        "pending",
+        "completed",
+        "skipped"
+      ]
+    },
+    "OnboardingStatusResponse": {
+      "title": "OnboardingStatusResponse",
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/OnboardingState"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "state",
+        "categories"
+      ],
+      "additionalProperties": false
+    },
+    "InterestSelectionCreate": {
+      "title": "InterestSelectionCreate",
+      "type": "object",
+      "properties": {
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source": {
+          "enum": [
+            "onboarding_picker",
+            "orcid_derived"
+          ]
+        }
+      },
+      "required": [
+        "categories",
+        "keywords",
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "InterestsResult": {
+      "title": "InterestsResult",
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/OnboardingState"
+        },
+        "eventRecorded": {
+          "type": "boolean"
+        },
+        "reason": {
+          "enum": [
+            "recorded",
+            "duplicate",
+            "disabled",
+            "degraded"
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "eventRecorded",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "SkipResult": {
+      "title": "SkipResult",
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/OnboardingState"
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "OrcidSuggestion": {
+      "title": "OrcidSuggestion",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "category",
+            "keyword"
+          ]
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "OrcidSuggestionsResponse": {
+      "title": "OrcidSuggestionsResponse",
+      "type": "object",
+      "properties": {
+        "suggestions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OrcidSuggestion"
+          }
+        },
+        "degraded": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "suggestions",
+        "degraded"
+      ],
+      "additionalProperties": false
+    },
+    "LoginProvider": {
+      "title": "LoginProvider",
+      "enum": [
+        "GOOGLE",
+        "ORCID",
+        "EMAIL"
+      ]
+    },
+    "AccountProfileVM": {
+      "title": "AccountProfileVM",
+      "type": "object",
+      "properties": {
+        "loginProvider": {
+          "$ref": "#/$defs/LoginProvider"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "loginProvider",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "OrcidWorkVM": {
+      "title": "OrcidWorkVM",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "title",
+        "year"
+      ],
+      "additionalProperties": false
+    },
+    "OrcidProfileVM": {
+      "title": "OrcidProfileVM",
+      "type": "object",
+      "properties": {
+        "orcidId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "affiliation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "works": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OrcidWorkVM"
+          }
+        }
+      },
+      "required": [
+        "orcidId",
+        "name",
+        "affiliation",
+        "works"
+      ],
+      "additionalProperties": false
+    },
+    "RecentlyViewedItemVM": {
+      "title": "RecentlyViewedItemVM",
+      "type": "object",
+      "properties": {
+        "arxivId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "viewedAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "arxivId",
+        "title",
+        "viewedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ConsentSettingsVM": {
+      "title": "ConsentSettingsVM",
+      "type": "object",
+      "properties": {
+        "privacyPolicyAgreed": {
+          "type": "boolean"
+        },
+        "termsOfServiceAgreed": {
+          "type": "boolean"
+        },
+        "nightlyPushAgreed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "privacyPolicyAgreed",
+        "termsOfServiceAgreed",
+        "nightlyPushAgreed"
+      ],
+      "additionalProperties": false
+    },
+    "DigestCadence": {
+      "title": "DigestCadence",
+      "enum": [
+        "daily",
+        "weekly"
+      ]
+    },
+    "FollowedTopicVM": {
+      "title": "FollowedTopicVM",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "topic": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "topic",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "FollowListVM": {
+      "title": "FollowListVM",
+      "type": "object",
+      "properties": {
+        "topics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FollowedTopicVM"
+          }
+        },
+        "maxTopics": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "topics",
+        "maxTopics"
+      ],
+      "additionalProperties": false
+    },
+    "DigestSettingsVM": {
+      "title": "DigestSettingsVM",
+      "type": "object",
+      "properties": {
+        "optedIn": {
+          "type": "boolean"
+        },
+        "cadence": {
+          "$ref": "#/$defs/DigestCadence"
+        },
+        "lastSentAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "optedIn",
+        "cadence",
+        "lastSentAt"
+      ],
+      "additionalProperties": false
+    },
+    "UnsubscribeResultVM": {
+      "title": "UnsubscribeResultVM",
+      "type": "object",
+      "properties": {
+        "optedIn": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "optedIn"
+      ],
+      "additionalProperties": false
+    },
+    "CitationTreeStatus": {
+      "title": "CitationTreeStatus",
+      "enum": [
+        "Success",
+        "Partial",
+        "Unavailable",
+        "RateLimited"
+      ]
+    },
+    "CitationNode": {
+      "title": "CitationNode",
+      "type": "object",
+      "properties": {
+        "nodeId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "citationCount": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "depth": {
+          "type": "number"
+        },
+        "arxivId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inCorpus": {
+          "type": "boolean"
+        },
+        "saveable": {
+          "type": "boolean"
+        },
+        "alreadyShown": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "nodeId",
+        "title",
+        "depth",
+        "saveable",
+        "alreadyShown"
+      ],
+      "additionalProperties": false
+    },
+    "CitationEdge": {
+      "title": "CitationEdge",
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "depth": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "source",
+        "target",
+        "depth"
+      ],
+      "additionalProperties": false
+    },
+    "UnresolvedCitation": {
+      "title": "UnresolvedCitation",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "CitationTreeResponse": {
+      "title": "CitationTreeResponse",
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/CitationTreeStatus"
+        },
+        "rootPaperId": {
+          "type": "string"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CitationNode"
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CitationEdge"
+          }
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UnresolvedCitation"
+          }
+        },
+        "depthReturned": {
+          "type": "number"
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "remainingEstimate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cacheHit": {
+          "type": "boolean"
+        },
+        "providerStatus": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "rootPaperId",
+        "nodes",
+        "edges",
+        "unresolved",
+        "depthReturned",
+        "truncated",
+        "cacheHit",
+        "providerStatus"
+      ],
+      "additionalProperties": false
+    },
+    "CitationTreeQuery": {
+      "title": "CitationTreeQuery",
+      "type": "object",
+      "properties": {
+        "expandNodeId": {
+          "type": "string"
+        },
+        "refresh": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "PlanTier": {
+      "title": "PlanTier",
+      "enum": [
+        "free",
+        "plus"
+      ]
+    },
+    "PlanQuotasVM": {
+      "title": "PlanQuotasVM",
+      "type": "object",
+      "properties": {
+        "evidenceDaily": {
+          "type": "number"
+        },
+        "noveltyDaily": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "evidenceDaily",
+        "noveltyDaily"
+      ],
+      "additionalProperties": false
+    },
+    "MyPlanVM": {
+      "title": "MyPlanVM",
+      "type": "object",
+      "properties": {
+        "tier": {
+          "$ref": "#/$defs/PlanTier"
+        },
+        "quotas": {
+          "$ref": "#/$defs/PlanQuotasVM"
+        },
+        "expiresAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tier",
+        "quotas"
+      ],
+      "additionalProperties": false
+    },
+    "PaperMetaVM": {
+      "title": "PaperMetaVM",
+      "type": "object",
+      "properties": {
+        "arxivId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "authors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "year": {
+          "type": "number"
+        },
+        "abstract": {
+          "type": "string"
+        },
+        "arxivUrl": {
+          "type": "string"
+        },
+        "sourceName": {
+          "type": "string"
+        },
+        "sourceUrl": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "arxivId",
+        "title",
+        "authors",
+        "abstract"
+      ],
+      "additionalProperties": false
+    },
+    "BackendResearchJob": {
+      "title": "BackendResearchJob",
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "active",
+            "completed",
+            "failed",
+            "cancelled"
+          ]
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "jobId",
+        "title",
+        "state",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "BackendResearchMessage": {
+      "title": "BackendResearchMessage",
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "user",
+            "assistant",
+            "system"
+          ]
+        },
+        "content": {
+          "type": "string"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {}
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "messageId",
+        "role",
+        "content",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "BackendNoveltyJob": {
+      "title": "BackendNoveltyJob",
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string"
+        },
+        "topic": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "jobId",
+        "topic",
+        "state",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "BackendNoveltyMessage": {
+      "title": "BackendNoveltyMessage",
+      "$ref": "#/$defs/BackendResearchMessage"
+    },
+    "BackendNoveltyEvent": {
+      "title": "BackendNoveltyEvent",
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "state",
+        "message",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "BackendNoveltyArtifact": {
+      "title": "BackendNoveltyArtifact",
+      "type": "object",
+      "properties": {
+        "artifactId": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifactId",
+        "kind",
+        "title",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "NotionConnectionStatusVM": {
+      "title": "NotionConnectionStatusVM",
+      "type": "object",
+      "properties": {
+        "connected": {
+          "type": "boolean"
+        },
+        "parentPageId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "updatedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "connected"
+      ],
+      "additionalProperties": false
+    },
+    "NotionExportVM": {
+      "title": "NotionExportVM",
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "notionPageId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "errorMessage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "NotionExportPreviewVM": {
+      "title": "NotionExportPreviewVM",
+      "type": "object",
+      "properties": {
+        "export": {
+          "$ref": "#/$defs/NotionExportVM"
+        },
+        "preview": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "artifacts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "title"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "title",
+            "artifacts"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "export",
+        "preview"
+      ],
+      "additionalProperties": false
+    },
+    "SummarizeValidationErrorDTO": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "validation_error"
+        },
+        "field": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "UnauthorizedDTO": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "unauthorized"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "JobAcceptedDTO": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "jobId"
+      ],
+      "additionalProperties": false
+    },
+    "AgentJobsDTO": {
+      "type": "object",
+      "properties": {
+        "jobs": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/BackendResearchJob"
+              },
+              {
+                "$ref": "#/$defs/BackendNoveltyJob"
+              }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ResearchJobDTO": {
+      "type": "object",
+      "properties": {
+        "job": {
+          "$ref": "#/$defs/BackendResearchJob"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BackendResearchMessage"
+          }
+        }
+      },
+      "required": [
+        "job"
+      ],
+      "additionalProperties": false
+    },
+    "NoveltyJobDTO": {
+      "type": "object",
+      "properties": {
+        "job": {
+          "$ref": "#/$defs/BackendNoveltyJob"
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BackendNoveltyEvent"
+          }
+        }
+      },
+      "required": [
+        "job"
+      ],
+      "additionalProperties": false
+    },
+    "NoveltyMessagesDTO": {
+      "type": "object",
+      "properties": {
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BackendNoveltyMessage"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoveltyArtifactsDTO": {
+      "type": "object",
+      "properties": {
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BackendNoveltyArtifact"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "RecentlyViewedDTO": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RecentlyViewedItemVM"
+          }
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

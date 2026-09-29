@@ -1,5 +1,7 @@
 # 실행 계획 (Execution Plan)
 
+> **현재 F01~F13/public-job 사이클 (2026-09-19)**: 상세 실행 계획은 `verification-remediation-2026-09-18-workflow-plan.md`의 `Public Job Workflow Amendment - WPR2`다. Requirements RJR1=A, User Stories RJS2=A 및 Workflow WPR2=A가 승인됐다. 아래 초기 Greenfield/과거 migration 계획은 당시 이력이다.
+
 **단계**: INCEPTION → Workflow Planning · **일자**: 2026-06-15 · **프로젝트 유형**: Greenfield
 
 ## 상세 분석 요약
@@ -163,4 +165,14 @@ flowchart TD
 - [ ] **코드 생성 — 실행(EXECUTE, 항상)**
   - **근거**: 인덱스 생성, 듀얼 라이트, 마이그레이션 스크립트, v4 컷오버 로직 구현.
 - [ ] **빌드 & 테스트 — 실행(EXECUTE, 항상)**
-  - **근거**: 마이그레이션 스크립트 테스트 및 듀얼 라이트 검증.
+   - **근거**: 마이그레이션 스크립트 테스트 및 듀얼 라이트 검증.
+
+---
+
+## 2026-09-19 REM 공개 job 실행 계획 인덱스
+
+- **프로젝트 유형/기준**: Brownfield, `develop` / `32a424d`, single Mac + launchd + OrbStack + Cloudflare Tunnel + Ollama.
+- **현재 계획**: `verification-remediation-2026-09-18-workflow-plan.md`의 WPR2 절이 단계/분석/package sequence/검증 gate/시각화/확장 준수의 단일 상세 계획이다.
+- **입력 승인**: Requirements RJR1=A, User Stories RJS2=A, DSRQ/명확화 결정.
+- **다음 권장 단계**: Application Design 재개 -> Units Generation -> 네 service Construction loops -> 통합 Build and Test.
+- **승인 기록**: `verification-remediation-2026-09-19-workflow-replan-approval.md` WPR2=A. Application Design 재개 승인 완료.

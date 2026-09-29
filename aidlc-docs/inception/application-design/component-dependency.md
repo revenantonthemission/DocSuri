@@ -1,5 +1,7 @@
 # component-dependency.md — 의존성 매트릭스·통신 패턴·데이터 흐름 (Application Design)
 
+> **현재 승인 설계**: 하단 `2026-09-19 Deployable Services and Public Jobs`가 DAD1=A로 승인된 dependency/data-flow다. source import와 synchronous call DAG를 asynchronous command/receipt feedback과 구분한다. 기존 superseded 흐름은 이력이다.
+
 > kind 표기: **sync**(요청→응답, 블로킹) / **event**(이벤트 백본, 비동기 fire-and-forget·구독) / **lib**(프로세스 내 라이브러리/함수 호출).
 > 잠금 결정 준수: 디스커버리 사용자 READ 경로는 전부 sync(DQ6); 인제스천·이력 쓰기·인시던트·관측성은 event 백본.
 
@@ -318,3 +320,241 @@ EvidenceChatService ─event▶ [Job Queue] ─▶ Worker: EvidenceAgentOrchestr
                                               │
                     Client ─sync▶ GET /api/evidence/jobs/:id (폴링)
 ```
+
+---
+
+## 2026-09-19 F01-F13 교정 의존성 개정
+
+> **SUPERSEDED - 2026-09-19 UQRF1=B**: 아래 in-process/package dependency model은 이력이다. 네 deployable services의 network/data/control-plane topology와 failure boundaries를 재설계한다.
+>
+> RQ1=A에 따라 의존성은 기존 deploy/package 경계를 유지한다. composition root가 포트 구현과 purge target specs를 조립하며, 도메인 패키지가 서로의 controller나 persistence 구현을 직접 import하지 않는다.
+
+### 9. REM-1 - Platform and Contract Integrity
+
+| from | to | kind | purpose / gate |
+|---|---|---|---|
+| Backend startup | OrderedMigrationRegistry | lib | startup migration 전에 단일 ordered registry 검증(F08). |
+| Migration CLI | OrderedMigrationRegistry | lib | startup과 동일 identity/order 소비; 별도 path list 금지(F08). |
+| OrderedMigrationRegistry | Migration runner | lib | 검증된 package-relative MigrationSpec만 전달. |
+| Migration runner | Postgres migration ledger | sync | script DDL과 ledger insert를 script별 transaction으로 적용. |
+| ContractGenerationPipeline | `shared` schema roots | build | schema 자동 발견; hard-coded subset 금지(F13). |
+| ContractGenerationPipeline | LocalSchemaRegistry | lib | `$id`/`$ref`를 offline 해소; network lookup 금지. |
+| ContractGenerationPipeline | Python/TypeScript build-consumed bindings | build | temporary tree 전체 성공 후 원자 publish; drift gate 입력. |
+| RuntimeSupplyChainVerifier | Deploy-unit runtime manifests/locks/images | build | production runtime, frozen lock, digest, advisory를 검증(F06). |
+| RuntimeSupplyChainVerifier | CI artifact store | build | deploy unit별 SBOM과 승인 예외 evidence publish. |
+
+### 10. REM-2 - Private Content and Generation
+
+| from | to | kind | purpose / gate |
+|---|---|---|---|
+| Public summary/DocModel/asset controllers | PublicPaperNamespacePolicy | lib | storage lookup 전에 `userdoc:`를 동일 일반화 응답으로 차단(F01/F07). |
+| Evidence/novelty owner-context controllers | UserDocModelCoordinator | lib | authenticated owner로만 private DocModel/asset ref 검증·읽기(F01). |
+| PublicPaperNamespacePolicy | UserDocModelCoordinator | prohibited | public route가 private reader로 자동 fallback하거나 범용 private endpoint를 형성하지 않는다(RQ2=A). |
+| SummaryRequestOrchestrationService | CanonicalSummarySourceResolver | lib | client source보다 먼저 server-owned canonical source/digest 확정(F02). |
+| CanonicalSummarySourceResolver | Discovery metadata/DocModel ports | sync/lib | server-verified metadata 또는 DocModel capability read; controller 직접 의존 없음. |
+| SummaryRequestOrchestrationService | Summary cache | sync | source identity가 포함된 versioned key로만 lookup/write(F02). |
+| SummaryRequestOrchestrationService | SummaryGenerationJobRegistry | lib | cache miss의 durable marker 생성/조회(F05). |
+| SummaryGenerationJobRegistry | Postgres persistence adapter | sync | job state/attempt/terminal outcome 영속. |
+| SummaryRequestOrchestrationService | Summary queue | event | durable marker와 enqueue 결과를 결속; enqueue 실패 시 pending 금지. |
+| Summarization worker | SummaryGenerationJobRegistry | sync | lease/running/terminal 상태 기록; visibility/retry budget과 결속. |
+| Browser | SameOriginAssetProxy | sync | authenticated same-origin asset 요청(F07). |
+| SameOriginAssetProxy | AuthenticatedPaperAssetController | sync stream | session/trusted identity를 전달하고 binary response relay. |
+| AuthenticatedPaperAssetController | Asset manifest + object storage | sync stream | public namespace/license/manifest 검증 후 backend-only key로 stream. |
+| Browser | Object storage endpoint | prohibited | MinIO/S3 endpoint, presigned URL, object key 직접 노출 금지(F07). |
+
+### 11. REM-3 - Owner Lifecycle and Edge Trust
+
+| from | to | kind | purpose / gate |
+|---|---|---|---|
+| Composition root | OwnerPurgeRegistry | lib | owner domain별 PurgeTargetSpec을 한 registry로 주입; accounts가 타 도메인 구현을 직접 import하지 않음. |
+| DurableOwnerPurgeService | OwnerPurgeRegistry | lib | SQL 삭제 전 coverage 검증과 exact owner inventory 생성(F04). |
+| DurableOwnerPurgeService | PurgeManifestRepository | sync | immutable manifest/hash/stage를 durable 저장하고 CAS 전이. |
+| DurableOwnerPurgeService | Private object/cache adapters | sync | manifest에 동결된 keys/prefixes만 idempotent 삭제. |
+| DurableOwnerPurgeService | Owner SQL/credential adapters | sync | object stage 이후 owner-scoped transaction 삭제와 residue 검사. |
+| Digest email renderer | DigestLinkTokenVerifier | lib | `/paper/{id}` link와 issued-at/settings-version token 생성(F09). |
+| Exact public unsubscribe route | DigestUnsubscribeController | sync | auth allowlist는 정확한 path 하나만 허용; token 검증으로 mutation authorize. |
+| DigestUnsubscribeController | Digest settings repository | sync | owner/version/opted-in compare-and-set; 다른 settings 변경 보존. |
+| Cloudflare Tunnel | EdgeClientIdentityForwarder | sync | trusted edge의 단일 client IP 입력(F10). |
+| Browser-provided internal identity header | EdgeClientIdentityForwarder | prohibited | inbound spoof 값은 전달하지 않고 항상 제거/overwrite. |
+| EdgeClientIdentityForwarder | TrustedClientIdentityResolver | sync | JSON/PDF/SSE 공통 private header 전달. |
+| TrustedClientIdentityResolver | Gateway RateLimiter + accounts abuse limiter | lib | request context의 단일 canonical client identity 소비. |
+| Non-loopback socket peer | TrustedClientIdentityResolver private header trust | prohibited | internal header를 신뢰하지 않고 요청을 거부. |
+
+### 12. REM-4 - Corpus and Search Integrity
+
+| from | to | kind | purpose / gate |
+|---|---|---|---|
+| Production seed command | ProductionSeedGuard | lib | explicit non-production mode가 아니면 fixture seed 거부(F03). |
+| CorpusIntegrityAuditService | Active OpenSearch alias/backing generation | sync read-only | fixture/source/completeness/generation snapshot 읽기; mutation 없음. |
+| CorpusIntegrityAuditor | Immutable audit report store | sync | report hash, generation/index UUID, freshness, readiness reasons publish. |
+| CorpusReadinessProvider | Immutable audit report store | sync read-only | current generation과 recent report 비교; OpenSearch 직접 수정 금지. |
+| TargetedCorpusRepairService | Backup/restore verifier | sync | verified backup 없이는 manifest/apply 진행 금지. |
+| TargetedCorpusRepairService | Candidate OpenSearch generation | sync write | approved exact manifest로 fixture-free candidate 생성/검증. |
+| TargetedCorpusRepairService | Active alias | sync atomic | 검증 성공 후 cutover; manifest가 이전 backing generation rollback 소유. |
+| Readiness/startup | TargetedCorpusRepairService | prohibited | health probe가 repair/delete/cutover를 호출하지 않는다(RQ6=A). |
+| SearchOrchestrationService | ResultAssembler | lib | retrieval 0건에도 degradation/provenance 전달(F11). |
+| Frontend ApiClient | SearchStateClassifier | lib | response metadata를 count보다 먼저 판정해 degraded-empty 보존. |
+| RelevanceFloorEvaluator | Verified corpus generation + labeled eval set | offline | candidate floors의 false-abstain/false-pass report 생성(F12). |
+| RelevanceFloorPolicy | Approved generation-bound calibration report | sync/lib | active generation/model 일치 정책만 search read에 공급. |
+| Full corpus rebuild | Automatic repair fallback | prohibited | 별도 명시 승인 전 reparse/reembed/rebuild/alias cutover 금지. |
+
+### 13. 교정 데이터 흐름
+
+#### (E) Public/private 문서와 비동기 생성
+
+1. Public request -> namespace policy -> canonical server source -> source-bound cache key.
+2. Cache hit -> immediate response. Cache miss -> durable job marker -> queue enqueue -> `pending`.
+3. Repeat request -> same source/job identity -> cached success, terminal failure, or existing `pending`.
+4. `userdoc:` public request -> generalized rejection. Owner-context request -> `UserDocModelCoordinator` -> owner-bound object read.
+5. Browser asset request -> same-origin BFF proxy -> authenticated backend stream -> object storage; storage endpoint/key never reaches the browser.
+
+#### (F) Durable owner purge
+
+1. Grace expiry -> registry coverage validation -> owner SQL/object/cache inventory.
+2. Inventory -> immutable manifest commit -> deterministic deletion event/stage.
+3. Manifest objects/cache -> idempotent delete -> stage CAS.
+4. Owner SQL/credentials -> transaction delete -> residue and non-owner preservation check.
+5. Failure -> persisted stage/error -> resume with the same manifest; no target recomputation.
+
+#### (G) Trusted client identity
+
+1. Cloudflare Tunnel -> BFF validates one `CF-Connecting-IP` and overwrites the private internal header.
+2. JSON/PDF/SSE proxy paths use the same forwarding helper.
+3. FastAPI raw loopback peer -> resolver accepts private header -> request-scoped canonical client identity.
+4. Gateway and accounts limiters consume the same identity; non-loopback/private-header spoof is rejected.
+
+#### (H) Corpus audit, repair, readiness, relevance
+
+1. Read-only auditor snapshots active generation -> immutable generation-bound audit report.
+2. Readiness reads the report only and reports stale/mismatch/fixture/completeness reasons.
+3. Approved targeted repair uses verified backup + exact manifest -> candidate generation -> validation -> atomic cutover or rollback.
+4. Relevance evaluation runs only on a verified generation -> shadow report -> approved floor bound to generation/model -> search enforcement.
+5. If completeness requires a full rebuild, flow stops at the separate approval gate.
+
+### 14. 비순환성 및 금지 경계
+
+- `backend.wiring`/composition root가 migration specs와 purge target specs를 조립한다. Registry가 각 도메인 controller/service를 역호출하지 않아 package dependency cycle을 만들지 않는다.
+- ingestion은 audit report를 생산하고 backend readiness는 report contract만 소비한다. backend가 ingestion runtime/tooling을 import하지 않는다.
+- BFF는 trusted identity와 asset bytes를 relay할 뿐 authz 판단을 소유하지 않는다. FastAPI domain/controller가 최종 authorization을 수행한다.
+- public paper route와 owner-context private route는 공유 raw storage adapter 아래에서만 만나며 API/service 경계는 분리된다.
+- summary job state는 canonical source identity를 소비하지만 source resolver가 job repository나 worker를 역참조하지 않는다.
+
+---
+
+## 2026-09-19 Deployable Services and Public Jobs
+
+Component ID는 `components.md`, interface는 `component-methods.md`, orchestration은 `services.md` DS-1~8을 따른다. 아래는 설계 의존성이며 현재 코드가 이미 이 구조로 변경됐다는 판정이 아니다.
+
+### 1. Dependency matrix
+
+| From | To | 종류 | 책임 / 금지 우회 |
+|---|---|---|---|
+| UI | EDGE의 BFF -> gateway | bounded HTTP/event/stream | same-origin 고정 API family만 소비; caller 지정 host/queue/storage URL 금지 |
+| EDGE | R2A/R3C/DELIVERY | authenticated bounded sync | 접수 또는 준비된 결과/관측까지. 업무 완료를 기다리는 RPC로 사용하지 않음 |
+| EDGE / REM entry / worker | AUTH | library + current projection read | source grant/current head/owner/purpose 확인. 인증은 queue에서 실행하지 않음 |
+| R2A/R3C/R4A | RK service-local instance | local transaction | 각 service의 operation/outbox만 원자 저장; 다른 REM 운영 table 직접 수정 금지 |
+| RK outbox | 해당 worker/명시 domain executor | durable async command | typed reference/version/correlation. broker ack는 업무 완료 증거가 아님 |
+| Domain executor | recipient-scoped CommandProjection | bounded read-only view | immutable 입력/manifest를 해소하고 current parent/run fence 확인. sender의 일반 mutable table 조회나 gateway callback 없음 |
+| R2W | U1 source/context projection, U7 business core, EXEC | bounded worker I/O/lib | owner/context/canonical source binding, fenced artifact publication |
+| R2W | U1 source builder | async command/receipt | 필요한 source 준비를 domain-owned consumer에 위임; REM-2 worker가 gateway를 역호출하지 않음 |
+| DELIVERY | AUTH + 자기 realm의 published view + 허용 artifact port | bounded direct read/stream | 현재 인가된 기존 결과만 전달. read/status business handler를 다시 실행하지 않음 |
+| U3 직접 lifecycle 제어 | U3 authority state + lifecycle outbox | direct control + async signal | 비활성화/revocation은 queue보다 먼저 적용; REM-3 가용성을 기다리지 않음 |
+| R3P | domain-owned EXEC | durable async command/receipt | quiesce/inventory/purge/verify. 각 domain은 자기 credential과 자기 store만 사용 |
+| R3C 및 U15 sender/settings writer | U15-owned ConsentBarrier 계약 | direct safety control | suppression/consent revision/provider handoff 경계 조정. remote REM-3 HTTP를 매 발송의 필수 callback으로 사용하지 않고 승인된 current control projection/adapter를 소비 |
+| R3C worker | U15 ApplyOptOut executor | durable async command/receipt | canonical settings ordinary writer는 U15. revision mismatch/실패가 suppression을 조용히 해제하지 않음 |
+| R3E | EDGE/U3 policy consumers | versioned artifact distribution | 로컬 verifier/identity normalization에 배포. 매 request마다 REM-3 API를 호출하지 않음 |
+| R1R | domain registry/schema/locks + 승인된 mutation port | build / privileged one-shot | 원 domain 정의를 소비하고 evidence 발행. REM-1 daemon의 역호출이나 자동 repair 없음 |
+| R1C | immutable platform evidence | read-only | 기존 서비스 실행/요청의 실시간 선결 RPC가 아님 |
+| R4A | corpus read ports -> immutable reports | worker read / own publication | corpus writer는 U1, report writer는 REM-4 |
+| R4R | U1 fenced mutation port | explicit privileged execution | exact manifest/backup/approval 범위. 일반 daemon/health credential로 실행 불가 |
+| SEARCH / OBS | current generation head + verified report/policy | local/read-only | report freshness/binding을 검증하고 U2/U5에서 집행; 검색 hot path의 REM-4 RPC 없음 |
+| 모든 entry point | OBS | local signal / durable audit path | correlation/redaction/단계 latency; telemetry 장애가 권한 검증을 우회시키지 않음 |
+
+### 2. Code/import 및 synchronous call DAG
+
+**Source dependency의 허용 순서** (상위가 하위만 import):
+
+| Level | 허용 구성 | 하위 의존 |
+|---|---|---|
+| C0 | language-neutral schemas, generated DTOs, pure port protocols | 제품 runtime import 없음 |
+| C1 | domain business cores, pure RK/validation/state helpers | C0 |
+| C2 | store/projection/transport adapters, domain-owned EXEC 구현 | C0/C1 및 외부 SDK |
+| C3 | REM/Gateway/기존 domain composition roots와 entry points; UI transport composition | C0~C2의 승인된 계약/구현을 조립 |
+
+service가 다른 service의 entry point/controller/repository 구현을 import하지 않는다. domain library가 gateway/REM composition root를 역참조하지 않는다. REM-3의 target registry는 shared target spec/manifest를 소비하며 타 domain adapter는 해당 owner의 composition root가 바인딩한다. frontend는 생성된 TS 계약을 소비하며 Python runtime import 관계가 없다.
+
+**Synchronous call의 허용 순서**:
+
+1. Browser -> BFF -> 기존 gateway -> 고정 REM daemon 또는 기존 직접 domain control.
+2. REM daemon/독립 worker entry -> service-local RK/DELIVERY/domain core -> AUTH/current projection/EXEC/I/O adapter -> store/model/provider.
+3. AUTH/current projection은 domain이 소유한 read-only revision/head 계약으로 조회하며 gateway/REM endpoint를 역호출하지 않는다. consent barrier도 domain-owned control adapter이며 원 요청으로 재진입하지 않는다.
+4. REM-1 read daemon/REM-4 report daemon 및 각 health는 자기 evidence/dependency를 직접 읽는다. 다른 service의 health가 자신을 다시 호출하는 readiness cycle을 만들지 않는다.
+
+따라서 위 **source 및 synchronous dependency 설계는 DAG**다. asynchronous outbox -> worker -> publication, purge command -> receipt -> coordinator는 의도된 feedback이다. 이를 전체 runtime 통신이 비순환이라고 표현하지 않는다. feedback은 parent operation/command/manifest에 결속하고 새 사용자 job 또는 무제한 status-query chain을 만들지 않는다.
+
+### 3. Content/status job data flow (DS-2/DS-3)
+
+```mermaid
+flowchart LR
+    B["Browser submission"] --> F["Same-origin BFF"] --> G["Gateway guards and fixed routing"]
+    G --> A["REM-2 admission"]
+    G --> R["REM-2 authorized delivery"]
+    A --> D["REM-2 operation outbox and published state"]
+    A --> V["Current authority projection"]
+    D -. "durable dispatch" .-> Q["Queue reference only"]
+    Q -. "validated command" .-> W["REM-2 content or status worker"]
+    W --> V
+    W --> S["Domain source and artifact ports"]
+    W -- "fenced publication" --> D
+    R --> V
+    R --> D
+    R --> S
+    R -- "Gateway and BFF relay" --> O["Browser event result or asset"]
+    style B fill:#CE93D8,stroke:#6A1B9A
+    style O fill:#CE93D8,stroke:#6A1B9A
+    style V fill:#FFF59D,stroke:#F9A825
+    style D fill:#C8E6C9,stroke:#2E7D32
+    linkStyle default stroke:#333,stroke-width:2px
+```
+
+**Text alternative**: UI가 BFF/gateway를 통해 R2A에 제출한다. 현재 권한과 durable operation/outbox가 확인된 뒤 receipt가 반환된다. outbox가 queue reference를 발행하고 worker가 자기 record/current authority/source를 읽어 fenced 결과를 publish한다. 별도의 인가된 직접 DELIVERY 경로가 같은 gateway/BFF를 통해 준비된 event/result/asset을 전달한다. StatusQuery도 한 worker 작업이며 결과 수신은 새로운 status job을 만들지 않는다. 그림의 store/worker feedback은 async 진행 기록이다.
+
+### 4. Purge command/receipt flow (DS-4/DS-5)
+
+```mermaid
+flowchart LR
+    U["U3 direct deactivation and revocation"] --> C["Current lifecycle authority and fences"]
+    U -. "durable purge-due intent" .-> P["REM-3 purge coordinator"]
+    P --> M["Immutable manifest and progress"]
+    P -. "purpose-bound commands" .-> Q["Domain command delivery"]
+    Q -.-> X["Domain-owned maintenance executors"]
+    X --> C
+    X --> S["Domain SQL object and cache stores"]
+    X -. "committed receipt" .-> I["REM-3 durable receipt inbox"]
+    I -.-> P
+    P -- "all receipts and zero residue" --> Z["Sanitized completion after control-data cleanup"]
+    W["Ordinary or late content writer"] --> C
+    style U fill:#FFF59D,stroke:#F9A825
+    style C fill:#FFF59D,stroke:#F9A825
+    style M fill:#C8E6C9,stroke:#2E7D32
+    style Z fill:#CE93D8,stroke:#6A1B9A
+    linkStyle default stroke:#333,stroke-width:2px
+```
+
+**Text alternative**: U3는 직접 owner epoch/session을 닫고 유예 후 durable purge intent를 전달한다. R3P가 domain별 quiescence/삭제/검증 command를 보내고 각 domain-owned executor는 자기 store에서만 처리한다. 실행 receipt가 REM-3 inbox로 돌아오면 coordinator가 manifest 진행을 갱신한다. 모든 target의 residue 및 coordinator 자체 owner control data 정리까지 확인한 뒤 비식별 완료 증거를 남긴다. 늦은 일반 writer는 current lifecycle fence에서 차단된다.
+
+### 5. Consent 및 corpus 흐름의 텍스트 모델
+
+- **Consent**: email token -> exact gateway route -> R3C/U15 ConsentBarrier -> suppression + operation/outbox commit -> restricted observer receipt. U15 sender는 동일 barrier의 current veto를 확인하며, async ApplyOptOut -> U15 settings executor -> receipt는 후속 반영이다. revision 경쟁/불명확 handoff는 성공으로 추정하지 않는다.
+- **Corpus**: operator/system audit intent -> R4A worker의 read-only generation snapshot -> immutable audit/calibration evidence -> SEARCH/OBS의 current-head 검증. 별도 승인된 repair runner만 U1 mutation port를 호출한다. report read/health/검색은 repair를 시작하지 않는다.
+- **Platform**: domain schema/registry/lock -> 명시적 R1R -> immutable evidence/CompatibilityManifest -> R1C 또는 local validator consumer. daemon availability를 build/bootstrap의 순환 dependency로 두지 않는다.
+
+### 6. 금지 edge와 failure boundaries
+
+- Browser -> REM listener/MinIO/queue, client URL -> 임의 proxy target, public paper -> private `userdoc:` 자동 fallback은 금지한다.
+- normal REM credential -> 다른 domain 일반 table write, receipt consumer -> 다른 service operation table 직접 write, user job -> privileged maintenance kind는 금지한다.
+- accepted row/old envelope -> 현재 권한 없이 실행, stale event-cache -> 인가 승인, lease expiry -> 외부 I/O quiescence 추정은 금지한다.
+- DELIVERY -> 새 source/model job 또는 recursive status query, health -> queue 작업/migration/repair, runtime daemon -> 자동 dependency repair/promotion은 금지한다.
+- gateway request -> REM -> gateway callback 형태의 synchronous 재진입은 금지한다. domain 작업은 shared port/current projection 또는 durable command/receipt로 연결한다.
+- broker 장애는 direct health와 current authority 판정을 막는 loop가 아니다. 단 current authority store 자체가 실패하면 private 실행/전달은 fail closed한다.
+- deployment/operation version mismatch는 명시적 보류/실패이며, rollback이 known-vulnerable legacy route나 두 ordinary writer를 동시에 활성화하지 않는다.

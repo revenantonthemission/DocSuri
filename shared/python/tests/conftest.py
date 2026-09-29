@@ -3,9 +3,15 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
+from hypothesis import settings
+
+settings.register_profile("pr", max_examples=200, derandomize=True, print_blob=True)
+settings.register_profile("release", max_examples=2000, derandomize=True, print_blob=True)
+settings.load_profile(os.environ.get("R1_TEST_PROFILE", "pr"))
 
 # tests/ -> python/ -> shared/   (the language-neutral SSOT root)
 SHARED_ROOT = Path(__file__).resolve().parents[2]

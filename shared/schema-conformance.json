@@ -1,0 +1,108 @@
+[
+  {
+    "name": "literal keywords and keyword-shaped property names",
+    "valid": true,
+    "documents": [{"$id":"https://schema.test/root","type":"object","default":{"$id":"data","$ref":"https://literal.test/data","$dynamicRef":"data"},"properties":{"$id":{"type":"string"},"$ref":{"const":{"$ref":"#/literal"}}}}]
+  },
+  {
+    "name": "nested resource and anchor recursion",
+    "valid": true,
+    "documents": [{"$id":"https://schema.test/root","$defs":{"Node":{"$id":"child","$anchor":"Node","type":"object","properties":{"next":{"$ref":"#Node"}}},"Alias":{"$ref":"child#Node"}}}],
+    "references": [{"base":"https://schema.test/root","ref":"child#Node","document":"https://schema.test/root","pointer":"/$defs/Node"}]
+  },
+  {
+    "name": "escaped slash tilde and UTF-8 pointer",
+    "valid": true,
+    "documents": [{"$id":"https://schema.test/root","$defs":{"A/B~C":{"type":"string"},"한글":{"type":"number"},"Alias":{"$ref":"#/$defs/A~1B~0C"},"Other":{"$ref":"#/$defs/%ED%95%9C%EA%B8%80"}}}],
+    "references": [{"base":"https://schema.test/root","ref":"#/$defs/A~1B~0C","document":"https://schema.test/root","pointer":"/$defs/A~1B~0C"}]
+  },
+  {
+    "name": "boolean definitions are schema nodes",
+    "valid": true,
+    "documents": [{"$id":"https://schema.test/root","$defs":{"Never":false,"Any":true,"Alias":{"$ref":"#/$defs/Never"}}}]
+  },
+  {
+    "name": "remote reference is not fetched",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test/root","$ref":"https://missing.test/schema"}]
+  },
+  {
+    "name": "literal object is not a schema reference target",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test/root","examples":[{}],"$ref":"#/examples/0"}]
+  },
+  {
+    "name": "invalid pointer tilde escape",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test/root","$defs":{"A~2B":{}},"$ref":"#/$defs/A~2B"}]
+  },
+  {
+    "name": "array index with leading zero",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test/root","prefixItems":[{},{}],"$ref":"#/prefixItems/01"}]
+  },
+  {
+    "name": "duplicate root identity",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test/root"},{"$id":"https://schema.test/root"}]
+  },
+  {
+    "name": "duplicate embedded identity",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test/root","$defs":{"x":{"$id":"https://schema.test/root"}}}]
+  },
+  {
+    "name": "duplicate anchor",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test/root","$defs":{"x":{"$anchor":"same"},"y":{"$anchor":"same"}}}]
+  },
+  {
+    "name": "dynamic references need an explicit supported profile",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test/root","$dynamicRef":"#Node"}]
+  },
+  {
+    "name": "null dialect is invalid",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test/root","$schema":null}]
+  },
+  {
+    "name": "null visibility is invalid",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test/root","x-docsuri-visibility":null}]
+  },
+  {
+    "name": "unsupported dialect",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test/root","$schema":"http://json-schema.org/draft-07/schema#"}]
+  },
+  {
+    "name": "noncanonical empty URL path",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test"}]
+  },
+  {
+    "name": "noncanonical default URL port",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test:443/root"}]
+  },
+  {
+    "name": "public resource cannot expose internal dependency",
+    "valid": false,
+    "documents": [{"$id":"https://schema.test/root","$ref":"https://schema.test/internal"},{"$id":"https://schema.test/internal","type":"object"}],
+    "visibility": {"https://schema.test/root":"public","https://schema.test/internal":"internal"},
+    "consumer": {"roots":["https://schema.test/root"],"visibility":"public"}
+  },
+  {
+    "name": "private nested definition remains dependency-only when unused",
+    "valid": true,
+    "documents": [{"$id":"https://schema.test/root","$defs":{"View":{"type":"object","$defs":{"Private":{"x-docsuri-visibility":"internal","type":"string"}}}}}],
+    "visibility": {"https://schema.test/root":"public"},
+    "consumer": {"roots":["https://schema.test/root"],"visibility":"public"}
+  },
+  {
+    "name": "empty catalog cannot pass",
+    "valid": false,
+    "documents": []
+  }
+]

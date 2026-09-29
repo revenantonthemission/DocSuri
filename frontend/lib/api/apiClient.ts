@@ -90,6 +90,25 @@ import type {
 } from '@/lib/agentChat/types';
 import { streamAgentTurn, timelineDetail } from '@/lib/agentChat/sse';
 import { MAX_AGENT_UPLOAD_BYTES } from '@/lib/agentChat/limits';
+import type {
+  ExtendedBackendResearchJob as BackendResearchJob,
+  ExtendedBackendResearchMessage as BackendResearchMessage,
+  ExtendedBackendNoveltyJob as BackendNoveltyJob,
+  ExtendedBackendNoveltyMessage as BackendNoveltyMessage,
+  ExtendedBackendNoveltyEvent as BackendNoveltyEvent,
+  ExtendedBackendNoveltyArtifact as BackendNoveltyArtifact,
+  ExtendedNotionConnectionStatusVM as NotionConnectionStatusVM,
+  ExtendedNotionExportVM as NotionExportVM,
+  ExtendedNotionExportPreviewVM as NotionExportPreviewVM,
+  ExtendedJobAcceptedDTO as JobAcceptedDTO,
+  ExtendedAgentJobsDTO as AgentJobsDTO,
+  ExtendedResearchJobDTO as ResearchJobDTO,
+  ExtendedNoveltyJobDTO as NoveltyJobDTO,
+  ExtendedNoveltyMessagesDTO as NoveltyMessagesDTO,
+  ExtendedNoveltyArtifactsDTO as NoveltyArtifactsDTO,
+  ExtendedRecentlyViewedDTO as RecentlyViewedDTO,
+} from '@/types/wire/dtos';
+export type { NotionConnectionStatusVM, NotionExportVM, NotionExportPreviewVM };
 
 export interface ApiClientOptions {
   timeoutMs?: number;
@@ -114,41 +133,6 @@ const EVIDENCE_TURN_TIMEOUT_MS = 90_000;
 // 무의미하게 만든다. 두 레이어를 함께 올린다(QA 2026-07-10 F1). 워밍된 검색은 <1초라 P50
 // 체감은 그대로.
 const SEARCH_TIMEOUT_MS = 30_000;
-
-type BackendResearchJob = {
-  jobId: string;
-  title: string;
-  state: 'active' | 'completed' | 'failed' | 'cancelled';
-  updatedAt: string;
-};
-type BackendResearchMessage = {
-  messageId: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  attachments?: unknown[];
-  createdAt: string;
-};
-type BackendNoveltyJob = {
-  jobId: string;
-  topic: string;
-  state: string;
-  updatedAt: string;
-};
-type BackendNoveltyMessage = BackendResearchMessage;
-type BackendNoveltyEvent = {
-  eventId: string;
-  state: string;
-  message: string;
-  payload?: Record<string, unknown>;
-  createdAt: string;
-};
-type BackendNoveltyArtifact = {
-  artifactId: string;
-  kind: string;
-  title: string;
-  payload?: Record<string, unknown>;
-  createdAt: string;
-};
 
 function encodeAgentSessionId(mode: AgentMode, rawId: string): string {
   return `${mode}${AGENT_ID_SEP}${rawId}`;
@@ -377,23 +361,6 @@ function assertPdfUploadSize(file: Blob): void {
 function requestBodyKey(body: unknown): string {
   if (isBinaryTransportBody(body)) return `[binary:${body.contentType}]`;
   return JSON.stringify(body ?? null);
-}
-
-export interface NotionConnectionStatusVM {
-  connected: boolean;
-  parentPageId?: string | null;
-  updatedAt?: string | null;
-}
-
-export interface NotionExportVM {
-  status: string;
-  notionPageId?: string | null;
-  errorMessage?: string | null;
-}
-
-export interface NotionExportPreviewVM {
-  export: NotionExportVM;
-  preview: { title: string; artifacts: { kind: string; title: string }[] };
 }
 
 function pageQuery(params?: PageQuery): string {
@@ -766,7 +733,7 @@ export class ApiClient {
       idempotent: true,
     });
     if (res.status === 200) {
-      const jobs = (res.body as { jobs?: unknown[] }).jobs ?? [];
+      const jobs = (res.body as AgentJobsDTO).jobs ?? [];
       return jobs.map((job) =>
         mode === 'evidence'
           ? mapResearchJob(job as BackendResearchJob)
@@ -789,7 +756,7 @@ export class ApiClient {
       idempotent: true,
     });
     if (res.status === 200) {
-      const body = res.body as { job: BackendResearchJob; messages?: BackendResearchMessage[] };
+      const body = res.body as ResearchJobDTO;
       return {
         session: mapResearchJob(body.job),
         messages: (body.messages ?? []).map((message) => mapAgentMessage(message)),
@@ -824,11 +791,9 @@ export class ApiClient {
     if (![200, 404, 409].includes(resultRes.status)) {
       throw normalizeHttpError(resultRes.status, serverMessage(resultRes.body));
     }
-    const jobBody = jobRes.body as { job: BackendNoveltyJob; events?: BackendNoveltyEvent[] };
-    const messageBody = messageRes.body as { messages?: BackendNoveltyMessage[] };
-    const resultBody = resultRes.body as {
-      artifacts?: BackendNoveltyArtifact[];
-    };
+    const jobBody = jobRes.body as NoveltyJobDTO;
+    const messageBody = messageRes.body as NoveltyMessagesDTO;
+    const resultBody = resultRes.body as NoveltyArtifactsDTO;
     const messages = (messageBody.messages ?? []).map((message) => mapAgentMessage(message));
     const resultMessage = mapNoveltyResultMessage(
       resultRes.status === 200 ? (resultBody.artifacts ?? []) : [],
@@ -943,7 +908,7 @@ export class ApiClient {
     // 업로드해 objectKey를 바인딩해야 분석이 시작된다.
     if (created && target.mode === 'novelty') {
       const manuscript = sendReq.attachments?.[0];
-      const jobId = (res.body as { jobId: string }).jobId;
+      const jobId = (res.body as JobAcceptedDTO).jobId;
       if (hasPdfSourceFile(manuscript)) {
         await this.uploadNoveltyPdfManuscript(jobId, manuscript);
       } else if (manuscript?.contentText) {
@@ -960,9 +925,9 @@ export class ApiClient {
     }
     const nextId =
       created && target.mode === 'evidence'
-        ? encodeAgentSessionId('evidence', (res.body as { jobId: string }).jobId)
+        ? encodeAgentSessionId('evidence', (res.body as JobAcceptedDTO).jobId)
         : created && target.mode === 'novelty'
-          ? encodeAgentSessionId('novelty', (res.body as { jobId: string }).jobId)
+          ? encodeAgentSessionId('novelty', (res.body as JobAcceptedDTO).jobId)
           : sessionId;
     const snapshot = await this.loadAgentSession(nextId);
     return {
@@ -1329,7 +1294,7 @@ export class ApiClient {
       path: '/mypage/recently-viewed',
       idempotent: true,
     });
-    if (res.status === 200) return (res.body as { items: RecentlyViewedItemVM[] }).items ?? [];
+    if (res.status === 200) return (res.body as RecentlyViewedDTO).items ?? [];
     if (res.status === 404) return [];
     throw normalizeHttpError(res.status, serverMessage(res.body));
   }

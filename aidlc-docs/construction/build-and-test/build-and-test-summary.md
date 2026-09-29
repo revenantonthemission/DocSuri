@@ -3,6 +3,15 @@
 **단계**: CONSTRUCTION → Build and Test · **유닛**: U1 Ingestion + U3 Accounts · **일자**: 2026-06-16
 **문서 언어**: 한국어 (영문 헤더 병기)
 
+## 현재 전역 검증 — 2026-09-18
+
+- 기준 `develop` / `32a424d`. **판정: CHANGES REQUIRED — 전면 기능/요구사항 충족 승인 불가.**
+- 기존 검사: Python **1,504 passed**, frontend **338 passed**, WebKit E2E **3 passed**, 타입/린트/Python 계약 드리프트/production build 통과.
+- 추가 합성 감사 반례 **4개 실패**. private 문서 소유권, 공유 번역 원문/캐시, 생성 timeout, BFF client 식별에서 확인된 결함이 있다. 공개 corpus fixture 오염 및 추가 데이터/배포/알림/의존성 문제도 확인했다.
+- [전체 보고서 및 활성 FR 47건 추적표](project-verification-2026-09-18.md)
+- [반례 구성과 실행 증거](project-verification-2026-09-18-reproductions.md)
+- 아래의 과거 유닛별 PASS/Operations 기록은 각 작성 시점의 이력이며 현재 전역 합격 판정이 아니다.
+
 ---
 
 # U11 Evidence Formation Agent Build and Test Summary — 2026-07-01

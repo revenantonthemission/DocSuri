@@ -20,16 +20,24 @@ codegen'd.
 
 from __future__ import annotations
 
-import shutil
+import fcntl
+import hashlib
+import json
+import os
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from urllib.parse import quote
+
+from docsuri_schema import load_catalog
 
 PKG_ROOT = Path(__file__).resolve().parents[1]  # shared/python/
 SHARED_ROOT = PKG_ROOT.parent  # shared/
 SCHEMA_DIRS = ("vector-spec", "dtos", "events")
 GENERATED_DIR = PKG_ROOT / "src" / "docsuri_shared" / "_generated"
+GENERATIONS = GENERATED_DIR.parent / "_binding_generations"
+HEAD = GENERATED_DIR.parent / "_binding_head.json"
 
 # NOTE: datamodel-codegen inserts --custom-file-header verbatim, so every line MUST
 # already be a comment (leading '#'), otherwise the generated modules are invalid Python.
@@ -40,21 +48,25 @@ FILE_HEADER = (
 
 
 def _stage_schemas(dest: Path) -> int:
-    """Copy every ``*.schema.json`` (only) into ``dest`` preserving the group
-    subdir, so cross-file ``$ref``/``$id`` resolution still works. Returns count."""
-    count = 0
-    for group in SCHEMA_DIRS:
-        src_group = SHARED_ROOT / group
-        if not src_group.is_dir():
-            raise SystemExit(f"missing schema group: {src_group}")
-        dest_group = dest / group
-        dest_group.mkdir(parents=True, exist_ok=True)
-        for schema in sorted(src_group.glob("*.schema.json")):
-            shutil.copy2(schema, dest_group / schema.name)
-            count += 1
-    if count == 0:
-        raise SystemExit("no *.schema.json files found to generate from")
-    return count
+    """Validate the complete declared catalog before staging local, schema-aware references."""
+    catalog = load_catalog(SHARED_ROOT)
+    roots = catalog.consumer_roots("python")
+    if set(roots) != set(catalog.documents):
+        raise ValueError("Python binding profile requires complete catalog coverage")
+    for identity in roots:
+        path = dest / catalog.paths[identity]
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        def encode(location, current=path):
+            target = dest / catalog.paths[location.document]
+            relative = "" if target == current else os.path.relpath(target, current.parent)
+            fragment = "#" + quote(location.pointer, safe="/~$") if location.pointer else ""
+            return relative + fragment
+
+        path.write_text(
+            json.dumps(catalog.rewrite(identity, encode), ensure_ascii=False), encoding="utf-8"
+        )
+    return len(roots)
 
 
 def _run_codegen(input_dir: Path, output_dir: Path) -> None:
@@ -83,7 +95,7 @@ def _run_codegen(input_dir: Path, output_dir: Path) -> None:
         "black",
     ]
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
     except FileNotFoundError as exc:
         raise SystemExit(
             "datamodel-codegen not found on PATH — run via `uv run python tools/generate.py` "
@@ -105,15 +117,51 @@ def _build(output_dir: Path) -> int:
 
 
 def generate(*, announce: bool = True) -> None:
-    """Regenerate GENERATED_DIR atomically: build into a temp dir, then swap in on
-    success. A codegen failure leaves the committed models untouched (no wipe-on-fail)."""
+    """Publish an immutable generation using one atomic head. Import pins one directory.
+
+    Existing legacy modules remain as historical source; the compatibility loader never falls
+    back to them after managed publication. Generation/verification failure changes no head.
+    """
     with tempfile.TemporaryDirectory() as tmp:
         fresh = Path(tmp) / "_generated"
         n = _build(fresh)
-        if GENERATED_DIR.exists():
-            shutil.rmtree(GENERATED_DIR)
-        GENERATED_DIR.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(fresh, GENERATED_DIR)
+        files = {
+            p.as_posix(): hashlib.sha256((fresh / p).read_bytes()).hexdigest()
+            for p in sorted(_py_files(fresh))
+        }
+        manifest = json.dumps(files, sort_keys=True, separators=(",", ":")).encode()
+        generation = hashlib.sha256(manifest).hexdigest()
+        GENERATIONS.mkdir(parents=True, exist_ok=True)
+        with (PKG_ROOT / ".codegen.lock").open("a+b") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            destination = GENERATIONS / generation
+            if destination.exists():
+                if _content_diff(destination, fresh):
+                    raise ValueError("immutable binding generation conflict")
+            else:
+                # Stage on the target filesystem; rename only after every file is durable.
+                staged = Path(tempfile.mkdtemp(prefix="candidate-", dir=GENERATIONS))
+                for path in sorted(_py_files(fresh)):
+                    target = staged / path
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    with target.open("xb") as stream:
+                        stream.write((fresh / path).read_bytes())
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                os.rename(staged, destination)
+            staged_head = HEAD.with_suffix(".tmp")
+            with staged_head.open("wb") as stream:
+                stream.write(
+                    json.dumps({"generation": generation, "files": files}, sort_keys=True).encode()
+                )
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(staged_head, HEAD)
+            directory_fd = os.open(HEAD.parent, os.O_RDONLY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
     if announce:
         print(f"generated models from {n} schema files -> {GENERATED_DIR}")
 
@@ -145,7 +193,14 @@ def check() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         fresh = Path(tmp) / "_generated"
         _build(fresh)
-        diffs = _content_diff(GENERATED_DIR, fresh)
+        committed = GENERATED_DIR
+        if HEAD.exists():
+            head = json.loads(HEAD.read_text())
+            generation = head.get("generation", "")
+            if len(generation) != 64 or any(c not in "0123456789abcdef" for c in generation):
+                raise ValueError("invalid binding head")
+            committed = GENERATIONS / generation
+        diffs = _content_diff(committed, fresh)
     if diffs:
         sys.stderr.write(
             "drift: committed _generated/ is stale vs the schemas.\n"

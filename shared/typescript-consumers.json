@@ -1,0 +1,2433 @@
+{
+  "version": 1,
+  "imports": [
+    {
+      "file": "frontend/app/paper/[id]/doc-model/page.tsx",
+      "module": "@/types/generated",
+      "symbol": "AnchorVM",
+      "local": "AnchorVM",
+      "generated": [
+        "SummarizationAnchor"
+      ]
+    },
+    {
+      "file": "frontend/components/agent/AgentChatScreen.tsx",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentAttachment",
+      "local": "AgentAttachment",
+      "generated": []
+    },
+    {
+      "file": "frontend/components/agent/AgentChatScreen.tsx",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentJobState",
+      "local": "AgentJobState",
+      "generated": []
+    },
+    {
+      "file": "frontend/components/agent/AgentChatScreen.tsx",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentMessage",
+      "local": "AgentMessage",
+      "generated": []
+    },
+    {
+      "file": "frontend/components/agent/AgentChatScreen.tsx",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentMode",
+      "local": "AgentMode",
+      "generated": []
+    },
+    {
+      "file": "frontend/components/agent/AgentChatScreen.tsx",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentSessionSummary",
+      "local": "AgentSessionSummary",
+      "generated": []
+    },
+    {
+      "file": "frontend/components/agent/AgentChatScreen.tsx",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentTimelineEvent",
+      "local": "AgentTimelineEvent",
+      "generated": []
+    },
+    {
+      "file": "frontend/components/agent/AgentChatScreen.tsx",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentTimelineState",
+      "local": "AgentTimelineState",
+      "generated": []
+    },
+    {
+      "file": "frontend/components/agent/NotionExportPanel.tsx",
+      "module": "@/lib/api/apiClient",
+      "symbol": "NotionExportPreviewVM",
+      "local": "NotionExportPreviewVM",
+      "generated": [
+        "ExtendedNotionExportPreviewVM"
+      ]
+    },
+    {
+      "file": "frontend/components/agent/NotionExportPanel.tsx",
+      "module": "@/lib/api/apiClient",
+      "symbol": "NotionExportVM",
+      "local": "NotionExportVM",
+      "generated": [
+        "ExtendedNotionExportVM"
+      ]
+    },
+    {
+      "file": "frontend/components/CitationTreePanel.tsx",
+      "module": "@/types/citationGraph",
+      "symbol": "CitationNode",
+      "local": "CitationNode",
+      "generated": [
+        "ExtendedCitationNode"
+      ]
+    },
+    {
+      "file": "frontend/components/CitationTreePanel.tsx",
+      "module": "@/types/citationGraph",
+      "symbol": "CitationTreeResponse",
+      "local": "CitationTreeResponse",
+      "generated": [
+        "ExtendedCitationTreeResponse"
+      ]
+    },
+    {
+      "file": "frontend/components/DocModelViewer.tsx",
+      "module": "@/types/generated",
+      "symbol": "AnchorVM",
+      "local": "AnchorVM",
+      "generated": [
+        "SummarizationAnchor"
+      ]
+    },
+    {
+      "file": "frontend/components/DocModelViewer.tsx",
+      "module": "@/types/generated",
+      "symbol": "AssetRef",
+      "local": "AssetRef",
+      "generated": [
+        "SummarizationAssetRef"
+      ]
+    },
+    {
+      "file": "frontend/components/DocModelViewer.tsx",
+      "module": "@/types/generated",
+      "symbol": "DocBlock",
+      "local": "DocBlock",
+      "generated": [
+        "DocmodelBlock"
+      ]
+    },
+    {
+      "file": "frontend/components/DocModelViewer.tsx",
+      "module": "@/types/generated",
+      "symbol": "DocModel",
+      "local": "DocModel",
+      "generated": [
+        "DocmodelDocModel"
+      ]
+    },
+    {
+      "file": "frontend/components/DocModelViewer.tsx",
+      "module": "@/types/generated",
+      "symbol": "DocSection",
+      "local": "DocSection",
+      "generated": [
+        "DocmodelSection"
+      ]
+    },
+    {
+      "file": "frontend/components/DocModelViewer.tsx",
+      "module": "@/types/generated",
+      "symbol": "DocTableBlock",
+      "local": "DocTableBlock",
+      "generated": [
+        "DocmodelTableBlock"
+      ]
+    },
+    {
+      "file": "frontend/components/FullTranslationIsland.tsx",
+      "module": "@/types/generated",
+      "symbol": "AssetRef",
+      "local": "AssetRef",
+      "generated": [
+        "SummarizationAssetRef"
+      ]
+    },
+    {
+      "file": "frontend/components/library/HistoryScreen.tsx",
+      "module": "@/lib/api",
+      "symbol": "SearchOutcome",
+      "local": "SearchOutcome",
+      "generated": [
+        "SearchResultCardVM",
+        "SearchResultMeta"
+      ]
+    },
+    {
+      "file": "frontend/components/library/HistoryScreen.tsx",
+      "module": "@/types/generated",
+      "symbol": "HistoryEntry",
+      "local": "HistoryEntry",
+      "generated": [
+        "LibraryHistoryEntry"
+      ]
+    },
+    {
+      "file": "frontend/components/library/LibraryScreen.tsx",
+      "module": "@/types/generated",
+      "symbol": "LibraryItemDTO",
+      "local": "LibraryItemDTO",
+      "generated": [
+        "LibraryLibraryItemDTO"
+      ]
+    },
+    {
+      "file": "frontend/components/library/OutcomeView.tsx",
+      "module": "@/lib/api",
+      "symbol": "SearchOutcome",
+      "local": "SearchOutcome",
+      "generated": [
+        "SearchResultCardVM",
+        "SearchResultMeta"
+      ]
+    },
+    {
+      "file": "frontend/components/library/OutcomeView.tsx",
+      "module": "@/types/generated",
+      "symbol": "ResultCardVM",
+      "local": "ResultCardVM",
+      "generated": [
+        "SearchResultCardVM"
+      ]
+    },
+    {
+      "file": "frontend/components/library/SavedSearchScreen.tsx",
+      "module": "@/lib/api",
+      "symbol": "SearchOutcome",
+      "local": "SearchOutcome",
+      "generated": [
+        "SearchResultCardVM",
+        "SearchResultMeta"
+      ]
+    },
+    {
+      "file": "frontend/components/library/SavedSearchScreen.tsx",
+      "module": "@/types/generated",
+      "symbol": "SavedSearchDTO",
+      "local": "SavedSearchDTO",
+      "generated": [
+        "LibrarySavedSearchDTO"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/MyPageLibraryScreen.tsx",
+      "module": "@/types/generated",
+      "symbol": "LibraryItemDTO",
+      "local": "LibraryItemDTO",
+      "generated": [
+        "LibraryLibraryItemDTO"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/MyPageLibraryScreen.tsx",
+      "module": "@/types/mypage",
+      "symbol": "RecentlyViewedItemVM",
+      "local": "RecentlyViewedItemVM",
+      "generated": [
+        "ExtendedRecentlyViewedItemVM"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/MyPageScreen.tsx",
+      "module": "@/types/generated",
+      "symbol": "SubscriptionDTO",
+      "local": "SubscriptionDTO",
+      "generated": [
+        "MypageSubscriptionDTO"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/MyPageScreen.tsx",
+      "module": "@/types/mypage",
+      "symbol": "AccountProfileVM",
+      "local": "AccountProfileVM",
+      "generated": [
+        "ExtendedAccountProfileVM"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/MyPageScreen.tsx",
+      "module": "@/types/mypage",
+      "symbol": "OrcidProfileVM",
+      "local": "OrcidProfileVM",
+      "generated": [
+        "ExtendedOrcidProfileVM"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/MyPageSettingsScreen.tsx",
+      "module": "@/lib/api/apiClient",
+      "symbol": "NotionConnectionStatusVM",
+      "local": "NotionConnectionStatusVM",
+      "generated": [
+        "ExtendedNotionConnectionStatusVM"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/MyPageSettingsScreen.tsx",
+      "module": "@/types/mypage",
+      "symbol": "ConsentSettingsVM",
+      "local": "ConsentSettingsVM",
+      "generated": [
+        "ExtendedConsentSettingsVM"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/MyPageSettingsScreen.tsx",
+      "module": "@/types/personalization",
+      "symbol": "PersonalizationSettings",
+      "local": "PersonalizationSettings",
+      "generated": [
+        "ExtendedPersonalizationSettings"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/MyPageSubscriptionScreen.tsx",
+      "module": "@/types/generated",
+      "symbol": "SubscriptionDTO",
+      "local": "SubscriptionDTO",
+      "generated": [
+        "MypageSubscriptionDTO"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/PlanSection.tsx",
+      "module": "@/types/plan",
+      "symbol": "FREE_PLAN_QUOTAS",
+      "local": "FREE_PLAN_QUOTAS",
+      "generated": []
+    },
+    {
+      "file": "frontend/components/mypage/PlanSection.tsx",
+      "module": "@/types/plan",
+      "symbol": "MyPlanVM",
+      "local": "MyPlanVM",
+      "generated": [
+        "ExtendedMyPlanVM"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/TrendsSettingsSection.tsx",
+      "module": "@/types/trends",
+      "symbol": "DigestCadence",
+      "local": "DigestCadence",
+      "generated": [
+        "ExtendedDigestCadence"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/TrendsSettingsSection.tsx",
+      "module": "@/types/trends",
+      "symbol": "DigestSettingsVM",
+      "local": "DigestSettingsVM",
+      "generated": [
+        "ExtendedDigestSettingsVM"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/TrendsSettingsSection.tsx",
+      "module": "@/types/trends",
+      "symbol": "FollowListVM",
+      "local": "FollowListVM",
+      "generated": [
+        "ExtendedFollowListVM"
+      ]
+    },
+    {
+      "file": "frontend/components/mypage/TrendsSettingsSection.tsx",
+      "module": "@/types/trends",
+      "symbol": "MAX_TOPIC_LENGTH",
+      "local": "MAX_TOPIC_LENGTH",
+      "generated": []
+    },
+    {
+      "file": "frontend/components/onboarding/InterestPickerModal.tsx",
+      "module": "@/types/onboarding",
+      "symbol": "OrcidSuggestion",
+      "local": "OrcidSuggestion",
+      "generated": [
+        "ExtendedOrcidSuggestion"
+      ]
+    },
+    {
+      "file": "frontend/components/onboarding/OnboardingGate.tsx",
+      "module": "@/types/onboarding",
+      "symbol": "OrcidSuggestion",
+      "local": "OrcidSuggestion",
+      "generated": [
+        "ExtendedOrcidSuggestion"
+      ]
+    },
+    {
+      "file": "frontend/components/PaperDetailIsland.tsx",
+      "module": "@/types/generated",
+      "symbol": "AnchorVM",
+      "local": "AnchorVM",
+      "generated": [
+        "SummarizationAnchor"
+      ]
+    },
+    {
+      "file": "frontend/components/PersonaToggle.tsx",
+      "module": "@/types/generated",
+      "symbol": "Persona",
+      "local": "Persona",
+      "generated": [
+        "SummarizationPersona"
+      ]
+    },
+    {
+      "file": "frontend/components/ResultCard.tsx",
+      "module": "@/types/generated",
+      "symbol": "ResultCardVM",
+      "local": "ResultCardVM",
+      "generated": [
+        "SearchResultCardVM"
+      ]
+    },
+    {
+      "file": "frontend/components/ResultList.tsx",
+      "module": "@/types/generated",
+      "symbol": "ResultCardVM",
+      "local": "ResultCardVM",
+      "generated": [
+        "SearchResultCardVM"
+      ]
+    },
+    {
+      "file": "frontend/components/SearchScreen.tsx",
+      "module": "@/lib/api",
+      "symbol": "SearchOutcome",
+      "local": "SearchOutcome",
+      "generated": [
+        "SearchResultCardVM",
+        "SearchResultMeta"
+      ]
+    },
+    {
+      "file": "frontend/components/SearchScreen.tsx",
+      "module": "@/types/generated",
+      "symbol": "ResultCardVM",
+      "local": "ResultCardVM",
+      "generated": [
+        "SearchResultCardVM"
+      ]
+    },
+    {
+      "file": "frontend/components/session/SessionContext.tsx",
+      "module": "@/types/generated",
+      "symbol": "SessionInfo",
+      "local": "SessionInfo",
+      "generated": [
+        "AccountsSessionInfo"
+      ]
+    },
+    {
+      "file": "frontend/components/SummaryModal.tsx",
+      "module": "@/types/generated",
+      "symbol": "AnchorVM",
+      "local": "AnchorVM",
+      "generated": [
+        "SummarizationAnchor"
+      ]
+    },
+    {
+      "file": "frontend/components/SummaryModal.tsx",
+      "module": "@/types/generated",
+      "symbol": "Persona",
+      "local": "Persona",
+      "generated": [
+        "SummarizationPersona"
+      ]
+    },
+    {
+      "file": "frontend/components/SummaryModal.tsx",
+      "module": "@/types/generated",
+      "symbol": "SummarizeRequest",
+      "local": "SummarizeRequest",
+      "generated": [
+        "SummarizationSummaryRequest"
+      ]
+    },
+    {
+      "file": "frontend/components/SummaryModal.tsx",
+      "module": "@/types/generated",
+      "symbol": "SummarizeScope",
+      "local": "SummarizeScope",
+      "generated": [
+        "SummarizationSummarizeScope"
+      ]
+    },
+    {
+      "file": "frontend/components/SummaryView.tsx",
+      "module": "@/types/generated",
+      "symbol": "AnchorVM",
+      "local": "AnchorVM",
+      "generated": [
+        "SummarizationAnchor"
+      ]
+    },
+    {
+      "file": "frontend/components/SummaryView.tsx",
+      "module": "@/types/generated",
+      "symbol": "SummaryVM",
+      "local": "SummaryVM",
+      "generated": [
+        "SummarizationSummaryDraft"
+      ]
+    },
+    {
+      "file": "frontend/components/TranslationView.tsx",
+      "module": "@/types/generated",
+      "symbol": "AssetRef",
+      "local": "AssetRef",
+      "generated": [
+        "SummarizationAssetRef"
+      ]
+    },
+    {
+      "file": "frontend/components/TranslationView.tsx",
+      "module": "@/types/generated",
+      "symbol": "TranslationVM",
+      "local": "TranslationVM",
+      "generated": [
+        "SummarizationTranslationDraft"
+      ]
+    },
+    {
+      "file": "frontend/lib/agentChat/sse.ts",
+      "module": "./types",
+      "symbol": "AgentTimelineEvent",
+      "local": "AgentTimelineEvent",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/agentChat/sse.ts",
+      "module": "./types",
+      "symbol": "AgentTimelineState",
+      "local": "AgentTimelineState",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/agentChat/state.ts",
+      "module": "./types",
+      "symbol": "AgentAttachment",
+      "local": "AgentAttachment",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/agentChat/state.ts",
+      "module": "./types",
+      "symbol": "AgentAttachmentKind",
+      "local": "AgentAttachmentKind",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/agentChat/state.ts",
+      "module": "./types",
+      "symbol": "AgentJobState",
+      "local": "AgentJobState",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/agentChat/state.ts",
+      "module": "./types",
+      "symbol": "AgentMessage",
+      "local": "AgentMessage",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/agentChat/state.ts",
+      "module": "./types",
+      "symbol": "AgentMode",
+      "local": "AgentMode",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/agentChat/state.ts",
+      "module": "./types",
+      "symbol": "AgentSendMessageResult",
+      "local": "AgentSendMessageResult",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/agentChat/state.ts",
+      "module": "./types",
+      "symbol": "AgentSessionSnapshot",
+      "local": "AgentSessionSnapshot",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/agentChat/state.ts",
+      "module": "./types",
+      "symbol": "AgentSessionSummary",
+      "local": "AgentSessionSummary",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/agentChat/state.ts",
+      "module": "./types",
+      "symbol": "AgentTimelineEvent",
+      "local": "AgentTimelineEvent",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "./classify",
+      "symbol": "SearchOutcome",
+      "local": "SearchOutcome",
+      "generated": [
+        "SearchResultCardVM",
+        "SearchResultMeta"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "./classifySummarize",
+      "symbol": "AssetsOutcome",
+      "local": "AssetsOutcome",
+      "generated": [
+        "SummarizationAssetRef"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "./classifySummarize",
+      "symbol": "DocModelOutcome",
+      "local": "DocModelOutcome",
+      "generated": [
+        "DocmodelDocModel"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "./classifySummarize",
+      "symbol": "SummarizeOutcome",
+      "local": "SummarizeOutcome",
+      "generated": [
+        "SummarizationSummaryDraft",
+        "SummarizationSummaryMeta",
+        "SummarizationTranslationDraft"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentAttachment",
+      "local": "AgentAttachment",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentAttachmentKind",
+      "local": "AgentAttachmentKind",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentAttachmentStatus",
+      "local": "AgentAttachmentStatus",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentJobState",
+      "local": "AgentJobState",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentMessage",
+      "local": "AgentMessage",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentMode",
+      "local": "AgentMode",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentSendMessageRequest",
+      "local": "AgentSendMessageRequest",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentSendMessageResult",
+      "local": "AgentSendMessageResult",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentSessionSnapshot",
+      "local": "AgentSessionSnapshot",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentSessionSummary",
+      "local": "AgentSessionSummary",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentTimelineEvent",
+      "local": "AgentTimelineEvent",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/citationGraph",
+      "symbol": "CitationNode",
+      "local": "CitationNode",
+      "generated": [
+        "ExtendedCitationNode"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/citationGraph",
+      "symbol": "CitationTreeQuery",
+      "local": "CitationTreeQuery",
+      "generated": [
+        "ExtendedCitationTreeQuery"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/citationGraph",
+      "symbol": "CitationTreeResponse",
+      "local": "CitationTreeResponse",
+      "generated": [
+        "ExtendedCitationTreeResponse"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "DocModelRequest",
+      "local": "DocModelRequest",
+      "generated": [
+        "DocmodelDocModelRequest"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "HistoryPageDTO",
+      "local": "HistoryPageDTO",
+      "generated": [
+        "LibraryHistoryPageDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "LibraryItemCreateDTO",
+      "local": "LibraryItemCreateDTO",
+      "generated": [
+        "LibraryLibraryItemCreateDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "LibraryItemDTO",
+      "local": "LibraryItemDTO",
+      "generated": [
+        "LibraryLibraryItemDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "LibraryPageDTO",
+      "local": "LibraryPageDTO",
+      "generated": [
+        "LibraryLibraryItemDTO",
+        "LibraryLibraryPageDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "LoginRequest",
+      "local": "LoginRequest",
+      "generated": [
+        "AccountsLoginRequest"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "SavedSearchCreateDTO",
+      "local": "SavedSearchCreateDTO",
+      "generated": [
+        "LibrarySavedSearchCreateDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "SavedSearchDTO",
+      "local": "SavedSearchDTO",
+      "generated": [
+        "LibrarySavedSearchDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "SavedSearchPageDTO",
+      "local": "SavedSearchPageDTO",
+      "generated": [
+        "LibrarySavedSearchPageDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "SearchRequest",
+      "local": "SearchRequest",
+      "generated": [
+        "SearchSearchRequest"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "SessionInfo",
+      "local": "SessionInfo",
+      "generated": [
+        "AccountsSessionInfo"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "SignupRequest",
+      "local": "SignupRequest",
+      "generated": [
+        "AccountsSignupRequest"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "SignupResult",
+      "local": "SignupResult",
+      "generated": [
+        "AccountsSignupResult"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "SubscriptionDTO",
+      "local": "SubscriptionDTO",
+      "generated": [
+        "MypageSubscriptionDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/generated",
+      "symbol": "SummarizeRequest",
+      "local": "SummarizeRequest",
+      "generated": [
+        "SummarizationSummaryRequest"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/glossary",
+      "symbol": "GlossaryListDTO",
+      "local": "GlossaryListDTO",
+      "generated": [
+        "ExtendedGlossaryListDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/glossary",
+      "symbol": "GlossaryTermDTO",
+      "local": "GlossaryTermDTO",
+      "generated": [
+        "ExtendedGlossaryTermDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/glossary",
+      "symbol": "GlossaryTermUpsertDTO",
+      "local": "GlossaryTermUpsertDTO",
+      "generated": [
+        "ExtendedGlossaryTermUpsertDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/glossary",
+      "symbol": "GlossaryUpsertResultDTO",
+      "local": "GlossaryUpsertResultDTO",
+      "generated": [
+        "ExtendedGlossaryUpsertResultDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/mypage",
+      "symbol": "AccountProfileVM",
+      "local": "AccountProfileVM",
+      "generated": [
+        "ExtendedAccountProfileVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/mypage",
+      "symbol": "ConsentSettingsVM",
+      "local": "ConsentSettingsVM",
+      "generated": [
+        "ExtendedConsentSettingsVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/mypage",
+      "symbol": "OrcidProfileVM",
+      "local": "OrcidProfileVM",
+      "generated": [
+        "ExtendedOrcidProfileVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/mypage",
+      "symbol": "RecentlyViewedItemVM",
+      "local": "RecentlyViewedItemVM",
+      "generated": [
+        "ExtendedRecentlyViewedItemVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/onboarding",
+      "symbol": "InterestSelectionCreate",
+      "local": "InterestSelectionCreate",
+      "generated": [
+        "ExtendedInterestSelectionCreate"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/onboarding",
+      "symbol": "InterestsResult",
+      "local": "InterestsResult",
+      "generated": [
+        "ExtendedInterestsResult"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/onboarding",
+      "symbol": "OnboardingStatusResponse",
+      "local": "OnboardingStatusResponse",
+      "generated": [
+        "ExtendedOnboardingStatusResponse"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/onboarding",
+      "symbol": "OrcidSuggestionsResponse",
+      "local": "OrcidSuggestionsResponse",
+      "generated": [
+        "ExtendedOrcidSuggestionsResponse"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/onboarding",
+      "symbol": "SkipResult",
+      "local": "SkipResult",
+      "generated": [
+        "ExtendedSkipResult"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/paperMeta",
+      "symbol": "PaperMetaVM",
+      "local": "PaperMetaVM",
+      "generated": [
+        "ExtendedPaperMetaVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/personalization",
+      "symbol": "BehaviorEventCreate",
+      "local": "BehaviorEventCreate",
+      "generated": [
+        "ExtendedBehaviorEventCreate"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/personalization",
+      "symbol": "DeletePersonalizationEventsResult",
+      "local": "DeletePersonalizationEventsResult",
+      "generated": [
+        "ExtendedDeletePersonalizationEventsResult"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/personalization",
+      "symbol": "EventRecordResult",
+      "local": "EventRecordResult",
+      "generated": [
+        "ExtendedEventRecordResult"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/personalization",
+      "symbol": "PersonalizationSettings",
+      "local": "PersonalizationSettings",
+      "generated": [
+        "ExtendedPersonalizationSettings"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/personalization",
+      "symbol": "ResetPersonalizationProfileResult",
+      "local": "ResetPersonalizationProfileResult",
+      "generated": [
+        "ExtendedResetPersonalizationProfileResult"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/plan",
+      "symbol": "MyPlanVM",
+      "local": "MyPlanVM",
+      "generated": [
+        "ExtendedMyPlanVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/trends",
+      "symbol": "DigestCadence",
+      "local": "DigestCadence",
+      "generated": [
+        "ExtendedDigestCadence"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/trends",
+      "symbol": "DigestSettingsVM",
+      "local": "DigestSettingsVM",
+      "generated": [
+        "ExtendedDigestSettingsVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/trends",
+      "symbol": "FollowedTopicVM",
+      "local": "FollowedTopicVM",
+      "generated": [
+        "ExtendedFollowedTopicVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/trends",
+      "symbol": "FollowListVM",
+      "local": "FollowListVM",
+      "generated": [
+        "ExtendedFollowListVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/trends",
+      "symbol": "MAX_FOLLOWED_TOPICS",
+      "local": "MAX_FOLLOWED_TOPICS",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/trends",
+      "symbol": "UnsubscribeResultVM",
+      "local": "UnsubscribeResultVM",
+      "generated": [
+        "ExtendedUnsubscribeResultVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedAgentJobsDTO",
+      "local": "AgentJobsDTO",
+      "generated": [
+        "ExtendedAgentJobsDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedBackendNoveltyArtifact",
+      "local": "BackendNoveltyArtifact",
+      "generated": [
+        "ExtendedBackendNoveltyArtifact"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedBackendNoveltyEvent",
+      "local": "BackendNoveltyEvent",
+      "generated": [
+        "ExtendedBackendNoveltyEvent"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedBackendNoveltyJob",
+      "local": "BackendNoveltyJob",
+      "generated": [
+        "ExtendedBackendNoveltyJob"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedBackendNoveltyMessage",
+      "local": "BackendNoveltyMessage",
+      "generated": [
+        "ExtendedBackendNoveltyMessage"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedBackendResearchJob",
+      "local": "BackendResearchJob",
+      "generated": [
+        "ExtendedBackendResearchJob"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedBackendResearchMessage",
+      "local": "BackendResearchMessage",
+      "generated": [
+        "ExtendedBackendResearchMessage"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedJobAcceptedDTO",
+      "local": "JobAcceptedDTO",
+      "generated": [
+        "ExtendedJobAcceptedDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedNotionConnectionStatusVM",
+      "local": "NotionConnectionStatusVM",
+      "generated": [
+        "ExtendedNotionConnectionStatusVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedNotionExportPreviewVM",
+      "local": "NotionExportPreviewVM",
+      "generated": [
+        "ExtendedNotionExportPreviewVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedNotionExportVM",
+      "local": "NotionExportVM",
+      "generated": [
+        "ExtendedNotionExportVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedNoveltyArtifactsDTO",
+      "local": "NoveltyArtifactsDTO",
+      "generated": [
+        "ExtendedNoveltyArtifactsDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedNoveltyJobDTO",
+      "local": "NoveltyJobDTO",
+      "generated": [
+        "ExtendedNoveltyJobDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedNoveltyMessagesDTO",
+      "local": "NoveltyMessagesDTO",
+      "generated": [
+        "ExtendedNoveltyMessagesDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedRecentlyViewedDTO",
+      "local": "RecentlyViewedDTO",
+      "generated": [
+        "ExtendedRecentlyViewedDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "module": "@/types/wire/dtos",
+      "symbol": "ExtendedResearchJobDTO",
+      "local": "ResearchJobDTO",
+      "generated": [
+        "ExtendedResearchJobDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/classify.ts",
+      "module": "@/types/generated",
+      "symbol": "ResultCardVM",
+      "local": "ResultCardVM",
+      "generated": [
+        "SearchResultCardVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/classify.ts",
+      "module": "@/types/generated",
+      "symbol": "ResultMeta",
+      "local": "ResultMeta",
+      "generated": [
+        "SearchResultMeta"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/classifySummarize.ts",
+      "module": "@/types/generated",
+      "symbol": "AssetRef",
+      "local": "AssetRef",
+      "generated": [
+        "SummarizationAssetRef"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/classifySummarize.ts",
+      "module": "@/types/generated",
+      "symbol": "DocModel",
+      "local": "DocModel",
+      "generated": [
+        "DocmodelDocModel"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/classifySummarize.ts",
+      "module": "@/types/generated",
+      "symbol": "SummaryMeta",
+      "local": "SummaryMeta",
+      "generated": [
+        "SummarizationSummaryMeta"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/classifySummarize.ts",
+      "module": "@/types/generated",
+      "symbol": "SummaryVM",
+      "local": "SummaryVM",
+      "generated": [
+        "SummarizationSummaryDraft"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/classifySummarize.ts",
+      "module": "@/types/generated",
+      "symbol": "TranslationVM",
+      "local": "TranslationVM",
+      "generated": [
+        "SummarizationTranslationDraft"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentAttachment",
+      "local": "AgentAttachment",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentMessage",
+      "local": "AgentMessage",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentSessionSnapshot",
+      "local": "AgentSessionSnapshot",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentSessionSummary",
+      "local": "AgentSessionSummary",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "module": "@/lib/agentChat/types",
+      "symbol": "AgentTimelineEvent",
+      "local": "AgentTimelineEvent",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "module": "@/types/citationGraph",
+      "symbol": "CitationNode",
+      "local": "CitationNode",
+      "generated": [
+        "ExtendedCitationNode"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "module": "@/types/generated",
+      "symbol": "LibraryItemCreateDTO",
+      "local": "LibraryItemCreateDTO",
+      "generated": [
+        "LibraryLibraryItemCreateDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "module": "@/types/generated",
+      "symbol": "SavedSearchCreateDTO",
+      "local": "SavedSearchCreateDTO",
+      "generated": [
+        "LibrarySavedSearchCreateDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "module": "@/types/personalization",
+      "symbol": "BehaviorEventCreate",
+      "local": "BehaviorEventCreate",
+      "generated": [
+        "ExtendedBehaviorEventCreate"
+      ]
+    },
+    {
+      "file": "frontend/lib/library/cardFromMeta.ts",
+      "module": "@/types/generated",
+      "symbol": "LibraryItemMeta",
+      "local": "LibraryItemMeta",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/library/cardFromMeta.ts",
+      "module": "@/types/generated",
+      "symbol": "ResultCardVM",
+      "local": "ResultCardVM",
+      "generated": [
+        "SearchResultCardVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/library/savedLibrary.tsx",
+      "module": "@/types/generated",
+      "symbol": "LibraryItemDTO",
+      "local": "LibraryItemDTO",
+      "generated": [
+        "LibraryLibraryItemDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/personalization.ts",
+      "module": "@/types/generated",
+      "symbol": "AnchorVM",
+      "local": "AnchorVM",
+      "generated": [
+        "SummarizationAnchor"
+      ]
+    },
+    {
+      "file": "frontend/lib/personalization.ts",
+      "module": "@/types/generated",
+      "symbol": "Persona",
+      "local": "Persona",
+      "generated": [
+        "SummarizationPersona"
+      ]
+    },
+    {
+      "file": "frontend/lib/personalization.ts",
+      "module": "@/types/generated",
+      "symbol": "SummarizeScope",
+      "local": "SummarizeScope",
+      "generated": [
+        "SummarizationSummarizeScope"
+      ]
+    },
+    {
+      "file": "frontend/lib/personalization.ts",
+      "module": "@/types/personalization",
+      "symbol": "BehaviorEventCreate",
+      "local": "BehaviorEventCreate",
+      "generated": [
+        "ExtendedBehaviorEventCreate"
+      ]
+    },
+    {
+      "file": "frontend/lib/search/searchCache.ts",
+      "module": "@/lib/api",
+      "symbol": "SearchOutcome",
+      "local": "SearchOutcome",
+      "generated": [
+        "SearchResultCardVM",
+        "SearchResultMeta"
+      ]
+    },
+    {
+      "file": "frontend/lib/useAssets.ts",
+      "module": "@/lib/api",
+      "symbol": "AssetsOutcome",
+      "local": "AssetsOutcome",
+      "generated": [
+        "SummarizationAssetRef"
+      ]
+    },
+    {
+      "file": "frontend/lib/useDocModel.ts",
+      "module": "@/lib/api",
+      "symbol": "DocModelOutcome",
+      "local": "DocModelOutcome",
+      "generated": [
+        "DocmodelDocModel"
+      ]
+    },
+    {
+      "file": "frontend/lib/useDocModel.ts",
+      "module": "@/types/generated",
+      "symbol": "DocModelRequest",
+      "local": "DocModelRequest",
+      "generated": [
+        "DocmodelDocModelRequest"
+      ]
+    },
+    {
+      "file": "frontend/lib/usePaperMeta.ts",
+      "module": "@/types/paperMeta",
+      "symbol": "PaperMetaVM",
+      "local": "PaperMetaVM",
+      "generated": [
+        "ExtendedPaperMetaVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/useSummarize.ts",
+      "module": "@/lib/api",
+      "symbol": "SummarizeOutcome",
+      "local": "SummarizeOutcome",
+      "generated": [
+        "SummarizationSummaryDraft",
+        "SummarizationSummaryMeta",
+        "SummarizationTranslationDraft"
+      ]
+    },
+    {
+      "file": "frontend/lib/useSummarize.ts",
+      "module": "@/types/generated",
+      "symbol": "SummarizeRequest",
+      "local": "SummarizeRequest",
+      "generated": [
+        "SummarizationSummaryRequest"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/library.ts",
+      "module": "../wire/dtos",
+      "symbol": "LibraryLibraryItemCreateDTO",
+      "local": "LibraryLibraryItemCreateDTO",
+      "generated": [
+        "LibraryLibraryItemCreateDTO"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/library.ts",
+      "module": "../wire/dtos",
+      "symbol": "LibraryLibraryItemDTO",
+      "local": "LibraryLibraryItemDTO",
+      "generated": [
+        "LibraryLibraryItemDTO"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/library.ts",
+      "module": "../wire/dtos",
+      "symbol": "LibraryLibraryPageDTO",
+      "local": "LibraryLibraryPageDTO",
+      "generated": [
+        "LibraryLibraryPageDTO"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/summarize.ts",
+      "module": "../wire/dtos",
+      "symbol": "ExtendedSummarizeValidationErrorDTO",
+      "local": "ExtendedSummarizeValidationErrorDTO",
+      "generated": [
+        "ExtendedSummarizeValidationErrorDTO"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/summarize.ts",
+      "module": "../wire/dtos",
+      "symbol": "ExtendedUnauthorizedDTO",
+      "local": "ExtendedUnauthorizedDTO",
+      "generated": [
+        "ExtendedUnauthorizedDTO"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/summarize.ts",
+      "module": "../wire/dtos",
+      "symbol": "SummarizationResponse",
+      "local": "SummarizationResponse",
+      "generated": [
+        "SummarizationResponse"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/summarize.ts",
+      "module": "../wire/dtos",
+      "symbol": "SummarizationSummarizeScope",
+      "local": "SummarizationSummarizeScope",
+      "generated": [
+        "SummarizationSummarizeScope"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/summarize.ts",
+      "module": "../wire/dtos",
+      "symbol": "SummarizationSummaryDraft",
+      "local": "SummarizationSummaryDraft",
+      "generated": [
+        "SummarizationSummaryDraft"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/summarize.ts",
+      "module": "../wire/dtos",
+      "symbol": "SummarizationSummaryResultDTO",
+      "local": "SummarizationSummaryResultDTO",
+      "generated": [
+        "SummarizationSummaryResultDTO"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/summarize.ts",
+      "module": "../wire/dtos",
+      "symbol": "SummarizationTranslationDraft",
+      "local": "SummarizationTranslationDraft",
+      "generated": [
+        "SummarizationTranslationDraft"
+      ]
+    },
+    {
+      "file": "frontend/types/plan.ts",
+      "module": "./wire/dtos",
+      "symbol": "ExtendedPlanQuotasVM",
+      "local": "PlanQuotasVM",
+      "generated": [
+        "ExtendedPlanQuotasVM"
+      ]
+    }
+  ],
+  "declarations": [
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "symbol": "ApiClientOptions",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "symbol": "PageQuery",
+      "generated": []
+    },
+    {
+      "file": "frontend/types/generated/library.ts",
+      "symbol": "LibraryItemCreateDTO",
+      "generated": [
+        "LibraryLibraryItemCreateDTO"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/library.ts",
+      "symbol": "LibraryItemDTO",
+      "generated": [
+        "LibraryLibraryItemDTO"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/library.ts",
+      "symbol": "LibraryItemMeta",
+      "generated": []
+    },
+    {
+      "file": "frontend/types/generated/library.ts",
+      "symbol": "LibraryPageDTO",
+      "generated": [
+        "LibraryLibraryItemDTO",
+        "LibraryLibraryPageDTO"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/summarize.ts",
+      "symbol": "StandardGlossaryItem",
+      "generated": [
+        "SummarizationTranslationDraft"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/summarize.ts",
+      "symbol": "SummarizeResponseDTO",
+      "generated": [
+        "ExtendedSummarizeValidationErrorDTO",
+        "ExtendedUnauthorizedDTO",
+        "SummarizationResponse",
+        "SummarizationSummarizeScope",
+        "SummarizationSummaryDraft",
+        "SummarizationSummaryResultDTO",
+        "SummarizationTranslationDraft"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/summarize.ts",
+      "symbol": "SummarizeValidationErrorDTO",
+      "generated": [
+        "ExtendedSummarizeValidationErrorDTO"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/summarize.ts",
+      "symbol": "SummaryOkDTO",
+      "generated": [
+        "SummarizationSummaryDraft",
+        "SummarizationSummaryResultDTO"
+      ]
+    },
+    {
+      "file": "frontend/types/generated/summarize.ts",
+      "symbol": "TranslationOkDTO",
+      "generated": [
+        "SummarizationSummarizeScope",
+        "SummarizationSummaryResultDTO",
+        "SummarizationTranslationDraft"
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "AccountProfileVM",
+      "generated": [
+        "ExtendedAccountProfileVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "AgentJobsDTO",
+      "generated": [
+        "ExtendedAgentJobsDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "CitationTreeResponse",
+      "generated": [
+        "ExtendedCitationTreeResponse"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "ConsentSettingsVM",
+      "generated": [
+        "ExtendedConsentSettingsVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "ConsentSettingsVM",
+      "generated": [
+        "ExtendedConsentSettingsVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "DeletePersonalizationEventsResult",
+      "generated": [
+        "ExtendedDeletePersonalizationEventsResult"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "DigestSettingsVM",
+      "generated": [
+        "ExtendedDigestSettingsVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "DigestSettingsVM",
+      "generated": [
+        "ExtendedDigestSettingsVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "EventRecordResult",
+      "generated": [
+        "ExtendedEventRecordResult"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "FollowedTopicVM",
+      "generated": [
+        "ExtendedFollowedTopicVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "FollowListVM",
+      "generated": [
+        "ExtendedFollowListVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "FollowListVM",
+      "generated": [
+        "ExtendedFollowListVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "GlossaryListDTO",
+      "generated": [
+        "ExtendedGlossaryListDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "GlossaryUpsertResultDTO",
+      "generated": [
+        "ExtendedGlossaryUpsertResultDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "HistoryPageDTO",
+      "generated": [
+        "LibraryHistoryPageDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "InterestsResult",
+      "generated": [
+        "ExtendedInterestsResult"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "JobAcceptedDTO",
+      "generated": [
+        "ExtendedJobAcceptedDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "JobAcceptedDTO",
+      "generated": [
+        "ExtendedJobAcceptedDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "JobAcceptedDTO",
+      "generated": [
+        "ExtendedJobAcceptedDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "LibraryItemDTO",
+      "generated": [
+        "LibraryLibraryItemDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "LibraryItemDTO",
+      "generated": [
+        "LibraryLibraryItemDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "LibraryPageDTO",
+      "generated": [
+        "LibraryLibraryItemDTO",
+        "LibraryLibraryPageDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "MyPlanVM",
+      "generated": [
+        "ExtendedMyPlanVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "NotionConnectionStatusVM",
+      "generated": [
+        "ExtendedNotionConnectionStatusVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "NotionConnectionStatusVM",
+      "generated": [
+        "ExtendedNotionConnectionStatusVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "NotionExportPreviewVM",
+      "generated": [
+        "ExtendedNotionExportPreviewVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "NotionExportVM",
+      "generated": [
+        "ExtendedNotionExportVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "NoveltyArtifactsDTO",
+      "generated": [
+        "ExtendedNoveltyArtifactsDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "NoveltyJobDTO",
+      "generated": [
+        "ExtendedNoveltyJobDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "NoveltyMessagesDTO",
+      "generated": [
+        "ExtendedNoveltyMessagesDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "OnboardingStatusResponse",
+      "generated": [
+        "ExtendedOnboardingStatusResponse"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "OrcidProfileVM",
+      "generated": [
+        "ExtendedOrcidProfileVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "OrcidSuggestionsResponse",
+      "generated": [
+        "ExtendedOrcidSuggestionsResponse"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "PaperMetaVM",
+      "generated": [
+        "ExtendedPaperMetaVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "PersonalizationSettings",
+      "generated": [
+        "ExtendedPersonalizationSettings"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "PersonalizationSettings",
+      "generated": [
+        "ExtendedPersonalizationSettings"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "RecentlyViewedDTO",
+      "generated": [
+        "ExtendedRecentlyViewedDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "ResearchJobDTO",
+      "generated": [
+        "ExtendedResearchJobDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "ResetPersonalizationProfileResult",
+      "generated": [
+        "ExtendedResetPersonalizationProfileResult"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "SavedSearchDTO",
+      "generated": [
+        "LibrarySavedSearchDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "SavedSearchPageDTO",
+      "generated": [
+        "LibrarySavedSearchPageDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "SessionInfo",
+      "generated": [
+        "AccountsSessionInfo"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "SignupResult",
+      "generated": [
+        "AccountsSignupResult"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "SkipResult",
+      "generated": [
+        "ExtendedSkipResult"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "SubscriptionDTO",
+      "generated": [
+        "MypageSubscriptionDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "SubscriptionDTO",
+      "generated": [
+        "MypageSubscriptionDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "SubscriptionDTO",
+      "generated": [
+        "MypageSubscriptionDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "type": "UnsubscribeResultVM",
+      "generated": [
+        "ExtendedUnsubscribeResultVM"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "{ approved?: boolean }",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "{ content?: string; attachments?: AgentAttachment[] }",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "{ content?: string; attachments?: AgentAttachment[] }",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "{ content?: string; attachments?: AgentAttachment[] }",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "{ email?: unknown }",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "{ enabled?: unknown }",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "{ nightlyPushAgreed?: unknown }",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "{ node?: CitationNode }",
+      "generated": [
+        "ExtendedCitationNode"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "{ parentPageId?: string }",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "{ query?: unknown }",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "{ task?: string; scope?: string; persona?: string }",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "{\n        termFrom?: unknown;\n        termTo?: unknown;\n        promptEnforced?: unknown;\n      }",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "{\n        topic?: string;\n      }",
+      "generated": []
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "BehaviorEventCreate",
+      "generated": [
+        "ExtendedBehaviorEventCreate"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "LibraryItemCreateDTO",
+      "generated": [
+        "LibraryLibraryItemCreateDTO"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "type": "SavedSearchCreateDTO",
+      "generated": [
+        "LibrarySavedSearchCreateDTO"
+      ]
+    }
+  ],
+  "adapters": [
+    {
+      "file": "frontend/lib/agentChat/sse.ts",
+      "symbol": "mapProgressEvent",
+      "input": [
+        "unknown"
+      ],
+      "output": "AgentTimelineEvent | null"
+    },
+    {
+      "file": "frontend/lib/agentChat/sse.ts",
+      "symbol": "mapTimelineState",
+      "input": [
+        "string"
+      ],
+      "output": "AgentTimelineState"
+    },
+    {
+      "file": "frontend/lib/agentChat/state.ts",
+      "symbol": "classifyAttachmentKind",
+      "input": [
+        "string"
+      ],
+      "output": "AgentAttachmentKind"
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "symbol": "mapAgentAttachments",
+      "input": [
+        "unknown[]"
+      ],
+      "output": "AgentAttachment[] | undefined"
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "symbol": "mapAgentMessage",
+      "input": [
+        "BackendResearchMessage"
+      ],
+      "output": "AgentMessage"
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "symbol": "mapNoveltyEvent",
+      "input": [
+        "BackendNoveltyEvent",
+        "number"
+      ],
+      "output": "AgentTimelineEvent"
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "symbol": "mapNoveltyJob",
+      "input": [
+        "BackendNoveltyJob"
+      ],
+      "output": "AgentSessionSummary"
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "symbol": "mapNoveltyResultMessage",
+      "input": [
+        "BackendNoveltyArtifact[]",
+        "string"
+      ],
+      "output": "AgentMessage | null"
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "symbol": "mapNoveltyState",
+      "input": [
+        "string"
+      ],
+      "output": "AgentJobState"
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "symbol": "mapResearchJob",
+      "input": [
+        "BackendResearchJob"
+      ],
+      "output": "AgentSessionSummary"
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "symbol": "mapResearchState",
+      "input": [
+        "BackendResearchJob['state']"
+      ],
+      "output": "AgentJobState"
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "symbol": "mapTimelineState",
+      "input": [
+        "AgentJobState"
+      ],
+      "output": "AgentTimelineEvent['state']"
+    },
+    {
+      "file": "frontend/lib/api/classify.ts",
+      "symbol": "classifySearchResponse",
+      "input": [
+        "unknown"
+      ],
+      "output": "SearchOutcome"
+    },
+    {
+      "file": "frontend/lib/api/classifySummarize.ts",
+      "symbol": "classifyAssetsResponse",
+      "input": [
+        "unknown"
+      ],
+      "output": "AssetsOutcome"
+    },
+    {
+      "file": "frontend/lib/api/classifySummarize.ts",
+      "symbol": "classifyDocModelResponse",
+      "input": [
+        "unknown"
+      ],
+      "output": "DocModelOutcome"
+    },
+    {
+      "file": "frontend/lib/api/classifySummarize.ts",
+      "symbol": "classifySummarizeResponse",
+      "input": [
+        "unknown"
+      ],
+      "output": "SummarizeOutcome"
+    },
+    {
+      "file": "frontend/lib/library/cardFromMeta.ts",
+      "symbol": "cardFromMeta",
+      "input": [
+        "LibraryItemMeta"
+      ],
+      "output": "ResultCardVM"
+    }
+  ],
+  "sourceDigests": [
+    {
+      "file": "frontend/app/paper/[id]/doc-model/page.tsx",
+      "sha256": "219f20e157a2d6458eb3330972ab43898d0237dd6abf556cdf2af02092b78aaa"
+    },
+    {
+      "file": "frontend/components/agent/AgentChatScreen.tsx",
+      "sha256": "ad5f17ed772a17dc8360a0a567f713f18c934eb504c1cc3b37ee02b033fa18bf"
+    },
+    {
+      "file": "frontend/components/agent/NotionExportPanel.tsx",
+      "sha256": "0a47363851f4f522556a8de95b914c7e84775f7e1e00f23d47707d49549af942"
+    },
+    {
+      "file": "frontend/components/CitationTreePanel.tsx",
+      "sha256": "940a1171ac1090410eddf9e199fae598df2fce9f50f0b79d810b63fe7a6ef5ef"
+    },
+    {
+      "file": "frontend/components/DocModelViewer.tsx",
+      "sha256": "8c839993a729789263a16db2f5700f51f14689b753a5e3407a3e99053d690483"
+    },
+    {
+      "file": "frontend/components/FullTranslationIsland.tsx",
+      "sha256": "a7838f54a37035c99e0a95a27398204b091428a23f998909fc023c506fb7bb62"
+    },
+    {
+      "file": "frontend/components/library/HistoryScreen.tsx",
+      "sha256": "7ac51c614a09fe1e84b800ac1453355ece9ecf79bcf479629d83037e749166af"
+    },
+    {
+      "file": "frontend/components/library/LibraryScreen.tsx",
+      "sha256": "c57e7b4c7cc3a36d8420a735b6279ddac3ba1dd70ecf776bf9a1fac65d865266"
+    },
+    {
+      "file": "frontend/components/library/OutcomeView.tsx",
+      "sha256": "b145b71f18ecfcd9006a019ebba744c47e471430e7528c6b7587b69f37a522c5"
+    },
+    {
+      "file": "frontend/components/library/SavedSearchScreen.tsx",
+      "sha256": "ae44ea2ec1b1040fa7400b02156de66f9be8b452502241f001f8ef0c000d9cc3"
+    },
+    {
+      "file": "frontend/components/mypage/MyPageLibraryScreen.tsx",
+      "sha256": "24a3d15089b153c737024e23d8a9581b3b84acdb3078dd648560c32c67b1770c"
+    },
+    {
+      "file": "frontend/components/mypage/MyPageScreen.tsx",
+      "sha256": "5499ca24f74fdc07f1f33960997225f55eeee41d31d1a210e1069571b825e913"
+    },
+    {
+      "file": "frontend/components/mypage/MyPageSettingsScreen.tsx",
+      "sha256": "7024e3b19221949d57583552870bc60efe5a2521af9bcd3875e64f5bce271499"
+    },
+    {
+      "file": "frontend/components/mypage/MyPageSubscriptionScreen.tsx",
+      "sha256": "3a8cf395ca75c45e705ca7a0d8cc493ac62ef591c27a777977b7d31db9642d4a"
+    },
+    {
+      "file": "frontend/components/mypage/PlanSection.tsx",
+      "sha256": "3f1055ab2f3ac3c5184e5c1ca1f719e82361ab194f49e91b0a43e3185394af0f"
+    },
+    {
+      "file": "frontend/components/mypage/TrendsSettingsSection.tsx",
+      "sha256": "d2ead31721f6f859f7f88c43f4c490be55fc485025caf4184bd06afe39f615d2"
+    },
+    {
+      "file": "frontend/components/onboarding/InterestPickerModal.tsx",
+      "sha256": "6e8836633552d3260ae57f88d400374c8273426606814d351086761ae916e989"
+    },
+    {
+      "file": "frontend/components/onboarding/OnboardingGate.tsx",
+      "sha256": "68a834f0a7d54b7aeec51f6dcc9fd08a16411d871eb661efda025c47420b9b25"
+    },
+    {
+      "file": "frontend/components/PaperDetailIsland.tsx",
+      "sha256": "4ba1e1f5eb0834e552bc38e56df1dcacb98643b73651884344a235e22d9d8b26"
+    },
+    {
+      "file": "frontend/components/PersonaToggle.tsx",
+      "sha256": "4df30fe9f787d4decbc0ccbc408c9a193fe0689eef7aa62a67f4a300a807c00e"
+    },
+    {
+      "file": "frontend/components/ResultCard.tsx",
+      "sha256": "c0e3bb0beb9c87a093f312c5dce9f90e920e14ea259e37498e48577d0234e872"
+    },
+    {
+      "file": "frontend/components/ResultList.tsx",
+      "sha256": "d869f65566e25d1b5c366857f2a3a013656c638a65a78e75183a8d05ec99c06d"
+    },
+    {
+      "file": "frontend/components/SearchScreen.tsx",
+      "sha256": "92a97f06e911f43de493de1ad2103ed64859d0ddbb5ce1d8f019ede7770df924"
+    },
+    {
+      "file": "frontend/components/session/SessionContext.tsx",
+      "sha256": "6816a22d4840f8163f0dd755d4b3d5e22f1daceca1f6355346fd6845b83c86d3"
+    },
+    {
+      "file": "frontend/components/SummaryModal.tsx",
+      "sha256": "f0df0fd5d25625b705c32f0efd315177b4524582cc6ca2b0fdc31c4ceca42660"
+    },
+    {
+      "file": "frontend/components/SummaryView.tsx",
+      "sha256": "0efdffae31dffef27d7a6aaf2042571ec1e7155c328c8d5c2b2483689553e656"
+    },
+    {
+      "file": "frontend/components/TranslationView.tsx",
+      "sha256": "68263b3e47284a8dfd3b10e9980e2202746ba5c4bd1674db9b34e615a5ee232b"
+    },
+    {
+      "file": "frontend/lib/agentChat/sse.ts",
+      "sha256": "01e86b119b822f50f863b75ea921f4d5787dccdd2f5ca3bcc0b4d04bc4b0dad4"
+    },
+    {
+      "file": "frontend/lib/agentChat/state.ts",
+      "sha256": "b151a31dae9a9e8918ff130d0c19bf871bc8a1397a63d95a275d06a06e553d9b"
+    },
+    {
+      "file": "frontend/lib/api/apiClient.ts",
+      "sha256": "18542fad1a4d9bcba51f029525b145ae10382132f78f949910c3a5afe13da364"
+    },
+    {
+      "file": "frontend/lib/api/classify.ts",
+      "sha256": "18a9bf5d65c82d25d968a6c07ae8b88e9f80dfadab50dda169d9d50c3bc97649"
+    },
+    {
+      "file": "frontend/lib/api/classifySummarize.ts",
+      "sha256": "019327719d977ea4dd10be0061602eba0ac752305f229a9ca58119433409b0c0"
+    },
+    {
+      "file": "frontend/lib/api/mockTransport.ts",
+      "sha256": "5c767f175a4f2b69eed4bd6c9d6e9a6995fc0024f6e0c70ab2ef475773438b23"
+    },
+    {
+      "file": "frontend/lib/library/cardFromMeta.ts",
+      "sha256": "cd345569827b6c158c3abb90c805ffe31dfd226deeb578b719c2c71ba2952516"
+    },
+    {
+      "file": "frontend/lib/library/savedLibrary.tsx",
+      "sha256": "ad2ec2d596a354a3e31ee651db1f86921c36b9e18a4693be80f717de139beb0a"
+    },
+    {
+      "file": "frontend/lib/personalization.ts",
+      "sha256": "77960f785f43c8d589bc16683a7bd4e975356e870d4b8bd77a28b672ffc697a1"
+    },
+    {
+      "file": "frontend/lib/search/searchCache.ts",
+      "sha256": "f67515bed85d9b0846fc2c944a3658115580ffba2fbd8d7a7f3bad8b49fe4d93"
+    },
+    {
+      "file": "frontend/lib/useAssets.ts",
+      "sha256": "84242682635836f6f32cf0b5f2b2d43445f97ab7715e4f5d6e134dea9f6e7f57"
+    },
+    {
+      "file": "frontend/lib/useDocModel.ts",
+      "sha256": "bac6dc06e304dbddae88ab51ccbfc18d5cbd8785a228d07be200d20bc1147c90"
+    },
+    {
+      "file": "frontend/lib/usePaperMeta.ts",
+      "sha256": "795aa367371f9b881f5beac191810a1ad84bd416d55aec9a3dbd9879fb864e8b"
+    },
+    {
+      "file": "frontend/lib/useSummarize.ts",
+      "sha256": "bbb1ab970a6cabcf673b05efba668d0ff58096d4cc1877fb957fb9df83b5b088"
+    },
+    {
+      "file": "frontend/types/generated/library.ts",
+      "sha256": "b1f06670da1afc8ebb5d00e85ad9c310d2b0e1412570d62f09a79728c69c1e7c"
+    },
+    {
+      "file": "frontend/types/generated/summarize.ts",
+      "sha256": "fc0ad4fc670c4637b34e6f8e709691b3bb056e2e95f7db016bc6aeb078376c23"
+    },
+    {
+      "file": "frontend/types/plan.ts",
+      "sha256": "f645604baa0f99275c7e1c849d9a3e597f853b7352b18ebaff60acc57dba3555"
+    }
+  ]
+}

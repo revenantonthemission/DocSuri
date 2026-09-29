@@ -1,59 +1,28 @@
-"""CLI: python -m backend.migrations [--check | --apply]
+"""Explicit readonly CLI. Mutation belongs to the protected REM-1 runner."""
 
---check: list pending migrations (exit 1 if any pending)
---apply: apply all pending migrations
-"""
-
-from __future__ import annotations
-
+import argparse
+import json
 import os
-import sys
+from dataclasses import asdict
 
-from . import apply_migrations, pending_migrations
-
-_DEFAULT_PATHS = [
-    "backend/modules/accounts/migrations",
-    "backend/modules/library/migrations",
-    "backend/modules/personalization/migrations",
-    "backend/modules/onboarding/migrations",
-    "backend/modules/trends/migrations",
-    "backend/modules/plans/migrations",
-    "backend/modules/evidence/sessions/migrations",
-    "backend/modules/novelty/migrations",
-    "backend/modules/evidence/migrations",
-    "ingestion/migrations/postgres",
-]
+from . import inspect_migrations
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", required=True)
+    parser.parse_args()
     dsn = os.environ.get("DATABASE_URL")
     if not dsn:
-        print("ERROR: DATABASE_URL environment variable is required", file=sys.stderr)
-        return 1
-
-    paths = _DEFAULT_PATHS
-    mode = sys.argv[1] if len(sys.argv) > 1 else "--apply"
-
-    if mode == "--check":
-        pending = pending_migrations(dsn, paths)
-        if pending:
-            print(f"{len(pending)} pending migration(s):")
-            for p in pending:
-                print(f"  - {p}")
-            return 1
-        print("All migrations applied.")
-        return 0
-
-    if mode == "--apply":
-        applied = apply_migrations(dsn, paths)
-        if applied:
-            print(f"Applied {len(applied)} migration(s): {', '.join(applied)}")
-        else:
-            print("No pending migrations.")
-        return 0
-
-    print(f"Unknown mode: {mode}. Use --check or --apply.", file=sys.stderr)
-    return 1
+        print(json.dumps({"state": "UNAVAILABLE", "reason": "database_not_configured"}))
+        return 2
+    try:
+        result = inspect_migrations(dsn)
+    except Exception:
+        print(json.dumps({"state": "UNAVAILABLE", "reason": "inspection_failed"}))
+        return 2
+    print(json.dumps(asdict(result)))
+    return 0 if result.state == "READY" else 1
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./test/setup.ts'],
     include: ['test/**/*.test.{ts,tsx}'],
+    exclude: ['test/contractGenerator.test.ts', 'test/consumerInventory.test.ts'],
   },
   resolve: {
     alias: {

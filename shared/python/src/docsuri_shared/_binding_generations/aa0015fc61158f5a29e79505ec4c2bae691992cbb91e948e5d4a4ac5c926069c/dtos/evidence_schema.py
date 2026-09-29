@@ -1,0 +1,188 @@
+# DO NOT EDIT. Generated from the JSON Schema SSOT in shared/ by tools/generate.py.
+# Change the schema and regenerate (§5-B); never hand-edit.
+
+from __future__ import annotations
+
+from enum import StrEnum
+from pydantic import BaseModel, ConfigDict, Field, RootModel
+from typing import Any, Literal
+
+
+class EvidenceScope(StrEnum):
+    """
+    근거 모을 논문 집합 범위(Q4=A 혼합). auto: 질의 주도 자동 검색. explicit: 사용자 명시 paper 집합만. mixed: 자동 검색 + 명시 집합 병합.
+    """
+
+    auto = 'auto'
+    explicit = 'explicit'
+    mixed = 'mixed'
+
+
+class SourceRef(BaseModel):
+    """
+    단일 출처 핸들 — 기존 계약 재사용. paperId = IndexRecord.arxivId(vector-spec §2). 사용자 업로드 문서는 paperId="userdoc:{uuid}", recordRef="upload:{ownerId}:{jobId}:{attachmentId}" — 실재 arXiv id가 없으므로 arxiv.org URL 조립 금지(무날조). recordRef = IndexRecord 식별자(실재성 검증 핸들). anchor = DocModel Section/Block id(summarization AnchorTarget 동일 방식). quote = 원문 스니펫(근거 인용, 선택). 내부 벡터/청크/점수 미노출(SEC-9). Trace: FR-5, SEC-9, vector-spec §2, summarization.schema.json AnchorTarget.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    paperId: str = Field(
+        ...,
+        description='출처 문서 id. arXiv: 표시용 arXiv ID(버전 포함 가능, Source: IndexRecord.arxivId). 사용자 업로드: "userdoc:{uuid}" 네임스페이스 — 실재 arXiv id 없음, arxiv.org URL 조립 금지(무날조). Trace: FR-5, vector-spec §2.',
+    )
+    recordRef: str = Field(
+        ...,
+        description='IndexRecord 식별자(실재성 검증 핸들). 사용자 업로드: "upload:{ownerId}:{jobId}:{attachmentId}". 내부 벡터·청크 정보 미포함. Trace: FR-5, vector-spec §2.',
+    )
+    anchor: str | None = Field(
+        None,
+        description='DocModel Section/Block 결정적 id(선택). 요약 AnchorTarget 계약과 동일 방식. Trace: summarization.schema.json.',
+    )
+    quote: str | None = Field(
+        None,
+        description='원문 인용 스니펫(선택, 추출 근거 표시용). 생성 산문 금지(C-2) — 논문 원문만.',
+    )
+
+
+class EvidenceItem(BaseModel):
+    """
+    단일 근거 명제 + 지지/상충 출처(Q3=B). statement = 논문에서 추출한 근거 명제(핵심 주장·방법·결과 수치·한계 — Q1=A). supporting = 명제를 지지하는 출처. conflicting = 명제와 상충하는 출처(페이즈 5 novelty 판단 입력). confidence 제외(FR-5 그라운딩·환각 위험 — Q3=B). 생성 산문 금지(C-2). Trace: Q1, Q3, FR-5, C-2, D5.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    statement: str = Field(
+        ...,
+        description='추출된 근거 명제(핵심 주장·방법·결과 수치·한계). 생성 산문 금지 — 논문 기반 추출만(C-2, FR-5).',
+    )
+    supporting: list[SourceRef] = Field(
+        ..., description='명제를 지지하는 출처 목록. Trace: FR-5.'
+    )
+    conflicting: list[SourceRef] = Field(
+        ...,
+        description='명제와 상충하는 출처 목록(페이즈 5 novelty 판단 입력). 빈 배열 = 상충 없음. Trace: D5.',
+    )
+
+
+class WebReferenceRef(BaseModel):
+    """
+    표시 전용 웹 레퍼런스(U11 웹레퍼런스 확장 §4, FR-49). SourceRef가 아니며 claims의 supporting/conflicting과 무관 — 링크백 전용 프로바이더 메타만(C-11: 본문·초록 저장 금지, web: 네임스페이스 신설 없음). 프로바이더 반환 URL/DOI 원본만(BR-WR4 무날조 — 조립·생성 금지). Trace: FR-49, C-11, US-WR1, BR-WR1, BR-WR4.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    title: str = Field(
+        ..., description='프로바이더가 반환한 논문 제목(표시용). Trace: FR-49.'
+    )
+    url: str = Field(
+        ...,
+        description='프로바이더 반환 원본 URL — https·허용 호스트 검증 통과분만, 조립 금지(BR-WR4). Trace: BR-WR4.',
+    )
+    doi: str | None = Field(
+        None, description='프로바이더 반환 DOI(선택, dedupe 키·표시용). Trace: BR-WR4.'
+    )
+    authors: list[str] | None = Field(
+        None, description='표시용 상위 저자 몇 명(선택). Trace: FR-49.'
+    )
+    year: int | None = Field(None, description='출판 연도(선택, 표시용). Trace: FR-49.')
+    source: str = Field(
+        ...,
+        description='출처 프로바이더 식별자: semantic_scholar | openalex. Trace: FR-49.',
+    )
+
+
+class EvidenceCoverage(BaseModel):
+    """
+    근거형성에 사용된 논문·쿼리 요약 메타(투명성). 내부 점수·타이밍 미노출(SEC-9).
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    paperCount: int = Field(..., description='근거 추출에 사용된 논문 수.')
+    queryUsed: str | None = Field(
+        None,
+        description='자동 검색 시 사용된 쿼리(auto·mixed scope). explicit scope이면 생략.',
+    )
+
+
+class EvidenceResult(BaseModel):
+    """
+    근거형성 성공 산출(state=ok). claims = 추출된 근거 명제 목록(Q2=A 논문 비교형 + 쟁점 오버레이의 데이터 기반). coverage = 사용 논문·쿼리 요약. answer = claims를 대화체로 풀어 쓴 요약(전적으로 claims/quote에서만 구성 — 새 사실 도입 금지, C-2 동일 적용). Trace: Q2, FR-5, D5.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    state: Literal['ok'] = Field(..., description='ok 고정(성공). Trace: FR-5.')
+    claims: list[EvidenceItem] = Field(
+        ...,
+        description='추출된 근거 명제 목록. 각 항목은 EvidenceItem{ statement, supporting[], conflicting[] }. Trace: Q1, Q3.',
+    )
+    coverage: EvidenceCoverage = Field(
+        ..., description='사용 논문 수·쿼리 요약. Trace: SEC-9.'
+    )
+    answer: str | None = Field(
+        None,
+        description="claims를 대화체 한국어 문단으로 풀어 쓴 요약. 오직 claims[].statement/supporting/conflicting에서만 조립되며 새 사실을 도입하지 않는다(C-2 동일 적용 — 생성 산문 금지 원칙은 '새 사실 금지'이지 '요약 표현 금지'가 아니다). 하위호환을 위해 선택 필드.",
+    )
+    webReferences: list[WebReferenceRef] | None = Field(
+        None,
+        description='표시 전용 웹 레퍼런스 목록(선택 — U11 웹레퍼런스 확장 §4). LLM 추출 완료 후 post-hoc으로만 동봉되며 프롬프트·추출 입력에 절대 불포함(BR-WR2). 실패·타임아웃·0건이면 생략 — 턴 결과 불변(BR-WR5). 하위호환: optional — 기존 저장 결과·구 클라이언트 무영향. Trace: FR-49, C-11, US-WR1, BR-WR2, BR-WR5.',
+    )
+
+
+class EvidenceAbstainResult(BaseModel):
+    """
+    근거 부족·범위 밖 기권(state=abstain). 날조 대신 기권(FR-5). abstainReason = 비기술 사유만(내부 위반 상세 비노출 — SEC-9). Trace: FR-5, SEC-9, C-2.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    state: Literal['abstain'] = Field(..., description='abstain 고정. Trace: FR-5.')
+    abstainReason: str = Field(
+        ...,
+        description='비기술 기권 사유(내부 위반 상세·점수 비노출 — SEC-9). 예: out_of_corpus, insufficient_evidence.',
+    )
+
+
+class EvidenceRequest(BaseModel):
+    """
+    근거형성 입력. topic = 연구 주제·질문. scope = 논문 집합 범위(Q4=A 혼합). paperIds = explicit·mixed scope 시 사용자 명시 paper 집합. attachments = 사용자 첨부(Q6=A, doc-model 파이프라인 재사용). constraints = 기간·분야·논문 수 제한(상세는 FD 이월). Trace: Q4, Q6.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    topic: str = Field(
+        ...,
+        description='연구 주제 또는 근거형성 질문. Trace: FR-1, SEC-5.',
+        max_length=2000,
+        min_length=1,
+    )
+    scope: EvidenceScope | None = Field(
+        None, description='논문 집합 범위(Q4=A). 생략 시 auto.'
+    )
+    paperIds: list[str] | None = Field(
+        None,
+        description='explicit·mixed scope 시 사용자 명시 arXiv ID 목록. auto scope이면 무시.',
+    )
+    attachments: list[str] | None = Field(
+        None,
+        description='사용자 첨부 문서 핸들 목록(Q6=A, doc-model 파이프라인 재사용). 형식·크기 한도는 FD 이월.',
+    )
+    constraints: dict[str, Any] | None = Field(
+        None,
+        description='PROVISIONAL — 기간·분야·최대 논문수 제한. 상세 형태는 FD 이월.',
+    )
+
+
+class EvidenceResultModel(RootModel[EvidenceResult | EvidenceAbstainResult]):
+    root: EvidenceResult | EvidenceAbstainResult = Field(
+        ...,
+        description='U4 문헌탐색·근거형성 Agent 출력 DTO 계약. ROOT = EvidenceResult (터미널 상태 유니온). 페이즈 5(연구아이디어 Agent)가 EvidenceFormationPort.form_evidence() 반환값으로 소비한다 (D5 공유 계약). 근거 출력 깊이(Q3=B): EvidenceItem{ statement, supporting[], conflicting[] } — confidence 제외(FR-5 그라운딩 원칙·환각 위험). 검색 scope(Q4=A): auto|explicit|mixed. 첨부(Q6=A): attachments? 지원. 기권(FR-5/SEC-9): state=abstain + 비기술 abstainReason, 내부 위반 상세 비노출. 생성 산문 금지(C-2): statement 필드는 논문에서 추출한 근거 명제만, 새로운 산문 생성 금지. Producer: U4; Consumer: U12. Trace: Q1, Q2, Q3, Q4, Q6, FR-5, SEC-9, C-2, D5.',
+        title='EvidenceResult',
+    )
