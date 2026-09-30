@@ -62,6 +62,12 @@ class Settings:
     # The rate-limit key is the X-Forwarded-For hop this many places from the right — i.e. what
     # your outermost trusted proxy stamped — never the spoofable leftmost hop. 1 = single LB.
     trusted_proxy_count: int = 1
+    # F10: trust Cloudflare-stamped client identity (CF-Connecting-IP / True-Client-IP) for
+    # per-client rate-limit bucketing. Default off for the same reason TRUST_PROXY_HEADERS is:
+    # these headers are client-settable, so honouring them without a verified edge in front would
+    # let a caller mint a fresh bucket per request by rotating the value. Set CLOUDFLARE_TRUSTED=1
+    # only when Cloudflare (or an equivalent verifying proxy) is the sole ingress path.
+    trust_cloudflare_headers: bool = False
     gateway_rate_limit_max_requests: int = 60
     gateway_rate_limit_window_seconds: float = 60.0
 
@@ -84,6 +90,8 @@ class Settings:
             trust_proxy_headers=os.getenv("TRUST_PROXY_HEADERS", "").strip().lower()
             in {"1", "true", "yes", "on"},
             trusted_proxy_count=int(os.getenv("TRUSTED_PROXY_COUNT") or "1"),
+            trust_cloudflare_headers=os.getenv("CLOUDFLARE_TRUSTED", "").strip().lower()
+            in {"1", "true", "yes", "on"},
             gateway_rate_limit_max_requests=int(
                 os.getenv("DOCSURI_GATEWAY_RATE_LIMIT_MAX_REQUESTS") or "60"
             ),

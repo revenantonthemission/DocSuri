@@ -9,6 +9,11 @@ dependencies = ["pydantic>=2.13.4,<3", "rfc8785>=0.1.4,<1", "cryptography>=50,<5
 api = ["fastapi>=0.138,<1", "uvicorn>=0.49,<1"]
 postgres = ["psycopg[binary]>=3.3.4,<4"]
 tools = ["jsonschema>=4.26,<5", "psutil>=7,<8", "docsuri-shared==0.1.0"]
+rem3 = [
+    "psycopg[binary]>=3.3.4,<4",
+    "pyjwt>=2.9,<3",
+    "redis>=5,<7",
+]
 
 [tool.uv.sources]
 docsuri-shared = { path = "../shared/python", editable = true }

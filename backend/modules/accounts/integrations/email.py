@@ -184,9 +184,20 @@ class EmailClientInterface(ABC):
         pass
 
     @abstractmethod
-    async def _send(self, to: str, subject: str, text: str, html: str) -> bool:
+    async def _send(
+        self,
+        to: str,
+        subject: str,
+        text: str,
+        html: str,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> bool:
         """일반 발송 프리미티브(프로바이더별 1회 구현). 신규 메일 종류는 렌더 → _send로 위임한다.
-        ponytail: 기존 send_verification/reset는 자체 구현 유지(작동 중 코드 미변경)."""
+        ponytail: 기존 send_verification/reset는 자체 구현 유지(작동 중 코드 미변경).
+
+        ``headers``는 RFC 8058 ``List-Unsubscribe`` 같은 메시지 수준 메타데이터를 provider까지
+        전달하기 위한 것이며, 기본 None이라 기존 호출부는 인자 없이 그대로 동작한다."""
         pass
 
     async def send_email_change_verification_email(self, email: str, token: str, confirm_link: str) -> bool:
@@ -234,7 +245,15 @@ class MockEmailClient(EmailClientInterface):
         logger.info("=============================================================")
         return True
 
-    async def _send(self, to: str, subject: str, text: str, html: str) -> bool:
+    async def _send(
+        self,
+        to: str,
+        subject: str,
+        text: str,
+        html: str,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> bool:
         logger.info("================ [MOCK EMAIL DELIVERY] ================")
         logger.info("To: [redacted]")
         logger.info(f"Subject: {subject}")
@@ -321,7 +340,15 @@ class SESEmailClient(EmailClientInterface):
             _emit_email_failure(self._observability_hub, e, provider="ses")
             return False
 
-    async def _send(self, to: str, subject: str, text: str, html: str) -> bool:
+    async def _send(
+        self,
+        to: str,
+        subject: str,
+        text: str,
+        html: str,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> bool:
         try:
             ses = self._get_client()
             response = await asyncio.to_thread(
@@ -335,6 +362,10 @@ class SESEmailClient(EmailClientInterface):
                             "Html": {"Data": html, "Charset": "UTF-8"},
                         },
                     },
+                    # SES carries custom message headers as a name/value list; a bare dict would
+                    # serialise to SES's shape only by accident, so convert explicitly here.
+                    **({"Headers": [{"Name": k, "Value": v} for k, v in headers.items()]}
+                       if headers else {}),
                 )
             )
             logger.info("Email sent via SES. MessageId: %s", response.get("MessageId"))

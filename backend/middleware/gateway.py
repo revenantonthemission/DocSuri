@@ -37,6 +37,7 @@ def install_gateway_middleware(
     production: bool = True,
     trust_proxy_headers: bool = False,
     trusted_proxy_count: int = 1,
+    trust_cloudflare_headers: bool = False,
 ) -> None:
     from .auth import inject_principal
 
@@ -53,6 +54,7 @@ def install_gateway_middleware(
                     request,
                     trust_proxy_headers=trust_proxy_headers,
                     trusted_proxy_count=trusted_proxy_count,
+                    trust_cloudflare_headers=trust_cloudflare_headers,
                 )
                 if not rate_limiter.allow(str(key)):
                     response = JSONResponse(
@@ -60,6 +62,12 @@ def install_gateway_middleware(
                         content={"message": "Too many requests.", "requestId": request_id},
                     )
                     response.headers["X-Request-ID"] = request_id
+                    # RFC 6585 §4: a 429 MUST carry Retry-After so a well-behaved client knows when
+                    # to retry instead of hot-looping against the limit. Absent here, API consumers
+                    # back off blindly and the abusive pattern is indistinguishable from a retry bug.
+                    retry_after = _retry_after_seconds(rate_limiter)
+                    if retry_after is not None:
+                        response.headers["Retry-After"] = str(retry_after)
                     apply_security_headers(response)
                     return response
 
@@ -120,12 +128,25 @@ def install_gateway_middleware(
                     pass
 
 
+# Cloudflare stamps these on every proxied request. They are only consulted when the deployment
+# opts in (CLOUDFLARE_TRUSTED=1), because an unverified client can set arbitrary headers: trusting
+# CF-Connecting-IP by default would let any caller mint unlimited rate-limit buckets by rotating it.
+# See the same reasoning as the X-Forwarded-For leftmost-hop rejection in _forwarded_client.
+_CF_CLIENT_IP_HEADERS = ("CF-Connecting-IP", "True-Client-IP")
+
+
 def _rate_limit_key(
     request: Request,
     *,
     trust_proxy_headers: bool = False,
     trusted_proxy_count: int = 1,
+    trust_cloudflare_headers: bool = False,
 ) -> str:
+    if trust_cloudflare_headers:
+        cf_client = _cloudflare_client(request)
+        if cf_client is not None:
+            return cf_client
+
     if trust_proxy_headers:
         forwarded = _forwarded_client(request, trusted_proxy_count)
         if forwarded is not None:
@@ -134,6 +155,24 @@ def _rate_limit_key(
     client = getattr(request, "client", None)
     host = getattr(client, "host", None)
     return str(host or "unknown-client")
+
+
+def _cloudflare_client(request: Request) -> str | None:
+    """Right-most valid IP among the Cloudflare client headers.
+
+    A caller may send several of these; we take the last valid one rather than the first so an
+    upstream-inserted duplicate cannot shadow the edge-stamped value. Non-IP values are rejected so
+    a garbage header cannot become a bucket of its own.
+    """
+    for header in _CF_CLIENT_IP_HEADERS:
+        raw = request.headers.get(header)
+        if not raw:
+            continue
+        hops = [hop.strip() for hop in raw.split(",") if hop.strip()]
+        for candidate in reversed(hops):
+            if _is_ip(candidate):
+                return candidate
+    return None
 
 
 def _forwarded_client(request: Request, trusted_proxy_count: int) -> str | None:
@@ -158,6 +197,22 @@ def _is_ip(value: str) -> bool:
     except ValueError:
         return False
     return True
+
+
+def _retry_after_seconds(rate_limiter) -> int | None:
+    """Seconds until the rate-limit window rolls over, or None if the limiter can't say.
+
+    Limiter implementations expose their window as ``window_seconds``; when absent we omit the
+    header rather than guess a value, since an understated Retry-After invites a retry storm.
+    """
+    window = getattr(rate_limiter, "window_seconds", None)
+    if window is None:
+        return None
+    try:
+        seconds = int(window)
+    except (TypeError, ValueError):
+        return None
+    return max(seconds, 1)
 
 
 def _emit_error(observability, request_id: str, exc: Exception) -> None:

@@ -97,8 +97,16 @@ class EmailSeamDigestAdapter:
     def __init__(self, client: Any) -> None:
         self._client = client
 
-    def send(self, to: str, subject: str, text: str, html: str) -> bool:
-        return asyncio.run(self._client._send(to, subject, text, html))
+    def send(
+        self,
+        to: str,
+        subject: str,
+        text: str,
+        html: str,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> bool:
+        return asyncio.run(self._client._send(to, subject, text, html, headers=headers))
 
 
 class SqlRecipientEmails:

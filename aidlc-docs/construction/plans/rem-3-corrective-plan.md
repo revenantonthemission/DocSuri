@@ -1,7 +1,8 @@
 # REM-3 Corrective Plan — Lifecycle and Edge Trust
 
-**Status**: APPROVED SCOPE — execution not yet started
+**Status**: APPROVED SCOPE — Phase 1-2 complete, Phase 3 in progress
 **Date**: 2026-10-01
+**Amended**: Phase 3 scope changed by `rem-3-duplicate-implementation-decision-questions.md` (Q1=A, Q2=A). See §3a.
 **Unit**: REM-3 Lifecycle and Edge Trust (`rem-3-lifecycle-edge-trust`) — re-opened under the same ID
 **Supersedes**: the REM-3 completion claim in commit `fcbac4e` ("REM-2 & REM-3: Complete")
 **Specification**: the existing REM-3 design documents remain authoritative and are **retained, not rewritten**
@@ -41,6 +42,8 @@ They are retained for audit history and must not be read as current status.
 ### In scope
 - **REM-3 corrective rewrite** — delete and regenerate the seven defective adapters and the REM-3
   frontend components from the approved design.
+  **SUPERSEDED by §3a**: the seven adapters are deleted outright, not regenerated. The frontend
+  component regeneration and F04/F09/F10 implementation move to their assigned homes in `backend/`.
 - **G1 (partial)** — redis/opensearch/minio/elasticmq rescans, `pip-audit` SIGABRT disposition,
   Docker bridge mTLS validation.
 - **G2** — F01/F02/F05/F07: the REM-2 worker pipeline (durable acceptance, enqueue failure recovery,
@@ -64,6 +67,40 @@ They are retained for audit history and must not be read as current status.
 
 G4 and G5 cannot close in this unit regardless of effort, because they close on findings that only
 REM-4 produces. No REM-4 code is written here.
+
+## 3a. Amended scope — the seven adapters are deleted, not regenerated
+
+Approved in `aidlc-docs/construction/rem-3-duplicate-implementation-decision-questions.md` (Q1=A,
+Q2=A) after a monorepo search found that five of the seven duplicated code that already exists, is
+wired into live request paths, and is already tested.
+
+| Adapter | Existing implementation that supersedes it |
+|---|---|
+| `purge.py` | `account_deletions` + `AccountDeletionService.purge_job()` + `accounts/purge_worker.py` + `SqlOwnerDataPurger` |
+| `unsubscribe.py` | `trends/service.py` `UnsubscribeTokenSigner` + `POST /trends/unsubscribe` + `digest.py` CLI |
+| `ratelimit.py` | `middleware/rate_limit.py` (`InMemoryRateLimiter`, `RedisRateLimiter`) |
+| `identity.py` | `middleware/gateway.py` `_forwarded_client()` / `_rate_limit_key()` |
+| `assets.py` | `summarization/adapters/rds_assets.py` `presign()` (boto3) + `ingestion/adapters/assets.py` |
+
+`revocation.py` and `authz.py` have no equivalent — they are **new work**, but built in the backend
+session/auth homes, not as `platform_integrity` adapters.
+
+All seven were orphaned: no test imported them, and their sole importer
+`platform_integrity/.../api/content_jobs.py` was broken three ways (imports from the hyphenated
+`ops.platform_integrity`, `AuthorizationServiceImpl` undefined, router never mounted).
+
+The approved plan's own scope table agrees — `verification-remediation-2026-09-18-workflow-plan.md`
+line 54 assigns F04/F09 to `accounts`+`trends`, line 55 assigns F10 to the gateway.
+
+### What remains, in the assigned homes
+| Finding | Home | Work |
+|---|---|---|
+| F04 / BR-PURGE | `backend/modules/accounts` | advisory locks; object purge order DB→S3→backup-GC→`PURGED`; late-write blocking; optimistic `version` |
+| F09 | `backend/modules/trends` + send path | `List-Unsubscribe`/`List-Unsubscribe-Post` headers; block send after token revocation |
+| F10 | `backend/middleware/gateway.py` | Cloudflare trusted identity headers; `Retry-After` on 429; spoof-resistant same-client bucket |
+| — | backend session/auth | revocation denylist; AuthZ recheck (genuinely new) |
+
+Per Q2=A the `minio` SDK is dropped; asset presigning reuses boto3 with `AWS_ENDPOINT_URL_S3`.
 
 ### Operator-owned, cannot be self-served
 | Item | Why |

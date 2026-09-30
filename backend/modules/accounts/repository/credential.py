@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, text
 from sqlalchemy.orm import Session, declarative_base
 
 from ..models import AccountStatus, DomainException, OidcProvider
@@ -374,6 +374,20 @@ class CredentialRepository:
             .filter(AccountDeletionTable.account_id == account_id)
             .first()
         )
+
+    def try_purge_lock(self) -> bool:
+        """파기 스윕 전역 advisory 잠금 획득 시도 (BR-PURGE-03/06).
+
+        트랜잭션 스코프(xact) 잠금이므로 COMMIT/ROLLBACK 시 자동 해제되어 스위퍼 프로세스를
+        청소할 수단이 없다. 이미 다른 스윕이 잡고 있으면 예약을 기다리지 않고 False를 반환해
+        이번 회차를 건너뛴다 — 정지한 잡 하나가 뒤따르는 모든 파기를 블록하는 HOL을 막는다.
+
+        SQLite(테스트 인메모리 프로파일)에는 advisory lock이 없다. 프로덕션 파기는 Postgres에서만
+        도는데 그 외 DB에서 잠금을 요구하면 테스트가 DB 기능으로 실패하므로, advisory lock을
+        지원하지 않는方言에서는 항상 획득 성공으로 취급한다(단일 프로세스라 경쟁이 없다)."""
+        if self._session.get_bind().dialect.name != "postgresql":
+            return True
+        return bool(self._session.execute(text("SELECT accounts_try_purge_lock()")).scalar())
 
     def get_due_deletions(self, now: datetime) -> list[AccountDeletionTable]:
         """유예(purge_after)가 경과한 미파기(DEACTIVATED) 삭제 레코드를 반환한다(파기 잡 입력)."""

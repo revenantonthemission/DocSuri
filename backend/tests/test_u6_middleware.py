@@ -321,3 +321,159 @@ def test_gateway_emits_telemetry_for_production_exception() -> None:
     assert ("gateway.request.latency", "500") in hub.metrics
     assert ("gateway.request.throughput", "500") in hub.metrics
     assert "error" in hub.logs  # _emit_error fired on the prod auth path
+
+
+# --- F10: spoof-resistant per-client bucketing + Retry-After -------------------------
+
+
+def _client_ip_request(headers: dict[str, str], host: str = "10.0.0.9") -> Request:
+    """Build a minimal Request for exercising _rate_limit_key in isolation."""
+
+    scope = {
+        "type": "http",
+        "headers": [(k.lower().encode(), v.encode()) for k, v in headers.items()],
+        "client": (host, 40000),
+        "method": "GET",
+        "path": "/",
+    }
+    return Request(scope)
+
+
+def test_cloudflare_identity_ignored_until_explicitly_trusted() -> None:
+    """An unverified caller can set CF-Connecting-IP freely, so it must not steer the bucket."""
+    request = _client_ip_request({"CF-Connecting-IP": "203.0.113.7"})
+
+    assert _rate_limit_key(request) == "10.0.0.9"
+    assert _rate_limit_key(request, trust_proxy_headers=True) == "10.0.0.9"
+
+
+def test_cloudflare_identity_used_when_trusted() -> None:
+    request = _client_ip_request({"CF-Connecting-IP": "203.0.113.7"})
+
+    assert _rate_limit_key(request, trust_cloudflare_headers=True) == "203.0.113.7"
+
+
+def test_cloudflare_identity_rejects_non_ip_header() -> None:
+    """A garbage value must not become its own bucket — that would be a free bypass."""
+    request = _client_ip_request({"CF-Connecting-IP": "not-an-ip"})
+
+    assert _rate_limit_key(request, trust_cloudflare_headers=True) == "10.0.0.9"
+
+
+def test_cloudflare_identity_takes_rightmost_valid_hop() -> None:
+    """Duplicate/untrusted leading values must not shadow the edge-stamped one."""
+    request = _client_ip_request({"CF-Connecting-IP": "198.51.100.1, 203.0.113.7"})
+
+    assert _rate_limit_key(request, trust_cloudflare_headers=True) == "203.0.113.7"
+
+
+def test_cloudflare_identity_takes_precedence_over_forwarded_for() -> None:
+    request = _client_ip_request(
+        {"CF-Connecting-IP": "203.0.113.7", "X-Forwarded-For": "203.0.113.8"},
+    )
+
+    assert (
+        _rate_limit_key(
+            request,
+            trust_proxy_headers=True,
+            trusted_proxy_count=1,
+            trust_cloudflare_headers=True,
+        )
+        == "203.0.113.7"
+    )
+
+
+def test_true_client_ip_header_is_accepted() -> None:
+    request = _client_ip_request({"True-Client-IP": "203.0.113.42"})
+
+    assert _rate_limit_key(request, trust_cloudflare_headers=True) == "203.0.113.42"
+
+
+def test_untrusted_identity_header_cannot_mint_fresh_buckets_by_rotation() -> None:
+    """The F10 abuse case: a spoofed client-identity header must not buy unlimited requests.
+
+    With Cloudflare headers left untrusted (the default) every request keys on the real peer
+    address, so rotating the header cannot escape the limit.
+    """
+    app = FastAPI()
+    configure_u6_middleware(
+        app,
+        rate_limiter=InMemoryRateLimiter(max_requests=2, window_seconds=60.0),
+        production=True,
+        trust_cloudflare_headers=False,
+    )
+
+    @app.get("/ok")
+    def ok() -> dict:
+        return {"ok": True}
+
+    client = TestClient(app)
+    assert client.get("/ok", headers={"CF-Connecting-IP": "203.0.113.7"}).status_code == 200
+    assert client.get("/ok", headers={"CF-Connecting-IP": "198.51.100.9"}).status_code == 200
+    rotated = client.get("/ok", headers={"CF-Connecting-IP": "192.0.2.4"})
+
+    assert rotated.status_code == 429
+
+
+def test_trusted_identity_buckets_separate_clients() -> None:
+    """With Cloudflare trusted, distinct edge-verified clients get their own budget."""
+    app = FastAPI()
+    configure_u6_middleware(
+        app,
+        rate_limiter=InMemoryRateLimiter(max_requests=1, window_seconds=60.0),
+        production=True,
+        trust_cloudflare_headers=True,
+    )
+
+    @app.get("/ok")
+    def ok() -> dict:
+        return {"ok": True}
+
+    client = TestClient(app)
+    assert client.get("/ok", headers={"CF-Connecting-IP": "203.0.113.7"}).status_code == 200
+    # Different verified client → separate bucket, not blocked by the first client's spend.
+    other = client.get("/ok", headers={"CF-Connecting-IP": "198.51.100.9"})
+    assert other.status_code == 200
+    # Same client again → over its own limit.
+    assert client.get("/ok", headers={"CF-Connecting-IP": "203.0.113.7"}).status_code == 429
+
+
+def test_rate_limit_429_carries_retry_after() -> None:
+    """RFC 6585 §4 — a 429 must tell the client when to retry."""
+    app = FastAPI()
+    configure_u6_middleware(
+        app,
+        rate_limiter=InMemoryRateLimiter(max_requests=1, window_seconds=42.0),
+        production=True,
+    )
+
+    @app.get("/ok")
+    def ok() -> dict:
+        return {"ok": True}
+
+    client = TestClient(app)
+    assert client.get("/ok").status_code == 200
+    limited = client.get("/ok")
+
+    assert limited.status_code == 429
+    assert limited.headers["Retry-After"] == "42"
+
+
+def test_rate_limit_429_omits_retry_after_when_window_unknown() -> None:
+    """Guessing a Retry-After invites a retry storm; omit the header instead."""
+
+    class _OpaqueLimiter:
+        def allow(self, key: str) -> bool:
+            return False
+
+    app = FastAPI()
+    configure_u6_middleware(app, rate_limiter=_OpaqueLimiter(), production=True)
+
+    @app.get("/ok")
+    def ok() -> dict:
+        return {"ok": True}
+
+    response = TestClient(app).get("/ok")
+
+    assert response.status_code == 429
+    assert "Retry-After" not in response.headers

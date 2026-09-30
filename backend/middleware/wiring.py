@@ -15,6 +15,7 @@ def configure_u6_middleware(
     production: bool = True,
     trust_proxy_headers: bool = False,
     trusted_proxy_count: int = 1,
+    trust_cloudflare_headers: bool = False,
 ) -> None:
     install_gateway_middleware(
         app,
@@ -24,4 +25,5 @@ def configure_u6_middleware(
         production=production,
         trust_proxy_headers=trust_proxy_headers,
         trusted_proxy_count=trusted_proxy_count,
+        trust_cloudflare_headers=trust_cloudflare_headers,
     )

@@ -77,11 +77,14 @@ class RecordingEmail:
     def __init__(self, fail_for: set[str] | None = None) -> None:
         self.sent: list[tuple[str, str, str, str]] = []
         self.fail_for = fail_for or set()
+        # F09: message-level headers per recipient, so tests can assert RFC 8058 opt-out.
+        self.headers: list[dict[str, str] | None] = []
 
-    def send(self, to, subject, text, html) -> bool:
+    def send(self, to, subject, text, html, *, headers=None) -> bool:
         if to in self.fail_for:
             return False
         self.sent.append((to, subject, text, html))
+        self.headers.append(headers)
         return True
 
 
@@ -418,8 +421,8 @@ class OptOutTriggeringEmail(RecordingEmail):
         self._repo = repo
         self._flip_user = flip_user
 
-    def send(self, to, subject, text, html) -> bool:
-        result = super().send(to, subject, text, html)
+    def send(self, to, subject, text, html, *, headers=None) -> bool:
+        result = super().send(to, subject, text, html, headers=headers)
         flip_at = T0 + timedelta(hours=2)
         self._repo.put_settings(self._flip_user, False, DigestCadence.DAILY, flip_at)
         return result
@@ -627,3 +630,65 @@ def test_service_raises_on_cap_and_duplicate() -> None:
         service.follow_topic(user, _follow_dto(f"t{n}"))
     with pytest.raises(TopicLimitExceeded):
         service.follow_topic(user, _follow_dto("overflow"))
+
+
+# --- F09: RFC 8058 one-click unsubscribe ---------------------------------------------------
+
+
+_DIGEST_USER = "digest-user"
+
+
+def _digest_runner(email: RecordingEmail, repo: InMemoryTrendsRepository) -> TrendsService:
+    """A runner with one fully wired opted-in user: topic, cadence, and a deliverable address."""
+    return _service(
+        repo,
+        search=FixtureSearch([_paper("2401.0001", 0.9, T0 + timedelta(hours=1))]),
+        email=email,
+        recipients=DictEmails({_DIGEST_USER: "a@test"}),
+    )
+
+
+def test_sent_digest_carries_rfc8058_one_click_headers() -> None:
+    """A compliant mail client must be able to opt out in one click, with no link-hunting."""
+    repo = InMemoryTrendsRepository()
+    email = RecordingEmail()
+    runner = _digest_runner(email, repo)
+    _opted_in_user(repo, _DIGEST_USER)
+
+    report = runner.run_digest(T0 + timedelta(days=1))
+
+    assert report.sent == 1 and report.failed == 0
+    headers = email.headers[0]
+    assert headers is not None
+    # RFC 8058: the List-Unsubscribe value is a bracketed URI, and the -Post opt-in declares that
+    # the endpoint accepts a POST (the CSRF-safe form) rather than the RFC 8058 CSRF-prone GET.
+    assert headers["List-Unsubscribe"].startswith("<")
+    assert headers["List-Unsubscribe"].endswith(">")
+    assert headers["List-Unsubscribe-Post"] == "List-Unsubscribe=One-Click"
+
+
+def test_one_click_header_points_at_the_tokenized_unsubscribe_route() -> None:
+    """The advertised URL must be the one the in-body link uses, or the two opt-outs diverge."""
+    repo = InMemoryTrendsRepository()
+    email = RecordingEmail()
+    runner = _digest_runner(email, repo)
+    _opted_in_user(repo, _DIGEST_USER)
+
+    runner.run_digest(T0 + timedelta(days=1))
+
+    advertised = email.headers[0]["List-Unsubscribe"].strip("<>")
+    assert "token=" in advertised
+    assert advertised in email.sent[0][3]  # the same URL appears in the HTML body
+
+
+def test_failed_send_emits_no_headers_and_leaves_watermark_for_retry() -> None:
+    """A provider failure must not advance the watermark (the digest is retried next cycle)."""
+    repo = InMemoryTrendsRepository()
+    email = RecordingEmail(fail_for={"a@test"})
+    runner = _digest_runner(email, repo)
+    _opted_in_user(repo, _DIGEST_USER)
+
+    report = runner.run_digest(T0 + timedelta(days=1))
+
+    assert report.failed == 1 and report.sent == 0
+    assert email.headers == []

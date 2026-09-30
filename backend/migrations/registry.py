@@ -25,6 +25,7 @@ DOMAINS = (
             "010_make_withdrawal_backup_email_nullable.sql",
             "011_add_purge_attempts.sql",
             "012_drop_account_withdrawal_backups.sql",
+            "013_block_late_writes_during_purge.sql",
         ),
     ),
     ("library", "backend/modules/library/migrations", ("001_create_library_tables.sql",)),

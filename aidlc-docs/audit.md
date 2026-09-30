@@ -7473,3 +7473,69 @@ rate limiting, none of which touch OpenSearch.
 ### Status
 Phase 2 complete. Stack is up, host-verified, and reproducible via `ops/local-stack/up.sh`. Phase 3
 (REM-3 code rewrite) is next. G1 still carries four blockers; G4/G5 remain BLOCKED-ON-REM-4.
+
+---
+
+## Phase 3 — Dependency declaration and duplicate-implementation discovery
+**Timestamp**: 2026-10-01T00:00:00Z
+**User Input**: "start phase 3" (earlier in this phase); "Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed."
+**AI Response**: Declared the four missing runtime dependencies, then halted before regenerating adapters because a monorepo search showed five of the seven duplicate existing wired+tested implementations. Wrote `aidlc-docs/construction/rem-3-duplicate-implementation-decision-questions.md` and escalated.
+**Context**: Phase 3, steps 9 and 10; escalation before regeneration.
+
+### Step 9 executed — defect 3 (undeclared dependencies) fixed
+`platform_integrity/pyproject.toml` core dependencies were only `pydantic`, `rfc8785`, `cryptography`;
+`psycopg` existed solely in the `postgres` extra, and `jwt`/`redis`/`minio` were absent entirely.
+Added a self-contained `rem3` optional group via `uv add --optional rem3`, keeping `uv.lock` in sync:
+
+- `minio>=7.2,<8` → resolved 7.2.20
+- `psycopg[binary]>=3.3.4,<4`
+- `pyjwt>=2.9,<3` → resolved 2.15.1
+- `redis>=5,<7` → resolved 6.4.0
+
+Import check over all seven adapters now passes (`purge`, `unsubscribe`, `identity`, `ratelimit`,
+`revocation`, `authz`, `assets` — all OK), confirming defect 3's unimportability is resolved.
+
+### Blocking discovery: five of seven adapters duplicate existing working code
+The approved plan directs deletion and regeneration of seven adapters inside
+`platform_integrity/.../adapters/`. A monorepo search before regenerating found existing,
+wired, and tested implementations of five of them:
+
+| Adapter | Existing implementation | Prior state |
+|---|---|---|
+| `purge.py` | `account_deletions` (`accounts/migrations/003`, `011_add_purge_attempts.sql`), `AccountDeletionService.purge_job()`, `accounts/purge_worker.py` (60-line real CLI), `SqlOwnerDataPurger` (16 tables, identifier whitelisting) | complete, wired, tested |
+| `unsubscribe.py` | `trends/service.py` `UnsubscribeTokenSigner` (HMAC-SHA256, `compare_digest`), `issue_unsubscribe_token()`, `POST /trends/unsubscribe` (token-only, never 5xx), `digest.py` CLI, frontend page | complete, wired, 629 test lines |
+| `ratelimit.py` | `middleware/rate_limit.py` — `InMemoryRateLimiter`, `RedisRateLimiter` (INCR+EXPIRE, TLS, fails open); consumed by gateway, accounts per-email/per-IP, `agent_quota.py` | complete, wired, tested |
+| `identity.py` | `middleware/gateway.py` `_forwarded_client()`/`_rate_limit_key()` — right-most-N-hop XFF, rejects spoofable leftmost; `TRUST_PROXY_HEADERS`/`TRUSTED_PROXY_COUNT` deployed as CloudFront+ALB | partial (no Cloudflare header), wired, tested |
+| `assets.py` | `summarization/adapters/rds_assets.py` `presign()` (boto3, honours `AWS_ENDPOINT_URL_S3`, never leaks `object_ref`); `ingestion/adapters/assets.py` `S3RdsAssetStore` (SSE-KMS, delete-by-version, orphan-tolerant GC) | complete, wired, tested |
+
+`revocation` and `authz` have **no** equivalent: no `jti` tracking or denylist exists anywhere, and
+`authz.py:_check_revocation()` is a stub returning `False` ("구현 간소화").
+
+### The regeneration target is orphaned dead code
+All seven files are unreferenced by tests. Their only importer is
+`platform_integrity/.../api/content_jobs.py`, which is broken three ways: it imports from
+`ops.platform_integrity` (a hyphenated, `__init__.py`-less directory), `AuthorizationServiceImpl` is
+defined nowhere, and the router is never mounted in any FastAPI app; `_job_service`,
+`_asset_service`, and `_authz_service` are never assigned, so all routes would 503 regardless.
+
+### The approved plan already assigns these concerns to backend modules
+`verification-remediation-2026-09-18-workflow-plan.md` maps G3's homes elsewhere: line 54 →
+`accounts` + `evidence`/`onboarding`/`trends`/`plans` for F04/F09 (파기/메일); line 55 → BFF +
+`gateway` + accounts controller for F10 (trusted client identity); line 589 states G3's actual
+requirement as full owner store/job/event/result purge with late-write blocking, immediate
+session/account protection, send-blocked-after-token-revocation, and a spoof-resistant same-client
+bucket.
+
+### Real remaining BR-PURGE work (not duplicate-shaped)
+Advisory locks (BR-PURGE-03/06, absent); the object-purge order DB→S3→backup-GC→`PURGED`, since
+`SqlOwnerDataPurger` never touches S3; optimistic `version` (BR-PURGE-07, `account_deletions` has
+`state`+`purge_attempts` only); late-write blocking for `DEACTIVATED` accounts (F04);
+`List-Unsubscribe`/`List-Unsubscribe-Post` headers (F09, absent repo-wide); `Retry-After` on 429
+(F10, absent repo-wide, only the orphan adapter set it); Cloudflare identity headers (absent
+repo-wide).
+
+### Status
+Halting before any adapter regeneration. Plan steps 10 and 11 (and the location of the F04/F09/F10
+work) depend on the user's answer to `rem-3-duplicate-implementation-decision-questions.md`.
+`platform_integrity/pyproject.toml` and `uv.lock` are the only source-adjacent changes; no adapter,
+design document, or migration has been modified.

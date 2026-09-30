@@ -215,6 +215,13 @@ class AccountDeletionService:
         event_id는 account_id에서 결정적으로 파생되어(uuid5) 재시도에도 동일하다.
         반환: 파기한 계정 수."""
         now = now or _now()
+        # BR-PURGE-03/06: one sweep at a time. Overlapping cron/launchd runs would read the same
+        # due list and race on the same account. try-lock (not blocking lock) so a stuck run is
+        # skipped rather than queueing every later purge behind it; this cycle simply does nothing.
+        if not self._repo.try_purge_lock():
+            logger.info("Purge sweep skipped: another sweep holds the advisory lock.")
+            self._repo.rollback()
+            return 0
         purged = 0
         for rec in self._repo.get_due_deletions(now):
             account_id = rec.account_id

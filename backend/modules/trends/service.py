@@ -85,7 +85,15 @@ class TrendSearchPort(Protocol):
 
 
 class DigestEmailPort(Protocol):
-    def send(self, to: str, subject: str, text: str, html: str) -> bool: ...
+    def send(
+        self,
+        to: str,
+        subject: str,
+        text: str,
+        html: str,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> bool: ...
 
 
 class RecipientEmailPort(Protocol):
@@ -420,7 +428,10 @@ class TrendsService:
         subject, text, body_html = render_digest_email(
             matches, app_url=self._config.app_url, unsubscribe_url=unsubscribe_url
         )
-        if not self._email.send(to_email, subject, text, body_html):
+        # F09: RFC 8058 one-click headers so mail clients expose opt-out without the reader having
+        # to find the in-body link. Sent with the message, not after it.
+        headers = list_unsubscribe_headers(unsubscribe_url)
+        if not self._email.send(to_email, subject, text, body_html, headers=headers):
             return "failed"  # watermark untouched → next cycle retries the same window
         self._repo.advance_watermark(settings.userId, now)
         self._repo.record_send(settings.userId, now, len(matches))
@@ -463,3 +474,25 @@ class TrendsService:
             emit(name, value, {})
         except Exception:  # noqa: BLE001 — observability must never break the digest
             pass
+
+
+# ── F09: RFC 8058 one-click unsubscribe headers ───────────────────────────────────────────────
+
+
+def list_unsubscribe_headers(unsubscribe_url: str) -> dict[str, str]:
+    """``List-Unsubscribe`` + ``List-Unsubscribe-Post`` headers for a digest (RFC 8058).
+
+    The in-body link already satisfies the manual opt-out, but RFC 8058 adds a ``POST`` endpoint
+    that compliant clients (Apple Mail, Outlook, Gmail) invoke with one click and no
+    user-consent screen. Without it the only unsubscribe path is a link the reader must find and
+    follow, and unclicked digests accumulate.
+
+    ``List-Unsubscribe-Post: List-Unsubscribe=One-Click`` is what marks the endpoint as accepting an
+    CSRF-safe POST rather than the RFC 8058 CSRF-prone GET, so the header and the existing
+    ``POST /trends/unsubscribe`` route agree. The value must be a bare HTTPS URL with no query
+    string — the token travels in the POST body, never the URL.
+    """
+    return {
+        "List-Unsubscribe": f"<{unsubscribe_url}>",
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    }

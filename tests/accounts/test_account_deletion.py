@@ -281,3 +281,35 @@ async def test_authenticate_reactivates_deactivated_owner_within_grace(session):
     assert handle == "sess-1"
     assert repo.get_by_id(acct.id).status == AccountStatus.ACTIVE.value
     assert repo.get_account_deletion(acct.id) is None  # 삭제 레코드 제거됨
+
+
+# --- F04: BR-PURGE-03 advisory lock on the purge sweep ---------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_purge_job_yields_when_another_sweep_holds_the_lock(session):
+    """Concurrent sweeps must not both process the same due account (BR-PURGE-03/06)."""
+    repo = CredentialRepository(session)
+    acct = _active_account(repo, session)
+    svc = AccountDeletionService(repo, AsyncMock(), AsyncMock())
+    await svc.request_deletion(acct.id, "OldPw123!@x")
+    session.commit()
+
+    repo.try_purge_lock = lambda: False
+
+    assert await svc.purge_job(now=_naive(days=31)) == 0
+    # Nothing purged and no attempt recorded — the locked-out sweep did no work at all.
+    assert repo.get_account_deletion(acct.id).state == AccountStatus.DEACTIVATED.value
+
+
+@pytest.mark.asyncio
+async def test_purge_job_purges_when_lock_is_acquired(session):
+    repo = CredentialRepository(session)
+    acct = _active_account(repo, session)
+    publisher = AsyncMock()
+    svc = AccountDeletionService(repo, AsyncMock(), publisher)
+    await svc.request_deletion(acct.id, "OldPw123!@x")
+    session.commit()
+
+    assert repo.try_purge_lock() is True
+    assert await svc.purge_job(now=_naive(days=31)) == 1
