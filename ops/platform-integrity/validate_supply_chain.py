@@ -16,17 +16,24 @@ DIGEST_PREFIX = "@sha256:"
 
 
 def image_references(targets: dict) -> dict[str, str]:
-    """Flatten images/derivedImages into {logical_name: reference}.
+    """Flatten images/derivedImages/localDevImages into {logical_name: reference}.
 
     Entries are either a bare reference string or a dict carrying a ``digest`` key. derivedImages
     also carry ``base``, which names another entry, so bases are resolved to their own reference.
+
+    ``localDevImages`` is included because it holds real, runnable image references. Leaving it out
+    made a mutable tag there pass unnoticed: a developer could pin by hand in one place and drift in
+    another. Non-production status stays a separate concern — this check judges pinning, not
+    release relevance.
     """
     resolved: dict[str, str] = {}
-    for section in ("images", "derivedImages"):
+    for section in ("images", "derivedImages", "localDevImages"):
         entries = targets.get(section) or {}
         if not isinstance(entries, dict):
             raise TypeError(f"{section} must be a mapping of name to reference")
         for name, value in entries.items():
+            if name == "note":
+                continue
             reference = value if isinstance(value, str) else (value or {}).get("digest", "")
             resolved[f"{section}.{name}"] = reference or ""
             if isinstance(value, dict) and value.get("base"):

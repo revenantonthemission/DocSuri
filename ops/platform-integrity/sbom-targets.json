@@ -12,8 +12,26 @@
     },
     "redis": "redis@sha256:c6eabf748fc7a61dbb5a705c78bcf3d6377b1127a97d0ce965c11c44ba46896f",
     "opensearch": "opensearchproject/opensearch@sha256:4ee82ecb35d837a6186c81aaa64c8a5bce71aa956edbd87f1f684ab56af52c44",
-    "minio": "quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+    "minio": {
+      "digest": "quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+      "status": "UNOBTAINABLE",
+      "observedAt": "2026-10-01",
+      "scan": "NOT_RUN_NO_ARTIFACT",
+      "unobtainableBecause": "Anonymous access to the repository is denied, not merely this digest: quay.io/v2/minio/minio/tags/list returns HTTP 401 UNAUTHORIZED, the digest manifest HEAD returns HTTP 401, registry-1.docker.io/v2/minio/minio returns HTTP 401 even with a valid auth.docker.io pull-scope token, and the vendor server binary at dl.min.io/server/minio/release/linux-amd64/minio returns HTTP 410 Gone. The repository-level 401 indicates the community edition was withdrawn from public distribution.",
+      "impact": "G1 has no scannable MinIO artifact, so the MinIO image CVE scan sub-item cannot be satisfied from this pin. This is the fourth G1 blocker and is not operator-actionable: there is no artifact to decide about. Only upstream restoring distribution, or an explicit decision to change the production S3 provider, can close it.",
+      "notRepointed": "This pin is deliberately NOT repointed at any substitute image. No third-party mirror or source build was used, because that would break the provenance chain this file exists to protect. See localDevImages.substituteAssetStore for the local-only stand-in, which is not a production input and must never appear in scan evidence."
+    },
     "elasticmq": "softwaremill/elasticmq-native@sha256:e4580ab9ad1bd5cd37b4ba04911bc5ccc8cd2d9ab4de56ece65acee71c24e05c"
+  },
+  "localDevImages": {
+    "note": "LOCAL DEVELOPMENT ONLY. These images are NOT production deployment inputs, are NOT the subject of any release scan, and must never be recorded as attesting to the production pins in images/derivedImages. They exist solely so the Colima stack can exercise the asset-store code path on a developer machine while the production S3 pin is unobtainable. Every entry here requires a local-only purpose string; an entry without one is a defect.",
+    "substituteAssetStore": {
+      "digest": "chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d",
+      "purpose": "Stand-in for images.minio in the Colima local stack so the asset-store code path is runnable during REM-3 corrective work. Speaks S3, so the minio Python SDK client is unchanged.",
+      "replaces": "images.minio",
+      "productionInput": false,
+      "scanBaseline": "NONE — not scanned, not release-relevant, must not be promoted to images/"
+    }
   },
   "derivedImages": {
     "postgres": {

@@ -98,3 +98,37 @@ def test_targets_are_not_mutated_by_validation(targets):
     snapshot = copy.deepcopy(targets)
     unpinned_images(targets)
     assert targets == snapshot
+
+
+def test_local_dev_images_must_also_be_digest_pinned(targets):
+    """A local-only section holds runnable references, so a mutable tag there is still a defect.
+
+    Leaving localDevImages unscoped meant a hand-pinned digest could drift unnoticed, because the
+    production sections were checked and this one was simply not read.
+    """
+    targets["localDevImages"]["substituteAssetStore"]["digest"] = "chrislusf/seaweedfs:latest"
+    assert unpinned_images(targets) == [
+        "localDevImages.substituteAssetStore: chrislusf/seaweedfs:latest"
+    ]
+
+
+def test_local_dev_image_with_no_digest_is_rejected(targets):
+    targets["localDevImages"]["substituteAssetStore"] = {"productionInput": False}
+    assert unpinned_images(targets) == [
+        "localDevImages.substituteAssetStore: <no digest declared>"
+    ]
+
+
+def test_the_local_dev_prose_note_is_not_treated_as_an_image(targets):
+    """The section's explanatory ``note`` is documentation, not a declared reference."""
+    resolved = image_references(targets)
+    assert not any("note" in key for key in resolved)
+    assert "localDevImages.substituteAssetStore" in resolved
+
+
+def test_local_dev_images_are_scanned_without_becoming_production_inputs(targets):
+    """Scanning for pinning must not launder a local image into a production attestation."""
+    substitute = targets["localDevImages"]["substituteAssetStore"]
+    assert substitute["productionInput"] is False
+    assert substitute["scanBaseline"].startswith("NONE")
+    assert "@sha256:" in substitute["digest"]
