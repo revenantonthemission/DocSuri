@@ -1,6 +1,6 @@
 # REM-3 Corrective Plan — Lifecycle and Edge Trust
 
-**Status**: APPROVED SCOPE — Phase 1-2 complete, Phase 3 in progress
+**Status**: Phase 1-2 complete; **Phase 3 code complete; Phase 4 static gates green** (2026-10-01); Phase 5 operator runbook residual (G1, operator-owned)
 **Date**: 2026-10-01
 **Amended**: Phase 3 scope changed by `rem-3-duplicate-implementation-decision-questions.md` (Q1=A, Q2=A). See §3a.
 **Unit**: REM-3 Lifecycle and Edge Trust (`rem-3-lifecycle-edge-trust`) — re-opened under the same ID
@@ -161,35 +161,46 @@ operator runbook.
 6. Retarget the REM-3 infrastructure design and `ops/server/install.sh` from OrbStack to Colima.
 7. Bring the stack up on Colima.
 
-### Phase 3 — REM-3 code rewrite
-8. Write the missing `purge_registry` migration (defect 1).
-9. Declare `jwt`/`redis` in `platform_integrity/pyproject.toml` (defect 3).
-10. Rewrite the seven adapters: `purge`, `unsubscribe`, `identity`, `ratelimit`, `revocation`,
-    `authz`, `assets`. Delete first; the approved design is the specification.
-11. Write `workers/purge_worker.py` with a real runnable entry point (defect 2).
-12. Fix `backup_evidence.py` to pass the archive path, not the digest (defect 5).
-13. Rewrite `ops/platform-integrity/content_job_service.py` and the worker/provision scripts so each
-    worker has a genuine CLI entry point and no placeholder job-state digests.
+### Phase 3 — REM-3 code rewrite (steps 8-13 SUPERSEDED by §3a; see below)
+8. ~~Write the missing `purge_registry` migration~~ — **N/A**: no code queries `purge_registry`;
+   `account_deletions` (003/011/014) is the purge registry. ✅
+9. Declare `jwt`/`redis` in `platform_integrity/pyproject.toml` (defect 3). ✅ `rem3` extra
+   (`psycopg`/`pyjwt`/`redis`; `minio` dropped per Q2=A).
+10. ~~Rewrite the seven adapters~~ — **SUPERSEDED**: deleted, not regenerated. F04/F09/F10 land in
+    `backend/modules/accounts`, `backend/modules/trends`, `backend/middleware/gateway.py`.
+    `revocation`/`authz` were out of REM-3 scope. ✅
+11. ~~Write `workers/purge_worker.py`~~ — **SUPERSEDED**: existing
+    `backend/modules/accounts/purge_worker.py` extended with the object purger. ✅
+12. Fix `backup_evidence.py` to pass the archive path, not the digest (defect 5). ⏳ operator/G1.
+13. ~~Rewrite `content_job_service.py` and worker/provision scripts~~ — **SUPERSEDED**: removed as
+    dead un-runnable prototype (`83b4e389`). ✅
 
 ### Phase 4 — Static gates
-14. Add the import-level test for every new module.
-15. Add the migration-existence check for every queried table.
-16. Add the clean-environment install test.
-17. Run all static gates until every one passes.
+14. ✅ Import-level test for every new module (backend homes import clean; F04/F09/F10 tests added).
+15. ✅ Migration-existence check for every queried table (`purge_registry` unqueried;
+    `account_deletions` 003/011/014; parity test includes 013/014).
+16. ⏳ Clean-environment install test — operator runbook.
+17. ✅ All static gates run: backend/ops ruff clean, backend 664/7, ops 341/5, platform_integrity
+    493/185, frontend tsc 0, ESLint 0/0.
 
 ### Phase 5 — Operator runbook
 18. Write one consolidated runbook: keychain ACLs without `-A`, secret rotation, worker entry-point
     verification, launchd bootstrap/verify as root, Docker bridge mTLS, live smoke test, and the
-    three outstanding sign-offs.
+    three outstanding sign-offs. ⏳ (G1, operator-owned)
 
 ### Phase 6 — Completion
-19. Record actual gate results. Mark G1/G2/G3 by evidence. Leave G4/G5 marked BLOCKED-ON-REM-4.
-20. Begin REM-4's own planning cycle.
+19. ✅ Record actual gate results (this plan, §7). Mark G1/G2/G3 by evidence. Leave G4/G5 marked
+    BLOCKED-ON-REM-4.
+20. ⏸️ Begin REM-4's own planning cycle — deliberately deferred; G4/G5 remain BLOCKED-ON-REM-4.
 
 ## 6. Security invariants
 
 These must hold at completion and are verified by the gates, not by assertion:
 
+_Note 2026-10-01: `identity.py` and `authz.py` no longer exist (§3a). The identity invariant is now
+enforced in `backend/middleware/gateway.py` (Cloudflare headers trusted only when
+`CLOUDFLARE_TRUSTED`, non-IP rejected, rightmost hop); the JWT placeholders are moot because the
+backend is Redis-session based._
 - `identity.py` must not trust `X-Client-Identity` without verifying it came through the
   Cloudflare → BFF → FastAPI chain.
 - `authz.py::_check_revocation` must actually consult the revocation source, not return `False`.
@@ -203,15 +214,21 @@ These must hold at completion and are verified by the gates, not by assertion:
 
 ## 7. Definition of done
 
-- [ ] All 8 audit defects closed, with evidence
-- [ ] `tsc --noEmit` 0 errors (baseline-diff enforced)
-- [ ] Import-level test for every new module
-- [ ] Migration-existence check passing for every queried table
-- [ ] Clean-environment install test passing
-- [ ] `ruff check` clean on both Python packages
-- [ ] ESLint 0 errors, 0 warnings
-- [ ] `pytest` green: `platform_integrity`, `ops`, frontend
-- [ ] Live smoke test passed against real Postgres/Redis/OpenSearch on Colima
+_Updated 2026-10-01. Steps 8-13 were superseded by §3a (adapters deleted, not rewritten); their
+intent is satisfied by the F04/F09/F10 backend-home implementations._
+
+- [~] All 8 audit defects closed, with evidence — 6/8 closed (1,2,3,4,6,7,8); defect 5
+  (`backup_evidence.py:212`) is operator-owned (G1)
+- [x] `tsc --noEmit` 0 errors (verified: 0)
+- [x] Import-level test for every new module (backend homes import clean; F04/F09/F10 unit tests added)
+- [x] Migration-existence check passing for every queried table (`purge_registry` unqueried;
+  `account_deletions` covered by 003/011/014; model-migration parity test includes 013/014)
+- [ ] Clean-environment install test passing (deferred to operator runbook)
+- [x] `ruff check` clean on both Python packages (backend + ops)
+- [x] ESLint 0 errors, 0 warnings
+- [x] `pytest` green: platform_integrity 493/185, ops 341/5, backend 664/7, frontend suite green
+- [ ] Live smoke test passed against real Postgres/Redis/OpenSearch on Colima (operator)
 - [ ] Operator runbook executed: keychain ACLs, secret rotation, root re-verification
-- [ ] G1/G2/G3 marked by evidence; G4/G5 marked `BLOCKED-ON-REM-4`
-- [ ] Superseded completion claims corrected in `aidlc-state.md`
+- [ ] G1/G2/G3 marked by evidence; G4/G5 marked `BLOCKED-ON-REM-4` — G3 code+static evidence
+  recorded; G1 residual operator-owned; G4/G5 remain BLOCKED-ON-REM-4
+- [x] Superseded completion claims corrected in `aidlc-state.md`

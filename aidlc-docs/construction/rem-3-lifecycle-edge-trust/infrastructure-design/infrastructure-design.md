@@ -5,8 +5,23 @@
 **기반**: 
 - NFR Design: `nfr-design/` 승인 (ND-Q1~10 전수 A)
 - Infrastructure Design Questions: ID-Q1~8 전수 A 승인
-- REM-1/2 인프라: launchd, OrbStack(Postgres/Redis/OpenSearch/MinIO/ElasticMQ), clock, receipt signer, keychain, backup/restore, load acceptance
+- REM-1/2 인프라: launchd, Colima(Postgres/Redis/OpenSearch/SeaweedFS/ElasticMQ), clock, receipt signer, keychain, backup/restore, load acceptance
 - `verification-remediation-2026-09-18.md` §2 Single-Mac Production 기준
+
+---
+
+## 0. Corrective note (2026-10-01) — 이 문서의 일부는 실제 승인 구현으로 대체됨
+
+이 문서는 2026-09-30 작성된 초기 설계이며, 이후 승인된 corrective 결정과 어긋나는 부분이 있다.
+구현의 정본은 코드와 `rem-3-corrective-plan.md` §3a, `rem-3-duplicate-implementation-decision-questions.md`다.
+
+| 이 문서 | 실제 승인 구현 | 근거 |
+|---|---|---|
+| §1 `purge_registry` 테이블 + migration 012 | **미채택.** 파기 레지스트리는 기존 `account_deletions`(003) 가 담당. `purge_registry`를 조회하는 코드는 없다. | `grep purge_registry` 0건 |
+| `acquire_purge_worker_lock` / `acquire_owner_purge_lock(owner_uid)` | `accounts_try_purge_lock()` (전역 xact try-lock) + `account_deletions.version` 낙관적 잠금. owner별 xact lock 대신 전역 락 + 버전 가드로 구현. | migration 013/014 |
+| 인프라 = OrbStack | 런타임은 **Colima**. 로컬 포트는 `ops/local-stack/.env` 로 시프트(15432/16379/19200/19324/19000/19333/18080). | `ops/local-stack/colima-stack.compose.yaml` |
+| MinIO | MinIO 이미지 UNOBTAINABLE → 로컬은 **SeaweedFS** 대체, 프로덕션 Pin 유지·마킹. | `ops/platform-integrity/cve-disposition.md` |
+| 7개 adapter (`purge`/`unsubscribe`/`identity`/`ratelimit`/`revocation`/`authz`/`assets`) | **삭제됨.** F04/F09/F10은 `backend/` 의 기존 home에 구현. `revocation`/`authz`는 REM-3 범위 밖. | `rem-3-duplicate-implementation-decision-questions.md` |
 
 ---
 

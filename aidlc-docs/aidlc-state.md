@@ -1963,3 +1963,53 @@ platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed*
 - **REM-4**: ⏸️ **보류 (deferred)**. 자체 planning cycle 대기. G4/G5를 차단 중.
 
 **다음 단계**: REM-3 corrective plan Phase 1 실행 — superseding annotation 부착, 게이트 매트릭스 반영(본 절), 오염된 완료 주장 정정. 이후 Phase 2(Colima re-baseline + digest pull) → Phase 3(code rewrite) → Phase 4(static gates) → Phase 5(operator runbook).
+
+---
+
+## REM-3 Corrective — Phase 3 code complete, Phase 4 static gates green (2026-10-01)
+
+**범위 확정**: 승인된 유닛 표(`verification-remediation-2026-09-18-workflow-plan.md:308`)에 따라
+**REM-3 = F04, F09, F10**. 삭제 대상 7개 adapter 중 `revocation`/`authz`는 대응 F-finding이 없어
+**REM-3 범위 밖**으로 정정(`rem-3-duplicate-implementation-decision-questions.md` Q1=A, Q2=A).
+
+### 완료된 작업
+- **Q1=A**: 7개 orphan adapter + `api/content_jobs.py` **삭제**(재생성 아님). **Q2=A**: `minio` SDK 제거,
+  `psycopg`/`pyjwt`/`redis`만 유지.
+- **F10**: `backend/middleware/gateway.py` Cloudflare 신뢰 헤더(`CF-Connecting-IP`/`True-Client-IP`),
+  non-IP 거부, 우측 hop 선택, 429 `Retry-After`. `CLOUDFLARE_TRUSTED` 게이트. 테스트 26.
+- **F09**: `List-Unsubscribe`/`List-Unsubscribe-Post` 헤더(RFC 8058) + send 직전 opt-in 재확인
+  (토큰 로테이션 후 전송 차단). 테스트 27.
+- **F04**: 파기 스윕 전역 `accounts_try_purge_lock()`(migration 013), DEACTIVATED owner 쓰기 차단
+  트리거(013), 낙관적 `version`(migration 014), owner 객체 파기 DB→object 순서
+  (`novelty_artifacts.object_key`, `S3ObjectPurger`, `purge_worker` 배선).
+- **ops lint 게이트**: `ops/platform-integrity/`의 죽은 프로토타입 12종 제거(존재하지 않는
+  `ops.platform_integrity.*` import, 비패키징, 테스트 미참조).
+
+### 결함 상태 갱신
+| # | 결함 | 상태 |
+|---|---|---|
+| 1 | `purge_registry` 미생성 | ✅ **종결** — 코드가 조회하지 않음; 레지스트리 역할은 `account_deletions`(003/011/014)가 담당 |
+| 2 | purge worker 부재 | ✅ **종결** — 기존 `backend/modules/accounts/purge_worker.py` 확장 |
+| 3 | jwt/redis 미선언 | ✅ **종결** — `platform_integrity[rem3]` extra |
+| 4 | `revocation.py` `self._cache` | ✅ **종결** — 어댑터 삭제(범위 밖) |
+| 5 | `backup_evidence.py:212` digest 경로 | ⏳ **OPEN** — ops/operator(G1) |
+| 6 | 신규 TS 오류 9건 | ✅ `4328af34` |
+| 7 | ESLint/tsc 게이트 | ✅ `4328af34` |
+| 8 | REM-3 import 테스트 0건 | ✅ **종결** — backend home import + 단위/통합 테스트 추가 |
+
+### 게이트 결과 (Phase 4)
+| 게이트 | 결과 |
+|---|---|
+| backend ruff | ✅ clean |
+| backend pytest | ✅ 664 passed / 7 skipped |
+| ops ruff | ✅ clean |
+| ops pytest | ✅ 341 passed / 5 skipped |
+| platform_integrity pytest(전체 extra) | ✅ 493 passed / 185 skipped |
+| frontend `tsc --noEmit` | ✅ 0 errors |
+| frontend ESLint | ✅ 0 errors / 0 warnings |
+| migration-model parity | ✅ (013/014 포함) |
+
+### 잔여 (G1, operator 소유 — 정체 아님)
+CVE-2026-85091 예외/알파인 refresh, derived postgres CANDIDATE→APPROVED, CVE-2026-82049 수용,
+MinIO UNOBTAINABLE, `backup_evidence.py:212`, launchctl 루트/Keychain ACL/bridge mTLS.
+**G4/G5는 여전히 ⛔ BLOCKED-ON-REM-4.**

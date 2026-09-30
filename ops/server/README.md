@@ -1,7 +1,7 @@
 # DocSuri server runbook
 
 This Mac **is** the production server (AWS decommissioned 2026-08-17). Everything runs
-here: data plane in OrbStack containers, app processes under launchd, inference on
+here: data plane in Colima containers, app processes under launchd, inference on
 Ollama, public ingress through a Cloudflare Tunnel.
 
 ```
@@ -60,10 +60,11 @@ FastAPI is async; one process serves concurrent requests fine. Raise the limit i
 config rather than adding workers.
 
 ### Why LaunchAgents, not LaunchDaemons
-OrbStack's Docker daemon and the Ollama brew service live in the user's GUI session.
+Colima's Docker daemon and the Ollama brew service live in the user's GUI session.
 A LaunchDaemon starts before login and would find no Docker socket and no Ollama.
 Agents start at login — which is why **automatic login must stay enabled** for the
-server to return unattended after a reboot or power cut.
+server to return unattended after a reboot or power cut. (Colima's VM is started by the
+user; it is not a boot-time system service.)
 
 ## First-time / rebuild-from-scratch
 
@@ -214,5 +215,5 @@ disappears before bootstrapping; re-run it.
 `number_of_replicas: 0`; if a new index appears yellow, set it to 0.
 
 **Nothing came back after reboot.** Check automatic login is still enabled, then that
-OrbStack is still in Login Items — the containers depend on it, and the agents depend
-on the containers.
+Colima is started (`colima start`, or it auto-starts on login if configured) — the
+containers depend on it, and the agents depend on the containers.

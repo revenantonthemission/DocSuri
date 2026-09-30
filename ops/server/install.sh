@@ -5,7 +5,7 @@
 #   ops/server/install.sh
 #
 # Why LaunchAgents (gui/<uid>) and not LaunchDaemons (system/):
-# OrbStack's Docker daemon and the Ollama brew service both live in the user's GUI
+# Colima's Docker daemon and the Ollama brew service both live in the user's GUI
 # session. A LaunchDaemon starts before login and would find no Docker socket and no
 # Ollama, so every dependency would be missing at start. Agents start at login, which
 # is why auto-login is the companion setting — see README.md.

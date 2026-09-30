@@ -7539,3 +7539,43 @@ Halting before any adapter regeneration. Plan steps 10 and 11 (and the location 
 work) depend on the user's answer to `rem-3-duplicate-implementation-decision-questions.md`.
 `platform_integrity/pyproject.toml` and `uv.lock` are the only source-adjacent changes; no adapter,
 design document, or migration has been modified.
+
+---
+
+## REM-3 Corrective Phase 3-4 — Code Complete + Static Gates (2026-10-01)
+
+**Timestamp**: 2026-10-01T00:00:00Z
+**Stage**: CONSTRUCTION / REM-3 corrective (re-opened)
+**User Input**: "commmit and continue to the next phase." / "continue to the next phase." / "Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed."
+
+**AI Response**: Executed the decision (Q1=A, Q2=A) and the remaining F04/F09/F10 work in the
+backend homes, then ran the static gates.
+
+### Scope correction (documented, not a question left open)
+`verification-remediation-2026-09-18-workflow-plan.md:308` defines REM-3 = **F04, F09, F10**. The
+deleted `revocation.py`/`authz.py` map to no REM-3 F-finding: the backend is Redis-session based
+(no JWT denylist to build), object authorization is SECURITY-08/F01/F07 (REM-2), and F09's
+"block send after token revocation" is already implemented (`trends/service.py:414-419`). Also, no
+code queries `purge_registry` (grep = 0), so `account_deletions` is the purge registry and the
+gate-4 "migration exists for every queried table" requirement is met by 003/011/014. Both recorded
+in `rem-3-corrective-plan.md` §3a.
+
+### Commits
+- `337281d` scope alignment, adapter deletion, F10, F09, late-write guard + purge lock.
+- `567ba49f` F04 optimistic purge versioning (migration 014) + gateway E501 fix.
+- `243048d2` F04 owner object purge (DB→object order, `S3ObjectPurger`).
+- `83b4e389` ops dead-prototype removal (unblocks ops ruff gate).
+
+### Gates (all run, not asserted)
+backend ruff clean; backend 664 passed/7 skipped; ops ruff clean; ops 341 passed/5 skipped;
+platform_integrity 493 passed/185 skipped (all extras synced); frontend tsc 0 errors; ESLint 0
+errors/0 warnings; migration-model parity includes 013/014.
+
+### Note on environment
+`platform_integrity` venv must include the `api,postgres,tools,rem3` extras to run its full suite
+(`uv sync --extra api --extra postgres --extra tools --extra rem3`); a default sync hides
+`psutil`/`docsuri_schema` and reports spurious failures.
+
+### Status
+Phase 3 code complete; Phase 4 static gates green. Remaining G1 items are operator-owned.
+G4/G5 remain ⛔ BLOCKED-ON-REM-4 and were not marked passed.
