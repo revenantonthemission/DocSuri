@@ -2,7 +2,7 @@
 
 **Status**: Phase 1-2 complete; **Phase 3 code complete; Phase 4 static gates green; all 8 audit
 defects closed**; F04 DB legs live-smoked against Colima Postgres (2026-10-01); Phase 5 operator
-runbook residual (G1, operator-owned)
+runbook **written** (`aidlc-docs/operations/g1-operator-runbook.md`) — execution operator-owned (G1)
 **Date**: 2026-10-01
 **Amended**: Phase 3 scope changed by `rem-3-duplicate-implementation-decision-questions.md` (Q1=A, Q2=A). See §3a.
 **Unit**: REM-3 Lifecycle and Edge Trust (`rem-3-lifecycle-edge-trust`) — re-opened under the same ID
@@ -187,9 +187,10 @@ operator runbook.
     493/185, frontend tsc 0, ESLint 0/0.
 
 ### Phase 5 — Operator runbook
-18. Write one consolidated runbook: keychain ACLs without `-A`, secret rotation, worker entry-point
-    verification, launchd bootstrap/verify as root, Docker bridge mTLS, live smoke test, and the
-    three outstanding sign-offs. ⏳ (G1, operator-owned)
+18. ✅ **Runbook written** — `aidlc-docs/operations/g1-operator-runbook.md`: keychain ACLs without `-A`,
+    secret rotation, worker entry-point + launchd root verification, Docker bridge mTLS, live Colima
+    smoke test, the three outstanding sign-offs, rescans, and pip-audit disposition. ⏳ execution is
+    operator-owned (G1).
 
 ### Phase 6 — Completion
 19. ✅ Record actual gate results (this plan, §7). Mark G1/G2/G3 by evidence. Leave G4/G5 marked

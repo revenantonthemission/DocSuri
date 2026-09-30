@@ -7608,3 +7608,17 @@ Full backend suite without the DSN: 664 passed / 9 skipped (2 gated skips).
 ### Status
 All 8 audit defects closed except operator-owned G1 residue (CVE sign-offs, Postgres approval,
 MinIO UNOBTAINABLE, launchctl/Keychain/bridge mTLS). G4/G5 remain ⛔ BLOCKED-ON-REM-4.
+
+---
+
+## REM-3 G1 Operator Runbook — authoring (2026-10-01)
+
+**Timestamp**: 2026-10-01T00:00:00Z
+**Stage**: CONSTRUCTION / REM-3 corrective — Phase 5 (operator runbook)
+**User Input**: "Walk the G1 operator runbook" (selected in response to "REM-3 corrective is complete. How should I proceed?")
+
+**AI Response**: Authoring one consolidated operator runbook covering the G1 sign-offs, image
+rescans, pip-audit disposition, Docker bridge mTLS, purpose-Keychain ACLs without `-A`, secret
+rotation, worker entry-point + launchd root verification, and the live Colima smoke test; plus the
+evidence to record back into `sbom-targets.json`/`cve-disposition.md`. All steps are operator-owned
+(require sudo / a maintenance window / a risk-acceptance decision).
