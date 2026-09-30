@@ -174,6 +174,10 @@ def collect_backup_evidence(
     """Gather evidence for one cut. Every field stays unproven unless actually observed."""
     notes: list[str] = []
     archive_digest: str | None = None
+    # The archive's on-disk location. An isolated restore needs the *path*; the digest only names
+    # the content. Conflating them (passing Path(archive_digest) to restore) made every restore
+    # fail against a bogus path while the digest looked fine.
+    archive_path: Path | None = None
     encrypted = False
     remote_verified = False
 
@@ -194,8 +198,12 @@ def collect_backup_evidence(
         archive_digest, encrypted, detail = archive.write_archive(cut.source, name=cut.generation)
         if archive_digest is None:
             notes.append(f"archive write did not produce a digest: {detail}")
-        elif not encrypted:
-            notes.append("archive was written without encryption")
+        else:
+            # write_archive reports the written location as its detail on success (the adapter
+            # returns str(destination)); failure paths return an error string with no digest.
+            archive_path = Path(detail)
+            if not encrypted:
+                notes.append("archive was written without encryption")
         if archive_digest is not None and encrypted:
             remote_verified, detail = archive.verify_remote_copy(archive_digest)
             if not remote_verified:
@@ -206,10 +214,10 @@ def collect_backup_evidence(
     if target_incarnation == cut.writer_epoch:
         # Restoring onto the incarnation we just cut would prove nothing about recovery.
         notes.append("restore target is the cut incarnation, not a new one")
-    elif archive_digest is not None and encrypted:
+    elif archive_path is not None and encrypted:
         if managed_root is not None:
             ManagedPath(managed_root).claim()
-        ok, detail = restore.restore(Path(archive_digest))
+        ok, detail = restore.restore(archive_path)
         if ok:
             restored_incarnation = target_incarnation
         else:

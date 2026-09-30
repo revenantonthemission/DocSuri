@@ -10,7 +10,7 @@ import os
 import stat
 import subprocess
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
@@ -64,11 +64,13 @@ class FakeArchive:
 class FakeRestore:
     incarnation_id: str = "incarnation-two"
     restore_result: tuple[bool, str] = (True, "restored")
+    restored_args: list = field(default_factory=list)
 
     def incarnation(self):
         return self.incarnation_id
 
     def restore(self, archive):
+        self.restored_args.append(archive)
         return self.restore_result
 
 
@@ -110,6 +112,18 @@ def test_a_fully_observed_backup_verifies(tmp_path):
     assert report.verified
     assert report.verdict == "VERIFIED" and report.reasons == ()
     assert report.evidence.restored_incarnation == "incarnation-two"
+
+
+def test_restore_receives_the_archive_path_not_the_digest(tmp_path):
+    """Defect 5: restore was handed ``Path(digest)`` — a location that never exists — so the
+    isolated-restore leg failed with a missing archive while the report (which carries the
+    digest, not the path) still looked plausible. The adapter returns the written location as
+    its detail; that is what restore must receive."""
+    restore = FakeRestore()
+    report = gather(tmp_path, restore=restore)
+    assert report.verified
+    assert restore.restored_args == [Path(f"{PINNED}.archive")]
+    assert restore.restored_args[0] != Path(PINNED)
 
 
 def test_a_missing_drive_is_incomplete(tmp_path):
