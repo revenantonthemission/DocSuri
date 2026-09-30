@@ -7058,3 +7058,61 @@ Each keychain:
 2. **deployment-architecture.md** — 상세 배포 아키텍처: Single-Mac/OrbStack 토폴로지, BFF/FastAPI, Launchd worker 5종(4 content + 1 purge), OrbStack containers, Keychain, Backup Volume. 배포 순서(Phase 1~3), 롤백 계획, 검증 체크리스트, 모니터링 경보.
 **Verification**: ID-Q1~8 전수 A 반영, REM-1/2 인프라 계승, Single-Mac production 기준 준수, Security Full/Resiliency Custom/PBT Full 확장 적용.
 **Next**: Code Generation Part 2 → `construction/rem-3-lifecycle-edge-trust/code/`
+
+## [REM-3 Verification Audit — FAILED / Completion Claim Retracted]
+**Timestamp**: 2026-10-01T00:20:00Z
+**User Input**: "start REM-4 planning" / "Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed."
+**AI Response**: Declined to begin REM-4 planning. Performed a pre-gate verification of REM-3 because the approved workflow plan gates REM-4 on verified upstream units, then found that the REM-3 "Complete" claim recorded in `aidlc-state.md` and in commit `fcbac4e` is materially false. Eight defects confirmed by direct execution, listed below. No source files were modified during this audit; the working tree was restored to `e046162` and verified clean.
+**Context**: CONSTRUCTION / REM-3 Build-and-Test verification gate — FAILED. REM-4 planning NOT started, pending user decision.
+
+### Verified defects
+1. **Missing migration (blocking)** — `platform_integrity/src/docsuri_platform_integrity/adapters/purge.py` issues `INSERT`/`UPDATE`/`SELECT` against table `purge_registry`, but no migration creates it. `platform_integrity/migrations/` ends at `011_prepared_target.sql`; the planned `012` was never written, and `grep -rn "purge_registry" --include="*.sql"` returns nothing outside venvs. Runtime failure: `relation "purge_registry" does not exist`. This also violates the REM-1 migration SSOT.
+2. **Missing worker (blocking)** — `ops/platform-integrity/provision_purge_worker.py` references `workers/purge_worker.py`; that file does not exist. `ops/platform-integrity/workers/` contains only `base_worker`, `evidence_worker`, `ingest_worker`, `novelty_worker`, `summarize_worker`, `translate_worker`.
+3. **Undeclared dependencies (blocking)** — `unsubscribe.py`, `revocation.py`, `authz.py`, and `assets.py` all fail to import with `ModuleNotFoundError: No module named 'jwt'` / `'redis'`. `platform_integrity/pyproject.toml` declares only `pydantic`, `rfc8785`, `cryptography`. A clean-environment install of the declared package cannot load 4 of the 7 new adapters.
+4. **Runtime AttributeError** — `adapters/revocation.py:61` assigns `self._cache`, but lines 71–72 read `self.cache`. `RevocationSubscriber` raises `AttributeError` on every cache invalidation.
+5. **Backup/restore defect** — `ops/src/docsuri_ops/backup_evidence.py:212` calls `restore.restore(Path(archive_digest))`, passing a digest string where an archive filesystem path is required. The restore evidence step cannot succeed as written.
+6. **Frontend type-check regression** — `tsc --noEmit` reports 10 errors at `e046162` versus a true baseline of 1 at `fcbac4e1~1` (measured by reverting the 3 REM-3-new files and `JobStatus.tsx`), so REM-3 introduced **9 new errors**: `ConsentManager.tsx` (3), `AccountSettings.tsx` (3), `UnsubscribePage.tsx` (2), `JobStatus.tsx` (1 of the 2). Root causes include `AccountSettings.tsx(134,14) TS2304: Cannot find name 'ConsentManager'` — the component is rendered but never imported — plus `SessionValue` having no `update` property and implicit-`any` indexing errors.
+7. **Lint gate gave false assurance** — the REM-3 migration from `.eslintrc.json` to `eslint.config.mjs` is not type-aware, and `tsc --noEmit` was never run as a gate, so "ESLint clean" masked all 9 type errors. Only unused-variable warnings surfaced.
+8. **Zero test coverage for REM-3** — no test file in `platform_integrity/tests`, `ops/tests`, or `tests` imports any new REM-3 module (`adapters.purge|unsubscribe|identity|ratelimit|revocation`, `purge_worker`, `content_job_service`). The reported "493 passed / 337 passed / 340 passed" results are legacy suites and provide no evidence about REM-3.
+
+### Conclusion
+REM-3 cannot be considered complete, and REM-4 (Corpus and Search Integrity: F03/F11/F12, R4A/R4R/SEARCH) must not start on this basis. Per the approved workflow plan, REM-4 corpus audit and generation-bound evidence depend on trustworthy upstream state and on the REM-1 regression/evidence harness. Escalated for user decision via `aidlc-docs/construction/rem-4-start-decision-questions.md`. Records in `aidlc-state.md` and `audit.md` that assert REM-2/REM-3 completion require correction.
+---
+
+## [Frontend Type-Check Remediation — All Errors Cleared]
+**Timestamp**: 2026-10-01T00:30:00Z
+**User Input**: "fix pre-existing errors first."
+**AI Response**: Cleared all 10 TypeScript errors (9 introduced by REM-3 + 1 pre-existing baseline) and both remaining ESLint unused-variable warnings, without touching any of the 5 backend defects that still require the Q1 decision. Changes are uncommitted pending user review.
+**Context**: CONSTRUCTION / REM-3 Build-and-Test verification gate — frontend portion now PASSING. Backend portion still FAILED.
+
+### Baseline
+- True baseline at `fcbac4e1~1` (measured by removing the three REM-3-new files and reverting `JobStatus.tsx`): 1 error.
+- At `e046162`: 10 errors. REM-3 therefore introduced 9.
+
+### Fixes applied
+1. **`AccountSettings.tsx`** — `TS2304 Cannot find name 'ConsentManager'`: added the missing `import { ConsentManager } from './ConsentManager'`. This was a hard compile failure; the component was rendered at line 134 but never imported.
+2. **`AccountSettings.tsx`** — `TS2339 Property 'update' does not exist on type 'SessionValue'`: removed the invalid destructure. `SessionValue` (SessionContext.tsx:13-19) exposes `status`, `user`, `signingOut`, `refresh`, `signOut` — there is no `update`. Both destructured names were also unused, so the `useSession` import and the unused `Tab` type alias were removed.
+3. **`AccountSettings.tsx`** — `TS2339 Property 'value' does not exist on type 'Element'`: `document.querySelector` returns `Element`; changed to `document.querySelector<HTMLInputElement>(...)` and `|| ''` to `?? ''`.
+4. **`ConsentManager.tsx`** — `TS7006`/`TS7053` (3 errors): `res.json()` returned `any`, so `c` was implicitly `any` and `c.scope` could not index `SCOPE_LABELS`. Introduced a `ConsentDTO` response type, a `isConsentScope` type guard, and an explicit `as ConsentDTO[]` cast. Unknown scopes from the server are now filtered out instead of throwing, and a non-OK response is now rejected rather than silently mapped.
+5. **`UnsubscribePage.tsx`** — `TS2345 string | null not assignable to string`: the narrowing from `if (!token) return;` did not reach `verify()` because it was a hoisted `function` declaration. Captured the value in `const tokenParam` and converted `verify` to a `const` arrow function; the call site is now `void verify()`.
+6. **`UnsubscribePage.tsx`** — `TS7053` on `errorMessages[state.code]`: the state union includes `'INVALID'` but the record omitted it, so the lookup was not total. Extracted `UnsubscribeErrorCode`/`UnsubscribeStateCode` and typed the record as `Record<UnsubscribeStateCode, string>` so the compiler now enforces exhaustiveness; added the `INVALID` message.
+7. **`UnsubscribePage.tsx`** — `TS2322 string | undefined not assignable to string`: the success branch read `data.assetId` from an optional field. Added `typeof data.assetId === 'string'` to the success condition.
+8. **`JobStatus.tsx`** — `TS2345` on `setState`: `event.state` is typed `string` on `JobEvent`, so the object literal was wider than `JobState['state']` and optional fields were being assigned `undefined`. Added an `isJobStateName` type guard, captured the narrowed value in `const stateName`, and assign optional fields only when `!== undefined`.
+9. **`JobStatus.tsx`** — `TS2345` on `onComplete`: the guard used inline `||` comparisons on `state.state`, and property narrowing does not survive into the `onClick` callback. Replaced the unused `isTerminal` with `terminalState = TERMINAL_STATES.find(...)`, whose type is the narrowed literal union and which narrows correctly inside the callback.
+10. **Lint warnings** — removed the unused `e` parameter in `AssetViewer.tsx:87` and the unused `BackendNoveltyMessage` alias in `apiClient.ts:97`.
+
+### Incidental real bugs fixed
+- **EventSource leak**: the `useEffect` cleanup in `JobStatus.tsx` previously returned an empty function with the comment "EventSource cleanup handled by subscribeJobEvents", but `subscribeJobEvents` returns an unsubscribe closure that was being discarded. The cleanup now returns it, so SSE connections are actually closed on unmount.
+- **Stale-state merge**: the old `setState(prev => ({ ...prev, ... }))` could carry a previous event's `assetId`/`error` into a new state. The new code builds a fresh `JobState` per event.
+- The `eslint-disable react-hooks/exhaustive-deps` directive is no longer needed and was removed.
+
+### Verification
+- `tsc --noEmit`: **0 errors** (was 10).
+- `pnpm run lint`: **clean — 0 errors, 0 warnings** (was 2 warnings).
+- `pnpm run test`: 57 files, **340 passed**.
+- `platform_integrity`: 493 passed, 185 skipped. `ops`: 337 passed, 5 skipped. Both unchanged.
+- `git diff --check`: clean.
+
+### Still outstanding (unchanged, requires the Q1 decision)
+Defects 1–5 from the preceding audit entry remain open and are NOT addressed here: the missing `purge_registry` migration, the missing `workers/purge_worker.py`, the undeclared `jwt`/`redis` dependencies, the `revocation.py` `self.cache` AttributeError, and the `backup_evidence.py:212` restore-path defect. No test coverage was added for any REM-3 module, so defect 8 also stands. REM-4 planning remains blocked.
+---

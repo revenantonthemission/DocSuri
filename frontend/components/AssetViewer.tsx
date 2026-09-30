@@ -84,7 +84,7 @@ export function AssetViewer({ assetId, token, className = '', onError, onLoad }:
         src={src!}
         alt="Asset"
         className="w-full h-full object-contain"
-        onError={(e) => { onError?.(new Error('Failed to load image')); }}
+        onError={() => { onError?.(new Error('Failed to load image')); }}
         onLoad={() => { onLoad?.(); }}
       />
     </div>

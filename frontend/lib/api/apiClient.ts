@@ -94,7 +94,6 @@ import type {
   ExtendedBackendResearchJob as BackendResearchJob,
   ExtendedBackendResearchMessage as BackendResearchMessage,
   ExtendedBackendNoveltyJob as BackendNoveltyJob,
-  ExtendedBackendNoveltyMessage as BackendNoveltyMessage,
   ExtendedBackendNoveltyEvent as BackendNoveltyEvent,
   ExtendedBackendNoveltyArtifact as BackendNoveltyArtifact,
   ExtendedNotionConnectionStatusVM as NotionConnectionStatusVM,

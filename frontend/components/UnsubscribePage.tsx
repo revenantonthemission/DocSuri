@@ -7,10 +7,14 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AssetViewer } from './AssetViewer';
 
+type UnsubscribeErrorCode = 'INVALID' | 'EXPIRED' | 'REVOKED' | 'MALFORMED';
+
+type UnsubscribeStateCode = Extract<UnsubscribeState, { status: 'error' }>['code'];
+
 type UnsubscribeState = 
   | { status: 'verifying' }
   | { status: 'success'; assetId: string }
-  | { status: 'error'; code: 'INVALID' | 'EXPIRED' | 'REVOKED' | 'MALFORMED'; message: string };
+  | { status: 'error'; code: UnsubscribeErrorCode; message: string };
 
 export function UnsubscribePage() {
   const searchParams = useSearchParams();
@@ -18,17 +22,18 @@ export function UnsubscribePage() {
   const [state, setState] = useState<UnsubscribeState>({ status: 'verifying' });
 
   useEffect(() => {
-    if (!token) {
+    const tokenParam = token;
+    if (!tokenParam) {
       setState({ status: 'error', code: 'MALFORMED', message: '토큰이 없습니다.' });
       return;
     }
 
-    async function verify() {
+    const verify = async () => {
       try {
-        const res = await fetch(`/api/unsubscribe?token=${encodeURIComponent(token)}`);
-        const data = await res.json();
-        
-        if (res.ok && data.status === 'success') {
+        const res = await fetch(`/api/unsubscribe?token=${encodeURIComponent(tokenParam)}`);
+        const data = (await res.json()) as { status?: string; assetId?: string };
+
+        if (res.ok && data.status === 'success' && typeof data.assetId === 'string') {
           setState({ status: 'success', assetId: data.assetId });
         } else if (res.status === 400) {
           setState({ status: 'error', code: 'MALFORMED', message: '잘못된 토큰 형식입니다.' });
@@ -42,9 +47,9 @@ export function UnsubscribePage() {
       } catch {
         setState({ status: 'error', code: 'MALFORMED', message: '서버 오류가 발생했습니다.' });
       }
-    }
+    };
 
-    verify();
+    void verify();
   }, [token]);
 
   if (state.status === 'verifying') {
@@ -68,7 +73,8 @@ export function UnsubscribePage() {
     );
   }
 
-  const errorMessages = {
+  const errorMessages: Record<UnsubscribeStateCode, string> = {
+    INVALID: '유효하지 않은 토큰입니다.',
     MALFORMED: '잘못된 토큰입니다.',
     EXPIRED: '토큰이 만료되었습니다.',
     REVOKED: '이미 처리되었거나 철회되었습니다.',

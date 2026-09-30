@@ -1,13 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { useSession } from './session/SessionContext';
-
-type Tab = 'security' | 'consents' | 'social' | 'deletion';
+import { ConsentManager } from './ConsentManager';
 
 export function AccountSettings() {
-  const { status, update: updateSession } = useSession();
   const [activeTab, setActiveTab] = useState<'security' | 'consents' | 'social' | 'deletion'>('security');
   const [passwordResetSent, setPasswordResetSent] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -102,7 +98,11 @@ export function AccountSettings() {
                   onKeyDown={e => e.key === 'Enter' && handlePasswordReset(e.currentTarget.value)}
                 />
                 <button
-                  onClick={() => handlePasswordReset(document.querySelector('input[type=email]')?.value || '')}
+                  onClick={() =>
+                    handlePasswordReset(
+                      document.querySelector<HTMLInputElement>('input[type=email]')?.value ?? '',
+                    )
+                  }
                   disabled={passwordResetSent}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                 >

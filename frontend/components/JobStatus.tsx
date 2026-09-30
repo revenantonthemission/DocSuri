@@ -30,6 +30,20 @@ const STATE_COLORS: Record<string, string> = {
   ABSTAINED: 'text-gray-600',
 };
 
+const TERMINAL_STATES = ['COMPLETED', 'FAILED', 'ABSTAINED'] as const;
+
+const JOB_STATES: readonly string[] = [
+  'SUBMITTED',
+  'ACCEPTED',
+  'QUEUED',
+  'RUNNING',
+  ...TERMINAL_STATES,
+];
+
+function isJobStateName(value: string): value is JobState['state'] {
+  return JOB_STATES.includes(value);
+}
+
 type JobStatusState = JobState | null;
 
 export function JobStatus({ jobId, onComplete }: JobStatusProps) {
@@ -46,26 +60,27 @@ export function JobStatus({ jobId, onComplete }: JobStatusProps) {
     const unsubscribe = subscribeJobEvents(
       jobIdRef.current,
       (event) => {
-        setState(prev => ({
-          ...prev,
-          jobId: event.jobId,
-          state: event.state,
-          assetId: event.payload?.assetId,
-          error: event.payload?.error,
-          abstainReason: event.payload?.abstainReason,
-        }));
+        if (!isJobStateName(event.state)) return;
+        const stateName = event.state;
+
+        setState(() => {
+          const next: JobState = { jobId: event.jobId, state: stateName };
+          const { assetId, error, abstainReason } = event.payload ?? {};
+          if (assetId !== undefined) next.assetId = assetId;
+          if (error !== undefined) next.error = error;
+          if (abstainReason !== undefined) next.abstainReason = abstainReason;
+          return next;
+        });
         setEventHistory(prev => [...prev, `${event.state} @ ${new Date(event.timestampUs / 1000).toLocaleTimeString()}`]);
       },
     );
 
-    return () => {
-      // EventSource cleanup handled by subscribeJobEvents
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return unsubscribe;
+  }, []);
 
   if (!state) return <div className="text-sm text-gray-500">작업 상태 로딩 중...</div>;
 
-  const isTerminal = ['COMPLETED', 'FAILED', 'ABSTAINED'].includes(state.state);
+  const terminalState = TERMINAL_STATES.find(s => s === state.state);
 
   return (
     <div className="space-y-2 p-4 border rounded-lg bg-white">
@@ -102,10 +117,10 @@ export function JobStatus({ jobId, onComplete }: JobStatusProps) {
         </ul>
       </details>
 
-      {(state.state === 'COMPLETED' || state.state === 'FAILED' || state.state === 'ABSTAINED') && onComplete && (
+      {terminalState && onComplete && (
         <div className="mt-2 pt-2 border-t">
           <button
-            onClick={() => onComplete(state.state, state.assetId, state.error)}
+            onClick={() => onComplete(terminalState, state.assetId, state.error)}
             className="text-sm text-blue-600 hover:underline"
           >
             계속하기

@@ -23,6 +23,18 @@ const SCOPE_LABELS: Record<ConsentScope, { label: string; description: string }>
   personalization: { label: '개인화 추천', description: '관심사 기반 논문 추천' },
 };
 
+type ConsentDTO = {
+  scope: string;
+  status: ConsentUI['status'];
+  granted_at?: string;
+  revoked_at?: string;
+  expires_at?: string;
+};
+
+function isConsentScope(value: string): value is ConsentScope {
+  return Object.prototype.hasOwnProperty.call(SCOPE_LABELS, value);
+}
+
 export function ConsentManager() {
   const [consents, setConsents] = useState<ConsentUI[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,16 +47,21 @@ export function ConsentManager() {
   async function loadConsents() {
     try {
       const res = await fetch('/api/consents');
-      const data = await res.json();
-      setConsents(data.map(c => ({
-        scope: c.scope,
-        label: SCOPE_LABELS[c.scope].label,
-        description: SCOPE_LABELS[c.scope].description,
-        status: c.status,
-        grantedAt: c.granted_at,
-        revokedAt: c.revoked_at,
-        expiresAt: c.expires_at,
-      })));
+      if (!res.ok) throw new Error(`consents request failed: ${res.status}`);
+      const data = (await res.json()) as ConsentDTO[];
+      setConsents(
+        data
+          .filter((c): c is ConsentDTO & { scope: ConsentScope } => isConsentScope(c.scope))
+          .map(c => ({
+            scope: c.scope,
+            label: SCOPE_LABELS[c.scope].label,
+            description: SCOPE_LABELS[c.scope].description,
+            status: c.status,
+            grantedAt: c.granted_at,
+            revokedAt: c.revoked_at,
+            expiresAt: c.expires_at,
+          })),
+      );
     } catch (err) {
       console.error('Failed to load consents:', err);
     } finally {
