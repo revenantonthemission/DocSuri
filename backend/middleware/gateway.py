@@ -62,9 +62,8 @@ def install_gateway_middleware(
                         content={"message": "Too many requests.", "requestId": request_id},
                     )
                     response.headers["X-Request-ID"] = request_id
-                    # RFC 6585 §4: a 429 MUST carry Retry-After so a well-behaved client knows when
-                    # to retry instead of hot-looping against the limit. Absent here, API consumers
-                    # back off blindly and the abusive pattern is indistinguishable from a retry bug.
+                    # RFC 6585 §4: a 429 MUST carry Retry-After so a well-behaved client knows
+                    # when to retry instead of hot-looping. Absent, consumers back off blindly.
                     retry_after = _retry_after_seconds(rate_limiter)
                     if retry_after is not None:
                         response.headers["Retry-After"] = str(retry_after)

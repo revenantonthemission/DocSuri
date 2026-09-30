@@ -109,6 +109,9 @@ class AccountDeletionTable(Base):
     state = Column(String(20), default=AccountStatus.DEACTIVATED.value, nullable=False)
     # S2: 파기 반복 실패 횟수. 임계 초과 시 state=PURGE_FAILED(DLQ)로 격리해 무한 재시도를 끊는다.
     purge_attempts = Column(Integer, default=0, nullable=False)
+    # BR-PURGE-07: 낙관적 잠금 버전. 상태 전이마다 1 증가하며, 갱신은 읽은 버전을 조건으로 걸어
+    # 동시 스윕이 서로의 전이를 덮어쓰지 못하게 한다(advisory lock과 이중 방어).
+    version = Column(Integer, default=1, nullable=False)
 
 
 class CredentialRepository:
@@ -384,7 +387,7 @@ class CredentialRepository:
 
         SQLite(테스트 인메모리 프로파일)에는 advisory lock이 없다. 프로덕션 파기는 Postgres에서만
         도는데 그 외 DB에서 잠금을 요구하면 테스트가 DB 기능으로 실패하므로, advisory lock을
-        지원하지 않는方言에서는 항상 획득 성공으로 취급한다(단일 프로세스라 경쟁이 없다)."""
+        지원하지 않는 DB에서는 항상 획득 성공으로 취급한다(단일 프로세스라 경쟁이 없다)."""
         if self._session.get_bind().dialect.name != "postgresql":
             return True
         return bool(self._session.execute(text("SELECT accounts_try_purge_lock()")).scalar())
@@ -425,12 +428,35 @@ class CredentialRepository:
         self._session.flush()
 
     def mark_deletion_purged(self, account_id: str) -> None:
-        """삭제 레코드를 PURGED로 전이해 재처리를 막는다(멱등 보증)."""
+        """삭제 레코드를 PURGED로 전이해 재처리를 막는다(멱등 보증).
+
+        BR-PURGE-07: version을 1 증가시키고, 갱신이 읽은 version을 조건으로 걸리도록 한다 —
+        due 목록을 읽은 뒤 다른 스윕이 먼저 전이시킨 경우(버전 불일치) 이 갱신은 0행이 되고,
+        호출부의 mark_deletion_purged 후 state 재확인 로직이 이를 감지한다."""
         rec = self.get_account_deletion(account_id)
         if rec is not None:
-            rec.state = "PURGED"
-            self._session.add(rec)
-            self._session.flush()
+            current = rec.version or 1
+            updated = (
+                self._session.query(AccountDeletionTable)
+                .filter(
+                    AccountDeletionTable.account_id == account_id,
+                    AccountDeletionTable.version == current,
+                    AccountDeletionTable.state == AccountStatus.DEACTIVATED.value,
+                )
+                .update(
+                    {
+                        AccountDeletionTable.state: "PURGED",
+                        AccountDeletionTable.version: current + 1,
+                    },
+                    synchronize_session=False,
+                )
+            )
+            if updated == 0:
+                # Another sweep transitioned this row first. Leave it — the state it moved to
+                # (PURGED/PURGE_FAILED) is authoritative and re-purging would be wrong.
+                self._session.expire_all()
+                return
+            self._session.expire_all()
 
     def increment_deletion_attempts(self, account_id: str) -> int:
         """파기 시도 횟수를 1 증가시키고 새 값을 반환한다(S2 — 독성 레코드 DLQ 가드용).
@@ -439,6 +465,7 @@ class CredentialRepository:
         if rec is None:
             return 0
         rec.purge_attempts = (rec.purge_attempts or 0) + 1
+        rec.version = (rec.version or 1) + 1
         self._session.add(rec)
         self._session.flush()
         return rec.purge_attempts
@@ -449,6 +476,7 @@ class CredentialRepository:
         rec = self.get_account_deletion(account_id)
         if rec is not None:
             rec.state = "PURGE_FAILED"
+            rec.version = (rec.version or 1) + 1
             self._session.add(rec)
             self._session.flush()
 

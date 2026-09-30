@@ -25,6 +25,7 @@ MIGRATIONS = [
     Path("backend/modules/accounts/migrations/006_add_orcid_columns_to_social_identities.sql"),
     Path("backend/modules/accounts/migrations/007_add_email_change_revoke_token.sql"),
     Path("backend/modules/accounts/migrations/011_add_purge_attempts.sql"),  # S2: account_deletions.purge_attempts
+    Path("backend/modules/accounts/migrations/014_add_purge_version.sql"),  # BR-PURGE-07: account_deletions.version
 ]
 
 
