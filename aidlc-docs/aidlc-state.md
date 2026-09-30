@@ -1911,3 +1911,55 @@ platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed*
   - `deployment-architecture.md` — 상세 배포 아키텍처: Single-Mac/OrbStack 토폴로지, BFF/FastAPI, Launchd worker 5종(4 content + 1 purge), OrbStack containers(Postgres/Redis/OpenSearch/MinIO/ElasticMQ), Keychain, Backup Volume. 배포 순서(Phase 1~3), 롤백 계획, 검증 체크리스트, 모니터링 경보.
 - ID-Q1~8 전수 A 승인 반영 완료, REM-1/2 인프라 계승, Single-Mac production 기준 준수.
 - **다음**: Code Generation Part 2 착수 → `construction/rem-3-lifecycle-edge-trust/code/`
+
+---
+
+## 🚨 게이트 상태 정정 — REM-2/REM-3 완료 주장 폐기 (2026-10-01)
+
+**BLOCKED-ON-REM-4**: **G4** (통합/browser/compatibility) 및 **G5** (복구/live preflight)는
+**REM-4 산출 없이는 어떤 effort로도 통과할 수 없다.** 두 게이트는 F03/F11/F12를 닫는데, 이는
+정확히 REM-4의 범위다 (`inception/plans/unit-of-work-plan.md:270`).
+
+- G4 요구: "corpus report와 no-match/저하" + findings F03/F07/F11/F12
+- G5 요구: findings F03 — R4A `CorpusEvidenceService`가 생산해야 하는 corpus 감사 증거
+- **결론**: REM-4는 G4/G5의 선행 조건이며, 역방향 의존이 아니다. REM-4 planning은 위 유닛 이후
+  자체 planning cycle로 진행한다.
+
+### 게이트 매트릭스 (현재 정정된 상태)
+
+| 게이트 | 상태 | 근거 |
+|---|---|---|
+| **G1** 플랫폼 기반 | 🟡 PARTIAL — BLOCKED-ON-OPERATOR | 실행 가능 항목(image rescan, pip-audit disposition, Docker bridge mTLS)은 corrective unit이 흡수. 단 operator 소유 3건 잔존: CVE-2026-85091 예외 승인 또는 alpine base refresh, derived postgres CANDIDATE→APPROVED 승격, CVE-2026-82049 clock observer 수용 |
+| **G2** service/store/worker | 🔴 미통과 | F01/F02/F05/F07 = REM-2 worker pipeline. REM-2 완료 주장은 폐기됨(아래). corrective unit이 rewrite 대상 |
+| **G3** lifecycle/edge | 🔴 미통과 | F04/F09/F10 = REM-3 자체 게이트. `purge_registry` migration 부재, purge worker 부재로 실행 불가 |
+| **G4** 통합/browser/compatibility | ⛔ **BLOCKED-ON-REM-4** | F03/F11/F12 corpus report + no-match/저하가 REM-4 산출. 통과 불가 |
+| **G5** 복구/live preflight | ⛔ **BLOCKED-ON-REM-4** | F03 증거가 REM-4 R4A `CorpusEvidenceService` 산출. 통과 불가 |
+
+### 폐기된 완료 주장 (SUPERSEDED — 이력 보존, 현재 상태 아님)
+
+- 커밋 `fcbac4e` "REM-2 & REM-3: Complete private content infrastructure + Lifecycle/Edge Trust" — **폐기**
+- 위 문서의 "**REM-2 Status**: ✅ **COMPLETE**" 및 "Code Generation Complete: All 13 checklist items implemented" — **폐기**
+- REM-3 "Build and Test ✅" 표기 — **폐기**
+- 위 주장 당시 "Tests: platform_integrity 493/185, ops 337/5, frontend 340 — all pass"는 **REM-3 코드에 대해 무의미**하다. REM-3 모듈을 import하는 테스트가 하나도 없었다.
+
+### 검증된 결함 8건 (`aidlc-docs/audit.md` "REM-3 Verification Audit" 전문)
+
+| # | 결함 | 상태 |
+|---|---|---|
+| 1 | `purge_registry` 테이블 미생성 (migration `011`까지만 존재) | OPEN |
+| 2 | `workers/purge_worker.py` 부재 (`provision_purge_worker.py`가 대상 지정) | OPEN |
+| 3 | `jwt`/`redis`가 `platform_integrity/pyproject.toml`에 미선언 — 7개 adapter 중 4개 import 불가 | OPEN |
+| 4 | `revocation.py` `self._cache` 대입 vs `self.cache` 참조 (L61 vs L71-72) | OPEN |
+| 5 | `backup_evidence.py:212` digest를 restore 경로로 전달 | OPEN |
+| 6 | 신규 TypeScript 오류 9건 (`ConsentManager` 미import 등) | ✅ **4328af34** |
+| 7 | ESLint flat config가 type-unaware, `tsc` 미게이트 | ✅ **4328af34** |
+| 8 | REM-3 모듈을 import하는 테스트 0건 | OPEN |
+
+### 정정된 유닛 상태
+
+- **REM-1**: nominally complete. G1은 🟡 PARTIAL (위 참조).
+- **REM-2**: 🔴 **완료 주장 폐기**. G2 미통과. corrective unit이 worker pipeline을 rewrite.
+- **REM-3**: 🔴 **재개 (re-opened under same ID)**. corrective plan: `construction/plans/rem-3-corrective-plan.md`.
+- **REM-4**: ⏸️ **보류 (deferred)**. 자체 planning cycle 대기. G4/G5를 차단 중.
+
+**다음 단계**: REM-3 corrective plan Phase 1 실행 — superseding annotation 부착, 게이트 매트릭스 반영(본 절), 오염된 완료 주장 정정. 이후 Phase 2(Colima re-baseline + digest pull) → Phase 3(code rewrite) → Phase 4(static gates) → Phase 5(operator runbook).

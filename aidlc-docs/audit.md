@@ -7116,3 +7116,153 @@ REM-3 cannot be considered complete, and REM-4 (Corpus and Search Integrity: F03
 ### Still outstanding (unchanged, requires the Q1 decision)
 Defects 1–5 from the preceding audit entry remain open and are NOT addressed here: the missing `purge_registry` migration, the missing `workers/purge_worker.py`, the undeclared `jwt`/`redis` dependencies, the `revocation.py` `self.cache` AttributeError, and the `backup_evidence.py:212` restore-path defect. No test coverage was added for any REM-3 module, so defect 8 also stands. REM-4 planning remains blocked.
 ---
+
+## [REM-4 Start Decision — Answers Recorded and Validated]
+**Timestamp**: 2026-10-01T00:50:00Z
+**User Input**: "I answered the questions."
+**AI Response**: Read `aidlc-docs/construction/rem-4-start-decision-questions.md` and recorded the four answers. **REM-4 planning remains NOT started** (per Q2=C). Instead, REM-3 is formally re-opened as a corrective unit. Validated the answers against the live environment and found four material constraints that must shape the corrective plan; escalated via `aidlc-docs/construction/rem-3-corrective-clarification-questions.md`.
+**Context**: CONSTRUCTION / corrective-unit scoping. Decisions accepted; scope clarification pending.
+
+### Recorded answers
+| Q | Answer | Decision |
+|---|---|---|
+| Q1 | **B** | Formally re-open REM-3 as a corrective unit with its own plan; treat existing REM-3 code as a defective draft to be **rewritten**, not patched |
+| Q2 | **C** | **Defer REM-4 entirely** until REM-3 is genuinely verified and G1/G2/G4/G5 are re-established; plan nothing new |
+| Q3 | **C** | All of B — `tsc --noEmit` blocking gate, import-level tests for every new module, migration-existence check per queried table, clean-environment install test, tsc baseline-diff — **plus** a live single-Mac smoke test against real Postgres/Redis/OpenSearch before any unit is marked complete |
+| Q4 | **A** | Worker entry points, replace `-A` with real ACLs, rotate exposed secrets, re-verify under root — all in scope of the corrective work |
+
+### Environment validation performed
+1. **G1 is already BLOCKED, independently of REM-3.** Per `ops/platform-integrity/cve-disposition.md:71`, G1 is blocked on: operator sign-off for the CVE-2026-85091 exception (or an alpine base refresh), promotion of the derived postgres image from CANDIDATE to APPROVED, acceptance of the clock observer CVE-2026-82049 finding, re-scans of redis/opensearch/minio/elasticmq, a pip-audit SIGABRT disposition, and Docker bridge mTLS validation. **Consequence for Q2=C:** REM-4's unblock condition depends on work that is largely operator-owned and outside the REM-3 corrective unit's scope. REM-4 will stay deferred until those are closed independently.
+2. **No containers are running.** `docker ps` returns an empty list, so Q3=C's live smoke test has no target services yet.
+3. **Container runtime is Colima, not OrbStack.** `orbstack` is absent; `colima status` reports running on macOS Virtualization.framework with the docker socket at `/Users/revenantonthemission/.colima/default/docker.sock`; Docker server 29.5.2. `docker` and `colima` are present, `podman` and `pg_isready`/`redis-cli` are not. **This contradicts the REM-3 infrastructure design**, which assumes OrbStack in 5 places in `deployment-architecture.md` and 1 in `infrastructure-design.md`. `ops/server/install.sh` also references OrbStack. The corrective plan must target Colima or explicitly re-baseline the runtime.
+4. **Q4=A requires root, which this agent cannot self-serve.** Keychain ACL rewriting (`security add-generic-password` without `-A`), secret rotation, `launchctl` bootstrap/verify under root, and Docker bridge mTLS validation all need operator sudo. These must be issued as operator runbook steps, not executed autonomously.
+
+### No contradictions detected among the four answers
+Q1=B and Q2=C are compatible (correcting REM-3 does not start REM-4). Q3=C and Q4=A are complementary: Q4's secret rotation is operator infrastructure work and is not subsumed by Q1's code rewrite, so both are needed. The open items below are scope and sequencing ambiguities, not conflicting instructions.
+---
+
+## [REM-3 Corrective Clarification — Answers Recorded, One Contradiction Found]
+**Timestamp**: 2026-10-01T01:05:00Z
+**User Input**: "I've answered to the questions."
+**AI Response**: Recorded all five answers. Q1, Q2, Q3, Q4 are mutually consistent and executable as given; work has not started pending the Q5 resolution below. Validated the environment again and found that Q5's stated rationale rests on a factual error about the gate map, so per the contradiction-handling rule I stopped and raised a single focused clarification rather than executing an instruction whose stated goal it cannot achieve.
+**Context**: CONSTRUCTION / corrective-unit scoping. Q1-Q4 accepted; Q5 pending clarification.
+
+### Recorded answers
+| Q | Answer | Decision |
+|---|---|---|
+| Q1 | **B** | Re-open the existing REM-3 unit under the same ID; append a corrective plan and superseding annotation to the existing REM-3 documentation |
+| Q2 | **A** | Delete the seven defective adapters and the REM-3 frontend components and regenerate from the approved design, which stays the specification |
+| Q3 | **A** | Bring up the container stack on Colima within this unit, and retarget the infrastructure design and `ops/server/install.sh` from OrbStack to Colima |
+| Q4 | **A** | Sequence strictly: code rewrite plus all static gates first, then one consolidated operator runbook for keychains, launchd, secret rotation, and the live smoke test |
+| Q5 | **C** | Fold the whole of G1 into the corrective unit so REM-4 becomes unblockable on completion — **rationale incorrect, see contradiction 1** |
+
+### Contradiction 1 (blocking Q5): G1 is not a REM-4 completion gate
+The approved gate map in `aidlc-docs/inception/plans/unit-of-work-plan.md` assigns gates per unit as follows (verified line by line):
+
+| Unit | Line | Completion gates |
+|---|---|---|
+| REM-1 Platform Integrity | 267 | **G1** |
+| REM-2 Private Content | 268 | G2, G4 |
+| REM-3 Lifecycle and Edge Trust | 269 | G3, G4/G5 |
+| REM-4 Corpus Integrity | 270 | **G2/G4/G5** |
+
+**G1 belongs to REM-1, not REM-4.** REM-4's completion gates are G2/G4/G5, none of which is G1. Therefore folding G1 into the corrective unit cannot make REM-4 unblockable, which is the outcome Q5=C was chosen to obtain. This also conflicts with the user's own Q2 answer in the prior round, which correctly listed "G1/G2/G4/G5" as the REM-4 preconditions.
+
+Note also that **G1 is already blocked** (`ops/platform-integrity/cve-disposition.md:71`) on items that are operator-owned: the CVE-2026-85091 exception sign-off or an alpine base refresh, promotion of the derived postgres image from CANDIDATE to APPROVED, acceptance of the clock observer CVE-2026-82049 finding, rescans of redis/opensearch/minio/elasticmq, a pip-audit SIGABRT disposition, and Docker bridge mTLS validation. Absorbing G1 therefore also means absorbing an operator sign-off that cannot be discharged autonomously, and G1 was the gate for REM-1, which is already marked complete.
+
+### Environment facts re-verified for this round
+- Container runtime is **Colima** (running, macOS Virtualization.framework, virtiofs, Docker 29.5.2); `orbstack` absent. Consistent with the Q3=A decision to retarget OrbStack references.
+- `docker ps` still empty. `docker ps -a` shows two stopped containers (`rem1-test-pg-20260924`, `rem1-test-pg-20260924-alpine-std`) and four REM-1 volumes (`rem1-pgdata-20260926`, `rem1-alpine-pgdata-20260926`, `rem1-nosu-test-20260926`, `rem1-nosu-repro-test-20260926`). No compose file for the service stack exists; the only compose file in the repo is `backend/docker-compose.yml`.
+- Locally available images are postgres-only (`docsuri/postgres-alpine-16.15-nosu` in `:local`/`:repro`/`:rep2`/`:rep3`, plus `postgres:16`). The redis, opensearch, minio, and elasticmq digests pinned in `ops/platform-integrity/sbom-targets.json` are **not** pulled locally, so the G1 rescans and the Q3=A bring-up both require network pulls first.
+- `ops/server/install.sh:8` is the only OrbStack reference in code (a comment); the REM-3 infrastructure design contains 6.
+
+### Status
+REM-4 planning remains not started. No corrective-unit source, design, or infrastructure file has been modified. Escalated via `aidlc-docs/construction/rem-3-corrective-g1-clarification-questions.md`.
+---
+
+## [REM-3 Corrective G1 Clarification — Answers Recorded, Second Contradiction Found]
+**Timestamp**: 2026-10-01T01:20:00Z
+**User Input**: "I've answered to the questions."
+**AI Response**: Recorded both answers (Q1=D, Q2=A). Q2 is unambiguous and executable. Q1=D deliberately widens scope beyond REM-3 into a full remediation-closure unit, which the user acknowledged in the option text ("since REM-4 actually needs those"). That reasoning is correct as far as it goes, but absorbing G4 and G5 is **blocked by a circular dependency on REM-4's own deliverables**, so it cannot be executed in this unit regardless of intent. Stopped to confirm and escalate rather than silently either stalling or under-delivering.
+**Context**: CONSTRUCTION / scope validation. Q2 accepted and executable. Q1 partially blocked; requires an explicit sequencing decision.
+
+### Recorded answers
+| Q | Answer | Decision |
+|---|---|---|
+| Q1 | **D** | Absorb G1 **and** pull G2/G4/G5 closure into this unit, making it a full remediation-closure unit rather than a REM-3 corrective |
+| Q2 | **A** | Pull the four pinned digests from `sbom-targets.json` as part of this unit |
+
+### Q2 accepted and executable
+The four pinned digests are `redis@sha256:c6eabf74...`, `opensearchproject/opensearch@sha256:4ee82ecb...`, `quay.io/minio/minio@sha256:14cea493...`, `softwaremill/elasticmq-native@sha256:e4580abd...`. They are already pinned and recorded as approved-for-scan in `ops/platform-integrity/sbom-targets.json`, and are required both by the Q3=A Colima bring-up and by any G1 rescan. Note the open question of whether these four images should be brought up as long-running services versus pulled for scan only; that is settled by Q3=A, which already mandates bringing the stack up on Colima in this unit.
+
+### Contradiction 2 (blocking the G4/G5 half of Q1=D): G4 and G5 require REM-4's own deliverables
+Gate definitions from `aidlc-docs/inception/plans/verification-remediation-2026-09-18-workflow-plan.md`:
+
+| Gate | Findings it closes |
+|---|---|
+| G2 service/store/worker | F01/F02/F05/F07, RJ-AC01~08/12 |
+| G3 lifecycle/edge | F04/F09/F10, RJ-AC05/09/10/11 |
+| G4 통합/browser/compatibility | **F03/F07/F11/F12**, RJ-AC01~12, US-RJ1~3 |
+| G5 복구/live preflight | safe repair approval scope, RES-2/4/10/12, **F03**/F04 |
+
+REM-4's scope is exactly **F03/F11/F12** (`unit-of-work-plan.md:270`).
+
+G4 explicitly requires "corpus report와 no-match/저하" (corpus report plus no-match/degradation behaviour) and its findings column includes F03, F11, and F12 — the complete REM-4 finding set. G5 requires F03 as well, which is the corpus-audit finding that R4A `CorpusEvidenceService` is supposed to produce.
+
+**Therefore G4 and G5 cannot be closed until REM-4's corpus evidence service, degraded-empty/no-match behaviour, and generation-bound calibration actually exist and produce verified evidence.** Absorbing G4/G5 into this unit requires building REM-4's deliverables, which is the work Q2=C in the first round explicitly deferred ("Defer REM-4 entirely until REM-3 is genuinely verified... plan nothing new yet").
+
+This is a direct conflict between the user's first-round Q2=C and this round's Q1=D. Q1=D's rationale ("REM-4 actually needs those") is factually correct — REM-4 does need G2/G4/G5 — but the implication is that REM-4 work must start now, which Q2=C forbade.
+
+### What Q1=D can and cannot deliver
+- **G1**: absorbable as scoped in the prior round's option A — rescans, pip-audit disposition, Docker bridge mTLS validation — with operator sign-offs (CVE-2026-85091, postgres CANDIDATE→APPROVED, CVE-2026-82049) remaining on the operator track.
+- **G2**: absorbable. Its findings F01/F02/F05/F07 are REM-2's scope, and REM-2's worker pipeline is what this unit already rewrites.
+- **G3**: this is REM-3's own gate and is squarely in scope.
+- **G4**: **not absorbable** without building REM-4's F03/F11/F12 deliverables.
+- **G5**: **not absorbable** without F03 evidence from REM-4's R4A `CorpusEvidenceService`.
+
+### Status
+No source, design, or infrastructure file has been modified. No image pulls have been performed. Escalated via `aidlc-docs/construction/rem-4-prerequisite-decision-questions.md` for an explicit decision on whether REM-4's minimal read-only evidence slice starts now (which would unblock G4/G5) or whether this unit is scoped to G1/G2/G3 and REM-4 follows afterwards.
+---
+
+## [REM-4 Prerequisite Decision — Answers Recorded, Scope Finally Consistent]
+**Timestamp**: 2026-10-01T01:35:00Z
+**User Input**: "I answered the questions."
+**AI Response**: Recorded both answers. **This resolves the contradiction chain.** Q1=B scopes the corrective unit to G1/G2/G3 plus the REM-3 corrective work, marks G4/G5 as blocked-on-REM-4, and defers REM-4 to its own planning cycle. That restores consistency with the first-round Q2=C, so no further clarification is required and execution may begin. Q2=A mandates explicit BLOCKED-ON-REM-4 markers in `aidlc-state.md` and `audit.md`.
+**Context**: CONSTRUCTION / scope locked. All decisions resolved; no open contradictions.
+
+### Recorded answers
+| Q | Answer | Decision |
+|---|---|---|
+| Q1 | **B** | Scope this unit to G1/G2/G3 plus the REM-3 corrective work; mark G4/G5 blocked-on-REM-4; start REM-4 properly afterwards with its own planning cycle |
+| Q2 | **A** | Add explicit `BLOCKED-ON-REM-4` markers to gate status in `aidlc-state.md` and `audit.md` so no downstream reader can infer G4/G5 passed |
+
+### Full accumulated decision set (all rounds)
+| Decision | Value | Source |
+|---|---|---|
+| REM-3 handling | Re-open REM-3 under the same ID; append corrective plan + superseding annotation | clarif Q1=B |
+| Defective files | Delete the 7 adapters and REM-3 frontend components; regenerate from the approved design, which remains the specification | clarif Q2=A |
+| Container runtime | Bring the stack up on Colima; retarget infrastructure design and `ops/server/install.sh` from OrbStack to Colima | clarif Q3=A |
+| Sequencing | Code rewrite + all static gates first, then one consolidated operator runbook (keychains, launchd, secret rotation, live smoke test) | clarif Q4=A |
+| G1 disposition | Absorb the executable portion — redis/opensearch/minio/elasticmq rescans, pip-audit SIGABRT disposition, Docker bridge mTLS validation; operator sign-offs (CVE-2026-85091, postgres CANDIDATE→APPROVED, CVE-2026-82049) remain operator-owned | g1-clarif, incorporated |
+| Image pulls | Pull the four pinned digests from `sbom-targets.json` | g1-clarif Q2=A |
+| Unit scope | G1/G2/G3 + REM-3 corrective only. **G4/G5 = BLOCKED-ON-REM-4** | prereq Q1=B |
+| REM-4 | Deferred to its own planning cycle after this unit | prereq Q1=B |
+| Gate recording | Explicit `BLOCKED-ON-REM-4` markers in `aidlc-state.md` and `audit.md` | prereq Q2=A |
+| Verification gates | `tsc --noEmit` blocking, import-level tests per module, migration-existence check per queried table, clean-environment install test, tsc baseline-diff, **plus live single-Mac smoke test** | decision Q3=C |
+| Worker/secret remediation | Real worker entry points, keychain ACLs without `-A`, secret rotation, root re-verification — in scope, delivered via the operator runbook | decision Q4=A |
+
+### Gate disposition for this unit
+| Gate | In scope | Notes |
+|---|---|---|
+| G1 | Partial | Executable items absorbed; three operator sign-offs remain operator-owned |
+| G2 | Yes | F01/F02/F05/F07 = REM-2 worker pipeline, rewritten in this unit |
+| G3 | Yes | REM-3's own gate (F04/F09/F10) |
+| G4 | **BLOCKED-ON-REM-4** | Requires F03/F11/F12 corpus report and no-match/degradation from REM-4 |
+| G5 | **BLOCKED-ON-REM-4** | Requires F03 evidence from REM-4's R4A `CorpusEvidenceService` |
+
+### Contradiction chain closed
+Round 1 Q2=C deferred REM-4 entirely. Round 2 Q1=D tried to absorb G1/G2/G4/G5, which conflicted with that because G4/G5 close on REM-4's own F03/F11/F12 deliverables. Round 3 Q1=B resolves it by limiting this unit to G1/G2/G3 and explicitly deferring REM-4. **No open contradictions remain.**
+
+### Status
+Scope locked. No source, design, or infrastructure file has been modified yet; no image pulls performed. Next: write the REM-3 corrective plan (retained as the specification per clarif Q2=A), add BLOCKED-ON-REM-4 gate markers, then begin execution.
+---
