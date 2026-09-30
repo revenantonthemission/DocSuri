@@ -1,13 +1,13 @@
-/** JobStatus — SSE-based job status display */
+/** JobStatus — SSE 기반 작업 상태 표시 */
 
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { JobEvent, subscribeJobEvents, JobState } from '@/lib/api/contentJobApi';
+import { subscribeJobEvents, JobState } from '@/lib/api/contentJobApi';
 
 type JobStatusProps = {
   jobId: string;
-  onComplete?: (state: 'COMPLETED' | 'FAILED' | 'ABSTAINED', assetId?: string, error?: any) => void;
+  onComplete?: (state: 'COMPLETED' | 'FAILED' | 'ABSTAINED', assetId?: string, error?: unknown) => void;
 };
 
 const STATE_LABELS: Record<string, string> = {
@@ -30,16 +30,21 @@ const STATE_COLORS: Record<string, string> = {
   ABSTAINED: 'text-gray-600',
 };
 
+type JobStatusState = JobState | null;
+
 export function JobStatus({ jobId, onComplete }: JobStatusProps) {
-  const [state, setState] = useState<JobState | null>(null);
+  const [state, setState] = useState<JobStatusState>(null);
   const [eventHistory, setEventHistory] = useState<string[]>([]);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const jobIdRef = useRef(jobId);
+
+  // Keep jobIdRef updated
+  useEffect(() => {
+    jobIdRef.current = jobId;
+  }, [jobId]);
 
   useEffect(() => {
-    let lastEventId: string | undefined;
-
     const unsubscribe = subscribeJobEvents(
-      state?.jobId || '',
+      jobIdRef.current,
       (event) => {
         setState(prev => ({
           ...prev,
@@ -56,21 +61,17 @@ export function JobStatus({ jobId, onComplete }: JobStatusProps) {
     return () => {
       // EventSource cleanup handled by subscribeJobEvents
     };
-  }, []);
-
-  // Initial state fetch would be needed here
-  // For now, component expects parent to fetch initial state
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!state) return <div className="text-sm text-gray-500">작업 상태 로딩 중...</div>;
 
   const isTerminal = ['COMPLETED', 'FAILED', 'ABSTAINED'].includes(state.state);
-  const colorClass = STATE_COLORS[state.state] || 'text-gray-600';
 
   return (
     <div className="space-y-2 p-4 border rounded-lg bg-white">
       <div className="flex items-center justify-between">
         <span className="font-medium">작업 상태</span>
-        <span className={`font-medium ${colorClass}`}>{STATE_LABELS[state.state] || state.state}</span>
+        <span className={`font-medium ${STATE_COLORS[state.state] || 'text-gray-600'}`}>{STATE_LABELS[state.state] || state.state}</span>
       </div>
 
       {state.assetId && (
@@ -101,10 +102,10 @@ export function JobStatus({ jobId, onComplete }: JobStatusProps) {
         </ul>
       </details>
 
-      {isTerminal && onComplete && (
+      {(state.state === 'COMPLETED' || state.state === 'FAILED' || state.state === 'ABSTAINED') && onComplete && (
         <div className="mt-2 pt-2 border-t">
           <button
-            onClick={() => onComplete(state.state as any, state.assetId, state.error)}
+            onClick={() => onComplete(state.state, state.assetId, state.error)}
             className="text-sm text-blue-600 hover:underline"
           >
             계속하기

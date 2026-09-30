@@ -46,10 +46,12 @@ export function AssetViewer({ assetId, token, className = '', onError, onLoad }:
     return (
       <div className={`relative aspect-video bg-gray-100 rounded-lg ${className}`}>
         <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-          <svg className="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
+          <div className="animate-spin h-8 w-8 text-blue-600">
+            <svg className="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          </div>
         </div>
       </div>
     );
@@ -82,11 +84,8 @@ export function AssetViewer({ assetId, token, className = '', onError, onLoad }:
         src={src!}
         alt="Asset"
         className="w-full h-full object-contain"
-        onLoad={() => {/* onLoad?.() */}}
-        onError={(e) => {
-          e.currentTarget.onerror = null; // prevent loop
-          e.currentTarget.src = '/placeholder-asset.png'; // fallback
-        }}
+        onError={(e) => { onError?.(new Error('Failed to load image')); }}
+        onLoad={() => { onLoad?.(); }}
       />
     </div>
   );

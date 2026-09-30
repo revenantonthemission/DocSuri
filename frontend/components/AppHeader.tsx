@@ -22,7 +22,7 @@ const NAV_LINKS = [
 // history back is fragile after an interleaved login redirect (session expiry) or a deep link.
 interface AppHeaderProps {
   title?: string;
-  /** Show a back arrow to this fixed destination instead of the brand. */
+  /** Show a back arrow to this fixed destination instead of the brand, for sub-routes. */
   backHref?: string;
 }
 
@@ -49,7 +49,6 @@ export function AppHeader({ title, backHref }: AppHeaderProps) {
         ) : (
           <Link href={brandHref} className={styles.brand} data-testid="app-header-brand">
             {/* Decorative mark: the brand text beside it carries the accessible name. */}
-            {/* eslint-disable-next-line @next/next/no-img-element -- small static brand asset (8KB); next/image not configured */}
             <img src="/logo.png" alt="" className={styles.brandLogo} width={32} height={32} />
             {title}
           </Link>

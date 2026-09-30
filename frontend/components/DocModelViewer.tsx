@@ -493,7 +493,6 @@ function BlockView({
       } else if (asset?.url) {
         const alt = block.anchorLabel ?? '수식';
         inner = (
-          // eslint-disable-next-line @next/next/no-img-element -- signed S3 url, not a static asset
           <img src={asset.url} alt={alt} loading="lazy" />
         );
       }
@@ -544,11 +543,9 @@ function BlockView({
           {asset?.url ? (
             <Zoomable
               onZoom={() =>
-                // eslint-disable-next-line @next/next/no-img-element -- signed S3 url
                 onZoom(<img src={asset.url} alt={alt} className={styles.zoomImg} />)
               }
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- signed S3 url, not a static asset */}
               <img src={asset.url} alt={alt} loading="lazy" />
             </Zoomable>
           ) : null}
@@ -603,7 +600,6 @@ function TableBlockView({
   const showImage = (override ?? !hasRows) && Boolean(asset?.url);
   const image =
     asset?.url != null ? (
-      // eslint-disable-next-line @next/next/no-img-element -- signed S3 url, not a static asset
       <img src={asset.url} alt={block.anchorLabel ?? '표 원본 이미지'} loading="lazy" />
     ) : null;
   const table = (

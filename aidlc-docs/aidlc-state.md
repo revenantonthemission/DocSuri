@@ -1835,3 +1835,79 @@ platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed*
 - **git diff --check**: clean
 
 **REM-2 Status**: ✅ **COMPLETE** — Ready for REM-3 (Lifecycle and Edge Trust)
+
+### REM-3 Planning Complete — Ready for Execution (2026-09-30)
+
+**Functional Design Plan**: `construction/plans/rem-3-lifecycle-edge-trust-functional-design-plan.md` (FD-Q1~8)
+- F04 owner purge, F09 unsubscribe token, F10 rate-limit identity
+- R3C purge lifecycle, R3P consent management, R3E edge trust
+- 이관 경로(F01/F02/F07/F10), account lifecycle
+
+**NFR Requirements Plan**: `construction/plans/rem-3-lifecycle-edge-trust-nfr-requirements-plan.md` (NFR-Q1~13)
+- Purge latency, unsubscribe latency, rate-limit latency, purge throughput
+- Token search, revocation propagation, rate-limit isolation
+- Authz recheck, dependency audit, client rate-limit, cache integrity
+- Timeout alignment, queue 복구, PBT, 운영 메트릭
+
+**NFR Design Plan**: `construction/plans/rem-3-lifecycle-edge-trust-nfr-design-plan.md` (ND-Q1~10)
+- Purge registry 스키마+advisory lock, unsubscribe JWT+Redis cache
+- Rate-limit identity 체인, purge worker 배치+advisory lock
+- Revocation pub/sub, authz recheck 체인, dependency audit 격리
+- Property test composite, observability 메트릭, consent revocation pub/sub
+
+**Infrastructure Design**: `construction/plans/rem-3-lifecycle-edge-trust-infrastructure-design-plan.md` (ID-Q1~8)
+- Purge registry migration, unsubscribe endpoint+JWT
+- Rate-limit identity 체인, purge worker launchd+advisory lock
+- Unsubscribe Cloudflare 경로, revocation pub/sub
+- Cloudflare WAF, backup purge path, unsubscribe JWT keychain
+
+**Code Generation Plan**: `construction/plans/rem-3-lifecycle-edge-trust-code-generation-plan.md` (CG-Q1~5)
+- 13 checklist items: purge registry/migration, purge worker, unsubscribe, identity 체인, revocation pub/sub, consent, account lifecycle, edge trust, property/integration tests, frontend UI, provisioning
+- 5 decision questions (CG-Q1~5)
+
+**Build and Test Plan**: `construction/build-and-test/rem-3-lifecycle-edge-trust-build-and-test.md`
+- 빌드 순서, 테스트 실행 순서, 통합 시나리오, 검증 게이트, 롤백 계획
+
+**현재 상태**: **Planning Complete — Ready for User Approval (FD-Q1~8, NFR-Q1~13, ND-Q1~10, ID-Q1~8, CG-Q1~5)**
+
+**다음**: 사용자 답변 수집 → Generation Part 2 순차 실행 → Build and Test
+
+### REM-3 Planning Approved — All A Answers (2026-09-30)
+- 사용자 `Use all A answers` (44개 전수 A). 
+- **Functional Design 승인**: FD-Q1~8 A → Part 2 Generation 게이트 오픈.
+- **NFR Requirements 승인**: NFR-Q1~13 A → Part 2 Generation 게이트 오픈.
+- **NFR Design 승인**: ND-Q1~10 A → Part 2 Generation 게이트 오픈.
+- **Infrastructure Design 승인**: ID-Q1~8 A → Part 2 Generation 게이트 오픈.
+- **Code Generation 승인**: CG-Q1~5 A → Part 2 Generation 게이트 오픈.
+
+**현재 상태**: **Construction / REM-3 Functional Design Generation Part 2 착수**. `construction/rem-3-lifecycle-edge-trust/functional-design/` 산출물 생성 개시.
+
+### REM-3 Functional Design Generation Part 2 Complete (2026-09-30)
+- 생성 산출물: `construction/rem-3-lifecycle-edge-trust/functional-design/` 하위 4개 문서
+  - `domain-entities.md`: 8 엔티티 (PurgeRegistry, UnsubscribeToken, RateLimitBucket, ConsentRecord, RevocationEvent, ClientIdentity, AccountLifecycleState, EdgeTrustPolicy)
+  - `business-logic-model.md`: 9 플로우 + 15 시나리오 + 추적성 매트릭스
+  - `business-rules.md`: 12 카테고리 80+ 규칙 (BR-PURGE~BR-XCUT) + FD→BR 추적성
+  - `scenarios.md`: 15개 Given/When/Then 시나리오 + FD/BR/NFR 추적성 매트릭스
+- FD-Q1~8 전수 A 승인 반영 완료, BR 규칙 80+개로 전수 추적
+- **다음**: NFR Requirements Generation Part 2 착수 → `construction/rem-3-lifecycle-edge-trust/nfr-requirements/`
+
+### REM-3 NFR Requirements Generation Part 2 Complete (2026-09-30)
+- 생성 산출물: `construction/rem-3-lifecycle-edge-trust/nfr-requirements/` 하위 2개 문서
+  - `nfr-requirements.md`: NFR-Q1~13 전수 A 반영 — NFR-P1~P4, NFR-R4, NFR-R1/R2, Security Full(SECURITY-08/10/11/13), Resiliency Custom(RESILIENCY-10/14), PBT Full(PBT-03/04/07/08), NFR-O1 (8지표+경보). 각 요구사항에 측정 방식/목표/구현 조건 명시.
+  - `tech-stack-decisions.md`: Python 3.13/FastAPI/Pydantic v2/SQLAlchemy 2/psycopg/httpx/orjson/python-jose/Hypothesis/Ruff/pyright + TypeScript/Next.js 14/React 18/Zustand/ky/Vitest/Playwright/fast-check/ESLint/Prettier. Infra: launchd/OrbStack/Postgres/Redis/OpenSearch/MinIO/ElasticMQ/Keychain. REM-3 전용: unsubscribe JWT keychain, rate-limit Redis, revocation pub/sub Redis, purge registry Postgres, purge worker launchd. Security: Ed25519/HS256/AES-GCM/Argon2id, Keychain secret mapping 2종 추가.
+- NFR-Q1~13 전수 A 승인 반영 완료.
+- **다음**: NFR Design Generation Part 2 착수 → `construction/rem-3-lifecycle-edge-trust/nfr-design/`
+
+### REM-3 NFR Design Generation Part 2 Complete (2026-09-30)
+- 생성 산출물: `construction/rem-3-lifecycle-edge-trust/nfr-design/` 하위 2개 문서
+  - `nfr-design-patterns.md`: 10 패턴 (PAT-R3-01~10) — Purge Registry+Advisory Lock, Unsubscribe HS256 JWT+Redis Cache, Rate-limit Identity Chain, Purge Worker 배치+Advisory Lock, Revocation Pub/Sub, Authz Recheck Middleware Chain, Dependency Audit 격리, Property Test Composite Strategy, Observability Metrics+Alerting, Consent Revocation Pub/Sub.
+  - `logical-components.md`: 9 논리 컴포넌트 (LC-R3-01~09) — PurgeRegistry, UnsubscribeTokenService, RateLimitIdentityService, PurgeWorker, UnsubscribeTokenService+Endpoint, RateLimitIdentityService+Middleware, RevocationService+Pub/Sub, AuthzRecheckMiddleware, ObservabilityMetrics. 컴포넌트 의존성 그래프, 인터페이스 계약, 데이터 플로우 요약 포함.
+- ND-Q1~10 전수 A 승인 반영 완료, PAT/LC 1:1 매핑, 컴포넌트 의존성 그래프/인터페이스 계약/데이터 플로우 완비.
+- **다음**: Infrastructure Design Generation Part 2 착수 → `construction/rem-3-lifecycle-edge-trust/infrastructure-design/`
+
+### REM-3 Infrastructure Design Generation Part 2 Complete (2026-09-30)
+- 생성 산출물: `construction/rem-3-lifecycle-edge-trust/infrastructure-design/` 하위 2개 문서
+  - `infrastructure-design.md`: ID-Q1~8 전수 A 반영 — Purge Registry migration, Unsubscribe JWT+Redis, Rate-limit Identity Chain, Purge Worker launchd+advisory lock, Unsubscribe Cloudflare Tunnel, Revocation Redis Pub/Sub, Cloudflare WAF, Backup purge path, Unsubscribe JWT Keychain. 배포 순서, 롤백 계획, 검증 체크리스트, 모니터링 경보 포함.
+  - `deployment-architecture.md` — 상세 배포 아키텍처: Single-Mac/OrbStack 토폴로지, BFF/FastAPI, Launchd worker 5종(4 content + 1 purge), OrbStack containers(Postgres/Redis/OpenSearch/MinIO/ElasticMQ), Keychain, Backup Volume. 배포 순서(Phase 1~3), 롤백 계획, 검증 체크리스트, 모니터링 경보.
+- ID-Q1~8 전수 A 승인 반영 완료, REM-1/2 인프라 계승, Single-Mac production 기준 준수.
+- **다음**: Code Generation Part 2 착수 → `construction/rem-3-lifecycle-edge-trust/code/`

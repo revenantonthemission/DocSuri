@@ -1,4 +1,4 @@
-"""Asset service — issuance, presigned URLs, same-origin delivery."""
+"""Asset Service — 발급, presigned URL, same-origin delivery."""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ class AssetMetadata:
 
 
 class AssetService:
-    """Asset issuance, presigned URL generation, and authorization."""
+    """Asset 발급, presigned URL 생성, 인증."""
 
     JWT_SECRET: str = "CHANGE_ME_IN_PRODUCTION"
     JWT_ALGORITHM = "HS256"
@@ -101,7 +101,7 @@ class AssetService:
             "assetId": asset_id,
             "action": action,
             "nonce": uuid.uuid4().hex,
-            "exp": int(time.time()) + 60,
+            "exp": int(time.time()) + self.TOKEN_TTL_SECONDS,
             "sub": caller,
         }
         secret = self._get_jwt_secret()
