@@ -1950,7 +1950,7 @@ platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed*
 | 2 | `workers/purge_worker.py` 부재 (`provision_purge_worker.py`가 대상 지정) | OPEN |
 | 3 | `jwt`/`redis`가 `platform_integrity/pyproject.toml`에 미선언 — 7개 adapter 중 4개 import 불가 | OPEN |
 | 4 | `revocation.py` `self._cache` 대입 vs `self.cache` 참조 (L61 vs L71-72) | OPEN |
-| 5 | `backup_evidence.py:212` digest를 restore 경로로 전달 | OPEN |
+| 5 | `backup_evidence.py:212` digest를 restore 경로로 전달 | ✅ **종결** (`43617610`) — 아래 2026-10-01 후속 절 참조 |
 | 6 | 신규 TypeScript 오류 9건 (`ConsentManager` 미import 등) | ✅ **4328af34** |
 | 7 | ESLint flat config가 type-unaware, `tsc` 미게이트 | ✅ **4328af34** |
 | 8 | REM-3 모듈을 import하는 테스트 0건 | OPEN |
@@ -1992,7 +1992,7 @@ platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed*
 | 2 | purge worker 부재 | ✅ **종결** — 기존 `backend/modules/accounts/purge_worker.py` 확장 |
 | 3 | jwt/redis 미선언 | ✅ **종결** — `platform_integrity[rem3]` extra |
 | 4 | `revocation.py` `self._cache` | ✅ **종결** — 어댑터 삭제(범위 밖) |
-| 5 | `backup_evidence.py:212` digest 경로 | ⏳ **OPEN** — ops/operator(G1) |
+| 5 | `backup_evidence.py:212` digest 경로 | ✅ **종결** — restore에 archive path 전달(`43617610`) |
 | 6 | 신규 TS 오류 9건 | ✅ `4328af34` |
 | 7 | ESLint/tsc 게이트 | ✅ `4328af34` |
 | 8 | REM-3 import 테스트 0건 | ✅ **종결** — backend home import + 단위/통합 테스트 추가 |
@@ -2001,7 +2001,8 @@ platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed*
 | 게이트 | 결과 |
 |---|---|
 | backend ruff | ✅ clean |
-| backend pytest | ✅ 664 passed / 7 skipped |
+| backend pytest | ✅ 664 passed / 9 skipped |
+| backend pytest(실 Postgres 게이트) | ✅ F04 late-write guard + purge lock 2 passed (Colima 15432) |
 | ops ruff | ✅ clean |
 | ops pytest | ✅ 341 passed / 5 skipped |
 | platform_integrity pytest(전체 extra) | ✅ 493 passed / 185 skipped |
@@ -2011,5 +2012,5 @@ platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed*
 
 ### 잔여 (G1, operator 소유 — 정체 아님)
 CVE-2026-85091 예외/알파인 refresh, derived postgres CANDIDATE→APPROVED, CVE-2026-82049 수용,
-MinIO UNOBTAINABLE, `backup_evidence.py:212`, launchctl 루트/Keychain ACL/bridge mTLS.
+MinIO UNOBTAINABLE, launchctl 루트/Keychain ACL/bridge mTLS (defect 5는 종결됨).
 **G4/G5는 여전히 ⛔ BLOCKED-ON-REM-4.**

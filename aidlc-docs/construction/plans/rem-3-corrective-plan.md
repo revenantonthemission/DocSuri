@@ -1,6 +1,8 @@
 # REM-3 Corrective Plan — Lifecycle and Edge Trust
 
-**Status**: Phase 1-2 complete; **Phase 3 code complete; Phase 4 static gates green** (2026-10-01); Phase 5 operator runbook residual (G1, operator-owned)
+**Status**: Phase 1-2 complete; **Phase 3 code complete; Phase 4 static gates green; all 8 audit
+defects closed**; F04 DB legs live-smoked against Colima Postgres (2026-10-01); Phase 5 operator
+runbook residual (G1, operator-owned)
 **Date**: 2026-10-01
 **Amended**: Phase 3 scope changed by `rem-3-duplicate-implementation-decision-questions.md` (Q1=A, Q2=A). See §3a.
 **Unit**: REM-3 Lifecycle and Edge Trust (`rem-3-lifecycle-edge-trust`) — re-opened under the same ID
@@ -16,16 +18,17 @@ false. Full evidence is in `aidlc-docs/audit.md` under "REM-3 Verification Audit
 
 | # | Defect | Status after frontend remediation |
 |---|---|---|
-| 1 | `purge_registry` table never created (migrations stop at `011`; no `.sql` declares it) | OPEN |
-| 2 | `workers/purge_worker.py` missing though `provision_purge_worker.py` targets it | OPEN |
-| 3 | `jwt`/`redis` undeclared in `platform_integrity/pyproject.toml`; 4 of 7 adapters unimportable | OPEN |
-| 4 | `revocation.py` assigns `self._cache` but reads `self.cache` (L61 vs L71-72) | OPEN |
-| 5 | `backup_evidence.py:212` passes `Path(archive_digest)` where a restore path is required | OPEN |
+| 1 | `purge_registry` table never created (migrations stop at `011`; no `.sql` declares it) | **RESOLVED** — scope §3a: no `purge_registry`; `account_deletions` (003/011/013/014) is the registry |
+| 2 | `workers/purge_worker.py` missing though `provision_purge_worker.py` targets it | **FIXED** — F04 `backend/modules/accounts/purge_worker.py` |
+| 3 | `jwt`/`redis` undeclared in `platform_integrity/pyproject.toml`; 4 of 7 adapters unimportable | **RESOLVED** — orphaned adapters deleted (Q1=A); `rem3` extra declared |
+| 4 | `revocation.py` assigns `self._cache` but reads `self.cache` (L61 vs L71-72) | **RESOLVED** — scope §3a: adapter deleted (out of REM-3) |
+| 5 | `backup_evidence.py:212` passes `Path(archive_digest)` where a restore path is required | **FIXED** in `43617610` |
 | 6 | 9 new TypeScript errors; `AccountSettings.tsx` rendered `ConsentManager` without importing it | **FIXED** in `4328af34` |
 | 7 | ESLint flat config was not type-aware and `tsc` was never a gate | **FIXED** in `4328af34` |
-| 8 | No test imports any REM-3 module | OPEN |
+| 8 | No test imports any REM-3 module | **RESOLVED** — adapters deleted; F04/F09/F10 covered by backend + real-Postgres tests |
 
-The frontend half of the gate now passes. The backend half fails.
+All eight audit defects are now closed or resolved by scope correction/deletion. The backend gate
+passes. Remaining G1 items are operator-owned.
 
 ## 2. Superseding annotation
 
@@ -217,8 +220,8 @@ backend is Redis-session based._
 _Updated 2026-10-01. Steps 8-13 were superseded by §3a (adapters deleted, not rewritten); their
 intent is satisfied by the F04/F09/F10 backend-home implementations._
 
-- [~] All 8 audit defects closed, with evidence — 6/8 closed (1,2,3,4,6,7,8); defect 5
-  (`backup_evidence.py:212`) is operator-owned (G1)
+- [x] All 8 audit defects closed, with evidence — 8/8 (1,3,4,8 resolved via scope/deletion; 2 F04
+  `purge_worker.py`; 5 `43617610`; 6,7 `4328af34`)
 - [x] `tsc --noEmit` 0 errors (verified: 0)
 - [x] Import-level test for every new module (backend homes import clean; F04/F09/F10 unit tests added)
 - [x] Migration-existence check passing for every queried table (`purge_registry` unqueried;
@@ -227,7 +230,10 @@ intent is satisfied by the F04/F09/F10 backend-home implementations._
 - [x] `ruff check` clean on both Python packages (backend + ops)
 - [x] ESLint 0 errors, 0 warnings
 - [x] `pytest` green: platform_integrity 493/185, ops 341/5, backend 664/7, frontend suite green
-- [ ] Live smoke test passed against real Postgres/Redis/OpenSearch on Colima (operator)
+- [~] Live smoke test passed against real Postgres/Redis/OpenSearch on Colima — F04 DB legs
+  verified against live Colima Postgres (`tests/accounts/test_purge_real_postgres.py`, 2 passed:
+  late-write guard + cross-connection advisory lock). F09/F10 Redis/OpenSearch acceptance remains
+  operator
 - [ ] Operator runbook executed: keychain ACLs, secret rotation, root re-verification
 - [ ] G1/G2/G3 marked by evidence; G4/G5 marked `BLOCKED-ON-REM-4` — G3 code+static evidence
   recorded; G1 residual operator-owned; G4/G5 remain BLOCKED-ON-REM-4

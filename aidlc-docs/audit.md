@@ -7579,3 +7579,32 @@ errors/0 warnings; migration-model parity includes 013/014.
 ### Status
 Phase 3 code complete; Phase 4 static gates green. Remaining G1 items are operator-owned.
 G4/G5 remain ⛔ BLOCKED-ON-REM-4 and were not marked passed.
+
+---
+
+## REM-3 Defect 5 + F04 Live Postgres Smoke (2026-10-01)
+
+**Timestamp**: 2026-10-01T00:00:00Z
+**Stage**: CONSTRUCTION / REM-3 corrective — Phase 3 residual + Phase 4 live smoke
+**User Input**: "continue to the next step."
+
+**AI Response**: Closed the one remaining code defect and ran the F04 live smoke.
+
+### Defect 5 (`backup_evidence.py:212`) — fixed (`43617610`)
+`collect_backup_evidence` passed `Path(archive_digest)` to `RestoreTarget.restore`, so the isolated
+restore always targeted a non-existent path while the report (carrying the digest, not the path)
+looked plausible. `ArchiveStore.write_archive` returns the written location as its detail on
+success (`LocalDriveArchive` → `str(destination)`); the caller now captures it as `archive_path` and
+passes that. Regression test added (FakeRestore records its argument); fix landed in
+`ops/src/docsuri_ops/backup_evidence.py`.
+
+### F04 live smoke against Colima Postgres — 2 passed (`71b0a626`)
+`tests/accounts/test_purge_real_postgres.py` (gated on `DOCSURI_TEST_PG_DSN`, skips without it)
+applies the real migrations 013/014 and asserts the late-write guard (rejects DEACTIVATED/unknown
+owner, allows ACTIVE) and that `accounts_try_purge_lock()` is a genuine cross-connection
+xact-scoped advisory lock. Run against the live Colima Postgres at `127.0.0.1:15432`: 2 passed.
+Full backend suite without the DSN: 664 passed / 9 skipped (2 gated skips).
+
+### Status
+All 8 audit defects closed except operator-owned G1 residue (CVE sign-offs, Postgres approval,
+MinIO UNOBTAINABLE, launchctl/Keychain/bridge mTLS). G4/G5 remain ⛔ BLOCKED-ON-REM-4.
