@@ -20,7 +20,7 @@ from sqlalchemy.orm import sessionmaker
 
 from .repository.credential import CredentialRepository
 from .services.account_deletion import AccountDeletionService, build_account_deleted_publisher
-from .services.owner_data_purge import SqlOwnerDataPurger
+from .services.owner_data_purge import SqlOwnerDataPurger, build_object_purger
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ async def run_purge(session) -> int:
         repo,
         session_manager=None,
         publisher=build_account_deleted_publisher(),
-        owner_data_purger=SqlOwnerDataPurger(session),
+        owner_data_purger=SqlOwnerDataPurger(session, object_purger=build_object_purger()),
     )
     purged = await svc.purge_job()
     session.commit()

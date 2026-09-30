@@ -98,7 +98,23 @@ line 54 assigns F04/F09 to `accounts`+`trends`, line 55 assigns F10 to the gatew
 | F04 / BR-PURGE | `backend/modules/accounts` | advisory locks; object purge order DB→S3→backup-GC→`PURGED`; late-write blocking; optimistic `version` |
 | F09 | `backend/modules/trends` + send path | `List-Unsubscribe`/`List-Unsubscribe-Post` headers; block send after token revocation |
 | F10 | `backend/middleware/gateway.py` | Cloudflare trusted identity headers; `Retry-After` on 429; spoof-resistant same-client bucket |
-| — | backend session/auth | revocation denylist; AuthZ recheck (genuinely new) |
+
+**Correction (2026-10-01): `revocation`/`authz` are NOT REM-3 scope.** The authoritative unit table
+(`verification-remediation-2026-09-18-workflow-plan.md:308`) defines REM-3 = **F04, F09, F10** only.
+`revocation.py` and `authz.py` were speculative adapters with no corresponding F-finding in REM-3:
+- Session revocation already exists structurally — the backend is Redis-session based
+  (`SessionManager.verify` on every request, `invalidate_all_for_user` on soft-delete), not JWT, so
+  there is no token denylist to build.
+- Object authorization is SECURITY-08, assigned to **F01/F04/F07** (F01/F07 live in REM-2).
+- F09's "block send after token revocation" is the unsubscribe-token semantics, and it is already
+  implemented: `_run_user` re-reads opt-in immediately before the send
+  (`backend/modules/trends/service.py:414-419`) and an unsubscribe rotates `settings_version`,
+  invalidating outstanding tokens (`service.py:356-371`).
+
+**Correction (2026-10-01): no `purge_registry` table is needed.** No code queries `purge_registry`
+(`grep` across repo is empty); the approved implementation uses `account_deletions` as the purge
+registry. The gate-4 requirement "every table any code queries has a migration" is satisfied by
+`account_deletions` (003) + `purge_attempts` (011) + `version` (014).
 
 Per Q2=A the `minio` SDK is dropped; asset presigning reuses boto3 with `AWS_ENDPOINT_URL_S3`.
 
