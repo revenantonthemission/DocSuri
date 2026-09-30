@@ -1,0 +1,34 @@
+# Timeout profiles for content job pipeline
+# Each layer timeout = lower layer timeout + margin (2-4 seconds)
+
+TRANSLATE:
+  sync_threshold_chars: 12000
+  model_p95_sec: 6
+  worker_sec: 8
+  api_sec: 10
+  bff_sec: 12
+  browser_sec: 15
+
+SUMMARIZE:
+  sync_threshold_chars: 8000
+  model_p95_sec: 6
+  worker_sec: 8
+  api_sec: 10
+  bff_sec: 12
+  browser_sec: 15
+
+NOVELTY:
+  sync_threshold_chars: 16000
+  model_p95_sec: 10
+  worker_sec: 14
+  api_sec: 18
+  bff_sec: 22
+  browser_sec: 30
+
+EVIDENCE:
+  sync_threshold_chars: 20000
+  model_p95_sec: 12
+  worker_sec: 16
+  api_sec: 20
+  bff_sec: 24
+  browser_sec: 30

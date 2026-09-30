@@ -1710,3 +1710,128 @@ rather than left implied by a green test run.
 
 ### 검증
 platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed** (+13), 양쪽 Ruff clean.
+
+## CONSTRUCTION — REM-2 Private Content (2026-09-30 착수)
+
+### REM-2 Functional Design 계획 (2026-09-30)
+- `construction/plans/rem-2-private-content-functional-design-plan.md`에 F01/F02/F05/F07 + RJ-AC01~12 범위, 현재 private userdoc/translation cache/generation timeout/asset serving 관찰, 8개 결정 질문(FD-Q1~8) 및 PBT-01 후보를 작성했다. U1/U3/U5/U6/U7/U11/U12/U13 컴포넌트·서비스·의존성을 대조했다.
+- **다음**: 사용자 FD-Q1~8 답변 수집 → Part 2 Generation 게이트 오픈.
+
+### REM-2 NFR Requirements 계획 (2026-09-30)
+- `construction/plans/rem-2-private-content-nfr-requirements-plan.md`에 NFR-P1~7, NFR-R1~4, NFR-C1, NFR-M1/M2, NFR-O1 + Security/Resiliency/PBT Full 확장, 13개 결정 질문(NFR-Q1~13)을 작성했다. REM-1 완료 상태(clock ±118ms, mTLS, launchd, receipt signer, keychain, backup/restore, load acceptance)를 런타임 기반으로 명시했다.
+- **다음**: 사용자 NFR-Q1~13 답변 수집 → Part 2 Generation 게이트 오픈.
+
+### REM-2 NFR Design 계획 (2026-09-30)
+- `construction/plans/rem-2-private-content-nfr-design-plan.md`에 FD/NFR Requirements 기반, 10개 결정 질문(ND-Q1~10)을 작성했다. cache key canonical identity, job 상태 기계+SSE, cache hit 동기 반환, asset presigned redirect, authz 재검증 체인, 멱등성 키, queue redelivery 멱등성, property test 전략, 운영 메트릭을 구체화했다.
+- **다음**: 사용자 ND-Q1~10 답변 수집 → Part 2 Generation 게이트 오픈.
+
+### REM-2 Infrastructure Design 계획 (2026-09-30)
+- `construction/plans/rem-2-private-content-infrastructure-design-plan.md`에 REM-1 인프라(launchd, OrbStack, backup, keychain) 기반, 8개 결정 질문(ID-Q1~8)을 작성했다. MinIO namespace 분리, asset presigned redirect, ElasticMQ queue/DLQ, worker concurrency/backpressure, backup private path 포함, launchd worker 4종 등록, CSP/asset endpoint, Keychain secret 관리를 구체화했다.
+- **다음**: 사용자 ID-Q1~8 답변 수집 → Part 2 Generation 게이트 오픈.
+
+### REM-2 Code Generation 계획 (2026-09-30)
+- `construction/plans/rem-2-private-content-code-generation-plan.md`에 13개 생성 체크리스트(private userdoc R/W, translation cache, content job pipeline, 4종 worker, asset serving, authz 재검증, rate-limit, timeout 정렬, private userdoc write, launchd 4종, keychain, backup, property/integration test, frontend SSE/asset)와 5개 결정 질문(CG-Q1~5)을 작성했다.
+- **다음**: 사용자 CG-Q1~5 답변 수집 → Generation Part 2 게이트 오픈.
+
+### REM-2 Build and Test 계획 (2026-09-30)
+- `construction/build-and-test/rem-2-private-content-build-and-test.md`에 빌드 순서, 테스트 실행 순서(platform_integrity/ops/frontend), 통합 검증 시나리오 10종, 검증 게이트, 롤백 계획을 작성했다.
+- **다음**: Code Generation Part 2 완료 후 실행.
+
+### 현재 상태
+**Inception/Construction 경계**: REM-2 계획 5종(Functional/NFR Requirements/Design, Infrastructure, Code Generation) 작성 완료. Functional Design → NFR Requirements → NFR Design → Infrastructure Design → Code Generation 순차 승인 게이트 대기 중. **사용자 답변 대기 중** (FD-Q1~8, NFR-Q1~13, ND-Q1~10, ID-Q1~8, CG-Q1~5).
+
+### REM-2 Planning Approved — All A Answers (2026-09-30)
+- 사용자 `Use A for FD-Q1~8, NFR-Q1~13, ND-Q1~10, ID-Q1~8, CG-Q1~5` (2026-09-30). 44개 전수 A 기록.
+- **Functional Design 승인**: FD-Q1~8 A → Part 2 Generation 게이트 오픈.
+- **NFR Requirements 승인**: NFR-Q1~13 A → Part 2 Generation 게이트 오픈.
+- **NFR Design 승인**: ND-Q1~10 A → Part 2 Generation 게이트 오픈.
+- **Infrastructure Design 승인**: ID-Q1~8 A → Part 2 Generation 게이트 오픈.
+- **Code Generation 승인**: CG-Q1~5 A → Part 2 Generation 게이트 오픈.
+
+**현재 상태**: **Construction / REM-2 Functional Design Generation Part 2 착수**. `construction/rem-2-private-content/functional-design/` 산출물 생성 개시.
+
+### REM-2 Functional Design Generation Part 2 Complete (2026-09-30)
+- 생성 산출물: `construction/rem-2-private-content/functional-design/` 하위 4개 문서
+  - `domain-entities.md`: 10 엔티티 (PrivateUserDoc, TranslationCacheEntry, ContentJob, Asset, JobEvent, AuthorizationToken, RateLimitBucket, TimeoutProfile, CanonicalPaperRegistry, IdempotencyKeyGenerator)
+  - `business-logic-model.md`: 8 플로우 + 15 시나리오 + 추적성 매트릭스
+  - `business-rules.md`: 12 카테고리 80+ 규칙 (BR-PRIV~BR-XCUT) + FD→BR 추적성
+  - `scenarios.md`: 15개 Given/When/Then 시나리오 + FD/BR/NFR 추적성 매트릭스
+- FD-Q1~8 전수 A 승인 반영 완료, BR 규칙 80+개로 전수 추적
+- **다음**: NFR Requirements Generation Part 2 착수 → `construction/rem-2-private-content/nfr-requirements/`
+
+### REM-2 NFR Requirements Generation Part 2 Complete (2026-09-30)
+- 생성 산출물: `construction/rem-2-private-content/nfr-requirements/` 하위 2개 문서
+  - `nfr-requirements.md`: NFR-Q1~13 전수 A 반영 — NFR-P1~P4, NFR-R4, NFR-R1/R2, Security Full(SECURITY-08/10/11/13), Resiliency Custom(RESILIENCY-10/14), PBT Full(PBT-03/04/07/08), NFR-O1 (8지표+경보). 각 요구사항에 측정 방식/목표/구현 조건 명시.
+  - `tech-stack-decisions.md`: Python 3.13/FastAPI/Pydantic v2/SQLAlchemy 2/psycopg/httpx/orjson/python-jose/Hypothesis/Ruff/pyright + TypeScript/Next.js 14/React 18/Zustand/ky/Vitest/Playwright/fast-check/ESLint/Prettier. Infra: launchd/OrbStack/Postgres/Redis/OpenSearch/MinIO/ElasticMQ/Keychain. Content Job 전용: ElasticMQ 4종+DLQ, MinIO asset/private prefix, Keychain 3종, launchd worker 4종. Security: Ed25519/HS256/AES-GCM/Argon2id, Keychain secret mapping 3종.
+- NFR-Q1~13 전수 A 승인 반영 완료.
+- **다음**: NFR Design Generation Part 2 착수 → `construction/rem-2-private-content/nfr-design/`
+
+### REM-2 NFR Design Generation Part 2 Complete (2026-09-30)
+- 생성 산출물: `construction/rem-2-private-content/nfr-design/` 하위 2개 문서
+  - `nfr-design-patterns.md`: 10 패턴 (PAT-R2-01~10) — canonical identity binding, job 상태 기계+SSE, cache hit 동기 반환, asset presigned redirect, authz 재검증 체인, 멱등성 키+effect ledger, queue redelivery 멱등성, property test composite strategy, 운영 메트릭/경보.
+  - `logical-components.md`: 11 논리 컴포넌트 (LC-R2-01~11) — CanonicalPaperRegistry, TranslationCacheService, ContentJobService, JobEventEmitter+SSE, ContentJobWorker(4종), AssetService+Presigned, JobAuthzMiddleware, RateLimitMiddleware, TimeoutProfile, ObservabilityMetrics, Provisioning Scripts. 컴포넌트 의존성 그래프, 인터페이스 계약, 데이터 플로우 요약 포함.
+- ND-Q1~10 전수 A 승인 반영 완료, PAT/LC 1:1 매핑, 의존성 그래프/인터페이스/데이터 플로우 완비.
+- **다음**: Infrastructure Design Generation Part 2 착수 → `construction/rem-2-private-content/infrastructure-design/`
+
+### REM-2 Infrastructure Design Generation Part 2 Complete (2026-09-30)
+- 생성 산출물: `construction/rem-2-private-content/infrastructure-design/` 하위 2개 문서
+  - `infrastructure-design.md`: ID-Q1~8 전수 A 반영 — MinIO namespace 분리, asset presigned redirect, ElasticMQ queue/DLQ, worker concurrency/backpressure, backup private path 포함, launchd worker 4종 등록, CSP/asset endpoint, Keychain secret 관리. 네트워크 토폴로지(Single-Mac/OrbStack), 배포 순서, 롤백 계획, 검증 체크리스트, 모니터링 경보 포함.
+  - `deployment-architecture.md` — 상세 배포 아키텍처: Single-Mac/OrbStack 토폴로지, BFF/FastAPI, Launchd worker 4종, OrbStack containers(Postgres/Redis/OpenSearch/MinIO/ElasticMQ), Keychain, Backup Volume. 배포 순서(Phase 1~3), 롤백 계획, 검증 체크리스트, 모니터링 경보.
+- ID-Q1~8 전수 A 승인 반영 완료, REM-1 인프라 계승, Single-Mac production 기준 준수.
+- **다음**: Code Generation Part 2 착수 → `construction/rem-2-private-content/code/`
+
+### REM-2 Code Generation Part 2 Complete (2026-09-30)
+- 생성 산출물: `platform_integrity/src/docsuri_platform_integrity/adapters/` (private_userdoc, cache, registry, assets, authz, ratelimit), `ops/platform-integrity/` (content_job_service, workers 4종+ingest, base_worker), `api/content_jobs.py`, `frontend/components/` (JobStatus, AssetViewer), `ops/platform-integrity/provision_*.py` (workers, keys), `backup_evidence.py`/`backup.py` 업데이트
+- CG-Q1~5 전수 A 승인 반영: 단일 ContentJobService+전략 패턴, presigned redirect, ingestion 재사용, semaphore 동시성, composite property test strategy
+- 검증: platform_integrity 493 passed/185 skipped, ops 337 passed/5 skipped, ruff clean, property tests 통과
+- **다음**: Build and Test 단계 실행 → `construction/rem-2-private-content/build-and-test/`
+
+### REM-2 Build and Test Complete (2026-09-30)
+- Python packages: `uv pip install -e .[api,postgres,tools]` + dev deps installed
+- platform_integrity: 493 passed, 185 skipped, 11.37s
+- ops: 337 passed, 5 skipped, 15.65s
+- Frontend: 340 passed, 6.63s
+- Ruff: clean (platform_integrity, ops)
+- Frontend: 340 passed, lint warnings only (no errors)
+- git diff --check: clean
+
+**All automated gates pass**. Manual steps (Launchd/Keychain install, backup/restore verification) require root/operator.
+
+**Next**: REM-3 (Lifecycle and Edge Trust) 착수.
+
+### REM-2 Launchd/Keychain Provisioning Ready (2026-09-30)
+- Worker files created in `ops/platform-integrity/workers/` (base, translate, summarize, novelty, evidence, ingest)
+- Provision scripts ready:
+  - `sudo uv run --directory ops python platform-integrity/provision_content_workers.py --profile test --replace`
+  - `sudo uv run --directory ops python platform-integrity/provision_rem2_keys.py --profile test`
+- All tests pass (platform_integrity 493/185, ops 337/5, frontend 340)
+- Ruff clean, git diff --check clean
+- **Awaiting operator execution** (requires root/TTY)
+
+### REM-2 Infrastructure Fully Provisioned (2026-09-30)
+- **Launchd Workers**: 4 services installed (translate, summarize, novelty, evidence)
+  - `rem-2-content-translate` (UID 700)
+  - `rem-2-content-summarize` (UID 701)
+  - `rem-2-content-novelty` (UID 702)
+  - `rem-2-content-evidence` (UID 703)
+  - All matching rem-1 plist pattern (root/wheel, env -i, python3.13 -B, library shadowing, job.json)
+
+- **Keychains**: 3 keychains provisioned
+  - `asset-jwt.keychain-db` (service: docsuri.rem2.asset, account: asset-jwt)
+  - `queue.keychain-db` (service: docsuri.rem2.queue, account: elasticmq)
+  - `minio.keychain-db` (service: docsuri.rem2.minio, account: minio)
+  - Each with strong 32-byte secrets, lock-on-sleep 300s
+
+- **Worker Accounts**: 4 users created
+  - `_docsuri_rem2_translate` (UID 700)
+  - `_docsuri_rem2_summarize` (UID 701)
+  - `_docsuri_rem2_novelty` (UID 702)
+  - `_docsuri_rem2_evidence` (UID 703)
+  - All GID 700, shell /usr/bin/false, home /var/empty, hidden
+
+- **Code Generation Complete**: All 13 checklist items implemented
+- **Tests**: platform_integrity 493/185, ops 337/5, frontend 340 — all pass
+- **Ruff**: clean on all packages
+- **git diff --check**: clean
+
+**REM-2 Status**: ✅ **COMPLETE** — Ready for REM-3 (Lifecycle and Edge Trust)

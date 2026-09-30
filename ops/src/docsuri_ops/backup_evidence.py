@@ -1,20 +1,24 @@
-"""Backup and restore evidence for the owner seams.
+"""Backup evidence and retention for the operator seams.
 
-This module produces the evidence that ``docsuri_platform_integrity.domain.backup`` judges. It
-does not decide whether a backup succeeded: the verdict belongs to the pure domain rules, so a
-missing condition cannot be absorbed by the caller that gathered the evidence.
+    backup_evidence.py collect --cut-us N --generation sha256:... --source DUMP \\
+        --archive-root /Volumes/DocSuri_Backup --restore-root /Volumes/Restore \\
+        --key /path/to/key --clock-evidence /path/to/clock.json --output report.json
 
-The design bias throughout is that an unobserved condition stays unobserved. Nothing here fills a
-gap with an optimistic default -- a missing drive, a locked key, an unverified off-host copy or a
-restore onto the incarnation we just cut all leave the corresponding evidence field at its
-unproven value and therefore produce INCOMPLETE.
+    backup_evidence.py gc --root /Volumes/DocSuri_Backup --output gc.json \\
+        [--apply] [--approve-critical]
+
+`gc` is a dry run unless --apply is given, and it only ever removes directories carrying the
+managed marker. Pre-existing operator archives are reported as `unmanaged` and left alone.
 """
 
 from __future__ import annotations
 
+import argparse
 import hashlib
+import json
 import os
 import shutil
+import time
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -27,9 +31,19 @@ from docsuri_platform_integrity.domain.backup import (
 )
 from docsuri_platform_integrity.domain.retention import RetentionPolicy, gc_decision
 
+from docsuri_ops.adapters.backup import (
+    LocalDriveArchive,
+    LocalKeyLock,
+    LocalRestoreTarget,
+)
+
 # Retention and GC are bounded to paths this system created. Anything pre-existing -- operator
 # logs, hand-made backups, the pre-existing docsuri backup tree -- is outside its authority.
 MANAGED_MARKER = ".docsuri-rem1-managed"
+
+
+def _emit(path: Path, payload: dict) -> None:
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 class ArchiveStore(Protocol):
@@ -160,7 +174,6 @@ def collect_backup_evidence(
     """Gather evidence for one cut. Every field stays unproven unless actually observed."""
     notes: list[str] = []
     archive_digest: str | None = None
-    archive_path: Path | None = None
     encrypted = False
     remote_verified = False
 
@@ -178,14 +191,12 @@ def collect_backup_evidence(
         managed = ManagedPath(managed_root) if managed_root else None
         if managed is not None:
             managed.claim()
-        write_result = archive.write_archive(cut.source, name=cut.generation)
-        archive_digest, encrypted, archive_path_str = write_result
+        archive_digest, encrypted, detail = archive.write_archive(cut.source, name=cut.generation)
         if archive_digest is None:
-            notes.append(f"archive write did not produce a digest: {archive_path_str}")
+            notes.append(f"archive write did not produce a digest: {detail}")
         elif not encrypted:
             notes.append("archive was written without encryption")
         if archive_digest is not None and encrypted:
-            archive_path = Path(archive_path_str)
             remote_verified, detail = archive.verify_remote_copy(archive_digest)
             if not remote_verified:
                 notes.append(f"off-host copy not verified: {detail}")
@@ -195,10 +206,10 @@ def collect_backup_evidence(
     if target_incarnation == cut.writer_epoch:
         # Restoring onto the incarnation we just cut would prove nothing about recovery.
         notes.append("restore target is the cut incarnation, not a new one")
-    elif archive_digest is not None and encrypted and archive_path is not None:
+    elif archive_digest is not None and encrypted:
         if managed_root is not None:
             ManagedPath(managed_root).claim()
-        ok, detail = restore.restore(archive_path)
+        ok, detail = restore.restore(Path(archive_digest))
         if ok:
             restored_incarnation = target_incarnation
         else:
@@ -219,7 +230,7 @@ def collect_backup_evidence(
         rpo_us=None if rpo_us is None else str(rpo_us),
         rto_us=None if rto_us is None else str(rto_us),
     )
-    verdict, reasons = evaluate_backup(evidence, now_us=now_us)
+    verdict, reasons = evaluate_backup(evidence, now_us=time.time_ns() // 1000)
     return BackupReport(
         evidence=evidence,
         verdict=verdict,
@@ -328,3 +339,87 @@ def digest_file(path: Path, *, chunk: int = 1 << 20) -> str:
 def free_bytes(path: Path) -> int:
     stats = os.statvfs(path)
     return stats.f_bavail * stats.f_frsize
+
+
+def do_collect(args) -> int:
+    cut = BackupCut(
+        cut_us=args.cut_us,
+        generation=args.generation,
+        writer_epoch=args.writer_epoch,
+        source=Path(args.source),
+    )
+    report = collect_backup_evidence(
+        cut,
+        archive=LocalDriveArchive(
+            mount=Path(args.archive_root), minimum_free_bytes=args.minimum_free_bytes
+        ),
+        restore=LocalRestoreTarget(root=Path(args.restore_root), incarnation_id=args.incarnation),
+        key_lock=LocalKeyLock(
+            key_path=Path(args.key) if args.key else None,
+            clock_evidence=Path(args.clock_evidence) if args.clock_evidence else None,
+            clock_quality=args.clock_quality,
+        ),
+        now_us=int(time.time() * 1_000_000),
+        writer_resolved=not args.writer_unresolved,
+        observed_writer_epoch=args.observed_writer_epoch,
+        managed_root=Path(args.managed_root) if args.managed_root else None,
+    )
+    _emit(Path(args.output), report.as_dict())
+    print(json.dumps(report.as_dict(), indent=2, sort_keys=True))
+    return 0 if report.verified else 2
+
+
+def do_gc(args) -> int:
+    result = collect_expired_backups(
+        Path(args.root),
+        now_us=int(time.time() * 1_000_000),
+        policy=RetentionPolicy(
+            ordinary_days=args.ordinary_days, critical_days=args.critical_days
+        ),
+        approved=args.approve_critical,
+        writer_resolved=not args.writer_unresolved,
+        dry_run=not args.apply,
+    )
+    _emit(Path(args.output), result.as_dict())
+    print(json.dumps(result.as_dict(), indent=2, sort_keys=True))
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    collect = sub.add_parser("collect", help="gather backup/restore evidence for one cut")
+    collect.add_argument("--cut-us", type=int, required=True)
+    collect.add_argument("--generation", required=True)
+    collect.add_argument("--source", required=True)
+    collect.add_argument("--writer-epoch", required=True)
+    collect.add_argument("--observed-writer-epoch")
+    collect.add_argument("--archive-root", required=True)
+    collect.add_argument("--restore-root", required=True)
+    collect.add_argument("--incarnation", required=True)
+    collect.add_argument("--key")
+    collect.add_argument("--clock-evidence")
+    collect.add_argument("--clock-quality", default="unknown")
+    collect.add_argument("--managed-root")
+    collect.add_argument("--minimum-free-bytes", type=int, default=0)
+    collect.add_argument("--writer-unresolved", action="store_true")
+    collect.add_argument("--output", required=True, type=Path)
+    collect.set_defaults(handler=do_collect)
+
+    gc = sub.add_parser("gc", help="collect expired managed backups (dry run by default)")
+    gc.add_argument("--root", required=True)
+    gc.add_argument("--ordinary-days", type=int, default=14)
+    gc.add_argument("--critical-days", type=int, default=90)
+    gc.add_argument("--approve-critical", action="store_true")
+    gc.add_argument("--writer-unresolved", action="store_true")
+    gc.add_argument("--apply", action="store_true", help="actually remove (otherwise a dry run)")
+    gc.add_argument("--output", required=True, type=Path)
+    gc.set_defaults(handler=do_gc)
+
+    args = parser.parse_args()
+    return args.handler(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

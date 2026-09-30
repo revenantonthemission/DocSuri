@@ -15,7 +15,27 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ..backup_evidence import digest_file, free_bytes
+# Local imports to avoid circular dependency
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..backup_evidence import digest_file, free_bytes
+else:
+    # Runtime imports - avoid circular dependency
+    import hashlib
+    import os
+
+    def digest_file(path: Path, *, chunk: int = 1 << 20) -> str:
+        """Streamed sha256, so a large archive is never held in memory."""
+        accumulator = hashlib.sha256()
+        with path.open("rb") as handle:
+            while block := handle.read(chunk):
+                accumulator.update(block)
+        return "sha256:" + accumulator.hexdigest()
+
+    def free_bytes(path: Path) -> int:
+        stats = os.statvfs(path)
+        return stats.f_bavail * stats.f_frsize
 
 
 def filevault_encrypted(mount: Path) -> bool:
@@ -125,12 +145,7 @@ class LocalRestoreTarget:
         return self.incarnation_id
 
     def restore(self, archive: Path) -> tuple[bool, str]:
-        """Copy the archive file into the new incarnation directory.
-
-        The archive is the exact dump produced by the cut. Restoring means placing it in the
-        isolated target directory so it can be loaded by the acceptance test. The caller owns
-        loading; this adapter only proves the file reached the new incarnation.
-        """
+        """Copy the archive file into the new incarnation directory."""
         target = self.root / self.incarnation_id
         if not archive.is_file():
             return False, f"archive {archive} is missing"
