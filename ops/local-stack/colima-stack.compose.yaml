@@ -1,0 +1,161 @@
+# DocSuri local development stack — Colima
+#
+# NOT a production deployment descriptor. Every image is pinned to the digest recorded in
+# ops/platform-integrity/sbom-targets.json. Host ports bind to 127.0.0.1 only, per the REM-2/REM-3
+# deployment design.
+#
+# Runtime: Colima (was OrbStack in the original design; retargeted 2026-10-01).
+#
+# Local-only relaxations, each deliberate and each NOT representative of production posture:
+#   1. Redis and SeaweedFS run without authentication. They are loopback-only.
+#   2. OpenSearch runs with the security plugin disabled. The design asks for
+#      security.disabled=false, which on 2.19.5 requires a strong admin password plus node TLS.
+#      No REM-2/REM-3 code talks to OpenSearch — the only OpenSearch client in the repo is
+#      opensearchpy in the ingestion package, a different unit — so this service is present for
+#      liveness only and its auth posture is not exercised here.
+#   3. Postgres runs with ssl=on but WITHOUT client-certificate enforcement. The client-cert
+#      mTLS requirement (sslmode=verify-full + sslcert/sslkey, per
+#      platform_integrity/adapters/postgres_tls.py) is proven by the dedicated harness
+#      platform_integrity/tests/test_postgres_mtls.py, which materializes certs via `docker cp`.
+#      That is deliberate: bind-mounting key material into the container under Colima's virtiofs
+#      cannot reliably hold the 0600 postgres ownership the server requires.
+#
+# Host ports are overridable because two container runtimes cannot share a loopback port. If
+# OrbStack.app is running it already holds 5432/6379/9200/9324/9000, and it will silently
+# intercept connections meant for this stack while the containers themselves report healthy —
+# healthchecks run inside the containers, so a port shadow is invisible to them. Copy
+# ops/local-stack/env.orbstack-conflict to ops/local-stack/.env to shift every host port, or quit
+# OrbStack and use the defaults.
+#
+# Bring up:  ops/local-stack/up.sh
+# Tear down: ops/local-stack/down.sh
+
+name: docsuri-rem
+
+services:
+  postgres:
+    # Derived REM-1 image: gosu removed, runs as the unprivileged postgres uid.
+    # CANDIDATE_PENDING_OPERATOR_MAINTENANCE_WINDOW — local use only.
+    image: docsuri/postgres-alpine-16.15-nosu@sha256:ccbe2a110992a5b602afdd4a28a45f184de67308d4e80284c0b2329a10cb0e2e
+    ports:
+      - "127.0.0.1:${DOCSURI_PG_HOST_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: rem3_smoke
+      POSTGRES_USER: rem3_smoke
+      POSTGRES_PASSWORD: rem3_smoke_local_only
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    command:
+      - postgres
+      - -c
+      - ssl=on
+    volumes:
+      - rem3-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rem3_smoke -d rem3_smoke"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  redis:
+    image: redis@sha256:c6eabf748fc7a61dbb5a705c78bcf3d6377b1127a97d0ce965c11c44ba46896f
+    ports:
+      - "127.0.0.1:${DOCSURI_REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - rem3-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  opensearch:
+    image: opensearchproject/opensearch@sha256:4ee82ecb35d837a6186c81aaa64c8a5bce71aa956edbd87f1f684ab56af52c44
+    ports:
+      - "127.0.0.1:${DOCSURI_OPENSEARCH_HOST_PORT:-9200}:9200"
+    environment:
+      discovery.type: single-node
+      bootstrap.memory_lock: "true"
+      # Colima allocates 1.9 GiB total across all five services; a 1g heap OOM-killed the node
+      # (exit 137). 512m is enough for single-node liveness at this scale.
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      # Local-only: see relaxation 2 in the header.
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - rem3-opensearch:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  elasticmq:
+    image: softwaremill/elasticmq-native@sha256:e4580ab9ad1bd5cd37b4ba04911bc5ccc8cd2d9ab4de56ece65acee71c24e05c
+    # The image's entrypoint hardcodes -Dconfig.file=/opt/elasticmq.conf, so the config must land
+    # at exactly that path.
+    volumes:
+      - ./elasticmq.conf:/opt/elasticmq.conf:ro
+    ports:
+      - "127.0.0.1:${DOCSURI_ELASTICMQ_HOST_PORT:-9324}:9324"
+    healthcheck:
+      # This image ships wget but not curl. The SQS endpoint answers any unauthenticated request
+      # with a 4xx, so the check asserts that an HTTP status line came back rather than demanding a
+      # 2xx — a queue server that is refusing connections emits no status line at all.
+      test: ["CMD-SHELL", "wget --server-response --spider -q http://localhost:9324/ 2>&1 | grep -q 'HTTP/'"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  seaweedfs:
+    # LOCAL DEVELOPMENT STAND-IN for images.minio. That pin is UNOBTAINABLE (quay.io denies
+    # anonymous reads repo-wide; the vendor binary path returns 410). See
+    # sbom-targets.json localDevImages.substituteAssetStore and cve-disposition.md.
+    # productionInput: false — never appears in release scan evidence.
+    image: chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
+    command:
+      - "server"
+      - "-s3"
+      - "-s3.port=9000"
+      - "-dir=/data"
+      - "-master.port=9333"
+      - "-volume.port=8080"
+    ports:
+      - "127.0.0.1:${DOCSURI_S3_HOST_PORT:-9000}:9000"   # S3 API
+      - "127.0.0.1:${DOCSURI_SEAWEED_MASTER_HOST_PORT:-9333}:9333"   # master
+      - "127.0.0.1:${DOCSURI_SEAWEED_VOLUME_HOST_PORT:-8080}:8080"   # volume
+    environment:
+      # NOT YET EFFECTIVE. This build (4.48) ignores AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY for S3
+      # identities. Two alternative paths were tried and both failed: `-s3.config=<json>` is
+      # accepted by `weed server` without error but leaves the gateway in "standard IAM" mode, so
+      # authenticated calls fail with InvalidAccessKeyId; `-config=<filer.toml>` is rejected
+      # outright because `weed server` defines no `-config` flag.
+      # The S3 credential path is therefore UNWIRED and is deliberately not worked around here.
+      # It is out of the approved smoke-test scope (Postgres/Redis/OpenSearch) and belongs to the
+      # Phase 3 assets.py rewrite, where the client, its credential source, and the `minio`
+      # dependency declaration are designed together.
+      AWS_ACCESS_KEY_ID: rem3local
+      AWS_SECRET_ACCESS_KEY: rem3localsecret
+    volumes:
+      - rem3-seaweedfs:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9333/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+volumes:
+  rem3-pgdata:
+  rem3-redis:
+  rem3-opensearch:
+  rem3-seaweedfs:

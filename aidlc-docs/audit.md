@@ -7266,3 +7266,210 @@ Round 1 Q2=C deferred REM-4 entirely. Round 2 Q1=D tried to absorb G1/G2/G4/G5, 
 ### Status
 Scope locked. No source, design, or infrastructure file has been modified yet; no image pulls performed. Next: write the REM-3 corrective plan (retained as the specification per clarif Q2=A), add BLOCKED-ON-REM-4 gate markers, then begin execution.
 ---
+
+## [REM-3 Corrective Phase 2 — Pinned Image Pulls: 3 of 4 Succeeded, MinIO Unobtainable]
+**Timestamp**: 2026-10-01T02:10:00Z
+**User Input**: "I answered the questions." (scope locked; execution started per approved plan)
+**AI Response**: Committed the corrective plan and gate matrix as `8dd84164`, then began Phase 2 per `aidlc-docs/construction/plans/rem-3-corrective-plan.md` Step 4 — pulling the four digests pinned in `ops/platform-integrity/sbom-targets.json`. **Three of four pulled and verified locally. MinIO cannot be pulled from any official source and is escalated as a decision, not worked around.**
+**Context**: CONSTRUCTION / Phase 2 infrastructure re-baseline. No source code modified. No pin altered.
+
+### Phase 1 committed — `8dd84164`
+`docs(rem-3): re-open unit, write corrective plan, mark G4/G5 BLOCKED-ON-REM-4` (7 files, +683).
+Carries `construction/plans/rem-3-corrective-plan.md`, the `BLOCKED-ON-REM-4` G4/G5 markers in `aidlc-state.md`, the withdrawn REM-2/REM-3 completion claims, the 8-defect table, and the five decision-question files with the answers inline.
+
+### Pull results against the pinned digests
+| Target | Pinned digest | Result |
+|---|---|---|
+| redis | `sha256:c6eabf748fc7a61dbb5a705c78bcf3d6377b1127a97d0ce965c11c44ba46896f` | ✅ PULLED, 192 MB, digest matches |
+| elasticmq | `sha256:e4580ab9ad1bd5cd37b4ba04911bc5ccc8cd2d9ab4de56ece65acee71c24e05c` | ✅ PULLED, 128 MB, digest matches |
+| opensearch | `sha256:4ee82ecb35d837a6186c81aaa64c8a5bce71aa956edbd87f1f684ab56af52c44` | ✅ PULLED, 2 GB, digest matches (needed 1 retry — see note) |
+| **minio** | `sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e` | ❌ **NOT OBTAINABLE — escalated below** |
+
+All three successful pulls were digest-addressed and were verified by `docker image inspect` against the exact pinned digest, not by tag. The pins in `sbom-targets.json` are unchanged.
+
+### Note on the OpenSearch retry
+The first `docker pull` of the OpenSearch digest failed mid-transfer with `failed to copy: httpReadSeeker: failed open: ... net/http: TLS handshake timeout` against `production.cloudfront.docker.com` on blob `sha256:0606...`. This is a transport fault, not a pin or manifest fault. Attempt 1 of the retry loop completed and `docker image inspect` confirmed the pinned digest. Recorded because a single failed attempt must not be misreported as a bad pin.
+
+### MinIO is unobtainable — evidence
+Every official distribution path for the pinned MinIO image now refuses anonymous access:
+
+| Source | Probe | Result |
+|---|---|---|
+| `quay.io/v2/minio/minio/manifests/<digest>` | `HEAD` with OCI + Docker manifest accept headers | **HTTP 401** `{"errors":[{"code":"UNAUTHORIZED","detail":{},"message":"access to the requested resource is not authorized"}]}` |
+| `quay.io/v2/minio/minio/tags/list` | `GET` | **HTTP 401** — the whole repository denies anonymous reads, not just this digest |
+| `registry-1.docker.io/v2/minio/minio` | `GET` with a valid `auth.docker.io` pull-scope token | **HTTP 401** |
+| `dl.min.io/server/minio/release/linux-amd64/minio` | `HEAD` (vendor server binary) | **HTTP 410 Gone** |
+
+The 401 on `tags/list` is the decisive observation: it is not that this particular digest was garbage-collected or superseded, it is that anonymous access to `quay.io/minio/minio` as a whole is no longer granted. The 410 from the vendor's own binary distribution path is consistent with the community edition having been withdrawn from public distribution. A third-party mirror or a source build would restore runnability but would break the provenance chain that `sbom-targets.json` exists to protect, so **no mirror and no substitute image was pulled** — that choice belongs to the operator.
+
+### Why this is a decision rather than something to work around
+1. **G1 scan target.** G1 requires a CVE scan of the MinIO image. With no obtainable image there is nothing to scan, so that G1 sub-item cannot be satisfied from the pinned artifact.
+2. **Provenance.** `sbom-targets.json` exists precisely to pin a scannable, reproducible artifact. Substituting a different S3 server changes the security baseline that every downstream scan result attests to, which is not mine to change silently.
+3. **The approved design names MinIO.** Ten REM-3 design documents reference it, including `infrastructure-design/deployment-architecture.md` and `tech-stack-decisions.md`. The design is the retained specification per the approved clarif Q2=A, so the substitution changes a specification-level choice.
+4. **Blast radius is small but real.** The live single-Mac smoke test gate is scoped to real Postgres/Redis/OpenSearch — MinIO is not in that set. The affected scope is the asset-store live path and the MinIO G1 scan.
+
+### Additional defects found while diagnosing (unfixed, for Phase 3)
+`platform_integrity/src/docsuri_platform_integrity/adapters/assets.py` is in the delete-and-regenerate set, and inspection surfaced more than the already-recorded placeholder-secret defect:
+- **L12-13** imports `minio` / `minio.error`; the `minio` SDK is **not declared** in `platform_integrity/pyproject.toml` — a third undeclared dependency alongside `jwt` and `redis`.
+- **L117-121** `create_minio_client()` hardcodes `endpoint="127.0.0.1:9000"`, `access_key="minioadmin"`, `secret_key="minioadmin"`. No environment override, and the well-known default credentials are exactly the insecure-defaults defect already on record.
+- **L91-93** `_minio_presigned_get` hardcodes `bucket_name="docsuri"` instead of using `self.bucket`, so the constructor's bucket parameter is ignored on the read path.
+
+Recorded for the Phase 3 rewrite; the client must become environment-driven and Keychain-backed like the JWT secret.
+
+### Status
+No source, design, or SBOM file has been modified. `sbom-targets.json` pins are untouched. Three images are staged locally and ready for the Colima stack definition. MinIO is escalated via `aidlc-docs/construction/minio-image-unavailable-decision-questions.md`.
+---
+
+## [MinIO Image Unavailable — Answers Recorded, Substituted for Local Stack Only]
+**Timestamp**: 2026-10-01T02:35:00Z
+**User Input**: "I've answered to the questions."
+**AI Response**: Recorded both answers as **A**. Q1 substitutes an S3-compatible server for the **local Colima stack only**, keeps the `minio` Python SDK as the client, and marks the SBOM MinIO pin `UNOBTAINABLE` with the 401/410 evidence rather than silently repointing it. Q2 records the unsatisfiable G1 MinIO scan as a fourth explicit G1 blocker alongside the three operator sign-offs. Before editing the SBOM I traced its schema consumers and confirmed the change is schema-safe; that check caught a real regression risk that a naive edit would have introduced.
+**Context**: CONSTRUCTION / Phase 2. Recorded, then executed against `sbom-targets.json` and `cve-disposition.md`.
+
+### Recorded answers
+| Q | Answer | Decision |
+|---|---|---|
+| Q1 | **A** | Substitute an S3-compatible server for the local Colima stack only; keep the `minio` SDK as client; mark the pin `UNOBTAINABLE` with evidence; G1 MinIO scan stays unsatisfied and recorded as blocked; `minio` SDK still declared in Phase 3 |
+| Q2 | **A** | Record the G1 MinIO scan as a new explicit G1 blocker with the 401/410 evidence attached |
+
+### Schema-consumer check performed before editing (prevented a CI regression)
+`sbom-targets.json` has two tested consumers: `ops/platform-integrity/validate_supply_chain.py` (invoked by the `rem1-closure-audit` CI lane via `.github/workflows/ci.yml`) and `ops/tests/test_supply_chain_targets.py`.
+
+A naive edit — replacing the `images.minio` string with an object — would have been at risk, because `image_references()` raises `TypeError` when a section is not a mapping and the audit already records one past incident where "the committed `sbom-targets.json` uses a **dict** shape, so the first inline check would have crashed".
+
+Reading both files established the safe shape:
+- `image_references()` L30 already accepts `value.get("digest")` for a dict entry.
+- `images.postgresSuperseded` already uses exactly that dict shape (`digest` + evidence fields), so it is the established precedent.
+- `test_findings_do_not_become_ci_failures` proves a dict entry carrying `digest` plus arbitrary evidence fields still reads as pinned.
+
+So the conversion follows an existing in-repo precedent rather than inventing one, and the pin is preserved as a real `digest` value so the digest-pinning CI check still passes.
+
+### G1 blocker list, now four items
+| # | Blocker | Owner |
+|---|---|---|
+| 1 | CVE-2026-85091 — alpine zlib, no upstream fix; exception or base refresh | operator sign-off |
+| 2 | Derived postgres image CANDIDATE → APPROVED promotion | operator maintenance window |
+| 3 | CVE-2026-82049 — python tarfile, PSF backport applied but Grype keys on CPE so it stays visible unapproved | operator sign-off |
+| 4 | **MinIO image unobtainable — no scannable artifact** (new, this unit) | upstream availability; not self-servable |
+
+Item 4 is categorically different from 1–3: those three need a human decision on a obtainable artifact, while item 4 has no artifact to decide about. It cannot be closed by operator action either — only by upstream restoring distribution or by an explicit decision to change the production S3 provider.
+
+### Security invariant preserved
+The production pin is **not** repointed. `images.minio` retains the exact original digest
+`quay.io/minio/minio@sha256:14cea493...` and gains an explicit `UNOBTAINABLE` status with the probe
+evidence. Any substitute is recorded in a **separate, clearly non-production** local-dev section, so
+no scan result can ever be read as attesting to the substitute while the production pin still names
+MinIO.
+
+### Status
+`sbom-targets.json` and `cve-disposition.md` updated. Validator and its tests re-run to prove no
+regression. Substitute image to be pinned and pulled, then the Colima stack defined and brought up.
+No source code modified.
+---
+
+## [REM-3 Corrective Phase 2 — Colima Stack Definition and Bring-Up Complete]
+**Timestamp**: 2026-10-01T03:20:00Z
+**User Input**: (execution continued per approved corrective plan Phase 2)
+**AI Response**: Wrote `ops/local-stack/` (compose descriptor, `up.sh`, `down.sh`, ElasticMQ config, SeaweedFS IAM notes) and brought the stack up on Colima. **All five services healthy and verified reachable from the host with real functional round trips, not just healthchecks.** Five genuine defects surfaced and were diagnosed during bring-up; four were fixed, one is recorded as unwired and deferred to Phase 3.
+**Context**: CONSTRUCTION / Phase 2 complete (Steps 5-7). No application source code modified.
+
+### Result: 5/5 healthy, host-verified
+| Service | Container health | Host-side verification |
+|---|---|---|
+| Postgres | healthy | `pg_stat_ssl` = **TLSv1.3**, created table, inserted, read back 1 row |
+| Redis | healthy | `PING` -> `+PONG` over a raw socket |
+| OpenSearch | healthy | `_cluster/health` -> `status: green`, 1 node, 11 active primary shards |
+| ElasticMQ | healthy | SQS endpoint answers 400 (server refusing unauthenticated action, i.e. alive) |
+| SeaweedFS | healthy | S3 endpoint answers 403 (alive; auth unwired, see below) |
+
+Every one of these is an actual protocol round trip from the host, not a container-local probe.
+
+### Defect found during bring-up: OrbStack shadows every host port (fixed)
+**This is the most consequential finding of Phase 2.** `OrbStack.app` is running (helper PID 1734,
+`/Applications/OrbStack.app` present, `orb` CLI at `/opt/homebrew/bin/orb`) and holds listeners on
+**all five** of the stack's host ports:
+
+| Port | Held by |
+|---|---|
+| 5432, 6379, 9200, 9324, 9000 | OrbStack |
+
+An earlier survey in this session recorded "OrbStack absent". **That was wrong** — it checked for a
+CLI named `orbstack`, while the binary is `orb`. The correction matters: OrbStack keeps those
+listeners even when it owns no container on them.
+
+The failure mode is nasty and was nearly misreported as a Postgres bug. `docker compose ps` showed
+Postgres healthy while every host connection answered `server does not support SSL, but SSL was
+required`. The container healthcheck passed because it runs *inside* the container, so a port shadow
+is invisible to it. Only `lsof -nP -iTCP:5432 -sTCP:LISTEN` naming `OrbStack` identified the real
+cause.
+
+Fix: host ports are now parametrized (`DOCSURI_PG_HOST_PORT` and siblings, defaulting to the
+standard ports). `ops/local-stack/env.orbstack-conflict` is a ready-to-copy shift to free
+neighbours — `15432/16379/19200/19324/19000/19333/18080` — copied to `ops/local-stack/.env` (gitignored)
+so the stack is reachable now. Quitting OrbStack reverts to the standard ports with no file changes.
+`up.sh` now reports the **actually published** ports from `docker compose port` rather than the
+defaults, so it can never again hand out DSNs that do not reach the stack.
+
+### Defect found: `up.sh` colima check was wrong (fixed)
+`colima status` reports on **stderr**, so the original `colima status 2>/dev/null | grep -c ...`
+guard saw empty output and wrongly reported "colima is not running" while Colima was up and exit 0.
+Replaced with an exit-code test.
+
+### Defect found: OpenSearch OOM-killed at 1 GB heap (fixed)
+`exited (137)` = SIGKILL. Colima reports **1.914 GiB total memory / 2 CPUs**, and a 1 GiB heap plus
+JVM overhead exceeded it with four other services running. Reduced to `-Xms512m -Xmx512m`, which is
+sufficient for single-node liveness at this scale. Recorded because it is a property of the Colima
+VM's allocation, not of the image: a larger `--memory` would allow the original value.
+
+### Defect found: ElasticMQ healthcheck used a binary the image lacks (fixed)
+The image ships `wget`, not `curl`, so `curl -sf http://localhost:9324/` failed while the service
+was perfectly healthy — it was creating all six DocSuri queue pairs with their DLQs. Because an SQS
+endpoint answers any unauthenticated request with a 4xx, demanding a 2xx would never work. The
+check now asserts an HTTP status line came back (`wget --server-response --spider | grep -q
+'HTTP/'`), which a refusing connection cannot produce.
+
+### Defect found: SeaweedFS S3 auth is UNWIRED (recorded, deferred to Phase 3)
+Authenticated S3 calls fail with `InvalidAccessKeyId`. Two paths were tried and both are dead ends in
+this build (4.48):
+- `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` env vars — ignored for S3 identities.
+- `-s3.config=<json>` — accepted by `weed server` without error, yet the gateway still starts in
+  "standard IAM" mode, so the identity is never applied.
+- `-config=<filer.toml>` — rejected outright: `weed server` defines no `-config` flag.
+
+No further workaround was attempted. Rationale: the S3 path is **outside the approved smoke-test
+scope** (Postgres/Redis/OpenSearch), and `assets.py` is scheduled for full regeneration in Phase 3,
+where the client, its credential source, and the undeclared `minio` dependency are designed together.
+Inventing a credential hack now would create something Phase 3 would immediately delete. Recorded as
+UNWIRED in the compose header rather than left to look working.
+
+### Design drift recorded for the Phase 2 doc updates
+- **OpenSearch pin is 2.19.5**, but the design table says `opensearchproject/opensearch:2.11`.
+- **ElasticMQ pin is `elasticmq-native`**, but the design table says `softwaremill/elasticmq:1.3`.
+- **MinIO row is unrunnable** (see the prior entry); SeaweedFS stands in locally.
+- Design specifies `security.disabled=false` for OpenSearch; the local stack disables the security
+  plugin instead, because 2.19.5 requires a strong admin password plus node TLS and no REM-2/REM-3
+  code talks to OpenSearch anyway.
+- Design requires Postgres `ssl=on` + mTLS. The stack provides `ssl=on` with a real server
+  certificate but **without client-cert enforcement**; the client-cert requirement
+  (`sslmode=verify-full` + `sslcert`/`sslkey`, per `adapters/postgres_tls.py`) is proven by the
+  dedicated harness `platform_integrity/tests/test_postgres_mtls.py`, which materializes certs via
+  `docker cp`. Bind-mounting key material under virtiofs cannot hold the 0600 postgres ownership the
+  server demands, so the harness's delivery mechanism is the correct one and was reused in `up.sh`.
+
+### Scoping finding: two of the five services have no client in these units
+| Service | Client code in `ops/src` + `platform_integrity/src` |
+|---|---|
+| Postgres | 8 files (`psycopg`), including `postgres_tls.py` |
+| Redis | 4 files — all in the delete-and-regenerate set; `redis` undeclared |
+| S3 | 1 file — `assets.py`; `minio` SDK undeclared |
+| **OpenSearch** | **0 files.** The only OpenSearch client in the repo is `opensearchpy` in the `ingestion` package, a different unit |
+| **ElasticMQ** | **0 files.** Referenced only in `provision_edge_keys.py` / `provision_rem2_keys.py` as keychain key names, not as an SQS client |
+
+So OpenSearch's leg of the approved smoke test is a **liveness check, not a functional check** — no
+REM-2/REM-3 code path can exercise it. Recorded rather than papered over; it does not weaken G2/G3,
+whose findings (F01/F02/F05/F07, F04/F09/F10) concern the worker pipeline, purge, unsubscribe, and
+rate limiting, none of which touch OpenSearch.
+
+### Status
+Phase 2 complete. Stack is up, host-verified, and reproducible via `ops/local-stack/up.sh`. Phase 3
+(REM-3 code rewrite) is next. G1 still carries four blockers; G4/G5 remain BLOCKED-ON-REM-4.
