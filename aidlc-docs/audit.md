@@ -7622,3 +7622,53 @@ rescans, pip-audit disposition, Docker bridge mTLS, purpose-Keychain ACLs withou
 rotation, worker entry-point + launchd root verification, and the live Colima smoke test; plus the
 evidence to record back into `sbom-targets.json`/`cve-disposition.md`. All steps are operator-owned
 (require sudo / a maintenance window / a risk-acceptance decision).
+
+---
+
+## REM-3 G1 Runbook — execution start (2026-10-01)
+
+**Timestamp**: 2026-10-01T00:00:00Z
+**Stage**: CONSTRUCTION / REM-3 corrective — Phase 5 execution
+**User Input**: "Which agent-runnable (no-sudo) parts should I execute now?" → "§2 image rescans, §3 pip-audit, §4 bridge mTLS, §8 full live smoke"
+
+**AI Response**: Executing the no-sudo, agent-runnable portions of
+`aidlc-docs/operations/g1-operator-runbook.md`: §2 rescans (redis/opensearch/elasticmq), §3
+pip-audit disposition, §4 Docker bridge mTLS, §8 live Colima smoke. Sudo/decision items (§1
+sign-offs, §5 keychain, §6 rotation, §7 launchd) remain operator-only.
+
+---
+
+## REM-3 G1 Runbook — §2/§3/§4/§8 execution complete (2026-10-01)
+
+**Timestamp**: 2026-10-01T18:30:00Z
+**Stage**: CONSTRUCTION / REM-3 corrective — Phase 5 execution
+**User Input**: "Continue if you have next steps..." (execute the agent-runnable runbook sections)
+
+**AI Response**:
+- **§2 rescans executed.** Syft 1.52.0 / Grype 0.119.0 fetched (digest-verified) into
+  `…/T/opencode/g1-scan-20261001/tools`; Grype DB updated (2.9G); redis/opensearch/elasticmq scanned
+  against digest-pinned images. **New findings: redis 82 / opensearch 204 / elasticmq 50 = 338
+  blocking (321 High/Critical + 17 unknown), all undispositioned.** Result: hole in G1 — sbom/report
+  hashes + observedAt recorded into `ops/platform-integrity/sbom-targets.json` (status
+  `SCANNED_BLOCKING_FINDINGS_PENDING_DISPOSITION`) and `ops/platform-integrity/cve-disposition.md`
+  (inventory/aggregate tables + checklist). Hashes cross-checked against on-disk `summary.json`.
+  `validate_supply_chain.py` → "all 10 declared image references are digest-pinned".
+- **§3 pip-audit resolved (not reproduced).** `uvx pip-audit==2.10.1` runs cleanly under uv 0.9.0 /
+  Python 3.14.7; the earlier SIGABRT did not recur. It surfaced 8 (backend) + 36 (ingestion)
+  findings that were **local-venv drift** — the locks already pinned patched versions
+  (`anyio 4.15.1`, `cryptography 50.0.1`, `pillow 12.3.0`, `urllib3 2.8.0`, `soupsieve 2.10`).
+  Remedy: `uv sync --project ingestion` (clean) + targeted `uv pip install` of the three backend
+  packages to locked versions (backend `uv sync` blocked by pre-existing `requires-python` conflict,
+  `docsuri-ops` needs ≥3.13 vs backend ≥3.11). Post-fix: all four venvs "No known vulnerabilities";
+  backend 664/9 and ingestion 317/1 still pass.
+- **§4 bridge mTLS passed.** `docsuri-g1-bridge` (driver bridge, id
+  `ac30303185f6b44a1ef69bc461077ed652d4db7062f5843324c29987ca7a3062`); derived image run at
+  `172.19.0.2` with the pinned digest; `tests/test_postgres_mtls.py` → **1 passed**. Runbook §4
+  corrected: the fixture hard-codes container `rem1-test-pg-20260924` / port `15439` / db `rem1_test`
+  (old exited container renamed `…-bak`).
+- **§8 live smoke passed.** `ops/local-stack/up.sh`: 5 services healthy; ports PG 15432 / Redis 16379
+  / OpenSearch 19200 / ElasticMQ 19324 / S3 19000. F04 live leg `test_purge_real_postgres.py` → **2
+  passed**. Object-store purge remains production-only (SeaweedFS S3 auth unwired locally).
+- **Docs updated**: runbook §4/§8 execution blocks; `cve-disposition.md` pip-audit + rescans + checklist;
+  `aidlc-state.md` G1 row + residual + Phase-5 section; `ops/uv.lock` regenerated to include the
+  `rem3` extra. **G1 stays 🟡 PARTIAL (new 338-finding blocker); G4/G5 remain ⛔ BLOCKED-ON-REM-4.**

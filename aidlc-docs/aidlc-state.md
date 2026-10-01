@@ -1929,7 +1929,7 @@ platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed*
 
 | 게이트 | 상태 | 근거 |
 |---|---|---|
-| **G1** 플랫폼 기반 | 🟡 PARTIAL — BLOCKED-ON-OPERATOR | 실행 가능 항목(image rescan, pip-audit disposition, Docker bridge mTLS)은 corrective unit이 흡수. 단 operator 소유 3건 잔존: CVE-2026-85091 예외 승인 또는 alpine base refresh, derived postgres CANDIDATE→APPROVED 승격, CVE-2026-82049 clock observer 수용 |
+| **G1** 플랫폼 기반 | 🟡 PARTIAL — BLOCKED-ON-OPERATOR | 실행 가능 항목 실행 완료(runbook §2/§3/§4/§8): rescans → redis/opensearch/elasticmq **338 blocking finding 신규 발견(미처분)**, pip-audit 정상화(venv drift → clean), bridge mTLS 1 passed, live smoke 2 passed. operator 소유 잔존: CVE-2026-85091 예외/알파인 refresh, derived postgres CANDIDATE→APPROVED, CVE-2026-82049 수용, 신규 338건 처분, Keychain ACL/secret rotation/launchd 루트 검증 |
 | **G2** service/store/worker | 🔴 미통과 | F01/F02/F05/F07 = REM-2 worker pipeline. REM-2 완료 주장은 폐기됨(아래). corrective unit이 rewrite 대상 |
 | **G3** lifecycle/edge | 🔴 미통과 | F04/F09/F10 = REM-3 자체 게이트. `purge_registry` migration 부재, purge worker 부재로 실행 불가 |
 | **G4** 통합/browser/compatibility | ⛔ **BLOCKED-ON-REM-4** | F03/F11/F12 corpus report + no-match/저하가 REM-4 산출. 통과 불가 |
@@ -2004,7 +2004,7 @@ platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed*
 | backend pytest | ✅ 664 passed / 9 skipped |
 | backend pytest(실 Postgres 게이트) | ✅ F04 late-write guard + purge lock 2 passed (Colima 15432) |
 | ops ruff | ✅ clean |
-| ops pytest | ✅ 341 passed / 5 skipped |
+| ops pytest | ✅ 342 passed / 5 skipped |
 | platform_integrity pytest(전체 extra) | ✅ 493 passed / 185 skipped |
 | frontend `tsc --noEmit` | ✅ 0 errors |
 | frontend ESLint | ✅ 0 errors / 0 warnings |
@@ -2014,3 +2014,20 @@ platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed*
 CVE-2026-85091 예외/알파인 refresh, derived postgres CANDIDATE→APPROVED, CVE-2026-82049 수용,
 MinIO UNOBTAINABLE, launchctl 루트/Keychain ACL/bridge mTLS (defect 5는 종결됨).
 **G4/G5는 여전히 ⛔ BLOCKED-ON-REM-4.**
+
+---
+
+## REM-3 Corrective — Phase 5 operator runbook, agent-runnable §2/§3/§4/§8 실행 (2026-10-01)
+
+runbook `operations/g1-operator-runbook.md` 작성 후, sudo/결정 불필요 구간을 실행했다.
+
+| § | 작업 | 결과 |
+|---|---|---|
+| §2 | redis/opensearch/elasticmq rescan (Syft 1.52.0/Grype 0.119.0, digest-verified) | ✅ 실행 — **redis 82 / opensearch 204 / elasticmq 50 = 338 blocking (미처분)**; sbom/report hash·observedAt을 `sbom-targets.json`/`cve-disposition.md`에 기록 |
+| §3 | pip-audit SIGABRT | ✅ **SIGABRT 재현 안 됨** — tool 정상. 지적된 vuln은 전부 venv drift; lock은 이미 패치 버전. ingestion `uv sync` + backend 대상 패키지 정렬 → 4개 venv 전부 clean |
+| §4 | derived postgres bridge mTLS | ✅ bridge mTLS **1 passed** (full client-cert 로그인 성공, wrong-CA 거부) |
+| §8 | Colima live smoke | ✅ `up.sh` 5 서비스 healthy; F04 live leg **2 passed**; 객체파기는 production-only 명시 |
+| §1/§5/§6/§7 | sign-off·Keychain ACL·secret rotation·launchd root | ⏳ operator 전용 (미실행) |
+
+**게이트 영향**: G1은 여전히 🟡 PARTIAL. 새 blocker 추가 — rescan이 **338건 blocking finding**을
+드러냈고 전부 처분이 필요하다. G4/G5는 ⛔ BLOCKED-ON-REM-4 유지.

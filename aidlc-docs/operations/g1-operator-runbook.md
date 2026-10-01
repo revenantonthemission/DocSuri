@@ -144,15 +144,17 @@ uv run --directory ops python platform-integrity/scan_sbom.py \
 ## 4. Docker bridge mTLS validation (derived postgres)
 
 The loopback mTLS harness is `platform_integrity/tests/test_postgres_mtls.py` (gated on
-`REM1_TEST_PG_DSN` + `REM1_TEST_CONTAINER`). It currently proves **loopback**; G1 asks for the
-endpoint validated **over the host bridge**.
+`REM1_TEST_PG_DSN` + `REM1_TEST_CONTAINER`). **The fixture hard-codes `CONTAINER ==
+"rem1-test-pg-20260924"`, host `127.0.0.1`, port `15439`, database `rem1_test`** — use exactly those
+names, not an arbitrary container name. It currently proves **loopback**; G1 asks for the endpoint
+validated **over the host bridge** (the published port traverses the bridge).
 
 ```sh
 # 1) user-defined bridge (not the default bridge), so DNS/network behaviour matches production-ish use
 docker network create docsuri-g1-bridge
 
-# 2) run the derived image on that network with a published port
-docker run -d --name rem1-bridge-pg --network docsuri-g1-bridge \
+# 2) run the derived image on that network with the pinned digest + exact DSN the fixture asserts
+docker run -d --name rem1-test-pg-20260924 --network docsuri-g1-bridge \
   -e POSTGRES_DB=rem1_test -e POSTGRES_USER=rem1_test -e POSTGRES_PASSWORD=rem1_test_local \
   -p 127.0.0.1:15439:5432 \
   docsuri/postgres-alpine-16.15-nosu@sha256:ccbe2a110992a5b602afdd4a28a45f184de67308d4e80284c0b2329a10cb0e2e
@@ -160,13 +162,20 @@ docker run -d --name rem1-bridge-pg --network docsuri-g1-bridge \
 # 3) run the harness against that container (it installs its own CA/server cert and HBA, via docker cp)
 #    note: the platform_integrity suite runs from its own project dir
 REM1_TEST_PG_DSN='postgresql://rem1_test:rem1_test_local@127.0.0.1:15439/rem1_test' \
-REM1_TEST_CONTAINER=rem1-bridge-pg \
+REM1_TEST_CONTAINER=rem1-test-pg-20260924 \
   uv run --directory platform_integrity --extra api --extra postgres python -m pytest \
   tests/test_postgres_mtls.py -v
 
 # 4) teardown
-docker rm -f rem1-bridge-pg && docker network rm docsuri-g1-bridge
+docker rm -f rem1-test-pg-20260924 && docker network rm docsuri-g1-bridge
 ```
+
+**Run 2026-10-01 (agent):** network `docsuri-g1-bridge` (driver `bridge`,
+id `ac30303185f6b44a1ef69bc461077ed652d4db7062f5843324c29987ca7a3062`); container
+`rem1-test-pg-20260924` attached at `172.19.0.2` on the pinned image digest
+`docsuri/postgres-alpine-16.15-nosu@sha256:ccbe2a110992…0e2e`. Harness result:
+`tests/test_postgres_mtls.py` → **1 passed** (full client-certificate login succeeds; wrong-CA is
+denied). Exited container `rem1-test-pg-20260924` was renamed `…-bak` to free the pinned name.
 
 - Success = real TLS handshake, `cert clientname` → `session_user`, read-only transaction enforced,
   wrong-CA rejected, over the bridge network with the published port.
@@ -316,6 +325,13 @@ DOCSURI_TEST_PG_DSN='postgresql://rem3_smoke:rem3_smoke_local_only@127.0.0.1:<pg
   off-host object purge.
 - **Evidence to record**: `up.sh` port block, the pytest result, and an explicit note that object-store
   purge is production-only.
+
+**Run 2026-10-01 (agent):** `up.sh` brought the Colima stack up, all five services healthy. Ports:
+PG `15432`, Redis `16379`, OpenSearch `19200`, ElasticMQ `19324`, SeaweedFS S3 `19000`
+(ports shifted for OrbStack shadowing). F04 live leg
+`tests/accounts/test_purge_real_postgres.py` → **2 passed** against
+`postgresql://rem3_smoke:…@127.0.0.1:15432/rem3_smoke`. **Object-store purge remains production-only**
+(SeaweedFS S3 auth unwired locally); this run does **not** prove off-host object purge.
 
 ---
 
