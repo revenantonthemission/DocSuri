@@ -7871,3 +7871,69 @@ threshold, i.e. an estimate rather than a measurement of the input.
 G4/G5 remain BLOCKED-ON-REM-4. Next is Phase 4 (F07 same-origin asset serving, items 17–19).
 
 ---
+
+## [REM-2 Corrective — Phase 4 (F07) Code Generation]
+**Timestamp**: 2026-10-01T16:30:00Z
+**User Input**: "Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed."
+**AI Response**: Executed Phase 4 (F07 same-origin asset delivery) end to end — red-first regressions, backend removal of presigning + new same-origin delivery endpoint, frontend `/bff` binary image relay + viewer rewrite + CSP tightening, contract comment alignment, full verification, plan/state/audit update.
+**Context**: REM-2 corrective, items 4 + 17 + 18 + 19. D5 satisfied (failing regression first). Decisions D1–D6 all A.
+
+**Defect (SECURITY-08 / FR-17):** the figure/table manifest handed the browser a presigned
+object-storage URL, and the browser fetched the bytes straight from storage. That leaked the internal
+object key and the storage host (MinIO locally) into the client and every cache/log/referrer along
+with it, moved the fetch outside every check the service makes (a 600s presign TTL froze the
+auth/license decision that produced it), and required a standing CSP allowlist for the storage host.
+
+**Fix — backend** (presign *removed*, not deprecated):
+- `domain/models.py`: added `AssetObject(payload: bytes, content_type: str)`; `AssetRef.url` is
+  documented as a same-origin path.
+- `ports/ports.py`: `AssetReadPort.presign` → `get_asset_object(paper_id, version, asset_id)`; the
+  manifest lookup is the object re-check.
+- `adapters/rds_assets.py`: parameterized `SELECT object_ref ... WHERE paper_id=%s AND version=%s
+  AND asset_id=%s AND type IN ('figure','table')`, then S3 `get_object` inside this process; content
+  type from the extension; `object_ref` never leaves the module.
+- `service/orchestrator.py`: `list_assets` builds each `url` from the ids the caller already has
+  (`/api/papers/<paper>/assets/<asset>`, percent-encoded); new `get_asset_object` delegate.
+- `api/router.py`: `GET /api/papers/{paper_id}/assets/{asset_id}` re-runs, in order — principal
+  (401) → private `userdoc:` namespace (404, *before* the license gate so it is not resolvable on a
+  deployment with assets disabled) → license gate → manifest row (404) → store fault (503 generic).
+  No redirect; `cache-control: private, max-age=60`; `x-content-type-options: nosniff`.
+
+**Fix — frontend**:
+- `lib/api/assetSrc.ts` (new) `browserAssetSrc()` prefixes the canonical delivery path with `/bff`;
+  `components/DocModelViewer.tsx` uses it at all four `<img>` sites (formula crop, figure, zoom,
+  table), so no `asset.url` reaches an `<img>` directly.
+- `app/bff/[...path]/route.ts`: binary image relay for `/api/papers/<id>/assets/<assetId>`.
+  `Transport` JSON-parses every response (an image body becomes `null` → broken image), so this hop
+  fetches directly; only a **200 with an `image/*` content type** is relayed — a 3xx would put the
+  storage URL back in a `Location` header, and non-image/network failures degrade to 404.
+- `middleware.ts`: `img-src 'self' data:` (both S3 allowlist entries removed).
+- `types/wire/dtos.ts` + `lib/api/apiClient.ts`: presigned-URL contract comments updated to the
+  same-origin delivery contract.
+
+**Evidence (all green, project-local runners):**
+- `backend`: new `modules/summarization/tests/test_asset_delivery.py` → **17 passed**; full suite
+  **473 passed, 7 skipped**; `ruff check modules/summarization` → clean.
+- Two pre-existing tests that **pinned the unsafe behavior as intended** were rewritten to assert the
+  safe contract instead: `test_reader_lists_presigns` → `test_reader_lists_manifest_rows`,
+  `test_orchestrator_skips_non_presignable_assets` →
+  `test_orchestrator_builds_same_origin_urls_and_never_leaks_the_object_ref`.
+- `ingestion`: **323 passed, 1 skipped**. `shared`: **145 passed**.
+- `frontend`: new `test/assetDelivery.test.ts` → **8 passed**; full suite **356 passed / 59 files**;
+  `tsc --noEmit` clean; `eslint` clean on every changed file (the 4 remaining eslint errors — `e2e/*`
+  parserOptions, `next-env.d.ts`, `dtos.ts:181 PublicWire {}` — are byte-identical at HEAD and
+  unrelated to this change).
+
+**Residual recorded as plan item 17a (does not block G2)**: private userdoc assets have no manifest
+at all — U1 extracts assets only from arXiv (`ArxivAssetSource`) and `paper_asset` has no `owner_id`
+column. A private asset route therefore has nothing to scope against yet; the private namespace is
+refused outright until an owner column and a private asset writer exist (strictly safer in the
+meantime).
+
+**Gate impact**: **G2 remains 🔴** — RJ-AC (Phase 5 job contract) is the only REM-2 defect left.
+G1 🟡 PARTIAL (operator), G3 🟡 PARTIAL (operator F09/F10), G4/G5 ⛔ BLOCKED-ON-REM-4 unchanged.
+
+**Context**: REM-2 corrective Phase 4; plan items 4/17/18/19 and the F01/F02/F05/F07 DoD rows marked
+complete; next is Phase 5 (RJ-AC01–08 + AC12 durable job contract).
+
+---

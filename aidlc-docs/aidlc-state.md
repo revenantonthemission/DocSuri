@@ -2114,3 +2114,57 @@ G3 🟡 PARTIAL(operator F09/F10), G4/G5 ⛔ BLOCKED-ON-REM-4 **변경 없음**.
 → resiliency → frontend 배선 → 최종 게이트.
 
 **REM-2 상태 정정**: 🔴 미통과 유지. F01/F02/F05 세 결함은 **종결** — F07/RJ-AC만 잔존.
+
+---
+
+## REM-2 Corrective — Phase 4 (F07 same-origin asset delivery) complete (2026-10-01)
+
+**결함**: figure/table manifest가 브라우저에 **presigned S3/MinIO GET URL**을 넘기고, 브라우저가
+storage에서 직접 받던 구조. 그 결과 ① 내부 object key(`assets/<paper>/v<n>/<assetId>.webp`)와
+storage host(`AWS_ENDPOINT_URL_S3` = 로컬 MinIO)가 클라이언트에 노출되고 로그/referrer/캐시에 남았고,
+② fetch가 모든 검사 밖에서 일어나 manifest 생성 시점의 결정(인증·라이선스·소유)이 600초 TTL 동안
+그대로 유효했고,③ bytes를 인라인으로 주려면 CSP가 storage host를 allowlist해야 해서 이미지 정책에
+상시 구멍이 생겼다.
+
+**수정(backend)**: presign을 **삭제**(deprecated가 아니라 제거)하고 동일 출처로 전달.
+`AssetObject(payload, content_type)` DTO 추가 · `AssetReadPort.presign` → `get_asset_object(paper,
+version, asset_id)` · `RdsS3AssetReader`가 manifest에서 (paper, version, asset_id) **파라미터화
+조회** 후 서버 내부에서 S3 `get_object` · orchestrator `list_assets`는 caller가 이미 가진 id로만
+`url`(percent-encoded `/api/papers/<id>/assets/<assetId>`)을 생성 · 신규
+`GET /api/papers/{paper_id}/assets/{asset_id}`가 전달 직전에 principal(401) → private `userdoc:`
+네임스페이스(404, 라이선스 게이트 **이전**) → 라이선스 게이트 재확인 → manifest 행 재확인(404) →
+store 장애(503, 일반 메시지)를 순서대로 다시 수행. `orchestrator.get_asset_object` 위임 추가.
+리다이렉트 미전달 · `cache-control: private, max-age=60` + `x-content-type-options: nosniff`.
+
+**수정(frontend)**: `browserAssetSrc()`(`frontend/lib/api/assetSrc.ts`)로 모든 `<img src>`를
+`/bff` + 전달 경로로 전환(`DocModelViewer` 4곳: formula crop·figure·zoom·table) · CSP
+`img-src 'self' data:`에서 S3 allowlist 제거(`middleware.ts`) · `app/bff/[...path]/route.ts`에
+**바이너리 이미지 relay** 추가 — `Transport`가 모든 응답을 JSON 파싱하므로(image body면 null이 되어
+깨진 이미지가 됨) 이 홉만 직접 fetch하고, 200 + `image/*`만 통과시키며 3xx(Location에 storage
+URL이 남음)·non-image·네트워크 실패는 404 degrade. wire DTO 주석/`apiClient` 주석을 presigned →
+same-origin 계약으로 갱신.
+
+**회귀 (D5, red-first)**: `backend/modules/summarization/tests/test_asset_delivery.py` **17 passed**
+(키/서명/버킷 노출 없음 · route 존재·401/404/503 · URL percent-encoding · 이중요청 시그니처 없음 ·
+라이선스 게이트 전달 시점 재확인 · private 404가 게이트보다 먼저 · store 장애 503 · 리다이렉트 없음
+· reader에 presign 없음 · S3 호출은 manifest 조회 후) + `frontend/test/assetDelivery.test.ts`
+**8 passed** (바이트 원본 통과 · 서버측 쿠키만 · gateway URL 비노출 · 3xx 미추종 · non-image 거부 ·
+404 relay · CSP/viewer에 storage host 없음). 기존에 **위험 동작을 의도로 고정**하던 두 테스트는
+목적에 맞게 개정(`test_reader_lists_presigns` → `test_reader_lists_manifest_rows`,
+`test_orchestrator_skips_non_presignable_assets` → `test_orchestrator_builds_same_origin_urls_and_never_leaks_the_object_ref`).
+
+**검증**: backend **473 passed / 7 skipped** · summarization `ruff` clean · ingestion **323 passed /
+1 skipped** · shared **145 passed** · frontend 신규 8 passed + 전체 **356 passed / 59 files** ·
+`tsc --noEmit` clean · eslint clean(변경 파일; e2e/`next-env.d.ts`/dtos.ts:181 `PublicWire {}` 오류는
+HEAD에도 동일하게 존재하는 기존 항목).
+
+**잔존(plan item 17a, G2 비차단)**: private userdoc 에셋은 manifest 자체가 없다 — U1은 arXiv
+(`ArxivAssetSource`)에서만 추출하고 `paper_asset`에 `owner_id`가 없다. 따라서 private route가
+소유 기준으로 스코프될 대상이 아직 존재하지 않으며, 그전까지 private 네임스페이스는 아예 거부된다
+(이론상 더 안전). private figure를 서비스하려면 owner 컬럼 + private asset writer가 선행되어야 한다.
+
+**게이트 영향**: **G2는 여전히 🔴** — RJ-AC(Phase 5 job contract)만 잔존. G1 🟡 PARTIAL(operator),
+G3 🟡 PARTIAL(operator F09/F10), G4/G5 ⛔ BLOCKED-ON-REM-4 **변경 없음**.
+
+**다음 단계**: REM-2 corrective Phase 5(RJ-AC01–08 durable job contract) → resiliency/readiness →
+frontend 배선 → 최종 게이트.

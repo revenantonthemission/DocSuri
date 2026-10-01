@@ -13,6 +13,7 @@ from typing import Protocol, runtime_checkable
 from docsuri_shared.dtos import DocModel
 
 from ..domain.models import (
+    AssetObject,
     Glossary,
     RefinedSource,
     StoredAsset,
@@ -138,15 +139,23 @@ class SummaryJobQueuePort(Protocol):
 @runtime_checkable
 class AssetReadPort(Protocol):
     """FR-17 read side: list a paper's figure/table manifest (paper_asset, RDS, read-only —
-    U1 is the single writer) and presign its S3 object refs (BR-S15). Read capability only."""
+    U1 is the single writer) and resolve an asset's bytes server-side (BR-S15).
+
+    REM-2 F07: the port no longer offers presigning. A signed GET URL put the object key and the
+    storage host into a caller-visible string and moved the fetch outside every authorization check
+    this process can make, so delivery resolves the object itself and returns the bytes.
+    """
 
     def list_assets(self, paper_id: str, version: int) -> Sequence[StoredAsset]:
         """Return stored asset metadata in display order (ordinal). Empty when none."""
         ...
 
-    def presign(self, object_ref: str) -> str | None:
-        """Return a short-lived signed GET URL for an S3 object ref, or ``None`` for a
-        non-S3 ref so the caller skips it — the raw object_ref is never exposed (SEC-9)."""
+    def get_asset_object(self, paper_id: str, version: int, asset_id: str) -> AssetObject | None:
+        """Resolve one manifest asset's bytes, or ``None`` when it is not in the manifest.
+
+        The manifest lookup is the **object re-check**: an ``asset_id`` alone authorizes nothing,
+        so the row must exist for this exact (paper, version, asset) triple.
+        """
         ...
 
 

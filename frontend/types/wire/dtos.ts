@@ -573,7 +573,7 @@ export interface DocmodelFigureBlock {
   anchorLabel?: string;
 }
 /**
- * A REFERENCE to a stored image asset — assetId, not pixels and not an object_ref. The read API (getDocModel / GET /api/papers/{id}/assets) issues a short-lived signed URL at read time; the doc-model artifact never stores the URL or object_ref (SEC-9). Mirrors the existing AssetRef in summarization.schema.json minus the runtime-only `url`. Trace: FR-17, SEC-9, D8/D5.
+ * A REFERENCE to a stored image asset — assetId, not pixels and not an object_ref. The read API (GET /api/papers/{id}/assets) returns a same-origin delivery path at read time; the doc-model artifact never stores the URL or object_ref (SEC-9, REM-2 F07). Mirrors the existing AssetRef in summarization.schema.json minus the runtime-only `url`. Trace: FR-17, SEC-9, D8/D5.
  *
  * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "DocmodelAssetRef".
@@ -1949,7 +1949,7 @@ export interface SummarizationSourceUnavailableDTO {
   reason: string;
 }
 /**
- * FR-17 figure/table view-model (display-only). Produced by U1 ingestion (paper_asset), presigned by U7. SEC-9: a short-lived signed `url` only — the S3 object_ref and internal manifest columns are NEVER exposed.
+ * FR-17 figure/table view-model (display-only). Produced by U1 ingestion (paper_asset), served by U7's same-origin delivery endpoint. SEC-9: a delivery `url` only — the S3 object_ref, bucket, storage host and internal manifest columns are NEVER exposed (REM-2 F07 replaced the short-lived presigned URL, which leaked the object key and outlived the decision behind it).
  *
  * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "SummarizationAssetRef".
@@ -1976,7 +1976,7 @@ export interface SummarizationAssetRef {
    */
   sourceMode: "structured" | "page-crop";
   /**
-   * Short-lived signed GET URL (SEC-9). Trace: FR-17, SEC-9.
+   * Same-origin delivery path (`/api/papers/<paperId>/assets/<assetId>`), resolved to bytes server-side (SEC-9). The browser must load it through the same-origin BFF (`/bff` + this path) so the httpOnly session cookie is sent. Trace: FR-17, SEC-9, REM-2 F07.
    */
   url: string;
   /**

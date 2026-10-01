@@ -420,15 +420,33 @@ class StoredAsset:
 
 
 @dataclass(frozen=True, slots=True)
+class AssetObject:
+    """An asset's bytes, resolved server-side and delivered over the same origin (REM-2 F07).
+
+    The payload exists only inside this process boundary: it is what makes the delivery endpoint
+    able to re-run every check at the moment the bytes are handed over, instead of trusting a URL
+    whose decision was made up to ten minutes earlier.
+    """
+
+    payload: bytes
+    content_type: str
+
+
+@dataclass(frozen=True, slots=True)
 class AssetRef:
-    """Public asset view-model — a short-lived signed ``url`` only (SEC-9, BR-S15)."""
+    """Public asset view-model — a **same-origin** delivery path only (SEC-9, BR-S15, F07).
+
+    ``url`` names this application's own endpoint, never object storage: it carries no object key,
+    no bucket, and no host. A signed URL would hand the caller the internal layout and, once
+    issued, would keep working after the decision behind it stopped applying.
+    """
 
     asset_id: str
     type: str
     ordinal: int
     caption: str
     source_mode: str
-    url: str  # presigned; object_ref/internal meta never exposed
+    url: str  # same-origin path; object_ref/internal meta never exposed
     page_ref: int | None = None
     bbox: list | None = None
 

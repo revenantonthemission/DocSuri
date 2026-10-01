@@ -473,7 +473,7 @@ export class ApiClient {
   }
 
   /** Structured doc-model for the rich view (D4; replaces the old full-text viewer). OA license-gated.
-   * url-free (SEC-9) — figures join the /assets signed urls by assetId. On a cache miss the
+   * url-free (SEC-9) — figures join the /assets delivery paths by assetId. On a cache miss the
    * backend reads-only (lazy build is a separate step); a not-yet-built artifact → source_unavailable. */
   async getDocModel(req: DocModelRequest): Promise<DocModelOutcome> {
     const path = `/api/papers/${encodeURIComponent(req.paperId)}/doc-model?version=${encodeURIComponent(
@@ -487,7 +487,7 @@ export class ApiClient {
   }
 
   /** Figure/table assets for the detail/viewer (FR-17, display-only; OA license-gated).
-   * Returns signed URLs only (SEC-9). Independent of the full-text viewer. */
+   * Returns same-origin delivery paths only (SEC-9) — load them via browserAssetSrc(). */
   async getAssets(paperId: string, version: number): Promise<AssetsOutcome> {
     const path = `/api/papers/${encodeURIComponent(paperId)}/assets?version=${encodeURIComponent(
       String(version),

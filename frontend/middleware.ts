@@ -34,9 +34,10 @@ function buildCsp(nonce: string): string {
     `script-src ${buildScriptSrc(nonce)}`,
     // Styling nonce is out of scope — style-src keeps 'unsafe-inline'.
     "style-src 'self' 'unsafe-inline'",
-    // Figure/table images are short-lived presigned S3 GET URLs (SEC-9): the object host must be
-    // whitelisted or the browser blocks them (broken-image icons). Scoped to the region's S3 hosts.
-    "img-src 'self' data: https://*.s3.ap-northeast-2.amazonaws.com https://s3.ap-northeast-2.amazonaws.com",
+    // Figure/table images are served from the same origin (REM-2 F07 / SECURITY-08). The
+    // delivery endpoint reads from object storage server-side and streams bytes to the
+    // browser, so no presigned object-storage host needs to be allowed here.
+    "img-src 'self' data:",
     "connect-src 'self' https://www.google.com/recaptcha/",
     "frame-src 'self' https://www.google.com/recaptcha/",
     "object-src 'none'",

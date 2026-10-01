@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import replace
+from urllib.parse import quote
 
 from docsuri_shared.docmodel_contract import DOCMODEL_PARSER_VERSION
 from docsuri_shared.dtos import DocModel
@@ -90,6 +91,15 @@ def _docmodel_generation_current() -> str:
     """
     return _docmodel_generation(DOCMODEL_PARSER_VERSION)
 
+
+
+def _asset_delivery_path(paper_id: str, asset_id: str) -> str:
+    """The same-origin path that serves one asset's bytes (REM-2 F07).
+
+    Percent-encoded: the ids are caller-supplied, and an unencoded ``userdoc:``-shaped value (or a
+    stray ``/``) must not be able to reshape the path it is spliced into.
+    """
+    return f"/api/papers/{quote(paper_id, safe='')}/assets/{quote(asset_id, safe='')}"
 
 
 def _is_cost_degraded(budget) -> bool:
@@ -457,31 +467,40 @@ class SummarizationOrchestrationService:
 
     # --- figure/table assets (FR-17, BR-S15) ---------------------------------
     def list_assets(self, paper_id: str, version: int) -> list[AssetRef] | None:
-        """Read the paper's asset manifest and presign each object ref (SEC-9: only the
-        signed URL leaves U7). None when the reader is not configured; OA license gating
-        is applied at the router (parallel to full_text)."""
+        """Read the paper's asset manifest, each entry pointing at the same-origin delivery
+        endpoint (SEC-9/F07). None when the reader is not configured; OA license gating is applied
+        at the router (parallel to full_text).
+
+        The ``url`` is built here from the ids the caller already has (paper + asset), so it cannot
+        carry the object key or the storage host: a presigned URL would (SECURITY-08). Delivery
+        re-runs the checks rather than relying on this manifest entry.
+        """
         if self._asset_reader is None:
             return None
-        refs: list[AssetRef] = []
-        for a in self._asset_reader.list_assets(paper_id, version):
-            url = self._asset_reader.presign(a.object_ref)
-            if url is None:
-                # Non-presignable ref (not an S3 URI): skip rather than leak the raw
-                # object_ref to the response (SEC-9). One bad row drops only its asset.
-                continue
-            refs.append(
-                AssetRef(
-                    asset_id=a.asset_id,
-                    type=a.type,
-                    ordinal=a.ordinal,
-                    caption=a.caption,
-                    source_mode=a.source_mode,
-                    url=url,
-                    page_ref=a.page_ref,
-                    bbox=a.bbox,
-                )
+        return [
+            AssetRef(
+                asset_id=a.asset_id,
+                type=a.type,
+                ordinal=a.ordinal,
+                caption=a.caption,
+                source_mode=a.source_mode,
+                url=_asset_delivery_path(paper_id, a.asset_id),
+                page_ref=a.page_ref,
+                bbox=a.bbox,
             )
-        return refs
+            for a in self._asset_reader.list_assets(paper_id, version)
+        ]
+
+    def get_asset_object(self, paper_id: str, version: int, asset_id: str):
+        """Resolve one manifest asset's bytes for same-origin delivery (REM-2 F07).
+
+        ``None`` when the reader is not configured or the (paper, version, asset) row is absent —
+        the manifest lookup inside the reader is the object re-check, so an asset id on its own
+        never fetches anything.
+        """
+        if self._asset_reader is None:
+            return None
+        return self._asset_reader.get_asset_object(paper_id, version, asset_id)
 
     # --- helpers -------------------------------------------------------------
     def _emit(self, name: str, value: float, request, *, verdict: str | None = None) -> None:

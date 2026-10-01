@@ -149,6 +149,12 @@ class _FakeCursor:
 
     def execute(self, sql, params):
         self.executed = (sql, params)
+    def fetchall(self):
+        return self._rows
+
+    def fetchone(self):
+        return self._rows[0] if self._rows else None
+
 
     def fetchall(self):
         return self._rows
@@ -188,25 +194,26 @@ def test_list_assets_query_excludes_formula_crops() -> None:
     assert "type IN ('figure', 'table')" in sql
 
 
-def test_reader_lists_and_presigns() -> None:
+def test_reader_lists_manifest_rows() -> None:
+    # REM-2 F07 replaced presigning with server-side resolution: this test used to assert the
+    # presigned URL SHAPE (``https://signed/assets/<paper>/v1/a0.webp``) — i.e. it pinned the
+    # object-key leak as intended behavior. It now asserts the manifest row keeps the object_ref
+    # internal while listing. Delivery is covered by test_asset_delivery.py.
     rows = [
         ("2401.00001:v1:figure:0", "figure", 0, "Figure 1", "page-crop",
          "s3://bkt/assets/2401.00001/v1/a0.webp", 2, None),
     ]
     s3 = _FakeS3()
-    reader = RdsS3AssetReader(connection=_FakeConn(rows), s3_client=s3, signed_url_ttl_seconds=300)
+    reader = RdsS3AssetReader(connection=_FakeConn(rows), s3_client=s3)
     assets = list(reader.list_assets("2401.00001", 1))
     assert len(assets) == 1
     a = assets[0]
-    assert isinstance(a, StoredAsset) and a.object_ref.startswith("s3://")  # internal
-    url = reader.presign(a.object_ref)
-    assert url.startswith("https://signed/assets/2401.00001/v1/a0.webp")
-    assert s3.calls[0]["params"] == {"Bucket": "bkt", "Key": "assets/2401.00001/v1/a0.webp"}
-    assert s3.calls[0]["ttl"] == 300
+    assert isinstance(a, StoredAsset) and a.object_ref.startswith("s3://")  # internal, never exposed
+    assert s3.calls == [], "listing a manifest must not touch object storage"
 
 
 class _PartialFakeReader:
-    """Lists two assets; only the s3:// one is presignable (the other returns None)."""
+    """Lists two assets: one with a real S3 ref, one whose ref is an internal path."""
 
     def list_assets(self, paper_id: str, version: int):
         return [
@@ -214,17 +221,21 @@ class _PartialFakeReader:
             StoredAsset("a2", "table", 1, "T1", "page-crop", "/internal/leak.webp", 2, None),
         ]
 
-    def presign(self, object_ref: str):
-        return f"https://signed/{object_ref}" if object_ref.startswith("s3://") else None
+    def get_asset_object(self, paper_id: str, version: int, asset_id: str):
+        # The non-S3 ref resolves to nothing (SEC-9: the raw internal path never leaves the reader).
+        return b"bytes" if asset_id == "a1" else None
 
 
-def test_orchestrator_skips_non_presignable_assets() -> None:
-    # SEC-9: a row whose object_ref can't be presigned is dropped, not leaked as a raw url.
+def test_orchestrator_builds_same_origin_urls_and_never_leaks_the_object_ref() -> None:
+    # SEC-9/F07: every asset is listed, and each ``url`` is a same-origin path — no object key, no
+    # bucket, no storage host. The internal ref behind an asset is resolved only at delivery time.
     orch = SummarizationOrchestrationService.__new__(SummarizationOrchestrationService)
     orch._asset_reader = _PartialFakeReader()
     refs = orch.list_assets("2401.00001", 1)
-    assert [r.asset_id for r in refs] == ["a1"]  # a2 dropped (non-s3 ref)
-    assert all(r.url.startswith("https://") for r in refs)
+    assert [r.asset_id for r in refs] == ["a1", "a2"]
+    for r in refs:
+        assert r.url.startswith("/api/papers/2401.00001/assets/"), r.url
+        assert "s3://" not in r.url and ".webp" not in r.url
 
 
 def test_split_s3_ref() -> None:

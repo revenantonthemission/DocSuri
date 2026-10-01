@@ -24,6 +24,9 @@ import {
 // auth-injection is tracked separately (backend coordination zone, system-infra step).
 
 const SSE_PROXY_TIMEOUT_MS = 15000;
+// asset image relay(REM-2 F07): 개당 수십~수백 KB webp라 기본값으로 충분하고,
+// 게이트웨이가 응답하면 로컬로 끝나므로(외부 S3로 나가는 홉이 아님) 더 길게 잡을 이유가 없다.
+const ASSET_IMAGE_TIMEOUT_MS = 10000;
 // evidence 턴(OpenSearch 검색 + 다건 S3 DocModel 로드 + Bedrock 추출)은 동기로 30~90초
 // 걸린다 — HttpTransport 기본 10초로는 백엔드가 정상 완료돼도 이 서버->게이트웨이 홉이
 // 먼저 끊겨 504로 보인다(ApiClient의 90초 타임아웃과는 별개 레이어, PR #338 후속 발견).
@@ -186,9 +189,86 @@ async function proxyEventStream(
   }
 }
 
+// figure/table 원본 이미지(REM-2 F07 / SECURITY-8) — `/api/papers/<id>/assets/<assetId>`.
+// Transport는 응답 본문을 항상 JSON으로 파싱하므로(이미지 body면 null이 된다) 이 홉만 직접 fetch한다.
+function isAssetImageRequest(method: TransportMethod, path: string[]): boolean {
+  return (
+    method === 'GET' &&
+    path.length === 5 &&
+    path[0] === 'api' &&
+    path[1] === 'papers' &&
+    path[3] === 'assets'
+  );
+}
+
+function notFoundImage(): NextResponse {
+  // 이미지 실패는 404로 접는다 — 뷰어 쪽이 "이미지 없음"으로 자연스럽게 degrade하고,
+  // 게이트웨이 주소·본문·Set-Cookie 같은 내부 정보가 5xx 본문으로 새어나가지 않는다.
+  return new NextResponse(null, { status: 404, headers: { 'cache-control': 'no-store' } });
+}
+
+// U7이 object storage를 **서버에서** 읽어 돌려주는 같은 출처 이미지 relay.
+// presigned URL은 더 이상 어디에도 등장하지 않으므로 브라우저는 object store를 알 수 없다.
+async function proxyAssetImage(req: NextRequest, upstreamPath: string): Promise<NextResponse> {
+  const baseUrl = process.env.DOCSURI_GATEWAY_URL;
+  if (!baseUrl) {
+    if (process.env.NODE_ENV === 'production' && process.env.DOCSURI_BFF_ALLOW_MOCK !== '1') {
+      return NextResponse.json(
+        { message: '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' },
+        { status: 503 },
+      );
+    }
+    return notFoundImage();
+  }
+  const headers = new Headers({ accept: 'image/*' });
+  const cookie = req.headers.get('cookie');
+  if (cookie) headers.set('cookie', cookie);
+
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}${upstreamPath}`, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+      signal: AbortSignal.timeout(ASSET_IMAGE_TIMEOUT_MS),
+    });
+  } catch {
+    // 게이트웨이 응답 실패(네트워크/타임아웃). 이미지는 본체 표시에 부가적이므로
+    // throw 대신 404 degrade — SSE 홉과 달리 사용자에게 오류 UI를 띄우지 않는다.
+    return notFoundImage();
+  }
+  // 3xx를 그대로 넘기면 Location이 object store URL이 되어 브라우저가 그 주소를 알게 된다.
+  // 리다이렉트를 따라가는 fetch도 마찬가지 — 업스트림이 200 이미지일 때만 통과시킨다.
+  if (res.status !== 200) return notFoundImage();
+  const contentType = res.headers.get('content-type')?.split(';', 1)[0].trim() ?? '';
+  // <img> 컨텍스트에 JSON/HTML이 들어오면 깨진 이미지거나 content-type confusion이 된다.
+  if (!contentType.startsWith('image/')) return notFoundImage();
+
+  const out = new NextResponse(res.body, {
+    status: 200,
+    headers: {
+      'content-type': contentType,
+      'cache-control': res.headers.get('cache-control') ?? 'private, no-store',
+      // 스니핑으로 이미지가 아닌 것이 <img>로 렌더링되는 걸 막는다.
+      'x-content-type-options': 'nosniff',
+    },
+  });
+  const getSetCookie = (res.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie;
+  const cookies = getSetCookie?.call(res.headers) ?? [];
+  const fallbackCookie = res.headers.get('set-cookie');
+  for (const setCookie of cookies.length ? cookies : fallbackCookie ? [fallbackCookie] : []) {
+    out.headers.append('set-cookie', setCookie);
+  }
+  return out;
+}
+
 async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {
   const method = req.method as TransportMethod;
   const upstreamPath = `/${path.join('/')}${req.nextUrl.search}`;
+
+  if (isAssetImageRequest(method, path)) {
+    return proxyAssetImage(req, upstreamPath);
+  }
 
   if (isNoveltyEventStream(method, path)) {
     return proxyEventStream(req, upstreamPath);

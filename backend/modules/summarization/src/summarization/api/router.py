@@ -12,7 +12,7 @@ from typing import Any
 
 from docsuri_shared.private_docs import is_private_paper_id
 from fastapi import APIRouter, Body, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from ..adapters._paper_ref import paper_version
 from ..api.gateway_seam import run_summarization
@@ -159,8 +159,10 @@ def build_router(
     @router.get("/api/papers/{paper_id}/assets")
     def paper_assets(request: Request, paper_id: str) -> Any:
         """FR-17 figure/table manifest for the detail/viewer. OA-license-gated like
-        full-text (BR-SF-11): disabled by default → ``license_unavailable``. Returns
-        signed URLs only (SEC-9). Independent of the full-text viewer (D1)."""
+        full-text (BR-SF-11): disabled by default → ``license_unavailable``. Each entry carries a
+        **same-origin** delivery path (SEC-9/F07) — no object key, no bucket, no storage host — and
+        is served by the ``/assets/{asset_id}`` endpoint below, which re-checks before delivering.
+        Independent of the full-text viewer (D1)."""
         user_id = _principal_user_id(request)
         if not user_id:
             return JSONResponse({"status": "unauthorized"}, status_code=401)
@@ -185,6 +187,58 @@ def build_router(
         if refs is None:
             return JSONResponse({"status": "license_unavailable"})
         return JSONResponse({"status": "ok", "assets": [r.to_dict() for r in refs]})
+
+    @router.get("/api/papers/{paper_id}/assets/{asset_id}")
+    def paper_asset_bytes(request: Request, paper_id: str, asset_id: str) -> Any:
+        """Same-origin asset delivery (REM-2 F07 / SECURITY-08 / FR-17).
+
+        The manifest used to hand the browser a presigned object-storage URL, which leaked the
+        object key and the storage host (``AWS_ENDPOINT_URL_S3`` → MinIO locally) and moved the
+        fetch outside every check this service makes. So the bytes are served here instead, and
+        **every check is re-run at delivery**:
+
+          * the principal (SEC-8) — an unauthenticated GET never reaches the object store;
+          * the private ``userdoc:`` namespace (F01) — refused with the same 404, before the
+            license gate, so it is not resolvable on a deployment with assets disabled;
+          * the OA license gate (BR-SF-11) — re-read here, because a manifest entry outlives the
+            decision that produced it;
+          * the object itself — the reader resolves (paper, version, asset) through the manifest,
+            so an ``asset_id`` on its own is not a capability.
+
+        A miss is a 404 whether the asset does not exist or does not belong to this paper/version,
+        so the endpoint cannot be used to enumerate ids.
+        """
+        user_id = _principal_user_id(request)
+        if not user_id:
+            return JSONResponse({"status": "unauthorized"}, status_code=401)
+        if is_private_paper_id(paper_id):
+            return JSONResponse(_PRIVATE_NAMESPACE_404, status_code=404)
+        if not assets_enabled:
+            return JSONResponse({"status": "license_unavailable"})
+        # ?version fallback mirrors the manifest handler above: the path id's revision, not v1.
+        raw_version = request.query_params.get("version")
+        try:
+            version = int(raw_version) if raw_version is not None else paper_version(paper_id)
+        except (TypeError, ValueError):
+            version = paper_version(paper_id)
+        if version < 1:
+            return JSONResponse(_PRIVATE_NAMESPACE_404, status_code=404)
+        try:
+            obj = orchestrator.get_asset_object(paper_id, version, asset_id)
+        except Exception:  # noqa: BLE001 — fail-closed (INV-4/SEC-15), parity with the manifest
+            return JSONResponse({"status": "unavailable"}, status_code=503)
+        if obj is None:
+            return JSONResponse(_PRIVATE_NAMESPACE_404, status_code=404)
+        return Response(
+            content=obj.payload,
+            media_type=obj.content_type,
+            headers={
+                # Authenticated delivery: a shared cache must never hold these bytes for another
+                # caller. Bounded reuse for the single caller's own repeat view.
+                "cache-control": "private, max-age=60",
+                "x-content-type-options": "nosniff",
+            },
+        )
 
     @router.get("/api/userdoc/{doc_id}/doc-model")
     def private_doc_model(request: Request, doc_id: str) -> Any:

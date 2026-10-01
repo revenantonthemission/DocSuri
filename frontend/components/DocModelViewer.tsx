@@ -20,6 +20,7 @@ import type {
   DocSection,
   DocTableBlock,
 } from '@/types/generated';
+import { browserAssetSrc } from '@/lib/api/assetSrc';
 import { useDocModel } from '@/lib/useDocModel';
 import { useAssets } from '@/lib/useAssets';
 import { createPortal } from 'react-dom';
@@ -487,13 +488,14 @@ function BlockView({
       // LaTeX is the preferred render source; when absent (PDF/GROBID path) the equation
       // degrades to a page-crop image referenced by assetRef (display-only).
       const asset = block.assetRef ? assetsById.get(block.assetRef.assetId) : undefined;
+      const assetSrc = browserAssetSrc(asset?.url);
       let inner: React.ReactNode = null;
       if (block.latex) {
         inner = <MathDisplay latex={block.latex} macros={macros} />;
-      } else if (asset?.url) {
+      } else if (assetSrc) {
         const alt = block.anchorLabel ?? '수식';
         inner = (
-          <img src={asset.url} alt={alt} loading="lazy" />
+          <img src={assetSrc} alt={alt} loading="lazy" />
         );
       }
       if (inner === null) {
@@ -536,17 +538,17 @@ function BlockView({
         />
       );
     case 'figure': {
-      const asset = assetsById.get(block.assetRef.assetId);
+      const assetSrc = browserAssetSrc(assetsById.get(block.assetRef.assetId)?.url);
       const alt = block.caption ?? block.anchorLabel ?? '그림';
       return (
         <figure className={`${cls} ${styles.figure}`} data-block={block.id} tabIndex={-1}>
-          {asset?.url ? (
+          {assetSrc ? (
             <Zoomable
               onZoom={() =>
-                onZoom(<img src={asset.url} alt={alt} className={styles.zoomImg} />)
+                onZoom(<img src={assetSrc} alt={alt} className={styles.zoomImg} />)
               }
             >
-              <img src={asset.url} alt={alt} loading="lazy" />
+              <img src={assetSrc} alt={alt} loading="lazy" />
             </Zoomable>
           ) : null}
           {caption(block.anchorLabel, block.caption, macros)}
@@ -593,14 +595,16 @@ function TableBlockView({
   onZoom: (node: React.ReactNode) => void;
   macros?: MathMacros;
 }) {
-  const asset = block.assetRef ? assetsById.get(block.assetRef.assetId) : undefined;
+  const assetSrc = browserAssetSrc(
+    block.assetRef ? assetsById.get(block.assetRef.assetId)?.url : undefined,
+  );
   const hasRows = block.rows.length > 0;
   // null = follow the default (structured unless the parse produced no rows); a tap sets it explicitly.
   const [override, setOverride] = useState<boolean | null>(null);
-  const showImage = (override ?? !hasRows) && Boolean(asset?.url);
+  const showImage = (override ?? !hasRows) && Boolean(assetSrc);
   const image =
-    asset?.url != null ? (
-      <img src={asset.url} alt={block.anchorLabel ?? '표 원본 이미지'} loading="lazy" />
+    assetSrc != null ? (
+      <img src={assetSrc} alt={block.anchorLabel ?? '표 원본 이미지'} loading="lazy" />
     ) : null;
   const table = (
     <table className={styles.table}>
@@ -625,7 +629,7 @@ function TableBlockView({
   );
   const shown = showImage && image ? image : table;
   // Only offer the toggle when there is a real choice (both a structured table and an image).
-  const canToggle = hasRows && Boolean(asset?.url);
+  const canToggle = hasRows && Boolean(assetSrc);
   return (
     <figure className={cls} data-block={block.id} tabIndex={-1}>
       <Zoomable onZoom={() => onZoom(shown)}>
