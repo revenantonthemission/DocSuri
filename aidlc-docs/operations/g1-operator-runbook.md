@@ -349,17 +349,42 @@ uv run --directory ops python platform-integrity/validate_supply_chain.py \
 4. Update `aidlc-docs/aidlc-state.md` G1 row and append the evidence to `aidlc-docs/audit.md`.
 5. Do **not** mark G4/G5 — they remain `BLOCKED-ON-REM-4` regardless of G1.
 
+### Clean-environment install test
+
+Provisions **only the declared dependencies** in a fresh interpreter, then imports the package and
+every adapter — the gate that catches undeclared dependencies (audit defect 3).
+
+```sh
+tmp=$(mktemp -d)
+uv venv --python 3.13 "$tmp/venv"
+uv pip install --python "$tmp/venv/bin/python" "platform_integrity[rem3]"
+"$tmp/venv/bin/python" - <<'PY'
+import importlib, pkgutil
+import docsuri_platform_integrity.adapters as adapters
+names = ["docsuri_platform_integrity", "docsuri_platform_integrity.adapters"]
+names += [f"docsuri_platform_integrity.adapters.{m.name}" for m in pkgutil.iter_modules(adapters.__path__)]
+for n in sorted(set(names)):
+    importlib.import_module(n)
+print("imported", len(set(names)), "modules, 0 failures")
+PY
+```
+
+**Run 2026-10-01 (agent):** **20/20 modules imported, 0 failures** after deleting 3 orphaned REM-2
+adapter modules (`registry.py`, `cache.py`, `private_userdoc.py`) that failed to import (mutual
+circular import; a reference to the removed `contracts.models.DocModel`; and a call to a
+non-existent `adapters.ingestion.parse_document`). None were imported by any test or module.
+
 ### G1 completion checklist (copy from `cve-disposition.md`)
 
 - [ ] CVE-2026-85091 exception signed, or alpine base refresh + rescan recorded
 - [ ] Derived postgres image promoted `CANDIDATE` → `APPROVED`
 - [ ] CVE-2026-82049 accepted as mitigated-in-build
-- [ ] Redis, OpenSearch, ElasticMQ scanned this cycle; new blocking findings dispositioned
-- [ ] MinIO recorded as UNOBTAINABLE / N/A (no artifact)
-- [ ] pip-audit SIGABRT fixed or documented non-blocking
-- [ ] Docker bridge mTLS validation executed and recorded
+- [ ] Redis, OpenSearch, ElasticMQ scanned this cycle (✅ 2026-09-30); new blocking findings dispositioned (❌ 338 pending)
+- [x] MinIO recorded as UNOBTAINABLE / N/A (no artifact)
+- [x] pip-audit SIGABRT fixed or documented non-blocking (not reproducible; venv drift reconciled → clean)
+- [x] Docker bridge mTLS validation executed and recorded (2026-10-01: 1 passed)
 - [ ] Purpose-Keychain ACLs provisioned without `-A`; receipts issued and preflight verified
 - [ ] Secrets rotated via remove-then-reprovision; old key-id retired
 - [ ] launchd jobs verified as root; purge worker entry point verified
-- [ ] Colima live smoke executed (object-store purge noted as production-only)
-- [ ] `validate_supply_chain.py` passes on the updated targets
+- [x] Colima live smoke executed (object-store purge noted as production-only)
+- [x] `validate_supply_chain.py` passes on the updated targets

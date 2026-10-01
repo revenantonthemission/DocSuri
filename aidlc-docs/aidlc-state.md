@@ -1931,7 +1931,7 @@ platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed*
 |---|---|---|
 | **G1** 플랫폼 기반 | 🟡 PARTIAL — BLOCKED-ON-OPERATOR | 실행 가능 항목 실행 완료(runbook §2/§3/§4/§8): rescans → redis/opensearch/elasticmq **338 blocking finding 신규 발견(미처분)**, pip-audit 정상화(venv drift → clean), bridge mTLS 1 passed, live smoke 2 passed. operator 소유 잔존: CVE-2026-85091 예외/알파인 refresh, derived postgres CANDIDATE→APPROVED, CVE-2026-82049 수용, 신규 338건 처분, Keychain ACL/secret rotation/launchd 루트 검증 |
 | **G2** service/store/worker | 🔴 미통과 | F01/F02/F05/F07 = REM-2 worker pipeline. REM-2 완료 주장은 폐기됨(아래). corrective unit이 rewrite 대상 |
-| **G3** lifecycle/edge | 🔴 미통과 | F04/F09/F10 = REM-3 자체 게이트. `purge_registry` migration 부재, purge worker 부재로 실행 불가 |
+| **G3** lifecycle/edge | 🟡 PARTIAL — code+static ✅ | F04/F09/F10 구현 완료(backend home)·정적 게이트 green·F04 실 Postgres leg 2 passed. 잔여 = F09/F10 실 Redis/OpenSearch 인수(operator). (`purge_registry`는 불필요 — `account_deletions`가 레지스트리) |
 | **G4** 통합/browser/compatibility | ⛔ **BLOCKED-ON-REM-4** | F03/F11/F12 corpus report + no-match/저하가 REM-4 산출. 통과 불가 |
 | **G5** 복구/live preflight | ⛔ **BLOCKED-ON-REM-4** | F03 증거가 REM-4 R4A `CorpusEvidenceService` 산출. 통과 불가 |
 
@@ -2027,7 +2027,11 @@ runbook `operations/g1-operator-runbook.md` 작성 후, sudo/결정 불필요 �
 | §3 | pip-audit SIGABRT | ✅ **SIGABRT 재현 안 됨** — tool 정상. 지적된 vuln은 전부 venv drift; lock은 이미 패치 버전. ingestion `uv sync` + backend 대상 패키지 정렬 → 4개 venv 전부 clean |
 | §4 | derived postgres bridge mTLS | ✅ bridge mTLS **1 passed** (full client-cert 로그인 성공, wrong-CA 거부) |
 | §8 | Colima live smoke | ✅ `up.sh` 5 서비스 healthy; F04 live leg **2 passed**; 객체파기는 production-only 명시 |
+| §9 | Clean-environment install test(선언된 의존성만) | ✅ fresh py3.13 venv + `platform_integrity[rem3]` → **20/20 adapter import, 0 fail**. 이 게이트가 orphan REM-2 adapter 3종(`registry.py`↔`cache.py` 상호 순환 import, `private_userdoc.py`의 제거된 `DocModel`·부재 `adapters.ingestion` 참조)을 적발 → **삭제**(§3a 선례). 어떤 테스트/모듈도 import하지 않음 |
 | §1/§5/§6/§7 | sign-off·Keychain ACL·secret rotation·launchd root | ⏳ operator 전용 (미실행) |
 
-**게이트 영향**: G1은 여전히 🟡 PARTIAL. 새 blocker 추가 — rescan이 **338건 blocking finding**을
-드러냈고 전부 처분이 필요하다. G4/G5는 ⛔ BLOCKED-ON-REM-4 유지.
+**게이트 영향**: **G3**는 🟡 PARTIAL(code+static ✅, F09/F10 실 인수 operator). **G1**은 여전히 🟡 PARTIAL —
+새 blocker: rescan **338건 blocking finding** 미처분. **G2**는 🔴 미통과 유지. G4/G5는 ⛔ BLOCKED-ON-REM-4 유지.
+
+**REM-2 orphan 정리(2026-10-01)**: `platform_integrity/.../adapters/{registry,cache,private_userdoc}.py` 삭제
+(commit `6ee9d7c5` 유래, test 0·import 0·실행 불가). full suite 회귀 없음(platform_integrity 493/185, ruff clean).

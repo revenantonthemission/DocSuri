@@ -7672,3 +7672,29 @@ sign-offs, §5 keychain, §6 rotation, §7 launchd) remain operator-only.
 - **Docs updated**: runbook §4/§8 execution blocks; `cve-disposition.md` pip-audit + rescans + checklist;
   `aidlc-state.md` G1 row + residual + Phase-5 section; `ops/uv.lock` regenerated to include the
   `rem3` extra. **G1 stays 🟡 PARTIAL (new 338-finding blocker); G4/G5 remain ⛔ BLOCKED-ON-REM-4.**
+
+---
+
+## REM-3 G1 Runbook — §9 clean-environment install test + REM-2 orphan cleanup (2026-10-01)
+
+**Timestamp**: 2026-10-01T19:15:00Z
+**Stage**: CONSTRUCTION / REM-3 corrective — Phase 4 gate (DoD line 230)
+**User Input**: "How should I resolve the 3 orphaned REM-2 adapter modules so the clean-environment
+install gate can be truthfully closed?" → **"Delete the 3 orphan modules (Recommended)"**
+
+**AI Response**:
+- Ran the clean-environment install test the plan had deferred (step 16 / DoD line 230): fresh Python
+  3.13 venv, `platform_integrity[rem3]` installed with **only declared dependencies**, then imported
+  the package and every adapter. Result: **20/20 import, 0 failures**.
+- The gate exposed 3 orphaned modules from the discredited REM-2 commit `6ee9d7c5`, imported by no
+  test or module: `adapters/registry.py` ↔ `adapters/cache.py` (mutual circular import) and
+  `adapters/private_userdoc.py` (imports the removed `contracts.models.DocModel`; `ingest()` calls a
+  non-existent `adapters.ingestion.parse_document`).
+- Per the user's decision, **deleted all 3** (consistent with the REM-3 §3a precedent for orphaned,
+  untested, non-functional prototypes). Re-ran the gate: 20/20, 0 failures. Full `platform_integrity`
+  suite unchanged (493 passed / 185 skipped); `ruff check` clean.
+- Updated: `rem-3-corrective-plan.md` (step 12 ✅, step 16 ✅, step 17 counts, DoD 230 ✅, 233 counts,
+  gate-matrix item ✅); `operations/g1-operator-runbook.md` §9 (clean-env command + evidence + G1
+  checklist ticks); `aidlc-state.md` (G3 → 🟡 PARTIAL code+static ✅; Phase-5 row + G2 residual note).
+- **Gate effect**: G3 code+static ✅ (live F09/F10 + operator residual); G1 stays 🟡 PARTIAL (338
+  rescan findings undispositioned); G2 stays 🔴; G4/G5 ⛔ BLOCKED-ON-REM-4.

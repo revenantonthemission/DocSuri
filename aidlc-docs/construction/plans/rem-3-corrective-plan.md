@@ -174,7 +174,7 @@ operator runbook.
     `revocation`/`authz` were out of REM-3 scope. ✅
 11. ~~Write `workers/purge_worker.py`~~ — **SUPERSEDED**: existing
     `backend/modules/accounts/purge_worker.py` extended with the object purger. ✅
-12. Fix `backup_evidence.py` to pass the archive path, not the digest (defect 5). ⏳ operator/G1.
+12. Fix `backup_evidence.py` to pass the archive path, not the digest (defect 5). ✅ `43617610`.
 13. ~~Rewrite `content_job_service.py` and worker/provision scripts~~ — **SUPERSEDED**: removed as
     dead un-runnable prototype (`83b4e389`). ✅
 
@@ -182,8 +182,13 @@ operator runbook.
 14. ✅ Import-level test for every new module (backend homes import clean; F04/F09/F10 tests added).
 15. ✅ Migration-existence check for every queried table (`purge_registry` unqueried;
     `account_deletions` 003/011/014; parity test includes 013/014).
-16. ⏳ Clean-environment install test — operator runbook.
-17. ✅ All static gates run: backend/ops ruff clean, backend 664/7, ops 341/5, platform_integrity
+16. ✅ **Clean-environment install test** — fresh Python 3.13 venv, `platform_integrity[rem3]` installed
+    with **only declared dependencies**, then import the package + every adapter module: **20/20
+    import, 0 failures**. The install surfaced and led to the deletion (§3a follow-up) of 3 orphaned
+    REM-2 adapter modules (`registry.py`, `cache.py`, `private_userdoc.py` — unimported, untested,
+    mutually circular / referencing a removed `DocModel` contract). Command + evidence:
+    `aidlc-docs/operations/g1-operator-runbook.md` §9.
+17. ✅ All static gates run: backend/ops ruff clean, backend 664/9, ops 342/5, platform_integrity
     493/185, frontend tsc 0, ESLint 0/0.
 
 ### Phase 5 — Operator runbook
@@ -227,15 +232,18 @@ intent is satisfied by the F04/F09/F10 backend-home implementations._
 - [x] Import-level test for every new module (backend homes import clean; F04/F09/F10 unit tests added)
 - [x] Migration-existence check passing for every queried table (`purge_registry` unqueried;
   `account_deletions` covered by 003/011/014; model-migration parity test includes 013/014)
-- [ ] Clean-environment install test passing (deferred to operator runbook)
+- [x] Clean-environment install test passing — fresh py3.13 venv, declared deps only, 20/20 adapters
+  import (runbook §9). This also caught and led to deleting 3 orphaned REM-2 modules.
 - [x] `ruff check` clean on both Python packages (backend + ops)
 - [x] ESLint 0 errors, 0 warnings
-- [x] `pytest` green: platform_integrity 493/185, ops 341/5, backend 664/7, frontend suite green
+- [x] `pytest` green: platform_integrity 493/185, ops 342/5, backend 664/9, frontend suite green
 - [~] Live smoke test passed against real Postgres/Redis/OpenSearch on Colima — F04 DB legs
   verified against live Colima Postgres (`tests/accounts/test_purge_real_postgres.py`, 2 passed:
   late-write guard + cross-connection advisory lock). F09/F10 Redis/OpenSearch acceptance remains
   operator
 - [ ] Operator runbook executed: keychain ACLs, secret rotation, root re-verification
-- [ ] G1/G2/G3 marked by evidence; G4/G5 marked `BLOCKED-ON-REM-4` — G3 code+static evidence
-  recorded; G1 residual operator-owned; G4/G5 remain BLOCKED-ON-REM-4
+- [x] Gate matrix recorded by evidence in `aidlc-state.md`: **G3** code+static ✅ (live F09/F10 +
+  operator residual); **G1** 🟡 PARTIAL (operator-only residual + 338 rescan findings undispositioned);
+  **G2** 🔴 not met (REM-2 pipeline still unbuilt); **G4/G5** ⛔ `BLOCKED-ON-REM-4`. Execution of the
+  agent-runnable runbook sections (§2/§3/§4/§8) is recorded; §1/§5/§6/§7 remain operator-owned.
 - [x] Superseded completion claims corrected in `aidlc-state.md`
