@@ -7810,3 +7810,64 @@ F05, F07, the RJ-AC job contract, resiliency, and the frontend stop-sending-`abs
 **Context**: REM-2 corrective; G2; F01+F02 implemented and verified; F05/F07/RJ-AC pending.
 
 ---
+
+## REM-2 Corrective Phase 3 (F05) — timeout budget declaration, sync→async threshold, bounded termination
+
+**Timestamp**: 2026-10-01T14:10:00Z
+
+**User Input**: "Check the todos. It says we're currently on phase 1." → the surfaced todo list was
+stale (from the F01/F02 session, before commit `cedb68a8`); it was rebuilt against git, which
+surfaced a real gap: the F05 code commit carried no plan/state/audit bookkeeping. Followed by
+"finish the todos" — complete the bookkeeping, and close item 16's outstanding half (the frontend
+budget) rather than record it as done while the client still cut at 10s.
+
+**AI Response**: Implemented and recorded F05 in full.
+
+**What was wrong (Phase 0.3 reproduction, before any production change):**
+- The sync→async boundary was an undeclared token constant in the orchestrator
+  (`_ASYNC_GENERATION_MIN_TOKENS = 6_000` ≈ 24k chars), unrelated to the approved char thresholds
+  (8k summary / 12k translate / 16k novelty). A 10k-char summary — ~2.5k tokens — was classified as
+  a *small* input and generated **inline**.
+- Nothing enforced the API leg. `run_summarization` ran the generation to completion no matter how
+  long it took, so the declared ordering (model → worker → api → bff → browser) protected nothing.
+- The browser fell back to `options.timeoutMs ?? 10000`, which is **below** the declared 10s API
+  budget: it could abandon a request the API was still intending to answer.
+
+**Changes:**
+- `summarization/domain/timeout_profile.py` (new): `TimeoutProfile` per task with
+  `sync_threshold_chars` + the five layers; `__post_init__` rejects a profile whose adjacent layers
+  are not separated by at least `MIN_LAYER_MARGIN_SEC`, so misaligned budgets fail where they are
+  built. `profile_for()` with an optional `DOCSURI_SYNC_THRESHOLD_CHARS_<TASK>` override.
+  `POLL_BACKOFF_MS` promoted here from a private orchestrator constant.
+- `service/orchestrator.py`: the token constant is gone; the boundary is now
+  `len(refined.body) > profile_for(request.task).sync_threshold_chars` (FD-Q3 measures input chars).
+  The MAP_REDUCE band keeps its `token_count` routing, so the two measures coexist by design.
+- `api/gateway_seam.py`: `run_summarization` runs the generation on a daemon thread and waits the
+  task's declared `api_sec`. Still running at the bound → the work is accepted as a background job
+  and answered `pending` (the client polls); with no queue → a bounded abstain. Either way the
+  request ends inside its own budget, which is what makes the outer layers' timeouts meaningful.
+- `frontend/lib/api/timeouts.ts` (new) + `apiClient.summarize`: the declared browser leg replaces the
+  10s fallback (15s summary/translate, 30s novelty/evidence). Retry suppression on the cost-bearing
+  POST is unchanged and asserted.
+
+**Design decision worth recording:** the threshold counts characters, as FD-Q3/NFR-Q11 specify. An
+inferred token count was rejected — it would make the cached `token_count` the only source of the
+threshold, i.e. an estimate rather than a measurement of the input.
+
+**Evidence (all green, project-local runners):**
+- `backend`: new `modules/summarization/tests/test_timeout_budget.py` → **26 passed**. Full suite
+  **473 passed, 7 skipped**. `ruff check modules/summarization` → clean.
+- `ingestion`: **323 passed, 1 skipped**.
+- `ops`: `ruff check src tests` → clean.
+- `frontend`: new `test/timeouts.test.ts` → **8 passed**; full suite **348 passed / 58 files**;
+  `tsc --noEmit` clean; `eslint` clean.
+- Parity is enforced from both sides of the wire: the Python and TS tests both parse
+  `ops/platform-integrity/timeouts.yaml` and fail on drift, without adding PyYAML (undeclared in
+  this repo).
+
+**Commits**: `5b9d2b2` (backend), `b47d1db3` (frontend).
+
+**Context**: REM-2 corrective Phase 3; G2 still 🔴 (F07/RJ-AC outstanding); G1/G3 operator-owned;
+G4/G5 remain BLOCKED-ON-REM-4. Next is Phase 4 (F07 same-origin asset serving, items 17–19).
+
+---

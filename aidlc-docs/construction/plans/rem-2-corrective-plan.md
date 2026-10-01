@@ -1,7 +1,8 @@
 # REM-2 Corrective Plan — Private Content Service
 
-**Status**: Phases 0 (F01/F02 items) + 1 + 2 **complete** — F01/F02 security hotfix landed
-2026-10-01; next is Phase 3 (F05). Phases 3–9 pending. Decisions D1–D6 answered (all A),
+**Status**: Phases 0 (F01/F02/F05 items) + 1 + 2 + 3 **complete** — F01/F02 security hotfix
+(`cedb68a8`) and F05 timeout alignment (`5b9d2b2`) + frontend browser budget (`b47d1db3`) landed
+2026-10-01; next is Phase 4 (F07). Phases 4–8 pending. Decisions D1–D6 answered (all A),
 recorded in `rem-2-corrective-decision-questions.md`.
 **Date**: 2026-10-01
 **Unit**: REM-2 Private Content Service (`rem-2-private-content`) — re-opened under the same ID
@@ -104,7 +105,7 @@ does not start until answered.
 ### Phase 0 — Reproductions (no production code yet)
 1. [x] F01: cross-owner `GET /api/papers/userdoc:<uuid>/doc-model` regression (fails today).
 2. [x] F02: two requests differing only in client `abstract` share a cache entry (fails today).
-3. [ ] F05: over-budget sync generation is not converted to job / no bounded hang (fails today).
+3. [x] F05: over-budget sync generation is not converted to job / no bounded hang (fails today).
 4. [ ] F07: asset manifest returns no owner/license check + key-in-URL assertion (fails today).
 5. [ ] Job contract: durable-acceptance and idempotency regressions (fail today).
 
@@ -126,9 +127,18 @@ does not start until answered.
     object is now denied (item 9's backfill half).*
 
 ### Phase 3 — F05 timeout alignment + sync/async threshold
-14. [ ] Declare the reverse timeout table as config (NFR-Q11).
-15. [ ] Threshold converts over-budget normal generation to job accept + pending/poll (FD-Q3).
-16. [ ] Bounded hang termination; remove arbitrary 10s 504 behavior.
+14. [x] Declare the reverse timeout table as config (NFR-Q11).
+15. [x] Threshold converts over-budget normal generation to job accept + pending/poll (FD-Q3).
+16. [x] Bounded hang termination; remove arbitrary 10s 504 behavior.
+    *Landed 2026-10-01 (`5b9d2b2` backend + `b47d1db3` frontend). The table is declared once in
+    `summarization.domain.timeout_profile` and mirrored in `ops/platform-integrity/timeouts.yaml`,
+    with drift tests on **both** sides. The undeclared orchestrator token constant (~24k chars) is
+    replaced by the declared per-task **char** threshold, so a 10k-char summary now becomes
+    job-accept + pending instead of an inline generation that blew the budget. The API leg is
+    actually enforced in `gateway_seam.run_summarization`: a generation still running at its budget
+    is handed to the job queue and answered `pending` (or, with no queue, a bounded abstain), so no
+    request outlives the layer the outer timeouts are calibrated against. The client's arbitrary
+    10s fallback is replaced by the declared browser leg (15s summary/translate, 30s novelty/evidence).*
 
 ### Phase 4 — F07 same-origin asset serving
 17. [ ] Same-origin `GET` asset endpoint with owner/license/object re-check before delivery.

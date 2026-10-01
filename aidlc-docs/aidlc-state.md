@@ -1930,7 +1930,7 @@ platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed*
 | 게이트 | 상태 | 근거 |
 |---|---|---|
 | **G1** 플랫폼 기반 | 🟡 PARTIAL — BLOCKED-ON-OPERATOR | 실행 가능 항목 실행 완료(runbook §2/§3/§4/§8): rescans → redis/opensearch/elasticmq **338 blocking finding 신규 발견(미처분)**, pip-audit 정상화(venv drift → clean), bridge mTLS 1 passed, live smoke 2 passed. operator 소유 잔존: CVE-2026-85091 예외/알파인 refresh, derived postgres CANDIDATE→APPROVED, CVE-2026-82049 수용, 신규 338건 처분, Keychain ACL/secret rotation/launchd 루트 검증 |
-| **G2** service/store/worker | 🔴 미통과 | F01/F02/F05/F07 = REM-2 worker pipeline. REM-2 완료 주장은 폐기됨(아래). corrective unit이 rewrite 대상. **F01·F02는 2026-10-01 hotfix로 종결**(아래 절), 잔존 = F05/F07/RJ-AC |
+| **G2** service/store/worker | 🔴 미통과 | F01/F02/F05/F07 = REM-2 worker pipeline. REM-2 완료 주장은 폐기됨(아래). corrective unit이 rewrite 대상. **F01·F02는 2026-10-01 hotfix로 종결**, **F05도 2026-10-01 Phase 3로 종결**(`5b9d2b2`/`b47d1db3`, 아래 절), 잔존 = F07/RJ-AC |
 | **G3** lifecycle/edge | 🟡 PARTIAL — code+static ✅ | F04/F09/F10 구현 완료(backend home)·정적 게이트 green·F04 실 Postgres leg 2 passed. 잔여 = F09/F10 실 Redis/OpenSearch 인수(operator). (`purge_registry`는 불필요 — `account_deletions`가 레지스트리) |
 | **G4** 통합/browser/compatibility | ⛔ **BLOCKED-ON-REM-4** | F03/F11/F12 corpus report + no-match/저하가 REM-4 산출. 통과 불가 |
 | **G5** 복구/live preflight | ⛔ **BLOCKED-ON-REM-4** | F03 증거가 REM-4 R4A `CorpusEvidenceService` 산출. 통과 불가 |
@@ -2071,3 +2071,46 @@ G3 🟡 PARTIAL(operator F09/F10), G4/G5 ⛔ BLOCKED-ON-REM-4 **변경 없음**.
 Phase 4(F07 동일 출처 asset proxy) → RJ-AC job contract → resiliency → frontend 배선 → 최종 게이트.
 
 **REM-2 상태 정정**: 🔴 미통과 유지. 다만 F01/F02 두 결함은 **종결** — 나머지 결함만 잔존.
+
+## REM-2 Corrective — Phase 3 (F05) 시간 예산 역정렬 + over-budget→job 전환 (2026-10-01)
+
+F05는 "느리면 504가 난다"가 아니라 **레이어 정렬** 문제였다. 예산이 선언되지 않았고(orchestrator의
+token 상수), **어느 레이어도 자기 예산을 강제하지 않았으며**(API 레이어 무 enforcement), 브라우저는
+선언보다 **짧은 10초**에서 요청을 버렸다. 결과적으로 API가 아직 답하려던 요청을 브라우저가 잘랐고
+사용자에게는 결과도, 폴링 핸들도 없는 네트워크 에러만 남았다.
+
+| Phase | 결과 |
+|---|---|
+| 0 재현 | 10k자 요약이 **인라인 생성**(구 6,000토큰 상수 ≈ 24k자 → "작은 입력"으로 오판) → 클라이언트 예산 초과. 그레이팅 있는 어느 task의 브라우저 예산도 10초보다 길지 않음 |
+| 3 F05 | ① **예산 선언 단일화**: `summarization.domain.timeout_profile` — task별 `sync_threshold_chars` + model/worker/api/bff/browser 5레이어. `__post_init__`가 인접 레이어 최소 여유(2초) 위반을 **구성 시점에 거부**. `ops/platform-integrity/timeouts.yaml`(LC-R2-09)과 **양쪽 drift 테스트**로 동일성 강제(파이썬/TS 각 1개, PyYAML 미선언 의존성 금지) |
+| | ② **경계 교체**: orchestrator의 미선언 `_ASYNC_GENERATION_MIN_TOKENS`(≈24k자)를 선언된 **task별 문자 수**(`len(refined.body)`, FD-Q3)로 교체. summary 8k / translate 12k / novelty 16k / evidence 20k. ops는 `DOCSURI_SYNC_THRESHOLD_CHARS_<TASK>`로 배포 없이 재조율 가능(오입력은 무시되어 기본값 유지) |
+| | ③ **API 레이어 실제 enforcement**: `gateway_seam.run_summarization`이 task의 선언된 `api_sec`까지 대기하고, 그 시점에도 실행 중이면 **job 위임 + pending**(폴링 핸들) 반환. 큐가 없으면 **bounded abstain**. 응답은 자기 예산 안에 반드시 끝난다 → 바깥 레이어의 timeout이 의미를 갖는다. 실측: 개시 전에 버려진 시도는 daemon 스레드이고, 정적 캐시 키로 착지하므로 결과가 달라지지 않는다 |
+| | ④ **브라우저 예산 정렬**: `frontend/lib/api/timeouts.ts`가 선언된 browser leg(요약/번역 15초, novelty/evidence 30초)을 미러링. `apiClient.summarize`의 임의 10초 fallback 제거. wire 소문자 task(`summary`/`translate`) → 선언 명사형 매핑. 검색·증거 호출의 기존 예외는 유지 |
+
+**설계 판단(기록)**: 문자 수 기준은 승인된 FD-Q3/NFR-Q11(문자 수 + model p95)을 그대로 따른다. 추론된
+token 수(문자 수의 근사치)는 **사용하지 않았다** — 두 값이 불일치하면 캐시된 `token_count`가
+임계값을 산정하는 유일한 계산원이 되어 입력 실측치가 아니게 된다. MAP_REDUCE 밴드 판정은 기존
+`token_count` 기반을 그대로 두었으므로 두 기준이 **의도적으로 공존**한다.
+
+**보안 영향**: 새로운 trust 경계 없음. 클라이언트 `abstract` 전송 중단은 Phase 7에 남아 있다(F02의
+서버측 무시는 이미 강제됨). 예산 값은 성능 파라미터이지 권한 결정이 아니다 — 인증/인가 경로는
+변경하지 않았다.
+
+**검증**: 신규 회귀 `backend/modules/summarization/tests/test_timeout_budget.py` **26 passed**
+(선언값·레이어 정렬·구성 거부·YAML drift·env override·hang→pending/abstain·정상 경로 무영향·
+worker 경로 재-dispatch 없음·task별 임계값) + 기존 summarization 회귀 무회귀. 전체 backend
+**473 passed / 7 skipped** · ingestion **323 passed / 1 skipped** · ops `ruff src tests` clean ·
+backend summarization `ruff` clean. 프론트 신규 `frontend/test/timeouts.test.ts` **8 passed**
+(YAML 미러 정합·레이어 순서·폴링 여유·wire 매핑·요약 15초·retry 금지 유지) + frontend 전체
+**348 passed / 58 files** · `tsc --noEmit` clean · `eslint` clean.
+
+**커밋**: `5b9d2b2` (backend: 프로파일 + seam + orchestrator 경계 + 회귀 26),
+`b47d1db3` (frontend: 선언 browser 예산 + 회귀 8).
+
+**게이트 영향**: **G2는 여전히 🔴** — F07/RJ-AC 미완료. G1 🟡 PARTIAL(operator),
+G3 🟡 PARTIAL(operator F09/F10), G4/G5 ⛔ BLOCKED-ON-REM-4 **변경 없음**.
+
+**다음 단계**: REM-2 corrective Phase 4(F07 동일 출처 asset proxy — item 17–19) → RJ-AC job contract
+→ resiliency → frontend 배선 → 최종 게이트.
+
+**REM-2 상태 정정**: 🔴 미통과 유지. F01/F02/F05 세 결함은 **종결** — F07/RJ-AC만 잔존.
