@@ -7937,3 +7937,41 @@ G1 🟡 PARTIAL (operator), G3 🟡 PARTIAL (operator F09/F10), G4/G5 ⛔ BLOCKE
 complete; next is Phase 5 (RJ-AC01–08 + AC12 durable job contract).
 
 ---
+
+## [REM-2 Corrective — Phase 4 follow-up: F05 real-orchestrator hand-over]
+**Timestamp**: 2026-10-01T16:45:00Z
+**User Input**: "Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed."
+**AI Response**: Found and closed a real defect the F05 suite could not see — `accept_async_job` existed only on test fakes, so the production over-budget path never consulted a configured job queue. Added a red-first regression bound to the real orchestrator, implemented the method, de-duplicated the dispatch-eligibility predicate, re-verified, documented, committed.
+**Context**: REM-2 corrective, Phase 3/4 boundary. Same user input as the preceding entry; this is the next step of that instruction.
+
+**Defect**: `gateway_seam._hand_over_over_budget_work` probes for `accept_async_job` with `getattr`,
+because at F05 time `SummarizationOrchestrationService` had **no such method**. Every F05 seam test
+drove a fake that defined it, so the suite was green while production was not: with a job queue
+wired, an over-budget generation never consulted it and ended as a bounded **abstain** — the work the
+queue existed to finish in the background was silently dropped, which is precisely the outcome F05
+was raised to remove (DoD: "over-budget sync generation converts to job/poll").
+
+**Fix** (`service/orchestrator.py`):
+- `accept_async_job(request, ctx) -> bool` queues the request and returns True **only** when it was
+  actually queued, so the seam can never promise a poll for work nothing will execute. Declines when
+  there is no queue, no authenticated principal, or a request shape the async path does not serve.
+- Extracted `_is_async_dispatchable()` and routed the inline char-threshold dispatch through it, so
+  the pre-generation threshold check and the post-timeout hand-over cannot drift apart — the same
+  gate now decides both, instead of two hand-written copies of "summary, or full translate with the
+  structured translator wired".
+
+**Regression** (`tests/test_timeout_budget.py`, +4, 30 total in file): builds the **real**
+`SummarizationOrchestrationService` through its constructor (not `__new__`, so the wiring under test
+is the production one) and asserts — a queued hand-over; an end-to-end seam run against the real
+class that hangs and must end `pending` with one enqueued job; decline with no queue; decline for an
+abstract translation. Red first: all four failed with
+`AttributeError: 'SummarizationOrchestrationService' object has no attribute 'accept_async_job'`.
+
+**Evidence**: backend **473 passed / 7 skipped**; summarization `ruff` clean (also fixed a duplicate
+`fetchall` and a long line left in `test_assets_endpoint.py` by the Phase 4 edit, and sorted the new
+test imports).
+
+**Context**: Phase 3/4 defects now closed. G2 remains 🔴 on RJ-AC (Phase 5). G1/G3 operator-owned;
+G4/G5 BLOCKED-ON-REM-4 unchanged.
+
+---

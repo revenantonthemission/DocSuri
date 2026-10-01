@@ -277,14 +277,7 @@ class SummarizationOrchestrationService:
             allow_enqueue
             and self._summary_job_queue is not None
             and len(refined.body) > profile_for(request.task).sync_threshold_chars
-            and (
-                request.task == Task.SUMMARY
-                or (
-                    request.task == Task.TRANSLATE
-                    and request.scope == Scope.FULL
-                    and self._translator is not None
-                )
-            )
+            and self._is_async_dispatchable(request)
         ):
             self._summary_job_queue.enqueue(request, user_id)
             self._emit("u7.job.pending", 1.0, request)
@@ -464,6 +457,45 @@ class SummarizationOrchestrationService:
         if doc is None:
             return DocModelLookup()
         return DocModelLookup(doc=doc)
+
+    def accept_async_job(self, request: SummaryRequest, ctx: RequestContext) -> bool:
+        """Take over an over-budget sync generation: queue it and report whether it was accepted.
+
+        REM-2 F05 / RESILIENCY-10. ``gateway_seam.run_summarization`` bounds the request by the
+        task's declared API budget and calls this when the generation is still running, so the work
+        continues in the background (pending → client polls) instead of being cut off by the browser
+        and lost. This method is the reason the production hand-over works at all: the seam probes
+        for it defensively, so without it a configured job queue would never be consulted and every
+        overrun would silently degrade to an abstain.
+
+        Returns True **only** when the job was actually queued, so the seam never promises a poll
+        for work nothing will execute. Declines when there is no queue, no authenticated principal,
+        or a request shape the async path does not support (abstract translate — BR-S8/BR-S12 only
+        cover full-summary and full-translate work).
+        """
+        if self._summary_job_queue is None:
+            return False
+        user_id = getattr(getattr(ctx, "auth_session", None), "user_id", None)
+        if not user_id:
+            return False
+        if not self._is_async_dispatchable(request):
+            return False
+        self._summary_job_queue.enqueue(request, user_id)
+        self._emit("u7.job.pending", 1.0, request)
+        return True
+
+    def _is_async_dispatchable(self, request: SummaryRequest) -> bool:
+        """Whether the async job path can serve this request (BR-S8/BR-S12).
+
+        Full summary always; full translate only with the structured translator wired. The
+        abstract scopes are short by construction and have no async job, so dispatching one would
+        queue work the worker cannot complete.
+        """
+        if request.task == Task.SUMMARY:
+            return True
+        return request.task == Task.TRANSLATE and request.scope == Scope.FULL and (
+            self._translator is not None
+        )
 
     # --- figure/table assets (FR-17, BR-S15) ---------------------------------
     def list_assets(self, paper_id: str, version: int) -> list[AssetRef] | None:

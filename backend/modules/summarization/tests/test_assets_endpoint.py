@@ -149,15 +149,12 @@ class _FakeCursor:
 
     def execute(self, sql, params):
         self.executed = (sql, params)
+
     def fetchall(self):
         return self._rows
 
     def fetchone(self):
         return self._rows[0] if self._rows else None
-
-
-    def fetchall(self):
-        return self._rows
 
 
 class _FakeConn:
@@ -208,7 +205,8 @@ def test_reader_lists_manifest_rows() -> None:
     assets = list(reader.list_assets("2401.00001", 1))
     assert len(assets) == 1
     a = assets[0]
-    assert isinstance(a, StoredAsset) and a.object_ref.startswith("s3://")  # internal, never exposed
+    # Internal only: never exposed. (Kept as the object_ref — the reader needs it to resolve bytes.)
+    assert isinstance(a, StoredAsset) and a.object_ref.startswith("s3://")
     assert s3.calls == [], "listing a manifest must not touch object storage"
 
 

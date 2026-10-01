@@ -2168,3 +2168,25 @@ G3 🟡 PARTIAL(operator F09/F10), G4/G5 ⛔ BLOCKED-ON-REM-4 **변경 없음**.
 
 **다음 단계**: REM-2 corrective Phase 5(RJ-AC01–08 durable job contract) → resiliency/readiness →
 frontend 배선 → 최종 게이트.
+
+### 후속 — F05 실오케스트레이터 hand-over 결함 수정 (2026-10-01)
+
+F05가 추가한 `gateway_seam`의 hand-over는 `getattr`로 `accept_async_job`를 탐색하는데, F05 시점에
+`SummarizationOrchestrationService`에는 **그 메서드가 없었다**. seam 테스트는 전부 메서드를 정의한
+fake를-driving 해서 suite는 green인데 production은 아니었다 — job queue가 정상 설정돼도 over-budget
+생성이 그 queue를 한 번도 조회하지 않고 bounded **abstain**으로 끝났고, queue가 백그라운드에서
+완료시키도록 존재하던 작업이 조용히 버려졌다(F05가 없애려던 바로 그 결과).
+
+수정: `accept_async_job(request, ctx) -> bool` 추가 — **실제로 큐에 들어간 경우에만** True를 반환해
+seam이 실행되지 않을 작업에 대한 poll을 약속하지 못하게 했다. queue 없음 / 인증 principal 없음 /
+async 경로가 지원하지 않는 요청(abstract translate — BR-S8/S12는 full summary·full translate만
+커버)에는 decline. 동시에 `_is_async_dispatchable()`을 추출해 char 임계값 사전 디스패치도 같은
+gate를 지나게 했다 — 같은 판단이 두 벌 복사돼 어긋날 수 없도록.
+
+회귀(`test_timeout_budget.py` +4, 파일 총 30): **진짜** `SummarizationOrchestrationService`를
+생성자(`__new__`가 아니라 — 검증 대상이 production wiring이어야 하므로)로 구성해 큐 hand-over,
+끝없이 걸리는 seam 실행이 `pending` + enqueue 1건으로 끝나는지, queue 없을 때 decline, abstract
+translate decline을 검증. Red first: 4건 모두
+`AttributeError: 'SummarizationOrchestrationService' object has no attribute 'accept_async_job'`.
+
+검증: backend **473 passed / 7 skipped** · summarization `ruff` clean. 커밋은 아래와 같다.

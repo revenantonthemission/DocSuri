@@ -38,6 +38,7 @@ from summarization.domain.timeout_profile import (
     TimeoutProfile,
     profile_for,
 )
+from summarization.service.orchestrator import SummarizationOrchestrationService
 
 # Layer order, from the generation itself outward. Each must clear the one below it by the margin.
 _LAYER_FIELDS = ("model_p95_sec", "worker_sec", "api_sec", "bff_sec", "browser_sec")
@@ -368,3 +369,103 @@ def test_translate_abstract_stays_inline_even_over_the_threshold() -> None:
 
     assert out.to_dict()["status"] == "ok"
     assert orch.accepted == []
+
+# --- the hand-over target is the REAL orchestrator, not a stand-in -----------------------------
+#
+# The tests above drive the seam with fakes, so they only prove the seam asks for a hand-over.
+# They never proved the seam's question has an answer in production: ``gateway_seam`` reaches for
+# ``accept_async_job`` defensively (``getattr``), because when F05 landed the real orchestrator had
+# no such method. A configured job queue was therefore never consulted on the over-budget path —
+# the request ended as a bounded abstain with work it could have finished in the background. These
+# tests bind the contract to the real class so a defensive ``getattr`` can never hide that again.
+
+
+class _RecordingJobQueue:
+    """Stands in for the async job queue (BR-S8/S12): records what the API path hands over."""
+
+    def __init__(self) -> None:
+        self.enqueued: list[tuple] = []
+
+    def enqueue(self, request, user_id) -> None:
+        self.enqueued.append((request, user_id))
+
+
+_ANY_TRANSLATOR = object()
+
+
+def _real_orchestrator(*, job_queue, translator=_ANY_TRANSLATOR):
+    """The production orchestrator, wired with the one collaborator under test."""
+    return SummarizationOrchestrationService(
+        store=None,
+        source_selector=None,
+        refiner=None,
+        glossary_resolver=None,
+        length_router=None,
+        llm=None,
+        grounding=None,
+        assembler=None,
+        cost_guard=None,
+        observability=None,
+        model_ver="test",
+        summary_job_queue=job_queue,
+        structured_translator=translator,
+    )
+
+
+def test_the_real_orchestrator_can_take_over_an_over_budget_generation() -> None:
+    queue = _RecordingJobQueue()
+    orch = _real_orchestrator(job_queue=queue)
+    request = SummaryRequest(paper_id="2401.1", version=1, task=Task.SUMMARY, scope=Scope.FULL)
+
+    assert orch.accept_async_job(request, _ctx("u1")) is True
+    assert queue.enqueued == [(request, "u1")]
+
+
+def test_the_over_budget_path_converts_to_a_pollable_job_against_the_real_orchestrator() -> None:
+    # End to end through the seam with the production hand-over target: a generation that never
+    # returns must end as pending with the job actually queued — not as an abstain that silently
+    # drops the work the queue was there to finish.
+    queue = _RecordingJobQueue()
+    orch = _real_orchestrator(job_queue=queue)
+    # A generation that hangs: the real run() would need the full adapter graph, and the point of
+    # this test is the seam's outcome, not the generation.
+    def _hang(*_args, **_kwargs) -> None:  # a generation that never returns
+        time.sleep(60)
+
+    orch.run = _hang  # type: ignore[method-assign]
+
+    out = run_summarization(
+        orch,
+        SummaryRequest(paper_id="2401.1", version=1, task=Task.SUMMARY, scope=Scope.FULL),
+        _ctx(),
+        budget_sec=0.05,
+    )
+
+    assert out.to_dict()["status"] == "pending"
+    assert len(queue.enqueued) == 1
+
+
+def test_the_real_orchestrator_declines_the_takeover_when_there_is_no_queue() -> None:
+    # Nowhere to continue → bounded abstain. The seam must not report a hand-over that no queue
+    # will ever execute.
+    orch = _real_orchestrator(job_queue=None)
+
+    assert orch.accept_async_job(
+        SummaryRequest(paper_id="2401.1", version=1, task=Task.SUMMARY, scope=Scope.FULL), _ctx()
+    ) is False
+
+
+def test_the_real_orchestrator_declines_an_abstract_translation_takeover() -> None:
+    # The async job path only exists for full-summary and full-translate work (BR-S8/S12). Handing
+    # over an abstract translation would queue a job the worker cannot complete, so it must decline
+    # and let the seam abstain.
+    queue = _RecordingJobQueue()
+    orch = _real_orchestrator(job_queue=queue)
+
+    assert orch.accept_async_job(
+        SummaryRequest(
+            paper_id="2401.1", version=1, task=Task.TRANSLATE, scope=Scope.ABSTRACT
+        ),
+        _ctx(),
+    ) is False
+    assert queue.enqueued == []
