@@ -56,19 +56,26 @@ class _FakeSource:
 
 
 class _FakeStore:
+    """Store double honouring the owner-scoped ``DocModelStorePort`` (REM-2 F01, ID-Q1)."""
+
     def __init__(self, cached: DocModel | None = None) -> None:
         self._cached = cached
         self.put_calls: list[DocModel] = []
+        # Owner passed alongside each put, in the same order as ``put_calls``.
+        self.put_owners: list[str | None] = []
 
-    def get(self, paper_id: str, version: int) -> DocModel | None:
+    def get(
+        self, paper_id: str, version: int, *, owner_id: str | None = None
+    ) -> DocModel | None:
         return self._cached
 
-    def put(self, doc: DocModel) -> str:
+    def put(self, doc: DocModel, *, owner_id: str | None = None) -> str:
         self.put_calls.append(doc)
+        self.put_owners.append(owner_id)
         return "s3://bucket/doc-model/x.json"
 
-    def remove(self, paper_id: str) -> None:  # pragma: no cover - not exercised here
-        pass
+    def remove(self, paper_id: str, *, owner_id: str | None = None) -> None:
+        pass  # pragma: no cover - not exercised here
 
 
 class _FakeUserDocumentSource:
@@ -339,6 +346,9 @@ def test_worker_dispatches_user_docmodel_job_and_acks(monkeypatch) -> None:
     assert doc.meta.version == 1
     assert doc.meta.provenance.sourceTier is SourceTier.pdf
     assert "User PDF body" in doc.fullText
+    # REM-2 F01 (ID-Q1): a private doc-model is written under its OWNER's key, so it can never
+    # occupy the shared corpus slot and can never be served by a corpus read.
+    assert store.put_owners == ["acct-1"]
     assert any(
         metric[0] == "ingestion.docmodel.user_build"
         and metric[2]["module"] == "evidence"

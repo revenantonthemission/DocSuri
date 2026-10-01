@@ -283,19 +283,29 @@ class InMemoryFullTextStore:
 
 
 class InMemoryDocModelStore:
+    """In-memory doc-model store honouring the owner-scoped ``DocModelStorePort`` (REM-2 F01).
+
+    Keyed by ``(owner_id, paperId, version)`` — mirroring ``S3DocModelStore``'s two key spaces,
+    so a private ``userdoc:`` document occupies its owner's slot and never the shared corpus one.
+    """
+
     def __init__(self) -> None:
-        self.objects: dict[tuple[str, int], DocModel] = {}
+        self.objects: dict[tuple[str | None, str, int], DocModel] = {}
 
-    def get(self, paper_id: str, version: int) -> DocModel | None:
-        return self.objects.get((paper_id, version))
+    def get(
+        self, paper_id: str, version: int, *, owner_id: str | None = None
+    ) -> DocModel | None:
+        return self.objects.get((owner_id, paper_id, version))
 
-    def put(self, doc: DocModel) -> str:
-        key = (doc.meta.paperId, doc.meta.version)
+    def put(self, doc: DocModel, *, owner_id: str | None = None) -> str:
+        key = (owner_id, doc.meta.paperId, doc.meta.version)
         self.objects[key] = doc
-        return f"memory://doc-model/{doc.meta.paperId}/v{doc.meta.version}.json"
+        scope = f"{owner_id}/" if owner_id else ""
+        return f"memory://doc-model/{scope}{doc.meta.paperId}/v{doc.meta.version}.json"
 
-    def remove(self, paper_id: str) -> None:
-        for key in [key for key in self.objects if key[0] == paper_id]:
+    def remove(self, paper_id: str, *, owner_id: str | None = None) -> None:
+        # Owner-scoped when given: a private id can only ever invalidate its own owner's slot.
+        for key in [key for key in self.objects if key[1] == paper_id and key[0] == owner_id]:
             del self.objects[key]
 
 

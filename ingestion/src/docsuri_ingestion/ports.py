@@ -198,13 +198,20 @@ class DocModelStorePort(Protocol):
 
     ``put`` derives its key from ``doc.meta`` (paperId/version); ``remove`` drops every cached
     version for a paper (tombstone/version-change invalidation, BLM §7).
+
+    ``owner_id`` (REM-2 F01, ID-Q1) scopes every operation for a PRIVATE ``userdoc:{uuid}``
+    document to ``private/userdoc/{owner}/{docId}/``. It is required for a private id and must
+    be omitted (``None``) for a corpus paper — so the public corpus prefix can never hold, or
+    be invalidated across, a tenant's document.
     """
 
-    def get(self, paper_id: str, version: int) -> DocModel | None: ...
+    def get(
+        self, paper_id: str, version: int, *, owner_id: str | None = None
+    ) -> DocModel | None: ...
 
-    def put(self, doc: DocModel) -> str: ...
+    def put(self, doc: DocModel, *, owner_id: str | None = None) -> str: ...
 
-    def remove(self, paper_id: str) -> None: ...
+    def remove(self, paper_id: str, *, owner_id: str | None = None) -> None: ...
 
 
 @runtime_checkable

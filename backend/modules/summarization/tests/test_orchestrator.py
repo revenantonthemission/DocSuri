@@ -30,8 +30,22 @@ def _ctx() -> RequestContext:
     return RequestContext(auth_session=AuthSession(user_id="u1"), request_id="r1")
 
 
+_ABSTRACT = "An abstract about BERT."
+
+
 def _req(task: Task = Task.SUMMARY, abstract: str | None = None) -> SummaryRequest:
+    """``abstract`` is the DEPRECATED client field — ignored as a source (REM-2 F02). Tests that
+    need an abstract source wire the server-side store instead (see ``abstract=`` below)."""
     return SummaryRequest(paper_id="2401.1", version=1, task=task, abstract=abstract)
+
+
+def _abstract_orch(**kwargs):
+    """An orchestrator whose only source is the SERVER-side canonical abstract store — the
+    abstract-scope translate path. The body is not a source, so this is how such a test must
+    be set up now."""
+    kwargs.setdefault("full_text", StubFullText(text=None))
+    kwargs.setdefault("abstract", _ABSTRACT)
+    return make_orchestrator(**kwargs)
 
 
 def test_cache_hit_skips_llm() -> None:
@@ -106,8 +120,8 @@ def test_llm_outage_then_recovery() -> None:
 
 
 def test_translate_path() -> None:
-    orch = make_orchestrator()
-    result = orch.run(_req(Task.TRANSLATE, abstract="An abstract about BERT."), _ctx())
+    orch = _abstract_orch()
+    result = orch.run(_req(Task.TRANSLATE), _ctx())
     out = result.to_dict()
     assert out["status"] == "ok"
     assert out["task"] == "translate"
@@ -120,8 +134,8 @@ def test_translate_abstains_on_empty_translation() -> None:
     # gate compares against the source and abstains after a retry (BR-S18). A dedicated metric is
     # emitted so this failure mode is separable from generation_unavailable in observability.
     obs = StubObservability()
-    orch = make_orchestrator(llm=StubLlm(empty=True), observability=obs)
-    result = orch.run(_req(Task.TRANSLATE, abstract="An abstract about BERT."), _ctx())
+    orch = _abstract_orch(llm=StubLlm(empty=True), observability=obs)
+    result = orch.run(_req(Task.TRANSLATE), _ctx())
     assert isinstance(result, AbstainDTO)
     assert result.reason == "empty_translation"
     assert any(name == "u7.translate.empty" for name, _v, _t in obs.metrics)
@@ -292,8 +306,8 @@ def test_orchestrator_abstract_translate_stays_inline() -> None:
     # An abstract translate (small, scope != FULL) is NOT dispatched async — it runs inline and
     # returns a result directly, even with a job queue wired.
     queue = _SpyQueue()
-    orch = make_orchestrator(summary_job_queue=queue)
-    out = orch.run(_req(Task.TRANSLATE, abstract="An abstract about BERT."), _ctx()).to_dict()
+    orch = _abstract_orch(summary_job_queue=queue)
+    out = orch.run(_req(Task.TRANSLATE), _ctx()).to_dict()
     assert out["status"] == "ok"
     assert queue.calls == []
 
@@ -386,7 +400,10 @@ def test_summary_from_stale_docmodel_heals_and_caches_under_own_generation() -> 
     assert result.to_dict()["status"] == "ok"  # stale doc served for this response
     assert store.puts == 1  # cached under the stale doc's OWN generation key (async-safe)
     (path,) = list(store.data)
-    assert "_d2." in path  # keyed on the ACTUAL (@2) generation, not the current one
+    assert "_d2_" in path  # keyed on the ACTUAL (@2) generation, not the current one
+    # REM-2 F02: the doc-model TIER is named too, so a degraded (legacy-text/abstract) request for
+    # the same paper+version can never be answered from this doc-model-backed artifact.
+    assert "_xdm2." in path
     assert queue.calls == [("2401.1", 1)]  # background rebuild still enqueued to heal
 
 
@@ -404,7 +421,8 @@ def test_translate_from_stale_docmodel_heals_and_caches_under_own_generation() -
     assert result.to_dict()["status"] == "ok"
     assert store.puts == 1  # translate base cached under the @2 key
     (path,) = list(store.data)
-    assert "_d2." in path
+    assert "_d2_" in path
+    assert "_xdm2." in path  # doc-model tier named (REM-2 F02)
     assert queue.calls == [("2401.1", 1)]
 
 
@@ -466,7 +484,9 @@ def test_legacy_cached_object_without_docmodel_segment_is_not_served() -> None:
     orch.run(_req(), _ctx())
     (current_path,) = list(store.data)
     gen = DOCMODEL_PARSER_VERSION.rpartition("@")[2]
-    legacy_path = current_path.replace(f"_d{gen}.json", ".json")
+    # The pre-migration path carried NEITHER the parser generation nor the source tier.
+    legacy_path = current_path.replace(f"_d{gen}_x", "").removesuffix(".json")
+    legacy_path = f"{legacy_path}.json"
     assert legacy_path != current_path  # sanity: the segment is actually present
     store.data.clear()
     store.data[legacy_path] = {"status": "ok", "marker": "STALE_LEGACY"}

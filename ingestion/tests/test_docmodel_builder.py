@@ -72,20 +72,35 @@ class _FakeSource:
 
 
 class _FakeStore:
+    """Store double honouring the owner-scoped ``DocModelStorePort`` (REM-2 F01, ID-Q1).
+
+    Keyed by ``(owner_id, paper_id, version)`` so the tests can prove a private document is never
+    read or written out of the shared corpus slot, and that invalidation is owner-scoped.
+    """
+
     def __init__(self, cached: DocModel | None = None) -> None:
         self._cached = cached
         self.put_calls: list[DocModel] = []
+        # Owner passed alongside each put, in the same order as ``put_calls``.
+        self.put_owners: list[str | None] = []
+        self.get_calls: list[tuple[str, int, str | None]] = []
         self.removed: list[str] = []
+        self.removed_scoped: list[tuple[str, str | None]] = []
 
-    def get(self, paper_id: str, version: int) -> DocModel | None:
+    def get(
+        self, paper_id: str, version: int, *, owner_id: str | None = None
+    ) -> DocModel | None:
+        self.get_calls.append((paper_id, version, owner_id))
         return self._cached
 
-    def put(self, doc: DocModel) -> str:
+    def put(self, doc: DocModel, *, owner_id: str | None = None) -> str:
         self.put_calls.append(doc)
+        self.put_owners.append(owner_id)
         return "s3://bucket/doc-model/x.json"
 
-    def remove(self, paper_id: str) -> None:
+    def remove(self, paper_id: str, *, owner_id: str | None = None) -> None:
         self.removed.append(paper_id)
+        self.removed_scoped.append((paper_id, owner_id))
 
 
 class _FixedClock:

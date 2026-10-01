@@ -3,6 +3,13 @@
 The object layout mirrors U1's ``S3DocModelStore`` writer (``doc-model/{paperId}/v{ver}.json``);
 a miss (NoSuchKey — not yet lazily built) or a license-disallowed object returns None so the
 router surfaces ``source_unavailable``. Read-only: building/caching is U1's role (D6).
+
+REM-2 F01 (SECURITY-08): this reader has TWO key spaces and never mixes them. ``get_doc_model``
+is the **corpus** read and refuses the reserved ``userdoc:`` private namespace outright — a
+private document can never be resolved out of the shared public prefix, even if a caller reaches
+this adapter directly. ``get_private_doc_model`` is the **owner-scoped** read: it probes only the
+caller's own ``private/userdoc/{owner}/{docId}/`` prefix, so a non-owner request resolves in its
+own empty prefix and cannot distinguish "exists but not yours" from "does not exist".
 """
 
 from __future__ import annotations
@@ -13,6 +20,7 @@ from typing import Any
 
 from docsuri_shared.docmodel_contract import DOCMODEL_SCHEMA_VERSION
 from docsuri_shared.dtos import DocModel
+from docsuri_shared.private_docs import is_private_paper_id, private_docmodel_key
 
 from ._paper_ref import bare_paper_id
 
@@ -42,9 +50,46 @@ class S3DocModelReader:
         self._prefix = prefix.strip("/")
 
     def get_doc_model(self, paper_id: str, version: int) -> DocModel | None:
-        from botocore.exceptions import ClientError
+        """Corpus read. Refuses the private ``userdoc:`` namespace (REM-2 F01).
+
+        Defense in depth behind the HTTP boundary: a private document is stored under the
+        separate owner-scoped prefix, so resolving one here would mean falling back to the public
+        corpus prefix — the cross-tenant read SECURITY-08 is about. Returns ``None`` (→ the
+        caller's source_unavailable / 404 surface) WITHOUT touching S3, so a rejected private id
+        cannot even be used as an existence oracle.
+        """
+        if is_private_paper_id(paper_id):
+            logger.info(
+                "private document id refused by the corpus doc-model reader (%s); "
+                "private reads must go through the owner-scoped path",
+                paper_id,
+            )
+            return None
 
         key = f"{self._prefix}/{bare_paper_id(paper_id)}/v{version}.json"
+        return self._read_key(key)
+
+    def get_private_doc_model(self, owner_id: str, doc_id: str, version: int) -> DocModel | None:
+        """Owner-scoped private read (REM-2 F01 / FD-Q1 / ID-Q1).
+
+        Probes ONLY ``private/userdoc/{owner}/{docId}/v{version}.json`` for the given owner, so
+        ownership is enforced by the key itself: a caller asking for another tenant's ``docId``
+        resolves in their own (empty) prefix and gets a miss, indistinguishable from a document
+        that does not exist. Returns ``None`` on any unverifiable input or a genuine miss.
+        """
+        try:
+            key = private_docmodel_key(owner_id=owner_id, doc_id=doc_id, version=version)
+        except ValueError:
+            # Unverifiable owner or a non-UUID doc id — fail closed rather than probe a key we
+            # cannot attribute to this caller.
+            logger.info("private doc-model read refused for unverifiable owner/doc id")
+            return None
+        return self._read_key(key)
+
+    def _read_key(self, key: str) -> DocModel | None:
+        """Shared read of one resolved key (corpus and private share the validation rules)."""
+        from botocore.exceptions import ClientError
+
         try:
             obj = self._s3.get_object(Bucket=self._bucket, Key=key)
             payload = json.loads(obj["Body"].read())

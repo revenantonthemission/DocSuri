@@ -12,8 +12,19 @@ from tests.stubs import StubFullText
 def _req(
     task: Task, abstract: str | None = None, scope: Scope = Scope.ABSTRACT
 ) -> SummaryRequest:
+    # ``abstract`` is the DEPRECATED client field (REM-2 F02): retained on the dataclass for
+    # wire compatibility, ignored as a source. The selector tests below therefore supply the
+    # abstract through the server-side ``abstract_lookup`` instead — which is how the canonical
+    # abstract actually reaches the pipeline in production.
     return SummaryRequest(
         paper_id="2401.00001", version=1, task=task, scope=scope, abstract=abstract
+    )
+
+
+def _selector_with_server_abstract(text: str | None = None, abstract: str | None = None):
+    """A selector whose abstract comes from the SERVER store, never the request body."""
+    return SourceSelector(
+        StubFullText(text=text), abstract_lookup=lambda _pid: abstract
     )
 
 
@@ -23,7 +34,7 @@ def test_summary_uses_full_text() -> None:
 
 
 def test_summary_falls_back_to_abstract() -> None:
-    src = SourceSelector(StubFullText(text=None)).select(_req(Task.SUMMARY, abstract="abs"))
+    src = _selector_with_server_abstract(text=None, abstract="abs").select(_req(Task.SUMMARY))
     assert src is not None and src.kind == SourceKind.ABSTRACT
     assert src.fallback_reason == "full_text_unavailable"
 
@@ -33,7 +44,7 @@ def test_summary_none_when_no_source() -> None:
 
 
 def test_translate_uses_abstract() -> None:
-    src = SourceSelector(StubFullText()).select(_req(Task.TRANSLATE, abstract="abs"))
+    src = _selector_with_server_abstract(abstract="abs").select(_req(Task.TRANSLATE))
     assert src is not None and src.kind == SourceKind.ABSTRACT
 
 
@@ -45,8 +56,8 @@ def test_translate_full_uses_full_text() -> None:
 
 
 def test_translate_full_falls_back_to_abstract() -> None:
-    src = SourceSelector(StubFullText(text=None)).select(
-        _req(Task.TRANSLATE, abstract="abs", scope=Scope.FULL)
+    src = _selector_with_server_abstract(text=None, abstract="abs").select(
+        _req(Task.TRANSLATE, scope=Scope.FULL)
     )
     assert src is not None and src.kind == SourceKind.ABSTRACT
     assert src.fallback_reason == "full_text_unavailable"
@@ -83,6 +94,54 @@ def test_cache_key_carries_docmodel_parser_generation() -> None:
     gen = DOCMODEL_PARSER_VERSION.rpartition("@")[2]
     assert key.docmodel_ver == gen
     assert f"_d{gen}.json" in key.object_path()
+
+
+def test_source_tier_ver_names_the_canonical_tier_each_source_resolves_to() -> None:
+    # REM-2 F02 / FD-Q2: the key segment that records WHICH canonical source an artifact came from.
+    from docsuri_shared.docmodel_contract import DOCMODEL_PARSER_VERSION
+    from docsuri_shared.dtos import DocModel
+
+    from summarization.domain.cache_key import source_tier_ver
+    from summarization.domain.models import SourceKind, SourceText
+
+    assert source_tier_ver(None) == "none"
+    assert source_tier_ver(SourceText(kind=SourceKind.ABSTRACT, raw="x")) == "abs"
+    assert source_tier_ver(SourceText(kind=SourceKind.FULL_TEXT, raw="x")) == "txt"
+
+    doc = DocModel.model_validate(
+        {
+            "meta": {
+                "paperId": "2401.1",
+                "version": 1,
+                "title": "Sample",
+                "provenance": {
+                    "sourceTier": "ar5iv",
+                    "parserVersion": DOCMODEL_PARSER_VERSION,
+                    "schemaVersion": "1.1.0",
+                    "generatedAt": "1970-01-01T00:00:00Z",
+                },
+            },
+            "fullText": "5.2 Results",
+            "sections": [],
+        }
+    )
+    gen = DOCMODEL_PARSER_VERSION.rpartition("@")[2]
+    assert source_tier_ver(SourceText(kind=SourceKind.FULL_TEXT, doc_model=doc)) == f"dm{gen}"
+
+
+def test_cache_key_source_tier_change_invalidates_path() -> None:
+    # Same request, different tier → different path, so a degraded artifact is never served to a
+    # healthy request (the provenance the key does not describe cannot be trusted).
+    kwargs = {"glossary_ver": 0, "model_ver": "m1", "user_id": "u1"}
+    legacy = build_cache_key(_req(Task.SUMMARY), source_ver="txt", **kwargs)
+    modelled = build_cache_key(_req(Task.SUMMARY), source_ver="dm4", **kwargs)
+    assert legacy != modelled
+    assert legacy.object_path() != modelled.object_path()
+    assert "_xtxt.json" in legacy.object_path()
+    assert "_xdm4.json" in modelled.object_path()
+    # No tier (a pre-selection/legacy key) stays a distinct path too — never silently equal.
+    untiered = build_cache_key(_req(Task.SUMMARY), **kwargs)
+    assert len({untiered.object_path(), legacy.object_path(), modelled.object_path()}) == 3
 
 
 def test_cache_key_parser_bump_invalidates_path() -> None:

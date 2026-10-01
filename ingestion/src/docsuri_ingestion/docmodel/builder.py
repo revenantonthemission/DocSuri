@@ -243,9 +243,10 @@ class DocModelBuilder:
         text: str,
         *,
         source_tier: SourceTier = SourceTier.pdf,
+        owner_id: str | None = None,
     ) -> DocModelResultDTO:
         """Return/cache a minimal doc-model for non-arXiv source records."""
-        cached = self._fresh_cached(paper_id, version)
+        cached = self._fresh_cached(paper_id, version, owner_id=owner_id)
         if cached is not None:
             return DocModelResultDTO(status="ok", cached=True, docModel=cached)
         doc = parse_text_to_docmodel(
@@ -259,7 +260,7 @@ class DocModelBuilder:
             schema_version=self._schema_version,
             generated_at=self._clock.now(),
         )
-        self._store.put(doc)
+        self._store.put(doc, owner_id=owner_id)
         return DocModelResultDTO(status="ok", cached=False, docModel=doc)
 
     def build_from_tei(
@@ -273,6 +274,7 @@ class DocModelBuilder:
         *,
         source_tier: SourceTier = SourceTier.pdf,
         crops: list[AssetCropSpec] | None = None,
+        owner_id: str | None = None,
     ) -> DocModelResultDTO:
         """Structured doc-model from GROBID TEI for non-arXiv sources (sections/tables/figures).
 
@@ -285,7 +287,7 @@ class DocModelBuilder:
         On a cache hit the TEI is not parsed, so ``crops`` stays empty — the caller distinguishes
         that via the returned ``cached`` flag.
         """
-        cached = self._fresh_cached(paper_id, version)
+        cached = self._fresh_cached(paper_id, version, owner_id=owner_id)
         if cached is not None:
             return DocModelResultDTO(status="ok", cached=True, docModel=cached)
         doc = None
@@ -311,20 +313,34 @@ class DocModelBuilder:
                 doc = None
         if doc is None:
             return self.build_from_paper(
-                paper_id, version, title, abstract, fallback_text, source_tier=source_tier
+                paper_id,
+                version,
+                title,
+                abstract,
+                fallback_text,
+                source_tier=source_tier,
+                owner_id=owner_id,
             )
-        self._store.put(doc)
+        self._store.put(doc, owner_id=owner_id)
         return DocModelResultDTO(status="ok", cached=False, docModel=doc)
 
-    def invalidate(self, paper_id: str) -> None:
-        """Drop every cached doc-model version for a paper (version change / tombstone)."""
-        self._store.remove(paper_id)
+    def invalidate(self, paper_id: str, *, owner_id: str | None = None) -> None:
+        """Drop every cached doc-model version for a paper (version change / tombstone).
 
-    def get_cached(self, paper_id: str, version: int) -> DocModel | None:
-        return self._fresh_cached(paper_id, version)
+        A private ``userdoc:`` id is scoped to its owner (REM-2 F01, ID-Q1), so invalidation can
+        never reach a sibling tenant's prefix.
+        """
+        self._store.remove(paper_id, owner_id=owner_id)
 
-    def _fresh_cached(self, paper_id: str, version: int) -> DocModel | None:
-        cached = self._store.get(paper_id, version)
+    def get_cached(
+        self, paper_id: str, version: int, *, owner_id: str | None = None
+    ) -> DocModel | None:
+        return self._fresh_cached(paper_id, version, owner_id=owner_id)
+
+    def _fresh_cached(
+        self, paper_id: str, version: int, *, owner_id: str | None = None
+    ) -> DocModel | None:
+        cached = self._store.get(paper_id, version, owner_id=owner_id)
         if cached is None:
             return None
         provenance = cached.meta.provenance

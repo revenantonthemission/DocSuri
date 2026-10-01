@@ -8,6 +8,12 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from docsuri_shared.dtos import DocModel
+from docsuri_shared.private_docs import (
+    is_private_paper_id,
+    private_doc_id,
+    private_docmodel_key,
+    private_docmodel_prefix,
+)
 from docsuri_shared.vector_spec import EMBEDDING_SPEC
 from pydantic import ValidationError
 
@@ -64,6 +70,12 @@ class S3DocModelStore:
     NOT stored here (the JSON references webp assets by assetId). SSE-KMS when a key is set,
     else SSE-S3. ``get`` returns ``None`` on a cache miss; ``remove`` drops every cached
     version for a paper (version-change / tombstone invalidation).
+
+    Private documents (REM-2 F01, ID-Q1) never touch the corpus prefix. A ``userdoc:{uuid}``
+    paper id is written/read under the SEPARATE owner-scoped
+    ``private/userdoc/{owner}/{docId}/v{version}.json`` (see ``docsuri_shared.private_docs``),
+    and a private id with no resolvable owner is refused rather than written into the shared
+    prefix — so the public corpus prefix can never hold a tenant's document.
     """
 
     def __init__(
@@ -76,16 +88,33 @@ class S3DocModelStore:
         self._prefix = prefix.strip("/")
         self._kms_key_id = kms_key_id
 
-    def _key(self, paper_id: str, version: int) -> str:
+    @staticmethod
+    def _private_doc_id(paper_id: str, owner_id: str | None) -> str:
+        """The verified doc id of a private request, or fail closed.
+
+        Raises ``ValueError`` for a private id with no/unverifiable owner, so a caller bug can
+        never publish, read or delete a private document through the public corpus prefix.
+        """
+        doc_id = private_doc_id(paper_id)
+        if doc_id is None or not owner_id:
+            raise ValueError(
+                f"private doc-model requires an owner and a valid doc id: {paper_id}"
+            )
+        return doc_id
+
+    def _key(self, paper_id: str, version: int, *, owner_id: str | None = None) -> str:
+        """Object key for a doc-model. Private ids require an owner and get the private prefix."""
+        if is_private_paper_id(paper_id):
+            doc_id = self._private_doc_id(paper_id, owner_id)
+            return private_docmodel_key(owner_id=owner_id, doc_id=doc_id, version=version)
         return f"{self._prefix}/{paper_id}/v{version}.json"
 
-    def get(self, paper_id: str, version: int) -> DocModel | None:
+    def get(self, paper_id: str, version: int, *, owner_id: str | None = None) -> DocModel | None:
         from botocore.exceptions import ClientError
 
         try:
-            response = self._client.get_object(
-                Bucket=self._bucket, Key=self._key(paper_id, version)
-            )
+            key = self._key(paper_id, version, owner_id=owner_id)
+            response = self._client.get_object(Bucket=self._bucket, Key=key)
         except ClientError as exc:
             if exc.response.get("Error", {}).get("Code") in {"NoSuchKey", "404", "NotFound"}:
                 return None
@@ -99,8 +128,8 @@ class S3DocModelStore:
             # already forces a rebuild on version drift; this covers the harder schema break.
             return None
 
-    def put(self, doc: DocModel) -> str:
-        key = self._key(doc.meta.paperId, doc.meta.version)
+    def put(self, doc: DocModel, *, owner_id: str | None = None) -> str:
+        key = self._key(doc.meta.paperId, doc.meta.version, owner_id=owner_id)
         kwargs: dict[str, Any] = {
             "Bucket": self._bucket,
             "Key": key,
@@ -117,18 +146,40 @@ class S3DocModelStore:
         }
         if self._kms_key_id:
             kwargs["SSEKMSKeyId"] = self._kms_key_id
+        if owner_id:
+            # Private writes carry the owner as object metadata too, so an operator/audit can
+            # attribute a private object without decoding its key.
+            kwargs["Metadata"] = {**kwargs["Metadata"], "owner-id": str(owner_id)}
         self._client.put_object(**kwargs)
         return f"s3://{self._bucket}/{key}"
 
-    def remove(self, paper_id: str) -> None:
+    def remove(self, paper_id: str, *, owner_id: str | None = None) -> None:
+        """Invalidate every cached version for a paper. A private id is scoped to its owner, so
+        invalidation can never reach another tenant's prefix."""
         paginator = self._client.get_paginator("list_objects_v2")
+        try:
+            key_prefix = self._version_prefix(paper_id, owner_id=owner_id)
+        except ValueError:
+            # A private id with no owner cannot be resolved to a single owner's prefix. Fail
+            # closed: drop nothing rather than risk a prefix-wide delete.
+            _log.warning("refusing doc-model invalidation for unresolvable private paper id")
+            return
         keys: list[dict[str, str]] = []
-        for page in paginator.paginate(Bucket=self._bucket, Prefix=f"{self._prefix}/{paper_id}/"):
+        for page in paginator.paginate(Bucket=self._bucket, Prefix=key_prefix):
             keys.extend({"Key": obj["Key"]} for obj in page.get("Contents", []))
         for start in range(0, len(keys), 1000):  # DeleteObjects caps at 1000 keys per call
             self._client.delete_objects(
                 Bucket=self._bucket, Delete={"Objects": keys[start : start + 1000]}
             )
+
+    def _version_prefix(self, paper_id: str, *, owner_id: str | None = None) -> str:
+        """Object-key prefix covering every cached version of one document."""
+        if is_private_paper_id(paper_id):
+            doc_id = self._private_doc_id(paper_id, owner_id)
+            # private/userdoc/{owner}/{docId}/ — owner-scoped, so this prefix is exactly one
+            # tenant's document and never a sibling's.
+            return private_docmodel_prefix(owner_id=owner_id, doc_id=doc_id)
+        return f"{self._prefix}/{paper_id}/"
 
 
 class S3RawContentStore:

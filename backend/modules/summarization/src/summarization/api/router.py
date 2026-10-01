@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from docsuri_shared.private_docs import is_private_paper_id
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
 
@@ -25,6 +26,13 @@ from ..domain.models import (
     Task,
 )
 from ..service.orchestrator import SummarizationOrchestrationService
+
+# REM-2 F01 (SECURITY-08) / FD-Q1: the private ``userdoc:`` namespace is served ONLY by the
+# owner-verified private route below. Every PUBLIC corpus route refuses it with this single
+# body — a 404 that is byte-identical whether or not the document exists, so a caller can use
+# neither the status code nor the body as an existence oracle, and the refusal happens BEFORE
+# any store/queue access so no cross-tenant read is even attempted.
+_PRIVATE_NAMESPACE_404 = {"status": "not_found"}
 
 
 def build_router(
@@ -49,6 +57,11 @@ def build_router(
                 {"status": "validation_error", "message": "요청을 확인해 주세요."},
                 status_code=400,
             )
+        # Summarization is a corpus capability. A private ``userdoc:`` id must never reach the
+        # pipeline (F01: it would resolve a private doc-model as the summary source and cache a
+        # derived artifact under a caller-supplied id), so it is refused here, not deeper down.
+        if is_private_paper_id(parsed.paper_id):
+            return JSONResponse(_PRIVATE_NAMESPACE_404, status_code=404)
 
         ctx = RequestContext(
             auth_session=AuthSession(user_id=user_id),
@@ -105,6 +118,12 @@ def build_router(
         user_id = _principal_user_id(request)
         if not user_id:
             return JSONResponse({"status": "unauthorized"}, status_code=401)
+        # REM-2 F01: refuse the private namespace before ANY branch — including the license gate
+        # below, whose 200 "license_unavailable" would otherwise make the private namespace
+        # resolvable (existence/state) on a deployment with doc-model disabled (see the module
+        # constant: the refusal must hold before any store/queue access).
+        if is_private_paper_id(paper_id):
+            return JSONResponse(_PRIVATE_NAMESPACE_404, status_code=404)
         if not docmodel_enabled:
             return JSONResponse({"status": "license_unavailable"})
         # FE sends ?version=<arXiv revision> (lib/arxivVersion.ts); if a client omits it, fall
@@ -145,6 +164,11 @@ def build_router(
         user_id = _principal_user_id(request)
         if not user_id:
             return JSONResponse({"status": "unauthorized"}, status_code=401)
+        # REM-2 F07/F01: the asset manifest is keyed on the same caller-supplied id, so it shares
+        # the private-namespace refusal (an owner has no assets here; see the private route) — and
+        # refuses before the license gate for the same reason as the doc-model route.
+        if is_private_paper_id(paper_id):
+            return JSONResponse(_PRIVATE_NAMESPACE_404, status_code=404)
         if not assets_enabled:
             return JSONResponse({"status": "license_unavailable"})
         # ?version fallback mirrors the doc-model handler: the path id's arXiv revision, not v1.
@@ -161,6 +185,48 @@ def build_router(
         if refs is None:
             return JSONResponse({"status": "license_unavailable"})
         return JSONResponse({"status": "ok", "assets": [r.to_dict() for r in refs]})
+
+    @router.get("/api/userdoc/{doc_id}/doc-model")
+    def private_doc_model(request: Request, doc_id: str) -> Any:
+        """Owner-verified read of a private (user-uploaded) doc-model — REM-2 F01 / FD-Q1.
+
+        The dedicated private route the corpus routes refer to: the owner's own
+        ``private/userdoc/{owner}/{docId}/`` prefix is the ONLY one probed, so a request for
+        another tenant's ``docId`` misses and returns the SAME 404 a nonexistent id returns. No
+        existence oracle, no cross-tenant read, no reliance on the caller being the owner.
+
+        Read-only: it never triggers a build (the upload flow drives builds), so a miss surfaces
+        as ``source_unavailable``. The response is url-free (SEC-9), matching the corpus route —
+        private figure delivery is the F07 same-origin endpoint's job.
+        """
+        user_id = _principal_user_id(request)
+        if not user_id:
+            return JSONResponse({"status": "unauthorized"}, status_code=401)
+        raw_version = request.query_params.get("version")
+        try:
+            version = int(raw_version) if raw_version is not None else 1
+        except (TypeError, ValueError):
+            version = 1
+        if version < 1:
+            return JSONResponse(_PRIVATE_NAMESPACE_404, status_code=404)
+        try:
+            result = orchestrator.private_doc_model(user_id, doc_id, version)
+        except Exception:  # noqa: BLE001 — fail-closed (INV-4/SEC-15), parity with the corpus
+            # route: a store fault is a generic 503, never a raw 500 leaking internals.
+            return JSONResponse({"status": "unavailable"}, status_code=503)
+        if result.doc is not None:
+            return JSONResponse(
+                {
+                    "status": "ok",
+                    "cached": True,
+                    "docModel": result.doc.model_dump(mode="json", exclude_none=True),
+                }
+            )
+        # A miss here is either "not built yet" or "not yours" — both are reported as the SAME
+        # 404 the corpus route returns for a private id, so the status code cannot be used as an
+        # existence oracle for another tenant's document. (Deliberately NOT the corpus route's
+        # ``source_unavailable`` 200, which would itself distinguish "yours, not built yet".)
+        return JSONResponse(_PRIVATE_NAMESPACE_404, status_code=404)
 
     return router
 
@@ -211,7 +277,11 @@ def _parse_request(payload: dict) -> SummaryRequest | None:
     persona = _enum_or_default(Persona, payload.get("persona"), Persona.EXPERT)
     lang = _enum_or_default(TargetLang, payload.get("targetLang"), TargetLang.KO)
     scope = _enum_or_default(Scope, payload.get("scope"), Scope.ABSTRACT)
-    abstract = payload.get("abstract")
+    # REM-2 F02 (FD-Q2): the client ``abstract`` field is DEPRECATED and dropped at the boundary.
+    # It is still accepted (so an older client is not broken by a 400) but never carried onto the
+    # request — ``SourceSelector`` sources the abstract from the server-side store, and leaving it
+    # on the request invited exactly the contamination SECURITY-13 is about. The worker/SQS
+    # payload keeps the key so an already-enqueued job still deserializes.
     return SummaryRequest(
         paper_id=paper_id,
         version=version,
@@ -219,7 +289,7 @@ def _parse_request(payload: dict) -> SummaryRequest | None:
         target_lang=lang,
         persona=persona,
         scope=scope,
-        abstract=str(abstract) if abstract else None,
+        abstract=None,
     )
 
 

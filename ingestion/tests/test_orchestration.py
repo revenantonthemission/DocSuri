@@ -39,19 +39,27 @@ class _NoHtmlDocModelSource:
 
 
 class _DocModelStore:
+    """Store double honouring the owner-scoped ``DocModelStorePort`` (REM-2 F01, ID-Q1)."""
+
     def __init__(self) -> None:
         self.docs: list[DocModel] = []
+        # Owner passed alongside each put, in the same order as ``docs``.
+        self.put_owners: list[str | None] = []
         self.removed: list[str] = []
 
-    def get(self, paper_id: str, version: int) -> DocModel | None:
-        del paper_id, version
+    def get(
+        self, paper_id: str, version: int, *, owner_id: str | None = None
+    ) -> DocModel | None:
+        del paper_id, version, owner_id
         return None
 
-    def put(self, doc: DocModel) -> str:
+    def put(self, doc: DocModel, *, owner_id: str | None = None) -> str:
         self.docs.append(doc)
+        self.put_owners.append(owner_id)
         return "memory://doc-model"
 
-    def remove(self, paper_id: str) -> None:
+    def remove(self, paper_id: str, *, owner_id: str | None = None) -> None:
+        del owner_id
         self.removed.append(paper_id)
 
 

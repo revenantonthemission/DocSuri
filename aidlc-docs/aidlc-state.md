@@ -1930,7 +1930,7 @@ platform **485 passed** / 185 skipped (기존 격리 DB skip), ops **192 passed*
 | 게이트 | 상태 | 근거 |
 |---|---|---|
 | **G1** 플랫폼 기반 | 🟡 PARTIAL — BLOCKED-ON-OPERATOR | 실행 가능 항목 실행 완료(runbook §2/§3/§4/§8): rescans → redis/opensearch/elasticmq **338 blocking finding 신규 발견(미처분)**, pip-audit 정상화(venv drift → clean), bridge mTLS 1 passed, live smoke 2 passed. operator 소유 잔존: CVE-2026-85091 예외/알파인 refresh, derived postgres CANDIDATE→APPROVED, CVE-2026-82049 수용, 신규 338건 처분, Keychain ACL/secret rotation/launchd 루트 검증 |
-| **G2** service/store/worker | 🔴 미통과 | F01/F02/F05/F07 = REM-2 worker pipeline. REM-2 완료 주장은 폐기됨(아래). corrective unit이 rewrite 대상 |
+| **G2** service/store/worker | 🔴 미통과 | F01/F02/F05/F07 = REM-2 worker pipeline. REM-2 완료 주장은 폐기됨(아래). corrective unit이 rewrite 대상. **F01·F02는 2026-10-01 hotfix로 종결**(아래 절), 잔존 = F05/F07/RJ-AC |
 | **G3** lifecycle/edge | 🟡 PARTIAL — code+static ✅ | F04/F09/F10 구현 완료(backend home)·정적 게이트 green·F04 실 Postgres leg 2 passed. 잔여 = F09/F10 실 Redis/OpenSearch 인수(operator). (`purge_registry`는 불필요 — `account_deletions`가 레지스트리) |
 | **G4** 통합/browser/compatibility | ⛔ **BLOCKED-ON-REM-4** | F03/F11/F12 corpus report + no-match/저하가 REM-4 산출. 통과 불가 |
 | **G5** 복구/live preflight | ⛔ **BLOCKED-ON-REM-4** | F03 증거가 REM-4 R4A `CorpusEvidenceService` 산출. 통과 불가 |
@@ -2035,3 +2035,39 @@ runbook `operations/g1-operator-runbook.md` 작성 후, sudo/결정 불필요 �
 
 **REM-2 orphan 정리(2026-10-01)**: `platform_integrity/.../adapters/{registry,cache,private_userdoc}.py` 삭제
 (commit `6ee9d7c5` 유래, test 0·import 0·실행 불가). full suite 회귀 없음(platform_integrity 493/185, ruff clean).
+
+---
+
+## REM-2 Corrective — D5 security hotfix landed: F01 + F02 (2026-10-01)
+
+승인된 결정 D1–D6(모두 A)에 따라 계획(`construction/plans/rem-2-corrective-plan.md`)의
+**D5 순서(F01 → F02)** 를 실행했다. plan Phase 0에서 두 결함을 먼저 **재현**한 뒤 수정했다.
+
+| Phase | 결과 |
+|---|---|
+| 0 재현 | F01: 타인 `userdoc:` doc-model이 **200**으로 반환 / F02: 공격자 body가 번역본에 반영 + body-only 요청이 **공유 캐시** 산출물 기록 |
+| 1 F01 | `userdoc:` 네임스페이스를 **owner-scoped**로 격리. `private/userdoc/{owner}/{docId}/v{N}.json` (신규 `docsuri_shared.private_docs`가 양쪽 deployable의 유일한 도출 지점). corpus reader는 private id를 **S3 접근 없이** 거부, private read는 호출자 자신의 prefix만 탐색. 공개 라우트 3종(doc-model/assets/summarize)은 **license 분기보다 앞에서** 동일한 404로 거부. owner 검증 `GET /api/userdoc/{doc_id}/doc-model` 신설 — miss/비소유자 **바이트 동일 404**, store 장애는 503 |
+| 2 F02 | `SourceSelector`가 client `abstract`을 **완전 무시**(doc-model → legacy text → server abstract만 사용). router가 `abstract`를 폐기(구 클라이언트는 400 회피). `SummaryCacheKey`에 **source-tier 차원**(`_xtxt`/`_xdm<gen>`/`_xabs`) 추가 — 동일 paper+version이라도 degraded/healthy 요청이 같은 키를 공유해 "초록 기반 산출물이 전문 요약으로 제공"되던 결함 제거 |
+
+**교차 deployable 회귀 발견·수정**: corpus 거부가 업로드 readiness probe를 깨뜨려
+`UserDocModelCoordinator.poll/peek_doc_model`을 owner-scoped private read로 전환했다
+(미전환 시 모든 첨부 doc-model이 영구 miss). private path 없는 reader는 "빌드 미완료"와
+구분 불가능하므로 **로그로 노출**한다.
+
+**검증**: backend **473 passed / 7 skipped** + ruff clean · ingestion **323 passed / 1 skipped** +
+ruff clean · shared **145 passed** + ruff clean. 신규 회귀
+`test_private_content_boundary.py`(12) · `test_private_doc_model_route.py`(11) ·
+`test_canonical_source_boundary.py`(10) · `shared/test_private_docs.py`(30) ·
+ingestion `test_docmodel_store.py` private 6케이스(+`put_owners` owner 단언) · `test_user_docmodel.py`.
+
+**잔여(이번 hotfix 범위 밖)**: legacy 공유 prefix `doc-model/userdoc:...` 산출물은 D2에 따라 이제
+거부되며 재작성되지 않는다 → **D6 dry-run/백업/purge 및 업로드 재빌드 필요**. F05, F07(동일 출처
+asset proxy), RJ-AC job contract, resiliency, frontend `abstract` 전송 중단 단계는 다음.
+
+**게이트 영향**: **G2는 여전히 🔴** — F05/F07/RJ-AC 미완료. G1 🟡 PARTIAL(operator),
+G3 🟡 PARTIAL(operator F09/F10), G4/G5 ⛔ BLOCKED-ON-REM-4 **변경 없음**.
+
+**다음 단계**: REM-2 corrective Phase 3(F05 비용/예산 정렬 + over-budget→job 전환) →
+Phase 4(F07 동일 출처 asset proxy) → RJ-AC job contract → resiliency → frontend 배선 → 최종 게이트.
+
+**REM-2 상태 정정**: 🔴 미통과 유지. 다만 F01/F02 두 결함은 **종결** — 나머지 결함만 잔존.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 import time
@@ -9,6 +10,9 @@ from urllib.parse import quote
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from docsuri_shared.dtos import DocModel
+from docsuri_shared.private_docs import private_doc_id
+
+logger = logging.getLogger(__name__)
 
 USER_DOCMODEL_VERSION = 1
 USER_DOCMODEL_MODULES = frozenset({"evidence", "novelty"})
@@ -221,10 +225,7 @@ class UserDocModelCoordinator:
             return None
         deadline = time.monotonic() + self._poll_timeout
         while True:
-            try:
-                doc = self._reader.get_doc_model(ref.paper_id, ref.version)
-            except Exception:  # noqa: BLE001 — best-effort readiness: a reader failure degrades, never 500s (contract).
-                return None
+            doc = self._read_private(ref)
             if doc is not None:
                 return doc
             now = time.monotonic()
@@ -235,11 +236,35 @@ class UserDocModelCoordinator:
     def peek_doc_model(self, ref: UserDocModelRef) -> DocModel | None:
         """Single non-blocking readiness check (no sleep) for a worker's early retry gate.
         Returns None when the doc-model is not built yet, or the reader is absent/erroring."""
+        return self._read_private(ref)
+
+    def _read_private(self, ref: UserDocModelRef) -> DocModel | None:
+        """Read THIS ref's doc-model through the owner-scoped private path (REM-2 F01 / ID-Q1).
+
+        The corpus read deliberately refuses the ``userdoc:`` namespace, so an upload's readiness
+        check must use the private read — scoped to ``ref.owner_id``, the owner the ref was minted
+        for (and re-verified by ``ref_from_attachment``), never to whatever the caller supplies.
+        A reader failure reads as "not ready" — a readiness probe degrades, never 500s.
+        """
         if self._reader is None:
             return None
+        doc_id = private_doc_id(ref.paper_id)
+        if doc_id is None:
+            return None
+        read_private = getattr(self._reader, "get_private_doc_model", None)
+        if read_private is None:
+            # A reader without the private path is a WIRING bug, not "not built yet" — degrade
+            # (never 500) but say so once, because the symptom otherwise looks like an upload
+            # whose build silently never lands.
+            logger.warning(
+                "doc-model reader %s has no get_private_doc_model; private readiness checks "
+                "cannot resolve (REM-2 F01)",
+                type(self._reader).__name__,
+            )
+            return None
         try:
-            return self._reader.get_doc_model(ref.paper_id, ref.version)
-        except Exception:  # noqa: BLE001 — best-effort peek; a reader failure reads as "not ready".
+            return read_private(ref.owner_id, doc_id, ref.version)
+        except Exception:  # noqa: BLE001 — best-effort readiness probe.
             return None
 
     def enqueue_and_poll(self, ref: UserDocModelRef) -> DocModel | None:

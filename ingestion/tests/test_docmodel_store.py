@@ -135,6 +135,94 @@ def test_remove_drops_all_cached_versions(store) -> None:
     assert fake.objects == {}
 
 
+# --- REM-2 F01 / ID-Q1: private documents live under a separate, owner-scoped prefix -------
+
+
+_PRIVATE_DOC_ID = "11111111-1111-4111-8111-111111111111"
+_PRIVATE_PAPER_ID = f"userdoc:{_PRIVATE_DOC_ID}"
+_PRIVATE_KEY = f"private/userdoc/acct-1/{_PRIVATE_DOC_ID}/v1.json"
+
+
+def _private_doc() -> DocModel:
+    return parse_html_to_docmodel(
+        _HTML,
+        paper_id=_PRIVATE_PAPER_ID,
+        version=1,
+        title="Private manuscript",
+        abstract=None,
+        source_tier=SourceTier.pdf,
+        parser_version="docmodel-parser@1",
+        schema_version="1.0.0",
+        generated_at=datetime(2026, 6, 23, tzinfo=UTC),
+    )
+
+
+def test_private_doc_model_is_written_under_the_owner_scoped_private_prefix(store) -> None:
+    s3_store, fake = store
+    ref = s3_store.put(_private_doc(), owner_id="acct-1")
+
+    assert ref == f"s3://papers/{_PRIVATE_KEY}"
+    # The public corpus prefix must never hold a private document (SECURITY-08).
+    assert not any(k.startswith("doc-model/") for k in fake.objects)
+    assert fake.objects[_PRIVATE_KEY]["Metadata"]["owner-id"] == "acct-1"
+
+
+def test_private_doc_model_refuses_to_write_without_an_owner(store) -> None:
+    # Fail closed: a caller bug can never publish a tenant's document into the shared prefix.
+    s3_store, fake = store
+    with pytest.raises(ValueError):
+        s3_store.put(_private_doc())
+    assert fake.objects == {}
+
+
+def test_private_doc_model_refuses_a_malformed_private_id(store) -> None:
+    s3_store, fake = store
+    # An empty owner has no verifiable prefix, so the write is refused.
+    with pytest.raises(ValueError):
+        s3_store.put(_private_doc(), owner_id="")
+    # So is a paper id whose doc segment is not a UUID.
+    with pytest.raises(ValueError):
+        s3_store.put(_private_doc().model_copy(update={"meta": _private_doc().meta.model_copy(
+            update={"paperId": "userdoc:not-a-uuid"}
+        )}), owner_id="acct-1")
+    assert fake.objects == {}
+
+
+def test_private_read_is_scoped_to_the_owner(store) -> None:
+    s3_store, _ = store
+    s3_store.put(_private_doc(), owner_id="acct-1")
+
+    # The owner reads their own copy.
+    assert s3_store.get(_PRIVATE_PAPER_ID, 1, owner_id="acct-1") is not None
+    # Another tenant resolves in their own (empty) prefix — a miss, not a disclosure.
+    assert s3_store.get(_PRIVATE_PAPER_ID, 1, owner_id="acct-2") is None
+    # And an unscoped read is refused outright rather than resolved through the corpus prefix.
+    with pytest.raises(ValueError):
+        s3_store.get(_PRIVATE_PAPER_ID, 1)
+
+
+def test_private_invalidation_cannot_reach_a_sibling_tenant(store) -> None:
+    s3_store, fake = store
+    s3_store.put(_private_doc(), owner_id="acct-1")
+
+    s3_store.remove(_PRIVATE_PAPER_ID, owner_id="acct-2")  # wrong owner: drops nothing
+
+    assert _PRIVATE_KEY in fake.objects
+
+    s3_store.remove(_PRIVATE_PAPER_ID, owner_id="acct-1")  # right owner: drops only its own
+
+    assert fake.objects == {}
+
+
+def test_private_invalidation_refuses_an_unresolvable_id_rather_than_guessing(store) -> None:
+    s3_store, fake = store
+    s3_store.put(_private_doc(), owner_id="acct-1")
+
+    s3_store.remove(_PRIVATE_PAPER_ID)  # no owner → fail closed, delete nothing
+
+    assert _PRIVATE_KEY in fake.objects
+
+
 def test_user_document_source_fetches_pdf_bytes(store) -> None:
     from docsuri_ingestion.adapters.aws import S3UserDocumentSource
 

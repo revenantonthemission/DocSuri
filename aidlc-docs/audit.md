@@ -7698,3 +7698,115 @@ install gate can be truthfully closed?" → **"Delete the 3 orphan modules (Reco
   checklist ticks); `aidlc-state.md` (G3 → 🟡 PARTIAL code+static ✅; Phase-5 row + G2 residual note).
 - **Gate effect**: G3 code+static ✅ (live F09/F10 + operator residual); G1 stays 🟡 PARTIAL (338
   rescan findings undispositioned); G2 stays 🔴; G4/G5 ⛔ BLOCKED-ON-REM-4.
+
+---
+
+## REM-2 Corrective — planning cycle started (2026-10-01)
+
+**Timestamp**: 2026-10-01T19:45:00Z
+**Stage**: CONSTRUCTION / REM-2 corrective (re-opened) — planning
+**User Input**: "continue to the next step." then, at the fork, **"Plan + execute REM-2 corrective (G2)"**
+
+**AI Response**: Confirmed the REM-3 corrective's agent-runnable work is complete and that the remaining
+gate is **G2 = F01/F02/F05/F07** (round-3 prereq Q1=B scoped it into this corrective unit as "the REM-2
+worker pipeline, rewritten in this unit"; it was never executed). Read the authoritative REM-2 design
+decisions (FD/ND/ID/NFR answers, all A) and ran two read-only gap analyses against the real code
+(deleted adapters excluded). Findings:
+- **F01 NOT MET** — `GET /api/papers/{id}/doc-model` checks only session presence; `userdoc:` not
+  rejected; id flows into the S3 key; private+corpus share one bucket/prefix → any session can read
+  another tenant's private DocModel.
+- **F02 NOT MET** — unvalidated client `abstract` is the sole/fallback source and is absent from the
+  cache key; baseline key is owner-agnostic → one user's text becomes every user's cached artifact.
+- **F05 NOT MET** — async SQS path exists, but no aligned budgets, no over-budget→job conversion, no
+  bounded hang termination.
+- **F07 NOT MET** — asset route checks only principal presence; browser fetches presigned S3/MinIO URLs
+  directly; object key leaks in the URL; no owner/license/object re-check.
+- **Job contract RJ-AC01–AC12 NOT MET** — no durable job store/state machine/idempotency/events/SSE/
+  expiry; frontend job files are dead code with no matching backend routes.
+- No failing regressions exist; the current suite pins the unsafe behavior.
+
+Wrote `aidlc-docs/construction/plans/rem-2-corrective-plan.md` (defects with evidence, scope, binding
+design decisions, 9 phases, security invariants, DoD, traceability) and
+`aidlc-docs/construction/rem-2-corrective-decision-questions.md` (D1–D6). Halting for answers before
+Phase 1, per the user's "confirm before coding".
+
+**Context**: REM-2 corrective planning; G2; no source changes made.
+
+---
+
+---
+
+## REM-2 Corrective — D5 security hotfix implemented: F01 + F02 (2026-10-01)
+
+**Timestamp**: 2026-10-01T21:40:00Z
+**Stage**: CONSTRUCTION / REM-2 corrective — Phase 0 (reproduce) + Phase 1 (F01) + Phase 2 (F02)
+**User Input**: "Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed."
+
+**AI Response**: Executed the approved D5 sequence (F01 + F02, each with a permanent regression, one
+security-hotfix commit).
+
+**Phase 0 — both defects reproduced first (failing before the fix):**
+- F01: authenticated `GET /api/papers/userdoc:1111.../doc-model` returned **200** with the other
+  tenant's DocModel.
+- F02: an attacker body rendered as `번역:ATTACKER CONTROLLED TEXT: exfiltrate everything`, and a
+  body-only request wrote a **successful shared-cache artifact**.
+
+**F01 — private namespace owner-scoped (ID-Q1/D2, FD-Q1):**
+- New shared contract `docsuri_shared.private_docs` (one derivation shared by both deployables):
+  `PRIVATE_DOCMODEL_PREFIX = private/userdoc`, `CORPUS_DOCMODEL_PREFIX = doc-model`, and
+  `private_docmodel_key(owner, docId, version)` → `private/userdoc/{ownerSegment}/{docId}/v{N}.json`.
+  Classification is the reserved `userdoc:` prefix alone, so a malformed private value is REFUSED,
+  never falling through to a corpus lookup; `owner_segment` sanitizes to `[A-Za-z0-9._-]`, bounds
+  at 128 chars, and refuses an empty owner **and** a dot-only segment (`"."`/`".."` would otherwise
+  traverse into a sibling owner's prefix — caught by a new shared test).
+- `ingestion`: `S3DocModelStore` writes/reads/invalidates private models only under the owner's
+  prefix (with `owner-id` object metadata) and **raises** for a private id with no/unverifiable
+  owner (fail closed, so a caller bug can never publish into the shared prefix);
+  `DocModelStorePort`, `DocModelBuilder`, `InMemoryDocModelStore` and `build_user_doc_model` all
+  carry `owner_id`, and a private build without an owner is refused.
+- `backend`: `S3DocModelReader.get_doc_model` **refuses** `userdoc:` without touching S3;
+  `get_private_doc_model(owner_id, doc_id, version)` probes only the caller's own prefix, so another
+  tenant's `docId` misses and is indistinguishable from nonexistent. Public routes
+  (`/api/papers/{id}/doc-model`, `/assets`, `/api/summarize`) reject the namespace with a single
+  byte-identical 404 **before** any read and **before** the license-feature branches (a 200
+  `license_unavailable` would otherwise resolve the namespace on a flag-off deployment).
+  New owner-verified `GET /api/userdoc/{doc_id}/doc-model`; a miss returns the SAME 404 (not the
+  corpus route's 200 `source_unavailable`, which would itself distinguish "yours, not built yet"),
+  a store fault stays a generic 503, and no version is ever inferred from the body.
+- **Cross-deploy regression found and fixed**: the corpus refusal broke the upload readiness probe —
+  `UserDocModelCoordinator.poll/peek_doc_model` called the corpus reader, so every attachment's
+  doc-model would have read as a permanent miss. It now resolves through
+  `get_private_doc_model(ref.owner_id, doc_id, ref.version)` — scoped to the owner the ref was
+  minted for and re-verified by `ref_from_attachment` — and logs (rather than silently degrading)
+  if the wired reader has no private path.
+
+**F02 — server-verified canonical source (FD-Q2):**
+- `SourceSelector` ignores `SummaryRequest.abstract` entirely and sources content only from
+  doc-model → legacy full text → the **server-side** abstract lookup; the router drops an incoming
+  `abstract` (still accepted, so an older client is not broken) and the field remains
+  deserialize-only for worker/SQS compatibility.
+- `SummaryCacheKey` gained a **source-tier dimension** (`_xtxt` / `_xdm<gen>` / `_xabs`), which the
+  plan required and the first pass had missed: a degraded request (no doc-model yet → abstract
+  fallback) and a healthy one share paper+version+task+lang+persona, so without the tier in the path
+  the first answer was served to both forever — a caller silently receiving an abstract-derived
+  artifact labelled as full text. The pre-select (zero-fetch) key is now scoped to the doc-model
+  tier only, so a request that would degrade always pays the source fetch.
+
+**Evidence (all green, project-local runners):**
+- `cd backend && .venv/bin/python -m pytest` → **473 passed, 7 skipped**; `ruff check .` → clean.
+- `cd ingestion && .venv/bin/python -m pytest` → **323 passed, 1 skipped**; `ruff check .` → clean.
+- `cd shared/python && uv run --frozen --group dev pytest` → **145 passed**; `ruff check .` → clean.
+- New regressions: `test_private_content_boundary.py` (12), `test_private_doc_model_route.py` (11),
+  `test_canonical_source_boundary.py` (10), `shared/python/tests/test_private_docs.py` (30),
+  ingestion `test_docmodel_store.py` private-prefix cases (+6) and owner assertions in
+  `test_docmodel_build_job.py` / `test_orchestration.py`; `test_user_docmodel.py` pins the
+  owner-scoped private readiness read.
+
+**Known residual (not part of this hotfix):** objects written before this change under the legacy
+shared prefix `doc-model/userdoc:...` are now denied by design (D2) and are never rewritten — the
+D6 dry-run/back-up/purge of untraceable artifacts and any rebuild of those uploads is still to do.
+F05, F07, the RJ-AC job contract, resiliency, and the frontend stop-sending-`abstract` phase remain.
+
+**Context**: REM-2 corrective; G2; F01+F02 implemented and verified; F05/F07/RJ-AC pending.
+
+---

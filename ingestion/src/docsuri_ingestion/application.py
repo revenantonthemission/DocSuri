@@ -212,6 +212,16 @@ class IngestionPipelineService:
                 reason=FailureReason.VALIDATION_VIOLATION,
                 stage="docmodel",
             )
+        # REM-2 F01 / ID-Q1: a private doc-model is stored under the separate, owner-scoped
+        # private/userdoc/{owner}/{docId}/ prefix. The owner is REQUIRED here — without it the
+        # doc-model could not be addressed, and the store refuses to write it into the public
+        # corpus prefix at all.
+        if not job.owner_id:
+            raise PermanentIngestionError(
+                "build_user_doc_model requires owner_id",
+                reason=FailureReason.VALIDATION_VIOLATION,
+                stage="docmodel",
+            )
 
         pdf = self._resilience.dependency_call(
             "s3",
@@ -261,6 +271,7 @@ class IngestionPipelineService:
             tei,
             text,
             source_tier=SourceTier.pdf,
+            owner_id=job.owner_id,
         )
         self._observability.emit_metric(
             "ingestion.docmodel.user_build",

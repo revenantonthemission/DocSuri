@@ -76,7 +76,14 @@ class SummaryRequest:
     target_lang: TargetLang = TargetLang.KO
     persona: Persona = Persona.EXPERT
     scope: Scope = Scope.ABSTRACT  # translate only (abstract|full); summary = full text
-    abstract: str | None = None  # carried for translate / full-text fallback (Q1)
+    # DEPRECATED (REM-2 F02, FD-Q2) — accepted for wire/worker compatibility but IGNORED as a
+    # source; ``SourceSelector`` reads the canonical abstract from the server-side store only.
+    # It used to be the sole/fallback source for abstract-scope translate and every full-text
+    # fallback, while the cache key carried no source content — so a caller's crafted body
+    # became the artifact the owner-agnostic baseline entry served to every other user
+    # (SECURITY-13). Retained only so in-flight SQS job payloads still deserialize; it must not
+    # be read for content, and new callers must not set it.
+    abstract: str | None = None
 
 
 # --- Cache key (immutable, §11 / BR-S1) --------------------------------------
@@ -104,6 +111,14 @@ class SummaryCacheKey:
     # artifact was derived from — forces a miss → regenerate, healing summaries built from an
     # older, since-superseded doc-model (BR-30). Empty (no segment) only for keys built without it.
     docmodel_ver: str = ""
+    # Canonical SOURCE TIER the artifact was derived from (REM-2 F02 / FD-Q2, SECURITY-13):
+    # ``dm<gen>`` (the structured doc-model), ``txt`` (legacy plain full text) or ``abs`` (the
+    # server-side abstract). The same paper+version yields DIFFERENT content per tier, so without
+    # this dimension a degraded request (no doc-model yet → abstract fallback) and a healthy one
+    # share a key, and whichever answered first is served to both forever — an artifact whose
+    # provenance the key does not describe. Part of the path so a tier change is a miss, not a
+    # stale serve. Empty (no segment) only for keys built before selection.
+    source_ver: str = ""
 
     def object_path(self) -> str:
         """S3 object path (infrastructure-design §2.1). Immutable → permanent (INV-5).
@@ -115,14 +130,18 @@ class SummaryCacheKey:
         owner-agnostic and shared — post-substitution (weak) terms don't alter the path (they are a
         read-time overlay on the shared base). ``seed_ver`` appends only when the seed diverges from
         the shipped baseline, so a seed edit self-invalidates without touching unaffected objects.
+        ``source_ver`` records which canonical tier the content came from, so an artifact can only
+        be served for a request that would resolve the SAME content (REM-2 F02).
         """
         owner = f"_u{self.owner_id}" if self.owner_id else ""
         seed = f"_s{self.seed_ver}" if self.seed_ver else ""
         docmodel = f"_d{self.docmodel_ver}" if self.docmodel_ver else ""
+        source = f"_x{self.source_ver}" if self.source_ver else ""
         return (
             f"summaries/{self.paper_id}/v{self.version}/"
             f"{self.task}_{self.target_lang}_{self.scope}_{self.persona}"
-            f"_g{self.glossary_ver}{owner}{seed}_{self.model_ver}_{self.prompt_ver}{docmodel}.json"
+            f"_g{self.glossary_ver}{owner}{seed}_{self.model_ver}_{self.prompt_ver}"
+            f"{docmodel}{source}.json"
         )
 
     def redis_key(self) -> str:

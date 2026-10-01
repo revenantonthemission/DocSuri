@@ -23,7 +23,7 @@ from docsuri_shared.dtos import DocModel
 from docsuri_shared.ports import CostGuardCircuitBreaker, ObservabilityHub
 
 from ..domain.assembler import ResultAssembler
-from ..domain.cache_key import build_cache_key
+from ..domain.cache_key import _docmodel_generation, build_cache_key, source_tier_ver
 from ..domain.glossary import GlossaryResolver, seed_cache_segment
 from ..domain.grounding import GroundingValidator
 from ..domain.length_router import LengthRoute, LengthRouter
@@ -79,6 +79,16 @@ def _source_doc_parser(source: SourceText) -> str:
     doc = getattr(source, "doc_model", None)
     ver = _doc_parser_version(doc) if doc is not None else None
     return ver or DOCMODEL_PARSER_VERSION
+
+
+def _docmodel_generation_current() -> str:
+    """Path-safe generation of the SHIPPED doc-model parser (``docmodel-parser@4`` → ``4``).
+
+    Used to name the doc-model tier in the pre-select (fast) cache key, so that key describes a
+    doc-model-backed artifact and nothing else (REM-2 F02).
+    """
+    return _docmodel_generation(DOCMODEL_PARSER_VERSION)
+
 # Client poll backoff hint after a long summary was enqueued as a background job (BR-S6/BR-S8).
 _SUMMARY_POLL_BACKOFF_MS = 3000
 # Generation above this input size is dispatched to the async job (pending → poll) instead of
@@ -172,7 +182,7 @@ class SummarizationOrchestrationService:
             else GlossaryResolver.signature_of_translate(glossary)
         )
 
-        def _cache_key(docmodel_parser: str) -> object:
+        def _cache_key(docmodel_parser: str, source_ver: str) -> object:
             return build_cache_key(
                 request,
                 glossary_ver=glossary_ver,
@@ -180,12 +190,17 @@ class SummarizationOrchestrationService:
                 user_id=user_id,
                 seed_ver=seed_cache_segment(),
                 docmodel_parser=docmodel_parser,
+                source_ver=source_ver,
             )
 
-        # Fast pre-select read on the CURRENT-parser key: a healed/hot paper hits here with zero
-        # source fetch. A stale doc's output lives under its own generation's key, resolved after
-        # source-select below, so this fast read misses it (correct — the fast key is @current).
-        key_current = _cache_key(DOCMODEL_PARSER_VERSION)
+        # Fast pre-select read on the CURRENT-parser, doc-model-tier key: a healed/hot paper hits
+        # here with zero source fetch. A stale doc's output lives under its own generation's key,
+        # resolved after source-select below, so this fast read misses it (correct — the fast key
+        # is @current). It is deliberately scoped to the doc-model tier (REM-2 F02): a request that
+        # would DEGRADE to legacy text or the abstract resolves different content for the same
+        # paper+version, so it must not be answered from this key — it pays the source fetch and is
+        # served from its own tier's key.
+        key_current = _cache_key(DOCMODEL_PARSER_VERSION, "dm" + _docmodel_generation_current())
         cached = self._store.get(key_current)
         if cached is not None:
             return self._serve_cached(cached, request, glossary)
@@ -218,7 +233,7 @@ class SummarizationOrchestrationService:
         # store under it — this is where the async job path delivers, so the poll finds the worker's
         # write here (before re-enqueuing) instead of looping. Both the worker (write) and the poll
         # (read) re-run this same computation, so their keys align.
-        key = _cache_key(_source_doc_parser(source))
+        key = _cache_key(_source_doc_parser(source), source_tier_ver(source))
         if key != key_current:
             cached = self._store.get(key)
             if cached is not None:
@@ -420,6 +435,28 @@ class SummarizationOrchestrationService:
             self._docmodel_build_queue.enqueue_build(paper_id, version)
             return DocModelLookup(building=True, retry_after_ms=_BUILD_POLL_BACKOFF_MS)
         return DocModelLookup()
+
+    def private_doc_model(self, owner_id: str, doc_id: str, version: int) -> DocModelLookup:
+        """Owner-scoped read of a PRIVATE (user-uploaded) doc-model — REM-2 F01 / FD-Q1.
+
+        This is the only sanctioned read path for a ``userdoc:`` document; the public corpus
+        route refuses that namespace outright. Ownership is enforced by the storage key itself:
+        only the caller's own ``private/userdoc/{owner}/{docId}/`` prefix is probed, so another
+        tenant's ``docId`` resolves as a miss — indistinguishable from a document that does not
+        exist, and never an existence oracle.
+
+        Read-only, exactly like :meth:`doc_model`: it does NOT trigger a build. A private build
+        is driven by the upload flow (``POST`` → job → builder), so a miss here is a genuine
+        "not built yet / not yours" and surfaces as ``source_unavailable``.
+        """
+        reader = self._docmodel_reader
+        read_private = getattr(reader, "get_private_doc_model", None)
+        if read_private is None:
+            return DocModelLookup()
+        doc = read_private(owner_id, doc_id, version)
+        if doc is None:
+            return DocModelLookup()
+        return DocModelLookup(doc=doc)
 
     # --- figure/table assets (FR-17, BR-S15) ---------------------------------
     def list_assets(self, paper_id: str, version: int) -> list[AssetRef] | None:

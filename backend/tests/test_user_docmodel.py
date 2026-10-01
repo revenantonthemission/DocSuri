@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from urllib.parse import unquote
 
 import pytest
@@ -29,6 +30,26 @@ class _RaisingReader:
     def get_doc_model(self, paper_id, version):
         raise RuntimeError("simulated AccessDenied / throttle / parse error")
 
+    def get_private_doc_model(self, owner_id, doc_id, version):
+        raise RuntimeError("simulated AccessDenied / throttle / parse error")
+
+
+class _OwnerScopedReader:
+    """Reader double recording WHICH identity the readiness probe resolved (REM-2 F01 / ID-Q1)."""
+
+    def __init__(self, doc_model=None):
+        self._doc_model = doc_model
+        self.corpus_reads: list[tuple[str, int]] = []
+        self.private_reads: list[tuple[str, str, int]] = []
+
+    def get_doc_model(self, paper_id, version):
+        self.corpus_reads.append((paper_id, version))
+        return None
+
+    def get_private_doc_model(self, owner_id, doc_id, version):
+        self.private_reads.append((owner_id, doc_id, version))
+        return self._doc_model
+
 
 class _CapturingS3:
     def __init__(self):
@@ -50,6 +71,62 @@ def test_poll_doc_model_degrades_when_reader_raises() -> None:
     )
 
     assert coord.poll_doc_model(_ref()) is None
+
+
+def test_poll_doc_model_reads_the_private_path_with_the_ref_owner() -> None:
+    # REM-2 F01 (ID-Q1): a ``userdoc:`` ref must be resolved through get_private_doc_model with the
+    # ref's OWNER identity — the corpus read now refuses the private namespace, so probing it there
+    # would turn every upload's readiness check into a permanent miss.
+    reader = _OwnerScopedReader()
+    coord = UserDocModelCoordinator(
+        bucket="b",
+        s3_client=_CapturingS3(),
+        doc_model_reader=reader,
+        poll_timeout_seconds=0.0,
+        poll_interval_seconds=0.01,
+    )
+    ref = _ref()
+
+    assert coord.poll_doc_model(ref) is None
+
+    assert reader.corpus_reads == []
+    assert reader.private_reads, "the private read must be attempted"
+    owner_read, doc_id_read, version_read = reader.private_reads[-1]
+    assert owner_read == ref.owner_id == "acct-1"
+    assert doc_id_read == ref.paper_id.split(":", 1)[1]
+    assert version_read == ref.version
+
+
+def test_peek_doc_model_returns_the_owned_document_without_polling() -> None:
+    reader = _OwnerScopedReader(doc_model=object())
+    coord = UserDocModelCoordinator(
+        bucket="b",
+        s3_client=_CapturingS3(),
+        doc_model_reader=reader,
+        poll_timeout_seconds=0.0,
+        poll_interval_seconds=0.01,
+    )
+
+    assert coord.peek_doc_model(_ref()) is not None
+    assert len(reader.private_reads) == 1  # exactly one attempt — no sleep loop
+
+
+def test_poll_doc_model_ignores_a_ref_whose_paper_id_is_not_private() -> None:
+    # Fail closed: a corpus-shaped ref must not be routed into the private namespace, and the
+    # corpus path stays unavailable here (the coordinator only serves private refs).
+    reader = _OwnerScopedReader()
+    coord = UserDocModelCoordinator(
+        bucket="b",
+        s3_client=_CapturingS3(),
+        doc_model_reader=reader,
+        poll_timeout_seconds=0.0,
+        poll_interval_seconds=0.01,
+    )
+    corpus_ref = replace(_ref(), paper_id="2401.00001")
+
+    assert coord.poll_doc_model(corpus_ref) is None
+    assert reader.private_reads == []
+    assert reader.corpus_reads == []
 
 
 def test_userdoc_build_queue_url_prefers_dedicated_then_falls_back(monkeypatch) -> None:

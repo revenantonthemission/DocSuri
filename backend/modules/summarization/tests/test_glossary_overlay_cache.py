@@ -29,7 +29,7 @@ from summarization.domain.models import (
     TermMapping,
     TranslationDraft,
 )
-from tests.stubs import StubStore, make_orchestrator, tiny_doc
+from tests.stubs import StubFullText, StubStore, make_orchestrator, tiny_doc
 
 
 class _FakeGlossaryRepo:
@@ -49,9 +49,14 @@ def _ctx(user: str = "u1") -> RequestContext:
     return RequestContext(auth_session=AuthSession(user_id=user), request_id="r")
 
 
+# The canonical abstract, served by the server-side abstract store (see _orch below).
+_ABSTRACT = "An abstract about BERT."
+
+
 def _translate_req() -> SummaryRequest:
-    return SummaryRequest(paper_id="2401.1", version=1, task=Task.TRANSLATE,
-                          abstract="An abstract about BERT.")
+    # No client ``abstract``: the field is deprecated and ignored as a source (REM-2 F02), so the
+    # canonical abstract comes from the server store wired in _orch.
+    return SummaryRequest(paper_id="2401.1", version=1, task=Task.TRANSLATE)
 
 
 def _text(result) -> str:
@@ -64,7 +69,15 @@ def _weak(term_from: str, term_to: str) -> TermMapping:
 
 def _orch(store: StubStore, terms_by_user: dict[str, tuple[TermMapping, ...]]):
     resolver = GlossaryResolver(_FakeGlossaryRepo(terms_by_user))
-    return make_orchestrator(store=store, glossary_resolver=resolver)
+    # ``abstract=`` is the SERVER-side canonical abstract store. The request's client ``abstract``
+    # is deprecated and ignored (REM-2 F02), so the source must be wired here — this is the
+    # abstract-scope translate path, whose ONLY canonical source is the server abstract store.
+    return make_orchestrator(
+        store=store,
+        glossary_resolver=resolver,
+        full_text=StubFullText(text=None),
+        abstract=_ABSTRACT,
+    )
 
 
 # Seed-derived mask table, to embed the right token for a term in synthetic bases.

@@ -219,6 +219,10 @@ def make_orchestrator(
     llm: StubLlm | None = None,
     store: StubStore | None = None,
     full_text: StubFullText | None = None,
+    # Server-side canonical abstract store. The client ``abstract`` request field is deprecated
+    # and ignored as a source (REM-2 F02, FD-Q2), so a test that wants an abstract source must
+    # supply it HERE — which is how the canonical abstract reaches the pipeline in production.
+    abstract: str | None = None,
     cost_guard: StubCostGuard | None = None,
     observability: StubObservability | None = None,
     doc_model_reader=None,
@@ -235,7 +239,9 @@ def make_orchestrator(
         # path (SourceSelector), mirroring production; ``doc_model_reader`` (below) feeds only the
         # rich-view doc_model() lookup. They are separate params so each path is testable alone.
         source_selector=SourceSelector(
-            full_text or StubFullText(), doc_model_reader=source_doc_model_reader
+            full_text or StubFullText(),
+            abstract_lookup=(lambda _paper_id: abstract) if abstract is not None else None,
+            doc_model_reader=source_doc_model_reader,
         ),
         refiner=InputRefiner(),
         glossary_resolver=glossary_resolver or GlossaryResolver(None),
