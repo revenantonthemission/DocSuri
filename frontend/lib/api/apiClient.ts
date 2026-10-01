@@ -21,6 +21,7 @@ import {
   type AssetsOutcome,
 } from './classifySummarize';
 import { recordPath } from '../observability';
+import { browserBudgetMs } from './timeouts';
 import type {
   SummarizeRequest,
   DocModelRequest,
@@ -414,6 +415,10 @@ export class ApiClient {
       idempotent: true,
       // dedup yes (BR-U5-18), retry no — a cost-bearing LLM POST must never double-bill (P-R1, NFR-C1).
       retryable: false,
+      // The declared browser leg of this task's budget, not the client default (REM-2 F05). The
+      // default 10s sits *below* the API budget, so it abandoned requests the API still intended to
+      // answer — a network error where the user should get a result or a poll handle.
+      timeoutMs: browserBudgetMs(req.task),
     });
     if (res.status === 200 || res.status === 400) {
       return classifySummarizeResponse(res.body);
