@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import useSWR from 'swr';
 import { getJobState, subscribeJobEvents, type JobEvent } from '@/lib/api/contentJobApi';
+import { UserFacingError } from '@/lib/api/errors';
 import { isTerminalJobState } from '@/lib/api/contentJobContracts';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import ErrorBoundaryFallback from '@/components/ErrorBoundaryFallback';
@@ -51,6 +52,7 @@ function JobStatusPanel({ jobId, onComplete }: JobStatusProps) {
   const [history, setHistory] = useState<string[]>([]);
   const [announcement, setAnnouncement] = useState<string | null>(null);
   const [streamMode, setStreamMode] = useState<'connecting' | 'live' | 'fallback'>('connecting');
+  const [accessLost, setAccessLost] = useState(false);
   const projectionRef = useRef(projection);
 
   // A new job identity resets the projection and cursors — never carry another
@@ -87,7 +89,7 @@ function JobStatusPanel({ jobId, onComplete }: JobStatusProps) {
   // accepted event id; a successful open returns to live and hides the note.
   const [reconnectNonce, setReconnectNonce] = useState(0);
   useEffect(() => {
-    if (projectionRef.current.terminal) return;
+    if (projectionRef.current.terminal || accessLost) return;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     const cursor = projectionRef.current.lastEventId ?? undefined;
     const unsubscribe = subscribeJobEvents(
@@ -115,17 +117,28 @@ function JobStatusPanel({ jobId, onComplete }: JobStatusProps) {
       if (reconnectTimer !== null) clearTimeout(reconnectTimer);
       unsubscribe();
     };
-  }, [handleEvent, jobId, projection.terminal, reconnectNonce]);
+  }, [handleEvent, jobId, projection.terminal, reconnectNonce, accessLost]);
 
   // Fallback poll — fixed two-second cadence, only while the stream is down and
   // the job has not settled. SWR owns caching/retry; the key gates the overlap.
   const fallbackKey =
-    streamMode === 'fallback' && !projection.terminal ? (['job-state', jobId] as const) : null;
-  const { data: polledState } = useSWR(fallbackKey, () => getJobState(jobId), {
+    streamMode === 'fallback' && !projection.terminal && !accessLost
+      ? (['job-state', jobId] as const)
+      : null;
+  const { data: polledState, error: pollError } = useSWR(fallbackKey, () => getJobState(jobId), {
     refreshInterval: JOB_FALLBACK_INTERVAL_MS,
     revalidateOnFocus: false,
     shouldRetryOnError: true,
   });
+
+  // An access loss (401/403 from the owner-scoped read) clears the view and
+  // cancels the work: polling stops, the stream is closed and no recreation is
+  // scheduled. The human must re-authenticate.
+  useEffect(() => {
+    if (pollError instanceof UserFacingError && pollError.kind === 'auth') {
+      setAccessLost(true);
+    }
+  }, [pollError]);
 
   useEffect(() => {
     if (!polledState) return;
@@ -142,6 +155,13 @@ function JobStatusPanel({ jobId, onComplete }: JobStatusProps) {
   }, [polledState]);
 
   const snapshot = projection.snapshot;
+  if (accessLost) {
+    return (
+      <div role="status" className="rounded-lg border bg-white p-4 text-sm text-gray-700">
+        접근 권한을 확인할 수 없어 작업 추적을 중지했습니다. 다시 로그인한 뒤 시도해 주세요.
+      </div>
+    );
+  }
   if (!snapshot) {
     return (
       <div role="status" aria-live="polite" aria-busy="true" className="text-sm text-gray-500">

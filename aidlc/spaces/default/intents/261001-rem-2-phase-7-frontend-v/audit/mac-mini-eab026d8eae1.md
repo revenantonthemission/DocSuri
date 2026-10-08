@@ -24490,3 +24490,228 @@
 **Session**: ses_ef0323d76ffekiBhVnpZoKRl88
 
 ---
+
+## Unit Resumed
+**Timestamp**: 2026-10-08T05:49:34Z
+**Event**: UNIT_RESUMED
+**Stage**: code-generation
+**Unit**: u2-job-resilience
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:49:46Z
+**Event**: SENSOR_FIRED
+**Fire id**: 205c1ce6
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2Idempotency.test.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:49:48Z
+**Event**: SENSOR_PASSED
+**Fire id**: 205c1ce6
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2Idempotency.test.ts
+**Duration ms**: 2071
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:49:48Z
+**Event**: SENSOR_FIRED
+**Fire id**: ac7c0f43
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2Idempotency.test.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:49:49Z
+**Event**: SENSOR_PASSED
+**Fire id**: ac7c0f43
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2Idempotency.test.ts
+**Duration ms**: 884
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:50:08Z
+**Event**: SENSOR_FIRED
+**Fire id**: 75989e2f
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:50:09Z
+**Event**: SENSOR_PASSED
+**Fire id**: 75989e2f
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+**Duration ms**: 982
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:50:10Z
+**Event**: SENSOR_FIRED
+**Fire id**: 7b598bfb
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:50:11Z
+**Event**: SENSOR_PASSED
+**Fire id**: 7b598bfb
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+**Duration ms**: 976
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:50:18Z
+**Event**: SENSOR_FIRED
+**Fire id**: 4930a2a7
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:50:19Z
+**Event**: SENSOR_PASSED
+**Fire id**: 4930a2a7
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+**Duration ms**: 988
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:50:19Z
+**Event**: SENSOR_FIRED
+**Fire id**: 07040df6
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:50:20Z
+**Event**: SENSOR_PASSED
+**Fire id**: 07040df6
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+**Duration ms**: 972
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:50:31Z
+**Event**: SENSOR_FIRED
+**Fire id**: e38ad930
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:50:32Z
+**Event**: SENSOR_PASSED
+**Fire id**: e38ad930
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+**Duration ms**: 982
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:50:43Z
+**Event**: SENSOR_FIRED
+**Fire id**: 04dabe69
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:50:44Z
+**Event**: SENSOR_PASSED
+**Fire id**: 04dabe69
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+**Duration ms**: 982
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:52:03Z
+**Event**: SENSOR_FIRED
+**Fire id**: 525290ba
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2JobStatus.test.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:52:04Z
+**Event**: SENSOR_PASSED
+**Fire id**: 525290ba
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2JobStatus.test.tsx
+**Duration ms**: 1018
+
+---
+
+## Error Logged
+**Timestamp**: 2026-10-08T05:52:40Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-state
+**Command**: aidlc-state engine state unit pause --stage code-generation --unit u2-job-resilience --reason Session context budget reached mid-u2 generation after Steps 7-8 and 11-12; captured-original storage-behavior tests and access-loss cleanup added (u2 suite 26 files/118 tests green), changed files tsc-clean at 81 pre-existing only and lint clean; no blocking question or failure.
+**Error**: unit pause requires --next-action <text> (the exact next step on resume).
+
+---
+
+## Unit Paused
+**Timestamp**: 2026-10-08T05:52:58Z
+**Event**: UNIT_PAUSED
+**Stage**: code-generation
+**Unit**: u2-job-resilience
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+**Reason**: Session context budget reached mid-u2 generation after Steps 7-8 and 11-12; captured-original storage-behavior tests and access-loss cleanup added (u2 suite 26 files/118 tests green), changed files tsc-clean at 81 pre-existing only and lint clean; no blocking question or failure.
+**Next Action**: Continue u2 at Steps 13-20: translation result-state tests (u2PreparedResult), authorized asset-ID copy implementation plus u2AssetIdCopy tests, telemetry scenario tests (u2JobDiagnostics), accessibility/measurement coverage (u2InteractionMatrix), then Steps 21-22 regressions and >=80% coverage, Step 23 record updates, Step 24 fresh review.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-08T05:53:39Z
+**Event**: HUMAN_TURN
+**Session**: ses_ef0323d76ffekiBhVnpZoKRl88
+
+---
