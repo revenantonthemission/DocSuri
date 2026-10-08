@@ -1,0 +1,15 @@
+{
+  "stage": "nfr-design",
+  "unit": "ErrorBoundaryFallback",
+  "upstream_ids": ["NFR1.1", "NFR1.2", "NFR2.1", "NFR2.2", "NFR3.1", "NFR4.1", "NFR4.2", "NFR5.1"],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "Pure functional component" },
+    { "id": "NFR1.2", "status": "OK", "target": "CSS Module + Tailwind, inline SVG" },
+    { "id": "NFR2.1", "status": "OK", "target": "Error code map + generic messages" },
+    { "id": "NFR2.2", "status": "OK", "target": "Never render raw error, only code + mapped message" },
+    { "id": "NFR3.1", "status": "OK", "target": "Props-driven variants" },
+    { "id": "NFR4.1", "status": "OK", "target": "Parent key remount via reset callback" },
+    { "id": "NFR4.2", "status": "OK", "target": "Semantic HTML + role=alert + autoFocus + contrast" },
+    { "id": "NFR5.1", "status": "OK", "target": "Sentry breadcrumbs + custom analytics on retry" }
+  ]
+}

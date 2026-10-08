@@ -1,0 +1,15 @@
+{
+  "stage_slug": "user-stories",
+  "space": "default",
+  "intent": "261001-rem-2-phase-7-frontend-v",
+  "selections": [
+    {
+      "candidate_id": "c1",
+      "type": "learning",
+      "scope": "project",
+      "heading": "Corrections",
+      "text": "Treat historical CodeKB readiness claims as evidence to recheck against the current code and contracts before planning integration work; source spot-checks found BFF streaming and result-reference gaps that the old inventory described as ready, so the story handoff now names those prerequisites instead of claiming compatibility.",
+      "source": "orchestrator"
+    }
+  ]
+}

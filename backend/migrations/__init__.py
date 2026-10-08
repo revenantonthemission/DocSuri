@@ -21,15 +21,26 @@ class MigrationBlocked(RuntimeError):
     pass
 
 
-def _atomic_sql(payload: bytes) -> str:
+def _atomic_sql(payload: bytes, definition: MigrationDefinition | None = None) -> str:
     sql = payload.decode("utf-8")
+    if definition is not None:
+        from .u1_atomic_admission import LOCAL_ID, admits_u1_atomic_script
+
+        if admits_u1_atomic_script(payload, definition):
+            return sql
+        # This reserved candidate cannot evade its reviewed full-byte pin by
+        # removing procedural syntax and falling back to the ordinary SQL lane.
+        if type(definition) is not MigrationDefinition or definition.local_id == LOCAL_ID:
+            raise MigrationBlocked("U1 definition is not admitted as ATOMIC_STEP")
     # Conservative admission of developer-owned registry scripts: these operations can escape
     # the step transaction or create external effects. Ignore full-line comments for admission;
     # execute the original bytes unchanged. Ambiguous/complex scripts require explicit review.
     executable = "\n".join(line for line in sql.splitlines() if not line.lstrip().startswith("--"))
     if re.search(
         r"\b(BEGIN|START\s+TRANSACTION|COMMIT|ROLLBACK|END|VACUUM|CONCURRENTLY|"
-        r"COPY|CALL|DO|EXECUTE|SET\s+ROLE|CREATE\s+DATABASE|ALTER\s+SYSTEM)\b",
+        r"COPY|CALL|DO|EXECUTE|SET\s+ROLE|CREATE\s+DATABASE|ALTER\s+SYSTEM|"
+        r"(?:CREATE|ALTER|DROP)\s+(?:ROLE|USER|DATABASE)|"
+        r"SET\s+(?:SESSION\s+)?AUTHORIZATION|RESET\s+ROLE)\b",
         executable,
         re.I,
     ):
@@ -169,7 +180,7 @@ def apply_migrations(
                 # Registry SQL is developer-owned immutable input; never taken from HTTP/CLI text.
                 with authority.guard(conn, spec.identity, spec.digest) as finalization:
                     with conn.transaction():
-                        conn.execute(_atomic_sql(payload))
+                        conn.execute(_atomic_sql(payload, spec))
                         conn.execute(
                             """INSERT INTO public._migrations_v2
                             (identity, definition_digest, assurance, receipt)

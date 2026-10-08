@@ -1,43 +1,45 @@
-# Deploy unit ① — API modular monolith (U2/U3/U4/U6-mw).
-# SEC-10: base image pinned by sha256 digest. Update hash when upgrading.
-FROM python:3.11.9-slim-bookworm@sha256:2856e6af199e8128161abd320575eb9b341f3b76f017b5d0c9cd364f60d8a050
+# Deploy unit ①. Digest inputs are mandatory and supplied ONLY from qualified
+# release evidence. No tag/default is a substitute for missing image qualification.
+ARG PYTHON_IMAGE_DIGEST
+ARG UV_IMAGE_DIGEST
+ARG LAMBDA_ADAPTER_IMAGE_DIGEST
+FROM ghcr.io/astral-sh/uv:0.9.0@sha256:${UV_IMAGE_DIGEST} AS uv_binary
+FROM public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1@sha256:${LAMBDA_ADAPTER_IMAGE_DIGEST} AS lambda_adapter
+FROM python:3.13.7-slim-bookworm@sha256:${PYTHON_IMAGE_DIGEST}
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
-
+    UV_PYTHON_DOWNLOADS=never \
+    UV_PROJECT_ENVIRONMENT=/app/runtime \
+    PYTHONPATH=/app \
+    PATH=/app/runtime/bin:$PATH
 WORKDIR /app
+COPY --from=uv_binary /uv /usr/local/bin/uv
+RUN useradd --create-home --uid 10001 docsuri \
+    && python -c 'import sys; assert sys.version_info >= (3, 13)'
 
-RUN useradd --create-home --uid 10001 docsuri
+# Copy ONLY public build inputs. In particular, never COPY the credential-bearing
+# backend/ops directories wholesale. Preserve the lockfile's relative path layout.
+COPY shared/python/pyproject.toml /app/shared/python/pyproject.toml
+COPY shared/python/src /app/shared/python/src
+COPY shared/python/README.md /app/shared/python/README.md
+COPY platform_integrity/pyproject.toml /app/platform_integrity/pyproject.toml
+COPY platform_integrity/src /app/platform_integrity/src
+COPY platform_integrity/migrations /app/platform_integrity/migrations
+COPY ops/pyproject.toml /app/ops/pyproject.toml
+COPY ops/src /app/ops/src
+COPY ops/README.md /app/ops/README.md
+COPY backend/pyproject.toml backend/uv.lock backend/README.md /app/backend/
+COPY backend/modules /app/backend/modules
+COPY backend/migrations /app/backend/migrations
+COPY backend/middleware /app/backend/middleware
+COPY backend/*.py /app/backend/
 
-# Copy shared contracts (docsuri_shared) + ops (docsuri_ops — real grounding hook) + discovery
-# (docsuri_discovery) + summarization (docsuri_summarization) + backend app-shell with in-tree
-# modules (accounts, library). discovery + summarization are top-level src-layout packages, so
-# they are installed (below) to land on the import path as `discovery` / `summarization`.
-COPY shared/python /app/shared/python
-COPY ops /app/ops
-COPY backend/modules/discovery /app/discovery
-COPY backend/modules/summarization /app/summarization
-COPY backend /app/backend
-
-# Install: shared → ops → discovery → summarization → backend deps (no backend package itself —
-# PYTHONPATH). Without installing summarization the app-shell's _mount_summarization import fails
-# (ModuleNotFoundError → skip) and /api/summarize + the doc-model endpoints 404; the [real]
-# extra (boto3/redis/psycopg) is already in the closure below, so no new third-party pulls.
-RUN python -m pip install --upgrade pip==24.2 \
-    && python -m pip install /app/shared/python /app/ops "/app/discovery[real]" \
-        "/app/summarization[real]" \
-    && python -m pip install -r /app/backend/requirements-deploy.txt \
-    && python -m pip install --upgrade boto3 botocore  # AWS changed cohere.embed-multilingual-v3 on-demand request handling ~2026-07; pinned boto3 built a now-rejected request ("invalid model identifier") — force latest SDK
-
+# Build backends themselves are in the frozen build group; build isolation must
+# not resolve fresh mutable requirements. Runtime-only sync removes that group.
+RUN uv sync --project /app/backend --frozen --only-group build \
+    && uv sync --project /app/backend --frozen --no-dev --no-editable --no-build-isolation
+COPY --from=lambda_adapter /lambda-adapter /opt/extensions/lambda-adapter
 USER docsuri
-
-# PYTHONPATH = /app so `backend.*` and top-level `discovery` resolve. Port 8000.
-ENV PYTHONPATH=/app
 EXPOSE 8000
-# Lambda Web Adapter (serverless-plan Phase 1-③): shipped as a Lambda EXTENSION so the same
-# image serves both platforms — on Lambda the runtime loads /opt/extensions/lambda-adapter and
-# proxies Function URL invokes to the HTTP server; on ECS nothing reads /opt/extensions (inert).
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
-# Use CMD so ECS command overrides can run background/maintenance modules from this shared image.
 CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

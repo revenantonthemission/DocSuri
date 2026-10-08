@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 from docsuri_shared.ports import (
     CostGuardCircuitBreaker,
@@ -111,6 +112,7 @@ def build_real_orchestrator(
     cost_guard: CostGuardCircuitBreaker,
     observability: ObservabilityHub,
     abstract_lookup: Callable[[str], str | None] | None = None,
+    job_service: Any | None = None,
 ) -> SummarizationBundle:
     assert settings.s3_bucket is not None  # noqa: S101 — gated by summarization_enabled
 
@@ -167,12 +169,13 @@ def build_real_orchestrator(
         # Async long-summary (BR-S8): when a queue URL is set, the API enqueues + returns pending
         # and the summarization worker produces the result. Unset → map-reduce runs inline.
         if settings.summary_job_queue_url:
-            from .adapters.sqs_summary_job import SqsSummaryJobQueue
+            from .adapters.content_job_queue import ContentJobQueue
 
-            summary_job_queue = SqsSummaryJobQueue(
+            summary_job_queue = ContentJobQueue(
+                job_service=job_service,
                 queue_url=settings.summary_job_queue_url,
                 region_name=settings.region_name,
-            )
+            )  # noqa: E501
 
     # Document-fidelity grounding gate (BR-S7). Built once so it can be both injected into the
     # orchestrator (the call seam) and registered in the shared grounding catalog (governance).

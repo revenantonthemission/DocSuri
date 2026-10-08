@@ -1,0 +1,14 @@
+{
+  "stage": "functional-design",
+  "unit": "AssetViewer",
+  "upstream_ids": [
+    "US5.1",
+    "US5.2",
+    "US5.3"
+  ],
+  "coverage": [
+    { "id": "US5.1", "status": "OK", "target": "Same-origin img src, no presigned URLs" },
+    { "id": "US5.2", "status": "OK", "target": "BFF proxyAssetImage auth re-check" },
+    { "id": "US5.3", "status": "OK", "target": "ZoomPanControls component" }
+  ]
+}

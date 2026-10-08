@@ -1,0 +1,15 @@
+{
+  "stage_slug": "refined-mockups",
+  "space": "default",
+  "intent": "261001-rem-2-phase-7-frontend-v",
+  "selections": [
+    {
+      "candidate_id": "c1",
+      "type": "learning",
+      "scope": "project",
+      "heading": "Corrections",
+      "text": "Inspect existing UI request triggers before reusing a component as a read-only result view; SummaryModal currently requests work on mount and persona changes, so result-view design must explicitly separate reading a completed result from initiating work and preserve the intended initial parameter choices.",
+      "source": "orchestrator"
+    }
+  ]
+}

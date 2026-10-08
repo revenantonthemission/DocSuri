@@ -1,0 +1,18 @@
+{
+  "stage": "nfr-design",
+  "unit": "ErrorBoundary",
+  "upstream_ids": ["NFR1.1", "NFR1.2", "NFR2.1", "NFR2.2", "NFR3.1", "NFR4.1", "NFR4.2", "NFR4.3", "NFR5.1", "NFR5.2", "NFR5.3"],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "Class component, no state when healthy" },
+    { "id": "NFR1.2", "status": "OK", "target": "Sync setState in componentDidCatch" },
+    { "id": "NFR2.1", "status": "OK", "target": "Env-based sanitization + error codes" },
+    { "id": "NFR2.2", "status": "OK", "target": "Sentry captureException in componentDidCatch" },
+    { "id": "NFR3.1", "status": "OK", "target": "Independent class component instances" },
+    { "id": "NFR4.1", "status": "OK", "target": "React error boundary bubbling" },
+    { "id": "NFR4.2", "status": "OK", "target": "Key-based remount on retry" },
+    { "id": "NFR4.3", "status": "OK", "target": "Standard React nesting behavior" },
+    { "id": "NFR5.1", "status": "OK", "target": "componentDidCatch → Sentry captureException" },
+    { "id": "NFR5.2", "status": "OK", "target": "Sentry metrics by boundary name" },
+    { "id": "NFR5.3", "status": "OK", "target": "Breadcrumb on retry + success" }
+  ]
+}

@@ -12,7 +12,7 @@ from typing import Any
 
 from docsuri_shared.private_docs import is_private_paper_id
 from fastapi import APIRouter, Body, Request
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 from ..adapters._paper_ref import paper_version
 from ..api.gateway_seam import run_summarization
@@ -25,6 +25,7 @@ from ..domain.models import (
     TargetLang,
     Task,
 )
+from ..service.job_service import ContentJobService
 from ..service.orchestrator import SummarizationOrchestrationService
 
 # REM-2 F01 (SECURITY-08) / FD-Q1: the private ``userdoc:`` namespace is served ONLY by the
@@ -40,8 +41,156 @@ def build_router(
     *,
     assets_enabled: bool = False,
     docmodel_enabled: bool = False,
+    job_service: ContentJobService | None = None,
 ) -> Any:
     router = APIRouter()
+
+    @router.post("/api/content-jobs/submit")
+    async def submit_content_job(request: Request) -> Any:
+        """Accept a durable content job (REM-2 items 20-21 / RJ-AC01, RJ-AC06).
+
+        The caller supplies a task type (summarize | translate | novelty | evidence |
+        ingest_userdoc) and an idempotency key. The response is a durable receipt:
+        {jobId, state} with state ACCEPTED only when the work was actually dispatched,
+        FAILED (retryable) if the queue is
+        unavailable. A retry with the same key returns the original job — never a second billable
+        job. An unauthenticated caller receives 401 before any store write.
+        """
+        if job_service is None:
+            return JSONResponse({"status": "unavailable"}, status_code=503)
+        user_id = _principal_user_id(request)
+        if not user_id:
+            return JSONResponse({"status": "unauthorized"}, status_code=401)
+        payload = await request.json()
+        task_type = payload.get("taskType")
+        valid = ("summarize", "translate", "novelty", "evidence", "ingest_userdoc")
+        if task_type not in valid:
+            return JSONResponse(
+                {"status": "validation_error", "message": "요청을 확인해 주세요."}, status_code=400
+            )
+        input_data = payload.get("input", {})
+        idempotency_key = payload.get("idempotencyKey")
+        ctx = RequestContext(
+            auth_session=AuthSession(user_id=user_id),
+            request_id=request.headers.get("x-request-id", ""),
+        )
+        try:
+            outcome = job_service.submit(
+                ctx, task_type, input_data, idempotency_key=idempotency_key
+            )
+        except Exception:  # noqa: BLE001 — fail-closed: store/queue fault is 503, not a raw 500
+            return JSONResponse({"status": "unavailable"}, status_code=503)
+        body = outcome.to_dict()
+        return JSONResponse(body, status_code=202)
+
+    @router.get("/api/content-jobs/{job_id}/state")
+    def content_job_state(request: Request, job_id: str) -> Any:
+        """The caller's job state (REM-2 item 23 / RJ-AC05, RJ-AC02).
+
+        Returns {jobId, state, error?, resultRef?} for the caller's own jobs. "Not yours" and
+        "does not exist" are the same 404, so the job id is a lookup handle and never an
+        existence oracle for another tenant.
+        """
+        if job_service is None:
+            return JSONResponse({"status": "unavailable"}, status_code=503)
+        user_id = _principal_user_id(request)
+        if not user_id:
+            return JSONResponse({"status": "unauthorized"}, status_code=401)
+        ctx = RequestContext(
+            auth_session=AuthSession(user_id=user_id),
+            request_id=request.headers.get("x-request-id", ""),
+        )
+        job = job_service.state_of(ctx, job_id)
+        if job is None:
+            return JSONResponse({"status": "not_found"}, status_code=404)
+        body = {"jobId": job.job_id, "state": job.state.value}
+        if job.error is not None:
+            body["error"] = job.error.to_dict()
+        if job.result_ref is not None:
+            body["resultRef"] = job.result_ref
+        return JSONResponse(body)
+
+    @router.get("/api/content-jobs/{job_id}/events")
+    def content_job_events(request: Request, job_id: str) -> Any:
+        """SSE stream of the job's state history (REM-2 item 22 / RJ-AC04, RJ-AC02).
+
+        The client may reconnect with ``Last-Event-ID`` (the per-job seq) to resume from the gap
+        it missed. Each event is a JSON line with {eventId, jobId, state, timestampUs, payload?}.
+        The stream ends when the job reaches a terminal state.
+        """
+        if job_service is None:
+            return JSONResponse({"status": "unavailable"}, status_code=503)
+        user_id = _principal_user_id(request)
+        if not user_id:
+            return JSONResponse({"status": "unauthorized"}, status_code=401)
+        ctx = RequestContext(
+            auth_session=AuthSession(user_id=user_id),
+            request_id=request.headers.get("x-request-id", ""),
+        )
+        job = job_service.state_of(ctx, job_id)
+        if job is None:
+            return JSONResponse({"status": "not_found"}, status_code=404)
+
+        # Resume from Last-Event-ID header (RFC 8030) or query param fallback.
+        last_event_id = request.headers.get("last-event-id")
+        if last_event_id is None:
+            last_event_id = request.query_params.get("lastEventId")
+        after_seq = 0
+        if last_event_id is not None:
+            try:
+                after_seq = int(last_event_id.split(":")[-1])
+            except (ValueError, IndexError):
+                after_seq = 0
+
+        from ..domain.job import TERMINAL_STATES
+
+        def event_stream():
+            import json
+            import time
+
+            cursor = [after_seq]
+            sent_terminal = False
+            while True:
+                events = job_service.events(ctx, job_id, after_seq=cursor[0], limit=100)
+                for ev in events:
+                    yield f"id: {ev.event_id}\\ndata: {json.dumps(ev.to_dict())}\\n\\n"
+                    cursor[0] = ev.seq
+                    if ev.state in TERMINAL_STATES:
+                        sent_terminal = True
+                        break
+                if sent_terminal:
+                    break
+                time.sleep(1.0)
+
+        return StreamingResponse(
+            event_stream(),
+            media_type="text/event-stream",
+            headers={
+                "cache-control": "no-cache",
+                "x-accel-buffering": "no",  # nginx: don't buffer SSE
+            },
+        )
+
+    @router.get("/api/content-jobs/{job_id}/result")
+    def content_job_result(request: Request, job_id: str) -> Any:
+        """Direct authorized result delivery (REM-2 items 24, 26 / RJ-AC07, RJ-AC08).
+
+        Returns {resultRef} or 404/410 if not ready, not yours, or expired. No new job is created
+        to fetch a job's result, and nothing outside this origin is handed back.
+        """
+        if job_service is None:
+            return JSONResponse({"status": "unavailable"}, status_code=503)
+        user_id = _principal_user_id(request)
+        if not user_id:
+            return JSONResponse({"status": "unauthorized"}, status_code=401)
+        ctx = RequestContext(
+            auth_session=AuthSession(user_id=user_id),
+            request_id=request.headers.get("x-request-id", ""),
+        )
+        result_ref = job_service.result_ref(ctx, job_id)
+        if result_ref is None:
+            return JSONResponse({"status": "not_found"}, status_code=404)
+        return JSONResponse({"resultRef": result_ref})
 
     @router.post("/api/summarize")
     def summarize(request: Request, payload: dict = Body(...)) -> Any:  # noqa: B008
@@ -282,6 +431,38 @@ def build_router(
         # ``source_unavailable`` 200, which would itself distinguish "yours, not built yet".)
         return JSONResponse(_PRIVATE_NAMESPACE_404, status_code=404)
 
+
+    # --- readiness --------------------------------------------------------------
+
+    @router.get("/api/summarization/ready")
+    def summarization_ready(request: Request) -> Any:
+        """Readiness probe for the summarization module.
+
+        Returns 200 if the module can serve requests (DB connectivity, cost guard healthy).
+        Returns 503 if the module should not receive traffic.
+        """
+        job_service: ContentJobService | None = getattr(
+            request.app.state, "summarization_job_service", None
+        )
+        if job_service is None:
+            return JSONResponse(
+                {"status": "not_ready", "reason": "job_service_unavailable"}, status_code=503
+            )
+
+        # Quick DB connectivity check via job store
+        try:
+            from ..domain.models import AuthSession, RequestContext
+            ctx = RequestContext(
+                auth_session=AuthSession(user_id="healthcheck"), request_id="ready"
+            )
+            job_service.state_of(ctx, "healthcheck-nonexistent")
+        except Exception:  # noqa: BLE001 — DB down
+            return JSONResponse(
+                {"status": "not_ready", "reason": "db_unreachable"}, status_code=503
+            )
+
+        return JSONResponse({"status": "ready"})
+
     return router
 
 
@@ -354,3 +535,5 @@ def _enum_or_default(enum_cls: Any, value: Any, default: Any) -> Any:
         return enum_cls(str(value))
     except ValueError:
         return default
+
+

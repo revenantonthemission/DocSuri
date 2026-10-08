@@ -1,0 +1,1 @@
+cd ops && .venv/bin/python -m pytest tests/test_u1_colima_executor.py -q && cd ../frontend && node --test scripts/u1-sandbox.test.mjs

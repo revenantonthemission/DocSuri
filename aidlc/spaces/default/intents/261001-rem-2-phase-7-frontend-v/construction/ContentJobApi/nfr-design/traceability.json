@@ -1,0 +1,24 @@
+{
+  "stage": "nfr-design",
+  "unit": "ContentJobApi",
+  "upstream_ids": ["NFR1.1", "NFR1.2", "NFR1.3", "NFR1.4", "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4", "NFR2.5", "NFR3.1", "NFR3.2", "NFR4.1", "NFR4.2", "NFR4.3", "NFR5.1", "NFR5.2", "NFR5.3"],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "Streaming BFF proxy, no buffering" },
+    { "id": "NFR1.2", "status": "OK", "target": "crypto.subtle.digest + TextEncoder" },
+    { "id": "NFR1.3", "status": "OK", "target": "Independent fetch + AbortController" },
+    { "id": "NFR1.4", "status": "OK", "target": "Modular exports, tree-shaking" },
+    { "id": "NFR2.1", "status": "OK", "target": "Constant base URL + ESLint + runtime assert" },
+    { "id": "NFR2.2", "status": "OK", "target": "SHA-256 deterministic + header transport + localStorage" },
+    { "id": "NFR2.3", "status": "OK", "target": "BFF bidirectional cookie forwarding" },
+    { "id": "NFR2.4", "status": "OK", "target": "Zod validation pre-fetch" },
+    { "id": "NFR2.5", "status": "OK", "target": "Transport sanitization layer" },
+    { "id": "NFR3.1", "status": "OK", "target": "Stateless fetch + HTTP/2 multiplexing" },
+    { "id": "NFR3.2", "status": "OK", "target": "Namespaced localStorage + 30-day TTL cleanup" },
+    { "id": "NFR4.1", "status": "OK", "target": "Transport retry with same idempotency key" },
+    { "id": "NFR4.2", "status": "OK", "target": "Transparent error propagation" },
+    { "id": "NFR4.3", "status": "OK", "target": "AbortController in useEffect cleanup" },
+    { "id": "NFR5.1", "status": "OK", "target": "Sentry breadcrumbs for BFF request lifecycle" },
+    { "id": "NFR5.2", "status": "OK", "target": "Sentry breadcrumbs for idempotency key lifecycle" },
+    { "id": "NFR5.3", "status": "OK", "target": "Sentry metrics + alert rules" }
+  ]
+}

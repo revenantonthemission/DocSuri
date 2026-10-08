@@ -3,7 +3,7 @@ name = "docsuri-backend"
 version = "0.1.0"
 description = "DocSuri backend modular monolith — app-shell (bootstrap·router·DI·middleware wiring). Deploy unit ①. Track 2 (@revenantonthemission)."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 license = "MIT"
 dependencies = [
     # Shared contracts (DTOs/events/vector-spec/ports) — single source of truth, never forked.
@@ -52,7 +52,10 @@ dev = [
     # these so the suite is reproducible (previously installed ad-hoc — rebaseline gap).
     "hypothesis>=6.100",
     "pytest-asyncio>=0.23",
+    "pytest-cov==7.0.0",
+    "coverage==7.10.7",
 ]
+build = ["hatchling==1.27.0"]
 
 # In-repo path sources. discovery + ops are on develop (PRs #48, #45), so the app-shell
 # installs them directly: `_mount_discovery` resolves and injects the real U6 grounding hook

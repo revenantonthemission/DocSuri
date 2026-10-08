@@ -1,0 +1,27 @@
+## Review
+
+**Verdict:** READY
+**Reviewer:** aidlc-product-lead-agent
+**Date:** 2026-10-03T07:33:13Z
+**Iteration:** 1
+
+### Findings
+
+| ID | Severity | Location | Finding | Required action | Status |
+|---|---|---|---|---|---|
+| R-01 | Major | aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/inception/refined-mockups/interaction-spec.md > Result Dialog and Copy Control (M3) > States and Transitions, Available | The existing summary-level selection has no explicit disposition in the new submit/read split. The specification warns that existing persona-selection semantics must not become parameter-changing retries, but M1 submits directly and M3 shows a read-only result without specifying where the initial persona is chosen or what happens to the existing toggle. Source inspection confirms SummaryModal.tsx renders PersonaToggle and reruns the request when persona changes (lines 62–75, 160–163). Implementers could remove a working reader choice or retain a control that violates the read-only result contract. | Specify the initial summary-parameter selection behavior and the completed-result toggle's disposition. A bounded workaround is to preserve selection on the initial-submission path and show the submitted level as non-editable metadata in the completed-result view; confirm that treatment rather than introducing a changed-parameter retry. Add an acceptance scenario proving View result and its controls cannot submit work. | New |
+| R-02 | Minor | aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/inception/refined-mockups/interaction-spec.md > Result Dialog and Copy Control (M3) > States and Transitions | Result reading specifies loading, available, missing/expired, and denied states, but not a transient network/server failure or unsupported result reference. M2's connectivity states concern job tracking, not the separate result read. The upstream US3.1 contract prerequisite explicitly includes unsupported-reference handling. Generic safe-error guidance supplies a workable fallback, but QA lacks the dialog-specific action and feedback for these branches. | Add result-read failure states with safe messages, an always-available Close action, and an explicit read-only retry policy for transient failures. For unsupported references, show a controlled unavailable outcome without interpreting the reference as an arbitrary URL or submitting work. Specify focus retention and announcement behavior. | New |
+| R-03 | Minor | aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/inception/refined-mockups/interaction-spec.md > Component field tables for JobStatus, Result Dialog, AssetViewer, and Full-Page Render-Error Presentation | The component tables summarize inputs but omit the required/default distinctions and usage examples in the stage's referenced component-spec template. Behavioral sections are useful, yet combinations such as a known job without original request context or an asset without equivalent text must be inferred from prose rather than a compact input contract. This does not require inventing backend wire formats. | Add conceptual input tables with type, required/optional status, default/absence behavior, and a short composition example for each component. Keep unresolved wire-format details assigned to Contract Design and distinguish an unavailable text equivalent from an acceptable decorative image. | New |
+
+### Summary
+
+The design is ready for the next design handoff under the advisory threshold: no Critical findings and one Major finding with a bounded workaround. It preserves the confirmed full-page render-error preference with tracking-only recovery, distinguishes submission recovery from restarting failed work, and gives usable sticky/in-flow, conditional-ETA, same-image minimap, copy-feedback, zoom/pan, and accessibility specifications; the existing summary-level control needs an explicit migration decision.
+
+### Verification Performed
+
+- Read all five dispatched refined-mockup artifacts, the stage definition, reviewer protocol, component-spec template, and the supplied requirements, stories, rough wireframes/user flow, and team-practices artifacts.
+- Loaded the shared and reviewer knowledge files. The active-space shared/reviewer knowledge directories were absent; initial glob searches did not expose the framework knowledge files, so directory reads and explicit file reads were used.
+- Cross-checked the changed screens and states against FR1–FR7 and US1–US8, treating later approved requirements/stories and the reconciled confirmed plan as authoritative over historical rough-flow assumptions.
+- Inspected SummaryModal.tsx, SummaryModal.module.css, PaperDetailIsland.tsx, AssetViewer.tsx, and globals.css. Confirmed the existing modal's mount/persona-triggered request behavior, centered responsive sizing, paper action integration, legacy asset delivery, and the listed light/dark token values.
+- Reviewed focus entry/containment/return, full-page fallback recovery, copy outcomes, unavailable recovery context, zoom/pan alternatives, and the checklist's WCAG thresholds and pending-evidence qualifications. The specified 44px target is correctly distinguished from a blanket WCAG 2.1 AA requirement.
+- No application, browser, accessibility, authorization, performance, or automated sensor tests were executed. This is a document/source review, not runtime conformance evidence; named contract and functional-design prerequisites remain outstanding.

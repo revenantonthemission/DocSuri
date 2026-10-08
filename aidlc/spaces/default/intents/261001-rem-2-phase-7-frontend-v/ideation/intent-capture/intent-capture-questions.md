@@ -89,8 +89,32 @@ Confirm this migration approach.
 
 **Please respond with your choices (A/B/C/X) for questions 1-7 above.** Any "X" responses should include a brief explanation.
 
-[Answer]: A / B / C / X
+1. A
+2. A
+3. A
+4. A
+5. B
+6. A
+7. A
 
 ---
 
-*This form will be reviewed by the Product Lead (advisory). The gate passes on explicit confirmation or if no objections are raised within 24 hours.*
+## Consolidated Summary Confirmation
+
+**Summary of your choices:**
+
+1. **BFF Routing**: Route all content-job calls through `/bff/api/content-jobs/*` (SEC-8)
+2. **SSE Fallback**: Implement polling fallback to `/state` if SSE fails
+3. **AssetViewer Migration**: Migrate to same-origin delivery, remove presigned URLs (SEC-9)
+4. **JobStatus Mount**: Mount on detail page only (near summary/translate buttons)
+5. **Idempotency Key**: Hash of (userId, paperId, task, params) — deterministic, survives reload
+6. **Error UX**: Inline "Retry" button (re-submits with same idempotency key)
+7. **Asset Cache**: 60s private cache is acceptable
+
+**Confirm** — Does this all look correct before I generate the artifact?
+
+- A. **Looks correct** — Generate the artifact from these answers
+- B. **Request changes** — Revise one or more answers before generation
+- X. Other (please specify)
+
+[Answer]: Looks correct

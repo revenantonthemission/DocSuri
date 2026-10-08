@@ -8,10 +8,11 @@ Dependency-isolation exceptions (RES-9 / NFR-R2 / Q1):
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from docsuri_shared.dtos import DocModel
 
+from ..domain.job import ContentJob, JobError, JobEvent, JobState
 from ..domain.models import (
     AssetObject,
     Glossary,
@@ -171,4 +172,105 @@ class GlossaryRepositoryPort(Protocol):
         self, user_id: str, term_from: str, term_to: str, *, prompt_enforced: bool
     ) -> int:
         """Add/override a personal term (owner-scoped); return the bumped ``glossary_ver``."""
+        ...
+
+
+# --- content jobs (REM-2 corrective Phase 5, RJ-AC01-08/AC12) ---------------------------------
+
+
+class JobStorePort(Protocol):
+    """Durable acceptance, state, effect ledger, and event history for content jobs.
+
+    Every method here exists because the fire-and-forget queue could not answer a caller: there was
+    no durable receipt (RJ-AC01), no way to make a retry idempotent (RJ-AC06), no way to resume an
+    event stream after a reconnect (RJ-AC04), and no way to make a redelivery not bill twice
+    (RJ-AC06/ND-Q8).
+
+    The adapter is the only place allowed to decide what "already exists" means, so the service
+    above it never races two submissions into two jobs.
+    """
+
+    def accept(
+        self,
+        *,
+        job_id: str,
+        owner_id: str,
+        task_type: str,
+        input: dict[str, Any],
+        idempotency_key: str | None,
+        now: float,
+    ) -> tuple[ContentJob, bool]:
+        """Durably record the job and return ``(job, created)``.
+
+        ``created`` is False when this caller's ``idempotency_key`` already names an accepted job:
+        the caller then receives the *existing* ``job_id`` rather than a second job (RJ-AC06). The
+        decision must be atomic — two concurrent retries of one submission may produce exactly one
+        job.
+        """
+        ...
+
+    def get(self, job_id: str) -> ContentJob | None:
+        """The job by id, unfiltered. Authorization is the caller's job, not the store's."""
+        ...
+
+    def release_idempotency(self, owner_id: str, key: str | None, job_id: str) -> None:
+        """Unbind an idempotency key from a job that was never accepted for dispatch.
+
+        A dispatch failure means no work was accepted, so the key must not stay bound to that job:
+        the caller's retry has to be able to get a fresh job rather than being permanently handed
+        back the same failure (RJ-AC06's "no duplicate effect" must not become "no retry").
+        """
+        ...
+
+    def transition(
+        self,
+        job_id: str,
+        target: JobState,
+        *,
+        expect_from: frozenset[JobState],
+        now: float,
+        result_ref: str | None = None,
+        result_expires_at: float | None = None,
+        error: JobError | None = None,
+        abstain_reason: str | None = None,
+        payload: dict[str, Any] | None = None,
+    ) -> ContentJob | None:
+        """Move the job to ``target`` and append exactly one corresponding event, atomically.
+
+        ``expect_from`` is a compare-and-set guard: the move happens only if the job is currently in
+        one of those states, so a redelivered or duplicated message cannot revive a finished job.
+        Returns the updated job, or ``None`` when the guard did not hold.
+        """
+        ...
+
+    def claim_effect(self, job_id: str, attempt: int, effect: str) -> bool:
+        """Atomically claim ``(job_id, attempt, effect)``; False when already claimed (ND-Q8).
+
+        The effect ledger is what makes redelivery safe: the second delivery of one logical attempt
+        loses this claim and skips the work instead of paying for it twice.
+        """
+        ...
+
+    def release_effect(self, job_id: str, attempt: int) -> None:
+        """Release a claim whose effect failed, so a retry can re-claim and try again."""
+        ...
+
+    def append_event(
+        self, job_id: str, owner_id: str, state: JobState, payload: dict[str, Any], now: float
+    ) -> JobEvent:
+        """Append one history entry with the next per-job ``seq`` (RJ-AC04 replay)."""
+        ...
+
+    def list_events(
+        self, job_id: str, *, after_seq: int = 0, limit: int = 500
+    ) -> list[JobEvent]:
+        """Events with ``seq > after_seq``, oldest first (the SSE reconnect path)."""
+        ...
+
+    def purge_owner(self, owner_id: str) -> None:
+        """Delete every trace of this owner's jobs, events, and ledger entries (G3/NFR-R4).
+
+        A late worker write for a purged job must be impossible to serve, not merely unlikely to
+        be looked up.
+        """
         ...

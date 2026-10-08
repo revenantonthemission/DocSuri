@@ -12,10 +12,13 @@ import type { AnchorVM } from '@/types/generated';
 import { usePaperMeta } from '@/lib/usePaperMeta';
 import { renderInlineMath } from '@/lib/renderMath';
 import { SummaryModal, type DetailView } from './SummaryModal';
+import { JobDialog } from './JobDialog';
+import { JobSubmissionForm, type JobSubmissionIdentity } from './JobSubmissionForm';
+import { JobStatus } from './JobStatus';
 import { SaveToLibraryButton } from './SaveToLibraryButton';
 import { CitationTreePanel } from './CitationTreePanel';
 import { DocModelViewer } from './DocModelViewer';
-import { recordPaperOpened } from '@/lib/personalization';
+import { recordPaperOpened, recordSummaryRequest } from '@/lib/personalization';
 import styles from './PaperDetailIsland.module.css';
 
 interface PaperDetailIslandProps {
@@ -44,8 +47,18 @@ const ACTIONS: { view: DetailView; label: string }[] = [
   { view: 'abstractTrans', label: '초록 번역' },
 ];
 
+// The job journey state machine: action → explicit submission form → live
+// tracking → query-only result. Nothing happens until the human chooses an
+// action, and the parent mounts tracking only for an ACTUAL returned identity
+// (ADR-013) — never for a guessed or stale one.
+type JobFlow =
+  | { phase: 'closed' }
+  | { phase: 'form'; view: DetailView }
+  | { phase: 'tracking'; view: DetailView; identity: JobSubmissionIdentity }
+  | { phase: 'result'; view: DetailView; jobId: string };
+
 export function PaperDetailIsland({ paperId, version, arxivUrl }: PaperDetailIslandProps) {
-  const [modalView, setModalView] = useState<DetailView | null>(null);
+  const [flow, setFlow] = useState<JobFlow>({ phase: 'closed' });
   const [citationOpen, setCitationOpen] = useState(false);
   // Desktop shows the full body inline (the doc-model is pre-stored); phones keep the 전문
   // button that opens the separate full-screen route. Resolved client-side after mount.
@@ -114,7 +127,7 @@ export function PaperDetailIsland({ paperId, version, arxivUrl }: PaperDetailIsl
             key={a.view}
             type="button"
             className={styles.action}
-            onClick={() => setModalView(a.view)}
+            onClick={() => setFlow({ phase: 'form', view: a.view })}
             data-testid={`open-${a.view}`}
           >
             {a.label}
@@ -213,12 +226,53 @@ export function PaperDetailIsland({ paperId, version, arxivUrl }: PaperDetailIsl
         </div>
       ) : null}
 
-      {modalView ? (
+      {flow.phase === 'form' ? (
+        <JobDialog
+          open
+          title={flow.view === 'summary' ? '요약' : '번역'}
+          onClose={() => setFlow({ phase: 'closed' })}
+        >
+          <JobSubmissionForm
+            paperId={paperId}
+            version={version}
+            task={flow.view === 'summary' ? 'summarize' : 'translate'}
+            onSubmitted={(identity) => {
+              recordSummaryRequest(
+                paperId,
+                identity.taskType === 'summarize' ? 'summary' : 'translation',
+                {},
+              );
+              setFlow({ phase: 'tracking', view: flow.view, identity });
+            }}
+            onCancel={() => setFlow({ phase: 'closed' })}
+          />
+        </JobDialog>
+      ) : null}
+
+      {flow.phase === 'tracking' ? (
+        <JobDialog open title="작업 진행" onClose={() => setFlow({ phase: 'closed' })}>
+          <JobStatus
+            jobId={flow.identity.jobId}
+            paperId={paperId}
+            onComplete={(terminal) => {
+              // COMPLETED → read the exact prepared result (query-only).
+              // FAILED/ABSTAINED stay shown in the status panel until closed.
+              if (terminal === 'COMPLETED') {
+                setFlow({ phase: 'result', view: flow.view, jobId: flow.identity.jobId });
+              } else {
+                setFlow({ phase: 'closed' });
+              }
+            }}
+          />
+        </JobDialog>
+      ) : null}
+
+      {flow.phase === 'result' ? (
         <SummaryModal
           paperId={paperId}
-          version={version}
-          view={modalView}
-          onClose={() => setModalView(null)}
+          jobId={flow.jobId}
+          view={flow.view}
+          onClose={() => setFlow({ phase: 'closed' })}
           onAnchor={openBody}
         />
       ) : null}

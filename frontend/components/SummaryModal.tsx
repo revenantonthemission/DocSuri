@@ -1,31 +1,38 @@
 'use client';
 
-// SummaryModal — the summary/translation surface as a modal overlay opened from the
-// body-first detail page. The detail-page action bar already picked the mode, so the
-// modal renders ONLY that mode's content (no tab bar): 요약 shows the 전문가용/입문자용
-// persona toggle + structured summary; 초록/전문 번역 show the translation. Runs
-// useSummarize and maps the outcome union to the surface (BR-SF-14, no infinite
-// loading). Anchor click closes the modal and asks the parent to highlight the span
-// in the on-page full-text body (Q5=C).
+// SummaryModal — the QUERY-ONLY completed-result surface (Step 33).
 //
-// Accessibility: role="dialog" aria-modal, Escape + backdrop close, initial focus,
-// and body-scroll lock while open. External text escaped by React (BR-SF-9).
-import { useEffect, useRef, useState } from 'react';
-import type { AnchorVM, Persona, SummarizeRequest, SummarizeScope } from '@/types/generated';
-import { useSummarize } from '@/lib/useSummarize';
-import { PersonaToggle } from './PersonaToggle';
+// The modal no longer initiates work: it reads the exact immutable prepared
+// result for one completed job (`GET …/{jobId}/result`) and renders it through
+// the existing safe views. Nothing here generates, enqueues or re-runs —
+// opening the modal, changing preferences or pressing retry are all reads of
+// the same payload. Work is initiated only through JobSubmissionForm's explicit
+// submit, and this modal never appears before a real, returned job identity.
+//
+// Accessibility: role="dialog" aria-modal, Escape + backdrop close, initial
+// focus, body-scroll lock. External text is escaped by React.
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { AnchorVM } from '@/types/generated';
+import {
+  getJobResult,
+  JobResultError,
+  type JobResultFailure,
+  type PreparedResultEnvelope,
+} from '@/lib/api/contentJobApi';
 import { SummaryView } from './SummaryView';
 import { TranslationView } from './TranslationView';
 import { StateView } from './StateView';
-import { recordSourceAnchorClicked, recordSummaryRequest } from '@/lib/personalization';
+import { emitJobDiagnostic } from '@/lib/jobDiagnostics';
+import { recordSourceAnchorClicked } from '@/lib/personalization';
 import styles from './SummaryModal.module.css';
 
-/** The three detail-page actions (요약/초록 번역/전문 번역). Each opens this modal. */
+/** The detail-page result modes (요약/초록 번역/전문 번역). */
 export type DetailView = 'summary' | 'abstractTrans' | 'fullTrans';
 
 interface SummaryModalProps {
   paperId: string;
-  version: number;
+  /** The completed job whose exact prepared result is READ (never re-run). */
+  jobId: string;
   /** Which mode this modal renders (chosen by the action bar / card). Fixed. */
   view: DetailView;
   onClose: () => void;
@@ -35,44 +42,47 @@ interface SummaryModalProps {
   onAnchor?: (anchor: AnchorVM) => void;
 }
 
-function buildRequest(
-  view: DetailView,
-  persona: Persona,
-  paperId: string,
-  version: number,
-): SummarizeRequest {
-  if (view === 'summary') return { task: 'summary', paperId, version, persona };
-  const scope: SummarizeScope = view === 'fullTrans' ? 'full' : 'abstract';
-  return { task: 'translate', paperId, version, scope };
-}
-
-const LOADING_TITLE: Record<DetailView, string> = {
-  summary: '요약 생성 중…',
-  abstractTrans: '초록 번역 중…',
-  fullTrans: '전문 번역 중… (시간이 걸릴 수 있어요)',
-};
-
 const MODAL_TITLE: Record<DetailView, string> = {
   summary: '요약',
   abstractTrans: '초록 번역',
   fullTrans: '전문 번역',
 };
 
-export function SummaryModal({ paperId, version, view, onClose, onAnchor }: SummaryModalProps) {
-  const [persona, setPersona] = useState<Persona>('expert');
-  const { state, run } = useSummarize();
+type ReadState =
+  | { status: 'loading' }
+  | { status: 'ready'; envelope: PreparedResultEnvelope }
+  | { status: 'failed'; reason: JobResultFailure; message: string };
+
+export function SummaryModal({ paperId, jobId, view, onClose, onAnchor }: SummaryModalProps) {
+  const [read, setRead] = useState<ReadState>({ status: 'loading' });
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  // Re-request on view/persona change; the backend cache returns cached results
-  // instantly (BR-SF-5/6), so switching tabs/levels is cheap.
+  // Query-only read of the exact prepared payload; retry re-reads, it does not
+  // regenerate (zero generation/enqueue on every read outcome).
+  const readResult = useCallback(async () => {
+    setRead({ status: 'loading' });
+    try {
+      const envelope = await getJobResult(jobId);
+      setRead({ status: 'ready', envelope });
+      emitJobDiagnostic({ kind: 'result-read', outcome: 'ready' });
+    } catch (caught) {
+      if (caught instanceof JobResultError) {
+        setRead({ status: 'failed', reason: caught.reason, message: caught.message });
+        emitJobDiagnostic({ kind: 'result-read', outcome: caught.reason });
+      } else {
+        setRead({
+          status: 'failed',
+          reason: 'transient',
+          message: '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+        });
+        emitJobDiagnostic({ kind: 'result-read', outcome: 'transient' });
+      }
+    }
+  }, [jobId]);
+
   useEffect(() => {
-    recordSummaryRequest(
-      paperId,
-      view === 'summary' ? 'summary' : 'translation',
-      view === 'summary' ? { persona } : { scope: view === 'fullTrans' ? 'full' : 'abstract' },
-    );
-    void run(buildRequest(view, persona, paperId, version));
-  }, [view, persona, paperId, version, run]);
+    void readResult();
+  }, [readResult]);
 
   // Escape to close + body-scroll lock while open.
   useEffect(() => {
@@ -89,8 +99,6 @@ export function SummaryModal({ paperId, version, view, onClose, onAnchor }: Summ
     };
   }, [onClose]);
 
-  const retry = () => void run(buildRequest(view, persona, paperId, version));
-
   const handleAnchor = (anchor: AnchorVM) => {
     recordSourceAnchorClicked(paperId, anchor);
     onAnchor?.(anchor);
@@ -98,49 +106,41 @@ export function SummaryModal({ paperId, version, view, onClose, onAnchor }: Summ
   };
 
   function renderResult() {
-    if (state.status === 'idle' || state.status === 'loading') {
+    if (read.status === 'loading') {
+      return <StateView kind="loading" title="결과 불러오는 중…" message="잠시만 기다려 주세요." />;
+    }
+    if (read.status === 'failed') {
+      switch (read.reason) {
+        case 'not-ready':
+          return (
+            <StateView
+              kind="degraded"
+              message="아직 결과가 준비되지 않았습니다. 잠시 후 다시 확인해 주세요."
+              onRetry={() => void readResult()}
+            />
+          );
+        case 'transient':
+          return (
+            <StateView kind="error" message={read.message} onRetry={() => void readResult()} />
+          );
+        case 'expired':
+        case 'unavailable':
+        case 'auth':
+        case 'not-found':
+          return <StateView kind="error" message={read.message} />;
+      }
+    }
+    const content = read.envelope.preparedResult.content;
+    if (content.task === 'summary') {
       return (
-        <StateView kind="loading" title={LOADING_TITLE[view]} message="잠시만 기다려 주세요." />
+        <SummaryView
+          summary={content.summary}
+          {...(content.cached !== undefined ? { cached: content.cached } : {})}
+          {...(onAnchor ? { onAnchor: handleAnchor } : {})}
+        />
       );
     }
-    const { outcome } = state;
-    switch (outcome.kind) {
-      case 'summary':
-        return (
-          <SummaryView
-            summary={outcome.summary}
-            cached={outcome.cached}
-            onAnchor={onAnchor ? handleAnchor : undefined}
-          />
-        );
-      case 'translation':
-        return <TranslationView translation={outcome.translation} cached={outcome.cached} />;
-      case 'pending': {
-        // This state renders ONLY when the API returned `pending` — i.e. the work was dispatched
-        // to a background job (BR-S6/BR-S8) and the hook keeps polling (short inline waits never
-        // reach here). So it's accurate to tell the user it's running in the background, and to set
-        // the "it's running, may take a while" expectation up front so the wait doesn't read as a
-        // failure — without promising a specific duration we can't reliably predict.
-        const noun = view === 'summary' ? '요약' : '번역';
-        return (
-          <StateView
-            kind="loading"
-            title={`${noun} 생성 중…`}
-            message={`AI가 백그라운드에서 ${noun}을 만들고 있어요. 논문이 길면 시간이 걸릴 수 있어요. 완료되면 여기에 표시돼요.`}
-          />
-        );
-      }
-      case 'abstain':
-        return <StateView kind="abstain" message="근거가 부족해 요약/번역을 보류했어요." />;
-      case 'degraded':
-        return <StateView kind="degraded" message={outcome.message} onRetry={retry} />;
-      case 'sourceUnavailable':
-        return <StateView kind="sourceUnavailable" />;
-      case 'invalid':
-        return <StateView kind="invalid" message={outcome.message} />;
-      case 'error':
-        return <StateView kind="error" message={outcome.message} onRetry={retry} />;
-    }
+    return <TranslationView translation={content.translation} />;
   }
 
   return (
@@ -157,11 +157,6 @@ export function SummaryModal({ paperId, version, view, onClose, onAnchor }: Summ
       >
         <div className={styles.head}>
           <h2 className={styles.heading}>{MODAL_TITLE[view]}</h2>
-          {view === 'summary' ? (
-            <section className={styles.personaSection} aria-label="요약 수준">
-              <PersonaToggle value={persona} onChange={setPersona} />
-            </section>
-          ) : null}
           <button
             type="button"
             className={styles.close}
@@ -180,3 +175,5 @@ export function SummaryModal({ paperId, version, view, onClose, onAnchor }: Summ
     </div>
   );
 }
+
+export default SummaryModal;

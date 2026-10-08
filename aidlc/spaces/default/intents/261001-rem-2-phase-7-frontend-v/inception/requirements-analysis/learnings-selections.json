@@ -1,0 +1,15 @@
+{
+  "stage_slug": "requirements-analysis",
+  "space": "default",
+  "intent": "261001-rem-2-phase-7-frontend-v",
+  "selections": [
+    {
+      "candidate_id": "c2",
+      "type": "learning",
+      "scope": "project",
+      "heading": "Corrections",
+      "text": "Separated same-key submission recovery from re-execution of a terminal failed job. The human selected same-parameter recovery only; requirements must not promise a restart that the backend idempotency contract does not provide.",
+      "source": "orchestrator"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "JobStatus",
+  "upstream_ids": ["NFR1.1", "NFR1.2", "NFR1.3", "NFR1.4", "NFR1.5", "NFR1.6", "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4", "NFR2.5", "NFR3.1", "NFR3.2", "NFR3.3", "NFR4.1", "NFR4.2", "NFR4.3", "NFR4.4", "NFR4.5", "NFR5.1", "NFR5.2", "NFR5.3", "NFR5.4"],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "BFF SSE route + Next.js standalone" },
+    { "id": "NFR1.2", "status": "OK", "target": "Direct stream via BFF" },
+    { "id": "NFR1.3", "status": "OK", "target": "SWR polling via BFF route" },
+    { "id": "NFR1.4", "status": "OK", "target": "Next.js standalone + bundle analysis" },
+    { "id": "NFR1.5", "status": "OK", "target": "Bundle analysis in CI (≤15KB)" },
+    { "id": "NFR1.6", "status": "OK", "target": "Docker health checks" },
+    { "id": "NFR2.1", "status": "OK", "target": "BFF SSE route forwards Cookie" },
+    { "id": "NFR2.2", "status": "OK", "target": "Keys via props, no infra needed" },
+    { "id": "NFR2.3", "status": "OK", "target": "ErrorBoundary sanitization (client)" },
+    { "id": "NFR2.4", "status": "OK", "target": "Next.js CSP header" },
+    { "id": "NFR2.5", "status": "OK", "target": "Sentry DSN in build env" },
+    { "id": "NFR3.1", "status": "OK", "target": "Per-instance SSE, HTTP/2 multiplexing" },
+    { "id": "NFR3.2", "status": "OK", "target": "SWR cache TTL 5min" },
+    { "id": "NFR3.3", "status": "OK", "target": "EventSource.close() + SWR TTL" },
+    { "id": "NFR4.1", "status": "OK", "target": "Native EventSource Last-Event-ID" },
+    { "id": "NFR4.2", "status": "OK", "target": "SWR fallback via BFF" },
+    { "id": "NFR4.3", "status": "OK", "target": "ErrorBoundary + key remount" },
+    { "id": "NFR4.4", "status": "OK", "target": "4-state machine (client)" },
+    { "id": "NFR4.5", "status": "OK", "target": "URL jobId + idempotency key" },
+    { "id": "NFR5.1", "status": "OK", "target": "ErrorBoundary → Sentry" },
+    { "id": "NFR5.2", "status": "OK", "target": "Web Vitals + custom metrics → Sentry" },
+    { "id": "NFR5.3", "status": "OK", "target": "SSE breadcrumbs → Sentry" },
+    { "id": "NFR5.4", "status": "OK", "target": "axe-core in CI" }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "stage": "functional-design",
+  "unit": "ZoomPanControls",
+  "upstream_ids": [
+    "US5.3"
+  ],
+  "coverage": [
+    { "id": "US5.3", "status": "OK", "target": "ZoomPanControls component with mouse, touch, keyboard" }
+  ]
+}

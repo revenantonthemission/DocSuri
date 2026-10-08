@@ -61,7 +61,11 @@ DOMAINS = (
     (
         "summarization",
         "backend/modules/summarization/migrations",
-        ("001_create_user_glossary.sql",),
+        (
+            "001_create_user_glossary.sql",
+            "002_create_content_jobs.sql",
+            "003_content_job_authority_prepared.sql",
+        ),
     ),
     (
         "ingestion",

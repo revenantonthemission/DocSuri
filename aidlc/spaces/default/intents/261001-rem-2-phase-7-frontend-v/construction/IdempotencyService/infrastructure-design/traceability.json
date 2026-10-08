@@ -1,0 +1,19 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "IdempotencyService",
+  "upstream_ids": ["NFR1.1", "NFR1.2", "NFR2.1", "NFR2.2", "NFR2.3", "NFR3.1", "NFR3.2", "NFR4.1", "NFR4.2", "NFR4.3", "NFR5.1", "NFR5.2"],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "crypto.subtle.digest ≤5ms" },
+    { "id": "NFR1.2", "status": "OK", "target": "Direct localStorage API ≤2ms" },
+    { "id": "NFR2.1", "status": "OK", "target": "SHA-256 deterministic generation" },
+    { "id": "NFR2.2", "status": "OK", "target": "Namespaced localStorage, no secrets" },
+    { "id": "NFR2.3", "status": "OK", "target": "30-day client + 24h server TTL" },
+    { "id": "NFR3.1", "status": "OK", "target": "~100KB total" },
+    { "id": "NFR3.2", "status": "OK", "target": "Deterministic = same key" },
+    { "id": "NFR4.1", "status": "OK", "target": "localStorage persistence" },
+    { "id": "NFR4.2", "status": "OK", "target": "try/catch + delete + regenerate" },
+    { "id": "NFR4.3", "status": "OK", "target": "QuotaExceededError → purge → Map fallback" },
+    { "id": "NFR5.1", "status": "OK", "target": "Sentry breadcrumbs for key lifecycle" },
+    { "id": "NFR5.2", "status": "OK", "target": "Sentry captureException on storage errors" }
+  ]
+}

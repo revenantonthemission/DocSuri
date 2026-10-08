@@ -461,13 +461,35 @@ def _mount_summarization(app: FastAPI, settings: Settings, result: MountResult) 
                     pass
         return None
 
+    # Durable job store + service (REM-2 Phase 5). Use the assembled DSN; the RDS adapter is
+    # lazy-imported so this path works even when psycopg is not installed (tests use in-memory).
+    import time
+
+    from summarization.adapters.in_memory_jobs import InMemoryJobStore
+    from summarization.adapters.rds_jobs import RdsJobStore
+    from summarization.service.job_service import ContentJobService
+
+    dsn = sm_settings.database_url
+    if dsn:
+        job_store = RdsJobStore(dsn=dsn)
+    else:
+        job_store = InMemoryJobStore()
+    job_service = ContentJobService(
+        store=job_store,
+        enqueue=lambda job: None,  # will be replaced by the worker wiring
+        result_ttl_seconds=3600.0,
+        now=time.time,
+    )
+
     bundle = build_real_orchestrator(
         sm_settings,
         cost_guard=app.state.cost_guard,
         observability=app.state.observability,
         abstract_lookup=abstract_lookup,
+        job_service=job_service,
     )
     app.state.summarization_bundle = bundle
+    app.state.summarization_job_service = job_service
     # The doc-model rich view + assets are OA-license-gated; the gates are passed from settings
     # (default OFF — ``license_unavailable`` → arXiv link-out) until a license signal is wired.
     app.include_router(
@@ -475,6 +497,7 @@ def _mount_summarization(app: FastAPI, settings: Settings, result: MountResult) 
             bundle.orchestrator,
             assets_enabled=sm_settings.assets_enabled,
             docmodel_enabled=sm_settings.docmodel_viewer_enabled,
+            job_service=job_service,
         )
     )
     result.mounted.append("summarization")

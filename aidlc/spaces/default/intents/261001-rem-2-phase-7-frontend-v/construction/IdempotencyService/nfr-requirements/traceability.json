@@ -1,0 +1,47 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "IdempotencyService",
+  "upstream_ids": ["NFR1", "NFR2", "NFR3", "NFR4", "NFR5", "NFR6", "NFR7", "NFR8"],
+  "coverage": [
+    {
+      "id": "NFR1",
+      "status": "N/A",
+      "target": "BFF routing handled by ContentJobApi"
+    },
+    {
+      "id": "NFR2",
+      "status": "N/A",
+      "target": "Auth re-check handled by AssetViewer"
+    },
+    {
+      "id": "NFR3",
+      "status": "N/A",
+      "target": "Presigned URLs handled by AssetViewer"
+    },
+    {
+      "id": "NFR4",
+      "status": "OK",
+      "target": "NFR1.1, NFR1.2, NFR2.1, NFR2.2, NFR2.3, NFR3.1, NFR3.2, NFR4.1, NFR4.2, NFR4.3, NFR5.1, NFR6.1, NFR6.2"
+    },
+    {
+      "id": "NFR5",
+      "status": "N/A",
+      "target": "Polling fallback handled by JobStatus"
+    },
+    {
+      "id": "NFR6",
+      "status": "N/A",
+      "target": "Error Boundary is separate unit"
+    },
+    {
+      "id": "NFR7",
+      "status": "OK",
+      "target": "NFR5.2"
+    },
+    {
+      "id": "NFR8",
+      "status": "N/A",
+      "target": "Security review is process gate"
+    }
+  ]
+}

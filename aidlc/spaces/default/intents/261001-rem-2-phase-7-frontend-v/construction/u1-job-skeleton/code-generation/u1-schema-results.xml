@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="10" failures="1" skipped="0" tests="26" time="0.136" timestamp="2026-10-05T22:32:18.833899+09:00" hostname="mac-mini"><testcase classname="tests.u1_integration.test_migrations" name="test_registered_additive_authority_script_follows_unchanged_002" time="0.001" /><testcase classname="tests.u1_integration.test_migrations" name="test_historical_002_retains_the_coordinators_prewrite_bytes_not_head" time="0.000" /><testcase classname="tests.u1_integration.test_migrations" name="test_registered_authority_script_is_admitted_by_the_actual_migration_runner" time="0.001"><failure message="backend.migrations.MigrationBlocked: script is not admitted as ATOMIC_STEP">def test_registered_authority_script_is_admitted_by_the_actual_migration_runner() -&gt; None:
+        definition = registry(owners={"summarization"})[-1]
+        # This currently fails: inherited _atomic_sql rejects PL/pgSQL BEGIN/END and
+        # trigger EXECUTE. Do not xfail/skip or bypass it with direct execution.
+&gt;       assert _atomic_sql(definition.path.read_bytes()).encode() == definition.path.read_bytes()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/u1_integration/test_migrations.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+payload = b"-- U1 / C7. Registered additive authority; never rewrite or backfill migration 002.\n-- Old jobs/effects retain NULL... FROM public.content_jobs j LEFT JOIN public.accounts a ON a.id = j.owner_id\n    WHERE j.authority_version IS NULL;\n"
+
+    def _atomic_sql(payload: bytes) -&gt; str:
+        sql = payload.decode("utf-8")
+        # Conservative admission of developer-owned registry scripts: these operations can escape
+        # the step transaction or create external effects. Ignore full-line comments for admission;
+        # execute the original bytes unchanged. Ambiguous/complex scripts require explicit review.
+        executable = "\n".join(line for line in sql.splitlines() if not line.lstrip().startswith("--"))
+        if re.search(
+            r"\b(BEGIN|START\s+TRANSACTION|COMMIT|ROLLBACK|END|VACUUM|CONCURRENTLY|"
+            r"COPY|CALL|DO|EXECUTE|SET\s+ROLE|CREATE\s+DATABASE|ALTER\s+SYSTEM)\b",
+            executable,
+            re.I,
+        ):
+&gt;           raise MigrationBlocked("script is not admitted as ATOMIC_STEP")
+E           backend.migrations.MigrationBlocked: script is not admitted as ATOMIC_STEP
+
+../../migrations/__init__.py:36: MigrationBlocked</failure></testcase><testcase classname="tests.u1_integration.test_migrations" name="test_schema_has_all_three_eligibility_indexes_and_cleanup_progress" time="0.000"><error message="failed on setup with &quot;Failed: U1 realm manifest/receipt and its trusted SHA-256 are required&quot;">U1 realm manifest/receipt and its trusted SHA-256 are required
+
+During handling of the above exception, another exception occurred:
+U1 realm manifest/receipt and its trusted SHA-256 are required</error></testcase><testcase classname="tests.u1_integration.test_migrations" name="test_legacy_rows_never_acquire_default_authority" time="0.000"><error message="failed on setup with &quot;Failed: U1 realm manifest/receipt and its trusted SHA-256 are required&quot;">U1 realm manifest/receipt and its trusted SHA-256 are required
+
+During handling of the above exception, another exception occurred:
+U1 realm manifest/receipt and its trusted SHA-256 are required</error></testcase><testcase classname="tests.u1_integration.test_migrations" name="test_v1_job_requires_binding_at_commit_not_only_a_decorative_marker" time="0.000"><error message="failed on setup with &quot;Failed: U1 realm manifest/receipt and its trusted SHA-256 are required&quot;">U1 realm manifest/receipt and its trusted SHA-256 are required
+
+During handling of the above exception, another exception occurred:
+U1 realm manifest/receipt and its trusted SHA-256 are required</error></testcase><testcase classname="tests.u1_integration.test_migrations" name="test_retained_key_uniqueness_and_distinct_keyless_jobs" time="0.000"><error message="failed on setup with &quot;Failed: U1 realm manifest/receipt and its trusted SHA-256 are required&quot;">U1 realm manifest/receipt and its trusted SHA-256 are required
+
+During handling of the above exception, another exception occurred:
+U1 realm manifest/receipt and its trusted SHA-256 are required</error></testcase><testcase classname="tests.u1_integration.test_migrations" name="test_completed_v1_cannot_advertise_an_unbound_coarse_reference" time="0.000"><error message="failed on setup with &quot;Failed: U1 realm manifest/receipt and its trusted SHA-256 are required&quot;">U1 realm manifest/receipt and its trusted SHA-256 are required
+
+During handling of the above exception, another exception occurred:
+U1 realm manifest/receipt and its trusted SHA-256 are required</error></testcase><testcase classname="tests.u1_integration.test_owner_lifecycle" name="test_inactive_account_cannot_accumulate_content_jobs[DEACTIVATED]" time="0.000"><error message="failed on setup with &quot;Failed: U1 realm manifest/receipt and its trusted SHA-256 are required&quot;">U1 realm manifest/receipt and its trusted SHA-256 are required
+
+During handling of the above exception, another exception occurred:
+U1 realm manifest/receipt and its trusted SHA-256 are required</error></testcase><testcase classname="tests.u1_integration.test_owner_lifecycle" name="test_inactive_account_cannot_accumulate_content_jobs[PURGE_FAILED]" time="0.000"><error message="failed on setup with &quot;Failed: U1 realm manifest/receipt and its trusted SHA-256 are required&quot;">U1 realm manifest/receipt and its trusted SHA-256 are required
+
+During handling of the above exception, another exception occurred:
+U1 realm manifest/receipt and its trusted SHA-256 are required</error></testcase><testcase classname="tests.u1_integration.test_owner_lifecycle" name="test_inactive_account_cannot_accumulate_content_jobs[PENDING]" time="0.000"><error message="failed on setup with &quot;Failed: U1 realm manifest/receipt and its trusted SHA-256 are required&quot;">U1 realm manifest/receipt and its trusted SHA-256 are required
+
+During handling of the above exception, another exception occurred:
+U1 realm manifest/receipt and its trusted SHA-256 are required</error></testcase><testcase classname="tests.u1_integration.test_owner_lifecycle" name="test_absent_owner_cannot_be_guessed_or_recreated" time="0.000"><error message="failed on setup with &quot;Failed: U1 realm manifest/receipt and its trusted SHA-256 are required&quot;">U1 realm manifest/receipt and its trusted SHA-256 are required
+
+During handling of the above exception, another exception occurred:
+U1 realm manifest/receipt and its trusted SHA-256 are required</error></testcase><testcase classname="tests.u1_integration.test_owner_lifecycle" name="test_existing_legacy_job_is_deleted_by_current_account_foreign_key" time="0.000"><error message="failed on setup with &quot;Failed: U1 realm manifest/receipt and its trusted SHA-256 are required&quot;">U1 realm manifest/receipt and its trusted SHA-256 are required
+
+During handling of the above exception, another exception occurred:
+U1 realm manifest/receipt and its trusted SHA-256 are required</error></testcase><testcase classname="tests.u1_integration.test_realm_preflight" name="test_missing_manifest_fails_before_any_connection_attempt" time="0.000" /><testcase classname="tests.u1_integration.test_realm_preflight" name="test_two_connections_are_separated_by_readonly_identity_success" time="0.000" /><testcase classname="tests.u1_integration.test_realm_preflight" name="test_wrong_identity_never_opens_the_mutation_connection[0-production]" time="0.000" /><testcase classname="tests.u1_integration.test_realm_preflight" name="test_wrong_identity_never_opens_the_mutation_connection[1-production-role]" time="0.000" /><testcase classname="tests.u1_integration.test_realm_preflight" name="test_wrong_identity_never_opens_the_mutation_connection[2-192.168.1.2]" time="0.000" /><testcase classname="tests.u1_integration.test_realm_preflight" name="test_wrong_identity_never_opens_the_mutation_connection[3-5433]" time="0.000" /><testcase classname="tests.u1_integration.test_realm_preflight" name="test_wrong_identity_never_opens_the_mutation_connection[4-wrong-marker]" time="0.000" /><testcase classname="tests.u1_integration.test_realm_preflight" name="test_wrong_identity_never_opens_the_mutation_connection[5-True]" time="0.000" /><testcase classname="tests.u1_integration.test_realm_preflight" name="test_wrong_identity_never_opens_the_mutation_connection[6-True]" time="0.000" /><testcase classname="tests.u1_integration.test_realm_preflight" name="test_wrong_identity_never_opens_the_mutation_connection[7-True]" time="0.000" /><testcase classname="tests.u1_integration.test_realm_preflight" name="test_initial_probe_cannot_silently_be_a_writable_session" time="0.000" /><testcase classname="tests.u1_integration.test_realm_preflight" name="test_rebinding_between_probe_and_second_connection_is_rechecked_before_ddl" time="0.000" /><testcase classname="tests.u1_integration.test_realm_preflight" name="test_driver_error_does_not_open_second_connection_or_print_raw_error" time="0.000" /></testsuite></testsuites>

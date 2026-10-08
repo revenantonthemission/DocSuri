@@ -94,6 +94,20 @@ function isNoveltyEventStream(method: TransportMethod, path: string[]): boolean 
   );
 }
 
+function isContentJobsPath(path: string[]): boolean {
+  return path[0] === 'api' && path[1] === 'content-jobs';
+}
+
+// U1 job stream — `/api/content-jobs/{jobId}/events` (GET, text/event-stream).
+// The client resumes with the verified cursor: EventSource re-sends the last
+// seen id in the `Last-Event-ID` header and the API layer also forwards it as
+// `lastEventId`; both ride this streaming hop unchanged.
+function isContentJobEventStream(method: TransportMethod, path: string[]): boolean {
+  return (
+    method === 'GET' && path.length === 4 && path[0] === 'api' && path[1] === 'content-jobs' && path[3] === 'events'
+  );
+}
+
 // US-EV2/NFR-P6 — 동기 evidence 턴의 SSE 표면(POST + Accept: text/event-stream).
 // research(에이전트 채팅의 evidence 모드)와 U11 canonical 엔드포인트 둘 다 지원한다.
 // 게이트웨이 미구성(mock) 시에는 일반 proxy로 흘려 JSON 폴백이 그대로 동작한다.
@@ -153,6 +167,11 @@ async function proxyEventStream(
   }
   const cookie = req.headers.get('cookie');
   if (cookie) headers.set('cookie', cookie);
+  // Cursor fidelity on the streaming hop: a recreated EventSource re-sends the
+  // last seen id as `Last-Event-ID`; forward it so the backend resumes the log
+  // instead of replaying from zero. Harmless for the other SSE surfaces.
+  const lastEventIdHeader = req.headers.get('last-event-id');
+  if (lastEventIdHeader) headers.set('last-event-id', lastEventIdHeader);
 
   const controller = new AbortController();
   // 타이머는 헤더 도착까지만 유효하다(finally에서 해제) — 본문 스트리밍은 끊지 않는다.
@@ -274,6 +293,12 @@ async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {
     return proxyEventStream(req, upstreamPath);
   }
 
+  // U1 job stream — same streaming hop as novelty (GET, incremental frames);
+  // cancellation propagates through the request abort and terminates the hop.
+  if (isContentJobEventStream(method, path)) {
+    return proxyEventStream(req, upstreamPath);
+  }
+
   // 동기 evidence 턴 SSE(US-EV2) — novelty와 같은 스트리밍 홉으로 흘린다. 게이트웨이
   // 미구성(mock) 시엔 일반 proxy로 폴스루해 FE가 JSON 응답으로 폴백한다(fail-soft).
   if (isAgentTurnStream(req, method, path) && process.env.DOCSURI_GATEWAY_URL) {
@@ -351,6 +376,8 @@ async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {
       ? new NextResponse(null, { status: res.status })
       : NextResponse.json(res.body ?? null, { status: res.status });
   for (const cookie of res.setCookies ?? []) out.headers.append('set-cookie', cookie);
+  // Job state/results are personalized and owner-scoped — never cacheable.
+  if (isContentJobsPath(path)) out.headers.set('cache-control', 'no-store');
   return out;
 }
 

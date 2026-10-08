@@ -1,0 +1,30 @@
+{
+  "stage": "nfr-design",
+  "unit": "JobStatus",
+  "upstream_ids": ["NFR1.1", "NFR1.2", "NFR1.3", "NFR1.4", "NFR1.5", "NFR1.6", "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4", "NFR2.5", "NFR3.1", "NFR3.2", "NFR3.3", "NFR4.1", "NFR4.2", "NFR4.3", "NFR4.4", "NFR4.5", "NFR5.1", "NFR5.2", "NFR5.3", "NFR5.4"],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "Native EventSource + preconnect hint" },
+    { "id": "NFR1.2", "status": "OK", "target": "Direct stream → useReducer" },
+    { "id": "NFR1.3", "status": "OK", "target": "SWR refreshInterval: 2000" },
+    { "id": "NFR1.4", "status": "OK", "target": "useReducer + useTransition batching" },
+    { "id": "NFR1.5", "status": "OK", "target": "Zero external deps (native EventSource + SWR)" },
+    { "id": "NFR1.6", "status": "OK", "target": "useEffect cleanup + SWR TTL" },
+    { "id": "NFR2.1", "status": "OK", "target": "Same-origin EventSource + BFF cookie forwarding" },
+    { "id": "NFR2.2", "status": "OK", "target": "Keys via props, never logged" },
+    { "id": "NFR2.3", "status": "OK", "target": "ErrorBoundary sanitization" },
+    { "id": "NFR2.4", "status": "OK", "target": "CSP connect-src 'self'" },
+    { "id": "NFR2.5", "status": "OK", "target": "ErrorBoundary → Sentry + breadcrumbs" },
+    { "id": "NFR3.1", "status": "OK", "target": "Independent EventSource per job; HTTP/2 multiplexing" },
+    { "id": "NFR3.2", "status": "OK", "target": "useReducer batching + useTransition" },
+    { "id": "NFR3.3", "status": "OK", "target": "EventSource.close() + SWR TTL" },
+    { "id": "NFR4.1", "status": "OK", "target": "Native EventSource Last-Event-ID" },
+    { "id": "NFR4.2", "status": "OK", "target": "3-error threshold → SWR polling" },
+    { "id": "NFR4.3", "status": "OK", "target": "ErrorBoundary + key-based remount" },
+    { "id": "NFR4.4", "status": "OK", "target": "4-state machine + ARIA live" },
+    { "id": "NFR4.5", "status": "OK", "target": "URL-based job ID + idempotency key resume" },
+    { "id": "NFR5.1", "status": "OK", "target": "ErrorBoundary + Sentry captureException + breadcrumbs" },
+    { "id": "NFR5.2", "status": "OK", "target": "Web Vitals + custom Sentry measurements" },
+    { "id": "NFR5.3", "status": "OK", "target": "Structured SSE lifecycle breadcrumbs" },
+    { "id": "NFR5.4", "status": "OK", "target": "ARIA live region + dev console logging" }
+  ]
+}

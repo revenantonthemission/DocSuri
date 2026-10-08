@@ -1,0 +1,26 @@
+{
+  "stage": "nfr-design",
+  "unit": "AssetViewer",
+  "upstream_ids": ["NFR1.1", "NFR1.2", "NFR1.3", "NFR1.4", "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4", "NFR2.5", "NFR3.1", "NFR3.2", "NFR3.3", "NFR4.1", "NFR4.2", "NFR4.3", "NFR4.4", "NFR5.1", "NFR5.2", "NFR5.3"],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "BFF streaming proxy, no buffering" },
+    { "id": "NFR1.2", "status": "OK", "target": "Minimal Next.js route, passthrough" },
+    { "id": "NFR1.3", "status": "OK", "target": "CSS transform + RAF + PDF.js worker" },
+    { "id": "NFR1.4", "status": "OK", "target": "Dynamic import PDF.js, native elements" },
+    { "id": "NFR2.1", "status": "OK", "target": "BFF-only URLs, ESLint forbids presigned" },
+    { "id": "NFR2.2", "status": "OK", "target": "Per-request gateway auth + ACL check" },
+    { "id": "NFR2.3", "status": "OK", "target": "BFF bidirectional cookie forwarding" },
+    { "id": "NFR2.4", "status": "OK", "target": "CSP img-src/media-src/frame-src 'self'" },
+    { "id": "NFR2.5", "status": "OK", "target": "Code scan for forbidden patterns" },
+    { "id": "NFR3.1", "status": "OK", "target": "Independent fetches, HTTP/2 multiplexing" },
+    { "id": "NFR3.2", "status": "OK", "target": "ReadableStream passthrough, no buffering" },
+    { "id": "NFR3.3", "status": "OK", "target": "Single PDF.js worker at app init" },
+    { "id": "NFR4.1", "status": "OK", "target": "BFF Range header passthrough" },
+    { "id": "NFR4.2", "status": "OK", "target": "401 → ErrorBoundary → login redirect" },
+    { "id": "NFR4.3", "status": "OK", "target": "ErrorBoundary wrap + retry remount" },
+    { "id": "NFR4.4", "status": "OK", "target": "Try/catch PDF.js + ErrorBoundary" },
+    { "id": "NFR5.1", "status": "OK", "target": "Gateway audit log + client breadcrumbs" },
+    { "id": "NFR5.2", "status": "OK", "target": "Sentry measurements + alert rules" },
+    { "id": "NFR5.3", "status": "OK", "target": "Sentry captureException with context" }
+  ]
+}

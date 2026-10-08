@@ -8,8 +8,11 @@ from __future__ import annotations
 from summarization.adapters.sqs_summary_job import SqsSummaryJobQueue
 from summarization.domain.models import Persona, Scope, SummaryRequest, Task
 from summarization.worker import process_job, request_from_payload, run_worker
+from summarization.service.job_service import ContentJobService
+from summarization.adapters.in_memory_jobs import InMemoryJobStore
 
 _PAYLOAD = {
+    "jobId": "test-job-1",
     "userId": "u1",
     "paperId": "2401.1",
     "version": 2,
@@ -39,7 +42,13 @@ class _Orch:
 
 def test_process_job_runs_inline_no_reenqueue() -> None:
     orch = _Orch()
-    process_job(orch, _PAYLOAD)
+    job_service = ContentJobService(
+        store=InMemoryJobStore(), enqueue=lambda _: None, result_ttl_seconds=3600.0, now=lambda: 1000.0
+    )
+    # Pre-create the job so the worker can transition it
+    ctx = type('ctx', (), {'auth_session': type('s', (), {'user_id': 'u1'})(), 'request_id': ''})()
+    job_service.submit(ctx, "summarize", {"paperId": "2401.1"}, idempotency_key="k1")
+    process_job(orch, job_service, _PAYLOAD)
     assert orch.runs == [("2401.1", "u1", False)]  # worker path: allow_enqueue=False
 
 
@@ -55,10 +64,24 @@ def test_run_worker_processes_then_acks() -> None:
 
     def receive():
         state["polls"] += 1
-        return [_Msg(_PAYLOAD), _Msg(_PAYLOAD)] if state["polls"] == 1 else []
+        if state["polls"] == 1:
+            return [
+                _Msg({**_PAYLOAD, "jobId": "test-job-1"}),
+                _Msg({**_PAYLOAD, "jobId": "test-job-2"}),
+            ]
+        return []
+
+    job_service = ContentJobService(
+        store=InMemoryJobStore(), enqueue=lambda _: None, result_ttl_seconds=3600.0, now=lambda: 1000.0
+    )
+    # Pre-create jobs for the worker
+    ctx = type('ctx', (), {'auth_session': type('s', (), {'user_id': 'u1'})(), 'request_id': ''})()
+    for _ in range(2):
+        job_service.submit(ctx, "summarize", {"paperId": "2401.1"}, idempotency_key=f"k{state['polls']+1}")
 
     run_worker(
         orch,
+        job_service,
         receive=receive,
         ack=acked.append,
         should_stop=lambda: state["polls"] >= 2,
@@ -79,7 +102,19 @@ def test_run_worker_leaves_failed_job_unacked() -> None:
         state["polls"] += 1
         return [_Msg(_PAYLOAD)] if state["polls"] == 1 else []
 
-    run_worker(_Boom(), receive=receive, ack=acked.append, should_stop=lambda: state["polls"] >= 2)
+    job_service = ContentJobService(
+        store=InMemoryJobStore(), enqueue=lambda _: None, result_ttl_seconds=3600.0, now=lambda: 1000.0
+    )
+    ctx = type('ctx', (), {'auth_session': type('s', (), {'user_id': 'u1'})(), 'request_id': ''})()
+    job_service.submit(ctx, "summarize", {"paperId": "2401.1"}, idempotency_key="k1")
+
+    run_worker(
+        _Boom(),
+        job_service,
+        receive=receive,
+        ack=acked.append,
+        should_stop=lambda: state["polls"] >= 2,
+    )
     assert acked == []  # failed job is NOT acked → redelivery
 
 

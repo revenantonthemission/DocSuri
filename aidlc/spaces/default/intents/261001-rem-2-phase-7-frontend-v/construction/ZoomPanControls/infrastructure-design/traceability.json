@@ -1,0 +1,14 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "ZoomPanControls",
+  "upstream_ids": ["NFR1.1", "NFR1.2", "NFR1.3", "NFR3.1", "NFR4.1", "NFR4.2", "NFR5.1"],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "RAF + direct DOM transform" },
+    { "id": "NFR1.2", "status": "OK", "target": "Float64 matrix + re-normalization" },
+    { "id": "NFR1.3", "status": "OK", "target": "Zero deps, minimal math" },
+    { "id": "NFR3.1", "status": "OK", "target": "Per-instance useRef state" },
+    { "id": "NFR4.1", "status": "OK", "target": "useRef state + DOM sync" },
+    { "id": "NFR4.2", "status": "OK", "target": "Math clamping in transform" },
+    { "id": "NFR5.1", "status": "OK", "target": "10% sampled custom analytics" }
+  ]
+}

@@ -1,0 +1,467 @@
+{
+  "actual_claims": {
+    "backend/Dockerfile": {
+      "mode": "100644",
+      "sha256": "73b9cf0bcd3162ebda43789ec84ac0e2d8c58ecb14115fe24035d69cda0be5dd",
+      "size": 2247
+    },
+    "backend/Dockerfile.dockerignore": {
+      "mode": "100644",
+      "sha256": "b823ce103c359838a6cf597b8b3d0569075d80837c8feb4125917f3a1d31733e",
+      "size": 982
+    },
+    "backend/migrations/__init__.py": {
+      "mode": "100644",
+      "sha256": "ef6995cdad27b58355ae4a349ecc2cc21667324259b1e50d29d2aaa3426ce6a2",
+      "size": 10836
+    },
+    "backend/migrations/registry.py": {
+      "mode": "100644",
+      "sha256": "709fd1f33fed0ed283bd27137f352580e5fba4a3f55e92bc8fc560a8378431c2",
+      "size": 4682
+    },
+    "backend/migrations/u1_atomic_admission.py": {
+      "mode": "100644",
+      "sha256": "28d927a1425bf87200e996e8c09e9944fd1f2b171d25641b29b03bb66a73810d",
+      "size": 1571
+    },
+    "backend/modules/summarization/migrations/003_content_job_authority_prepared.sql": {
+      "mode": "100644",
+      "sha256": "c19a2f0dada8c012fae76e6a1737379d5783be7f7f561e558fd6e0459eb4c0e2",
+      "size": 26057
+    },
+    "backend/modules/summarization/pyproject.toml": {
+      "mode": "100644",
+      "sha256": "45d1b80211ff46a4f6eb51c8e55179125433208bee4fb9ce155076cf843e7512",
+      "size": 1546
+    },
+    "backend/modules/summarization/src/summarization/domain/job.py": {
+      "mode": "100644",
+      "sha256": "b769e13f834f90c6249536a5cca0f00acaac40c8ca955c5c8127b29cc4efa087",
+      "size": 9084
+    },
+    "backend/modules/summarization/src/summarization/domain/job_protocol.py": {
+      "mode": "100644",
+      "sha256": "e11441d6d7b1c66e86b990cef3ca25b2e35c6b679df9904ea36f53e57066046f",
+      "size": 17423
+    },
+    "backend/modules/summarization/src/summarization/domain/prepared_result.py": {
+      "mode": "100644",
+      "sha256": "2eb28812e7329991c4b804484d8f223f6e5347a1558e42c3cc3d3e39f283b2f7",
+      "size": 17339
+    },
+    "backend/modules/summarization/src/summarization/domain/result_storage_codec.py": {
+      "mode": "100644",
+      "sha256": "54c665a39eb8f62a5fdd1e7d5350d2f32671aa4e5d5093df2f0bd092cca19f12",
+      "size": 5660
+    },
+    "backend/modules/summarization/tests/test_u1_job_model.py": {
+      "mode": "100644",
+      "sha256": "3202591f08ea932f0918b3f5b45fac07ca73b42f8218bda3f4dc923ecb26de1e",
+      "size": 14696
+    },
+    "backend/modules/summarization/tests/test_u1_result_storage_codec.py": {
+      "mode": "100644",
+      "sha256": "98d6278b32ed614e474f654c12905223a4860760522cfaf41d6996f9d7bdd2a1",
+      "size": 14100
+    },
+    "backend/modules/summarization/tests/test_u1_result_timestamps.py": {
+      "mode": "100644",
+      "sha256": "22b8e5b073ecc6c4869e14621a18c0b6472809782b28e3102c396bb9af596189",
+      "size": 4414
+    },
+    "backend/modules/summarization/tests/u1_integration/__init__.py": {
+      "mode": "100644",
+      "sha256": "6ba669952edb488870cc511eaddd495cd38ac0376ed069f2697b252525cb8edc",
+      "size": 84
+    },
+    "backend/modules/summarization/tests/u1_integration/conftest.py": {
+      "mode": "100644",
+      "sha256": "2027b530a0e255f50d709db8b6abbef57f64fe425b73ddc312a31aedae97a36e",
+      "size": 2217
+    },
+    "backend/modules/summarization/tests/u1_integration/realm.py": {
+      "mode": "100644",
+      "sha256": "dd0e0123e49987a781dfee1907e9d6f91c1c09ba433118d74f6a863f543db2bd",
+      "size": 13757
+    },
+    "backend/modules/summarization/tests/u1_integration/test_migrations.py": {
+      "mode": "100644",
+      "sha256": "b0e1138db615e6aca14d8ed8618a9c8166036b242d22283e0de1daff0347b866",
+      "size": 5888
+    },
+    "backend/modules/summarization/tests/u1_integration/test_owner_lifecycle.py": {
+      "mode": "100644",
+      "sha256": "f4fa4d1919dba2e609b9349feea5cf44ad22a1bfd6c5bc1fdff9b0b44a2c7e34",
+      "size": 6677
+    },
+    "backend/modules/summarization/tests/u1_integration/test_realm_preflight.py": {
+      "mode": "100644",
+      "sha256": "0986e8b642adfd4ab4804a66e09adda8160674d53b64b87e364469e759faddda",
+      "size": 10652
+    },
+    "backend/modules/summarization/tests/u1_integration/test_text_result_schema.py": {
+      "mode": "100644",
+      "sha256": "dec0172348fbdc61657b705dd984af844f494904d36de248efa46054895aadd3",
+      "size": 12924
+    },
+    "backend/modules/summarization/uv.lock": {
+      "mode": "100644",
+      "sha256": "1ab55e0eadd0e9da3de050b7bf4285e4d9db1571aa602778b880ee8055415fd7",
+      "size": 145183
+    },
+    "backend/pyproject.toml": {
+      "mode": "100644",
+      "sha256": "73b964260bfd5a781153020294d5750fef309b8dab59e00dae62846e667e7c69",
+      "size": 4400
+    },
+    "backend/tests/test_u1_atomic_admission.py": {
+      "mode": "100644",
+      "sha256": "26352638122b9b8dc5706daa5484a3ce23ee3a4888b8b1473669c45442d962e5",
+      "size": 10549
+    },
+    "backend/uv.lock": {
+      "mode": "100644",
+      "sha256": "8f09e34b385ab2a3a120626d597799c23cb3a6be5bf71b08a4d63502e25e3cf9",
+      "size": 321070
+    },
+    "frontend/eslint.config.mjs": {
+      "mode": "100644",
+      "sha256": "f7a270aabcd4ef8aa7d8ab58a68fd6549a367628739954f434fa736e7d926925",
+      "size": 1910
+    },
+    "frontend/package.json": {
+      "mode": "100644",
+      "sha256": "61f2ccf86a71924fb51fc3e740036ae8b8e599186d534d555546d877364d518b",
+      "size": 2759
+    },
+    "frontend/playwright.u1.config.ts": {
+      "mode": "100644",
+      "sha256": "659c795e237a269e5f3f0e60bb8be320d1d4268ec661e166b731ec42de2426be",
+      "size": 1640
+    },
+    "frontend/pnpm-lock.yaml": {
+      "mode": "100644",
+      "sha256": "ef77c98878e83b21c5d996f6e17e6ac5d0e29e96d196bf2ac14ee36e1b004df0",
+      "size": 224768
+    },
+    "frontend/postcss.config.mjs": {
+      "mode": "100644",
+      "sha256": "150003dc09e7f1cde920c5a85ccc5122081d67713a6f1fd98fa8615afd88c978",
+      "size": 63
+    },
+    "frontend/scripts/u1-sandbox.mjs": {
+      "mode": "100644",
+      "sha256": "300f4c77ac93c10021a5db70ecd6d0612bec52400d9f2167c07af8fc97819891",
+      "size": 4535
+    },
+    "frontend/scripts/u1-sandbox.test.mjs": {
+      "mode": "100644",
+      "sha256": "76c2e014d041e8c58225bd7d595eb0a0fa981b4b6ca878183f727578292ec4a1",
+      "size": 4015
+    },
+    "frontend/tsconfig.u1.json": {
+      "mode": "100644",
+      "sha256": "26ae4a5c74e2baff988f93d5fb2418601712e67634fa76923bb76ca31d4f1ddd",
+      "size": 927
+    },
+    "frontend/vitest.u1.config.ts": {
+      "mode": "100644",
+      "sha256": "83031854ecd64035ead7d1e394de4866d57ef710ff1ffecf7b4010dcb185a62a",
+      "size": 1573
+    },
+    "ops/pyproject.toml": {
+      "mode": "100644",
+      "sha256": "6d5b0c5893234d94bc45dfcde23895e06311df52a120154553044a8a17855bcd",
+      "size": 1013
+    },
+    "ops/server/u1_db_bootstrap.py": {
+      "mode": "100644",
+      "sha256": "d97fb57229d30f1ee4a5e1d3af556f5bd7a5124bbda5be19965f4bed6636e9e0",
+      "size": 22363
+    },
+    "ops/tests/test_u1_db_bootstrap.py": {
+      "mode": "100644",
+      "sha256": "7a515229e9c1e935c9aafd9996862c49fb8f50ee13dbaa8d45374d795e1d2696",
+      "size": 12500
+    },
+    "ops/uv.lock": {
+      "mode": "100644",
+      "sha256": "84a44bfd1a35092cc3627e20a7f9ddd2b1874da127c895b06e7a1c00a1480f82",
+      "size": 111446
+    }
+  },
+  "boundary": "Developer local lead-repair observations only; NOT independent review, SQL/realm/CI/Unit acceptance",
+  "collection_only": {
+    "fixture_invocations": 0,
+    "owner_lifecycle_nodes": 13,
+    "text_schema_source_nodes": 16
+  },
+  "complete_changed_executable_source_coverage": "NOT_ESTABLISHED_SQL_AND_LIVE_PATHS_UNMEASURED",
+  "live_R01_regressions": {
+    "authored": 8,
+    "executed": 0
+  },
+  "new_source_capture_performed": false,
+  "observed_at": "2026-10-06T04:11:31.546442+00:00",
+  "ops_execution": "NOT_REPEATED_UNMODIFIED_SOURCE_AND_PRIOR_REPORT_IDENTITIES_REVERIFIED",
+  "original_listing_sha256": "9b6bcacda2f5e05ec3a573d5aae19fe959e2e2bf86b6ebfd29ac6f75d8a21080",
+  "original_manifest_sha256": "a57fbe1e60374dd48a0e83dae0648d537dbea6d039a1f26116bb3a5bca8d5c92",
+  "original_source_binding": "4b22034726c38f1118e01079cbc5ec7d65a432f7a61549c837a8e2dc24b28ac9",
+  "preserved_prior_reports": [
+    {
+      "bytes": 43346,
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 250
+      },
+      "failures": [],
+      "passed": 250,
+      "path": "tranche-backend-02-results.xml",
+      "sha256": "aa3fd1dfdc5aaa8851940e5c6829a93626e2c417190c94547f4bef28c82b02d7"
+    },
+    {
+      "bytes": 51261,
+      "path": "tranche-backend-02-coverage.json",
+      "report_sources": {
+        "/Users/revenantonthemission/Projects/DocSuri/backend/migrations/__init__.py": "ef6995cdad27b58355ae4a349ecc2cc21667324259b1e50d29d2aaa3426ce6a2",
+        "/Users/revenantonthemission/Projects/DocSuri/backend/migrations/__main__.py": "9e8d295794ab04a9f6fecc576daabdaccda5429110f3eb06ad556320782e3942",
+        "/Users/revenantonthemission/Projects/DocSuri/backend/migrations/registry.py": "709fd1f33fed0ed283bd27137f352580e5fba4a3f55e92bc8fc560a8378431c2",
+        "/Users/revenantonthemission/Projects/DocSuri/backend/migrations/u1_atomic_admission.py": "e3cb44552ce9ccc7ca48904ffa2ebd6159f2ac01ec8c1300f16db185bc78219e",
+        "src/summarization/domain/job.py": "b769e13f834f90c6249536a5cca0f00acaac40c8ca955c5c8127b29cc4efa087",
+        "src/summarization/domain/job_protocol.py": "e11441d6d7b1c66e86b990cef3ca25b2e35c6b679df9904ea36f53e57066046f",
+        "src/summarization/domain/prepared_result.py": "2eb28812e7329991c4b804484d8f223f6e5347a1558e42c3cc3d3e39f283b2f7",
+        "src/summarization/domain/result_storage_codec.py": "61cad1d737d5f07d04c898a00f1f4dec30ceebe2a0599ba23db814eca7e605b8",
+        "tests/u1_integration/conftest.py": "2027b530a0e255f50d709db8b6abbef57f64fe425b73ddc312a31aedae97a36e",
+        "tests/u1_integration/realm.py": "dd0e0123e49987a781dfee1907e9d6f91c1c09ba433118d74f6a863f543db2bd"
+      },
+      "sha256": "8a285d3690977db91c9dde2d1df866c819174d1421b0de576a3d6be97aa65a75",
+      "totals": {
+        "covered_lines": 944,
+        "excluded_lines": 10,
+        "missing_lines": 175,
+        "num_statements": 1119,
+        "percent_covered": 84.36103663985702,
+        "percent_covered_display": "84"
+      }
+    },
+    {
+      "bytes": 5207,
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 35
+      },
+      "failures": [],
+      "passed": 35,
+      "path": "tranche-bootstrap-02-results.xml",
+      "sha256": "4b8dbc17cc97c0f33b4b4baf9d2ecda8a404a609ee13c6c7206067979df4453c"
+    },
+    {
+      "bytes": 12328,
+      "path": "tranche-bootstrap-02-coverage.json",
+      "report_sources": {
+        "server/u1_db_bootstrap.py": "d97fb57229d30f1ee4a5e1d3af556f5bd7a5124bbda5be19965f4bed6636e9e0"
+      },
+      "sha256": "0e35999543bd397c578be14db815caed46da17e5df4e23ad6539e9ee39bd19b7",
+      "totals": {
+        "covered_lines": 234,
+        "excluded_lines": 0,
+        "missing_lines": 25,
+        "num_statements": 259,
+        "percent_covered": 90.34749034749035,
+        "percent_covered_display": "90"
+      }
+    },
+    {
+      "bytes": 15586,
+      "counts": {
+        "errors": 0,
+        "failures": 3,
+        "skipped": 0,
+        "tests": 93
+      },
+      "failures": [
+        "test_events_streams_from_after_seq",
+        "test_events_resume_from_last_event_id_header",
+        "test_events_resume_from_last_event_id_query_param"
+      ],
+      "passed": 90,
+      "path": "tranche-before-backend.xml",
+      "sha256": "222393e999bcfe7b2cb360740ea4fe93c10ecfa7f04da57ae22a9af673200f72"
+    },
+    {
+      "bytes": 15586,
+      "counts": {
+        "errors": 0,
+        "failures": 3,
+        "skipped": 0,
+        "tests": 93
+      },
+      "failures": [
+        "test_events_streams_from_after_seq",
+        "test_events_resume_from_last_event_id_header",
+        "test_events_resume_from_last_event_id_query_param"
+      ],
+      "passed": 90,
+      "path": "tranche-after-backend-regression.xml",
+      "sha256": "dd2c728f265410ed60b52fd72bd355496361e527b210fda9c744669d99128006"
+    },
+    {
+      "bytes": 6761,
+      "counts": {
+        "errors": 0,
+        "failures": 1,
+        "skipped": 0,
+        "tests": 35
+      },
+      "failures": [
+        "test_wrong_environment_artifacts_resources_principals_and_unknown_secrets_fail_inspection[change5]"
+      ],
+      "passed": 34,
+      "path": "tranche-bootstrap-initial-failure.xml",
+      "sha256": "4072c995524156cc20bacca408907d38b9a1c8eb3a8d209dd90ed72ca885ac70"
+    }
+  ],
+  "prior_human_report_archives": [
+    {
+      "path": "focused-repair-prior-code-summary.md",
+      "purpose": "prior report; not source baseline",
+      "sha256": "b0efb9675f15204a12f32f83d8fd0e62911a2e82739f05e6afee894e5f3882bd"
+    },
+    {
+      "path": "focused-repair-prior-tranche-verification.md",
+      "purpose": "prior report; not source baseline",
+      "sha256": "224293fb1a969d319842e80a798de982f7332086960133841a050c8da23353e2"
+    }
+  ],
+  "prior_snapshot_sha256": "26cc65eaed4c481bfb5b2f0c1ace5e43a532b35fc60fc4350baef34084c7132e",
+  "repair_paths": [
+    "backend/migrations/u1_atomic_admission.py",
+    "backend/modules/summarization/migrations/003_content_job_authority_prepared.sql",
+    "backend/modules/summarization/src/summarization/domain/result_storage_codec.py",
+    "backend/modules/summarization/tests/test_u1_result_storage_codec.py",
+    "backend/modules/summarization/tests/u1_integration/test_owner_lifecycle.py",
+    "backend/modules/summarization/tests/u1_integration/test_text_result_schema.py"
+  ],
+  "reports": [
+    {
+      "bytes": 49879,
+      "classes": {
+        "modules.summarization.tests.test_job_contract": 40,
+        "modules.summarization.tests.test_u1_job_model": 54,
+        "modules.summarization.tests.test_u1_result_storage_codec": 79,
+        "modules.summarization.tests.test_u1_result_timestamps": 33,
+        "modules.summarization.tests.u1_integration.test_migrations": 3,
+        "modules.summarization.tests.u1_integration.test_realm_preflight": 30,
+        "modules.summarization.tests.u1_integration.test_text_result_schema": 3,
+        "tests.test_migration_registry": 6,
+        "tests.test_u1_atomic_admission": 29
+      },
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 277
+      },
+      "passed": 277,
+      "path": "focused-repair-final-results.xml",
+      "scope": "current local repair",
+      "sha256": "cc6017ad3e31272e0fa187fbd3e33cb4d6a77d0d538ec126f928b527e8c2c065"
+    },
+    {
+      "bytes": 52618,
+      "path": "focused-repair-final-coverage.json",
+      "report_sources": {
+        "/Users/revenantonthemission/Projects/DocSuri/backend/migrations/__init__.py": "ef6995cdad27b58355ae4a349ecc2cc21667324259b1e50d29d2aaa3426ce6a2",
+        "/Users/revenantonthemission/Projects/DocSuri/backend/migrations/__main__.py": "9e8d295794ab04a9f6fecc576daabdaccda5429110f3eb06ad556320782e3942",
+        "/Users/revenantonthemission/Projects/DocSuri/backend/migrations/registry.py": "709fd1f33fed0ed283bd27137f352580e5fba4a3f55e92bc8fc560a8378431c2",
+        "/Users/revenantonthemission/Projects/DocSuri/backend/migrations/u1_atomic_admission.py": "28d927a1425bf87200e996e8c09e9944fd1f2b171d25641b29b03bb66a73810d",
+        "src/summarization/domain/job.py": "b769e13f834f90c6249536a5cca0f00acaac40c8ca955c5c8127b29cc4efa087",
+        "src/summarization/domain/job_protocol.py": "e11441d6d7b1c66e86b990cef3ca25b2e35c6b679df9904ea36f53e57066046f",
+        "src/summarization/domain/prepared_result.py": "2eb28812e7329991c4b804484d8f223f6e5347a1558e42c3cc3d3e39f283b2f7",
+        "src/summarization/domain/result_storage_codec.py": "54c665a39eb8f62a5fdd1e7d5350d2f32671aa4e5d5093df2f0bd092cca19f12",
+        "tests/u1_integration/conftest.py": "2027b530a0e255f50d709db8b6abbef57f64fe425b73ddc312a31aedae97a36e",
+        "tests/u1_integration/realm.py": "dd0e0123e49987a781dfee1907e9d6f91c1c09ba433118d74f6a863f543db2bd"
+      },
+      "scope": "current local repair",
+      "sha256": "17e82a13701908ed5a11aca18c11f92a4f08a12bd703c7d56a22cbc3968d8fac",
+      "totals": {
+        "covered_lines": 988,
+        "excluded_lines": 10,
+        "missing_lines": 176,
+        "num_statements": 1164,
+        "percent_covered": 84.87972508591065,
+        "percent_covered_display": "85"
+      }
+    },
+    {
+      "bytes": 49704,
+      "classes": {
+        "modules.summarization.tests.test_job_contract": 40,
+        "modules.summarization.tests.test_u1_job_model": 54,
+        "modules.summarization.tests.test_u1_result_storage_codec": 78,
+        "modules.summarization.tests.test_u1_result_timestamps": 33,
+        "modules.summarization.tests.u1_integration.test_migrations": 3,
+        "modules.summarization.tests.u1_integration.test_realm_preflight": 30,
+        "modules.summarization.tests.u1_integration.test_text_result_schema": 3,
+        "tests.test_migration_registry": 6,
+        "tests.test_u1_atomic_admission": 29
+      },
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 276
+      },
+      "passed": 276,
+      "path": "focused-repair-backend-results.xml",
+      "scope": "prior intermediate repair run",
+      "sha256": "82b7640d9fa8397153c4c67220d957f9a3ef13f9b35be2952da7c645d98b5f55"
+    },
+    {
+      "bytes": 52618,
+      "path": "focused-repair-backend-coverage.json",
+      "report_sources": {
+        "/Users/revenantonthemission/Projects/DocSuri/backend/migrations/__init__.py": "ef6995cdad27b58355ae4a349ecc2cc21667324259b1e50d29d2aaa3426ce6a2",
+        "/Users/revenantonthemission/Projects/DocSuri/backend/migrations/__main__.py": "9e8d295794ab04a9f6fecc576daabdaccda5429110f3eb06ad556320782e3942",
+        "/Users/revenantonthemission/Projects/DocSuri/backend/migrations/registry.py": "709fd1f33fed0ed283bd27137f352580e5fba4a3f55e92bc8fc560a8378431c2",
+        "/Users/revenantonthemission/Projects/DocSuri/backend/migrations/u1_atomic_admission.py": "28d927a1425bf87200e996e8c09e9944fd1f2b171d25641b29b03bb66a73810d",
+        "src/summarization/domain/job.py": "b769e13f834f90c6249536a5cca0f00acaac40c8ca955c5c8127b29cc4efa087",
+        "src/summarization/domain/job_protocol.py": "e11441d6d7b1c66e86b990cef3ca25b2e35c6b679df9904ea36f53e57066046f",
+        "src/summarization/domain/prepared_result.py": "2eb28812e7329991c4b804484d8f223f6e5347a1558e42c3cc3d3e39f283b2f7",
+        "src/summarization/domain/result_storage_codec.py": "54c665a39eb8f62a5fdd1e7d5350d2f32671aa4e5d5093df2f0bd092cca19f12",
+        "tests/u1_integration/conftest.py": "2027b530a0e255f50d709db8b6abbef57f64fe425b73ddc312a31aedae97a36e",
+        "tests/u1_integration/realm.py": "dd0e0123e49987a781dfee1907e9d6f91c1c09ba433118d74f6a863f543db2bd"
+      },
+      "scope": "prior intermediate repair run",
+      "sha256": "ce2363818ff71e06a04a49c008c41c4eead99700069b658347143d82aeed70eb",
+      "totals": {
+        "covered_lines": 988,
+        "excluded_lines": 10,
+        "missing_lines": 176,
+        "num_statements": 1164,
+        "percent_covered": 84.87972508591065,
+        "percent_covered_display": "85"
+      }
+    }
+  ],
+  "required_live_schema_execution": "NOT_RUN_PENDING_SECOND_SOURCE_REVIEW_AND_QUALIFIED_OPERATOR_REALM",
+  "review_01_disposition": "UNCHANGED_NOT_READY; second independent pass pending",
+  "review_01_path": "reviews/migration-admission-review-01.md",
+  "review_01_sha256": "03bdea601943126fd45518d4b6bb6bba1be85843ad5249cc732e498b6e5530fc",
+  "source_manifest_sha256": "105fad6d25dd7e6c87e36bc0ee7a824a8b79a6fec2f02b0223edcff2ca58751d",
+  "supersedes_local_source_snapshot": "tranche-source-evidence-02.json",
+  "supplement_manifest": "aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/.aidlc-engine/u1-source-supplements/2148418e4b2b574cdafcede2b247e727864de99ba56c18a9b1575f3113516aa2/manifest.json",
+  "supplement_sha256": "2148418e4b2b574cdafcede2b247e727864de99ba56c18a9b1575f3113516aa2",
+  "traceability_sha256": "421248e37b1add5390865bb8bf555900cffb0bd2c8647c3cfd49658d8170e54b",
+  "traceability_status_counts": {
+    "Deferred": 6,
+    "GAP": 178
+  },
+  "unit": "u1-job-skeleton",
+  "version": 1
+}

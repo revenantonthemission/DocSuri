@@ -1,0 +1,12 @@
+{
+  "stage": "functional-design",
+  "unit": "ErrorBoundaryFallback",
+  "upstream_ids": [
+    "US7.2",
+    "US7.3"
+  ],
+  "coverage": [
+    { "id": "US7.2", "status": "OK", "target": "ErrorBoundaryFallback UI" },
+    { "id": "US7.3", "status": "OK", "target": "ErrorBoundary retry" }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "ZoomPanControls",
+  "upstream_ids": ["NFR1", "NFR2", "NFR3", "NFR4", "NFR5", "NFR6", "NFR7", "NFR8"],
+  "coverage": [
+    {
+      "id": "NFR1",
+      "status": "N/A",
+      "target": "BFF routing not applicable"
+    },
+    {
+      "id": "NFR2",
+      "status": "N/A",
+      "target": "Auth re-check not applicable"
+    },
+    {
+      "id": "NFR3",
+      "status": "N/A",
+      "target": "Presigned URLs not applicable"
+    },
+    {
+      "id": "NFR4",
+      "status": "N/A",
+      "target": "Idempotency not applicable"
+    },
+    {
+      "id": "NFR5",
+      "status": "N/A",
+      "target": "Polling fallback not applicable"
+    },
+    {
+      "id": "NFR6",
+      "status": "OK",
+      "target": "NFR1.1, NFR4.1, NFR6.1, NFR6.2"
+    },
+    {
+      "id": "NFR7",
+      "status": "N/A",
+      "target": "Sentry not applicable (no errors expected)"
+    },
+    {
+      "id": "NFR8",
+      "status": "N/A",
+      "target": "Security review not applicable"
+    }
+  ]
+}
