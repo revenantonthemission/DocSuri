@@ -57,12 +57,21 @@ function JobStatusPanel({ jobId, onComplete }: JobStatusProps) {
   // Bounded measurement point: mount time, so the first stream open can record
   // its connection latency for later benchmark verification.
   const mountedAtRef = useRef<number>(Date.now());
+  // Bounded measurement point: the first committed status, recorded once per
+  // job identity so the mount-to-first-status timing is measurable too.
+  const firstStatusRef = useRef(false);
+  const recordFirstStatus = useCallback(() => {
+    if (firstStatusRef.current) return;
+    firstStatusRef.current = true;
+    emitJobDiagnostic({ kind: 'status', latencyMs: Date.now() - mountedAtRef.current });
+  }, []);
 
   // A new job identity resets the projection and cursors — never carry another
   // job's terminal state into a fresh submit.
   useEffect(() => {
     const fresh = createJobProjection(jobId);
     projectionRef.current = fresh;
+    firstStatusRef.current = false;
     setProjection(fresh);
     setHistory([]);
     setAnnouncement(null);
@@ -84,7 +93,8 @@ function JobStatusPanel({ jobId, onComplete }: JobStatusProps) {
     if (becameTerminal && terminalState && isTerminalJobState(terminalState)) {
       emitJobDiagnostic({ kind: 'terminal', state: terminalState });
     }
-  }, []);
+    recordFirstStatus();
+  }, [recordFirstStatus]);
 
   // Live stream. The verified cursor rides every (re)creation, so a browser
   // that gives up on its own reconnect still recovers: an error hands over to
@@ -138,11 +148,17 @@ function JobStatusPanel({ jobId, onComplete }: JobStatusProps) {
     shouldRetryOnError: true,
   });
 
-  // An access loss (401/403 from the owner-scoped read) clears the view and
-  // cancels the work: polling stops, the stream is closed and no recreation is
-  // scheduled. The human must re-authenticate.
+  // An access loss from the owner-scoped read clears the view and cancels the
+  // work: polling stops, the stream is closed and no recreation is scheduled.
+  // The human must re-authenticate. 403 (forbidden) is an access loss too; a
+  // 404 stays retryable — the contract's generic not-owned/unknown body is
+  // indistinguishable from propagation lag, so the owner keeps a transient
+  // retry rather than a silent stop.
   useEffect(() => {
-    if (pollError instanceof UserFacingError && pollError.kind === 'auth') {
+    if (
+      pollError instanceof UserFacingError &&
+      (pollError.kind === 'auth' || pollError.kind === 'forbidden')
+    ) {
       setAccessLost(true);
     }
   }, [pollError]);
@@ -159,7 +175,8 @@ function JobStatusPanel({ jobId, onComplete }: JobStatusProps) {
     if (becameTerminal && terminalState && isTerminalJobState(terminalState)) {
       emitJobDiagnostic({ kind: 'terminal', state: terminalState });
     }
-  }, [polledState]);
+    recordFirstStatus();
+  }, [polledState, recordFirstStatus]);
 
   const snapshot = projection.snapshot;
   if (accessLost) {

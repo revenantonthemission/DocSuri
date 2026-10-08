@@ -1,0 +1,22 @@
+{
+  "stage": "code-generation",
+  "unit": "u2-job-resilience",
+  "version": 1,
+  "writes": [
+    { "path": "frontend/vitest.u2.config.ts" },
+    { "path": "frontend/tsconfig.u2.json" },
+    { "path": "frontend/package.json" },
+    { "path": "frontend/components/JobSubmissionForm.tsx" },
+    { "path": "frontend/components/JobStatus.tsx" },
+    { "path": "frontend/components/SummaryModal.tsx" },
+    { "path": "frontend/lib/jobDiagnostics.ts" },
+    { "path": "frontend/test/u2JobState.test.ts" },
+    { "path": "frontend/test/u2JobSubmissionForm.test.tsx" },
+    { "path": "frontend/test/u2JobStatus.test.tsx" },
+    { "path": "frontend/test/u2Idempotency.test.ts" },
+    { "path": "frontend/test/u2PreparedResult.test.tsx" },
+    { "path": "frontend/test/u2AssetIdCopy.test.tsx" },
+    { "path": "frontend/test/u2JobDiagnostics.test.tsx" },
+    { "path": "frontend/test/u2InteractionMatrix.test.tsx" }
+  ]
+}

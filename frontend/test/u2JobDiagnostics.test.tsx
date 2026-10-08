@@ -4,6 +4,7 @@ import { SWRConfig } from 'swr';
 import { JobStatus } from '@/components/JobStatus';
 import {
   clearJobDiagnostics,
+  emitJobDiagnostic,
   readJobDiagnostics,
   setJobDiagnosticSender,
 } from '@/lib/jobDiagnostics';
@@ -86,6 +87,17 @@ describe('job telemetry scenarios (u2)', () => {
     expect(typeof live.latencyMs).toBe('number');
     expect(live.latencyMs).toBeGreaterThanOrEqual(0);
     expect(live.latencyMs).toBeLessThanOrEqual(600000);
+    // The status mount-to-first-commit measurement is recorded once, bounded.
+    await waitFor(() =>
+      expect(readJobDiagnostics().some((record) => record.event.kind === 'status')).toBe(true),
+    );
+    const status = readJobDiagnostics()
+      .map((record) => record.event)
+      .find((event) => event.kind === 'status');
+    if (!status || status.kind !== 'status') throw new Error('unreachable');
+    expect(
+      status.latencyMs !== undefined && status.latencyMs >= 0 && status.latencyMs <= 600000,
+    ).toBe(true);
     // Delivery reached the installed sender and no identifiers leak.
     expect(sent.length).toBeGreaterThanOrEqual(3);
     expect(JSON.stringify(readJobDiagnostics())).not.toContain('job-1');
@@ -118,5 +130,23 @@ describe('job telemetry scenarios (u2)', () => {
     first.emit({ eventId: 'e2', jobId: 'job-1', seq: 6, state: 'FAILED', timestampUs: 2 });
     const terminals = readJobDiagnostics().filter((record) => record.event.kind === 'terminal');
     expect(terminals).toHaveLength(1);
+  });
+
+  it('drops invalid latency measurements and rounds valid ones', () => {
+    emitJobDiagnostic({ kind: 'stream', mode: 'live', latencyMs: Number.NaN }, 1);
+    emitJobDiagnostic({ kind: 'stream', mode: 'live', latencyMs: Number.POSITIVE_INFINITY }, 2);
+    emitJobDiagnostic({ kind: 'stream', mode: 'live', latencyMs: -5 }, 3);
+    emitJobDiagnostic({ kind: 'stream', mode: 'live', latencyMs: 700000 }, 4);
+    emitJobDiagnostic({ kind: 'status', latencyMs: Number.NEGATIVE_INFINITY }, 5);
+    emitJobDiagnostic({ kind: 'stream', mode: 'live', latencyMs: 12.6 }, 6);
+
+    const events = readJobDiagnostics().map((record) => record.event);
+    for (const invalid of events.slice(0, 5)) {
+      const latency =
+        invalid.kind === 'stream' || invalid.kind === 'status' ? invalid.latencyMs : undefined;
+      expect(latency).toBeUndefined();
+    }
+    const rounded = events[5]!;
+    expect(rounded.kind === 'stream' ? rounded.latencyMs : null).toBe(13);
   });
 });

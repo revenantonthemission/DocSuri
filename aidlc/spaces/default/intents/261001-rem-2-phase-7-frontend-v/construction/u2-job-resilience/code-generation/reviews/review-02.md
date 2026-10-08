@@ -1,0 +1,16 @@
+## Review
+
+**Verdict:** NOT-READY
+**Reviewer:** aidlc-architecture-reviewer-agent
+**Iteration:** 2
+
+### Findings
+
+| ID | Severity | Location | Finding | Required action | Status |
+|---|---|---|---|---|---|
+| R-01 | High | frontend/components/JobStatus.tsx:157-164; frontend/test/u2JobStatus.test.tsx:95-121; code-summary.md:12 | 403 was not treated as access loss and had no test. Fix verified: the guard now accepts `auth` OR `forbidden`; `it.each([401, 403])` asserts the view clears, the stream closes (`first.closed`), and no recreation is scheduled after 2200 ms; the 404-retryable decision is documented in the component comment and the summary. Both cases pass in the executed u2 suite. | None. | Resolved |
+| R-02 | Medium | traceability.json; code-summary.md:36 | The sensor previously failed with 18 rows and 111 assigned acceptance ids missing from `upstream_ids`. Fix verified: re-run of `aidlc engine sensor-traceability --stage-slug code-generation` reports `missing_from_upstream_ids: []`, `orphans: []`, `missing_from_table: []`, `invalid_entries: []`, `invalid_targets: []` over all 129 ids (18 story/quality + 111 acceptance); the reasoned all-GAP advisory disposition is recorded in `code-summary.md`. | None. | Resolved |
+| R-03 | Medium | frontend/lib/jobDiagnostics.ts:21-25,64-67; frontend/components/JobStatus.tsx:62-67,96,178; frontend/test/u2JobDiagnostics.test.tsx:90-100 | Plan Steps 19-20 promised a status mount timing measurement that did not exist. Fix verified: a `status` event kind carries a bounded `latencyMs`; JobStatus emits it once per job identity on the first committed status (stream event or adopted poll snapshot); `u2JobDiagnostics.test.tsx` asserts a bounded status measurement, and the suite is green. | None. | Resolved |
+| R-04 | Low | frontend/test/u2JobState.test.ts | The promised projection test file was absent. Fix verified: the file exists, is claimed in `source-manifest.json`, matches the u2 lane (`test/u2*.test.{ts,tsx}`), and its 5 tests pass, covering seq-watermark ordering with stale drops, replayed-id dedupe after stream recreation, terminal stickiness via both apply and adopt paths, poll adoption with stale/foreign rejection, and announcement deduplication. | None. | Resolved |
+| R-05 | Low | frontend/test/u2JobDiagnostics.test.tsx:135-151 | The "dropped when invalid" latency branch was untested. Fix verified: NaN, +Infinity, negative and over-bound values are dropped for both `stream` and `status` records, and the valid fractional 12.6 rounds to 13; test passes. | None. | Resolved |
+| R-06 | Low | frontend/test/u2PreparedResult.test.tsx | Two controlled translate result states required by the approved instructions remain untested: auth (401/403) and not-found (404). unit-test-instructions.md line 30 and plan Step 14 require every controlled state; no test in frontend/test issues a 401, 403, or 404 to the `/result` route or exercises `JobResultError`, leaving contentJobApi.ts:126-129 status mapping and SummaryModal.tsx:139-143 auth/not-found rendering unverified for the translate matrix. | Add 401/403 (auth message) and 404 (not-found message) cases to `u2PreparedResult.test.tsx` asserting the controlled error renders and no generation/enqueue call occurs. | New |

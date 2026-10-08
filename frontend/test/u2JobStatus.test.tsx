@@ -92,28 +92,31 @@ describe('JobStatus recreated-stream recovery (u2)', () => {
     expect(FakeEventSource.instances).toHaveLength(1);
   });
 
-  it('clears the view and cancels work on an access loss (401) without recreating the stream', async () => {
-    fetchMock.mockImplementation(async () => {
-      return new Response(JSON.stringify({ message: 'nope' }), {
-        status: 401,
-        headers: { 'content-type': 'application/json' },
+  it.each([401, 403])(
+    'clears the view and cancels work on an access loss (%i) without recreating the stream',
+    async (status) => {
+      fetchMock.mockImplementation(async () => {
+        return new Response(JSON.stringify({ message: 'nope' }), {
+          status,
+          headers: { 'content-type': 'application/json' },
+        });
       });
-    });
 
-    renderStatus();
-    const first = FakeEventSource.instances[0]!;
-    first.onopen?.();
-    first.emit({ eventId: 'evt-1', jobId: 'job-1', seq: 5, state: 'RUNNING', timestampUs: 1 });
-    expect(await screen.findByTestId('job-state-label')).toHaveTextContent('처리중');
+      renderStatus();
+      const first = FakeEventSource.instances[0]!;
+      first.onopen?.();
+      first.emit({ eventId: 'evt-1', jobId: 'job-1', seq: 5, state: 'RUNNING', timestampUs: 1 });
+      expect(await screen.findByTestId('job-state-label')).toHaveTextContent('처리중');
 
-    first.onerror?.(new Event('error'));
-    expect(
-      await screen.findByText(/접근 권한을 확인할 수 없어 작업 추적을 중지했습니다/),
-    ).toBeInTheDocument();
+      first.onerror?.(new Event('error'));
+      expect(
+        await screen.findByText(/접근 권한을 확인할 수 없어 작업 추적을 중지했습니다/),
+      ).toBeInTheDocument();
 
-    // Work is cancelled: the stream closes and no recreation is scheduled.
-    await waitFor(() => expect(first.closed).toBe(true));
-    await new Promise((resolve) => setTimeout(resolve, 2200));
-    expect(FakeEventSource.instances).toHaveLength(1);
-  });
+      // Work is cancelled: the stream closes and no recreation is scheduled.
+      await waitFor(() => expect(first.closed).toBe(true));
+      await new Promise((resolve) => setTimeout(resolve, 2200));
+      expect(FakeEventSource.instances).toHaveLength(1);
+    },
+  );
 });

@@ -18,6 +18,11 @@ export type JobDiagnosticEvent =
       /** Bounded measurement point: mount-to-open latency in ms (live only). */
       latencyMs?: number;
     }
+  | {
+      kind: 'status';
+      /** Bounded measurement point: mount-to-first-committed-status latency in ms. */
+      latencyMs?: number;
+    }
   | { kind: 'terminal'; state: 'COMPLETED' | 'FAILED' | 'ABSTAINED' }
   | {
       kind: 'result-read';
@@ -33,21 +38,32 @@ const MAX_BUFFER = 50;
 const buffer: JobDiagnosticRecord[] = [];
 let sender: ((records: readonly JobDiagnosticRecord[]) => void) | null = null;
 
+/** A measurement is admitted only as a finite non-negative bounded value. */
+function boundedLatency(value: unknown): number | null {
+  if (
+    typeof value === 'number' &&
+    Number.isFinite(value) &&
+    value >= 0 &&
+    value <= 600000
+  ) {
+    return Math.round(value);
+  }
+  return null;
+}
+
 function sanitize(event: JobDiagnosticEvent): JobDiagnosticEvent {
   switch (event.kind) {
     case 'submit':
       return { kind: 'submit', taskType: event.taskType, outcome: event.outcome };
     case 'stream': {
-      // A measurement is admitted only as a finite non-negative bounded value.
-      if (
-        typeof event.latencyMs === 'number' &&
-        Number.isFinite(event.latencyMs) &&
-        event.latencyMs >= 0 &&
-        event.latencyMs <= 600000
-      ) {
-        return { kind: 'stream', mode: event.mode, latencyMs: Math.round(event.latencyMs) };
-      }
-      return { kind: 'stream', mode: event.mode };
+      const latencyMs = boundedLatency(event.latencyMs);
+      return latencyMs === null
+        ? { kind: 'stream', mode: event.mode }
+        : { kind: 'stream', mode: event.mode, latencyMs };
+    }
+    case 'status': {
+      const latencyMs = boundedLatency(event.latencyMs);
+      return latencyMs === null ? { kind: 'status' } : { kind: 'status', latencyMs };
     }
     case 'terminal':
       return { kind: 'terminal', state: event.state };

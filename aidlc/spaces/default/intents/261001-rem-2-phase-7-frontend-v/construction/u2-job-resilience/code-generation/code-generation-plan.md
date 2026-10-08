@@ -95,9 +95,9 @@ U2 is a frontend-behavior unit: the contract's "frontend behavior" layer is impl
 | [x] Step 18 | Author/run telemetry tests: latency/drop/recovery sequences; failing sender swallowed; scrubbed bounded records; no recursion. | NFR7.1–4 |
 | [x] Step 19 | Complete the accessibility and performance evidence for the new states: keyboard reachability and focus order across the translate/recovery/result states, live-region politeness, and the measurement points (connection timing, status mount timing) recorded for later benchmark verification. | US2.1/US7 slice; NFR9/10 |
 | [x] Step 20 | Author/run accessibility/measurement tests: focus continuity, announcements deduplicated, measurement hooks emit bounded values. | NFR9/10; AC7.1 |
-| [ ] Step 21 | Extend the combined regressions: run the u2 suite together with the u1 suite and the full base suite; repair any cross-suite regressions without weakening expectations. | all U2 slices; NFR12.2 |
-| [ ] Step 22 | Verify the coverage floor: `test:coverage:u2` reports ≥80% lines over new/changed u2 frontend sources; surface and close gaps. | scope floor |
-| [ ] Step 23 | Record the actual files, decisions, results and deviations; write `code-summary.md`, `source-manifest.json` claims and `traceability.json` rows for this unit. | NFR11 |
+| [x] Step 21 | Extend the combined regressions: run the u2 suite together with the u1 suite and the full base suite; repair any cross-suite regressions without weakening expectations. | all U2 slices; NFR12.2 |
+| [x] Step 22 | Verify the coverage floor: `test:coverage:u2` reports ≥80% lines over new/changed u2 frontend sources; surface and close gaps. | scope floor |
+| [x] Step 23 | Record the actual files, decisions, results and deviations; write `code-summary.md`, `source-manifest.json` claims and `traceability.json` rows for this unit. | NFR11 |
 | [ ] Step 24 | Obtain the fresh current-attempt review; repair findings through the required flow; present completion. | required review |
 
 ## Planned Source Footprint and Blast Radius
