@@ -120,6 +120,29 @@ describe('translation prepared-result read states (u2)', () => {
     expect(screen.getByTestId('state-view-retry')).toBeInTheDocument();
   });
 
+  it.each([401, 403])(
+    'maps an access loss (%i) on the translate result read to the controlled auth state',
+    async (status) => {
+      fetchMock.mockResolvedValue(envelopeResponse({ message: 'nope' }, status));
+      renderTranslateResult();
+
+      expect(await screen.findByTestId('state-view-error')).toBeInTheDocument();
+      expect(screen.getByText('로그인이 필요합니다. 다시 로그인해 주세요.')).toBeInTheDocument();
+      expect(screen.queryByTestId('state-view-retry')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('translation-view')).not.toBeInTheDocument();
+    },
+  );
+
+  it('maps a missing translation result (404) to the controlled not-found state', async () => {
+    fetchMock.mockResolvedValue(envelopeResponse({ message: 'missing' }, 404));
+    renderTranslateResult();
+
+    expect(await screen.findByTestId('state-view-error')).toBeInTheDocument();
+    expect(screen.getByText('결과를 찾을 수 없습니다.')).toBeInTheDocument();
+    expect(screen.queryByTestId('state-view-retry')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('translation-view')).not.toBeInTheDocument();
+  });
+
   it('fails closed on a malformed translation envelope instead of rendering partial content', async () => {
     const malformed = translationEnvelope();
     // The bare document must be present; a wrapper or missing docModel is not content.

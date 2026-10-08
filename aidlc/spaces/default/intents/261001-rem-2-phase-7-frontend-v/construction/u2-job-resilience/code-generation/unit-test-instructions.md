@@ -4,7 +4,7 @@
 
 Use the complete unchanged Testing Contract embedded in `code-generation-plan.md`, hash `sha256:f87c0507a83e45b42705d96d9cdb5a9124962ca7bb56c2fd06fd2061fcc42153`: test-after / test-last per component, Standard five–eight meaningful tests per component with happy path and at least two error/edge cases, and at least 80% line coverage over the new/changed u2 frontend sources. Existing suites must remain green (u1 scoped suite 23 files / 104 tests; full base suite 73 files / 421 tests).
 
-This plan and these instructions descend from the consolidated summary confirmed on 2026-10-08 (`summary_authorization_id` `ba249706a44a196bced2c938af7a6391966fdaa9c45e1140c65576b8bd516729`). They are current proposals, not implementation permission: the fresh exact Plan Approval precedes developer writes. The plan is not current implementation or execution authority.
+This plan and these instructions descend from the consolidated summary confirmed on 2026-10-08 (`summary_authorization_id` `910a3a5ad706c1705121f43d3a8a35d96038f3b01cecb2b5eaf2623a8a807d61`). They are current proposals, not implementation permission: the fresh exact Plan Approval precedes developer writes. The plan is not current implementation or execution authority.
 
 U2 is a frontend-behavior unit: implement the affected component fully, then write and run its tests. The data-model/repository/API layers are consumed as delivered U1 guarantees (validated in the u1 suite), not re-implemented.
 

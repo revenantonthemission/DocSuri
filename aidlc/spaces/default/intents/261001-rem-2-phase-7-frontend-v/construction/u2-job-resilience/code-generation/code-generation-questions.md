@@ -18,7 +18,7 @@ X. Other (please specify)
 
 ## Q1 Resolution
 
-The human-selected path completed: `u1-job-skeleton`'s frontend completion pass settled on its restarted attempt (fresh Plan Approval `sha256:v3:ea953058…`, adversarial review READY with all prior findings resolved, walking-skeleton checkpoint verified with the recorded command and human-approved on 2026-10-08). The delivered U1 frontend job surface U2 extends now exists on disk: BFF-routed content-job transport with typed contracts/`seq` watermarking (`lib/api/contentJobApi.ts`, `lib/api/contentJobContracts.ts`), `idempotencyService`, `jobState`, `jobDiagnostics`, `cn`, `JobSubmissionForm`/`JobDialog`, `ErrorBoundary`/`ErrorBoundaryFallback`, the live `JobStatus` with the fixed two-second SWR fallback, the query-only `SummaryModal`, and the `PaperDetailIsland` composition — with 23 u1 test files (104 tests) green alongside the base suite (421 tests). U2's plan therefore builds on that delivered surface as its unit definition prescribes. The Q1 situation text above is retained as provenance of the state at the time of the question; it no longer describes the current tree.
+The human-selected path completed: `u1-job-skeleton`'s frontend completion pass settled on its restarted attempt (fresh Plan Approval `sha256:v3:ea953058…`, adversarial review READY with all prior findings resolved, walking-skeleton checkpoint verified with the recorded command and human-approved on 2026-10-08). The delivered U1 frontend job surface U2 extends now exists on disk: BFF-routed content-job transport with typed contracts/`seq` watermarking (`lib/api/contentJobApi.ts`, `lib/api/contentJobContracts.ts`), `idempotencyService`, `jobState`, `jobDiagnostics`, `cn`, `JobSubmissionForm`/`JobDialog`, `ErrorBoundary`/`ErrorBoundaryFallback`, the live `JobStatus` with the fixed two-second SWR fallback, the query-only `SummaryModal`, and the `PaperDetailIsland` composition — with 23 u1 test files (104 tests) green alongside the base suite (421 tests). U2's plan therefore builds on that delivered surface as its unit definition prescribes. The Q1 situation text above is retained as provenance of the state at the time of the question; it no longer describes the current tree. (Since superseded: the stage restart recorded below re-settled U1 on a new attempt — current Plan Approval `sha256:v3:bdcce478…`, checkpoint re-verified and re-approved; see the Re-entry Context.)
 
 ## Plan Approval
 
@@ -28,13 +28,17 @@ This current-attempt decision covers `code-generation-plan.md`, its embedded com
 
 The current tool-produced approval/source tags are recorded here before presentation.
 
-[Approval Fingerprint]: sha256:v3:a20115e644e51b0d435f8754627e5de04e6758537a4cd908c546139e40c086b0
-[Planned Source]: 1e1bb78c35f28326e3fec0c917efc314637256cebc0c91fcb4f966c9180e8d72
+[Approval Fingerprint]: sha256:v3:cfe13564bed14a747801b5672aa145cc00a966459443002af6d926fa8821b3b2
+[Planned Source]: 1d2b8570897baa070be0c404f252239d68c91d1af53283ddab3f040d06be1729
 
 - Approve Plan — Authorize developer implementation of this exact current plan and scoped test instructions through its protected receipt.
 - Request Changes — Revise the plan or test instructions before implementation.
 
 [Answer]: Approve Plan
+
+## Re-entry Context — Stage Restart (2026-10-08)
+
+The human rejected the stage after U1's skeleton checkpoint could not re-confirm against U2's reviewed repairs (review budget spent); the recorded revision instruction was "Restart the code-generation unit cycle". The engine executed the stage restart (`STAGE_JUMPED`, 2026-10-08T09:50:19Z), and U1's per-unit pass re-settled on the new attempt: fresh summary confirmation (authorization `3118bfb25725d881b5cf1e16613a382e49be2716df2d7269958c9f35e7f24c39`), fresh Plan Approval `sha256:v3:bdcce478a0c60fef225b0412e178a9d543bbf143f83b54536c6c2294cd46dae4`, adversarial review READY (`reviews/review-09.md`; all 16 findings resolved), and a fresh walking-skeleton checkpoint verified with the recorded command and human-approved. U2's recorded answers survive; this re-entry requires a fresh summary confirmation for this attempt, the outputs re-saved under it, a fresh exact Plan Approval, and fresh review passes for this unit. U2's plan and test instructions are retained unchanged; the only source delta since U2's last review is the two translate error-state tests (401/403, 404) added to `frontend/test/u2PreparedResult.test.tsx` under the prior revision, resolving that review's residual R-06 finding (u2 lane now 31 files / 144 tests; full suite 81 files / 461 tests). The earlier attempt's receipts (`sha256:v3:a20115e644e51b0d435f8754627e5de04e6758537a4cd908c546139e40c086b0` and older) no longer bind the current bytes and are not reused.
 
 ## Consolidated Summary Confirmation
 

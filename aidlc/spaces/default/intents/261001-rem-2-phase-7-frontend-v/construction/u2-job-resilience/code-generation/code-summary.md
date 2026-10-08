@@ -2,7 +2,7 @@
 
 ## Sources and Evidence Identity
 
-This record descends from the consolidated summary confirmed on 2026-10-08 (`summary_authorization_id` `ba249706a44a196bced2c938af7a6391966fdaa9c45e1140c65576b8bd516729`) and the fresh Plan Approval recorded against the current plan/test-instruction bytes (`sha256:v3:a20115e644e51b0d435f8754627e5de04e6758537a4cd908c546139e40c086b0`, `testing-posture verify --unit u2-job-resilience` => `ok:true`/`execution_allowed:true`). The plan and unit-test instructions were written after that confirmation and descend from it; the claim authority is this directory's `source-manifest.json` (15 writes for this unit). No lifecycle/approval/review setter was invoked outside the sanctioned flow.
+This record descends from the consolidated summary confirmed on 2026-10-08 (`summary_authorization_id` `910a3a5ad706c1705121f43d3a8a35d96038f3b01cecb2b5eaf2623a8a807d61`) and the fresh Plan Approval recorded against the current plan/test-instruction bytes on the stage-restarted attempt (`sha256:v3:cfe13564bed14a747801b5672aa145cc00a966459443002af6d926fa8821b3b2`; the earlier `sha256:v3:a20115e6…` approval no longer binds these bytes), `testing-posture verify --unit u2-job-resilience` => `ok:true`/`execution_allowed:true`. The plan and unit-test instructions were written after that confirmation and descend from it; the claim authority is this directory's `source-manifest.json` (15 writes for this unit). No lifecycle/approval/review setter was invoked outside the sanctioned flow.
 
 ## Implemented
 
@@ -10,17 +10,17 @@ This record descends from the consolidated summary confirmed on 2026-10-08 (`sum
 - **Translate submission (Steps 3–4):** verified the translate branch sends the complete C1 `JobInput` (`paperId, version, targetLang:'ko', persona, scope`) with explicit-submit-only semantics, capture-before-send and owner-bound recovery; tests added.
 - **Reload recovery and unavailable-original feedback (Steps 5–8):** `JobSubmissionForm` now surfaces controlled feedback when a stored attempt exists but its captured original is missing/corrupt/foreign, while a usable owner-bound original keeps same-key recovery; captured-original storage behavior covered end to end (corrupt JSON, task-type mismatch, ownerless records, quota/unavailable on every operation, owner scoping).
 - **Replay/reconnection and restoration (Steps 9–12):** `JobStatus` recreates the stream after an error carrying the verified cursor (`lastEventId`), hands over to the fixed two-second SWR fallback without overlap, closes the replaced stream, never recreates after terminal, and treats an access loss (401 `auth` / 403 `forbidden` from the owner-scoped read) as view-clearing, work-cancelling cleanup; a 404 stays retryable because the contract's generic not-owned/unknown body is indistinguishable from propagation lag.
-- **Translation result states and copy (Steps 13–16):** the query-only `SummaryModal` renders the translate branch across every controlled read state; a keyboard-operable **자산 ID 복사** control copies the exact authorized identifier as text (no URLs/tokens), confirms politely, renders nothing without an id, and degrades quietly on clipboard denial.
+- **Translation result states and copy (Steps 13–16):** the query-only `SummaryModal` renders the translate branch across every controlled read state — including the auth (401/403) and not-found (404) outcomes; a keyboard-operable **자산 ID 복사** control copies the exact authorized identifier as text (no URLs/tokens), confirms politely, renders nothing without an id, and degrades quietly on clipboard denial.
 - **Telemetry and measurement (Steps 17–20):** scenario tests for the live → fallback → recreated-live sequence with a failing sender, terminal recorded once; `jobDiagnostics` gained two bounded measurement points wired to JobStatus — the live stream's mount-to-open `latencyMs` and a `status` mount-to-first-committed-status `latencyMs`, recorded once per job identity — with invalid values dropped and valid ones rounded; interaction-matrix tests cover the single polite live region with honest `aria-busy`, deduplicated announcements, and dialog initial focus.
 
 ## Tests and Evidence
 
 | Lane | Result | Command |
 |---|---|---|
-| u2 scoped suite | 31 files / 141 tests green | `vitest run --config vitest.u2.config.ts` |
+| u2 scoped suite | 31 files / 144 tests green | `vitest run --config vitest.u2.config.ts` |
 | u1 scoped suite (combined regression) | 23 files / 104 tests green | `vitest run --config vitest.u1.config.ts` |
-| Full base suite | 81 files / 458 tests green | `vitest run` |
-| u2 coverage | 84.83% lines over the u2 include set (threshold 80) | `vitest run --config vitest.u2.config.ts --coverage` |
+| Full base suite | 81 files / 461 tests green | `vitest run` |
+| u2 coverage | 84.94% lines over the u2 include set (threshold 80) | `vitest run --config vitest.u2.config.ts --coverage` |
 | Strict types (u2 graph) | 81 pre-existing errors, none on u2-touched lines; changed files clean | `tsc --project tsconfig.u2.json --noEmit` |
 | Lint | clean on the u2-touched source and test files | `eslint components/JobSubmissionForm.tsx components/JobStatus.tsx components/SummaryModal.tsx components/TranslationView.tsx lib/jobState.ts lib/jobDiagnostics.ts lib/idempotencyService.ts test/u2JobState.test.ts test/u2JobStatus.test.tsx test/u2JobDiagnostics.test.tsx` |
 

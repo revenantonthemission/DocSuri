@@ -1,6 +1,6 @@
 # U2 Job Resilience — Code Generation Plan
 
-Authority: current attempt of `code-generation` for unit `u2-job-resilience`; this plan descends from the consolidated summary confirmed on 2026-10-08 (`summary_authorization_id` `ba249706a44a196bced2c938af7a6391966fdaa9c45e1140c65576b8bd516729`). Basis: the delivered and approved U1 frontend job surface, `unit-of-work.md` (U2), `contract-summary.md` (C1–C4), and `requirements.md`. No new backend controller/service/worker capability is added; U1's tested shared guarantees are consumed. Fresh Plan Approval precedes generation.
+Authority: current attempt of `code-generation` for unit `u2-job-resilience`; this plan descends from the consolidated summary confirmed on 2026-10-08 (`summary_authorization_id` `910a3a5ad706c1705121f43d3a8a35d96038f3b01cecb2b5eaf2623a8a807d61`). Basis: the delivered and approved U1 frontend job surface, `unit-of-work.md` (U2), `contract-summary.md` (C1–C4), and `requirements.md`. No new backend controller/service/worker capability is added; U1's tested shared guarantees are consumed. Fresh Plan Approval precedes generation.
 
 ## Testing Contract
 

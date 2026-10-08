@@ -209,8 +209,8 @@ This current-attempt decision covers `code-generation-plan.md`, its unchanged co
 
 The current tool-produced approval/source tags are recorded here before presentation. The historical tags/answer above remain prior provenance and are not reused as current authority.
 
-[Approval Fingerprint]: sha256:v3:ea95305833651a01cd3fda1b7f256870ef61615a3bc3c4e5957cdebf689b6d21
-[Planned Source]: 1e1bb78c35f28326e3fec0c917efc314637256cebc0c91fcb4f966c9180e8d72
+[Approval Fingerprint]: sha256:v3:bdcce478a0c60fef225b0412e178a9d543bbf143f83b54536c6c2294cd46dae4
+[Planned Source]: 1d2b8570897baa070be0c404f252239d68c91d1af53283ddab3f040d06be1729
 
 - Approve Plan — Authorize developer implementation of this exact current plan and scoped test instructions through its protected receipt; required focused SQL review, qualified realm/resources and separate operational/checkpoint authorizations remain required.
 - Request Changes — Revise the plan or test instructions before implementation.
@@ -228,6 +228,10 @@ Completion-pass scope: implement the plan's missing frontend job-surface steps t
 Review cycle and restart: two adversarial review passes then ran on the completion-pass record (both reaching NOT-READY at their iteration caps; their findings R-01–R-14 were dispositioned and every actionable finding was fixed on the working bytes, including the persona-enum, owner-bound-recovery and evidence-wording repairs). Because a stage attempt allows two review passes, the human selected the engine's offered recovery — restart the stage from the top (`aidlc engine orchestrate next --stage code-generation` → `aidlc engine jump execute --target code-generation --direction redo`, 2026-10-08T02:28:15Z) with the revision instruction "Re-check the current bytes". This entry re-confirms the summary once and re-saves every output document under that confirmation; the restart itself changes no artifact content, and the fixed application/test bytes carry forward unchanged.
 
 Fresh consolidated-summary confirmation and fresh exact Plan Approval are required under the new attempt before generation, because the earlier attempt-scoped receipts do not authorize this attempt.
+
+### Review-Budget Restart (2026-10-08, second revision)
+
+After U2's completion the stage gate could not re-confirm the earlier skeleton approval: U2's reviewed repairs moved five files that the U1 review receipt had bound (`frontend/components/JobStatus.tsx`, `frontend/components/JobSubmissionForm.tsx`, `frontend/components/SummaryModal.tsx`, `frontend/lib/jobDiagnostics.ts`, `frontend/package.json`), and both U1 review passes on the prior attempt were already spent. The engine's review refusal offered presentation at the approval gate or a revision; the human answered the revision question with "Restart the code-generation unit cycle". The rejection was recorded at 2026-10-08T09:16:17Z; the review budget still being spent, the engine's offered recovery — a stage restart — was then executed (`STAGE_JUMPED`, 2026-10-08T09:50:19Z), resetting code-generation from the top under a new attempt. The revision instruction is carried out by: the two remaining translate result-state tests from the U2 review's residual R-06 finding added to `frontend/test/u2PreparedResult.test.tsx` before this re-entry's reviews (so every fresh unit review and checkpoint binds the final bytes), then fresh summary confirmation, fresh exact Plan Approval, fresh review passes for this unit, and a fresh skeleton checkpoint. The application sources themselves carry forward unchanged; this restart changes no U1-owned artifact content.
 
 ## Consolidated Summary Confirmation
 
