@@ -24031,3 +24031,32 @@
 **Session**: ses_ef0323d76ffekiBhVnpZoKRl88
 
 ---
+
+## Unit Started
+**Timestamp**: 2026-10-08T05:00:53Z
+**Event**: UNIT_STARTED
+**Stage**: code-generation
+**Unit**: u2-job-resilience
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-08T05:02:34Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/code-generation-questions.md
+**Context**: construction > u2-job-resilience > code-generation > code-generation-questions.md
+
+---
+
+## Unit Paused
+**Timestamp**: 2026-10-08T05:02:38Z
+**Event**: UNIT_PAUSED
+**Stage**: code-generation
+**Unit**: u2-job-resilience
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+**Reason**: Session context budget reached mid-Unit; the Q1 dependency (u1 frontend surface) is delivered and approved, no blocking question or failure.
+**Next Action**: Prepare the u2 code-generation plan and unit-test instructions from the shared inception artifacts (contract-summary, unit-of-work, requirements) and the delivered u1 frontend surface, run any remaining u2 questions and the consolidated summary confirmation, then the Plan Approval sequence and generation.
+
+---

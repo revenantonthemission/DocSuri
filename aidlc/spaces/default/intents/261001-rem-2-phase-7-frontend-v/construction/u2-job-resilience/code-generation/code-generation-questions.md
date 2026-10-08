@@ -15,3 +15,7 @@ B. Reopen U1 for a completion pass first — the workflow goes back so the missi
 X. Other (please specify)
 
 [Answer]: B
+
+## Q1 Resolution
+
+The human-selected path completed: `u1-job-skeleton`'s frontend completion pass settled on its restarted attempt (fresh Plan Approval `sha256:v3:ea953058…`, adversarial review READY with all prior findings resolved, walking-skeleton checkpoint verified with the recorded command and human-approved on 2026-10-08). The delivered U1 frontend job surface U2 extends now exists on disk: BFF-routed content-job transport with typed contracts/`seq` watermarking (`lib/api/contentJobApi.ts`, `lib/api/contentJobContracts.ts`), `idempotencyService`, `jobState`, `jobDiagnostics`, `cn`, `JobSubmissionForm`/`JobDialog`, `ErrorBoundary`/`ErrorBoundaryFallback`, the live `JobStatus` with the fixed two-second SWR fallback, the query-only `SummaryModal`, and the `PaperDetailIsland` composition — with 23 u1 test files (104 tests) green alongside the base suite (421 tests). U2's plan therefore builds on that delivered surface as its unit definition prescribes. The Q1 situation text above is retained as provenance of the state at the time of the question; it no longer describes the current tree.

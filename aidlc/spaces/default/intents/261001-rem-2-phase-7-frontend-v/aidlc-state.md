@@ -130,6 +130,14 @@
 
 
 
+- **Active Unit**: u2-job-resilience
+
+- **Unit State**: paused
+
+- **Unit Pause Reason**: Session context budget reached mid-Unit; the Q1 dependency (u1 frontend surface) is delivered and approved, no blocking question or failure.
+
+- **Unit Next Action**: Prepare the u2 code-generation plan and unit-test instructions from the shared inception artifacts (contract-summary, unit-of-work, requirements) and the delivered u1 frontend surface, run any remaining u2 questions and the consolidated summary confirmation, then the Plan Approval sequence and generation.
+
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
 
@@ -191,7 +199,7 @@ Per unit: [TBD]
 - **Current Stage**: code-generation
 - **Next Stage**: build-and-test
 - **Status**: Running
-- **Last Updated**: 2026-10-08T03:34:47Z
+- **Last Updated**: 2026-10-08T05:02:38Z
 
 - **Construction Autonomy Mode**: autonomous
 
