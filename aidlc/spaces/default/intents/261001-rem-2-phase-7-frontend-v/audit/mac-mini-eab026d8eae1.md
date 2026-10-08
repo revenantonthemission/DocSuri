@@ -24847,3 +24847,240 @@
 **Session**: ses_ef0323d76ffekiBhVnpZoKRl88
 
 ---
+
+## Unit Resumed
+**Timestamp**: 2026-10-08T06:00:19Z
+**Event**: UNIT_RESUMED
+**Stage**: code-generation
+**Unit**: u2-job-resilience
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T06:00:23Z
+**Event**: SENSOR_FIRED
+**Fire id**: 25aff3fb
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: frontend/lib/jobDiagnostics.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T06:00:25Z
+**Event**: SENSOR_PASSED
+**Fire id**: 25aff3fb
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: frontend/lib/jobDiagnostics.ts
+**Duration ms**: 2299
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T06:00:25Z
+**Event**: SENSOR_FIRED
+**Fire id**: 89c943e2
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/lib/jobDiagnostics.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T06:00:26Z
+**Event**: SENSOR_PASSED
+**Fire id**: 89c943e2
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/lib/jobDiagnostics.ts
+**Duration ms**: 1071
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T06:00:44Z
+**Event**: SENSOR_FIRED
+**Fire id**: 6a3069ad
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: frontend/lib/jobDiagnostics.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T06:00:46Z
+**Event**: SENSOR_PASSED
+**Fire id**: 6a3069ad
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: frontend/lib/jobDiagnostics.ts
+**Duration ms**: 1951
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T06:00:46Z
+**Event**: SENSOR_FIRED
+**Fire id**: 03ac06d0
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/lib/jobDiagnostics.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T06:00:47Z
+**Event**: SENSOR_PASSED
+**Fire id**: 03ac06d0
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/lib/jobDiagnostics.ts
+**Duration ms**: 868
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T06:01:24Z
+**Event**: SENSOR_FIRED
+**Fire id**: 844c8ab5
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: frontend/lib/jobDiagnostics.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T06:01:26Z
+**Event**: SENSOR_PASSED
+**Fire id**: 844c8ab5
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: frontend/lib/jobDiagnostics.ts
+**Duration ms**: 2031
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T06:01:26Z
+**Event**: SENSOR_FIRED
+**Fire id**: 0418dfd0
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/lib/jobDiagnostics.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T06:01:27Z
+**Event**: SENSOR_PASSED
+**Fire id**: 0418dfd0
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/lib/jobDiagnostics.ts
+**Duration ms**: 856
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T06:01:43Z
+**Event**: SENSOR_FIRED
+**Fire id**: e2da915d
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T06:01:44Z
+**Event**: SENSOR_PASSED
+**Fire id**: e2da915d
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+**Duration ms**: 1044
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T06:01:44Z
+**Event**: SENSOR_FIRED
+**Fire id**: fe9512eb
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T06:01:45Z
+**Event**: SENSOR_PASSED
+**Fire id**: fe9512eb
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+**Duration ms**: 957
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T06:02:57Z
+**Event**: SENSOR_FIRED
+**Fire id**: a75db009
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2JobDiagnostics.test.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T06:02:58Z
+**Event**: SENSOR_PASSED
+**Fire id**: a75db009
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2JobDiagnostics.test.tsx
+**Duration ms**: 995
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T06:04:07Z
+**Event**: SENSOR_FIRED
+**Fire id**: 58cd15b0
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2InteractionMatrix.test.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T06:04:08Z
+**Event**: SENSOR_PASSED
+**Fire id**: 58cd15b0
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2InteractionMatrix.test.tsx
+**Duration ms**: 989
+
+---
+
+## Unit Paused
+**Timestamp**: 2026-10-08T06:06:23Z
+**Event**: UNIT_PAUSED
+**Stage**: code-generation
+**Unit**: u2-job-resilience
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+**Reason**: Session context budget reached mid-u2 generation after Steps 17-20; telemetry scenario tests, the bounded connection-latency measurement point, and interaction-matrix tests added (u2 suite 30 files/134 tests green), changed files tsc-clean at 81 pre-existing only and lint clean; no blocking question or failure.
+**Next Action**: Continue u2 at Steps 21-24: run the u1 + base-suite combined regressions, verify >=80% u2 coverage via test:coverage:u2 (closing gaps as needed), update code-summary.md/source-manifest.json/traceability.json for u2, then request the fresh current-attempt review and settle the unit.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-08T06:15:36Z
+**Event**: HUMAN_TURN
+**Session**: ses_ef0323d76ffekiBhVnpZoKRl88
+
+---

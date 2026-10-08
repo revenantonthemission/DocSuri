@@ -54,6 +54,9 @@ function JobStatusPanel({ jobId, onComplete }: JobStatusProps) {
   const [streamMode, setStreamMode] = useState<'connecting' | 'live' | 'fallback'>('connecting');
   const [accessLost, setAccessLost] = useState(false);
   const projectionRef = useRef(projection);
+  // Bounded measurement point: mount time, so the first stream open can record
+  // its connection latency for later benchmark verification.
+  const mountedAtRef = useRef<number>(Date.now());
 
   // A new job identity resets the projection and cursors — never carry another
   // job's terminal state into a fresh submit.
@@ -97,7 +100,11 @@ function JobStatusPanel({ jobId, onComplete }: JobStatusProps) {
       {
         onOpen: () => {
           setStreamMode('live');
-          emitJobDiagnostic({ kind: 'stream', mode: 'live' });
+          emitJobDiagnostic({
+            kind: 'stream',
+            mode: 'live',
+            latencyMs: Date.now() - mountedAtRef.current,
+          });
         },
         onEvent: handleEvent,
         onError: () => {

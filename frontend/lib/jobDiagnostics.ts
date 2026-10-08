@@ -12,7 +12,12 @@ export type JobDiagnosticEvent =
       taskType: 'summarize' | 'translate';
       outcome: 'started' | 'sent' | 'uncertain' | 'rejected';
     }
-  | { kind: 'stream'; mode: 'connecting' | 'live' | 'fallback' }
+  | {
+      kind: 'stream';
+      mode: 'connecting' | 'live' | 'fallback';
+      /** Bounded measurement point: mount-to-open latency in ms (live only). */
+      latencyMs?: number;
+    }
   | { kind: 'terminal'; state: 'COMPLETED' | 'FAILED' | 'ABSTAINED' }
   | {
       kind: 'result-read';
@@ -32,8 +37,18 @@ function sanitize(event: JobDiagnosticEvent): JobDiagnosticEvent {
   switch (event.kind) {
     case 'submit':
       return { kind: 'submit', taskType: event.taskType, outcome: event.outcome };
-    case 'stream':
+    case 'stream': {
+      // A measurement is admitted only as a finite non-negative bounded value.
+      if (
+        typeof event.latencyMs === 'number' &&
+        Number.isFinite(event.latencyMs) &&
+        event.latencyMs >= 0 &&
+        event.latencyMs <= 600000
+      ) {
+        return { kind: 'stream', mode: event.mode, latencyMs: Math.round(event.latencyMs) };
+      }
       return { kind: 'stream', mode: event.mode };
+    }
     case 'terminal':
       return { kind: 'terminal', state: event.state };
     case 'result-read':
