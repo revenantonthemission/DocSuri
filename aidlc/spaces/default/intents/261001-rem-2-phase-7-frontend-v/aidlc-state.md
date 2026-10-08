@@ -134,9 +134,11 @@
 
 - **Unit State**: paused
 
-- **Unit Pause Reason**: Session context budget reached mid-Unit; the Q1 dependency (u1 frontend surface) is delivered and approved, no blocking question or failure.
 
-- **Unit Next Action**: Prepare the u2 code-generation plan and unit-test instructions from the shared inception artifacts (contract-summary, unit-of-work, requirements) and the delivered u1 frontend surface, run any remaining u2 questions and the consolidated summary confirmation, then the Plan Approval sequence and generation.
+
+- **Unit Pause Reason**: Session context budget reached after the u2 planning gates; summary confirmed, plan and unit-test instructions written and approved (fingerprint a20115e6..., execution_allowed:true), no blocking question or failure.
+
+- **Unit Next Action**: Generate u2 per the approved plan: create vitest.u2.config.ts + tsconfig.u2.json + package scripts (Steps 1-2), implement Steps 3-20 component-by-component with their u2 tests (test-after), run the u1 + base regressions and the >=80% coverage check (Steps 21-22), update code-summary/source-manifest/traceability (Step 23), then obtain the fresh current-attempt review (Step 24).
 
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
@@ -199,7 +201,7 @@ Per unit: [TBD]
 - **Current Stage**: code-generation
 - **Next Stage**: build-and-test
 - **Status**: Running
-- **Last Updated**: 2026-10-08T05:02:38Z
+- **Last Updated**: 2026-10-08T05:17:41Z
 
 - **Construction Autonomy Mode**: autonomous
 

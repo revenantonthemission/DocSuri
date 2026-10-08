@@ -19,3 +19,36 @@ X. Other (please specify)
 ## Q1 Resolution
 
 The human-selected path completed: `u1-job-skeleton`'s frontend completion pass settled on its restarted attempt (fresh Plan Approval `sha256:v3:ea953058…`, adversarial review READY with all prior findings resolved, walking-skeleton checkpoint verified with the recorded command and human-approved on 2026-10-08). The delivered U1 frontend job surface U2 extends now exists on disk: BFF-routed content-job transport with typed contracts/`seq` watermarking (`lib/api/contentJobApi.ts`, `lib/api/contentJobContracts.ts`), `idempotencyService`, `jobState`, `jobDiagnostics`, `cn`, `JobSubmissionForm`/`JobDialog`, `ErrorBoundary`/`ErrorBoundaryFallback`, the live `JobStatus` with the fixed two-second SWR fallback, the query-only `SummaryModal`, and the `PaperDetailIsland` composition — with 23 u1 test files (104 tests) green alongside the base suite (421 tests). U2's plan therefore builds on that delivered surface as its unit definition prescribes. The Q1 situation text above is retained as provenance of the state at the time of the question; it no longer describes the current tree.
+
+## Plan Approval
+
+Approve this exact Code Generation plan?
+
+This current-attempt decision covers `code-generation-plan.md`, its embedded complete native Testing Contract and `unit-test-instructions.md` for `u2-job-resilience`. Actual partial source/baseline/evidence and qualified-realm/admission/coverage obligations remain binding.
+
+The current tool-produced approval/source tags are recorded here before presentation.
+
+[Approval Fingerprint]: sha256:v3:a20115e644e51b0d435f8754627e5de04e6758537a4cd908c546139e40c086b0
+[Planned Source]: 1e1bb78c35f28326e3fec0c917efc314637256cebc0c91fcb4f966c9180e8d72
+
+- Approve Plan — Authorize developer implementation of this exact current plan and scoped test instructions through its protected receipt.
+- Request Changes — Revise the plan or test instructions before implementation.
+
+[Answer]: Approve Plan
+
+## Consolidated Summary Confirmation
+
+- **Scope and basis:** U2 extends the delivered U1 frontend job surface (BFF-routed `contentJobApi`/typed contracts, `idempotencyService`, `jobState`, `jobDiagnostics`, `JobSubmissionForm`/`JobDialog`, `ErrorBoundary`/`ErrorBoundaryFallback`, live `JobStatus` with the fixed two-second SWR fallback, query-only `SummaryModal`, `PaperDetailIsland` composition) with translate capability and the remaining job acceptance and resilience cases. The plan derives from `unit-of-work.md` (U2), `contract-summary.md` (C1 submission enum/profile, C3 event/cursor contract, C4 owner/request reconciliation, preparedResult v1 and result error precedence) and `requirements.md`, and consumes the tested U1 shared guarantees; it adds no new backend controller/service/worker capability.
+- **Translate:** complete translate parameter selection/submission (`targetLang: 'ko'`, scope abstract/full, supported persona default) and readable translation results through the existing query-only prepared-result path (the translation branch renders via `TranslationView`), preserving safe formatting and conditional focus.
+- **Resilience:** complete reload recovery on the owner-bound captured original, corrupt/unavailable/quota-limited storage behavior, owner/request reconciliation and unavailable-original recovery feedback; replay ordering/deduplication and recreated-`EventSource` recovery across the verified BFF cursor contract (Last-Event-ID precedence), channel restoration, obsolete timer/response suppression and access-loss cleanup; terminal states never regress (ADR-013) and the two-second fallback never overlaps the stream.
+- **Result coverage:** the full translation result-state matrix (all controlled states honored), authorized asset-ID copy, and conditional focus continuity.
+- **Telemetry and evidence:** scrubbed job telemetry (connection latency/drop/recovery and diagnostic-delivery failure handling), applicable performance and accessibility evidence, extended tests plus combined U1/U2 regressions; at least 80% line coverage for new/changed frontend code and all existing suites green.
+- **Authority limits:** no real database/operational evidence is claimed; backend/SQL/realm and staging/collector obligations remain as recorded; fresh Plan Approval precedes generation.
+
+Does this all look correct before I generate the artifact?
+
+- Looks correct
+- Request changes
+
+[Answer]: Looks correct
+

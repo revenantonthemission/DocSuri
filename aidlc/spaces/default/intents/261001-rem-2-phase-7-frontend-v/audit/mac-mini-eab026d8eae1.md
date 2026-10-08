@@ -24060,3 +24060,204 @@
 **Next Action**: Prepare the u2 code-generation plan and unit-test instructions from the shared inception artifacts (contract-summary, unit-of-work, requirements) and the delivered u1 frontend surface, run any remaining u2 questions and the consolidated summary confirmation, then the Plan Approval sequence and generation.
 
 ---
+
+## Human Turn
+**Timestamp**: 2026-10-08T05:04:26Z
+**Event**: HUMAN_TURN
+**Session**: ses_ef0323d76ffekiBhVnpZoKRl88
+
+---
+
+## Unit Resumed
+**Timestamp**: 2026-10-08T05:05:41Z
+**Event**: UNIT_RESUMED
+**Stage**: code-generation
+**Unit**: u2-job-resilience
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-08T05:06:47Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/code-generation-questions.md
+**Context**: construction > u2-job-resilience > code-generation > code-generation-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-08T05:07:56Z
+**Event**: DECISION_RECORDED
+**Stage**: code-generation
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/code-generation-questions.md
+**Unit**: u2-job-resilience
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-08T05:08:34Z
+**Event**: HUMAN_TURN
+**Session**: ses_ef0323d76ffekiBhVnpZoKRl88
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-08T05:08:50Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/code-generation-questions.md
+**Context**: construction > u2-job-resilience > code-generation > code-generation-questions.md
+
+---
+
+## Summary Confirmation Recorded
+**Timestamp**: 2026-10-08T05:08:52Z
+**Event**: SUMMARY_CONFIRMATION_RECORDED
+**Stage**: code-generation
+**Details**: Looks correct
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/code-generation-questions.md
+**Questions SHA-256**: 2e25228cae446c125ec7155234be40ba4ceb33221a04149f3c3e84a971479395
+**Hash Scope**: confirmed-content-v1
+**Unit**: u2-job-resilience
+**Summary Authorization Id**: ba249706a44a196bced2c938af7a6391966fdaa9c45e1140c65576b8bd516729
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-08T05:12:59Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/code-generation-plan.md
+**Context**: construction > u2-job-resilience > code-generation > code-generation-plan.md
+**Summary Authorization Id**: ba249706a44a196bced2c938af7a6391966fdaa9c45e1140c65576b8bd516729
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-08T05:13:24Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/code-generation-plan.md
+**Context**: construction > u2-job-resilience > code-generation > code-generation-plan.md
+**Summary Authorization Id**: ba249706a44a196bced2c938af7a6391966fdaa9c45e1140c65576b8bd516729
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-08T05:13:31Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/code-generation-plan.md
+**Context**: construction > u2-job-resilience > code-generation > code-generation-plan.md
+**Summary Authorization Id**: ba249706a44a196bced2c938af7a6391966fdaa9c45e1140c65576b8bd516729
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-08T05:14:14Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/unit-test-instructions.md
+**Context**: construction > u2-job-resilience > code-generation > unit-test-instructions.md
+**Summary Authorization Id**: ba249706a44a196bced2c938af7a6391966fdaa9c45e1140c65576b8bd516729
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-08T05:14:42Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/code-generation-questions.md
+**Context**: construction > u2-job-resilience > code-generation > code-generation-questions.md
+**Summary Authorization Id**: ba249706a44a196bced2c938af7a6391966fdaa9c45e1140c65576b8bd516729
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-08T05:15:09Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/code-generation-questions.md
+**Context**: construction > u2-job-resilience > code-generation > code-generation-questions.md
+**Summary Authorization Id**: ba249706a44a196bced2c938af7a6391966fdaa9c45e1140c65576b8bd516729
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-08T05:15:10Z
+**Event**: DECISION_RECORDED
+**Stage**: code-generation
+**Decision**: Approve this exact Code Generation plan?
+**Options**: Approve Plan,Request Changes
+**Checkpoint**: Code Generation Plan Approval
+**Plan Target**: unit:u2-job-resilience
+**Intent**: 01a0f9bc-324a-723c-abfc-b10f932c3de1
+**Directive Epoch**: sha256:7dc69e03c054b0a91fce32966117c9a6d4ee96ee6beffeefe1061cc27def954d
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+**Approval Fingerprint**: sha256:v3:a20115e644e51b0d435f8754627e5de04e6758537a4cd908c546139e40c086b0
+**Questions File**: aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/code-generation-questions.md
+**Questions SHA-256**: 11e19af9a85ea85f3a1ed34f34d4f56ad1a72b12dff032949f139340b4c483f7
+**Prompt SHA-256**: 5cdb8eebbfb0b2bea8486194f115c0eea5996e1099adadbaa31658f14a4e29d9
+**Session**: ses_ef0323d76ffekiBhVnpZoKRl88
+**Unit**: u2-job-resilience
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-08T05:16:18Z
+**Event**: HUMAN_TURN
+**Session**: ses_ef0323d76ffekiBhVnpZoKRl88
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-08T05:16:45Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/code-generation-questions.md
+**Context**: construction > u2-job-resilience > code-generation > code-generation-questions.md
+**Summary Authorization Id**: ba249706a44a196bced2c938af7a6391966fdaa9c45e1140c65576b8bd516729
+
+---
+
+## Plan Approval Recorded
+**Timestamp**: 2026-10-08T05:16:47Z
+**Event**: PLAN_APPROVAL_RECORDED
+**Stage**: code-generation
+**Details**: Approve Plan
+**Unit**: u2-job-resilience
+**Session**: ses_ef0323d76ffekiBhVnpZoKRl88
+**Checkpoint**: Code Generation Plan Approval
+**Plan Target**: unit:u2-job-resilience
+**Intent**: 01a0f9bc-324a-723c-abfc-b10f932c3de1
+**Directive Epoch**: sha256:7dc69e03c054b0a91fce32966117c9a6d4ee96ee6beffeefe1061cc27def954d
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+**Approval Fingerprint**: sha256:v3:a20115e644e51b0d435f8754627e5de04e6758537a4cd908c546139e40c086b0
+**Questions File**: aidlc/spaces/default/intents/261001-rem-2-phase-7-frontend-v/construction/u2-job-resilience/code-generation/code-generation-questions.md
+**Questions SHA-256**: b8a4c068d4b0f6bf949040ba17bb57fc1e9b0d046aafbaa1ca14ec45f52f0532
+**Prompt SHA-256**: 5cdb8eebbfb0b2bea8486194f115c0eea5996e1099adadbaa31658f14a4e29d9
+
+---
+
+## Unit Paused
+**Timestamp**: 2026-10-08T05:17:41Z
+**Event**: UNIT_PAUSED
+**Stage**: code-generation
+**Unit**: u2-job-resilience
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+**Reason**: Session context budget reached after the u2 planning gates; summary confirmed, plan and unit-test instructions written and approved (fingerprint a20115e6..., execution_allowed:true), no blocking question or failure.
+**Next Action**: Generate u2 per the approved plan: create vitest.u2.config.ts + tsconfig.u2.json + package scripts (Steps 1-2), implement Steps 3-20 component-by-component with their u2 tests (test-after), run the u1 + base regressions and the >=80% coverage check (Steps 21-22), update code-summary/source-manifest/traceability (Step 23), then obtain the fresh current-attempt review (Step 24).
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-08T05:18:55Z
+**Event**: HUMAN_TURN
+**Session**: ses_ef0323d76ffekiBhVnpZoKRl88
+
+---
