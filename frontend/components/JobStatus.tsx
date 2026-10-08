@@ -81,23 +81,41 @@ function JobStatusPanel({ jobId, onComplete }: JobStatusProps) {
     }
   }, []);
 
-  // Live stream. The native EventSource owns reconnection; when it reports an
-  // error the fallback poll takes over until a reconnect succeeds.
+  // Live stream. The verified cursor rides every (re)creation, so a browser
+  // that gives up on its own reconnect still recovers: an error hands over to
+  // the fallback poll and schedules one recreated EventSource carrying the last
+  // accepted event id; a successful open returns to live and hides the note.
+  const [reconnectNonce, setReconnectNonce] = useState(0);
   useEffect(() => {
     if (projectionRef.current.terminal) return;
-    const unsubscribe = subscribeJobEvents(jobId, {
-      onOpen: () => {
-        setStreamMode('live');
-        emitJobDiagnostic({ kind: 'stream', mode: 'live' });
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    const cursor = projectionRef.current.lastEventId ?? undefined;
+    const unsubscribe = subscribeJobEvents(
+      jobId,
+      {
+        onOpen: () => {
+          setStreamMode('live');
+          emitJobDiagnostic({ kind: 'stream', mode: 'live' });
+        },
+        onEvent: handleEvent,
+        onError: () => {
+          setStreamMode('fallback');
+          emitJobDiagnostic({ kind: 'stream', mode: 'fallback' });
+          if (reconnectTimer === null && !projectionRef.current.terminal) {
+            reconnectTimer = setTimeout(
+              () => setReconnectNonce((nonce) => nonce + 1),
+              JOB_FALLBACK_INTERVAL_MS,
+            );
+          }
+        },
       },
-      onEvent: handleEvent,
-      onError: () => {
-        setStreamMode('fallback');
-        emitJobDiagnostic({ kind: 'stream', mode: 'fallback' });
-      },
-    });
-    return unsubscribe;
-  }, [handleEvent, jobId, projection.terminal]);
+      cursor,
+    );
+    return () => {
+      if (reconnectTimer !== null) clearTimeout(reconnectTimer);
+      unsubscribe();
+    };
+  }, [handleEvent, jobId, projection.terminal, reconnectNonce]);
 
   // Fallback poll — fixed two-second cadence, only while the stream is down and
   // the job has not settled. SWR owns caching/retry; the key gates the overlap.

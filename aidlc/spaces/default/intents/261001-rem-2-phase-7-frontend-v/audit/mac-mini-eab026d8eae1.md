@@ -24261,3 +24261,232 @@
 **Session**: ses_ef0323d76ffekiBhVnpZoKRl88
 
 ---
+
+## Unit Resumed
+**Timestamp**: 2026-10-08T05:21:41Z
+**Event**: UNIT_RESUMED
+**Stage**: code-generation
+**Unit**: u2-job-resilience
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:22:46Z
+**Event**: SENSOR_FIRED
+**Fire id**: e49d2c4a
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: frontend/vitest.u2.config.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:22:49Z
+**Event**: SENSOR_PASSED
+**Fire id**: e49d2c4a
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: frontend/vitest.u2.config.ts
+**Duration ms**: 2731
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:22:49Z
+**Event**: SENSOR_FIRED
+**Fire id**: 278a2849
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/vitest.u2.config.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:22:50Z
+**Event**: SENSOR_PASSED
+**Fire id**: 278a2849
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/vitest.u2.config.ts
+**Duration ms**: 893
+
+---
+
+## Unit Paused
+**Timestamp**: 2026-10-08T05:24:40Z
+**Event**: UNIT_PAUSED
+**Stage**: code-generation
+**Unit**: u2-job-resilience
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+**Reason**: Session context budget reached after u2 Steps 1-2; the unit-scoped runner and strict-type configs are verified (test:u2 baseline 23 files/104 tests green, tsc 81 pre-existing only, lint:u2 clean); plan approval current; no blocking question or failure.
+**Next Action**: Continue u2 generation at Steps 3-20: implement the real deltas (unavailable-original recovery feedback, recreated-EventSource cursor recovery with backoff, access-loss cleanup, authorized asset-ID copy, measurement points) and author the u2 test files (u2JobSubmissionForm, u2Idempotency, u2JobStatus, u2JobState, u2PreparedResult, u2AssetIdCopy, u2JobDiagnostics, u2InteractionMatrix), then Steps 21-22 regressions + >=80% coverage, Step 23 record updates, and Step 24 fresh review.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-08T05:39:12Z
+**Event**: HUMAN_TURN
+**Session**: ses_ef0323d76ffekiBhVnpZoKRl88
+
+---
+
+## Unit Resumed
+**Timestamp**: 2026-10-08T05:40:30Z
+**Event**: UNIT_RESUMED
+**Stage**: code-generation
+**Unit**: u2-job-resilience
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:40:31Z
+**Event**: SENSOR_FIRED
+**Fire id**: ce076cdd
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobSubmissionForm.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:40:32Z
+**Event**: SENSOR_PASSED
+**Fire id**: ce076cdd
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobSubmissionForm.tsx
+**Duration ms**: 1056
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:40:45Z
+**Event**: SENSOR_FIRED
+**Fire id**: dd5c716e
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobSubmissionForm.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:40:46Z
+**Event**: SENSOR_PASSED
+**Fire id**: dd5c716e
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobSubmissionForm.tsx
+**Duration ms**: 930
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:40:58Z
+**Event**: SENSOR_FIRED
+**Fire id**: 3794e5b2
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobSubmissionForm.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:40:59Z
+**Event**: SENSOR_PASSED
+**Fire id**: 3794e5b2
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobSubmissionForm.tsx
+**Duration ms**: 928
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:42:42Z
+**Event**: SENSOR_FIRED
+**Fire id**: 0b7d40e4
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:42:43Z
+**Event**: SENSOR_PASSED
+**Fire id**: 0b7d40e4
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/components/JobStatus.tsx
+**Duration ms**: 1129
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:43:23Z
+**Event**: SENSOR_FIRED
+**Fire id**: 669ad13f
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2JobStatus.test.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:43:24Z
+**Event**: SENSOR_PASSED
+**Fire id**: 669ad13f
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2JobStatus.test.tsx
+**Duration ms**: 994
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-08T05:43:53Z
+**Event**: SENSOR_FIRED
+**Fire id**: ea7b84ec
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2JobSubmissionForm.test.tsx
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-08T05:43:54Z
+**Event**: SENSOR_PASSED
+**Fire id**: ea7b84ec
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: frontend/test/u2JobSubmissionForm.test.tsx
+**Duration ms**: 1000
+
+---
+
+## Unit Paused
+**Timestamp**: 2026-10-08T05:45:27Z
+**Event**: UNIT_PAUSED
+**Stage**: code-generation
+**Unit**: u2-job-resilience
+**Run floor**: STAGE_JUMPED:2026-10-08T02:28:16Z#23
+**Reason**: Session context budget reached mid-u2 generation after Steps 3-10; unavailable-original recovery feedback and recreated-stream cursor recovery implemented with 7 new u2 tests (u2 suite 25 files/111 tests green), changed files tsc-clean at 81 pre-existing only, lint clean; no blocking question or failure.
+**Next Action**: Continue u2 at Steps 7-8 (storage-behavior test file u2Idempotency), Steps 11-12 (access-loss cleanup plus tests), Steps 13-20 (translation result-state tests, authorized asset-ID copy, telemetry scenarios, accessibility/measurement evidence), then Steps 21-22 regressions and >=80% coverage, Step 23 record updates, Step 24 fresh review.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-08T05:47:38Z
+**Event**: HUMAN_TURN
+**Session**: ses_ef0323d76ffekiBhVnpZoKRl88
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-08T05:48:10Z
+**Event**: HUMAN_TURN
+**Session**: ses_ef0323d76ffekiBhVnpZoKRl88
+
+---

@@ -5,6 +5,7 @@ import { submitJob } from '@/lib/api/contentJobApi';
 import { UserFacingError } from '@/lib/api/errors';
 import {
   buildIdempotencyKey,
+  readStoredIdempotencyKey,
   readStoredOriginalRequestForOwner,
   storeIdempotencyKey,
   storeOriginalRequest,
@@ -56,16 +57,21 @@ export function JobSubmissionForm({
   const [phase, setPhase] = useState<SubmitPhase>('idle');
   const [message, setMessage] = useState<string | null>(null);
   const [recoverable, setRecoverable] = useState(false);
+  const [recoveryUnavailable, setRecoveryUnavailable] = useState(false);
   const attentionRef = useRef<HTMLButtonElement>(null);
 
   // Reload recovery: a captured original request — captured by THIS owner —
   // means a submission may have reached the backend before the page went away.
-  // An absent or other-owner record disables recovery. This effect NEVER submits.
+  // An absent or other-owner record disables recovery; a stored attempt whose
+  // original cannot be used is surfaced as controlled unavailable-original
+  // feedback. This effect NEVER submits.
   useEffect(() => {
     const owner = user?.userId;
-    setRecoverable(
-      owner !== undefined && readStoredOriginalRequestForOwner(paperId, task, owner) !== null,
-    );
+    const hasStoredAttempt = readStoredIdempotencyKey(paperId, task) !== null;
+    const usable =
+      owner !== undefined && readStoredOriginalRequestForOwner(paperId, task, owner) !== null;
+    setRecoverable(usable);
+    setRecoveryUnavailable(hasStoredAttempt && !usable);
   }, [paperId, task, user?.userId]);
 
   const buildInput = useCallback((): Record<string, unknown> => {
@@ -239,6 +245,13 @@ export function JobSubmissionForm({
         <p className="text-xs text-gray-500">
           요청이 도달했는지 확인이 필요합니다. 같은 요청으로 결과를 확인합니다 — 새로운 작업을 만들지
           않습니다.
+        </p>
+      )}
+
+      {phase === 'idle' && recoveryUnavailable && (
+        <p role="status" className="text-xs text-gray-500">
+          이전 요청의 원본 정보를 확인할 수 없습니다. 같은 조건으로 다시 제출하면 기존 작업으로
+          이어집니다.
         </p>
       )}
     </form>

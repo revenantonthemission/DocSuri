@@ -1,0 +1,32 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "incremental": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "components/PaperDetailIsland.tsx",
+    "components/JobStatus.tsx",
+    "components/SummaryModal.tsx",
+    "components/JobSubmissionForm.tsx",
+    "components/ErrorBoundary.tsx",
+    "components/ErrorBoundaryFallback.tsx",
+    "components/JobDialog.tsx",
+    "components/TranslationView.tsx",
+    "components/SummaryView.tsx",
+    "components/StateView.tsx",
+    "components/session/SessionContext.tsx",
+    "lib/api/contentJob*.ts",
+    "lib/idempotencyService.ts",
+    "lib/job*.ts",
+    "lib/cn.ts",
+    "app/bff/[...path]/route.ts",
+    "instrumentation*.ts",
+    "sentry.server.config.ts"
+  ],
+  "exclude": ["node_modules", "e2e", "test", ".next"]
+}

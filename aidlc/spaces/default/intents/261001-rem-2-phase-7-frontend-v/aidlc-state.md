@@ -136,9 +136,13 @@
 
 
 
-- **Unit Pause Reason**: Session context budget reached after the u2 planning gates; summary confirmed, plan and unit-test instructions written and approved (fingerprint a20115e6..., execution_allowed:true), no blocking question or failure.
 
-- **Unit Next Action**: Generate u2 per the approved plan: create vitest.u2.config.ts + tsconfig.u2.json + package scripts (Steps 1-2), implement Steps 3-20 component-by-component with their u2 tests (test-after), run the u1 + base regressions and the >=80% coverage check (Steps 21-22), update code-summary/source-manifest/traceability (Step 23), then obtain the fresh current-attempt review (Step 24).
+
+
+
+- **Unit Pause Reason**: Session context budget reached mid-u2 generation after Steps 3-10; unavailable-original recovery feedback and recreated-stream cursor recovery implemented with 7 new u2 tests (u2 suite 25 files/111 tests green), changed files tsc-clean at 81 pre-existing only, lint clean; no blocking question or failure.
+
+- **Unit Next Action**: Continue u2 at Steps 7-8 (storage-behavior test file u2Idempotency), Steps 11-12 (access-loss cleanup plus tests), Steps 13-20 (translation result-state tests, authorized asset-ID copy, telemetry scenarios, accessibility/measurement evidence), then Steps 21-22 regressions and >=80% coverage, Step 23 record updates, Step 24 fresh review.
 
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
@@ -201,7 +205,7 @@ Per unit: [TBD]
 - **Current Stage**: code-generation
 - **Next Stage**: build-and-test
 - **Status**: Running
-- **Last Updated**: 2026-10-08T05:17:41Z
+- **Last Updated**: 2026-10-08T05:45:27Z
 
 - **Construction Autonomy Mode**: autonomous
 
