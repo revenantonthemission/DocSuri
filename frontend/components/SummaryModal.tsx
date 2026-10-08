@@ -55,12 +55,25 @@ type ReadState =
 
 export function SummaryModal({ paperId, jobId, view, onClose, onAnchor }: SummaryModalProps) {
   const [read, setRead] = useState<ReadState>({ status: 'loading' });
+  const [assetCopyState, setAssetCopyState] = useState<'idle' | 'copied'>('idle');
   const panelRef = useRef<HTMLDivElement | null>(null);
+
+  // Authorized asset-ID copy: the identifier is plain text — never a URL or a
+  // token — and a clipboard that is unavailable or denied degrades quietly.
+  const copyAssetId = useCallback(async (assetId: string) => {
+    try {
+      await navigator.clipboard.writeText(assetId);
+      setAssetCopyState('copied');
+    } catch {
+      // Clipboard unavailable or denied: no failure surface.
+    }
+  }, []);
 
   // Query-only read of the exact prepared payload; retry re-reads, it does not
   // regenerate (zero generation/enqueue on every read outcome).
   const readResult = useCallback(async () => {
     setRead({ status: 'loading' });
+    setAssetCopyState('idle');
     try {
       const envelope = await getJobResult(jobId);
       setRead({ status: 'ready', envelope });
@@ -169,6 +182,25 @@ export function SummaryModal({ paperId, jobId, view, onClose, onAnchor }: Summar
         </div>
 
         <div className={styles.body} data-testid="summary-modal-result">
+          {read.status === 'ready' && read.envelope.preparedResult.assetId ? (
+            <div className="mb-2 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                data-testid="copy-asset-id"
+                className="text-xs text-blue-600 underline"
+                onClick={() => {
+                  const assetId =
+                    read.status === 'ready' ? read.envelope.preparedResult.assetId : undefined;
+                  if (assetId) void copyAssetId(assetId);
+                }}
+              >
+                자산 ID 복사
+              </button>
+              <span role="status" aria-live="polite" className="text-xs text-gray-500">
+                {assetCopyState === 'copied' ? '복사됨' : ''}
+              </span>
+            </div>
+          ) : null}
           {renderResult()}
         </div>
       </div>

@@ -142,9 +142,11 @@
 
 
 
-- **Unit Pause Reason**: Session context budget reached mid-u2 generation after Steps 7-8 and 11-12; captured-original storage-behavior tests and access-loss cleanup added (u2 suite 26 files/118 tests green), changed files tsc-clean at 81 pre-existing only and lint clean; no blocking question or failure.
 
-- **Unit Next Action**: Continue u2 at Steps 13-20: translation result-state tests (u2PreparedResult), authorized asset-ID copy implementation plus u2AssetIdCopy tests, telemetry scenario tests (u2JobDiagnostics), accessibility/measurement coverage (u2InteractionMatrix), then Steps 21-22 regressions and >=80% coverage, Step 23 record updates, Step 24 fresh review.
+
+- **Unit Pause Reason**: Session context budget reached mid-u2 generation after Steps 13-16; translation result-state tests and the authorized asset-ID copy are implemented (u2 suite 28 files/128 tests green), changed files tsc-clean at 81 pre-existing only and lint clean; no blocking question or failure.
+
+- **Unit Next Action**: Continue u2 at Steps 17-20: telemetry scenario tests (u2JobDiagnostics: latency/drop/recovery sequences, failing sender), accessibility/measurement coverage (u2InteractionMatrix: keyboard/focus across states, deduplicated announcements, bounded measurement values), then Steps 21-22 (u1 + base regressions, >=80% u2 coverage), Step 23 record updates (code-summary/source-manifest/traceability), Step 24 fresh review.
 
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
@@ -207,7 +209,7 @@ Per unit: [TBD]
 - **Current Stage**: code-generation
 - **Next Stage**: build-and-test
 - **Status**: Running
-- **Last Updated**: 2026-10-08T05:52:58Z
+- **Last Updated**: 2026-10-08T05:58:24Z
 
 - **Construction Autonomy Mode**: autonomous
 
