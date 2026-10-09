@@ -16,10 +16,14 @@ function needsBffPrefix(url: string): boolean {
 }
 
 /**
- * The `<img src>` for a manifest asset: the delivery path rewritten onto the same-origin BFF.
- * Returns `undefined` when there is no URL so callers can branch on the result directly.
+ * The `<img src>` for a manifest asset: the canonical delivery path rewritten onto the
+ * same-origin BFF, and nothing else. An off-origin or absolute URL (e.g. a presigned
+ * object-storage URL from a stale manifest) fails closed to `undefined` instead of
+ * being emitted into the page; `data:image/*` passes through for the dev-mock fixtures.
  */
 export function browserAssetSrc(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
-  return needsBffPrefix(url) ? `/bff${url}` : url;
+  if (needsBffPrefix(url)) return `/bff${url}`;
+  if (url.startsWith('data:image/')) return url;
+  return undefined;
 }

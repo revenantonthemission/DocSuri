@@ -22,7 +22,7 @@ export function FullTranslationIsland({ paperId, version }: { paperId: string; v
     // eslint-disable-next-line react-hooks/exhaustive-deps -- request is derived from these
   }, [paperId, version, run, loadAssets]);
 
-  // Map assetId → signed asset so the translated doc-model's figure blocks render their images.
+  // Map assetId → same-origin authorized asset so the translated doc-model's figure blocks render their images.
   const assetsById = useMemo(() => {
     const map = new Map<string, AssetRef>();
     if (assetState.status === 'done' && assetState.outcome.kind === 'assets') {

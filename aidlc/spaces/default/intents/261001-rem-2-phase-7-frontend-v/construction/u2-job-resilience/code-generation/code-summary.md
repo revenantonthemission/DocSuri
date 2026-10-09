@@ -2,7 +2,7 @@
 
 ## Sources and Evidence Identity
 
-This record descends from the consolidated summary confirmed on 2026-10-08 (`summary_authorization_id` `910a3a5ad706c1705121f43d3a8a35d96038f3b01cecb2b5eaf2623a8a807d61`) and the fresh Plan Approval recorded against the current plan/test-instruction bytes on the stage-restarted attempt (`sha256:v3:cfe13564bed14a747801b5672aa145cc00a966459443002af6d926fa8821b3b2`; the earlier `sha256:v3:a20115e6…` approval no longer binds these bytes), `testing-posture verify --unit u2-job-resilience` => `ok:true`/`execution_allowed:true`. The plan and unit-test instructions were written after that confirmation and descend from it; the claim authority is this directory's `source-manifest.json` (15 writes for this unit). No lifecycle/approval/review setter was invoked outside the sanctioned flow.
+This record descends from the consolidated summary confirmed on 2026-10-08 (`summary_authorization_id` `910a3a5ad706c1705121f43d3a8a35d96038f3b01cecb2b5eaf2623a8a807d61`) and the fresh Plan Approval recorded against the current plan/test-instruction bytes on the frozen-bytes stage restart (`sha256:v3:e06536ab619bd0750b9b477232c99e7e8e12e319a87b776ab025193296e6f1d1`; the earlier `sha256:v3:cfe13564…` and `sha256:v3:a20115e6…` approvals no longer bind these bytes), `testing-posture verify --unit u2-job-resilience` => `ok:true`/`execution_allowed:true`. The plan and unit-test instructions were written after that confirmation and descend from it; the claim authority is this directory's `source-manifest.json` (15 writes for this unit). No lifecycle/approval/review setter was invoked outside the sanctioned flow.
 
 ## Implemented
 
@@ -19,15 +19,15 @@ This record descends from the consolidated summary confirmed on 2026-10-08 (`sum
 |---|---|---|
 | u2 scoped suite | 31 files / 144 tests green | `vitest run --config vitest.u2.config.ts` |
 | u1 scoped suite (combined regression) | 23 files / 104 tests green | `vitest run --config vitest.u1.config.ts` |
-| Full base suite | 81 files / 461 tests green | `vitest run` |
-| u2 coverage | 84.94% lines over the u2 include set (threshold 80) | `vitest run --config vitest.u2.config.ts --coverage` |
+| Full base suite | 86 files / 494 tests green | `vitest run` |
+| u2 coverage | 85.58% lines over the u2 include set (threshold 80) | `vitest run --config vitest.u2.config.ts --coverage` |
 | Strict types (u2 graph) | 81 pre-existing errors, none on u2-touched lines; changed files clean | `tsc --project tsconfig.u2.json --noEmit` |
 | Lint | clean on the u2-touched source and test files | `eslint components/JobSubmissionForm.tsx components/JobStatus.tsx components/SummaryModal.tsx components/TranslationView.tsx lib/jobState.ts lib/jobDiagnostics.ts lib/idempotencyService.ts test/u2JobState.test.ts test/u2JobStatus.test.tsx test/u2JobDiagnostics.test.tsx` |
 
 ## Deviations
 
 - The telemetry test file is `frontend/test/u2JobDiagnostics.test.tsx` (JSX, since it renders `JobStatus`) rather than the planned `.test.ts`.
-- `TranslationView.tsx` sits at 30.7% in the u2 lane; it is unchanged by this unit and the aggregate (84.64%) clears the threshold. Aggregate, not per-file, is the enforced u2 floor here; the final changed-executable-line gate remains Step 47 territory.
+- `TranslationView.tsx` sits at 30.7% in the u2 lane; it is unchanged by this unit and the aggregate (85.58% at the frozen-bytes re-measure; earlier attempt-era figures were 84.64–84.94%) clears the threshold. Aggregate, not per-file, is the enforced u2 floor here; the final changed-executable-line gate remains Step 47 territory.
 
 ## Known Remaining Obligations (not complete, not counted as done)
 

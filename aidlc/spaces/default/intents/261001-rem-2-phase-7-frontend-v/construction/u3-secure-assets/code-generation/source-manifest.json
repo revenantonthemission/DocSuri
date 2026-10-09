@@ -1,0 +1,26 @@
+{
+  "stage": "code-generation",
+  "unit": "u3-secure-assets",
+  "version": 1,
+  "writes": [
+    { "path": "frontend/vitest.u3.config.ts" },
+    { "path": "frontend/tsconfig.u3.json" },
+    { "path": "frontend/package.json" },
+    { "path": "frontend/app/bff/" },
+    { "path": "frontend/components/AssetViewer.tsx" },
+    { "path": "frontend/components/ZoomPanControls.tsx" },
+    { "path": "frontend/components/DocModelViewer.tsx" },
+    { "path": "frontend/components/DocModelViewer.module.css" },
+    { "path": "frontend/components/UnsubscribePage.tsx" },
+    { "path": "frontend/components/FullTranslationIsland.tsx" },
+    { "path": "frontend/lib/api/assetSrc.ts" },
+    { "path": "frontend/lib/api/contentJobApi.ts" },
+    { "path": "frontend/lib/jobDiagnostics.ts" },
+    { "path": "frontend/lib/useAssets.ts" },
+    { "path": "frontend/test/u3AssetViewer.test.tsx" },
+    { "path": "frontend/test/u3BffAssetBranch.test.ts" },
+    { "path": "frontend/test/u3UnsubscribePage.test.tsx" },
+    { "path": "frontend/test/u3ViewerMinimap.test.tsx" },
+    { "path": "frontend/test/u3ZoomPanControls.test.tsx" }
+  ]
+}

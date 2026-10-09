@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "incremental": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "components/DocModelViewer.tsx",
+    "components/AssetViewer.tsx",
+    "components/ZoomPanControls.tsx",
+    "components/UnsubscribePage.tsx",
+    "components/PaperDetailIsland.tsx",
+    "components/TranslationView.tsx",
+    "components/FullTranslationIsland.tsx",
+    "lib/useAssets.ts",
+    "lib/api/assetSrc.ts",
+    "lib/api/apiClient.ts",
+    "lib/api/contentJobApi.ts",
+    "app/bff/[...path]/route.ts"
+  ],
+  "exclude": ["node_modules", "e2e", "test", ".next"]
+}

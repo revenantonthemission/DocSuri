@@ -2,7 +2,7 @@
 
 // DocModelViewer (자체 리치뷰, D4/Q5=C, BR-SF-11) — renders the structured doc-model:
 // nested sections + TOC, MathJax formulas, structured tables (DATA, not crops — D8), and
-// webp figures joined to the /assets signed urls by assetId (SEC-9 — the doc-model is
+// webp figures joined to the /assets same-origin BFF paths by assetId (SEC-9 — the doc-model is
 // url-free). OA-license-gated: license_unavailable → arXiv link-out. External text is
 // escaped by React (BR-SF-9). Replaces the legacy plain-text full-text viewer.
 //
@@ -28,6 +28,14 @@ import { MathDisplay, renderInlineMath, type MathMacros } from '@/lib/renderMath
 import { StateView } from './StateView';
 import { ScrollToTopButton } from './ScrollToTopButton';
 import { recordReadCompleted } from '@/lib/personalization';
+import { emitJobDiagnostic } from '@/lib/jobDiagnostics';
+import {
+  ZoomPanControls,
+  dragPan,
+  FIT_TRANSFORM,
+  type ZoomPanMetrics,
+  type ZoomPanTransform,
+} from './ZoomPanControls';
 import styles from './DocModelViewer.module.css';
 
 interface DocModelViewerProps {
@@ -54,7 +62,7 @@ export function DocModelViewer({
 
   useEffect(() => {
     void load({ paperId, version });
-    void loadAssets(paperId, version); // figures join these signed urls by assetId
+    void loadAssets(paperId, version); // figures join these same-origin BFF paths by assetId
   }, [paperId, version, load, loadAssets]);
 
   const assetsById = useMemo(() => {
@@ -184,6 +192,12 @@ export function DocModelBody({
   // Tap-to-enlarge: figures/tables/formulas are shown fit-to-width inline and open a
   // scaled-to-fit overlay centred in the viewport (no scrollbars).
   const [zoom, setZoom] = useState<React.ReactNode | null>(null);
+  // New asset identity, a cleared asset map (known access loss) or a new doc
+  // model clears the open overview — it must never retain a previous owner's
+  // image (interaction spec: new asset/unmount/access loss clears transforms).
+  useEffect(() => {
+    setZoom(null);
+  }, [docModel, assetsById]);
   // Author macros from the e-print preamble (meta.macros) — handed to every KaTeX render so
   // custom commands resolve instead of showing as red unsupported-command errors.
   const macros = docModel.meta.macros;
@@ -259,6 +273,66 @@ function DocTOC({ sections, macros }: { sections: DocSection[]; macros?: MathMac
 // keyboard/screen-reader access. The button is `pointer-events: none` (see CSS) so it never blocks
 // touch scroll; it sits as a SIBLING (not a wrapper) so the block's own markup (table cells, figure
 // alt, formula) stays directly in the accessibility tree (never swallowed — the D1 regression).
+// Asset image with skeleton loading, a bounded decoded-readiness measurement and
+// a controlled generic failure state. An image error event never reveals an HTTP
+// status, so the failure copy stays generic; the caption/text equivalent outside
+// this component is preserved in every state.
+function FigureImage({ src, alt }: { src: string; alt: string }) {
+  const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const mountedAtRef = useRef(Date.now());
+  const reportedRef = useRef(false);
+
+  useEffect(() => {
+    setState('loading');
+    mountedAtRef.current = Date.now();
+    reportedRef.current = false;
+  }, [src]);
+
+  const report = (outcome: 'ready' | 'failed') => {
+    if (reportedRef.current) return;
+    reportedRef.current = true;
+    emitJobDiagnostic(
+      outcome === 'ready'
+        ? { kind: 'asset', outcome, readinessMs: Date.now() - mountedAtRef.current }
+        : { kind: 'asset', outcome },
+    );
+  };
+
+  if (state === 'failed') {
+    return (
+      <span role="img" className={styles.assetFallback} aria-label="이미지를 표시할 수 없습니다">
+        이미지를 표시할 수 없습니다
+      </span>
+    );
+  }
+  return (
+    <span className={styles.assetFrame} data-state={state}>
+      {state === 'loading' ? (
+        <>
+          <span className={styles.assetSkeleton} aria-hidden="true" />
+          <span role="status" className="sr-only">
+            이미지 불러오는 중
+          </span>
+        </>
+      ) : null}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        className={state === 'loading' ? styles.assetLoading : undefined}
+        onLoad={() => {
+          setState('ready');
+          report('ready');
+        }}
+        onError={() => {
+          setState('failed');
+          report('failed');
+        }}
+      />
+    </span>
+  );
+}
+
 function Zoomable({ onZoom, children }: { onZoom: () => void; children: React.ReactNode }) {
   return (
     <div className={styles.zoomable} onClick={onZoom}>
@@ -307,7 +381,9 @@ function BlockZoomOverlay({
   // The element that had focus before the overlay opened (e.g. the ZoomButton that
   // triggered it) — restored on close (D2, BR-U5-20).
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
-  const [scale, setScale] = useState(1);
+  const [fit, setFit] = useState(1);
+  const [dims, setDims] = useState({ vw: 0, vh: 0, cw: 0, ch: 0 });
+  const [transform, setTransform] = useState<ZoomPanTransform>(FIT_TRANSFORM);
 
   useLayoutEffect(() => {
     const content = contentRef.current;
@@ -319,7 +395,8 @@ function BlockZoomOverlay({
       const availH = overlay.clientHeight * 0.9;
       const w = content.scrollWidth || 1;
       const h = content.scrollHeight || 1;
-      setScale(Math.min(availW / w, availH / h, _ZOOM_MAX_SCALE));
+      setFit(Math.min(availW / w, availH / h, _ZOOM_MAX_SCALE));
+      setDims({ vw: overlay.clientWidth, vh: overlay.clientHeight, cw: w, ch: h });
     };
     measure();
     // The content's natural size settles after the first paint — a formula reflows when the
@@ -331,6 +408,12 @@ function BlockZoomOverlay({
     ro.observe(content);
     ro.observe(overlay);
     return () => ro.disconnect();
+  }, [children]);
+
+  // A new asset (new children) clears the transform and the overview — the
+  // viewer must never retain a previous block's (or owner's) transform state.
+  useEffect(() => {
+    setTransform(FIT_TRANSFORM);
   }, [children]);
 
   useEffect(() => {
@@ -374,11 +457,49 @@ function BlockZoomOverlay({
     };
   }, []);
 
+  const metrics: ZoomPanMetrics = {
+    viewport: { width: dims.vw, height: dims.vh },
+    content: { width: dims.cw * fit, height: dims.ch * fit },
+  };
+  const dragRef = useRef<{ x: number; y: number; t: ZoomPanTransform } | null>(null);
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Dragging pans only when enlarged; a plain tap still closes via the backdrop.
+    if (e.button !== 0 || transform.scale <= 1) return;
+    dragRef.current = { x: e.clientX, y: e.clientY, t: transform };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = dragRef.current;
+    if (!start || transform.scale <= 1) return;
+    setTransform(dragPan(start.t, { x: start.x, y: start.y }, { x: e.clientX, y: e.clientY }, metrics));
+  };
+  // Pointer cancellation ends the drag only — it never activates another action.
+  const endDrag = () => {
+    dragRef.current = null;
+  };
+  // Minimap geometry (decorative, aria-hidden): the same content at a small
+  // scale plus a rectangle for the visible region.
+  const effScale = fit * transform.scale || 1;
+  const minimapScale = Math.min(
+    (dims.vw * 0.22) / (dims.cw * fit || 1),
+    (dims.vh * 0.22) / (dims.ch * fit || 1),
+    1,
+  );
+  const rectW = Math.min(100, (dims.vw / (dims.cw * effScale || 1)) * 100);
+  const rectH = Math.min(100, (dims.vh / (dims.ch * effScale || 1)) * 100);
+  const rectLeft = Math.min(
+    100 - rectW,
+    Math.max(0, 50 - (transform.x / (dims.cw * effScale || 1)) * 100 - rectW / 2),
+  );
+  const rectTop = Math.min(
+    100 - rectH,
+    Math.max(0, 50 - (transform.y / (dims.ch * effScale || 1)) * 100 - rectH / 2),
+  );
+
   // Portalled to body: the backdrop covers the whole viewport and the content centres on the
   // user's screen wherever they have scrolled to.
   if (typeof document === 'undefined') return null;
-  return createPortal(
-    <div
+  return createPortal(    <div
       ref={overlayRef}
       className={styles.zoomOverlay}
       role="dialog"
@@ -400,11 +521,35 @@ function BlockZoomOverlay({
       <div
         ref={contentRef}
         className={styles.zoomContent}
-        style={{ transform: `scale(${scale})` }}
+        data-testid="zoom-content"
+        style={{
+          transform: `translate(${transform.x}px, ${transform.y}px) scale(${fit * transform.scale})`,
+          ...(transform.scale > 1 ? { touchAction: 'none' as const } : {}),
+        }}
         onClick={(e) => e.stopPropagation()}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
       >
         {children}
       </div>
+      {dims.vw > 0 && (
+        <div className={styles.zoomControlsBar} onClick={(e) => e.stopPropagation()}>
+          <ZoomPanControls transform={transform} metrics={metrics} onChange={setTransform} />
+        </div>
+      )}
+      {transform.scale > 1 && dims.cw > 0 && (
+        <div className={styles.zoomMinimap} aria-hidden="true" inert data-testid="zoom-minimap">
+          <div className={styles.zoomMinimapInner} style={{ transform: `scale(${minimapScale})` }}>
+            {children}
+          </div>
+          <div
+            className={styles.zoomViewportRect}
+            style={{ width: `${rectW}%`, height: `${rectH}%`, left: `${rectLeft}%`, top: `${rectTop}%` }}
+          />
+        </div>
+      )}
     </div>,
     document.body,
   );
@@ -548,7 +693,7 @@ function BlockView({
                 onZoom(<img src={assetSrc} alt={alt} className={styles.zoomImg} />)
               }
             >
-              <img src={assetSrc} alt={alt} loading="lazy" />
+              <FigureImage src={assetSrc} alt={alt} />
             </Zoomable>
           ) : null}
           {caption(block.anchorLabel, block.caption, macros)}
@@ -604,7 +749,7 @@ function TableBlockView({
   const showImage = (override ?? !hasRows) && Boolean(assetSrc);
   const image =
     assetSrc != null ? (
-      <img src={assetSrc} alt={block.anchorLabel ?? '표 원본 이미지'} loading="lazy" />
+      <FigureImage src={assetSrc} alt={block.anchorLabel ?? '표 원본 이미지'} />
     ) : null;
   const table = (
     <table className={styles.table}>

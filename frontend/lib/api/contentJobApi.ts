@@ -177,21 +177,17 @@ export function subscribeJobEvents(
   return () => source.close();
 }
 
-// --- Legacy (U3-owned) helpers -------------------------------------------------
-// The asset helpers below still follow the pre-F07 redirect flow and are
-// migrated with AssetViewer under u3-secure-assets (SECURITY-08). They are
-// intentionally untouched by the u1 completion pass.
+// --- Legacy (U1-adjacent) helpers ---------------------------------------------
+// The asset-token/redirect helpers followed the pre-F07 presigned redirect
+// flow and were retired with AssetViewer under u3-secure-assets
+// (SECURITY-08): asset delivery now runs through the same-origin
+// `/bff/api/papers/{paperId}/assets/{assetId}` hop only.
 
 export interface TranslateResponse {
   assetId?: string;
   jobId?: string;
   state: string;
   source: 'cache' | 'job';
-}
-
-export interface AssetTokenResponse {
-  token: string;
-  expiresIn: number;
 }
 
 /** @deprecated superseded by content-job submit with taskType 'translate'. */
@@ -208,29 +204,4 @@ export async function translate(input: {
   });
   if (!res.ok) throw normalizeHttpError(res.status, await readErrorBody(res));
   return (await res.json()) as TranslateResponse;
-}
-
-/** @deprecated retireAssetRedirect: U3 moves delivery to `/bff/api/papers/{paperId}/assets/{assetId}`. */
-export async function getAssetUrl(assetId: string, token: string): Promise<string> {
-  const res = await jobFetch(`/bff/api/content-jobs/assets/${assetId}?token=${encodeURIComponent(token)}`, {
-    redirect: 'manual', // Don't follow redirect automatically
-  });
-  if (res.status === 307) {
-    return res.headers.get('Location') || '';
-  }
-  throw new UserFacingError('unknown');
-}
-
-/** @deprecated retired with the presigned asset flow (SECURITY-08). */
-export async function issueAssetToken(
-  assetId: string,
-  action: 'view' = 'view',
-): Promise<AssetTokenResponse> {
-  const res = await jobFetch(`${CONTENT_JOB_API_BASE}/assets/${assetId}/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action }),
-  });
-  if (!res.ok) throw normalizeHttpError(res.status, await readErrorBody(res));
-  return (await res.json()) as AssetTokenResponse;
 }

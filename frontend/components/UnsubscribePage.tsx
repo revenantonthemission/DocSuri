@@ -13,7 +13,7 @@ type UnsubscribeStateCode = Extract<UnsubscribeState, { status: 'error' }>['code
 
 type UnsubscribeState = 
   | { status: 'verifying' }
-  | { status: 'success'; assetId: string }
+  | { status: 'success'; assetId: string; paperId?: string }
   | { status: 'error'; code: UnsubscribeErrorCode; message: string };
 
 export function UnsubscribePage() {
@@ -31,10 +31,14 @@ export function UnsubscribePage() {
     const verify = async () => {
       try {
         const res = await fetch(`/api/unsubscribe?token=${encodeURIComponent(tokenParam)}`);
-        const data = (await res.json()) as { status?: string; assetId?: string };
+        const data = (await res.json()) as { status?: string; assetId?: string; paperId?: string };
 
         if (res.ok && data.status === 'success' && typeof data.assetId === 'string') {
-          setState({ status: 'success', assetId: data.assetId });
+          setState({
+            status: 'success',
+            assetId: data.assetId,
+            ...(typeof data.paperId === 'string' ? { paperId: data.paperId } : {}),
+          });
         } else if (res.status === 400) {
           setState({ status: 'error', code: 'MALFORMED', message: '잘못된 토큰 형식입니다.' });
         } else if (res.status === 401) {
@@ -66,8 +70,8 @@ export function UnsubscribePage() {
         <div className="text-green-600 text-4xl mb-4">✓</div>
         <h1 className="text-2xl font-bold mb-2">수신 해지 완료</h1>
         <p className="text-gray-600 mb-4">이메일 수신이 성공적으로 해지되었습니다.</p>
-        {state.assetId && (
-          <AssetViewer assetId={state.assetId} token="" className="mt-4" />
+        {state.assetId && state.paperId && (
+          <AssetViewer paperId={state.paperId} assetId={state.assetId} className="mt-4" />
         )}
       </div>
     );

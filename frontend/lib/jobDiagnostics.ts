@@ -23,6 +23,12 @@ export type JobDiagnosticEvent =
       /** Bounded measurement point: mount-to-first-committed-status latency in ms. */
       latencyMs?: number;
     }
+  | {
+      kind: 'asset';
+      outcome: 'ready' | 'failed';
+      /** Bounded measurement point: image mount-to-decoded readiness in ms (ready only). */
+      readinessMs?: number;
+    }
   | { kind: 'terminal'; state: 'COMPLETED' | 'FAILED' | 'ABSTAINED' }
   | {
       kind: 'result-read';
@@ -64,6 +70,15 @@ function sanitize(event: JobDiagnosticEvent): JobDiagnosticEvent {
     case 'status': {
       const latencyMs = boundedLatency(event.latencyMs);
       return latencyMs === null ? { kind: 'status' } : { kind: 'status', latencyMs };
+    }
+    case 'asset': {
+      if (event.outcome === 'ready') {
+        const readinessMs = boundedLatency(event.readinessMs);
+        return readinessMs === null
+          ? { kind: 'asset', outcome: 'ready' }
+          : { kind: 'asset', outcome: 'ready', readinessMs };
+      }
+      return { kind: 'asset', outcome: 'failed' };
     }
     case 'terminal':
       return { kind: 'terminal', state: event.state };

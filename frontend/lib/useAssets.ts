@@ -1,6 +1,6 @@
 'use client';
 
-// useAssets (FR-17) — fetches the figure/table manifest for a paper (signed URLs only).
+// useAssets (FR-17) — fetches the figure/table manifest for a paper (same-origin BFF delivery paths only).
 // real-first BFF transport, mock in dev. Load-on-demand with per-(paper,version) dedup
 // so the detail island can trigger it once.
 import { useCallback, useRef, useState } from 'react';

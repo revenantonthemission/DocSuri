@@ -1,0 +1,333 @@
+{
+  "stage": "code-generation",
+  "unit": "u3-secure-assets",
+  "upstream_ids": [
+    "US5.1",
+    "US5.2",
+    "US5.3",
+    "NFR5",
+    "NFR7",
+    "NFR9",
+    "NFR10",
+    "NFR11",
+    "NFR12",
+    "AC3.2.1",
+    "AC3.2.2",
+    "AC3.2.3",
+    "AC3.2.4",
+    "AC3.2.5",
+    "AC5.1.1",
+    "AC5.1.2",
+    "AC5.1.3",
+    "AC5.1.4",
+    "AC5.1.5",
+    "AC5.2.1",
+    "AC5.2.2",
+    "AC5.2.3",
+    "AC5.2.4",
+    "AC5.2.5",
+    "AC5.3.1",
+    "AC5.3.2",
+    "AC5.3.3",
+    "AC5.3.4",
+    "AC5.3.5",
+    "AC6.1.1",
+    "AC6.1.2",
+    "AC6.1.3",
+    "AC6.1.4",
+    "AC6.1.5",
+    "AC6.1.6",
+    "AC6.1.7",
+    "AC6.2.1",
+    "AC6.2.2",
+    "AC6.2.3",
+    "AC6.2.4",
+    "AC6.2.5",
+    "AC6.3.1",
+    "AC6.3.2",
+    "AC6.3.3",
+    "AC6.3.4",
+    "AC6.3.5",
+    "AC6.3.6",
+    "AC6.3.7",
+    "AC8.2.1",
+    "AC8.2.2",
+    "AC8.2.3",
+    "AC8.2.4",
+    "AC8.2.5"
+  ],
+  "partial_evidence": [
+    "frontend/test/u3BffAssetBranch.test.ts",
+    "frontend/test/u3AssetViewer.test.tsx",
+    "frontend/test/u3ZoomPanControls.test.tsx",
+    "frontend/test/u3ViewerMinimap.test.tsx",
+    "frontend/test/u3UnsubscribePage.test.tsx"
+  ],
+  "coverage": [
+    {
+      "id": "US5.1",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "US5.2",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "US5.3",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "NFR5",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "NFR7",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "NFR9",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "NFR10",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "NFR11",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "NFR12",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC3.2.1",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC3.2.2",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC3.2.3",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC3.2.4",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC3.2.5",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.1.1",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.1.2",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.1.3",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.1.4",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.1.5",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.2.1",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.2.2",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.2.3",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.2.4",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.2.5",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.3.1",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.3.2",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.3.3",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.3.4",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC5.3.5",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.1.1",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.1.2",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.1.3",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.1.4",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.1.5",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.1.6",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.1.7",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.2.1",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.2.2",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.2.3",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.2.4",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.2.5",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.3.1",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.3.2",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.3.3",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.3.4",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.3.5",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.3.6",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC6.3.7",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC8.2.1",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC8.2.2",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC8.2.3",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC8.2.4",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    },
+    {
+      "id": "AC8.2.5",
+      "status": "GAP",
+      "target": "code-summary.md#known-remaining-obligations-not-complete-not-counted-as-done"
+    }
+  ]
+}

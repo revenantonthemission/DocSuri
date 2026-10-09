@@ -210,9 +210,9 @@ async function proxyEventStream(
 
 // figure/table 원본 이미지(REM-2 F07 / SECURITY-8) — `/api/papers/<id>/assets/<assetId>`.
 // Transport는 응답 본문을 항상 JSON으로 파싱하므로(이미지 body면 null이 된다) 이 홉만 직접 fetch한다.
-function isAssetImageRequest(method: TransportMethod, path: string[]): boolean {
+function isAssetImageRequest(method: TransportMethod | 'HEAD', path: string[]): boolean {
   return (
-    method === 'GET' &&
+    (method === 'GET' || method === 'HEAD') &&
     path.length === 5 &&
     path[0] === 'api' &&
     path[1] === 'papers' &&
@@ -220,10 +220,37 @@ function isAssetImageRequest(method: TransportMethod, path: string[]): boolean {
   );
 }
 
-function notFoundImage(): NextResponse {
+// A decoded catch-all segment may carry a `/` (Next decodes %2F before the
+// handler sees it), an empty string, `.`/`..`, a backslash or control bytes.
+// Joining such a segment into the upstream URL can escape the intended route
+// (`/api/papers/a/../../../foo/assets/x` resolves to `/foo/assets/x`), so the
+// route refuses every non-canonical segment before any upstream fetch.
+function isNonCanonicalSegment(segment: string): boolean {
+  return (
+    segment.length === 0 ||
+    segment === '.' ||
+    segment === '..' ||
+    /[/\\\u0000-\u001f\u007f]/.test(segment)
+  );
+}
+
+// 실제 업스트림 응답의 세션 Set-Cookie만 별도로 relay한다 — 오류 응답이어도 relay하고,
+// 타임아웃처럼 실제 응답이 없을 때는 아무 쿠키도 만들어내지 않는다(계약 C5).
+function relaySetCookies(from: Response, to: NextResponse): void {
+  const getSetCookie = (from.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie;
+  const cookies = getSetCookie?.call(from.headers) ?? [];
+  const fallbackCookie = from.headers.get('set-cookie');
+  for (const setCookie of cookies.length ? cookies : fallbackCookie ? [fallbackCookie] : []) {
+    to.headers.append('set-cookie', setCookie);
+  }
+}
+
+function notFoundImage(from?: Response): NextResponse {
   // 이미지 실패는 404로 접는다 — 뷰어 쪽이 "이미지 없음"으로 자연스럽게 degrade하고,
-  // 게이트웨이 주소·본문·Set-Cookie 같은 내부 정보가 5xx 본문으로 새어나가지 않는다.
-  return new NextResponse(null, { status: 404, headers: { 'cache-control': 'no-store' } });
+  // 게이트웨이 주소·본문·Location 같은 내부 정보가 5xx 본문으로 새어나가지 않는다.
+  const out = new NextResponse(null, { status: 404, headers: { 'cache-control': 'no-store' } });
+  if (from) relaySetCookies(from, out);
+  return out;
 }
 
 // U7이 object storage를 **서버에서** 읽어 돌려주는 같은 출처 이미지 relay.
@@ -242,13 +269,17 @@ async function proxyAssetImage(req: NextRequest, upstreamPath: string): Promise<
   const headers = new Headers({ accept: 'image/*' });
   const cookie = req.headers.get('cookie');
   if (cookie) headers.set('cookie', cookie);
+  const isHead = req.method === 'HEAD';
 
   let res: Response;
   try {
     res = await fetch(`${baseUrl}${upstreamPath}`, {
-      method: 'GET',
+      method: isHead ? 'HEAD' : 'GET',
       headers,
       cache: 'no-store',
+      // 3xx를 따라가면 Location이 object store URL이 되어 브라우저가 그 주소를 알게 된다.
+      // 명시적 리다이렉트 거부(manual)로 3xx 응답 자체를 404로 접는다(계약 C5).
+      redirect: 'manual',
       signal: AbortSignal.timeout(ASSET_IMAGE_TIMEOUT_MS),
     });
   } catch {
@@ -256,34 +287,37 @@ async function proxyAssetImage(req: NextRequest, upstreamPath: string): Promise<
     // throw 대신 404 degrade — SSE 홉과 달리 사용자에게 오류 UI를 띄우지 않는다.
     return notFoundImage();
   }
-  // 3xx를 그대로 넘기면 Location이 object store URL이 되어 브라우저가 그 주소를 알게 된다.
-  // 리다이렉트를 따라가는 fetch도 마찬가지 — 업스트림이 200 이미지일 때만 통과시킨다.
-  if (res.status !== 200) return notFoundImage();
+  // 200 이미지일 때만 통과시킨다. 실제 업스트림 응답이면 세션 Set-Cookie만 별도 relay한다.
+  if (res.status !== 200) return notFoundImage(res);
   const contentType = res.headers.get('content-type')?.split(';', 1)[0].trim() ?? '';
   // <img> 컨텍스트에 JSON/HTML이 들어오면 깨진 이미지거나 content-type confusion이 된다.
-  if (!contentType.startsWith('image/')) return notFoundImage();
+  if (!contentType.startsWith('image/')) return notFoundImage(res);
 
-  const out = new NextResponse(res.body, {
+  const out = new NextResponse(isHead ? null : res.body, {
     status: 200,
     headers: {
       'content-type': contentType,
-      'cache-control': res.headers.get('cache-control') ?? 'private, no-store',
+      // 업스트림이 침묵하면 계약 상수값(private, max-age=60)으로 폴백한다.
+      'cache-control': res.headers.get('cache-control') ?? 'private, max-age=60',
       // 스니핑으로 이미지가 아닌 것이 <img>로 렌더링되는 걸 막는다.
       'x-content-type-options': 'nosniff',
     },
   });
-  const getSetCookie = (res.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie;
-  const cookies = getSetCookie?.call(res.headers) ?? [];
-  const fallbackCookie = res.headers.get('set-cookie');
-  for (const setCookie of cookies.length ? cookies : fallbackCookie ? [fallbackCookie] : []) {
-    out.headers.append('set-cookie', setCookie);
-  }
+  relaySetCookies(res, out);
   return out;
 }
 
 async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {
   const method = req.method as TransportMethod;
-  const upstreamPath = `/${path.join('/')}${req.nextUrl.search}`;
+  if (path.some(isNonCanonicalSegment)) {
+    // The asset hop degrades to its empty 404; every other route is a malformed request.
+    return isAssetImageRequest(method, path)
+      ? notFoundImage()
+      : NextResponse.json({ message: '잘못된 요청 형식입니다.' }, { status: 400 });
+  }
+  // Re-encode each segment so the upstream URL keeps the exact segment
+  // boundaries the client sent (no decoded `/`, `?` or `#` rewriting the path).
+  const upstreamPath = `/${path.map(encodeURIComponent).join('/')}${req.nextUrl.search}`;
 
   if (isAssetImageRequest(method, path)) {
     return proxyAssetImage(req, upstreamPath);
@@ -384,6 +418,9 @@ async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {
 type Ctx = { params: Promise<{ path: string[] }> };
 
 export async function GET(req: NextRequest, ctx: Ctx): Promise<NextResponse> {
+  return proxy(req, (await ctx.params).path);
+}
+export async function HEAD(req: NextRequest, ctx: Ctx): Promise<NextResponse> {
   return proxy(req, (await ctx.params).path);
 }
 export async function POST(req: NextRequest, ctx: Ctx): Promise<NextResponse> {

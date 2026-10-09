@@ -1,63 +1,37 @@
-/** AssetViewer — presigned URL로 이미지/자산 렌더링 */
+/** AssetViewer — authorized asset rendering through the same-origin BFF (SECURITY-08) */
 
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getAssetUrl } from '@/lib/api/contentJobApi';
+import { browserAssetSrc } from '@/lib/api/assetSrc';
+
+// The viewer renders the authorized bytes served by
+// `/bff/api/papers/{paperId}/assets/{assetId}` — the hop carries the session
+// cookie server-side and the browser never learns a storage URL or a token.
+// There is no presigned/token prop anymore: delivery authorization is the
+// server's re-check on every request.
 
 type AssetViewerProps = {
+  paperId: string;
   assetId: string;
-  token: string;
   className?: string;
   onError?: (error: Error) => void;
   onLoad?: () => void;
 };
 
-export function AssetViewer({ assetId, token, className = '', onError, onLoad }: AssetViewerProps) {
-  const [src, setSrc] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+export function AssetViewer({ paperId, assetId, className = '', onError, onLoad }: AssetViewerProps) {
+  const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    let cancelled = false;
+    setState('loading');
+  }, [paperId, assetId, attempt]);
 
-    async function loadAsset() {
-      try {
-        setLoading(true);
-        const url = await getAssetUrl(assetId, token);
-        if (!cancelled) {
-          setSrc(url);
-          setLoading(false);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          const error = err instanceof Error ? err : new Error(String(err));
-          setError(error);
-          setLoading(false);
-        }
-      }
-    }
+  const src = browserAssetSrc(
+    `/api/papers/${encodeURIComponent(paperId)}/assets/${encodeURIComponent(assetId)}`,
+  );
 
-    loadAsset();
-    return () => { cancelled = true; };
-  }, [assetId, token]);
-
-  if (loading) {
-    return (
-      <div className={`relative aspect-video bg-gray-100 rounded-lg ${className}`}>
-        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-          <div className="animate-spin h-8 w-8 text-blue-600">
-            <svg className="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
+  if (state === 'failed') {
     return (
       <div className={`relative aspect-video bg-gray-100 rounded-lg ${className}`}>
         <div className="absolute inset-0 flex items-center justify-center text-red-500">
@@ -67,7 +41,8 @@ export function AssetViewer({ assetId, token, className = '', onError, onLoad }:
             </svg>
             <p className="text-sm">자산 로드 실패</p>
             <button
-              onClick={() => window.location.reload()}
+              type="button"
+              onClick={() => setAttempt((n) => n + 1)}
               className="mt-2 text-xs text-blue-600 hover:underline"
             >
               다시 시도
@@ -80,12 +55,29 @@ export function AssetViewer({ assetId, token, className = '', onError, onLoad }:
 
   return (
     <div className={`relative aspect-video bg-gray-100 rounded-lg overflow-hidden ${className}`}>
+      {state === 'loading' && (
+        <div className="absolute inset-0 flex items-center justify-center text-gray-400" aria-hidden="true">
+          <div className="animate-spin h-8 w-8 text-blue-600">
+            <svg className="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          </div>
+        </div>
+      )}
       <img
-        src={src!}
-        alt="Asset"
-        className="w-full h-full object-contain"
-        onError={() => { onError?.(new Error('Failed to load image')); }}
-        onLoad={() => { onLoad?.(); }}
+        key={`${paperId}|${assetId}|${attempt}`}
+        src={src}
+        alt="자산 이미지"
+        className={`w-full h-full object-contain ${state === 'loading' ? 'opacity-0' : ''}`}
+        onError={() => {
+          setState('failed');
+          onError?.(new Error('Failed to load image'));
+        }}
+        onLoad={() => {
+          setState('ready');
+          onLoad?.();
+        }}
       />
     </div>
   );

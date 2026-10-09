@@ -209,8 +209,8 @@ This current-attempt decision covers `code-generation-plan.md`, its unchanged co
 
 The current tool-produced approval/source tags are recorded here before presentation. The historical tags/answer above remain prior provenance and are not reused as current authority.
 
-[Approval Fingerprint]: sha256:v3:bdcce478a0c60fef225b0412e178a9d543bbf143f83b54536c6c2294cd46dae4
-[Planned Source]: 1d2b8570897baa070be0c404f252239d68c91d1af53283ddab3f040d06be1729
+[Approval Fingerprint]: sha256:v3:479f9a62197f6ffe7b3150e29e60adf27cc695ad9aef4f834173534fb6ecb940
+[Planned Source]: f15e575aa90973275e732081a343b46014dda8f9f5be35f17d14b6c4bffa64fc
 
 - Approve Plan — Authorize developer implementation of this exact current plan and scoped test instructions through its protected receipt; required focused SQL review, qualified realm/resources and separate operational/checkpoint authorizations remain required.
 - Request Changes — Revise the plan or test instructions before implementation.

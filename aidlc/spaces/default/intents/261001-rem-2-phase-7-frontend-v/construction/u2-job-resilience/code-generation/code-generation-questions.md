@@ -28,8 +28,8 @@ This current-attempt decision covers `code-generation-plan.md`, its embedded com
 
 The current tool-produced approval/source tags are recorded here before presentation.
 
-[Approval Fingerprint]: sha256:v3:cfe13564bed14a747801b5672aa145cc00a966459443002af6d926fa8821b3b2
-[Planned Source]: 1d2b8570897baa070be0c404f252239d68c91d1af53283ddab3f040d06be1729
+[Approval Fingerprint]: sha256:v3:e06536ab619bd0750b9b477232c99e7e8e12e319a87b776ab025193296e6f1d1
+[Planned Source]: f15e575aa90973275e732081a343b46014dda8f9f5be35f17d14b6c4bffa64fc
 
 - Approve Plan — Authorize developer implementation of this exact current plan and scoped test instructions through its protected receipt.
 - Request Changes — Revise the plan or test instructions before implementation.
