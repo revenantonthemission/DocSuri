@@ -31,17 +31,6 @@ afterEach(() => {
   clearJobDiagnostics();
 });
 
-async function figureImg(): Promise<HTMLElement> {
-  return await waitFor(
-    () => {
-      const el = screen.getAllByRole('img').find((e) => e.tagName === 'IMG');
-      expect(el).toBeTruthy();
-      return el!;
-    },
-    { timeout: 5000 },
-  );
-}
-
 // Non-awaiting lookup for act-and-retry loops: under load the async mock
 // transport can re-render the figure subtree and detach a previously resolved
 // node, so every attempt must re-resolve the CURRENT element before acting.
