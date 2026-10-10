@@ -2,6 +2,10 @@
 
 Date: 2026-10-11 (Asia/Seoul)
 
+Basis: the updated feasibility summary was confirmed with “Looks correct”,
+including C-13's $0, free-or-local constraint. This register reflects that
+confirmation and awaits assessment approval.
+
 ## Interpretation and authority
 
 Confirmed constraints below come from the approved [intent-statement](../intent-capture/intent-statement.md)

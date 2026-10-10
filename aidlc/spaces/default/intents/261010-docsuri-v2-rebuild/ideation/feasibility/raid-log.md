@@ -2,6 +2,10 @@
 
 Date: 2026-10-11 (Asia/Seoul)
 
+Basis: the updated feasibility summary was confirmed with “Looks correct”,
+including the $0, free-or-local constraint. The risks and evidence gaps below
+remain open; summary confirmation does not close them.
+
 ## Reading this log
 
 RAID means risks, assumptions, issues and dependencies. A risk is a possible

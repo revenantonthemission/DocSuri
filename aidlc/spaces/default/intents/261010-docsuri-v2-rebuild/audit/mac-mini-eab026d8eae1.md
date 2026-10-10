@@ -1559,3 +1559,347 @@
 **Summary Authorization Id**: 693070abc949bfdf2813b818774ed5e6198200e42e2658f1506fa660a2003dad
 
 ---
+
+## Decision Recorded
+**Timestamp**: 2026-10-10T22:44:37Z
+**Event**: DECISION_RECORDED
+**Stage**: feasibility
+**Decision**: Which type best describes the added budget note? The budget constraint is already applied; this choice classifies the reusable note.
+**Options**: Interpretation,Deviation,Tradeoff,Open question
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-10T22:45:40Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-10T22:46:05Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-learnings-questions.md
+**Context**: ideation > feasibility > feasibility-learnings-questions.md
+**Summary Authorization Id**: 693070abc949bfdf2813b818774ed5e6198200e42e2658f1506fa660a2003dad
+
+---
+
+## Question Answered
+**Timestamp**: 2026-10-10T22:46:06Z
+**Event**: QUESTION_ANSWERED
+**Stage**: feasibility
+**Details**: Interpretation
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_2843f90ea39d445bbcb20877fa3151fa\",0]","question":"Your $0, free-or-local constraint is already applied and committed. How should the reusable note be classified? Interpretation records a decision; Deviation records a process change; Tradeoff records a compromise; Open question records something to investigate.","answer":"Interpretation"}]\n</send_user_message_question_reply>
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-10T22:46:19Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/learnings-feasibility-selections.json
+**Context**: ideation > feasibility > learnings-feasibility-selections.json
+**Summary Authorization Id**: 693070abc949bfdf2813b818774ed5e6198200e42e2658f1506fa660a2003dad
+
+---
+
+## Rule Learned
+**Timestamp**: 2026-10-10T22:46:19Z
+**Event**: RULE_LEARNED
+**Stage**: feasibility
+**Candidate-ID**: user-addition-feasibility-zero-budget
+**Content-Hash**: 8b97e6556b76d33fa4e38c3faa2ca4217b7aa1760d372575de50908d31dd9781
+**Destination**: <project-dir>/aidlc/spaces/default/memory/project.md
+**Heading**: ## Corrections
+**Source**: user_addition
+
+---
+
+## Session End
+**Timestamp**: 2026-10-10T22:47:22Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a127f8-e969-7291-a1d6-13cbb36d3868 last seen 2026-10-10T22:39:48.358Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-10T22:47:22Z
+**Event**: HUMAN_TURN
+**Session**: 01a127ff-d6f0-75e3-9c43-cfd4ba4905b3
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-10T22:48:27Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-10T22:48:51Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-questions.md
+**Context**: ideation > feasibility > feasibility-questions.md
+**Summary Authorization Id**: 693070abc949bfdf2813b818774ed5e6198200e42e2658f1506fa660a2003dad
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-10T22:48:52Z
+**Event**: DECISION_RECORDED
+**Stage**: feasibility
+**Decision**: Does this all look correct?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-questions.md
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-10T22:50:31Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-10T22:50:46Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-questions.md
+**Context**: ideation > feasibility > feasibility-questions.md
+**Summary Authorization Id**: 693070abc949bfdf2813b818774ed5e6198200e42e2658f1506fa660a2003dad
+
+---
+
+## Summary Confirmation Recorded
+**Timestamp**: 2026-10-10T22:50:46Z
+**Event**: SUMMARY_CONFIRMATION_RECORDED
+**Stage**: feasibility
+**Details**: Looks correct
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-questions.md
+**Questions SHA-256**: e0ef6b83e03ba07e029b6eb315c8f6fa15e4ea57ee53d2ef222537cd559d0b44
+**Hash Scope**: confirmed-content-v2
+**Summary Authorization Id**: 6f01a5ca08ba2d0c60ee534773a3f6a387828887f81ff98e45aaa581c7d15a5c
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-10T22:51:00Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-assessment.md
+**Context**: ideation > feasibility > feasibility-assessment.md
+**Summary Authorization Id**: 6f01a5ca08ba2d0c60ee534773a3f6a387828887f81ff98e45aaa581c7d15a5c
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-10T22:51:00Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/constraint-register.md
+**Context**: ideation > feasibility > constraint-register.md
+**Summary Authorization Id**: 6f01a5ca08ba2d0c60ee534773a3f6a387828887f81ff98e45aaa581c7d15a5c
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-10T22:51:01Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/raid-log.md
+**Context**: ideation > feasibility > raid-log.md
+**Summary Authorization Id**: 6f01a5ca08ba2d0c60ee534773a3f6a387828887f81ff98e45aaa581c7d15a5c
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-10T22:52:02Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-learnings-questions.md
+**Context**: ideation > feasibility > feasibility-learnings-questions.md
+**Summary Authorization Id**: 6f01a5ca08ba2d0c60ee534773a3f6a387828887f81ff98e45aaa581c7d15a5c
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_FIRED
+**Fire id**: 3c02d47b
+**Sensor ID**: required-sections
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-assessment.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_PASSED
+**Fire id**: 3c02d47b
+**Sensor ID**: required-sections
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-assessment.md
+**Duration ms**: 26
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_FIRED
+**Fire id**: ecd613c1
+**Sensor ID**: required-sections
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/constraint-register.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_PASSED
+**Fire id**: ecd613c1
+**Sensor ID**: required-sections
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/constraint-register.md
+**Duration ms**: 25
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_FIRED
+**Fire id**: 5310a138
+**Sensor ID**: required-sections
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/raid-log.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_PASSED
+**Fire id**: 5310a138
+**Sensor ID**: required-sections
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/raid-log.md
+**Duration ms**: 24
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_FIRED
+**Fire id**: ae468686
+**Sensor ID**: required-sections
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-questions.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_PASSED
+**Fire id**: ae468686
+**Sensor ID**: required-sections
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-questions.md
+**Duration ms**: 24
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_FIRED
+**Fire id**: 35b50742
+**Sensor ID**: upstream-coverage
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-assessment.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_PASSED
+**Fire id**: 35b50742
+**Sensor ID**: upstream-coverage
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-assessment.md
+**Duration ms**: 26
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_FIRED
+**Fire id**: efd384e3
+**Sensor ID**: upstream-coverage
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/constraint-register.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_PASSED
+**Fire id**: efd384e3
+**Sensor ID**: upstream-coverage
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/constraint-register.md
+**Duration ms**: 24
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_FIRED
+**Fire id**: a0c29a9b
+**Sensor ID**: upstream-coverage
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/raid-log.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_PASSED
+**Fire id**: a0c29a9b
+**Sensor ID**: upstream-coverage
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/raid-log.md
+**Duration ms**: 25
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_FIRED
+**Fire id**: b1f04107
+**Sensor ID**: upstream-coverage
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-questions.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: SENSOR_PASSED
+**Fire id**: b1f04107
+**Sensor ID**: upstream-coverage
+**Stage slug**: feasibility
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-questions.md
+**Duration ms**: 25
+
+---
+
+## Stage Awaiting Approval
+**Timestamp**: 2026-10-10T22:52:03Z
+**Event**: STAGE_AWAITING_APPROVAL
+**Stage**: feasibility
+
+---

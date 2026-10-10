@@ -2,6 +2,10 @@
 
 Date: 2026-10-11 (Asia/Seoul)
 
+Basis: the updated feasibility summary, including the $0 budget and free/local
+constraint, was confirmed with “Looks correct”. This assessment is saved against
+that confirmation; assessment approval remains a separate decision.
+
 ## Assessment
 
 **Recommendation: proceed with scope definition and evidence gathering, with

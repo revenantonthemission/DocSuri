@@ -1,4 +1,4 @@
-# Feasibility — Notes for future work
+# Feasibility — Note capture record
 
 ## Context
 
@@ -27,4 +27,4 @@ C. Tradeoff — records a compromise
 D. Open question — records something to investigate
 X. Other (please specify)
 
-[Answer]:
+[Answer]: Interpretation

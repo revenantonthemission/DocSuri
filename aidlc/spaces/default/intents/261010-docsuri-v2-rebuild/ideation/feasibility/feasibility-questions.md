@@ -87,12 +87,14 @@ X. Other (please specify)
 - Approved `../intent-capture/intent-statement.md` and its question record.
 - `CONVENTIONS.md` and the user's explicit Git-flow correction.
 
-## Consolidated Summary Confirmation
+## Confirmation history
 
 The summary was originally confirmed with “Looks correct”. The user subsequently
 instructed: “The budget should be $0. Only use free or local stacks.” The budget
-lines below incorporate that explicit correction; the original confirmation is
-retained as history, not represented as a second confirmation of revised text.
+lines below incorporate that explicit correction. The earlier confirmation is
+historical; the user chose to confirm the updated summary again.
+
+## Consolidated Summary Confirmation
 
 - Retain all current capabilities for researchers and engineers, anchored in
   finding, understanding, saving and revisiting a paper. Prioritize stable,
