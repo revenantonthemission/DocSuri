@@ -4,21 +4,30 @@ Date: 2026-10-10 (Asia/Seoul)
 
 ## Status
 
-Update, 2026-10-11: the source correction and regression tests are now implemented
-and verified in an isolated upstream checkout. See
-[runtime verification](runtime-fix/verification.md). Installation was rejected
-by the active workflow's protection hook, so the live rebuild still has not
-advanced. The earlier diagnosis below is retained as historical evidence.
+Update, 2026-10-11: the verified correction was applied to the tracked project
+runtime from an external terminal, after the protection hook refused agent-side
+installation. The corrected source command successfully completed Intent Capture
+using the user's existing `Approve` answer. The audit records `GATE_APPROVED`,
+`STAGE_COMPLETED` for `intent-capture`, and `STAGE_STARTED` for `feasibility` at
+2026-10-10T22:24:00Z (2026-10-11 07:24 Asia/Seoul). The current state is
+`feasibility`, `Running`. See [runtime verification](runtime-fix/verification.md).
 
-The user approved the completed Intent Capture documents and explicitly requested continuing from that approval. The approval is recorded in the audit. The stage transition has not succeeded, and the state remains at `intent-capture`. No additional product or Git-flow approval is needed for this checkpoint.
+All three approved document SHA-256 values still match the pre-continuation
+snapshot. No additional product or Git-flow approval was requested for this
+checkpoint.
 
 `CONVENTIONS.md` is authoritative for Git workflow: working branches merge into `develop` through a GitHub PR; releases promote `develop` to `main`. That decision is persisted in the project rules.
 
-The supported intent-switch command completed, but the subsequent transition still failed. No session-identity environment override, lifecycle-state edit, guard change, or runtime patch was applied as part of this diagnosis.
+At the original diagnosis checkpoint, the supported intent-switch command
+completed, but the subsequent transition still failed. No session-identity
+environment override, lifecycle-state edit, guard change, or runtime patch was
+applied during that diagnosis. The later external source correction and normal
+engine transition are documented separately in the verification report.
 
-## Confirmed source behavior
+## Confirmed source behavior before the repair
 
-The relevant code is in `.codex/tools/aidlc-orchestrate.ts` and `.codex/tools/aidlc-lib.ts`:
+The original code was inspected in `.codex/tools/aidlc-orchestrate.ts` and
+`.codex/tools/aidlc-lib.ts`. Line numbers below refer to the pre-repair source:
 
 1. The orchestrator resolves its workflow selection and stores the resolved session ID in `engineSessionId` (`aidlc-orchestrate.ts:15574`).
 2. `engineChildEnv` copies the process environment and injects `AIDLC_SESSION_OVERRIDE=engineSessionId`, without adding provenance (`aidlc-orchestrate.ts:657`).
@@ -30,9 +39,13 @@ The invoking environment was inspected only for the four relevant variables: `AI
 
 The installed command reports `aidlc 2.11.0 (runtime 2.11.0)`. The source behavior explains the observed parent-success/child-failure pattern. This diagnosis does not prove byte identity between repository source and the installed compiled runtime.
 
-## Correction to evaluate
+## Implemented correction
 
-Preserve validated native or hook identity provenance when constructing child environments. The existing `hookChildEnv` helper (`aidlc-lib.ts:6456-6470`) implements the analogous propagation contract. Do not indiscriminately trust arbitrary overrides or remove the mismatch check.
+`engineChildEnv` now uses the existing `hookChildEnv` helper only when no valid
+inherited override exists, the runtime is Codex, and the native thread ID matches
+the resolved session. Existing hook provenance and conflicting bare-override
+rejection remain intact. The installed project source hash matches the verified
+generated correction.
 
 Focused regression cases for a runtime correction:
 

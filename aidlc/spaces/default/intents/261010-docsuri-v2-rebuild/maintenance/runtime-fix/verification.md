@@ -2,17 +2,21 @@
 
 Date: 2026-10-11 (Asia/Seoul)
 
-## Result and remaining step
+## Result
 
 The correction is implemented and verified in an isolated checkout of the exact
-AI-DLC 2.11.0 source commit used by the installed release. It is **not installed
-in DocSuri**, and the live rebuild has **not advanced** from Intent Capture.
+AI-DLC 2.11.0 source commit used by the installed release. It is now **applied to
+DocSuri's tracked project source**, and the live rebuild has successfully advanced
+from Intent Capture to Feasibility using the user's existing approval.
 
-The active workflow's PreToolUse protection hook rejected copying the corrected
+The active workflow's PreToolUse protection hook initially rejected copying the corrected
 orchestrator into `.codex/tools/aidlc-orchestrate.ts`. Its stated restriction is
 that installed enforcement-file maintenance must use the official updater or an
-external terminal outside the running agent workflow. No bypass, direct state
-edit, session override, or alternative live invocation was attempted afterward.
+external terminal outside the running agent workflow. That refusal was honored.
+Application subsequently completed from an external terminal, and the resulting
+source SHA-256 matches the tested correction. Normal source-runtime commands
+then continued the workflow; no hook bypass, direct state edit, or exported
+session override was used.
 
 The newest published official preview checked,
 `v2.11.1-preview.20261009.1`, still injects the unmarked session override in
@@ -20,10 +24,10 @@ The newest published official preview checked,
 this correction. Source: the upstream GitHub Contents API for
 `core/tools/aidlc-orchestrate.ts` at that exact tag.
 
-The external application command is in `README.md`. It applies the reviewable
-`project.patch` with original and corrected SHA-256 checks. After application,
-use the source runtime to continue through normal lifecycle commands, preserving
-the user's existing approval. No new product or Git-flow approval is needed.
+The external application command is retained in `README.md`. It applies the
+reviewable `project.patch` with original and corrected SHA-256 checks. Workflow
+commands now use `bun .codex/tools/aidlc.ts` from the repository root. The
+machine's separately installed official native runtime was not replaced.
 
 ## Change
 
@@ -44,14 +48,37 @@ unverified override merely because a parent ancestry lookup was unavailable.
 | `bun scripts/package.ts --check` | Deterministic across two independent builds for all seven distributions |
 | Native build | Passed all 56 checks, no failures; VERIFIED, full-runtime, darwin-arm64 |
 | Compiled parent-to-state-child parity | Native identity reached the intended record; conflicting bare override still rejected; unrelated state and audit bytes unchanged |
+| Applied project source | SHA-256 matches the verified generated orchestrator correction |
+| Live Intent Capture approval | Normal source-runtime report completed Intent Capture and started Feasibility at 2026-10-10T22:24:00Z |
+| Approved document preservation | All three raw file SHA-256 values remained unchanged after the live transition |
 
 The real process-ancestry tests require process-inspection permission. The first
 restricted run could not inspect processes; its results were not treated as
 verification. The reported results come from runs with that permission.
 
 The compiled parity case uses temporary workflow records and actual child
-processes. It proves the compiled handoff, not a successful live DocSuri approval
-transition. `build-results-native.json` records the native build evidence.
+processes. The live DocSuri transition was verified separately as described
+below. `build-results-native.json` records the native build evidence.
+
+## Live continuation
+
+After verifying the applied source hash, the parent workflow ran source-runtime
+`orchestrate next --resume`, reported `intent-capture` as `awaiting-approval`,
+obtained the review brief, and reported `approved --user-input 'Approve'` using
+the already recorded user answer. The engine returned `done` with
+`workflow_continues: true`, then issued the Feasibility run-stage directive.
+
+The [audit shard](../../audit/mac-mini-eab026d8eae1.md) records:
+
+- `STAGE_AWAITING_APPROVAL`, `intent-capture`: 2026-10-10T22:23:48Z.
+- `GATE_APPROVED` with `User Input: Approve`, `intent-capture`: 2026-10-10T22:24:00Z.
+- `STAGE_COMPLETED`, `intent-capture`: 2026-10-10T22:24:00Z.
+- `STAGE_STARTED`, `feasibility`: 2026-10-10T22:24:00Z.
+
+The [workflow state](../../aidlc-state.md) was read after continuation and names
+`Current Stage: feasibility`, `Status: Running`, and
+`Next Action: Execute Feasibility & Constraints`. This confirms that the actual
+approval transition succeeded; it does not claim Feasibility is complete.
 
 ## Identity and hashes
 
@@ -68,8 +95,10 @@ or attestation was forged or replaced.
 ## Existing approval and artifact preservation
 
 The audit records the user's exact `Approve` answer for `intent-capture` at
-2026-10-10T13:58:16Z. The source repair does not change those documents. Their
-SHA-256 values before any live continuation are:
+2026-10-10T13:58:16Z. That answer was honored in the successful engine transition
+at 2026-10-10T22:24:00Z. The source repair did not change those documents. Their
+raw file SHA-256 values match both the pre-continuation snapshot and a fresh read
+after the transition:
 
 | Document | SHA-256 |
 | --- | --- |

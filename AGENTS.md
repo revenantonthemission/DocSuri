@@ -59,3 +59,13 @@ Commit the `aidlc/` workspace tree — the record (state, the per-clone audit sh
 - `aidlc/spaces/*/intents/*/.aidlc-*` (the record's `.aidlc-engine/` framework state)
 - harness-local files your harness's shipped `.gitignore` block adds
 <!-- END AI-DLC:agents -->
+
+## Project-local AI-DLC command
+
+Run AI-DLC commands from this repository root with `bun .codex/tools/aidlc.ts`
+in place of the machine's `aidlc` launcher, preserving all subsequent arguments
+(for example, `bun .codex/tools/aidlc.ts engine orchestrate next --resume`).
+This uses the verified local Codex session-provenance correction. Keep this
+command until an upstream release includes the correction and passes its
+regression checks. See the
+[repair record](aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/runtime-fix/README.md).

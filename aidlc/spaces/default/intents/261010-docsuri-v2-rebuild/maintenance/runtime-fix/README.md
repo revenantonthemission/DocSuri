@@ -10,10 +10,12 @@ approval requirements, lifecycle routing, or the identity resolver's policy.
 
 `upstream.patch` contains the authored source correction and regression tests.
 `project.patch` applies only the corresponding generated orchestrator change to
-`.codex/tools/aidlc-orchestrate.ts`. **The fix has not been installed:** the
-active workflow's protection hook refused replacing installed enforcement files.
-It explicitly permits intentional maintenance from an external terminal.
-See `verification.md` for the executed checks and remaining step.
+`.codex/tools/aidlc-orchestrate.ts`. **The fix is applied to this checkout.**
+The protection hook initially refused agent-side replacement; application then
+completed from an external terminal through the permitted maintenance path.
+The corrected source runtime completed Intent Capture from the existing approval
+and started Feasibility at 2026-10-10T22:24:00Z. See `verification.md` for the
+executed checks, hashes, and live transition evidence.
 
 ## Reproduce
 
@@ -38,9 +40,10 @@ The process-ancestry tests need permission to inspect processes (`ps` on macOS).
 Run them outside a sandbox that blocks process inspection. Test fixtures use
 temporary projects and never mutate the real DocSuri workflow.
 
-## Apply from an external terminal
+## External application
 
-From the DocSuri root, run:
+The following command documents the completed external application and can be
+used from the DocSuri root for an unpatched checkout:
 
 ```sh
 bash aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/runtime-fix/apply-local-fix.sh
@@ -52,9 +55,9 @@ It does not change guards, workflow records, approval evidence, or the machine's
 official runtime. The patch is reversible with `git apply -R project.patch`
 from the repository root using the full path to the patch.
 
-## Command after applying the fix
+## Project command
 
-After applying the patch, and until an upstream release includes this correction,
+Until an upstream release includes and passes this correction's regression checks,
 run workflow commands from the repository root using the corrected source runtime:
 
 ```sh
