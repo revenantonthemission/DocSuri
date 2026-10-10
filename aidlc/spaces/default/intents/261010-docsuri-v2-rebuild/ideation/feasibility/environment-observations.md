@@ -1,7 +1,8 @@
 # DocSuri v2 — Initial environment observations
 
-Observed: 2026-10-11, approximately 07:26–07:27 Asia/Seoul
-(2026-10-10 22:26–22:27 UTC).
+Initial observations: 2026-10-11, approximately 07:26–07:27 Asia/Seoul
+(2026-10-10 22:26–22:27 UTC). Follow-up metadata checks were performed during
+the same feasibility session.
 
 This is supporting discovery evidence, not a feasibility conclusion or an
 approved migration plan. No services were started, restarted, or changed.
@@ -26,11 +27,14 @@ approved migration plan. No services were started, restarted, or changed.
 | `docker context ls` | Current context was `colima`; other listed contexts included default, desktop-linux and orbstack | Container observations below apply only to the current context. |
 | `docker ps` | No running containers returned | No running containers in that context at the observation time. |
 | `docker ps -a` | Five `docsuri-rem` services were stopped; two older Postgres test containers were also stopped | Stopped development/test containers remain. Their presence does not establish production users or data. |
+| Selected `docker inspect` labels and mounts | All five `docsuri-rem` containers name `ops/local-stack` as their Compose working directory; database, cache, search and object-store mounts use the corresponding development volumes | This links the stopped services to the repository's development stack. No container environment variables or record contents were inspected. |
 | `docker volume ls` filtered for DocSuri/rem3 | Postgres, Redis, OpenSearch and SeaweedFS volumes were listed under `docsuri-rem` | Persistent volumes exist; contents, age and authority have not been established. |
 | `launchctl list` filtered for DocSuri | No matching rows in the caller's launchctl context | This is not an exhaustive check of all users or system service domains. |
 | HTTP GET `http://127.0.0.1:8000/health` with five-second timeout | Connection failed; curl exit 7, HTTP 000 | The documented local backend endpoint was unavailable at that moment. |
 | HTTP GET `http://127.0.0.1:3000/` | HTTP 200 | The frontend root responds; the complete paper journey has not been verified. |
+| Frontend title and listener metadata | Page title is `DocSuri`; a Node process listens on loopback port 3000 | Confirms that the responding root page identifies itself as DocSuri; does not validate backend connectivity. |
 | Directory metadata for `~/DocSuriData` and `~/Backups/docsuri` | Both directories exist | No private record contents were read; existence alone does not establish valid backups. |
+| Directory metadata for `~/DocSuriData/minio` and `~/Backups/docsuri/postgres` | Both more specific directories also exist | Contents and restorability remain unverified. |
 
 ## Open evidence gaps
 
@@ -43,8 +47,10 @@ approved migration plan. No services were started, restarted, or changed.
 - Baseline the complete find → understand → save → revisit journey, including
   responsiveness, interruption recovery and defect reproduction.
 - Establish current operating costs and external integration obligations.
-- Record the user's deadline, budget, maintainer-capacity and fixed-provider
-  constraints in `feasibility-questions.md` when the pending answers arrive.
+- The user confirmed no fixed deadline or budget yet, one human maintainer with
+  coding agents, and no fixed technology choice. Estimate effort and cost after
+  discovery; evaluate replacements against stability and repairability. Remaining
+  integration and policy questions are pending in `feasibility-questions.md`.
 
 ## Evidence method
 

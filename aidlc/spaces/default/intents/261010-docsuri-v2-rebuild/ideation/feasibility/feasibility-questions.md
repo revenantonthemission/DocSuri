@@ -23,7 +23,7 @@ B. There are hard limits; provide the date and/or amounts.
 C. There is a target date or budget, but it is flexible; provide the targets.
 X. Other (please specify)
 
-[Answer]:
+[Answer]: No fixed deadline or budget yet; estimate after discovery.
 
 ### Q2. Who will build and maintain v2, and what capacity is available?
 
@@ -32,7 +32,7 @@ B. A small human team with coding agents; describe roles and availability.
 C. Not decided; identify the effort and skills needed first.
 X. Other (please specify)
 
-[Answer]:
+[Answer]: Me with coding agents; plan for one human maintainer.
 
 ### Q3. Are the current technologies or providers mandatory for v2?
 
@@ -44,7 +44,7 @@ B. Some technologies or providers must remain; name them.
 C. Inventory the current dependencies before deciding what can change.
 X. Other (please specify)
 
-[Answer]:
+[Answer]: No fixed technology choice; evaluate replacements against stability and repairability.
 
 ### Q4. Are there external integration commitments that may not be visible in the repository?
 

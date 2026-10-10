@@ -1250,3 +1250,60 @@
 **Context**: ideation > feasibility > environment-observations.md
 
 ---
+
+## Human Turn
+**Timestamp**: 2026-10-10T22:30:41Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-10T22:31:16Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-questions.md
+**Context**: ideation > feasibility > feasibility-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-10-10T22:31:16Z
+**Event**: QUESTION_ANSWERED
+**Stage**: feasibility
+**Details**: Q1: No fixed deadline or budget yet; estimate after discovery. Q2: Me with coding agents; plan for one human maintainer. Q3: No fixed technology choice; evaluate replacements against stability and repairability.
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_efec492acf20400abcfd4c105b13755f\",0]","question":"Q1. What hard deadline and budget limits should constrain DocSuri v2? Include any launch date and limits for development, hosting, or model/API usage.","answer":"No fixed deadline or budget yet; estimate after discovery."},{"questionItemId":"[\"request_user_input_async\",\"call_efec492acf20400abcfd4c105b13755f\",1]","question":"Q2. Who will build and maintain DocSuri v2, and what capacity is available?","answer":"Me with coding agents; plan for one human maintainer."},{"questionItemId":"[\"request_user_input_async\",\"call_efec492acf20400abcfd4c105b13755f\",2]","question":"Q3. Are the current technologies or providers mandatory for v2? All current product capabilities will still be retained.","answer":"No fixed technology choice; evaluate replacements against stability and repairability."}]\n</send_user_message_question_reply>
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-10T22:31:17Z
+**Event**: DECISION_RECORDED
+**Stage**: feasibility
+**Decision**: Feasibility Q4-Q5: external integration commitments and known privacy, licensing, institutional or data-location requirements.
+**Options**: Answer the two questions; describe any existing compatibility commitments or specific requirements.
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-10T22:31:57Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/environment-observations.md
+**Context**: ideation > feasibility > environment-observations.md
+
+---
+
+## Session End
+**Timestamp**: 2026-10-10T22:32:10Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-10T22:28:36.002Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-10T22:32:10Z
+**Event**: HUMAN_TURN
+**Session**: 01a127f1-ed2b-7142-a5f3-ee5c41cecf82
+
+---
