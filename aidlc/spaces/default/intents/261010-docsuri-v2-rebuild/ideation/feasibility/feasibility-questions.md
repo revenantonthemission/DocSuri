@@ -23,7 +23,11 @@ B. There are hard limits; provide the date and/or amounts.
 C. There is a target date or budget, but it is flexible; provide the targets.
 X. Other (please specify)
 
-[Answer]: No fixed deadline or budget yet; estimate after discovery.
+Previous answer: No fixed deadline or budget yet; estimate after discovery.
+The later budget instruction below supersedes the budget portion of that answer.
+No fixed deadline remains the confirmed schedule position.
+
+[Answer]: The budget should be $0. Only use free or local stacks.
 
 ### Q2. Who will build and maintain v2, and what capacity is available?
 
@@ -85,14 +89,19 @@ X. Other (please specify)
 
 ## Consolidated Summary Confirmation
 
+The summary was originally confirmed with “Looks correct”. The user subsequently
+instructed: “The budget should be $0. Only use free or local stacks.” The budget
+lines below incorporate that explicit correction; the original confirmation is
+retained as history, not represented as a second confirmation of revised text.
+
 - Retain all current capabilities for researchers and engineers, anchored in
   finding, understanding, saving and revisiting a paper. Prioritize stable,
   smooth use and comprehensible, repairable code.
-- There is no fixed deadline or budget yet. Estimate effort and operating costs
-  after discovery; do not assume unlimited resources.
+- The budget is $0; use only free or local stacks. No fixed deadline is set.
+  Estimate effort and verify that proposed resource use stays within the budget.
 - Plan for one human maintainer supported by coding agents.
-- No current technology or provider is mandatory. Evaluate replacements against
-  stability and repairability while preserving the product capabilities.
+- No current technology or provider is mandatory. Evaluate free or local
+  replacements against stability and repairability while preserving capabilities.
 - No external integration commitments are known beyond current capabilities.
   Verify existing dependencies and usage during discovery.
 - Privacy, content-licensing, institutional and data-location requirements are
@@ -107,8 +116,8 @@ X. Other (please specify)
 - Measure complete-task success, responsiveness, interruption recovery and
   defect reproduction/repair before setting numeric targets.
 - The feasibility documents will distinguish confirmed constraints from open
-  risks, assumptions and dependencies. No stack, hosting, migration policy,
-  schedule or spending amount is selected by this confirmation.
+  risks, assumptions and dependencies. The later instruction fixes spending at
+  $0; no specific stack, hosting, migration policy or schedule is selected.
 - The user retains scope and priority decisions. Git follows `CONVENTIONS.md`:
   working branch → PR into `develop` → release promotion to `main`.
 

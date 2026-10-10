@@ -47,9 +47,11 @@ approved migration plan. No services were started, restarted, or changed.
 - Baseline the complete find → understand → save → revisit journey, including
   responsiveness, interruption recovery and defect reproduction.
 - Establish current operating costs and external integration obligations.
-- The user confirmed no fixed deadline or budget yet, one human maintainer with
-  coding agents, and no fixed technology choice. Estimate effort and cost after
-  discovery; evaluate replacements against stability and repairability. The user
+- The user initially left the budget open, then explicitly set it to $0 with
+  only free or local stacks. No fixed deadline, one human maintainer with coding
+  agents, and no fixed technology choice remain confirmed. Estimate effort and
+  verify resource sufficiency within the budget; evaluate free/local replacements
+  against stability and repairability. The user
   also confirmed no known external commitments beyond current capabilities and
   directed investigation of uncertain policy requirements before hosting and
   data-handling choices. These answers are in `feasibility-questions.md`.
