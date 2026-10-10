@@ -5,5 +5,13 @@
     "dirName": "261001-rem-2-phase-7-frontend-v",
     "scope": "feature",
     "status": "complete"
+  },
+  {
+    "uuid": "01a125e9-2931-7fc6-8278-172e25327572",
+    "slug": "docsuri-v2-rebuild",
+    "dirName": "261010-docsuri-v2-rebuild",
+    "scope": "classic",
+    "status": "in-flight",
+    "request": "f74bb3e8"
   }
 ]
