@@ -2286,3 +2286,124 @@
 **Stage**: scope-definition
 
 ---
+
+## Session End
+**Timestamp**: 2026-10-10T23:15:54Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a12812-7b8e-7d81-908b-2b2e195f5c76 last seen 2026-10-10T23:07:44.012Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-10T23:15:54Z
+**Event**: HUMAN_TURN
+**Session**: 01a12819-f771-7bb3-aef4-2050e6f9b5eb
+
+---
+
+## Session End
+**Timestamp**: 2026-10-10T23:16:02Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a12819-f771-7bb3-aef4-2050e6f9b5eb last seen 2026-10-10T23:15:54.287Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-10T23:16:02Z
+**Event**: HUMAN_TURN
+**Session**: 01a1281a-13e7-7772-9896-807b44d7c52b
+
+---
+
+## Session End
+**Timestamp**: 2026-10-10T23:16:24Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a1281a-13e7-7772-9896-807b44d7c52b last seen 2026-10-10T23:16:02.155Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-10T23:16:24Z
+**Event**: HUMAN_TURN
+**Session**: 01a1281a-6ae7-7a53-a2b4-58323dc7a6ef
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-10T23:17:34Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Gate Approved
+**Timestamp**: 2026-10-10T23:17:39Z
+**Event**: GATE_APPROVED
+**Stage**: scope-definition
+**User Input**: Approve
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_727c2f87a9404c2493971fc6fe3119cf\",0]","question":"Scope Definition is ready for approval. Review the [scope document](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/scope-definition/scope-document.md) and [prioritized backlog](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/scope-definition/intent-backlog.md). They retain all current capabilities, sequence the work by risk, and keep the budget at $0. Approve continues to Approval & Handoff; Request Changes revises these documents. How would you like to proceed?","answer":"Approve"}]\n</send_user_message_question_reply>
+
+---
+
+## Stage Completion
+**Timestamp**: 2026-10-10T23:17:39Z
+**Event**: STAGE_COMPLETED
+**Stage**: scope-definition
+**Validation Basis**: {"graphContract":"sha256:f507bca6811bab5a3fbe73663d1debe5d0de707829c0a8a0d3c77b97f91a29c7","inputs":[{"artifact":"constraint-register","contentHash":"sha256:c5c0e001d9da327792686107e0e6c640ae6d4aa7d4b2a429f855c5108ad85608","instanceCount":1,"presentCount":1,"producer":"feasibility","required":false,"structureHash":"sha256:872ef1f93bda791f867e723aa48577cf58e32089e2f397bcbd8cbcf1c1e496fd"},{"artifact":"feasibility-assessment","contentHash":"sha256:389c212dbbbb39eaff2677c9560866c9853c5c169e566244e1b7b384a6299e40","instanceCount":1,"presentCount":1,"producer":"feasibility","required":false,"structureHash":"sha256:56345b71bb360839061b2a1df2a44c8c39675fd6e0f50ba53a7ff8f1ea944b33"},{"artifact":"intent-statement","contentHash":"sha256:a3d554abddfbbbe0478c826fb6baa3a834e9ed64c793e635e482ae4028ef34a3","instanceCount":1,"presentCount":1,"producer":"intent-capture","required":true,"structureHash":"sha256:ee278871495fc9cb95c2673c704c1a9b5d7c2267fb11765188a8fff96055003e"}],"outputs":[{"artifact":"intent-backlog","contentHash":"sha256:66f2843de5f86f13e491833119fe3dbfb43ad5a8e6e57b910081f788c2a4d4ea","instanceCount":1,"presentCount":1,"producer":"scope-definition","required":true,"structureHash":"sha256:edfe8a817064e89ff060099c340383ed62af063c7ff12262477ef3a82cb1ba54"},{"artifact":"scope-definition-questions","contentHash":"sha256:a804a86b90ad93c85cbc0ceb1766f84440924e785a3cff3eb03f5b8a37d47788","instanceCount":1,"presentCount":1,"producer":"scope-definition","required":true,"structureHash":"sha256:3e3f1f0c673937e2d04b183703ca9c042933980171bb3b1672bf4ffb3502d1e5"},{"artifact":"scope-document","contentHash":"sha256:d9ef0c3a00a6584efa91debf35f9af5687dfa8877566a8a73366cd653ea06992","instanceCount":1,"presentCount":1,"producer":"scope-definition","required":true,"structureHash":"sha256:566784e4cd6ea9f0f2b272a71e5f16f552ec94b65b6e3da56a5e2825b23fed42"}],"projectType":"brownfield","schema":3}
+**Details**: Stage Scope Definition approved by gate
+
+---
+
+## Stage Start
+**Timestamp**: 2026-10-10T23:17:39Z
+**Event**: STAGE_STARTED
+**Stage**: approval-handoff
+**Agent**: aidlc-delivery-agent
+**Answer Mode**: guide (reused from intent-capture)
+
+---
+
+## Memory Empty
+**Timestamp**: 2026-10-10T23:17:39Z
+**Event**: MEMORY_EMPTY
+**Stage**: scope-definition
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-10T23:19:33Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/approval-handoff/approval-handoff-questions.md
+**Context**: ideation > approval-handoff > approval-handoff-questions.md
+
+---
+
+## Error Logged
+**Timestamp**: 2026-10-10T23:19:54Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-log
+**Command**: aidlc-log decision --stage approval-handoff --checkpoint summary-confirmation --questions-file aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/approval-handoff/approval-handoff-questions.md --decision Does this all look correct before I generate the artifact? --options Looks correct,Request changes
+**Error**: Summary confirmation questions file aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/approval-handoff/approval-handoff-questions.md is invalid: unsupported H2 heading "Assumptions & Open Questions" after the consolidated summary; only Q<n>, "Requested Changes Feedback", or one "Assumption Confirmation" section may follow.
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-10T23:20:05Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/approval-handoff/approval-handoff-questions.md
+**Context**: ideation > approval-handoff > approval-handoff-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-10T23:20:05Z
+**Event**: DECISION_RECORDED
+**Stage**: approval-handoff
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/approval-handoff/approval-handoff-questions.md
+
+---
