@@ -49,8 +49,10 @@ approved migration plan. No services were started, restarted, or changed.
 - Establish current operating costs and external integration obligations.
 - The user confirmed no fixed deadline or budget yet, one human maintainer with
   coding agents, and no fixed technology choice. Estimate effort and cost after
-  discovery; evaluate replacements against stability and repairability. Remaining
-  integration and policy questions are pending in `feasibility-questions.md`.
+  discovery; evaluate replacements against stability and repairability. The user
+  also confirmed no known external commitments beyond current capabilities and
+  directed investigation of uncertain policy requirements before hosting and
+  data-handling choices. These answers are in `feasibility-questions.md`.
 
 ## Evidence method
 

@@ -1307,3 +1307,137 @@
 **Session**: 01a127f1-ed2b-7142-a5f3-ee5c41cecf82
 
 ---
+
+## Session End
+**Timestamp**: 2026-10-10T22:32:47Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a127f1-ed2b-7142-a5f3-ee5c41cecf82 last seen 2026-10-10T22:32:10.440Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-10T22:32:48Z
+**Event**: HUMAN_TURN
+**Session**: 01a127f2-7d23-7693-b305-3f0b81e975f8
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-10T22:32:58Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-10T22:33:27Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-questions.md
+**Context**: ideation > feasibility > feasibility-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-10-10T22:33:28Z
+**Event**: QUESTION_ANSWERED
+**Stage**: feasibility
+**Details**: Q4: No known commitments beyond current product capabilities. Q5: Uncertain; investigate before choosing hosting and data-handling rules.
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_fd928c28ffbb4b5b84f717a870d18fa8\",0]","question":"Q4. Are there external integration commitments that may not be visible in the repository—for example, institutional sign-in, a partner API, a required export format, or an existing consumer of DocSuri’s APIs?","answer":"No known commitments beyond current product capabilities."},{"questionItemId":"[\"request_user_input_async\",\"call_fd928c28ffbb4b5b84f717a870d18fa8\",1]","question":"Q5. Are there known privacy, content-licensing, institutional, or data-location requirements for DocSuri v2?","answer":"Uncertain; investigate before choosing hosting and data-handling rules."}]\n</send_user_message_question_reply>
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-10T22:33:28Z
+**Event**: DECISION_RECORDED
+**Stage**: feasibility
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-questions.md
+
+---
+
+## Session End
+**Timestamp**: 2026-10-10T22:33:45Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a127f2-7d23-7693-b305-3f0b81e975f8 last seen 2026-10-10T22:32:47.840Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-10T22:33:45Z
+**Event**: HUMAN_TURN
+**Session**: 01a127f3-5eb6-7a90-b86e-80bda4b480ca
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-10T22:34:29Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-10T22:34:45Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-questions.md
+**Context**: ideation > feasibility > feasibility-questions.md
+
+---
+
+## Summary Confirmation Recorded
+**Timestamp**: 2026-10-10T22:34:45Z
+**Event**: SUMMARY_CONFIRMATION_RECORDED
+**Stage**: feasibility
+**Details**: Looks correct
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-questions.md
+**Questions SHA-256**: adfaf1ecd65af3bb42419fea9ad0b27084e1608b6567e1dcf3595aacde259222
+**Hash Scope**: confirmed-content-v2
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_a69e51bdb4904c0eb5431a60ec5dc094\",0]","question":"Feasibility summary before I generate the assessment:\n\n- Retain all current capabilities, centered on finding → understanding → saving → revisiting papers, with stable use and repairable code.\n- No fixed deadline or budget; estimate after discovery. Plan for one human maintainer with coding agents.\n- No mandatory technology or provider; evaluate replacements against stability and repairability.\n- No known external integration commitments beyond current capabilities.\n- Investigate uncertain privacy, licensing, institutional and data-location requirements before choosing hosting or data-handling rules.\n- Verify the authoritative service environment, existing users, saved data and recoverable backups before choosing continuity or migration. Current local observations do not yet establish these.\n- Measure the user journey before setting numeric targets. Keep unresolved evidence gaps explicit in the assessment.\n- You decide scope and priorities; Git follows working branch → PR into develop → release to main.\n\nNo stack, hosting, migration policy, schedule or spending amount is selected here. Does this all look correct before I generate the artifact?","answer":"Looks correct"}]\n</send_user_message_question_reply>
+**Summary Authorization Id**: 693070abc949bfdf2813b818774ed5e6198200e42e2658f1506fa660a2003dad
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-10T22:37:54Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/feasibility-assessment.md
+**Context**: ideation > feasibility > feasibility-assessment.md
+**Summary Authorization Id**: 693070abc949bfdf2813b818774ed5e6198200e42e2658f1506fa660a2003dad
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-10T22:37:54Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/constraint-register.md
+**Context**: ideation > feasibility > constraint-register.md
+**Summary Authorization Id**: 693070abc949bfdf2813b818774ed5e6198200e42e2658f1506fa660a2003dad
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-10T22:37:54Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/raid-log.md
+**Context**: ideation > feasibility > raid-log.md
+**Summary Authorization Id**: 693070abc949bfdf2813b818774ed5e6198200e42e2658f1506fa660a2003dad
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-10T22:37:54Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/ideation/feasibility/environment-observations.md
+**Context**: ideation > feasibility > environment-observations.md
+**Summary Authorization Id**: 693070abc949bfdf2813b818774ed5e6198200e42e2658f1506fa660a2003dad
+
+---

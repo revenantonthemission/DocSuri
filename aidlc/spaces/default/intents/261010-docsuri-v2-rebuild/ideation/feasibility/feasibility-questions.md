@@ -56,7 +56,7 @@ B. Yes; describe the integration and what must remain compatible.
 C. Unknown; investigate current usage before deciding.
 X. Other (please specify)
 
-[Answer]:
+[Answer]: No known commitments beyond current product capabilities.
 
 ### Q5. Are there known privacy, content-licensing, institutional, or data-location requirements?
 
@@ -65,7 +65,7 @@ B. Specific requirements apply; name the policy, agreement, or constraint.
 C. Uncertain; investigate before choosing hosting and data-handling rules.
 X. Other (please specify)
 
-[Answer]:
+[Answer]: Uncertain; investigate before choosing hosting and data-handling rules.
 
 ## Evidence to collect
 
@@ -83,7 +83,37 @@ X. Other (please specify)
 - Approved `../intent-capture/intent-statement.md` and its question record.
 - `CONVENTIONS.md` and the user's explicit Git-flow correction.
 
-## Summary Confirmation
+## Consolidated Summary Confirmation
 
-Pending answers and evidence collection. No feasibility conclusion, migration
-policy, architecture, schedule, or budget is approved by this question file.
+- Retain all current capabilities for researchers and engineers, anchored in
+  finding, understanding, saving and revisiting a paper. Prioritize stable,
+  smooth use and comprehensible, repairable code.
+- There is no fixed deadline or budget yet. Estimate effort and operating costs
+  after discovery; do not assume unlimited resources.
+- Plan for one human maintainer supported by coding agents.
+- No current technology or provider is mandatory. Evaluate replacements against
+  stability and repairability while preserving the product capabilities.
+- No external integration commitments are known beyond current capabilities.
+  Verify existing dependencies and usage during discovery.
+- Privacy, content-licensing, institutional and data-location requirements are
+  uncertain. Investigate them before choosing hosting and data-handling rules.
+- Repository hosting descriptions and local runtime observations still need
+  reconciliation: the DocSuri frontend root responds, the documented local
+  backend health endpoint was unavailable, and the observed stopped containers
+  belong to the development stack. These are observations, not a complete
+  production inventory or a measured user-journey baseline.
+- Existing users, authoritative saved data and backup restorability remain to
+  be established before deciding continuity or migration.
+- Measure complete-task success, responsiveness, interruption recovery and
+  defect reproduction/repair before setting numeric targets.
+- The feasibility documents will distinguish confirmed constraints from open
+  risks, assumptions and dependencies. No stack, hosting, migration policy,
+  schedule or spending amount is selected by this confirmation.
+- The user retains scope and priority decisions. Git follows `CONVENTIONS.md`:
+  working branch → PR into `develop` → release promotion to `main`.
+
+Does this all look correct before I generate the artifact?
+
+Looks correct / Request changes
+
+[Answer]: Looks correct
