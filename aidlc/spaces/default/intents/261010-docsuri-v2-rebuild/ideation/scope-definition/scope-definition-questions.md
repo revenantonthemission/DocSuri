@@ -47,15 +47,52 @@ B. User journey first: after essential discovery, prioritize a working find → 
 C. Dependencies first: after essential discovery, rebuild shared foundations and dependent capabilities in the order their verified dependencies require.
 X. Other (please specify)
 
-[Answer]:
+[Answer]: Risk first (Recommended): resolve free/local capacity, data continuity and recovery uncertainties, then prove the paper journey and complete remaining capability parity.
 
 ## Assumptions & Open Questions
 
-- Q1 is the only new preference question. Previously settled release, deadline,
-  budget and quality decisions remain in force.
+- Q1 is answered: risk first. Previously settled release, deadline, budget and
+  quality decisions remain in force.
 - Detailed capability dependencies require investigation, not a guess from the
   user. The scope backlog will identify that work and keep unresolved items
   visible until evidence settles them.
 - No RICE or WSJF scores are asserted: measured reach and effort are unavailable.
   Use MoSCoW for the agreed release boundary and an explicit work order for the
-  retained capabilities once Q1 is answered.
+  retained capabilities following the risk-first preference selected in Q1.
+
+## Consolidated Summary Confirmation
+
+- The first v2 release retains all current product capabilities for researchers
+  and engineers. New feature expansion is deferred.
+- Use risk-first sequencing: establish the capability and dependency inventory
+  and resolve free/local capacity, existing-user/data continuity and recovery
+  uncertainties; then prove the find → understand → save → revisit journey and
+  complete remaining capability parity. Actual dependencies and the approved
+  review points still apply.
+- Treat the anchor journey as the first complete outcome to prove. Release
+  readiness also requires verification of every retained capability.
+- Keep the budget at $0 with only free or local stacks. Plan for one human
+  maintainer with coding agents, no fixed deadline, and effort estimates after
+  discovery. Any evidenced conflict between parity, quality and resources comes
+  back to the user; it does not authorize spending or silent scope reduction.
+- Prioritize stable, smooth use and comprehensible, repairable code. Measure
+  task success, responsiveness, interruption recovery and defect reproduction
+  and repair before agreeing numeric acceptance targets.
+- Investigate authoritative users, saved data and recoverable backups before
+  deciding continuity or migration. Investigate privacy, content-licensing,
+  institutional and data-location obligations before hosting/data decisions.
+  Current integrations and dependencies also need verification.
+- Keep technology, hosting, migration, detailed implementation units and the
+  delivery schedule open until the required evidence is available. The scope
+  document and backlog will identify outcomes, dependencies and closure evidence
+  without inventing a complete feature inventory or measured priority scores.
+- The user decides scope and priorities, with concise progress and clear review
+  summaries. Git follows CONVENTIONS.md: working branch → PR into develop →
+  release promotion to main.
+
+Does this all look correct before I generate the artifact?
+
+- Looks correct
+- Request changes
+
+[Answer]:
