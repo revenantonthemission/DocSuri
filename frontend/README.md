@@ -12,10 +12,11 @@ Independent deploy unit (④), not part of the backend monolith.
 ```bash
 pnpm install
 pnpm dev            # http://localhost:3000  (runs fully on MockTransport — no backend needed)
-pnpm test           # Vitest + Testing Library (48 tests)
+pnpm test           # Vitest + Testing Library
 pnpm build          # Next.js production build (standalone)
 pnpm e2e            # Playwright hero-flow E2E (phone viewport)
-pnpm gen:types      # refresh the schema drift-dump under types/.schema-raw/
+pnpm gen:types      # regenerate the committed wire DTOs in types/wire/dtos.ts
+pnpm check:types    # check committed wire DTOs for schema drift
 ```
 
 ## Configuration (mock ↔ real)
@@ -56,7 +57,7 @@ The app runs against `MockTransport` (DTO-derived fixtures). The search box bran
 - **reCAPTCHA** — `POST /auth/login` accepts an optional reCAPTCHA token; sending it needs the site key (secret/infra) and is part of the real-deploy wiring.
 
 ## Contract (from `shared/`, do not fork or edit)
-- `shared/dtos/*.schema.json` is the SSOT. `types/generated/*.ts` mirror the exposed contract; `pnpm gen:types` dumps a raw codegen to `types/.schema-raw/` for drift review. See `aidlc-docs/construction/u5-frontend/code/README.md` for the TypeGen design note.
+- `shared/dtos/*.schema.json` is the SSOT. `scripts/gen-types.mjs` generates the committed wire DTOs in `types/wire/dtos.ts`; run `pnpm gen:types` to regenerate them and `pnpm check:types` to check for schema drift.
 
 ## Invariants
 - Render only externally-exposed DTO fields (SEC-9). `password` is request-input-only (SEC-12/3).

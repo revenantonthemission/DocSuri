@@ -29,7 +29,7 @@ Date of investigation and host observation: 2026-10-06.
 | Ubuntu tracker | fix deferred across all releases |
 | Debian tracker | unfixed |
 
-**Conclusion: there is no fixed, pinned PostgreSQL/base closure available today.** A base refresh (runbook `aidlc.archive/.../g1-operator-runbook.md` §1.1 Option B) repulls `zlib 1.3.2-r0` and therefore **cannot clear this finding**.
+**Conclusion: there is no fixed, pinned PostgreSQL/base closure available today.** A base refresh (runbook `ops/platform-integrity/runbooks/g1-operator-runbook-2026-10-01.md` §1.1 Option B) repulls `zlib 1.3.2-r0` and therefore **cannot clear this finding**.
 
 ### 1.3 Vulnerability mechanics
 
@@ -219,7 +219,7 @@ Reversal is idempotent-refusing, not destructive-blind: each step refuses on abs
 - `ops/platform-integrity/sbom-targets.json` (read, unchanged)
 - Alpine `APKINDEX` feeds for `v3.21`–`v3.24` and `edge`; `https://secdb.alpinelinux.org/{v3.21,v3.24,edge}/main.json` (read-only, 2026-10-06)
 - Alpine/Ubuntu/Debian vulnerability tracker records for CVE-2026-85091 (read-only, 2026-10-06)
-- `aidlc.archive/spaces/default/intents/261001-default/operations/g1-operator-runbook.md` §1.1, §2
+- `ops/platform-integrity/runbooks/g1-operator-runbook-2026-10-01.md` §1.1, §2
 - `ops/server/u1_db_bootstrap.py` (read, unmodified), `ops/tests/test_u1_db_bootstrap.py`
 - `ops/server/u1_colima_executor.py`, `ops/tests/test_u1_colima_executor.py` (written under Q8-A)
 - Host observations 2026-10-06: `docker context ls`, `docker image inspect`, `colima status`, `docker version`

@@ -8,6 +8,7 @@ description: >
   SRE and reliability engineer responsible for observability, incident response, and operational optimization.
   Leads Observability Setup, Incident Response, and Feedback & Optimization stages.
   Supports Performance Validation.
+variant: medium
 mode: subagent
 permission:
   task: deny

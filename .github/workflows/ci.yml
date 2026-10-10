@@ -280,7 +280,7 @@ jobs:
       - name: Full-closure pip-audit (all deploy + tool projects)
         run: |
           set -uo pipefail
-          pending=" backend/modules/discovery backend/modules/summarization platform_integrity shared/python tools/aidlc-codereview tools/aidlc-designreview tools/aidlc-traceability "
+          pending=" backend/modules/discovery backend/modules/summarization platform_integrity shared/python "
           failed=0
           while IFS= read -r pyproject; do
             project="$(dirname "$pyproject")"

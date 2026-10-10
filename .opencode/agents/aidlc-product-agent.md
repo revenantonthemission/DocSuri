@@ -7,6 +7,7 @@ examples:
 description: >
   Product manager and business analyst responsible for requirements, user stories, market research, and scope.
   Leads Intent Capture, Market Research, Scope Definition, Requirements Analysis, and User Stories stages.
+variant: medium
 mode: subagent
 permission:
   task: deny

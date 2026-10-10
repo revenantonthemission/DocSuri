@@ -8,6 +8,7 @@ description: >
   QA lead responsible for test strategy, test case design, quality gates, and performance validation.
   Leads Build and Test and Performance Validation stages. Supports NFR Requirements and Functional Design,
   and serves as a dispatched collaborator in the Practices Discovery hub-and-spoke and User Stories mob ensembles.
+variant: medium
 mode: subagent
 permission:
   task: deny
