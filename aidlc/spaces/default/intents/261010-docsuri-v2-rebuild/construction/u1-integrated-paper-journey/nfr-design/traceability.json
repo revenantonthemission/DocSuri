@@ -1,0 +1,230 @@
+{
+  "stage": "nfr-design",
+  "unit": "u1-integrated-paper-journey",
+  "upstream_ids": [
+    "NFR1.1",
+    "NFR1.2",
+    "NFR2.1",
+    "NFR2.2",
+    "NFR3.1",
+    "NFR3.2",
+    "NFR3.3",
+    "NFR3.4",
+    "NFR3.5",
+    "NFR4.1",
+    "NFR4.2",
+    "NFR4.3",
+    "NFR4.4",
+    "NFR4.5",
+    "NFR4.6",
+    "NFR5.1",
+    "NFR5.2",
+    "NFR5.3",
+    "NFR6.1",
+    "NFR6.2",
+    "NFR6.3",
+    "NFR7.1",
+    "NFR7.2",
+    "NFR7.3",
+    "NFR8.1",
+    "NFR8.2",
+    "NFR8.3",
+    "NFR8.4",
+    "NFR8.5",
+    "NFR9.1",
+    "NFR9.2",
+    "NFR9.3",
+    "NFR9.4",
+    "NFR10.1",
+    "NFR10.2",
+    "NFR10.3",
+    "NFR10.4"
+  ],
+  "coverage": [
+    {
+      "id": "NFR1.1",
+      "status": "OK",
+      "target": "performance-design.md: P01"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "OK",
+      "target": "performance-design.md: P02"
+    },
+    {
+      "id": "NFR2.1",
+      "status": "OK",
+      "target": "performance-design.md: P03"
+    },
+    {
+      "id": "NFR2.2",
+      "status": "OK",
+      "target": "performance-design.md: P04"
+    },
+    {
+      "id": "NFR3.1",
+      "status": "OK",
+      "target": "reliability-design.md: REL01"
+    },
+    {
+      "id": "NFR3.2",
+      "status": "OK",
+      "target": "reliability-design.md: REL02"
+    },
+    {
+      "id": "NFR3.3",
+      "status": "OK",
+      "target": "reliability-design.md: REL03"
+    },
+    {
+      "id": "NFR3.4",
+      "status": "OK",
+      "target": "reliability-design.md: REL04"
+    },
+    {
+      "id": "NFR3.5",
+      "status": "OK",
+      "target": "reliability-design.md: REL05"
+    },
+    {
+      "id": "NFR4.1",
+      "status": "OK",
+      "target": "security-design.md: SEC01"
+    },
+    {
+      "id": "NFR4.2",
+      "status": "OK",
+      "target": "security-design.md: SEC02"
+    },
+    {
+      "id": "NFR4.3",
+      "status": "OK",
+      "target": "security-design.md: SEC03"
+    },
+    {
+      "id": "NFR4.4",
+      "status": "OK",
+      "target": "security-design.md: SEC04"
+    },
+    {
+      "id": "NFR4.5",
+      "status": "OK",
+      "target": "security-design.md: SEC05"
+    },
+    {
+      "id": "NFR4.6",
+      "status": "OK",
+      "target": "security-design.md: SEC06"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "security-design.md: SEC07"
+    },
+    {
+      "id": "NFR5.2",
+      "status": "OK",
+      "target": "security-design.md: SEC08"
+    },
+    {
+      "id": "NFR5.3",
+      "status": "OK",
+      "target": "security-design.md: SEC09"
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": "performance-design.md: P05"
+    },
+    {
+      "id": "NFR6.2",
+      "status": "OK",
+      "target": "performance-design.md: P06"
+    },
+    {
+      "id": "NFR6.3",
+      "status": "OK",
+      "target": "security-design.md: SEC10"
+    },
+    {
+      "id": "NFR7.1",
+      "status": "OK",
+      "target": "observability-design.md: OBS05"
+    },
+    {
+      "id": "NFR7.2",
+      "status": "OK",
+      "target": "observability-design.md: OBS06"
+    },
+    {
+      "id": "NFR7.3",
+      "status": "OK",
+      "target": "logical-components.md: LOG01"
+    },
+    {
+      "id": "NFR8.1",
+      "status": "OK",
+      "target": "scalability-design.md: SC01"
+    },
+    {
+      "id": "NFR8.2",
+      "status": "OK",
+      "target": "scalability-design.md: SC02"
+    },
+    {
+      "id": "NFR8.3",
+      "status": "OK",
+      "target": "scalability-design.md: SC03"
+    },
+    {
+      "id": "NFR8.4",
+      "status": "OK",
+      "target": "scalability-design.md: SC04"
+    },
+    {
+      "id": "NFR8.5",
+      "status": "OK",
+      "target": "logical-components.md: LOG02"
+    },
+    {
+      "id": "NFR9.1",
+      "status": "OK",
+      "target": "observability-design.md: OBS01"
+    },
+    {
+      "id": "NFR9.2",
+      "status": "OK",
+      "target": "observability-design.md: OBS02"
+    },
+    {
+      "id": "NFR9.3",
+      "status": "OK",
+      "target": "observability-design.md: OBS03"
+    },
+    {
+      "id": "NFR9.4",
+      "status": "OK",
+      "target": "observability-design.md: OBS04"
+    },
+    {
+      "id": "NFR10.1",
+      "status": "OK",
+      "target": "logical-components.md: LOG03"
+    },
+    {
+      "id": "NFR10.2",
+      "status": "OK",
+      "target": "logical-components.md: LOG04"
+    },
+    {
+      "id": "NFR10.3",
+      "status": "OK",
+      "target": "logical-components.md: LOG05"
+    },
+    {
+      "id": "NFR10.4",
+      "status": "OK",
+      "target": "logical-components.md: LOG06"
+    }
+  ]
+}

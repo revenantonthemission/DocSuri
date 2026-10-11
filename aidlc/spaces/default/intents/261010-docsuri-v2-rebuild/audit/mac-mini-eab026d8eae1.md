@@ -8722,3 +8722,398 @@
 **Next Action**: Record the human NFR Design summary response; after Looks correct, resume U1 NFR Design and generate the confirmed artifacts.
 
 ---
+
+## Session End
+**Timestamp**: 2026-10-11T08:23:46Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-11T08:07:37.000Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T08:23:46Z
+**Event**: HUMAN_TURN
+**Session**: 01a12a0f-8b62-79b1-a1c6-4b0a34da2b46
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T08:24:08Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a12a0f-8b62-79b1-a1c6-4b0a34da2b46 last seen 2026-10-11T08:23:46.422Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T08:24:09Z
+**Event**: HUMAN_TURN
+**Session**: 01a12a0f-dd8f-7853-b06f-f646e22c944d
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T08:24:58Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:25:20Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/nfr-design-questions.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > nfr-design-questions.md
+
+---
+
+## Summary Confirmation Recorded
+**Timestamp**: 2026-10-11T08:25:20Z
+**Event**: SUMMARY_CONFIRMATION_RECORDED
+**Stage**: nfr-design
+**Details**: Looks correct
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/nfr-design-questions.md
+**Questions SHA-256**: 5063a3b848e8a103a15661d246f65d5d797c651ac71871918f79270abf1164e6
+**Hash Scope**: confirmed-content-v2
+**Unit**: u1-integrated-paper-journey
+**Person Reply**: Looks Correct
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Unit Resumed
+**Timestamp**: 2026-10-11T08:25:21Z
+**Event**: UNIT_RESUMED
+**Stage**: nfr-design
+**Unit**: u1-integrated-paper-journey
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:31:19Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/logical-components.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > logical-components.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-11T08:31:19Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:31:32Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/performance-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > performance-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:31:32Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/scalability-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > scalability-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:31:44Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/security-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > security-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:32:09Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/reliability-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > reliability-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:32:09Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/observability-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > observability-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:32:28Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/security-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > security-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:32:49Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/reliability-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > reliability-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:32:50Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/reliability-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > reliability-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:32:50Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/observability-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > observability-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:33:00Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/performance-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > performance-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:33:00Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/scalability-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > scalability-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T08:33:05Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: worker
+**Agent ID**: 01a12a12-5751-7db2-84a9-8782d2fdbc62
+**Message**: Created [security-design.md](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/security-design.md)
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:33:21Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/observability-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > observability-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T08:33:42Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: worker
+**Agent ID**: 01a12a11-fe76-78d2-9fcc-94c47a8620cb
+**Message**: Created both owned files:\n\n- [reliability-design.md](aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/reliability-design.md): 229 lines; REL01
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:33:46Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/performance-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > performance-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T08:34:04Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a12a0f-dd8f-7853-b06f-f646e22c944d last seen 2026-10-11T08:24:08.965Z.
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T08:34:05Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: worker
+**Agent ID**: 01a12a11-a438-7b12-9395-a910fa5803de
+**Message**: Created only:\n\n- [performance-design.md](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/perform
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:35:29Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/reliability-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > reliability-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:35:29Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/security-design.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > security-design.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:35:30Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/traceability.json
+**Context**: construction > u1-integrated-paper-journey > nfr-design > traceability.json
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T08:35:30Z
+**Event**: SENSOR_FIRED
+**Fire id**: 946638ea
+**Sensor ID**: traceability
+**Stage slug**: nfr-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/traceability.json
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T08:35:30Z
+**Event**: SENSOR_PASSED
+**Fire id**: 946638ea
+**Sensor ID**: traceability
+**Stage slug**: nfr-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/traceability.json
+**Duration ms**: 85
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:35:55Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/validate_design.py
+**Context**: construction > u1-integrated-paper-journey > nfr-design > validate_design.py
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T08:36:39Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: worker
+**Agent ID**: 01a12a19-8823-7200-8eb8-6420767e0198
+**Message**: Baseline captured for exact SHA `7f9f956765569dfafd35a56740caa7261310cc02`.\n\n- [CI 38124507711](https://github.com/revenantonthemission/DocSuri/actions/runs/38124507711): completed, **11 failed / 2 pa
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:37:12Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/validation.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > validation.md
+**Summary Authorization Id**: a5a4f8c33bf0982fe3bd2ecb825d8df55e67f66e562fb0f6640da49d170f7f27
+
+---
+
+## Review Requested
+**Timestamp**: 2026-10-11T08:37:12Z
+**Event**: REVIEW_REQUESTED
+**Stage**: nfr-design
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: u1-integrated-paper-journey
+**Iteration**: 1
+**Artifact Fingerprint**: sha256:02283a3f58e9b8b95255bf19bc9d89a653a9e9ad2c865872d18f8917acd0300a
+**Request Id**: review:40005cfd289bf26eff965186de2bfb05
+**Review File**: .aidlc-engine/reviews/nfr-design/units/u1-integrated-paper-journey/24fa3166af3ad245/1.40005cfd289bf26eff965186de2bfb05.review.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:37:22Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/reviewer-dispatch.json
+**Context**: .aidlc-engine > reviewer-dispatch.json
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:41:07Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/reviews/nfr-design/units/u1-integrated-paper-journey/24fa3166af3ad245/1.40005cfd289bf26eff965186de2bfb05.review.md
+**Context**: .aidlc-engine > reviews > nfr-design > units > u1-integrated-paper-journey > 24fa3166af3ad245 > 1.40005cfd289bf26eff965186de2bfb05.review.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T08:41:19Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: aidlc-architecture-reviewer-agent
+**Agent ID**: 01a12a1c-61ea-79f0-ab89-f9a8019e56b9
+**Message**: **Reviewer:** aidlc-architecture-reviewer-agent\n\nREADY — no new findings. Review written to the exact dispatched review file.\n\nDocument validator, traceability, upstream coverage and all six required-
+
+---
+
+## Review Completed
+**Timestamp**: 2026-10-11T08:41:28Z
+**Event**: REVIEW_COMPLETED
+**Stage**: nfr-design
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: u1-integrated-paper-journey
+**Iteration**: 1
+**Verdict**: READY
+**Request Fingerprint**: sha256:02283a3f58e9b8b95255bf19bc9d89a653a9e9ad2c865872d18f8917acd0300a
+**Artifact Fingerprint**: sha256:02283a3f58e9b8b95255bf19bc9d89a653a9e9ad2c865872d18f8917acd0300a
+**Request Id**: review:40005cfd289bf26eff965186de2bfb05
+**Review Record**: .aidlc-engine/reviews/nfr-design/units/u1-integrated-paper-journey/24fa3166af3ad245/1.json
+**Review Record Digest**: sha256:b77380a5d860c78baed7c994f5e439d75320aa0ee969b7b688996c696a8d869c
+
+---
+
+## Unit Completed
+**Timestamp**: 2026-10-11T08:41:29Z
+**Event**: UNIT_COMPLETED
+**Stage**: nfr-design
+**Unit**: u1-integrated-paper-journey
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
