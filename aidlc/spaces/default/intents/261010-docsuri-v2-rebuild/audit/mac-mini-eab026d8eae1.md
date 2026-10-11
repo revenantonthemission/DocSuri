@@ -4422,3 +4422,229 @@
 **Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a128a1-79c6-7362-aa3d-7bdf6174fac5 last seen 2026-10-11T01:43:55.323Z.
 
 ---
+
+## Session End
+**Timestamp**: 2026-10-11T02:00:38Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-11T01:59:39.401Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T02:00:39Z
+**Event**: HUMAN_TURN
+**Session**: 01a128b0-ca2c-78f2-b593-fe9b35f57ef0
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T02:01:06Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a128b0-ca2c-78f2-b593-fe9b35f57ef0 last seen 2026-10-11T02:00:38.749Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T02:01:06Z
+**Event**: HUMAN_TURN
+**Session**: 01a128b1-353f-7371-b73b-6dbc690125c4
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T02:21:03Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T02:21:22Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/refined-mockups/refined-mockups-questions.md
+**Context**: inception > refined-mockups > refined-mockups-questions.md
+
+---
+
+## Summary Confirmation Recorded
+**Timestamp**: 2026-10-11T02:21:22Z
+**Event**: SUMMARY_CONFIRMATION_RECORDED
+**Stage**: refined-mockups
+**Details**: Looks correct
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/refined-mockups/refined-mockups-questions.md
+**Questions SHA-256**: 88d04f28e6bc4a10aaa333dc200515810473c1e9a7ad5a44729dd23c4f9816af
+**Hash Scope**: confirmed-content-v2
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_993238a57be241419f595d6eb6f5d317\",0]","question":"DocSuri v2 refined mockups summary:\n\n- Create a fresh, coherent visual design while keeping the DocSuri name. Prioritize readable papers, clear actions, consistent components and understandable feedback.\n- Design desktop/laptop layouts first, then adapt every retained web UI capability for phones and tablets. Specify responsive navigation, content reflow, long-text and zoom behavior without inventing new mobile interfaces for operational command-line tools.\n- Map all 20 capability groups and their stable requirements to screens, interactions or the appropriate existing operational interface. Anchor the design in finding → understanding → saving → revisiting a paper, while retaining public registration, account isolation, administration and the remaining capabilities.\n- Preserve unsent research questions and manuscript text as durable, owner-bound drafts recoverable after browser restart and authenticated return. Show saving, saved, failed and recovered states; define discard, account-switch/logout isolation and conflict behavior. Retention/deletion rules, storage and privacy implications must be resolved before implementation. This elaborates the accepted unsent-input concern and does not weaken protection for committed work or accepted jobs.\n- Account for the current Korean-facing UI and preserve supported light/dark/system appearance behavior in the fresh design. Write review documents in English; keep product-language and component-reuse decisions explicit.\n- Use WCAG 2.2 AA as the proposed accessibility design target, covering keyboard and focus behavior, readable contrast, reflow, status/error announcements, target sizing and accessible authentication. Produce a checklist and later verification plan without claiming that mockups establish conformance or user validation.\n- Produce reviewable screen mockups, interaction specifications, design-system mapping and an accessibility checklist. Cover loading, empty, success, error, partial/degraded, interrupted, unauthorized and expired states. Keep reading a result separate from starting work and exporting separate from preview/approval.\n- Keep the $0 free/local constraint and one-maintainer model. Technology, hosting, continuity/migration, privacy/content obligations, numeric service-quality targets and schedule remain subject to their existing evidence and decisions. Follow CONVENTIONS.md: working branch → PR into develop → release promotion to main.\n\nDoes this all look correct before I generate the artifact?","answer":"Looks correct"}]\n</send_user_message_question_reply>
+**Summary Authorization Id**: 7ba9e8192c72951e27a7ac3febdfb7e185be919b1594c482dd8833dbdffdee17
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T02:22:57Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: default
+**Agent ID**: 01a128c4-47da-7f81-ad6b-3366f406a8b0
+**Message**: The mockups need explicit states and transitions for all 20 FR groups; the paper journey is the first demonstration, not the release boundary.\n\n| Group | Easily missed outcomes to make reviewable |\n|-
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T02:25:46Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/refined-mockups/mockups.md
+**Context**: inception > refined-mockups > mockups.md
+**Summary Authorization Id**: 7ba9e8192c72951e27a7ac3febdfb7e185be919b1594c482dd8833dbdffdee17
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T02:28:37Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/refined-mockups/interaction-spec.md
+**Context**: inception > refined-mockups > interaction-spec.md
+**Summary Authorization Id**: 7ba9e8192c72951e27a7ac3febdfb7e185be919b1594c482dd8833dbdffdee17
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T02:31:25Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/refined-mockups/design-system-mapping.md
+**Context**: inception > refined-mockups > design-system-mapping.md
+**Summary Authorization Id**: 7ba9e8192c72951e27a7ac3febdfb7e185be919b1594c482dd8833dbdffdee17
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T02:31:25Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/refined-mockups/accessibility-checklist.md
+**Context**: inception > refined-mockups > accessibility-checklist.md
+**Summary Authorization Id**: 7ba9e8192c72951e27a7ac3febdfb7e185be919b1594c482dd8833dbdffdee17
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T02:35:54Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/refined-mockups/prototype/index.html
+**Context**: inception > refined-mockups > prototype > index.html
+**Summary Authorization Id**: 7ba9e8192c72951e27a7ac3febdfb7e185be919b1594c482dd8833dbdffdee17
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T02:37:59Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/refined-mockups/mockups.md
+**Context**: inception > refined-mockups > mockups.md
+**Summary Authorization Id**: 7ba9e8192c72951e27a7ac3febdfb7e185be919b1594c482dd8833dbdffdee17
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T02:39:02Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/refined-mockups/prototype/index.html
+**Context**: inception > refined-mockups > prototype > index.html
+**Summary Authorization Id**: 7ba9e8192c72951e27a7ac3febdfb7e185be919b1594c482dd8833dbdffdee17
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T02:41:47Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/refined-mockups/prototype/index.html
+**Context**: inception > refined-mockups > prototype > index.html
+**Summary Authorization Id**: 7ba9e8192c72951e27a7ac3febdfb7e185be919b1594c482dd8833dbdffdee17
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T02:41:48Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/refined-mockups/prototype/index.html
+**Context**: inception > refined-mockups > prototype > index.html
+**Summary Authorization Id**: 7ba9e8192c72951e27a7ac3febdfb7e185be919b1594c482dd8833dbdffdee17
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T02:42:57Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/refined-mockups/design-verification.md
+**Context**: inception > refined-mockups > design-verification.md
+**Summary Authorization Id**: 7ba9e8192c72951e27a7ac3febdfb7e185be919b1594c482dd8833dbdffdee17
+
+---
+
+## Review Requested
+**Timestamp**: 2026-10-11T02:43:10Z
+**Event**: REVIEW_REQUESTED
+**Stage**: refined-mockups
+**Reviewer**: aidlc-product-lead-agent
+**Iteration**: 1
+**Artifact Fingerprint**: sha256:7c0c9e2570de6e81c66955e9075c32f963ddd1ca9c46cc1f61b9fdfcd01cf6a3
+**Request Id**: review:75dfb379ec50ce1bc8d8a9ccc39636e2
+**Review File**: .aidlc-engine/reviews/refined-mockups/stage/dbe832a5d809c08e/1.75dfb379ec50ce1bc8d8a9ccc39636e2.review.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T02:46:15Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/reviews/refined-mockups/stage/dbe832a5d809c08e/1.75dfb379ec50ce1bc8d8a9ccc39636e2.review.md
+**Context**: .aidlc-engine > reviews > refined-mockups > stage > dbe832a5d809c08e > 1.75dfb379ec50ce1bc8d8a9ccc39636e2.review.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T02:46:28Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: aidlc-product-lead-agent
+**Agent ID**: 01a128d8-345c-7771-a090-ffb353d63555
+**Message**: **Reviewer:** aidlc-product-lead-agent\n\nREADY — one Major and two Minor findings:\n\n- Search recovery examples remove required query/filter context.\n- Draft helper copy overstates recovery of unsaved e
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T02:46:31Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a128b1-353f-7371-b73b-6dbc690125c4 last seen 2026-10-11T02:01:06.469Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T02:46:31Z
+**Event**: HUMAN_TURN
+**Session**: 01a128da-c7c4-74c1-a525-a65e829ad4ce
+
+---
+
+## Review Completed
+**Timestamp**: 2026-10-11T02:46:35Z
+**Event**: REVIEW_COMPLETED
+**Stage**: refined-mockups
+**Reviewer**: aidlc-product-lead-agent
+**Iteration**: 1
+**Verdict**: READY
+**Request Fingerprint**: sha256:7c0c9e2570de6e81c66955e9075c32f963ddd1ca9c46cc1f61b9fdfcd01cf6a3
+**Artifact Fingerprint**: sha256:7c0c9e2570de6e81c66955e9075c32f963ddd1ca9c46cc1f61b9fdfcd01cf6a3
+**Request Id**: review:75dfb379ec50ce1bc8d8a9ccc39636e2
+**Review Record**: .aidlc-engine/reviews/refined-mockups/stage/dbe832a5d809c08e/1.json
+**Review Record Digest**: sha256:38cfaa08cb3001ab0bd187e0b7c3377b224086f845f6e3b9b52e1d4f8158fae6
+
+---
