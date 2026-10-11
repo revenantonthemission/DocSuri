@@ -7,10 +7,12 @@ Date: 2026-10-11 (Asia/Seoul). Basis: [requirements](../requirements-analysis/re
 1. Separate read, prepare, mutate and external-effect actions. Name a retry according to its effect. Reading a prepared result, reopening a session or restoring a draft never starts new work.
 2. Show success only after the relevant authoritative acknowledgement. Unknown outcomes remain unknown while reconciled; duplicate user actions resolve the same intended effect where required.
 3. Treat owner, context, paper/version and operation identity as part of every private view and update. Clear stale private state before rendering a newly authenticated account.
-4. Keep focus and committed context stable through refresh; route changes and explicit opens receive purposeful focus. Do not announce every event or keystroke.
-5. Every component uses semantic tokens and the shared state/responsive contract. Hover has a visible cue, keyboard focus has a 3px outline with 2px offset, and disabled/busy controls explain why and prevent only the relevant effect. No hover-only action.
+4. Keep focus and committed context stable through refresh; route changes and explicit opens receive purposeful focus. Return from a paper restores its search query, refinements, order and result position; source/result navigation preserves paper/version and the relevant anchor. Reflect acknowledged saves consistently across reader and library. Do not announce every event or keystroke.
+5. Every component uses inherited DocSuri blue/neutral semantic tokens, their accessible variants, and the shared state/responsive contract. Hover and press have visible cues, keyboard focus has a 3px outline with 2px offset, and disabled/busy controls explain why and prevent only the relevant effect. No hover-only action. Use consistent action-group sizing, with selective primary emphasis and quieter secondary actions.
 6. Inputs and source markup are untrusted. No private draft/question/manuscript text in URLs, analytics, notification previews, normal logs or shared clipboard without the owner's deliberate action.
 7. Local prototype feedback is illustrative. Only implemented boundary tests can prove these invariants.
+
+The [Apple HIG-to-web mapping](design-system-mapping.md#apple-hig-to-web-mapping) grounds the layout, typography, grouping, action hierarchy, feedback and material treatment. Apply it through semantic browser controls and stable opaque reading surfaces. It adds no native-framework requirement. Keep browser navigation and text-selection conventions, the Korean-facing experience and the approved Light / Dark / System behavior.
 
 ## Durable draft lifecycle
 
@@ -35,6 +37,23 @@ Drafts are distinct from committed messages, accepted jobs and saved library wor
 | Retention expiry | State that a previously saved draft expired, where such metadata can lawfully remain | Warn according to the eventual policy; never fabricate recoverable text after erasure |
 
 **Implementation dependency D-01:** choose storage placement, encryption/key/access behavior, retention/expiry and deletion/backup propagation only after privacy, security and free/local-capacity investigation. No private plaintext draft may be left in shared unauthenticated browser storage as a shortcut. This specifies a security outcome, not a claim that owner tags alone secure storage. Recovery across devices is not promised by the restart requirement. Offline persistence beyond the last acknowledged save is not claimed. The final user-facing retention text must contain the actual approved policy before release.
+
+### Draft status and helper copy
+
+The status and adjacent helper describe the same revision. Do not keep a generic “이 계정에서 다시 열 수 있어요” (you can reopen it in this account) helper beneath an unsaved, failed or conflicting latest edit. A confirmed time is displayed only when known; if no revision has been acknowledged, say that no saved draft is confirmed.
+
+| State | Primary status example | Helper meaning / example |
+| --- | --- | --- |
+| Editing, no acknowledgement | “저장되지 않은 변경사항” (Unsaved changes) | Latest text is not confirmed saved; no restart recovery promise |
+| Saving | “저장 중…” (Saving…) | “아직 저장이 확인되지 않았어요.” If an older acknowledgement exists, only that earlier revision is recoverable |
+| Saved | “저장됨” (Saved), with confirmed time if known | The acknowledged revision can be restored after return to this authenticated account |
+| Failed/offline | “최신 변경사항이 저장되지 않았어요” (Latest changes not saved) | Keep the page open and retry; identify only the older acknowledged revision as recoverable, or state none is confirmed |
+| Recovery offered | “저장된 초안이 있어요” (A saved draft is available) | Identify its context and known save time; Restore / Discard is an explicit choice |
+| Recovered | “저장된 초안을 복원했어요” (Saved draft restored) | This is the last acknowledged revision; edits made after its save may be absent |
+| Conflict | “다른 곳에서 변경된 초안이 있어요” (Draft changed elsewhere) | Current local edits are not confirmed saved; compare the available revisions and choose explicitly before acknowledging a new save |
+| Locked | “다시 로그인해 주세요” (Sign in again) | Neutral owner-safe copy only; no draft preview, private context or recoverable-text claim before authorization |
+
+M08 submits with “질문 보내기” (Send question); M09 submits with “분석 시작” (Start analysis). Visible label, accessible name, simulated feedback and eventual handler must agree on the effect. Enter in a multiline field continues to insert a newline.
 
 ## State transitions with externally visible effects
 
@@ -88,10 +107,11 @@ The following tables use framework-neutral input notation. Every component's sta
 | destinations | list of authorized labels/URLs | yes | — | Role-filtered routes; server authorization still required |
 | current | route identity | yes | — | aria-current location |
 | owner | safe display identity or null | yes | null | Account switch clears prior private context |
+| returnContext | authorized route + query/refinement/order/result position or paper/version/anchor | no | absent | Preserve useful context without putting private input in URLs; revalidate owner on return |
 
 #### Responsive Behaviour
 
-Desktop rail and context header; tablet compact rail; phone disclosure menu with all web destinations reachable.
+Desktop rail and context header; tablet compact rail; phone disclosure menu with all web destinations reachable. Moving between layouts keeps the active paper/session and deliberate return destination; a hidden secondary panel is still reachable through its labeled control.
 
 #### Accessibility
 
@@ -117,11 +137,11 @@ Navigate({current:'paper', owner:'synthetic-A', destinations:allowed})
 | State | Description / trigger |
 | --- | --- |
 | default | previous query ready |
-| loading | searching after submit |
+| loading | submitted result region busy; query/mode/order/filter controls remain available |
 | success | results with mode/freshness |
-| empty | confirmed no match |
+| empty | confirmed no match in result region; Edit query / Clear filters available |
 | invalid | field error before request |
-| error | request failed with same input |
+| error | failed result region; preserve input and refinements; Retry search available |
 | partial | fallback/incomplete results |
 | stale | snapshot changed |
 
@@ -136,6 +156,8 @@ Navigate({current:'paper', owner:'synthetic-A', destinations:allowed})
 #### Responsive Behaviour
 
 Filters wrap at desktop; tablet/phone labeled expandable filter region with applied chips always visible; result metadata wraps and actions stack.
+
+The form and applied refinement controls are persistent siblings of the results/status region. Loading, empty and error must not replace the entire search workspace with a banner. Editing fields keeps focus and does not automatically submit; starting a revised search identifies the new submitted values while retaining safe return context. Clear filters is an explicit action with a visible outcome. Retry uses the intended submitted query/refinements, not silently modified values. When returning from a paper, restore the query/order/refinements and result position; if results changed, explain freshness instead of pretending the old position is unchanged.
 
 #### Accessibility
 
@@ -255,7 +277,8 @@ Activity({state:'succeeded', connection:'offline', resultRead:'expired'})
 | saving | persistence request |
 | saved | durable acknowledgement |
 | failed/offline | restart recovery not promised for latest text |
-| recovered | owner-authenticated restore offered |
+| recovery-available | owner-authenticated saved revision offered for explicit restore |
+| recovered | acknowledged revision restored; newer unsaved text may be absent |
 | conflict | both available revisions retained |
 | locked | expired/changed owner |
 | submitting | reconcile input revision |
@@ -267,7 +290,7 @@ Activity({state:'succeeded', connection:'offline', resultRead:'expired'})
 | --- | --- | --- | --- | --- |
 | owner/context/draftId | opaque identity tuple | yes | — | Scope includes research session or novelty input mode |
 | revision/baseRevision | opaque versions | yes | — | Prevents silent overwrite |
-| saveState | enum + acknowledged revision/time | yes | unsaved | Only durable ack permits Saved |
+| saveState | enum + acknowledged revision/time | yes | unsaved | Only durable ack permits Saved; status and helper refer to the same revision |
 | input | text + accepted attachment references | yes | empty | Secrets/private text excluded from URLs/telemetry |
 | onSave/onSubmit/onDiscard | separate handlers | yes | — | No restored auto-submit |
 
