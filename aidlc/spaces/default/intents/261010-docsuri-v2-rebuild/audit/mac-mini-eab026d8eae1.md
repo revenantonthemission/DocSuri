@@ -7670,3 +7670,127 @@
 **Context**: maintenance > develop-integration.md
 
 ---
+
+## Session End
+**Timestamp**: 2026-10-11T07:16:48Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-11T07:09:41.208Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T07:16:49Z
+**Event**: HUMAN_TURN
+**Session**: 01a129d2-3e9c-75e3-979d-9ddca9c097b6
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T07:17:11Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a129d2-3e9c-75e3-979d-9ddca9c097b6 last seen 2026-10-11T07:16:48.833Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T07:17:11Z
+**Event**: HUMAN_TURN
+**Session**: 01a129d2-965c-7691-be3e-6489282252e5
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T07:17:25Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a129d2-965c-7691-be3e-6489282252e5 last seen 2026-10-11T07:17:11.650Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T07:17:26Z
+**Event**: HUMAN_TURN
+**Session**: 01a129d2-ce61-72a1-aa54-8ab8389e6c99
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T07:24:43Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Autonomy Mode Set
+**Timestamp**: 2026-10-11T07:24:48Z
+**Event**: AUTONOMY_MODE_SET
+**Mode**: autonomous
+
+---
+
+## Unit Started
+**Timestamp**: 2026-10-11T07:27:00Z
+**Event**: UNIT_STARTED
+**Stage**: functional-design
+**Unit**: u1-integrated-paper-journey
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T07:28:47Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a129db-2f54-7be2-b10c-d7747aa820c1
+**Message**: **No essential new user questions before the U1 Functional Design summary.** The remaining gaps need engineering proposals or evidence; existing answers should not be reopened.\n\nSource references belo
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T07:29:44Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a129da-fb45-70a2-b02b-8f1cce56aa60
+**Message**: No new human-only question is required before technology-agnostic U1 Functional Design. Existing approvals cover the necessary behavior. Policy values, provider fit and continuity decisions remain pre
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T07:30:28Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/functional-design/functional-design-questions.md
+**Context**: construction > u1-integrated-paper-journey > functional-design > functional-design-questions.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T07:31:02Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/functional-design/functional-design-questions.md
+**Context**: construction > u1-integrated-paper-journey > functional-design > functional-design-questions.md
+
+---
+
+## Unit Paused
+**Timestamp**: 2026-10-11T07:31:21Z
+**Event**: UNIT_PAUSED
+**Stage**: functional-design
+**Unit**: u1-integrated-paper-journey
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+**Reason**: Awaiting human confirmation of the U1 Functional Design summary
+**Next Action**: Record the summary reply, resume this unit, then generate its functional design artifacts after confirmation
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-11T07:31:21Z
+**Event**: DECISION_RECORDED
+**Stage**: functional-design
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/functional-design/functional-design-questions.md
+**Unit**: u1-integrated-paper-journey
+
+---
