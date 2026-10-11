@@ -57,3 +57,34 @@ Ingestion, discovery, dependency review, branch naming and both CodeQL analyses
 passed. Frontend tests/E2E/build and secret scanning were not reached after
 earlier failures. No full-suite pass or vulnerability clearance is claimed.
 These repair areas remain evidence for the subsequent CI/CD work.
+
+## Approved Domain Design branch integration
+
+On 2026-10-11, the user approved Domain Design with both Minor architecture
+findings accepted. [PR #36](https://github.com/revenantonthemission/DocSuri/pull/36)
+merged `docs/docsuri-v2-domain-design` into `develop` at
+`b819700ec4526231a6832195bc11e147dbd49da0` on 2026-10-11T04:27:58Z.
+The reviewed head was `e3b80ad722774b5fbbd822dea534a09ac96ae769`; its exact
+base was `9e6dbe49297459e84ebd754c3b738b473bedec7b`.
+
+The domain document verifier passed 13 components, 42 entity owners, 44 acyclic
+dependencies, all 70 functional requirement mappings, seven ADRs and Mermaid
+syntax. The independent review was READY with the two accepted clarifications:
+search-projection write ownership and the artifact revision bound by export
+approval. Document checks do not establish runtime parity or deployment readiness.
+
+[PR #36 CI](https://github.com/revenantonthemission/DocSuri/actions/runs/38111431799)
+finished with 11 failed jobs, three passed jobs and one skipped job. Every failed
+job matched the error signatures in the
+[exact-base CI](https://github.com/revenantonthemission/DocSuri/actions/runs/38108651681).
+The failures belong to the same repair areas listed above; no new CI regression
+was identified. Ingestion, discovery and dependency review passed, as did both
+[CodeQL analyses](https://github.com/revenantonthemission/DocSuri/actions/runs/38111431921)
+and the [branch-name check](https://github.com/revenantonthemission/DocSuri/actions/runs/38111431888).
+Frontend tests/E2E/build and secret scanning were not reached after earlier
+failures. Application source, dependencies and CI workflows were unchanged.
+
+Integration followed the user's documented interim policy. The completed local
+and remote Domain Design branches were removed, local develop was fast-forwarded
+to origin/develop, and Units Generation continues on
+`docs/docsuri-v2-units-generation`. Main was not promoted.
