@@ -207,3 +207,45 @@ continues on `docs/docsuri-v2-u1-functional-design`, created from that merge.
 Construction retains serial, unit-major execution and no separate walking-
 skeleton ceremony as approved in Delivery Planning. The ordinary completion
 checkpoint approval choice remains pending. Main was not promoted.
+
+## U1 Functional Design integration
+
+The human subsequently selected Continue automatically for ordinary Construction
+completion. U1 Functional Design completed with its confirmed summary, document
+checks and independent architecture review. [PR #40](https://github.com/revenantonthemission/DocSuri/pull/40)
+merged into develop at `ee2957bac885549d4b5865e8bb939967f0dfbfb3` on
+2026-10-11T07:57:22Z. Its verified head was
+`ae88e6bff698c969291254dd65ffe08ea6f9facd`, exact base
+`93b43f86639c51df1c82bcf919809f9a8d9c5002`.
+
+Validation passed for 21 logical entities, 39 rules, nine workflows, 14 local
+checks, 29 U1 FR contributions and all 70 release FR rows, ten NFRs and nine IB
+obligations. Mermaid syntax passed. The review found no Critical/Major concerns
+and two Minor details: initial empty-glossary revision and immutable acceptance
+timestamp. These carry into coordinated contracts before affected code. No
+running application, operating feasibility or executable finding closure is
+claimed from this design.
+
+[Head CI 38122906293](https://github.com/revenantonthemission/DocSuri/actions/runs/38122906293)
+finished with 11 failed, three passed and one skipped job. All 230 normalized
+diagnostic lines across its 11 failures matched
+[exact-base CI 38120766277](https://github.com/revenantonthemission/DocSuri/actions/runs/38120766277)
+(11 failed, two passed, two skipped); shared/frontend complete failed steps also
+matched after normalization. No new regression was identified by this bounded
+comparison. Ingestion, discovery and PR-only dependency review passed, as did
+[CodeQL](https://github.com/revenantonthemission/DocSuri/actions/runs/38122906295)
+and [branch naming](https://github.com/revenantonthemission/DocSuri/actions/runs/38122906331).
+
+Shared lint/tests, accounts/library and summarization tests, frontend dependency
+audit/lint/tests/E2E/build, ingestion/ops security audits and Gitleaks, image
+digest verification, isolated Postgres/non-vacuity checks and Ops APFS tests
+were not reached. Full PBT was skipped. CI remains failed; this establishes
+neither security clearance nor complete-service readiness. Application source,
+dependencies and CI configuration were unchanged.
+
+Integration followed CONVENTIONS.md and the interim policy. Local develop and
+origin/develop were synchronized; completed local/remote Functional Design
+branches were removed. U1 NFR Requirements continues on the fresh
+`docs/docsuri-v2-u1-nfr-requirements` branch from the merge. Enabled summary/plan
+confirmations, exact verification-command approval and failure decisions remain
+human stops. Main was not promoted.
