@@ -1,6 +1,6 @@
 # DocSuri v2 — Units Generation questions and proposed plan
 
-Date: 2026-10-11 (Asia/Seoul). Status: proposed decomposition; awaiting plan approval.
+Date: 2026-10-11 (Asia/Seoul). Status: decomposition plan approved; awaiting consolidated summary confirmation before artifact generation.
 
 ## Existing decisions and evidence
 
@@ -143,5 +143,57 @@ application/separate operator deployment grouping, fit the rebuild?
 A. Approve Plan — retain this decomposition for the subsequent confirmed summary and artifact generation.
 B. Revise Plan — change the grouping, granularity, kinds or dependency approach before generation.
 X. Other (please specify)
+
+[Answer]: A. Approve Plan
+
+## Consolidated Summary Confirmation
+
+- Generate eight construction units within the approved 13-component ownership
+  model, retaining every current capability for the first v2 release. The units
+  are U1 integrated paper journey (`service`), U2 account/personal controls
+  (`library`), U3 complete paper/corpus capabilities (`library`), U4
+  research/novelty (`library`), U5 topics/digests (`library`), U6 approved export
+  (`library`), U7 controlled platform protocols (`service`), and U8 complete
+  service operations/integration (`service`).
+- Keep one shared application release with a separate controlled operator
+  executable. U1 and U8 are successive assemblies of the same application;
+  embedded modules include their required UI contributions and real integration
+  checks. Define composition and source responsibility without duplicating
+  business ownership or making the core depend on future implementations.
+- U1 must demonstrate finding, understanding, saving and revisiting a paper
+  through real persistence, owner checks and recoverable accepted work. Later
+  units complete all remaining parity; the anchor demonstration does not reduce
+  release scope. Keep the approved responsive Korean web experience, inherited
+  colors, Apple HIG adaptations, appearance modes and accessibility target.
+- Preserve the approved dependency structure: U2 needs U1; U3 needs U1/U2; U4
+  and U5 need U1/U2/U3; U6 needs U1/U2/U4; U7 is independent; U8 consumes all
+  other units' contracts. Validate the DAG and document why each edge exists.
+  Describe independent development possibilities without changing the recorded
+  serial execution. Delivery Planning selects the economic sequence; no
+  recommended cross-unit build order, critical path or schedule is chosen here.
+- Produce the unit catalogue with IDs/directories, kinds, boundaries, deployment
+  grouping, relative complexity and constraints; the dependency DAG; the
+  requirement-to-unit map; and traceability for all 70 functional requirement
+  IDs. Carry all non-functional and evidence obligations, then obtain an
+  independent architecture review.
+- Carry the accepted Domain Design findings into contract work: explicit
+  search-projection write/rebuild and withdrawal responsibility, and the exact
+  research artifact revision bound by export approval. Assignment is not proof
+  that these findings have been resolved.
+- Keep the $0 free/local budget and one-maintainer model. Existing users/data,
+  recoverable backups, continuity, source/privacy obligations, draft retention
+  and shared-device isolation, free/local capacity, public integration viability
+  and baseline measurements remain evidence prerequisites for affected choices.
+  Stack, hosting, migration, numeric quality targets and schedule remain open;
+  no paid fallback or silent capability removal is authorized.
+- Follow CONVENTIONS.md: completed working branches merge into develop through
+  PRs under the documented interim CI policy; release promotion to main is
+  separate. Domain Design is merged; Units Generation continues on its fresh
+  working branch.
+
+Does this all look correct before I generate the artifact?
+
+- Looks correct
+- Request changes
 
 [Answer]:
