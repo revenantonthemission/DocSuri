@@ -1,0 +1,110 @@
+"""Corpus-owned immutable sources and projection publication for local research."""
+
+from __future__ import annotations
+
+from backend.artifacts import PrivateArtifacts
+from backend.transactions import OwnerTransactions
+from psycopg.types.json import Jsonb
+
+
+class CorpusRepository:
+    def __init__(self, transactions: OwnerTransactions, files: PrivateArtifacts):
+        self.transactions = transactions
+        self.files = files
+
+    def publish(
+        self,
+        *,
+        paper: str,
+        version: str,
+        title: str,
+        authors: list[str],
+        source_url: str,
+        version_label: str,
+        content: dict,
+        raw: bytes,
+        provenance: dict,
+        chunks: list[dict],
+    ) -> dict:
+        if not 1 <= len(chunks) <= 256:
+            raise ValueError("projection allocation exceeded")
+        artifact = self.files.publish(raw)
+
+        def write(conn):
+            conn.execute(
+                "INSERT INTO corpus.paper(id,title,authors,metadata) VALUES(%s,%s,%s,%s) ON "
+                "CONFLICT(id) DO NOTHING",
+                (paper, title, Jsonb(authors), Jsonb({"localResearchOnly": True})),
+            )
+            existing = conn.execute(
+                "SELECT * FROM corpus.version WHERE id=%s FOR UPDATE", (version,)
+            ).fetchone()
+            if existing:
+                if existing["paper_id"] != paper or existing["source_hash"] != artifact.sha256:
+                    raise ValueError("immutable source identity conflict")
+                return existing
+            count = conn.execute("SELECT count(*) AS count FROM corpus.version").fetchone()["count"]
+            if count >= 2:
+                raise ValueError("source fixture allocation exhausted")
+            row = conn.execute(
+                "INSERT INTO corpus.version(id,paper_id,source_url,source_hash,version_label,"
+                "private_path,eligible,purpose,provenance,content) VALUES(%s,%s,%s,%s,%s,%s,"
+                "true,'local-research',%s,%s) RETURNING *",
+                (
+                    version,
+                    paper,
+                    source_url,
+                    artifact.sha256,
+                    version_label,
+                    artifact.name,
+                    Jsonb(dict(provenance, byteLength=artifact.size)),
+                    Jsonb(content),
+                ),
+            ).fetchone()
+            for ordinal, chunk in enumerate(chunks):
+                conn.execute(
+                    "INSERT INTO corpus.projection(version_id,ordinal,content_hash,anchor,"
+                    "section,text_content,embedding,vector_policy) VALUES(%s,%s,%s,%s,%s,%s,%s,"
+                    "%s)",
+                    (
+                        version,
+                        ordinal,
+                        artifact.sha256,
+                        chunk["anchor"],
+                        chunk["section"],
+                        chunk["text"],
+                        chunk.get("embedding"),
+                        chunk.get("vectorPolicy"),
+                    ),
+                )
+            return row
+
+        return self.transactions.run("corpus", write)
+
+    def read(self, version: str) -> dict:
+        def read(conn):
+            conn.execute("SELECT corpus.guard_version(%s,%s)", (version, "local-research"))
+            return conn.execute(
+                "SELECT v.*,p.title,p.authors,p.metadata FROM corpus.version v JOIN "
+                "corpus.paper p ON p.id=v.paper_id WHERE v.id=%s",
+                (version,),
+            ).fetchone()
+
+        return self.transactions.run("corpus", read)
+
+    def withdraw(self, version: str) -> None:
+        def write(conn):
+            row = conn.execute(
+                "SELECT paper_id FROM corpus.version WHERE id=%s", (version,)
+            ).fetchone()
+            if not row:
+                raise ValueError("unknown source version")
+            conn.execute("SELECT id FROM corpus.paper WHERE id=%s FOR UPDATE", (row["paper_id"],))
+            conn.execute(
+                "UPDATE corpus.version SET eligible=false,"
+                "eligibility_revision=gen_random_uuid() WHERE id=%s",
+                (version,),
+            )
+            conn.execute("DELETE FROM corpus.projection WHERE version_id=%s", (version,))
+
+        self.transactions.run("corpus", write)
