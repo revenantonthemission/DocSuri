@@ -6424,3 +6424,58 @@
 **Stage**: units-generation
 
 ---
+
+## Session End
+**Timestamp**: 2026-10-11T05:04:04Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a1294f-fe6d-77a3-9c8f-5ed0faa2eb20 last seen 2026-10-11T04:54:32.712Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T05:04:04Z
+**Event**: HUMAN_TURN
+**Session**: 01a12958-b76c-7b53-b1a9-c044525a14be
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T05:15:28Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Gate Approved
+**Timestamp**: 2026-10-11T05:15:35Z
+**Event**: GATE_APPROVED
+**Stage**: units-generation
+**User Input**: Approve
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_322d8cc96dc94d09a0477cbb08e3305e\",0]","question":"Units Generation is ready for approval. Review the [unit catalogue](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work.md), [dependency graph](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work-dependency.md), [requirement map](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work-story-map.md) and [architecture review](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/reviews/review-01.md).\n\nThe eight units preserve all current capabilities and the $0 constraint. All 70 functional requirements are mapped, the 19-edge dependency graph is acyclic, and the independent review found no new issues. This verifies the decomposition; implementation and operating feasibility still require evidence.\n\nApprove completes this stage and continues to Contract Design; I’ll merge the completed branch into develop through a PR under CONVENTIONS.md. Request Changes revises these documents. How would you like to proceed?","answer":"Approve"}]\n</send_user_message_question_reply>
+
+---
+
+## Stage Completion
+**Timestamp**: 2026-10-11T05:15:35Z
+**Event**: STAGE_COMPLETED
+**Stage**: units-generation
+**Validation Basis**: {"graphContract":"sha256:baf39a0a351356930786ca985bbb7c5893e8db3e93715525a8e909b629765ee7","inputs":[{"artifact":"components","contentHash":"sha256:48ad6dcebd23b56a0d815d491ff0807a15bc9faea3f1bf71aac7cd9e435fd161","instanceCount":1,"presentCount":1,"producer":"domain-design","required":true,"structureHash":"sha256:5f1fd9553d673ba09932fab9ecb3e74d0b6f9195f1328053ce1d1d32dced9e7e"},{"artifact":"decisions","contentHash":"sha256:c85a29eadad0666ccaa728910867f3084def167189589d6ea3327fa6d1ce2946","instanceCount":1,"presentCount":1,"producer":"domain-design","required":false,"structureHash":"sha256:7b8eccf2498c394430945f487459839ee68ed161eaedf4313742e6b6b0434202"},{"artifact":"requirements","contentHash":"sha256:6f20903a40e5aa97dac918075fdcab25056fa95eb820c8e768da11344dd18f8b","instanceCount":1,"presentCount":1,"producer":"requirements-analysis","required":true,"structureHash":"sha256:279106f77e0d58b2e8995a0ad005efc79e094e5c00a4c3431ead5e3b22c4c593"}],"outputs":[{"artifact":"traceability","contentHash":"sha256:8fe2036cd446c1134e4631989f30169746058d37a679077ec07ac4ff733af591","instanceCount":1,"presentCount":1,"producer":"units-generation","required":true,"structureHash":"sha256:7449f251ddfae1e930ad4dd7071c3d9f7c43092f3a117f9642077310e1a51742"},{"artifact":"unit-of-work-dependency","contentHash":"sha256:a085c06fd79e03285233729f314cbf356d9f2ae70a3fbd362b1c8da7053fb66f","instanceCount":1,"presentCount":1,"producer":"units-generation","required":true,"structureHash":"sha256:399f8c5ec0c274a74278006154b3417aa28fa7565d5d9a660f8fdac22f7cf5e8"},{"artifact":"unit-of-work-story-map","contentHash":"sha256:d0fd06d2056302d04fa77d622c3cf6e13ddca68b7a357dc420f04bddf0ce4643","instanceCount":1,"presentCount":1,"producer":"units-generation","required":true,"structureHash":"sha256:f010c656eedaebe74cb412a3e4180cb51ad5780301b925ed7f4bdfa067af5c53"},{"artifact":"unit-of-work","contentHash":"sha256:81ba782f173b6f4eff9313df887939c0170dc49c2c54c4b347bd3c56443bb03d","instanceCount":1,"presentCount":1,"producer":"units-generation","required":true,"structureHash":"sha256:e2f243ed899048406360d62e77596aa6a67e8a3b449181149c654846aa0179f4"}],"projectType":"brownfield","schema":3}
+**Details**: Stage Units Generation approved by gate
+
+---
+
+## Stage Start
+**Timestamp**: 2026-10-11T05:15:35Z
+**Event**: STAGE_STARTED
+**Stage**: contract-design
+**Agent**: aidlc-architect-agent
+**Answer Mode**: guide (reused from intent-capture)
+
+---
+
+## Memory Empty
+**Timestamp**: 2026-10-11T05:15:36Z
+**Event**: MEMORY_EMPTY
+**Stage**: units-generation
+
+---
