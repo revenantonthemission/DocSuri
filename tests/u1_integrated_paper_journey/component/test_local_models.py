@@ -326,3 +326,107 @@ def test_invalid_later_source_is_rejected_before_any_inference_or_attempt_record
         with pytest.raises(ValueError):
             assistant.generate(chunks, task="summary")
         assert not runtime.calls and not assistant.attempts
+
+
+def structured_response():
+    return {
+        "text": "A diagnostic explanation.",
+        "citations": ["s1.p1"],
+        "definitions": [
+            {
+                "term": "diagnostic source",
+                "meaning": "An authored source used for diagnosis.",
+                "anchor": "s1.p1",
+                "quote": "An authored diagnostic source.",
+            }
+        ],
+    }
+
+
+def structured_runtime(payload):
+    return FaultRuntime(
+        {
+            "message": {"content": json.dumps(payload)},
+            "model": "qwen3:8b",
+            "prompt_eval_count": 100,
+            "eval_count": 40,
+            "done_reason": "stop",
+        }
+    )
+
+
+def test_structured_definition_preserves_exact_evidence_and_renders_without_synthesis():
+    runtime = structured_runtime(structured_response())
+    result = GroundedLocalAssistant(runtime, structured_summary=True).generate(
+        source(), task="summary"
+    )
+    section = result["sections"][0]
+    assert section["definitions"] == structured_response()["definitions"]
+    assert section["explanation"] == "A diagnostic explanation."
+    assert "diagnostic source: An authored source used for diagnosis. [s1.p1]" in result["text"]
+    validate_request("qwen3:8b", runtime.calls[0]["body"])
+    assert runtime.calls[0]["body"]["options"]["num_predict"] == 224
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"quote": "A fabricated quotation."},
+        {"anchor": "s9.p9"},
+        {"meaning": ""},
+        {"meaning": "d_{\text{model}}"},  # Actual tab after JSON decode, not literal LaTeX.
+        {"term": "x" * 65},
+        {"quote": "x" * 181},
+        {"extra": "unapproved field"},
+    ],
+)
+def test_invalid_definition_rejects_whole_result_without_repair(change):
+    payload = structured_response()
+    payload["definitions"][0].update(change)
+    runtime = structured_runtime(payload)
+    assistant = GroundedLocalAssistant(runtime, structured_summary=True)
+    with pytest.raises(ModelUnavailable):
+        assistant.generate(source(), task="summary")
+    assert len(runtime.calls) == 1
+    assert assistant.attempts[0]["status"] == "failed"
+    assert assistant.attempts[0]["rawResponse"]["message"]["content"] == json.dumps(payload)
+
+
+def test_empty_definition_array_is_allowed_but_missing_or_unbounded_array_is_not():
+    payload = structured_response()
+    payload["definitions"] = []
+    result = GroundedLocalAssistant(structured_runtime(payload), structured_summary=True).generate(
+        source(), task="summary"
+    )
+    assert result["sections"][0]["definitions"] == []
+    for definitions in (None, [structured_response()["definitions"][0]] * 3):
+        payload["definitions"] = definitions
+        with pytest.raises(ModelUnavailable):
+            GroundedLocalAssistant(structured_runtime(payload), structured_summary=True).generate(
+                source(), task="summary"
+            )
+    del payload["definitions"]
+    with pytest.raises(ModelUnavailable):
+        GroundedLocalAssistant(structured_runtime(payload), structured_summary=True).generate(
+            source(), task="summary"
+        )
+
+
+def test_math_backslash_is_preserved_but_decoded_control_characters_are_rejected():
+    payload = {"text": r"Dimension d_{\text{model}}.", "citations": ["s1.p1"]}
+    result = GroundedLocalAssistant(structured_runtime(payload)).generate(source(), task="summary")
+    assert result["text"] == payload["text"]
+    for character in ("\t", "\b", "\r", "\n", "\x00", "\x7f"):
+        payload["text"] = "Mathematical text " + character
+        with pytest.raises(ModelUnavailable, match="control characters"):
+            GroundedLocalAssistant(structured_runtime(payload)).generate(source(), task="summary")
+
+
+def test_translation_keeps_translation_only_shape_in_structured_experiment():
+    payload = {"text": "진단 문장입니다.", "citations": ["s1.p1"]}
+    runtime = structured_runtime(payload)
+    result = GroundedLocalAssistant(runtime, structured_summary=True).generate(
+        source(), task="translate", language="ko"
+    )
+    assert result["text"] == payload["text"]
+    assert "definitions" not in runtime.calls[0]["body"]["format"]["properties"]

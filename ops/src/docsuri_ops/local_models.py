@@ -94,7 +94,10 @@ def validate_request(model: str, body: dict) -> None:
             fields.add("format")
             try:
                 anchors = body["format"]["properties"]["citations"]["items"]["enum"]
-                if body["format"] != grounded_format(anchors):
+                if body["format"] not in (
+                    grounded_format(anchors),
+                    grounded_format(anchors, definitions=True),
+                ):
                     raise ValueError("unexpected schema")
             except (KeyError, TypeError, ValueError) as exc:
                 raise ModelUnavailable("generation schema outside bounded contract") from exc
@@ -120,7 +123,7 @@ def validate_request(model: str, body: dict) -> None:
         raise ModelUnavailable("model context/output options differ from finite policy")
 
 
-def grounded_format(anchors: list[str]) -> dict:
+def grounded_format(anchors: list[str], *, definitions: bool = False) -> dict:
     if (
         not isinstance(anchors, list)
         or not 1 <= len(anchors) <= 8
@@ -130,7 +133,7 @@ def grounded_format(anchors: list[str]) -> dict:
         )
     ):
         raise ValueError("invalid bounded anchor vocabulary")
-    return {
+    schema = {
         "type": "object",
         "additionalProperties": False,
         "properties": {
@@ -145,6 +148,24 @@ def grounded_format(anchors: list[str]) -> dict:
         },
         "required": ["text", "citations"],
     }
+    if definitions:
+        schema["properties"]["definitions"] = {
+            "type": "array",
+            "maxItems": 2,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "term": {"type": "string", "minLength": 1, "maxLength": 64},
+                    "meaning": {"type": "string", "minLength": 1, "maxLength": 160},
+                    "anchor": {"type": "string", "enum": anchors},
+                    "quote": {"type": "string", "minLength": 1, "maxLength": 180},
+                },
+                "required": ["term", "meaning", "anchor", "quote"],
+            },
+        }
+        schema["required"].append("definitions")
+    return schema
 
 
 def validate_clone_allocation(created: list[str], before: dict, after: dict, growth: int) -> None:

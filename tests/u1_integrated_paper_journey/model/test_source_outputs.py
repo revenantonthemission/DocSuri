@@ -42,7 +42,7 @@ def model_context(request):
         "sourceIdentity": source_identity(),
         "paperManifest": manifest,
         "semanticReview": "pending",
-        "experiment": "natural-section-neutral-recommended-nonthinking-two-fixed-seeds",
+        "experiment": "source-section-definitions-two-fixed-seeds",
         "samplingOptions": generation_options(request.param),
         "cases": [],
     }
@@ -121,7 +121,7 @@ def test_real_bound_source_response(model_context, case_id, paper, anchors, task
         "startedAt": time.time(),
         "semanticReview": "pending",
     }
-    assistant = GroundedLocalAssistant(runtime, sampling_seed=seed)
+    assistant = GroundedLocalAssistant(runtime, sampling_seed=seed, structured_summary=True)
     try:
         record["output"] = assistant.generate(chunks, task=task, language=language)
         record["status"] = "returned-bound-result"

@@ -15,9 +15,16 @@ from docsuri_ops.local_models import (
 
 
 class GroundedLocalAssistant:
-    def __init__(self, runtime: LocalModelRuntime, *, sampling_seed: int | None = None):
+    def __init__(
+        self,
+        runtime: LocalModelRuntime,
+        *,
+        sampling_seed: int | None = None,
+        structured_summary: bool = False,
+    ):
         self.runtime = runtime
         self.generation_options = generation_options(sampling_seed)
+        self.structured_summary = structured_summary
         self.attempts = []
 
     def generate(self, chunks: list[dict], *, task: str, language: str = "en") -> dict:
@@ -80,7 +87,11 @@ class GroundedLocalAssistant:
             "requestHash": hashlib.sha256(
                 json.dumps(
                     {
-                        "strategy": "source-section-groups-2",
+                        "strategy": (
+                            "source-section-definitions-3"
+                            if self.structured_summary
+                            else "source-section-groups-2"
+                        ),
                         "task": task,
                         "language": language,
                         "sections": [s["requestHash"] for s in sections],
@@ -131,9 +142,21 @@ class GroundedLocalAssistant:
         )
         if task == "translate" and language != "ko":
             raise ValueError("local translation currently supports English to Korean")
+        definitions = self.structured_summary and task == "summary"
+        structure_instruction = (
+            " Return a definitions array for explicit terms defined in this section: "
+            "at most two entries with term, meaning, anchor and quote. Prioritize these "
+            "definitions over benchmark, history or model-size details. Each quote must "
+            "be a short exact substring of the named source block supporting that meaning. "
+            "Use an empty array only when this section defines no terms. Keep text to "
+            "at most 45 words and each meaning to at most 15 words. Do not repeat "
+            "definitions in text. Return valid JSON; escape literal backslashes twice."
+            if definitions
+            else " Use at most 90 words of complete prose."
+        )
         body = {
             "model": "qwen3:8b",
-            "format": grounded_format(identifiers),
+            "format": grounded_format(identifiers, definitions=definitions),
             "stream": False,
             "think": False,
             "keep_alive": 0,
@@ -151,8 +174,8 @@ class GroundedLocalAssistant:
                         "Do not add general limitations or speculation absent from the source. "
                         "Do not infer guaranteed outcomes. Preserve source qualifiers such as "
                         "suspect or hypothesize when explaining proposed mechanisms. "
-                        "Use at most 90 words of complete prose; no preamble or "
-                        "displayed equations."
+                        "No preamble or displayed equations. No control characters."
+                        + structure_instruction
                     ),
                 },
                 {"role": "user", "content": instruction + "\n\nSOURCE EXCERPTS:\n" + evidence},
@@ -163,12 +186,17 @@ class GroundedLocalAssistant:
             generated = json.loads(response["message"]["content"])
         except (ValueError, TypeError) as exc:
             raise ModelUnavailable("result is not the declared structured output") from exc
-        if not isinstance(generated, dict) or set(generated) != {"text", "citations"}:
+        expected_fields = {"text", "citations"}
+        if definitions:
+            expected_fields.add("definitions")
+        if not isinstance(generated, dict) or set(generated) != expected_fields:
             raise ModelUnavailable("result fields differ from declared structured output")
         text = generated["text"]
         citations = generated["citations"]
         if not isinstance(text, str) or not text.strip() or not isinstance(citations, list):
             raise ModelUnavailable("result is empty or malformed")
+        if any(ord(character) < 32 or ord(character) == 127 for character in text):
+            raise ModelUnavailable("result contains control characters")
         inline_citations = [
             anchor.strip()
             for group in re.findall(r"\[([^\[\]]+)\]", text)
@@ -180,9 +208,44 @@ class GroundedLocalAssistant:
             or any(anchor not in identifiers for anchor in [*citations, *inline_citations])
         ):
             raise ModelUnavailable("result lacks valid source-bound references")
+        defined_terms = generated.get("definitions", [])
+        if not isinstance(defined_terms, list) or len(defined_terms) > 2:
+            raise ModelUnavailable("definition count outside bounded structure")
+        source_by_anchor = {item["anchor"]: item["text"] for item in chunks}
+        for definition in defined_terms:
+            if not isinstance(definition, dict) or set(definition) != {
+                "term",
+                "meaning",
+                "anchor",
+                "quote",
+            }:
+                raise ModelUnavailable("malformed source definition")
+            for field, maximum in (("term", 64), ("meaning", 160), ("quote", 180)):
+                value = definition[field]
+                if (
+                    not isinstance(value, str)
+                    or not value.strip()
+                    or len(value) > maximum
+                    or any(ord(c) < 32 or ord(c) == 127 for c in value)
+                ):
+                    raise ModelUnavailable("definition text outside bounded structure")
+            anchor = definition["anchor"]
+            if (
+                not isinstance(anchor, str)
+                or anchor not in source_by_anchor
+                or definition["quote"] not in source_by_anchor[anchor]
+            ):
+                raise ModelUnavailable("definition quote is not exact bound source")
+        # Exact quotes establish provenance, not semantic entailment. Independent
+        # quality review still checks that each meaning follows from its quote.
+        rendered_definitions = [
+            f"{item['term']}: {item['meaning']} [{item['anchor']}]" for item in defined_terms
+        ]
         return {
-            "text": text,
-            "citations": list(dict.fromkeys(citations)),
+            "text": "\n".join([text, *rendered_definitions]),
+            "explanation": text,
+            "definitions": defined_terms,
+            "citations": list(dict.fromkeys([*citations, *(d["anchor"] for d in defined_terms)])),
             "task": task,
             "language": language,
             "sourceAnchors": identifiers,
