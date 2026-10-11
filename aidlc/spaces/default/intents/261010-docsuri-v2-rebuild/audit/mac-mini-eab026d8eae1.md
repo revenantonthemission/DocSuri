@@ -6182,3 +6182,245 @@
 **Review Record Digest**: sha256:8af47d4da6221706d7dbedd877f1488f1d4c7a344b95010aa51a2ad56a13dac3
 
 ---
+
+## Decision Recorded
+**Timestamp**: 2026-10-11T04:53:49Z
+**Event**: DECISION_RECORDED
+**Stage**: units-generation
+**Decision**: Anything to add for next time?
+**Options**: Nothing to add,Add a note
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T04:54:00Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-11T04:52:50.888Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T04:54:01Z
+**Event**: HUMAN_TURN
+**Session**: 01a1294f-8382-7ad1-a44f-df0f990184d4
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T04:54:15Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a1294f-8382-7ad1-a44f-df0f990184d4 last seen 2026-10-11T04:54:00.913Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T04:54:15Z
+**Event**: HUMAN_TURN
+**Session**: 01a1294f-ba8d-7ad3-b2bd-ae88da5f8913
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T04:54:32Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a1294f-ba8d-7ad3-b2bd-ae88da5f8913 last seen 2026-10-11T04:54:15.520Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T04:54:33Z
+**Event**: HUMAN_TURN
+**Session**: 01a1294f-fe6d-77a3-9c8f-5ed0faa2eb20
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T05:03:14Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Question Answered
+**Timestamp**: 2026-10-11T05:03:19Z
+**Event**: QUESTION_ANSWERED
+**Stage**: units-generation
+**Details**: Nothing to add
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_a29c8f08672349379fa95a67b7980a89\",0]","question":"Anything to add for next time? The eight-unit catalogue, dependency graph, requirement mapping and independent architecture review are committed as b6ef90df. Consistency checks passed and the review found no new issues. Your $0 budget and CONVENTIONS.md Git flow remain recorded. You can add a reusable note before reviewing the unit documents for approval.","answer":"Nothing to add"}]\n</send_user_message_question_reply>
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_FIRED
+**Fire id**: 56a40fdc
+**Sensor ID**: required-sections
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_PASSED
+**Fire id**: 56a40fdc
+**Sensor ID**: required-sections
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work.md
+**Duration ms**: 26
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_FIRED
+**Fire id**: b686162e
+**Sensor ID**: required-sections
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work-dependency.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_PASSED
+**Fire id**: b686162e
+**Sensor ID**: required-sections
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work-dependency.md
+**Duration ms**: 25
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_FIRED
+**Fire id**: 1bf06665
+**Sensor ID**: required-sections
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work-story-map.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_PASSED
+**Fire id**: 1bf06665
+**Sensor ID**: required-sections
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work-story-map.md
+**Duration ms**: 25
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_FIRED
+**Fire id**: 85be1829
+**Sensor ID**: required-sections
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/traceability.json
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_PASSED
+**Fire id**: 85be1829
+**Sensor ID**: required-sections
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/traceability.json
+**Duration ms**: 25
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_FIRED
+**Fire id**: 40fccd30
+**Sensor ID**: upstream-coverage
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_PASSED
+**Fire id**: 40fccd30
+**Sensor ID**: upstream-coverage
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work.md
+**Duration ms**: 26
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_FIRED
+**Fire id**: b6096018
+**Sensor ID**: upstream-coverage
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work-dependency.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_PASSED
+**Fire id**: b6096018
+**Sensor ID**: upstream-coverage
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work-dependency.md
+**Duration ms**: 27
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_FIRED
+**Fire id**: eebcf0c6
+**Sensor ID**: upstream-coverage
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work-story-map.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_PASSED
+**Fire id**: eebcf0c6
+**Sensor ID**: upstream-coverage
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/unit-of-work-story-map.md
+**Duration ms**: 25
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_FIRED
+**Fire id**: 76ec3369
+**Sensor ID**: upstream-coverage
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/traceability.json
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: SENSOR_PASSED
+**Fire id**: 76ec3369
+**Sensor ID**: upstream-coverage
+**Stage slug**: units-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/units-generation/traceability.json
+**Duration ms**: 26
+
+---
+
+## Stage Awaiting Approval
+**Timestamp**: 2026-10-11T05:03:20Z
+**Event**: STAGE_AWAITING_APPROVAL
+**Stage**: units-generation
+
+---
