@@ -49,7 +49,7 @@ B. A multi-user web service initially limited to invited users; retain the full 
 C. Keep multi-user capabilities required, but decide public versus invited access after free/local capacity and operating evidence are available.
 X. Other (please specify)
 
-[Answer]:
+[Answer]: A multi-user web service with public registration.
 
 ## Q2. What research example should guide the first end-to-end acceptance checks?
 
@@ -64,7 +64,7 @@ A. Choose and document representative public-paper tasks; I have no particular e
 B. I will provide a research topic, query or paper and the outcome I want the reader to understand.
 X. Other (please specify)
 
-[Answer]:
+[Answer]: Choose and document representative public-paper tasks; I have no particular example to supply now.
 
 ## Evidence and decision dependencies
 
@@ -92,3 +92,61 @@ state/results and malformed progress events inform explicit verification work.
 - [RE] [Business overview](../../../../codekb/DocSuri/business-overview.md), CAP-01–CAP-20; [architecture](../../../../codekb/DocSuri/architecture.md); [code structure](../../../../codekb/DocSuri/code-structure.md).
 - [CQ] [Code-quality assessment](../../../../codekb/DocSuri/code-quality-assessment.md), Q-01–Q-08, with source-versus-executed evidence distinguished.
 - [Git conventions](../../../../../../../CONVENTIONS.md).
+
+## Answer analysis
+
+Q1 selects a multi-user web service with public registration. It establishes the
+intended access model; public hosting, sustainable capacity and deployment
+readiness still require their own evidence. Q2 delegates selection of documented
+public-paper tasks to the agents. It does not leave a user-supplied example
+pending. Neither answer contradicts the approved scope or requires a follow-up.
+
+The requirements will separate preserved outcomes, source-observed defects,
+proposed acceptance criteria and unresolved evidence. Conditions that affect
+public registration, ownership, sessions, asynchronous work, storage, external
+dependencies and generated research output will receive explicit pass/fail
+behavior. Exact quantitative limits remain dependent on the approved baseline
+and target-setting sequence.
+
+## Consolidated Summary Confirmation
+
+- Build a multi-user web service with public registration for researchers and
+  engineers. Preserve personal accounts, administrator boundaries and isolation
+  of each user's saved work and private material.
+- Retain all current capabilities in the first v2 release. Map the 20 discovered
+  capability groups into traceable requirements covering discovery, reading and
+  AI assistance, library/history, accounts/preferences, citations, research and
+  novelty, approved exports, quotas and operations. Defer new feature expansion;
+  existing mock subscription behavior is not a real billing requirement.
+- Prove find → understand → save → revisit first. Agents will choose and document
+  public-paper tasks with queries, source references, expected useful outcomes
+  and repeatable checks. These supplement the full capability-parity checks and
+  do not claim validation by actual users.
+- Define observable happy-path, error and recovery criteria, including truthful
+  job progress/results, retry and duplicate handling, interrupted sessions,
+  unavailable dependencies, failed writes, ownership checks and accessible
+  interaction. Carry the four confirmed paper-job integration defects into
+  acceptance work without prescribing the old implementation as v2's design.
+- Prioritize stable, smooth use and comprehensible, repairable code. Measure
+  complete-task success, responsiveness, interruption recovery and defect
+  reproduction/repair before agreeing numeric quality targets. Source presence
+  and isolated tests do not establish complete readiness.
+- Keep the budget at $0 with only free or local stacks, one human maintainer
+  supported by coding agents and no fixed deadline. Verify public-service
+  capacity and behavior at resource limits; retain the risk-first order and
+  bring evidenced conflicts back to the user without silent scope cuts or paid
+  fallback.
+- Establish authoritative users, data and recoverable backups before selecting
+  continuity/migration. Investigate obligations and current integrations before
+  affected hosting or data-handling choices. Stack, hosting, migration, numeric
+  targets and schedule remain open until their required evidence is available.
+- The user remains the sole scope and priority approver. Keep concise updates
+  and clear review summaries. Follow CONVENTIONS.md: working branch → PR into
+  develop → release promotion to main.
+
+Does this all look correct before I generate the requirements artifact?
+
+- Looks correct
+- Request changes
+
+[Answer]:
