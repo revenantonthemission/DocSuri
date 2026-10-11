@@ -128,8 +128,11 @@ def test_source_withdrawal_denies_saved_and_result_reads(repositories, connect):
     r["library"].save(r["authority"], r["ids"]["paper"], r["ids"]["version"], uuid4(), None)
     with connect("corpus") as conn:
         conn.execute("UPDATE corpus.version SET eligible=false WHERE id=%s", (r["ids"]["version"],))
-    with pytest.raises(psycopg.errors.InsufficientPrivilege):
-        r["library"].list_saved(r["authority"])
+    saved = r["library"].list_saved(r["authority"])
+    assert saved[0]["version_id"] == r["ids"]["version"]
+    assert saved[0]["availability"] == "withdrawn"
+    history = r["pa"].history(r["authority"])
+    assert next(row for row in history if row["id"] == job["id"])["availability"] == "withdrawn"
     with pytest.raises(psycopg.errors.InsufficientPrivilege):
         r["pa"].result(r["authority"], UUID(result["resultId"]))
 

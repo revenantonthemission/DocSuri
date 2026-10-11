@@ -63,7 +63,13 @@ def test_corpus_publication_and_readonly_projection_boundary(repositories, realm
     with connect("discovery") as conn:
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             conn.execute("DELETE FROM corpus.projection")
+    r["library"].save(r["authority"], args["paper"], args["version"], uuid4(), None)
+    r["library"].save(r["authority"], r["ids"]["paper"], r["ids"]["version"], uuid4(), None)
     corpus.withdraw(args["version"])
+    saved = {item["version_id"]: item for item in r["library"].list_saved(r["authority"])}
+    assert len(saved) == 2
+    assert saved[args["version"]]["availability"] == "withdrawn"
+    assert saved[r["ids"]["version"]]["availability"] == "available"
     assert all(
         item["version_id"] != args["version"] for item in discovery.candidates(r["authority"])
     )

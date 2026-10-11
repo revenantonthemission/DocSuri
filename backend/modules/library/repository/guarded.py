@@ -36,9 +36,12 @@ class GuardedLibraryRepository:
                 (authority.account_id, limit),
             ).fetchall()
             for row in rows:
-                # Deny the protected read on withdrawal; a later presenter can
-                # expose only an unavailable identity through a separate contract.
-                guard(conn, authority, version=row["version_id"])
+                # The saved reference remains the owner's data after withdrawal.
+                # This narrow corpus function grants disposition, never content.
+                row["availability"] = conn.execute(
+                    "SELECT corpus.reference_availability(%s) AS disposition",
+                    (row["version_id"],),
+                ).fetchone()["disposition"]
             return rows
 
         return self.transactions.run("library", read)

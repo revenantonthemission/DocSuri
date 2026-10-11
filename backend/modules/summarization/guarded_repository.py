@@ -263,7 +263,10 @@ class GuardedAssistanceRepository:
                 (authority.account_id, limit),
             ).fetchall()
             for row in rows:
-                guard(conn, authority, version=row["version_id"])
+                row["availability"] = conn.execute(
+                    "SELECT corpus.reference_availability(%s) AS disposition",
+                    (row["version_id"],),
+                ).fetchone()["disposition"]
             return rows
 
         return self.transactions.run("assistance", read)
