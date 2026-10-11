@@ -88,3 +88,35 @@ Integration followed the user's documented interim policy. The completed local
 and remote Domain Design branches were removed, local develop was fast-forwarded
 to origin/develop, and Units Generation continues on
 `docs/docsuri-v2-units-generation`. Main was not promoted.
+
+## Approved Units Generation branch integration
+
+On 2026-10-11, the user approved the eight-unit decomposition with no new
+architecture findings. [PR #37](https://github.com/revenantonthemission/DocSuri/pull/37)
+merged `docs/docsuri-v2-units-generation` into `develop` at
+`1033307515e3ebcf52bca2134a734885ae04a13a` on 2026-10-11T05:21:11Z.
+The verified head was `03e3e71d8048bc4b3849f740a74e7e01ffbca063`; its exact
+base was `b819700ec4526231a6832195bc11e147dbd49da0`.
+
+The unit document verifier passed eight units, 19 acyclic dependencies, all
+70 functional requirement mappings, ten NFR rows and Mermaid syntax. The
+independent architecture review returned READY with no new findings. This
+establishes document consistency, not runtime parity or free/local feasibility.
+
+[PR #37 CI](https://github.com/revenantonthemission/DocSuri/actions/runs/38114290424)
+finished with 11 failed jobs, three passed and one skipped. All 11 failure
+signatures matched the
+[exact-base CI](https://github.com/revenantonthemission/DocSuri/actions/runs/38111666857).
+They cover the existing consumer inventory, lint, import/dependency, native
+platform, Postgres fixture and audit-input defects listed above. No new CI
+regression was identified. Ingestion, discovery and dependency review passed;
+both [CodeQL analyses](https://github.com/revenantonthemission/DocSuri/actions/runs/38114290428)
+and the [branch-name check](https://github.com/revenantonthemission/DocSuri/actions/runs/38114290429)
+passed. Frontend dependency audit/lint/tests/E2E/build, ingestion/ops security
+audits and secret scanning were not reached. Scheduled full PBT was skipped.
+Application source, dependencies and CI workflows were unchanged.
+
+Integration followed CONVENTIONS.md and the user's interim policy. Local
+`develop` was synchronized to the merge, the completed local and remote branch
+was deleted, and Contract Design continues on
+`docs/docsuri-v2-contract-design` from that merge. Main was not promoted.

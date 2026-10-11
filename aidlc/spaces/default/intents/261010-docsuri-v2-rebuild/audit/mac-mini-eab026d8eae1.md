@@ -6479,3 +6479,504 @@
 **Stage**: units-generation
 
 ---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T05:19:29Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: worker
+**Agent ID**: 01a12908-f558-7fc1-82fb-b3a11604ed5d
+**Message**: No additional interview is justified now. The consolidated summary can propose:\n\n- Specify the 19 unit dependency edges through owned contract bundles, plus actual browser/public API, provider and ope
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T05:19:31Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a12958-b76c-7b53-b1a9-c044525a14be last seen 2026-10-11T05:04:04.348Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T05:19:32Z
+**Event**: HUMAN_TURN
+**Session**: 01a12966-ddef-7881-9f0f-9e3e3fc9aa6d
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T05:20:35Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: default
+**Agent ID**: 01a128fe-da48-7bc2-b537-56a2a55ac3eb
+**Message**: PR #37 checks are **terminal; none remain running**.\n\n[Head CI](https://github.com/revenantonthemission/DocSuri/actions/runs/38114290424), `03e3e71d`: **11 failed, 3 passed, 1 skipped**. All 11 failur
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T05:21:50Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/develop-integration.md
+**Context**: maintenance > develop-integration.md
+
+---
+
+## Error Logged
+**Timestamp**: 2026-10-11T05:22:18Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-log
+**Command**: aidlc-log decision --stage contract-design --checkpoint summary-confirmation --questions-file <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-design-questions.md --decision Does this all look correct before I generate the artifact? --options Looks correct,Request changes
+**Error**: Summary confirmation questions file <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-design-questions.md is invalid: unsupported H2 heading "Sources" after the consolidated summary; only Q<n>, "Requested Changes Feedback", or one "Assumption Confirmation" section may follow.
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-11T05:22:28Z
+**Event**: DECISION_RECORDED
+**Stage**: contract-design
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-design-questions.md
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T05:23:03Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Summary Confirmation Recorded
+**Timestamp**: 2026-10-11T05:23:22Z
+**Event**: SUMMARY_CONFIRMATION_RECORDED
+**Stage**: contract-design
+**Details**: Looks correct
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-design-questions.md
+**Questions SHA-256**: 48066f6c9d0cea00f01c389a65c0c74d28a8c8ded205983c10353b860010c677
+**Hash Scope**: confirmed-content-v2
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_e13743b4a56c4d54a502503ff0ee1e07\",0]","question":"DocSuri v2 Contract Design summary:\n\n- Define formal interfaces across the approved eight units and retained external surfaces, keeping one shared application, embedded feature modules and a separately controlled operator executable.\n- Specify typed module/shared-data contracts, browser HTTP/JSON and recoverable progress, and durable background-work messages without selecting a paid stack, framework, broker or hosting provider.\n- Preserve public registration, existing anonymous search, private owner isolation and administrator/operator boundaries. Verify the detailed access matrix and actual external consumers; add no new public API product or broader guest capabilities.\n- Pin identity/revision, acceptance, validation, errors, timeout/retry, idempotency, cancellation and recovery behavior. Keep acknowledged drafts, committed work, prepared results and explicitly approved external effects distinct; unknown remote outcomes require reconciliation.\n- Define module registration, lifecycle participation and compatibility so the initial application runs independently of future modules and complete integration verifies every required participant.\n- Make projection write/rebuild/withdrawal ownership explicit and bind export approval to the exact immutable research artifact revision and destination. Carry these through formal specs and later executable checks.\n- Document versioning and coordinated breaking changes. Verify existing consumers before removing relied-on behavior; provider adapters retain their current capabilities under verified free/local constraints.\n- Produce the contract summary with formal inline specifications, requirement mapping, ownership, error/recovery rules, validation and independent review. Keep users/data, backups, obligations, retention/shared-device treatment, migration, resource capacity and numeric targets as explicit prerequisites wherever unresolved evidence blocks a decision or implementation.\n- Follow CONVENTIONS.md: completed branches merge through PRs into develop under the interim CI policy; main promotion remains separate.\n\nDoes this all look correct before I generate the artifact?","answer":"Looks correct"}]\n</send_user_message_question_reply>
+**Summary Authorization Id**: 4ffcb23f9a8b3b27201cf42654e73dd35db2638416c666cad577ee4ff965b37d
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T05:36:38Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: default
+**Agent ID**: 01a128fe-da48-7bc2-b537-56a2a55ac3eb
+**Message**: Created `/tmp/docsuri-contract-domain.py` with:\n\n- C04–C09: **62 operations, 113 schemas**.\n- Projection publication/withdrawal ownership, exact draft recovery/consumption, immutable research artifact
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-11T05:37:02Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: contract-design
+**State Validity**: valid
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-11T05:37:23Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: contract-design
+**State Validity**: valid
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T05:40:28Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a12966-ddef-7881-9f0f-9e3e3fc9aa6d last seen 2026-10-11T05:19:31.784Z.
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T05:40:38Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: worker
+**Agent ID**: 01a12908-f558-7fc1-82fb-b3a11604ed5d
+**Message**: Ready: `/tmp/docsuri-contract-core.py`.\n\n- C01–C03: 66 operations, 143 schemas.\n- Integrity checks passed: serialization, unique operations, references, errors and trusted context.\n- Shared `LibraryQu
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T05:40:46Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-11T05:40:28.568Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T05:40:46Z
+**Event**: HUMAN_TURN
+**Session**: 01a1297a-3a35-77c3-9d36-a10474c98b05
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T05:44:20Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: worker
+**Agent ID**: 01a12908-f558-7fc1-82fb-b3a11604ed5d
+**Message**: Updated `/tmp/docsuri-contract-core.py`: **69 operations, 148 schemas**; integrity checks pass.\n\nNew HTTP actions:\n\n- `access.retrieveMfaEnrollmentMaterial` — protected, one-time admin delivery.\n- `ac
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T05:44:21Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a1297a-3a35-77c3-9d36-a10474c98b05 last seen 2026-10-11T05:40:46.223Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T05:44:22Z
+**Event**: HUMAN_TURN
+**Session**: 01a1297d-9bd2-7631-b8f7-3ab64346b920
+
+---
+
+## Error Logged
+**Timestamp**: 2026-10-11T05:47:57Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-log
+**Command**: aidlc-log review --stage contract-design --reviewer aidlc-architecture-reviewer-agent --iteration 1
+**Error**: Cannot start review for "contract-design": this stage's output document <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md has no recorded write. Save the document again, so its write descends from the current confirmation, then continue.\n{"kind":"ask","ask_type":"guard-recovery","response_route":"execute-remedy","question":"Contract Design can't go ahead as things stand: which way would you like to go on?","stage":"contract-design","reason_codes":["SUMMARY_ARTIFACT_UNAUTHORIZED"],"remedies":[{"op":"reconfirm-summary","label":"Confirm the summary again","description":"I'll show you the current summary of your answers for Contract Design to confirm, then save its documents again from it.","action":"Present the current consolidated summary and record it with the checkpoint flags (a plain decision or answer never counts): `aidlc engine log decision --checkpoint summary-confirmation --stage contract-design --questions-file aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-design-questions.md --decision 'Does this all look correct?' --options 'Looks correct,Request changes'`, with exactly one blank `[Answer]:` line in the summary section; end the turn; after the human's fresh reply run `aidlc engine log answer --checkpoint summary-confirmation --stage contract-design --questions-file aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-design-questions.md --details 'Looks correct'`. Then regenerate or re-save the produced artifacts.","requiresHuman":true,"executableNow":true,"interaction":"human-input"},{"op":"request-changes","label":"Request Changes","description":"Tell me what should change in Contract Design, and I'll revise it.","action":"When the person already said what should change for stage \"contract-design\", submit Request Changes with their exact text unchanged as the report reason. Otherwise ask \"What should change?\" and end the turn, then submit their answer the same way. Either way that unlocks revision and a fresh review.","requiresHuman":true,"executableNow":true,"interaction":"human-input"}]}
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-11T05:49:17Z
+**Event**: DECISION_RECORDED
+**Stage**: contract-design
+**Decision**: Contract Design cannot proceed to review because the document-save record is missing. How would you like to continue?
+**Options**: Confirm the summary again,Request Changes
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T05:49:31Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a1297d-9bd2-7631-b8f7-3ab64346b920 last seen 2026-10-11T05:44:21.940Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T05:49:31Z
+**Event**: HUMAN_TURN
+**Session**: 01a12982-5154-73c0-8dd3-bc92a1c22f69
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T05:50:02Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a12982-5154-73c0-8dd3-bc92a1c22f69 last seen 2026-10-11T05:49:31.170Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T05:50:02Z
+**Event**: HUMAN_TURN
+**Session**: 01a12982-cda1-7c71-8890-50a60a0c8d64
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T05:57:11Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Question Answered
+**Timestamp**: 2026-10-11T05:57:48Z
+**Event**: QUESTION_ANSWERED
+**Stage**: contract-design
+**Details**: Confirm the summary again
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_syxjjs3AZMAp4dQVyJC0BjWv\",0]","question":"Contract Design cannot proceed to review because the document-save record is missing. How would you like to continue? “Confirm the summary again” presents the current summary for confirmation, then saves the documents again. “Request Changes” lets you revise the contracts.","answer":"Confirm the summary again"}]\n</send_user_message_question_reply>
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T05:57:48Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-design-questions.md
+**Context**: inception > contract-design > contract-design-questions.md
+**Summary Authorization Id**: 4ffcb23f9a8b3b27201cf42654e73dd35db2638416c666cad577ee4ff965b37d
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-11T05:57:49Z
+**Event**: DECISION_RECORDED
+**Stage**: contract-design
+**Decision**: Does this all look correct?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-design-questions.md
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T05:58:11Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a12982-cda1-7c71-8890-50a60a0c8d64 last seen 2026-10-11T05:50:02.562Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T05:58:11Z
+**Event**: HUMAN_TURN
+**Session**: 01a1298a-4067-77d0-92a9-c0e7004c3bec
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T05:59:49Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T06:00:02Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-design-questions.md
+**Context**: inception > contract-design > contract-design-questions.md
+**Summary Authorization Id**: 4ffcb23f9a8b3b27201cf42654e73dd35db2638416c666cad577ee4ff965b37d
+
+---
+
+## Summary Confirmation Recorded
+**Timestamp**: 2026-10-11T06:00:03Z
+**Event**: SUMMARY_CONFIRMATION_RECORDED
+**Stage**: contract-design
+**Details**: Looks correct
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-design-questions.md
+**Questions SHA-256**: 8bea1c9d282103b4096f5094b86452fba3c2b6b080c5407be61a6711802d2d00
+**Hash Scope**: confirmed-content-v2
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_KIbV25fk5qwVFRlvDNe5l2xY\",0]","question":"DocSuri v2 Contract Design summary:\n\n- Define formal interfaces across the approved eight units and retained external surfaces, keeping one shared application, embedded feature modules and a separately controlled operator executable.\n- Specify typed module/shared-data contracts, browser HTTP/JSON and recoverable progress, and durable background-work messages without selecting a paid stack, framework, broker or hosting provider.\n- Preserve public registration, existing anonymous search, private owner isolation and administrator/operator boundaries. Verify the detailed access matrix and actual external consumers; add no new public API product or broader guest capabilities.\n- Pin identity/revision, acceptance, validation, errors, timeout/retry, idempotency, cancellation and recovery behavior. Keep acknowledged drafts, committed work, prepared results and explicitly approved external effects distinct; unknown remote outcomes require reconciliation.\n- Define module registration, lifecycle participation and compatibility so the initial application runs independently of future modules and complete integration verifies every required participant.\n- Make projection write/rebuild/withdrawal ownership explicit and bind export approval to the exact immutable research artifact revision and destination. Carry these through formal specs and later executable checks.\n- Document versioning and coordinated breaking changes. Verify existing consumers before removing relied-on behavior; provider adapters retain their current capabilities under verified free/local constraints.\n- Produce the contract summary with formal inline specifications, requirement mapping, ownership, error/recovery rules, validation and independent review. Keep users/data, backups, obligations, retention/shared-device treatment, migration, resource capacity and numeric targets as explicit prerequisites wherever unresolved evidence blocks a decision or implementation.\n- Follow CONVENTIONS.md: completed branches merge through PRs into develop under the interim CI policy; main promotion remains separate.\n\nDoes this all look correct before I re-save the artifact from this summary?","answer":"Looks correct"}]\n</send_user_message_question_reply>
+**Summary Authorization Id**: 4173f9a3634be83e36b08aaae1815b99d6dfe35f8ac43565e575e179312fde3a
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T06:00:29Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+**Context**: inception > contract-design > contract-summary.md
+**Summary Authorization Id**: 4173f9a3634be83e36b08aaae1815b99d6dfe35f8ac43565e575e179312fde3a
+
+---
+
+## Review Requested
+**Timestamp**: 2026-10-11T06:00:51Z
+**Event**: REVIEW_REQUESTED
+**Stage**: contract-design
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Iteration**: 1
+**Artifact Fingerprint**: sha256:467b7f64574ed083dc2959471846335141acfbd44a466ccea42ab3aa2d024093
+**Request Id**: review:63d2a08ad89006fc03fc2b98a6ad46b8
+**Review File**: .aidlc-engine/reviews/contract-design/stage/07b2a9ba2eba7a7f/1.63d2a08ad89006fc03fc2b98a6ad46b8.review.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T06:05:41Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/reviews/contract-design/stage/07b2a9ba2eba7a7f/1.63d2a08ad89006fc03fc2b98a6ad46b8.review.md
+**Context**: .aidlc-engine > reviews > contract-design > stage > 07b2a9ba2eba7a7f > 1.63d2a08ad89006fc03fc2b98a6ad46b8.review.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T06:05:53Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: aidlc-architecture-reviewer-agent
+**Agent ID**: 01a1298d-49f3-7162-bebd-d3a131fd2892
+**Message**: **Reviewer:** aidlc-architecture-reviewer-agent\n\n**NOT-READY** — 3 Major findings; no Critical or Minor findings:\n\n- HTTP mutations cannot carry required revision preconditions.\n- Draft recovery lacks
+
+---
+
+## Review Completed
+**Timestamp**: 2026-10-11T06:05:59Z
+**Event**: REVIEW_COMPLETED
+**Stage**: contract-design
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Iteration**: 1
+**Verdict**: NOT-READY
+**Request Fingerprint**: sha256:467b7f64574ed083dc2959471846335141acfbd44a466ccea42ab3aa2d024093
+**Artifact Fingerprint**: sha256:467b7f64574ed083dc2959471846335141acfbd44a466ccea42ab3aa2d024093
+**Request Id**: review:63d2a08ad89006fc03fc2b98a6ad46b8
+**Review Record**: .aidlc-engine/reviews/contract-design/stage/07b2a9ba2eba7a7f/1.json
+**Review Record Digest**: sha256:bd082b765f290b97e29f0d2d0be4211d7ed4ef25e34ee5f20fa95dcedc233b3c
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-11T06:06:39Z
+**Event**: DECISION_RECORDED
+**Stage**: contract-design
+**Decision**: Anything to add for next time?
+**Options**: Nothing to add,Add a note
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T06:07:01Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a1298a-4067-77d0-92a9-c0e7004c3bec last seen 2026-10-11T05:58:11.053Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T06:07:01Z
+**Event**: HUMAN_TURN
+**Session**: 01a12992-5787-7d12-9d08-10386e0c6d4b
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T06:07:13Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a12992-5787-7d12-9d08-10386e0c6d4b last seen 2026-10-11T06:07:01.270Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T06:07:14Z
+**Event**: HUMAN_TURN
+**Session**: 01a12992-8947-7803-9ea9-cf01ff0daf3f
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T06:09:11Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Question Answered
+**Timestamp**: 2026-10-11T06:09:29Z
+**Event**: QUESTION_ANSWERED
+**Stage**: contract-design
+**Details**: Nothing to add
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_86339b5ae5364c31bbb89b36a21328a1\",0]","question":"Anything to add for next time? The Contract Design documents and independent review are committed as 7a39b19b. Three Major findings remain: browser revision preconditions, rediscovery of saved drafts after restart, and worker execution claims/payload retrieval. Your $0 constraint and CONVENTIONS.md Git flow are already recorded. You can save a reusable note before the separate contract approval decision.","answer":"Nothing to add"}]\n</send_user_message_question_reply>
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T06:09:30Z
+**Event**: SENSOR_FIRED
+**Fire id**: 548269bc
+**Sensor ID**: required-sections
+**Stage slug**: contract-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T06:09:30Z
+**Event**: SENSOR_PASSED
+**Fire id**: 548269bc
+**Sensor ID**: required-sections
+**Stage slug**: contract-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+**Duration ms**: 28
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T06:09:30Z
+**Event**: SENSOR_FIRED
+**Fire id**: e9c1f886
+**Sensor ID**: upstream-coverage
+**Stage slug**: contract-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T06:09:30Z
+**Event**: SENSOR_PASSED
+**Fire id**: e9c1f886
+**Sensor ID**: upstream-coverage
+**Stage slug**: contract-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+**Duration ms**: 26
+
+---
+
+## Stage Awaiting Approval
+**Timestamp**: 2026-10-11T06:09:30Z
+**Event**: STAGE_AWAITING_APPROVAL
+**Stage**: contract-design
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T06:10:47Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a12992-8947-7803-9ea9-cf01ff0daf3f last seen 2026-10-11T06:07:13.877Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T06:10:47Z
+**Event**: HUMAN_TURN
+**Session**: 01a12995-ca4b-7671-be56-40c4cfa8e72d
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T06:11:18Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Gate Approved
+**Timestamp**: 2026-10-11T06:11:42Z
+**Event**: GATE_APPROVED
+**Stage**: contract-design
+**User Input**: Approve
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_d9c6cd16e3b9463fb60f3457b9237753\",0]","question":"Contract Design is ready for your decision. Review the [contracts](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md) and [architecture review](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/reviews/review-01.md).\n\nValidation passed, but three Major findings remain:\n- Browser mutations cannot transmit required revision preconditions.\n- Returning users lack a concrete way to rediscover acknowledged drafts after restart.\n- Workers lack a complete execution-claim and payload-retrieval contract.\n\nApprove accepts these findings, completes Contract Design and continues to Delivery Planning; I’ll merge the completed branch into develop through a PR. Request Changes revises the contracts and obtains a fresh review. I recommend Request Changes to address all three findings before implementation. How would you like to proceed?","answer":"Approve"}]\n</send_user_message_question_reply>
+**Review Finding Dispositions**: {"version":1,"dispositions":[{"artifact":"aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md","id":"R-01","fingerprint":"sha256:e2c01732a6e958815a8e059cc188ed955ef8ccccde5394b73f4e9052a830efbd","status":"Accepted risk","decided_at_severity":"Major","reviewed_record":{"path":".aidlc-engine/reviews/contract-design/stage/07b2a9ba2eba7a7f/1.json","digest":"sha256:bd082b765f290b97e29f0d2d0be4211d7ed4ef25e34ee5f20fa95dcedc233b3c"}},{"artifact":"aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md","id":"R-02","fingerprint":"sha256:4497e9bdc71a10184936ffe9934e01afed215fdf95a8473d14945890f55bfaa2","status":"Accepted risk","decided_at_severity":"Major","reviewed_record":{"path":".aidlc-engine/reviews/contract-design/stage/07b2a9ba2eba7a7f/1.json","digest":"sha256:bd082b765f290b97e29f0d2d0be4211d7ed4ef25e34ee5f20fa95dcedc233b3c"}},{"artifact":"aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md","id":"R-03","fingerprint":"sha256:3090fedf82195acf32acc1238ca728a79a5ccd0d94a8dff9117f1d4332d07f92","status":"Accepted risk","decided_at_severity":"Major","reviewed_record":{"path":".aidlc-engine/reviews/contract-design/stage/07b2a9ba2eba7a7f/1.json","digest":"sha256:bd082b765f290b97e29f0d2d0be4211d7ed4ef25e34ee5f20fa95dcedc233b3c"}}]}
+
+---
+
+## Stage Completion
+**Timestamp**: 2026-10-11T06:11:42Z
+**Event**: STAGE_COMPLETED
+**Stage**: contract-design
+**Validation Basis**: {"graphContract":"sha256:ad5599bf4da38de3dec2bfb4bf705de33d27113e18b6a160549a97c4b694fea3","inputs":[{"artifact":"components","contentHash":"sha256:48ad6dcebd23b56a0d815d491ff0807a15bc9faea3f1bf71aac7cd9e435fd161","instanceCount":1,"presentCount":1,"producer":"domain-design","required":false,"structureHash":"sha256:5f1fd9553d673ba09932fab9ecb3e74d0b6f9195f1328053ce1d1d32dced9e7e"},{"artifact":"requirements","contentHash":"sha256:6f20903a40e5aa97dac918075fdcab25056fa95eb820c8e768da11344dd18f8b","instanceCount":1,"presentCount":1,"producer":"requirements-analysis","required":false,"structureHash":"sha256:279106f77e0d58b2e8995a0ad005efc79e094e5c00a4c3431ead5e3b22c4c593"},{"artifact":"unit-of-work-dependency","contentHash":"sha256:a085c06fd79e03285233729f314cbf356d9f2ae70a3fbd362b1c8da7053fb66f","instanceCount":1,"presentCount":1,"producer":"units-generation","required":true,"structureHash":"sha256:399f8c5ec0c274a74278006154b3417aa28fa7565d5d9a660f8fdac22f7cf5e8"},{"artifact":"unit-of-work","contentHash":"sha256:81ba782f173b6f4eff9313df887939c0170dc49c2c54c4b347bd3c56443bb03d","instanceCount":1,"presentCount":1,"producer":"units-generation","required":true,"structureHash":"sha256:e2f243ed899048406360d62e77596aa6a67e8a3b449181149c654846aa0179f4"}],"outputs":[{"artifact":"contract-summary","contentHash":"sha256:7770a026395b307f26c45c7d0e64113469a7c48e49eb2daabdd00041cee3e61d","instanceCount":1,"presentCount":1,"producer":"contract-design","required":true,"structureHash":"sha256:c49c74b8af73155d608d5cbf751e34b447f1832b9f798432f2bc5603af102634"}],"projectType":"brownfield","schema":3}
+**Details**: Stage Contract Design approved by gate
+
+---
+
+## Stage Start
+**Timestamp**: 2026-10-11T06:11:42Z
+**Event**: STAGE_STARTED
+**Stage**: delivery-planning
+**Agent**: aidlc-delivery-agent
+**Answer Mode**: guide (reused from intent-capture)
+
+---
+
+## Memory Empty
+**Timestamp**: 2026-10-11T06:11:42Z
+**Event**: MEMORY_EMPTY
+**Stage**: contract-design
+
+---
