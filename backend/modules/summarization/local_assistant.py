@@ -7,6 +7,8 @@ import json
 import re
 
 from docsuri_ops.local_models import (
+    COMPACT_PROFILE,
+    THINKING_PROFILE,
     LocalModelRuntime,
     ModelUnavailable,
     generation_options,
@@ -21,9 +23,13 @@ class GroundedLocalAssistant:
         *,
         sampling_seed: int | None = None,
         structured_summary: bool = False,
+        profile: str = COMPACT_PROFILE,
     ):
         self.runtime = runtime
-        self.generation_options = generation_options(sampling_seed)
+        self.generation_options = generation_options(sampling_seed, profile=profile)
+        self.profile = profile
+        if profile == THINKING_PROFILE and structured_summary:
+            raise ValueError("thinking candidate uses compact text/citations only")
         self.structured_summary = structured_summary
         self.attempts = []
 
@@ -54,6 +60,8 @@ class GroundedLocalAssistant:
         groups = {}
         for chunk in chunks:
             groups.setdefault(chunk["section"], []).append(chunk)
+        if self.profile == THINKING_PROFILE:
+            groups = {"Selected source sections": chunks}
         sections = []
         with self.runtime.work(seconds=90) as deadline:
             for title, group in groups.items():
@@ -88,7 +96,9 @@ class GroundedLocalAssistant:
                 json.dumps(
                     {
                         "strategy": (
-                            "source-section-definitions-3"
+                            "combined-source-thinking-4"
+                            if self.profile == THINKING_PROFILE
+                            else "source-section-definitions-3"
                             if self.structured_summary
                             else "source-section-groups-2"
                         ),
@@ -152,13 +162,17 @@ class GroundedLocalAssistant:
             "at most 45 words and each meaning to at most 15 words. Do not repeat "
             "definitions in text. Return valid JSON; escape literal backslashes twice."
             if definitions
-            else " Use at most 90 words of complete prose."
+            else (
+                " Use at most 180 words of complete prose."
+                if self.profile == THINKING_PROFILE and task == "summary"
+                else " Use at most 90 words of complete prose."
+            )
         )
         body = {
             "model": "qwen3:8b",
             "format": grounded_format(identifiers, definitions=definitions),
             "stream": False,
-            "think": False,
+            "think": self.profile == THINKING_PROFILE,
             "keep_alive": 0,
             "options": dict(self.generation_options),
             "messages": [

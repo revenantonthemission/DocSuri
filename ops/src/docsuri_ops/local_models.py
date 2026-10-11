@@ -23,6 +23,8 @@ from pathlib import Path
 import httpx
 
 GIB = 1024**3
+COMPACT_PROFILE = "qwen-nonthinking-2048-224-v1"
+THINKING_PROFILE = "qwen-thinking-4096-2048-v1"
 MODEL_PINS = {
     "qwen3:8b": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
     "bge-m3:latest": "7907646426070047a77226ac3e684fbbe8410524f7b4a74d02837e43f2146bab",
@@ -52,24 +54,46 @@ def pressure() -> int:
     return int(match.group(1))
 
 
-def validate_response(response: dict, *, model: str) -> None:
+def validate_response(response: dict, *, model: str, profile: str = COMPACT_PROFILE) -> None:
+    if profile not in (COMPACT_PROFILE, THINKING_PROFILE):
+        raise ModelUnavailable("unknown response profile")
     if response.get("model") != model or response.get("error"):
         raise ModelUnavailable("model response identity or error mismatch")
     if model == "qwen3:8b":
         if response.get("done") is not True or response.get("done_reason") != "stop":
             raise ModelUnavailable("generation incomplete or output limit reached")
-        if not 0 < response.get("eval_count", 0) <= 224:
+        output_limit, input_limit = (2048, 2048) if profile == THINKING_PROFILE else (224, 1824)
+        if not 0 < response.get("eval_count", 0) <= output_limit:
             raise ModelUnavailable("generation token evidence outside policy")
-        if not 0 < response.get("prompt_eval_count", 0) <= 1824:
+        if not 0 < response.get("prompt_eval_count", 0) <= input_limit:
             raise ModelUnavailable("source context exceeds reserved output capacity")
         message = response.get("message", {})
         if not isinstance(message.get("content"), str) or not message["content"].strip():
             raise ModelUnavailable("generation returned no usable text")
+        if profile == THINKING_PROFILE and (
+            not isinstance(message.get("thinking"), str) or not message["thinking"].strip()
+        ):
+            raise ModelUnavailable("thinking execution was not evidenced")
 
 
-def generation_options(seed: int | None = None) -> dict:
+def generation_options(seed: int | None = None, *, profile: str = COMPACT_PROFILE) -> dict:
     """Pinned diagnostic profiles; sampling never changes the execution allocation."""
     options = {"num_ctx": 2048, "num_thread": 2, "num_predict": 224, "temperature": 0}
+    if profile not in (COMPACT_PROFILE, THINKING_PROFILE):
+        raise ValueError("unknown generation profile")
+    if profile == THINKING_PROFILE:
+        if type(seed) is not int or seed not in (42, 43):
+            raise ValueError("thinking experiment requires a predeclared seed")
+        return {
+            "num_ctx": 4096,
+            "num_thread": 2,
+            "num_predict": 2048,
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "top_k": 20,
+            "min_p": 0,
+            "seed": seed,
+        }
     if seed is not None:
         if type(seed) is not int or seed not in (42, 43):
             raise ValueError("only predeclared decoding experiment seeds are supported")
@@ -77,7 +101,9 @@ def generation_options(seed: int | None = None) -> dict:
     return options
 
 
-def validate_request(model: str, body: dict) -> None:
+def validate_request(model: str, body: dict, *, profile: str = COMPACT_PROFILE) -> None:
+    if profile not in (COMPACT_PROFILE, THINKING_PROFILE):
+        raise ModelUnavailable("unknown request profile")
     if body.get("model") != model or model not in MODEL_PINS or body.get("keep_alive") != 0:
         raise ModelUnavailable("request model or lifetime outside policy")
     if len(json.dumps(body).encode()) > 16384:
@@ -86,7 +112,7 @@ def validate_request(model: str, body: dict) -> None:
     expected = {"num_ctx": 2048, "num_thread": 2}
     if model == "qwen3:8b":
         try:
-            expected = generation_options(options.get("seed"))
+            expected = generation_options(options.get("seed"), profile=profile)
         except (AttributeError, ValueError) as exc:
             raise ModelUnavailable("unknown bounded decoding profile") from exc
         fields = {"model", "messages", "stream", "think", "keep_alive", "options"}
@@ -101,7 +127,11 @@ def validate_request(model: str, body: dict) -> None:
                     raise ValueError("unexpected schema")
             except (KeyError, TypeError, ValueError) as exc:
                 raise ModelUnavailable("generation schema outside bounded contract") from exc
-        if set(body) != fields or body.get("stream") is not False or body.get("think") is not False:
+        if (
+            set(body) != fields
+            or body.get("stream") is not False
+            or body.get("think") is not (profile == THINKING_PROFILE)
+        ):
             raise ModelUnavailable("generation request policy mismatch")
         messages = body.get("messages", [])
         if len(messages) != 2 or [m.get("role") for m in messages] != ["system", "user"]:
@@ -168,6 +198,34 @@ def grounded_format(anchors: list[str], *, definitions: bool = False) -> dict:
     return schema
 
 
+def validate_thinking_support(shown: dict) -> dict:
+    """Require actual pinned runtime/model metadata before candidate inference."""
+    capabilities = shown.get("capabilities", [])
+    metadata = shown.get("model_info", {})
+    architecture = metadata.get("general.architecture")
+    supported_context = metadata.get(str(architecture) + ".context_length")
+    if (
+        not isinstance(capabilities, list)
+        or "thinking" not in capabilities
+        or "completion" not in capabilities
+        or type(supported_context) is not int
+        or supported_context < 4096
+    ):
+        raise ModelUnavailable("cached model thinking/context support unverified")
+    return {
+        "capabilities": capabilities,
+        "architecture": architecture,
+        "supportedContext": supported_context,
+        "metadataSha256": hashlib.sha256(json.dumps(shown, sort_keys=True).encode()).hexdigest(),
+    }
+
+
+def log_reports_truncation(log: str) -> bool:
+    """Zero/false slot status is explicit absence, not a truncation warning."""
+    without_negative_status = re.sub(r"\btruncated\s*=\s*(?:0|false)\b", "", log.lower())
+    return "truncat" in without_negative_status
+
+
 def validate_clone_allocation(created: list[str], before: dict, after: dict, growth: int) -> None:
     if created and growth > 64 * 1024**2:
         raise ModelUnavailable("model clone setup exceeded scratch growth allocation")
@@ -176,7 +234,12 @@ def validate_clone_allocation(created: list[str], before: dict, after: dict, gro
 
 
 class LocalModelRuntime:
-    def __init__(self, root: Path, run_id: str, expires_at: float):
+    def __init__(
+        self, root: Path, run_id: str, expires_at: float, *, profile: str = COMPACT_PROFILE
+    ):
+        if profile not in (COMPACT_PROFILE, THINKING_PROFILE):
+            raise ValueError("unknown model runtime profile")
+        self.profile = profile
         if root != Path("/tmp/docsuri-u1-run").resolve():
             raise ValueError("explicit synthetic root required")
         raw = (root / "environment.json").read_bytes()
@@ -347,7 +410,7 @@ class LocalModelRuntime:
             "OLLAMA_MAX_LOADED_MODELS": "1",
             "OLLAMA_NUM_PARALLEL": "1",
             "OLLAMA_MAX_QUEUE": "1",
-            "OLLAMA_CONTEXT_LENGTH": "2048",
+            "OLLAMA_CONTEXT_LENGTH": "4096" if self.profile == THINKING_PROFILE else "2048",
             "OLLAMA_KEEP_ALIVE": "0",
             "OLLAMA_LOAD_TIMEOUT": "60s",
         }
@@ -381,6 +444,10 @@ class LocalModelRuntime:
             ):
                 raise ModelUnavailable("effective model allowlist mismatch")
             self.identity["version"] = version
+            self.identity["profile"] = self.profile
+            if self.profile == THINKING_PROFILE:
+                shown = self._request("/api/show", {"model": "qwen3:8b"})
+                self.identity["thinkingSupport"] = validate_thinking_support(shown)
             self.identity["environment"] = {k: v for k, v in env.items() if k.startswith("OLLAMA_")}
             return self
         except BaseException:
@@ -427,11 +494,13 @@ class LocalModelRuntime:
         self.close()
 
     def infer(self, *, model: str, body: dict, work_deadline: float | None = None) -> dict:
-        validate_request(model, body)
+        validate_request(model, body, profile=self.profile)
         if not self.permit.acquire(blocking=False):
             raise ModelUnavailable("one local model execution is already active")
         stopped = threading.Event()
         violations = []
+        effective_contexts = []
+        log_start = self.log_path.stat().st_size
         self.last_response = None
         timeout = 90 if model == "qwen3:8b" else 60
         deadline = time.monotonic() + timeout
@@ -447,6 +516,18 @@ class LocalModelRuntime:
                     loaded = self._request("/api/ps").get("models", [])
                     if len(loaded) > 1 or sum(m.get("size", 0) for m in loaded) > 8 * GIB:
                         raise ModelUnavailable("model resident allocation exceeded")
+                    for item in loaded:
+                        if item.get("name") == model:
+                            observation = {
+                                "model": model,
+                                "context": item.get("context_length"),
+                                "size": item.get("size"),
+                                "at": time.time(),
+                            }
+                            effective_contexts.append(observation)
+                            if self.profile == THINKING_PROFILE and model == "qwen3:8b":
+                                if item.get("context_length") != 4096:
+                                    raise ModelUnavailable("effective thinking context unverified")
                 except Exception as exc:
                     violations.append(type(exc).__name__ + ": " + str(exc))
                     self.close()
@@ -468,7 +549,15 @@ class LocalModelRuntime:
             self.last_response = response
             if violations or time.monotonic() >= deadline:
                 raise ModelUnavailable("inference exceeded monitored policy")
-            validate_response(response, model=model)
+            if self.profile == THINKING_PROFILE and model == "qwen3:8b":
+                if not effective_contexts:
+                    raise ModelUnavailable("no effective thinking allocation observation")
+                with self.log_path.open("rb") as log:
+                    log.seek(log_start)
+                    current_log = log.read(1048577).decode(errors="replace").lower()
+                if len(current_log) > 1048576 or log_reports_truncation(current_log):
+                    raise ModelUnavailable("possible input/context truncation in model log")
+            validate_response(response, model=model, profile=self.profile)
             return response
         except (httpx.HTTPError, ValueError) as exc:
             self.close()
@@ -477,4 +566,5 @@ class LocalModelRuntime:
             stopped.set()
             if watcher:
                 watcher.join(timeout=10)
+            self.identity.setdefault("effectiveAllocations", []).extend(effective_contexts)
             self.permit.release()

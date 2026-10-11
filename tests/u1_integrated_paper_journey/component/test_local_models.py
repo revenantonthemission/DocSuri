@@ -12,11 +12,14 @@ import pytest
 from backend.modules.discovery.local_embedding import LocalEmbeddings, cosine
 from backend.modules.summarization.local_assistant import GroundedLocalAssistant
 from docsuri_ops.local_models import (
+    THINKING_PROFILE,
     LocalModelRuntime,
     ModelUnavailable,
     generation_options,
+    log_reports_truncation,
     validate_request,
     validate_response,
+    validate_thinking_support,
 )
 
 pytestmark = pytest.mark.u1_component
@@ -430,3 +433,87 @@ def test_translation_keeps_translation_only_shape_in_structured_experiment():
     )
     assert result["text"] == payload["text"]
     assert "definitions" not in runtime.calls[0]["body"]["format"]["properties"]
+
+
+def test_named_thinking_profile_is_exact_and_cannot_leak_into_default_profile():
+    body = request()
+    body.update(think=True, options=generation_options(42, profile=THINKING_PROFILE))
+    validate_request("qwen3:8b", body, profile=THINKING_PROFILE)
+    with pytest.raises(ModelUnavailable):
+        validate_request("qwen3:8b", body)
+    for change in ({"num_ctx": 8192}, {"num_predict": 4096}, {"num_thread": 4}, {"seed": 44}):
+        with pytest.raises(ModelUnavailable):
+            validate_request(
+                "qwen3:8b",
+                {**body, "options": {**body["options"], **change}},
+                profile=THINKING_PROFILE,
+            )
+    with pytest.raises(ValueError):
+        generation_options(profile=THINKING_PROFILE)
+
+
+def test_actual_thinking_capability_and_context_are_required():
+    metadata = {
+        "capabilities": ["completion", "thinking"],
+        "model_info": {
+            "general.architecture": "diagnostic",
+            "diagnostic.context_length": 4096,
+        },
+    }
+    assert validate_thinking_support(metadata)["supportedContext"] == 4096
+    for changed in (
+        {**metadata, "capabilities": ["completion"]},
+        {**metadata, "model_info": {"general.architecture": "diagnostic"}},
+        {
+            **metadata,
+            "model_info": {"general.architecture": "diagnostic", "diagnostic.context_length": 2048},
+        },
+    ):
+        with pytest.raises(ModelUnavailable):
+            validate_thinking_support(changed)
+
+
+def test_thinking_requires_final_answer_and_combined_generation_within_reserved_context():
+    response = {
+        "model": "qwen3:8b",
+        "done": True,
+        "done_reason": "stop",
+        "eval_count": 1500,
+        "prompt_eval_count": 1300,
+        "message": {"thinking": "deliberate diagnostic fixture", "content": "final"},
+    }
+    validate_response(response, model="qwen3:8b", profile=THINKING_PROFILE)
+    for change in (
+        {"eval_count": 2049},
+        {"prompt_eval_count": 2049},
+        {"done_reason": "length"},
+        {"message": {"thinking": "deliberate diagnostic fixture", "content": ""}},
+        {"message": {"content": "final"}},
+    ):
+        with pytest.raises(ModelUnavailable):
+            validate_response({**response, **change}, model="qwen3:8b", profile=THINKING_PROFILE)
+
+
+def test_thinking_combines_bound_sources_once_without_discarding_anchors():
+    payload = {"text": "Diagnostic.", "citations": ["s1.p1", "s1.p2"]}
+    runtime = structured_runtime(payload)
+    chunks = source() + [dict(source()[0], anchor="s1.p2", section="Second source section")]
+    result = GroundedLocalAssistant(runtime, sampling_seed=42, profile=THINKING_PROFILE).generate(
+        chunks, task="summary"
+    )
+    assert len(runtime.calls) == 1 and len(result["sections"]) == 1
+    assert result["sourceAnchors"] == ["s1.p1", "s1.p2"]
+    validate_request("qwen3:8b", runtime.calls[0]["body"], profile=THINKING_PROFILE)
+
+
+def test_zero_truncation_status_is_not_a_warning_but_actual_or_unknown_truncation_is():
+    assert not log_reports_truncation("slot release: n_tokens = 943, truncated = 0")
+    assert not log_reports_truncation("slot release: truncated = false")
+    for value in (
+        "slot release: truncated = 1",
+        "slot release: truncated = true",
+        "truncating input prompt",
+        "input truncation status unknown",
+        "truncated = 0\ntruncating input prompt",
+    ):
+        assert log_reports_truncation(value)
