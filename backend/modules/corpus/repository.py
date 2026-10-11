@@ -11,6 +11,16 @@ from backend.transactions import OwnerTransactions
 from psycopg.types.json import Jsonb
 
 
+def content_revision(source: dict) -> str:
+    """Corpus-owned token shared by reading and immutable assistance acceptance."""
+    encoded = json.dumps(
+        source["content"], sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode()
+    if len(encoded) > 2097152:
+        raise ValueError("parsed source exceeds local payload allocation")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 class CorpusRepository:
     def __init__(self, transactions: OwnerTransactions, files: PrivateArtifacts):
         self.transactions = transactions

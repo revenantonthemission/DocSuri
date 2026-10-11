@@ -140,6 +140,11 @@ class ExecutionClaims:
                 ),
                 "reservationId": job["reservation_id"],
                 "jobRevision": job["revision"],
+                "accountId": job["account_id"],
+                "versionId": job["version_id"],
+                "sourceHash": job["source_hash"],
+                "glossaryRevision": job["glossary_revision"],
+                "glossarySnapshot": job["glossary_snapshot"],
             }
 
         return self.repository.transactions.run("assistance", read)

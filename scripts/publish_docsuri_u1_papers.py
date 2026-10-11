@@ -6,10 +6,12 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 import stat
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
 
@@ -32,6 +34,85 @@ from scripts.verify_docsuri_u1 import private_json, source_identity
 METADATA = ROOT / "tests/u1_integrated_paper_journey/fixtures/paper-metadata.json"
 QUERIES = ROOT / "tests/u1_integrated_paper_journey/fixtures/research-queries.json"
 VECTOR_POLICY = "bge-m3-1024-pinned-1"
+ATTEMPT_BYTES = 524288
+EVIDENCE_BYTES = 8 * 1024 * 1024
+ATTEMPT_FILES = 64
+DIRECTORY_ENTRIES = 1024
+
+
+@contextmanager
+def publication_lock(root: Path):
+    """Hold allocation and publication together, including direct Python callers."""
+    descriptor = os.open(
+        root / "corpus-publication.lock",
+        os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK,
+        0o600,
+    )
+    try:
+        info = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.getuid()
+            or stat.S_IMODE(info.st_mode) != 0o600
+            or info.st_nlink != 1
+        ):
+            raise ValueError("publication lock custody differs")
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        yield
+    finally:
+        os.close(descriptor)
+
+
+def reserve_evidence(root: Path, record: dict) -> int:
+    """Validate retained attempts and reserve one whole maximum-size result.
+
+    The caller holds publication_lock until the final record is durable. Never
+    reclaim prior evidence or adopt an orphan left by interrupted publication.
+    """
+    paths = []
+    # Path.glob eagerly materializes scandir results in Python 3.13. Iterate
+    # directly so polluted directories cannot allocate an unbounded path list.
+    with os.scandir(root) as entries:
+        for number, entry in enumerate(entries, start=1):
+            if number > DIRECTORY_ENTRIES:
+                raise ValueError("publication directory inventory exceeds allocation")
+            if entry.name.startswith("corpus-publication-attempt-"):
+                paths.append(root / entry.name)
+                if len(paths) > ATTEMPT_FILES:
+                    raise ValueError("publication attempt count exceeds allocation")
+    count = record.get("attemptCount")
+    if type(count) is not int or count != len(paths) or not 0 <= count < ATTEMPT_FILES:
+        raise ValueError("publication attempt count or allocation differs")
+    occupied = 0
+    digests = {}
+    for path in paths:
+        if not re.fullmatch(r"corpus-publication-attempt-[0-9]+\.json", path.name):
+            raise ValueError("unexplained publication evidence file")
+        if path.lstat().st_nlink != 1:
+            raise ValueError("publication evidence has aliased custody")
+        raw = private_bytes(path, maximum=ATTEMPT_BYTES)
+        value = json.loads(raw)
+        if (
+            not isinstance(value, dict)
+            or value.get("status") not in {"published", "failed"}
+            or not isinstance(value.get("startedAt"), (int, float))
+            or not isinstance(value.get("sourceIdentity"), dict)
+        ):
+            raise ValueError("unrecognized publication evidence")
+        occupied += len(raw)
+        digests[path.name] = hashlib.sha256(raw).hexdigest()
+    latest = record.get("latestAttempt")
+    if count and (
+        not isinstance(latest, dict)
+        or latest.get("file") not in digests
+        or latest.get("sha256") != digests[latest["file"]]
+    ):
+        raise ValueError("publication latest evidence is incomplete or changed")
+    if not count and latest is not None:
+        raise ValueError("publication latest evidence has no attempt")
+    if occupied + ATTEMPT_BYTES > EVIDENCE_BYTES:
+        raise ValueError("publication attempt evidence allocation exhausted")
+    return occupied
 
 
 def checked_metadata(raw: bytes) -> list[dict]:
@@ -77,6 +158,11 @@ def publish() -> dict:
     profile = LocalProfile.load(
         Path("/tmp/docsuri-u1-run/environment.json").resolve()
     ).journey()
+    with publication_lock(profile.root):
+        return publish_locked(profile)
+
+
+def publish_locked(profile: LocalProfile) -> dict:
     metadata_raw = METADATA.read_bytes()
     metadata = checked_metadata(metadata_raw)
     query_raw = QUERIES.read_bytes()
@@ -109,16 +195,21 @@ def publish() -> dict:
         record = json.loads(private_bytes(target, maximum=65536))
         if record["identity"] != identity:
             raise ValueError("existing publication has different bound inputs")
-    if record["attemptCount"] >= 16:
-        raise ValueError("publication attempt evidence allocation exhausted")
+    occupied = reserve_evidence(profile.root, record)
     attempt = {
         "startedAt": time.time(),
         "sourceIdentity": source_identity(),
         "status": "running",
+        "evidenceAllocation": {
+            "retainedBytes": occupied,
+            "reservedBytes": ATTEMPT_BYTES,
+            "maximumBytes": EVIDENCE_BYTES,
+            "maximumFiles": ATTEMPT_FILES,
+        },
     }
     attempt_path = profile.root / f"corpus-publication-attempt-{time.time_ns()}.json"
     # Full source evidence stays separate from the small resumable manifest.
-    if len(json.dumps(attempt).encode()) > 262144:
+    if len(json.dumps(attempt, sort_keys=True, indent=2).encode()) > 262144:
         raise ValueError("publication source evidence exceeds allocation")
     record.update(ready=False, attemptCount=record["attemptCount"] + 1)
     record["latestAttempt"] = {"file": attempt_path.name, "status": "running"}
@@ -214,7 +305,7 @@ def publish() -> dict:
             samples=runtime.samples,
             serverExit=runtime.process.returncode if runtime.process else None,
         )
-        if len(json.dumps(attempt).encode()) > 524288:
+        if len(json.dumps(attempt, sort_keys=True, indent=2).encode()) > ATTEMPT_BYTES:
             record["ready"] = False
             record["latestAttempt"]["status"] = "evidence-allocation-refused"
             private_json(target, record)
