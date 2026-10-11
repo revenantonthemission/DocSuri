@@ -12,6 +12,8 @@
     { "id": "https://docsuri.dev/shared/dtos/mypage.schema.json", "path": "dtos/mypage.schema.json", "visibility": "public" },
     { "id": "https://docsuri.dev/shared/dtos/search.schema.json", "path": "dtos/search.schema.json", "visibility": "public" },
     { "id": "https://docsuri.dev/shared/dtos/summarization.schema.json", "path": "dtos/summarization.schema.json", "visibility": "public" },
+    { "id": "https://docsuri.dev/shared/dtos/workspace.schema.json", "path": "dtos/workspace.schema.json", "visibility": "public" },
+    { "id": "https://docsuri.dev/shared/events/execution.schema.json", "path": "events/execution.schema.json", "visibility": "internal" },
     { "id": "https://docsuri.dev/shared/events/account-signals.schema.json", "path": "events/account-signals.schema.json", "visibility": "internal" },
     { "id": "https://docsuri.dev/shared/events/incidents.schema.json", "path": "events/incidents.schema.json", "visibility": "internal" },
     { "id": "https://docsuri.dev/shared/events/ingestion.schema.json", "path": "events/ingestion.schema.json", "visibility": "internal" },
@@ -31,6 +33,8 @@
         "https://docsuri.dev/shared/dtos/mypage.schema.json",
         "https://docsuri.dev/shared/dtos/search.schema.json",
         "https://docsuri.dev/shared/dtos/summarization.schema.json",
+        "https://docsuri.dev/shared/dtos/workspace.schema.json",
+        "https://docsuri.dev/shared/events/execution.schema.json",
         "https://docsuri.dev/shared/events/account-signals.schema.json",
         "https://docsuri.dev/shared/events/incidents.schema.json",
         "https://docsuri.dev/shared/events/ingestion.schema.json",
@@ -49,7 +53,8 @@
         "https://docsuri.dev/shared/dtos/library.schema.json",
         "https://docsuri.dev/shared/dtos/mypage.schema.json",
         "https://docsuri.dev/shared/dtos/search.schema.json",
-        "https://docsuri.dev/shared/dtos/summarization.schema.json"
+        "https://docsuri.dev/shared/dtos/summarization.schema.json",
+        "https://docsuri.dev/shared/dtos/workspace.schema.json"
       ]
     }
   }

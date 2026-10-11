@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -82,7 +83,13 @@ async def lifespan(app: FastAPI):
             log.warning("app-shell: telemetry flush error: %r", exc)
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, *, local_environment: Path | None = None) -> FastAPI:
+    if local_environment is not None:
+        if settings is not None:
+            raise ValueError('synthetic manifest and ambient Settings cannot be combined')
+        from .local_host import assemble
+        from .local_profile import LocalProfile
+        return assemble(LocalProfile.load(local_environment))
     _configure_logging()
     settings = settings or Settings.from_env()
     _apply_startup_migrations(settings.database_url)

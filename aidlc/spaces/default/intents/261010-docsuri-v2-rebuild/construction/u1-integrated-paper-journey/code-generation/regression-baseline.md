@@ -30,3 +30,17 @@ No U1 implementation suite exists or passed from these runs. New code must compa
 ## Integration reconciliation
 
 Infrastructure PR #43 merged to develop at `2a9a08f66dfb0bc484e270fe2fb26d0ed3503b71`. The implementation branch starts there; maintenance record commit `23344448` follows it. Parent verified `git diff --name-only 2068a59a69fa6606dd80a49d844d1fc99cd3cd16 23344448` contains only the audit shard and maintenance/develop-integration.md. Application, configuration and test bytes therefore match the captured baseline. No historical green count substitutes for these observations.
+
+## Locked-environment reconciliation before application edits
+
+The installed backend environment had drifted from its committed lock. `uv --no-cache sync --project backend --locked --group dev` restored it without changing that lock before the first application edit. The ordinary cache-using invocation was refused by the sandbox's read boundary; the no-cache invocation succeeded. Python remains 3.13.7; pytest becomes 9.1.1, FastAPI 0.141.1, Starlette 1.7.0 and Uvicorn 0.53.0. The same listed backend commands then produced:
+
+| Scope | Locked baseline |
+|---|---|
+| App shell/atomic admission | 45 passed, the same one import failure |
+| Accounts/library/db/personalization/onboarding/plans/docmodel | 298 passed, 2 skipped; 9.04s |
+| Discovery | 124 passed, 3 skipped; 1.20s |
+| Summarization | 665 passed, the same 3 failures, 3 skipped and 31 setup errors; 2.77s |
+| Operations | 2 collection errors for missing `server`; 0.62s. The declared platform-integrity package is now installed, resolving the other four missing imports. |
+
+These are the relevant locked comparison results. Subsequent shared email-format bindings required `pydantic[email]`; that is an implementation dependency amendment, with backend and shared locks updated and email-validator 2.3.0/dnspython 2.9.0 installed. Regression comparison must include that change, rather than representing it as part of the unchanged initial baseline.

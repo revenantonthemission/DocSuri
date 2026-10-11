@@ -1,0 +1,7103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docsuri.dev/shared/dtos/workspace.schema.json",
+  "$comment": "Generated canonical contract release 2.0.0; source SHA256:557733c5ff54bddee179e5a7ed83bfa12c1c15f63d56b0ceb2cd92304ddc9bc8",
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "Revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "Time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "Hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "PolicyRef": {
+      "type": "object",
+      "properties": {
+        "policyId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "policyId",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "APPROVAL_REQUIRED",
+            "CANCELLED",
+            "CAPACITY_EXHAUSTED",
+            "CONFLICT",
+            "CONSENT_REVOKED",
+            "DEADLINE_EXCEEDED",
+            "DEPENDENCY_UNAVAILABLE",
+            "EXPIRED",
+            "FORBIDDEN",
+            "IDEMPOTENCY_CONFLICT",
+            "INCOMPATIBLE",
+            "INCOMPATIBLE_VERSION",
+            "INTERNAL_ERROR",
+            "INVALID_ARGUMENT",
+            "INVALID_CONTENT",
+            "INVALID_INPUT",
+            "INVALID_TOKEN",
+            "MFA_REQUIRED",
+            "NOT_FOUND",
+            "NOT_READY",
+            "OUTCOME_UNKNOWN",
+            "POLICY_DENIED",
+            "POLICY_UNRESOLVED",
+            "QUOTA_EXCEEDED",
+            "RATE_LIMITED",
+            "SNAPSHOT_EXPIRED",
+            "SOURCE_INELIGIBLE",
+            "STALE_REVISION",
+            "UNAUTHENTICATED",
+            "UNKNOWN_OUTCOME"
+          ]
+        },
+        "requestId": {
+          "$ref": "#/$defs/Id"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "messageKey": {
+          "$ref": "#/$defs/Id"
+        },
+        "retryAfterSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "details": {
+          "type": "object",
+          "properties": {
+            "fieldNames": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Id"
+              },
+              "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+            }
+          },
+          "required": [
+            "fieldNames"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "code",
+        "requestId",
+        "retryable",
+        "messageKey"
+      ],
+      "additionalProperties": false
+    },
+    "PaperRef": {
+      "type": "object",
+      "properties": {
+        "paperId": {
+          "$ref": "#/$defs/Id"
+        },
+        "versionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "eligibilityRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "paperId",
+        "versionId",
+        "eligibilityRevision"
+      ],
+      "additionalProperties": false
+    },
+    "ResultRef": {
+      "type": "object",
+      "properties": {
+        "resultId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "contentHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "mediaType": {
+          "type": "string",
+          "minLength": 1,
+          "x-limit-policy": "AdmissionPolicy bounds bytes and characters before persistence/processing."
+        }
+      },
+      "required": [
+        "resultId",
+        "revision",
+        "contentHash",
+        "mediaType"
+      ],
+      "additionalProperties": false
+    },
+    "PageRequest": {
+      "type": "object",
+      "properties": {
+        "cursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "x-limit-policy": "AdmissionPolicy bounds bytes and characters before persistence/processing."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "x-limit-policy": "bounded by selected admission policy"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "PageInfo": {
+      "type": "object",
+      "properties": {
+        "nextCursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "x-limit-policy": "AdmissionPolicy bounds bytes and characters before persistence/processing."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "snapshotRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "nextCursor",
+        "snapshotRevision"
+      ],
+      "additionalProperties": false
+    },
+    "Ack": {
+      "type": "object",
+      "properties": {
+        "resourceId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "requestId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "resourceId",
+        "revision",
+        "requestId"
+      ],
+      "additionalProperties": false
+    },
+    "Progress": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "indeterminate"
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "determinate"
+            },
+            "current": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "total": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "mode",
+            "current",
+            "total"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "JobReceipt": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "running",
+            "cancel_requested",
+            "succeeded",
+            "failed",
+            "cancelled"
+          ]
+        },
+        "requestId": {
+          "$ref": "#/$defs/Id"
+        },
+        "acceptedAt": {
+          "$ref": "#/$defs/Time"
+        }
+      },
+      "required": [
+        "jobId",
+        "revision",
+        "seq",
+        "state",
+        "requestId",
+        "acceptedAt"
+      ],
+      "additionalProperties": false
+    },
+    "JobSnapshot": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "$ref": "#/$defs/Id"
+        },
+        "kind": {
+          "$ref": "#/$defs/Id"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "running",
+            "cancel_requested",
+            "succeeded",
+            "failed",
+            "cancelled"
+          ]
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "progress": {
+          "$ref": "#/$defs/Progress"
+        },
+        "result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ResultRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Error"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "acceptedAt": {
+          "$ref": "#/$defs/Time"
+        }
+      },
+      "required": [
+        "jobId",
+        "kind",
+        "state",
+        "revision",
+        "seq",
+        "ownerId",
+        "progress",
+        "result",
+        "error",
+        "acceptedAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "succeeded"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "result": {
+                "$ref": "#/$defs/ResultRef"
+              },
+              "error": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "failed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error": {
+                "$ref": "#/$defs/Error"
+              },
+              "result": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "accepted",
+                  "running",
+                  "cancel_requested",
+                  "cancelled"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "result": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "OpsObservation": {
+      "type": "object",
+      "properties": {
+        "observationId": {
+          "$ref": "#/$defs/Id"
+        },
+        "capability": {
+          "$ref": "#/$defs/Id"
+        },
+        "component": {
+          "$ref": "#/$defs/Id"
+        },
+        "observedAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "available",
+            "degraded",
+            "unavailable",
+            "unknown"
+          ]
+        },
+        "evidenceRef": {
+          "$ref": "#/$defs/Id"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        }
+      },
+      "required": [
+        "observationId",
+        "capability",
+        "component",
+        "observedAt",
+        "revision",
+        "status",
+        "evidenceRef",
+        "limitations"
+      ],
+      "additionalProperties": false
+    },
+    "OpsObservationPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OpsObservation"
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        }
+      },
+      "required": [
+        "items",
+        "page"
+      ],
+      "additionalProperties": false
+    },
+    "OpsIncident": {
+      "type": "object",
+      "properties": {
+        "incidentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        },
+        "correlationIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "open",
+            "investigating",
+            "recovering",
+            "resolved"
+          ]
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        }
+      },
+      "required": [
+        "incidentId",
+        "revision",
+        "capabilities",
+        "correlationIds",
+        "state",
+        "evidenceRefs"
+      ],
+      "additionalProperties": false
+    },
+    "OpsIncidentPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OpsIncident"
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        }
+      },
+      "required": [
+        "items",
+        "page"
+      ],
+      "additionalProperties": false
+    },
+    "LibraryFilter": {
+      "type": "object",
+      "properties": {
+        "filterId": {
+          "$ref": "#/$defs/Id"
+        },
+        "operatorId": {
+          "$ref": "#/$defs/Id"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "x-policy-bound": "search filter value"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "x-policy-bound": "search vocabulary entry and approved input policy"
+        }
+      },
+      "required": [
+        "filterId",
+        "operatorId",
+        "values"
+      ],
+      "additionalProperties": false
+    },
+    "LibraryQueryContext": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-bound": "search query size/input policy",
+          "description": "Bound by the named approved policy before processing."
+        },
+        "modeId": {
+          "$ref": "#/$defs/Id"
+        },
+        "orderId": {
+          "$ref": "#/$defs/Id"
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LibraryFilter"
+          },
+          "x-policy-bound": "retained filter vocabulary and search policy"
+        },
+        "vocabularyRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "query",
+        "modeId",
+        "orderId",
+        "filters",
+        "vocabularyRevision",
+        "policyRef"
+      ],
+      "additionalProperties": false,
+      "description": "Canonical submitted query/refinement context shared by search, saved queries and history. Unknown or unsupported vocabulary IDs are rejected; no arbitrary query-engine syntax is accepted through filters."
+    },
+    "HostPaperReturnContext": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "paper"
+        },
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "anchorId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "kind",
+        "paper"
+      ],
+      "additionalProperties": false
+    },
+    "HostSearchReturnContext": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "search"
+        },
+        "queryContext": {
+          "$ref": "#/$defs/LibraryQueryContext"
+        },
+        "resultWindowId": {
+          "$ref": "#/$defs/Id"
+        },
+        "resultPosition": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "kind",
+        "queryContext",
+        "resultWindowId"
+      ],
+      "additionalProperties": false
+    },
+    "HostRouteReturnContext": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "route"
+        },
+        "routeId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "kind",
+        "routeId"
+      ],
+      "additionalProperties": false
+    },
+    "HostReturnContext": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/HostPaperReturnContext"
+        },
+        {
+          "$ref": "#/$defs/HostSearchReturnContext"
+        },
+        {
+          "$ref": "#/$defs/HostRouteReturnContext"
+        }
+      ]
+    },
+    "HostNavigationItem": {
+      "type": "object",
+      "properties": {
+        "routeId": {
+          "$ref": "#/$defs/Id"
+        },
+        "titleKey": {
+          "$ref": "#/$defs/Id"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-bound": "registered relative route policy",
+          "description": "Bound by the named approved policy before processing."
+        },
+        "capabilityId": {
+          "$ref": "#/$defs/Id"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "reasonKey": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "routeId",
+        "titleKey",
+        "path",
+        "capabilityId",
+        "available"
+      ],
+      "additionalProperties": false
+    },
+    "HostNavigationResult": {
+      "type": "object",
+      "properties": {
+        "manifestRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "authorityRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HostNavigationItem"
+          },
+          "x-policy-bound": "authorized compiled navigation manifest"
+        },
+        "resolvedRouteId": {
+          "$ref": "#/$defs/Id"
+        },
+        "returnContext": {
+          "$ref": "#/$defs/HostReturnContext"
+        },
+        "clearPriorOwnerState": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "manifestRevision",
+        "authorityRevision",
+        "items",
+        "resolvedRouteId",
+        "clearPriorOwnerState"
+      ],
+      "additionalProperties": false
+    },
+    "AccessSecret": {
+      "type": "string",
+      "minLength": 1,
+      "x-policy-bound": "credential input policy",
+      "description": "Sensitive proof/credential; never logged, reflected or placed in a URL.",
+      "writeOnly": true,
+      "x-sensitive": true
+    },
+    "AccessEmail": {
+      "type": "string",
+      "format": "email",
+      "x-policy-bound": "email normalization and size policy"
+    },
+    "AccessPublicSession": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "authorityRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "verified": {
+          "type": "boolean"
+        },
+        "authenticationLevel": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "mfa"
+          ]
+        },
+        "expiresAt": {
+          "$ref": "#/$defs/Time"
+        }
+      },
+      "required": [
+        "sessionId",
+        "accountId",
+        "authorityRevision",
+        "verified",
+        "authenticationLevel"
+      ],
+      "additionalProperties": false
+    },
+    "AccessAnonymousSession": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "const": "anonymous"
+        },
+        "requestId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "state",
+        "requestId"
+      ],
+      "additionalProperties": false
+    },
+    "AccessKnownSession": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "const": "authenticated"
+        },
+        "session": {
+          "$ref": "#/$defs/AccessPublicSession"
+        }
+      },
+      "required": [
+        "state",
+        "session"
+      ],
+      "additionalProperties": false
+    },
+    "AccessSessionStatus": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/AccessAnonymousSession"
+        },
+        {
+          "$ref": "#/$defs/AccessKnownSession"
+        }
+      ]
+    },
+    "AccessChallengeDelivery": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "$ref": "#/$defs/Id"
+        },
+        "acknowledgement": {
+          "const": "accepted"
+        },
+        "messageKey": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "requestId",
+        "acknowledgement",
+        "messageKey"
+      ],
+      "additionalProperties": false,
+      "description": "Existence-neutral public acknowledgement. It does not expose account existence, challenge secrets or recipient-specific delivery facts."
+    },
+    "AccessChallengeProof": {
+      "type": "object",
+      "properties": {
+        "challengeId": {
+          "$ref": "#/$defs/Id"
+        },
+        "proof": {
+          "$ref": "#/$defs/AccessSecret"
+        },
+        "flowBinding": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "challengeId",
+        "proof",
+        "flowBinding"
+      ],
+      "additionalProperties": false
+    },
+    "AccessMfaContinuation": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "const": "mfa_required"
+        },
+        "challengeId": {
+          "$ref": "#/$defs/Id"
+        },
+        "flowBinding": {
+          "$ref": "#/$defs/Id"
+        },
+        "expiresAt": {
+          "$ref": "#/$defs/Time"
+        }
+      },
+      "required": [
+        "state",
+        "challengeId",
+        "flowBinding",
+        "expiresAt"
+      ],
+      "additionalProperties": false
+    },
+    "AccessLoginResult": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/AccessKnownSession"
+        },
+        {
+          "$ref": "#/$defs/AccessMfaContinuation"
+        }
+      ]
+    },
+    "AccessProviderRedirect": {
+      "type": "object",
+      "properties": {
+        "flowId": {
+          "$ref": "#/$defs/Id"
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "google",
+            "orcid"
+          ]
+        },
+        "authorizationUrl": {
+          "type": "string",
+          "format": "uri",
+          "x-policy-bound": "allowlisted provider redirect length"
+        },
+        "expiresAt": {
+          "$ref": "#/$defs/Time"
+        }
+      },
+      "required": [
+        "flowId",
+        "provider",
+        "authorizationUrl",
+        "expiresAt"
+      ],
+      "additionalProperties": false,
+      "description": "URL generated from configured provider and registered callback binding; never copied from a caller-controlled destination."
+    },
+    "AccessIdentityLink": {
+      "type": "object",
+      "properties": {
+        "identityLinkId": {
+          "$ref": "#/$defs/Id"
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "google",
+            "orcid"
+          ]
+        },
+        "providerSubject": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-bound": "provider subject policy",
+          "description": "Bound by the named approved policy before processing."
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "profileAvailable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "identityLinkId",
+        "provider",
+        "providerSubject",
+        "revision",
+        "profileAvailable"
+      ],
+      "additionalProperties": false
+    },
+    "AccessIdentityPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccessIdentityLink"
+          },
+          "x-policy-bound": "accepted PageRequest.limit and approved list policy"
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        },
+        "appliedLimit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "appliedLimit",
+        "policyRef"
+      ],
+      "additionalProperties": false
+    },
+    "AccessOrcidWork": {
+      "type": "object",
+      "properties": {
+        "sourceId": {
+          "$ref": "#/$defs/Id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-bound": "ORCID work-title policy",
+          "description": "Bound by the named approved policy before processing."
+        },
+        "externalIdentifiers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-bound": "ORCID external identifier policy",
+            "description": "Bound by the named approved policy before processing."
+          },
+          "x-policy-bound": "ORCID work identifier policy"
+        },
+        "sourceUrl": {
+          "type": "string",
+          "format": "uri",
+          "x-policy-bound": "eligible profile source URL policy"
+        }
+      },
+      "required": [
+        "sourceId",
+        "title",
+        "externalIdentifiers"
+      ],
+      "additionalProperties": false
+    },
+    "AccessOrcidProfile": {
+      "type": "object",
+      "properties": {
+        "identityLinkId": {
+          "$ref": "#/$defs/Id"
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-bound": "ORCID subject policy",
+          "description": "Bound by the named approved policy before processing."
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-bound": "profile provenance policy",
+          "description": "Bound by the named approved policy before processing."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-bound": "profile display-name policy",
+          "description": "Bound by the named approved policy before processing."
+        },
+        "works": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccessOrcidWork"
+          },
+          "x-policy-bound": "approved ORCID enrichment count policy"
+        },
+        "coverage": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial",
+            "unavailable"
+          ]
+        }
+      },
+      "required": [
+        "identityLinkId",
+        "subject",
+        "revision",
+        "provenance",
+        "works",
+        "coverage"
+      ],
+      "additionalProperties": false
+    },
+    "AccessMfaEnrollment": {
+      "type": "object",
+      "properties": {
+        "enrollmentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "deliveryReference": {
+          "$ref": "#/$defs/Id"
+        },
+        "expiresAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "nextAction": {
+          "const": "confirm_factor"
+        }
+      },
+      "required": [
+        "enrollmentId",
+        "deliveryReference",
+        "expiresAt",
+        "nextAction"
+      ],
+      "additionalProperties": false,
+      "description": "Protected one-time enrollment delivery is separate from ordinary JSON/log output; no factor seed or recovery code is returned here."
+    },
+    "AccessEnrollmentSecret": {
+      "type": "string",
+      "minLength": 1,
+      "x-policy-bound": "protected MFA enrollment-material policy",
+      "description": "Secret output permitted only by the protected single-use enrollment-material response; redact entirely from diagnostics and do not cache or persist in the client.",
+      "readOnly": true,
+      "x-sensitive": true,
+      "x-protected-one-time": true
+    },
+    "AccessMfaMaterial": {
+      "type": "object",
+      "properties": {
+        "enrollmentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "seed": {
+          "$ref": "#/$defs/AccessEnrollmentSecret"
+        },
+        "provisioningUri": {
+          "$ref": "#/$defs/AccessEnrollmentSecret"
+        },
+        "recoveryCodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccessEnrollmentSecret"
+          },
+          "x-policy-bound": "approved MFA recovery-code count/size policy",
+          "uniqueItems": true
+        },
+        "expiresAt": {
+          "$ref": "#/$defs/Time"
+        }
+      },
+      "required": [
+        "enrollmentId",
+        "seed",
+        "provisioningUri",
+        "recoveryCodes",
+        "expiresAt"
+      ],
+      "additionalProperties": false,
+      "description": "Dedicated protected response only. provisioningUri encodes this enrollment's seed and account/issuer binding and may be rendered as a QR locally, without an external QR service. Recovery codes remain unusable before successful enrollment confirmation. The trusted HTTP adapter applies Cache-Control: no-store and excludes the response from logging, tracing, generic result caches and persisted client storage."
+    },
+    "AccessProfileValue": {
+      "oneOf": [
+        {
+          "type": "string",
+          "x-policy-bound": "declared profile field policy"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "x-policy-bound": "declared profile multi-choice policy",
+          "uniqueItems": true
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "AccessProfileFieldDefinition": {
+      "type": "object",
+      "properties": {
+        "fieldId": {
+          "$ref": "#/$defs/Id"
+        },
+        "labelKey": {
+          "$ref": "#/$defs/Id"
+        },
+        "valueKind": {
+          "type": "string",
+          "enum": [
+            "text",
+            "boolean",
+            "single_choice",
+            "multi_choice"
+          ]
+        },
+        "mutable": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "choiceIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "x-policy-bound": "retained profile choice vocabulary",
+          "uniqueItems": true
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "fieldId",
+        "labelKey",
+        "valueKind",
+        "mutable",
+        "nullable",
+        "choiceIds",
+        "policyRef"
+      ],
+      "additionalProperties": false
+    },
+    "AccessProfileField": {
+      "type": "object",
+      "properties": {
+        "fieldId": {
+          "$ref": "#/$defs/Id"
+        },
+        "value": {
+          "$ref": "#/$defs/AccessProfileValue"
+        }
+      },
+      "required": [
+        "fieldId",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "AccessProfile": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "email": {
+          "$ref": "#/$defs/AccessEmail"
+        },
+        "emailVerified": {
+          "type": "boolean"
+        },
+        "fieldVocabularyRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "definitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccessProfileFieldDefinition"
+          },
+          "x-policy-bound": "retained editable-profile field vocabulary"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccessProfileField"
+          },
+          "x-policy-bound": "retained editable-profile field vocabulary"
+        }
+      },
+      "required": [
+        "accountId",
+        "revision",
+        "email",
+        "emailVerified",
+        "fieldVocabularyRevision",
+        "definitions",
+        "fields"
+      ],
+      "additionalProperties": false
+    },
+    "AccessConsentRecord": {
+      "type": "object",
+      "properties": {
+        "consentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "purposeId": {
+          "$ref": "#/$defs/Id"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "granted",
+            "revoked"
+          ]
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "effectiveAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "consentId",
+        "accountId",
+        "purposeId",
+        "decision",
+        "revision",
+        "effectiveAt",
+        "policyRef"
+      ],
+      "additionalProperties": false
+    },
+    "AccessConsentPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccessConsentRecord"
+          },
+          "x-policy-bound": "accepted PageRequest.limit and approved list policy"
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        },
+        "appliedLimit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "appliedLimit",
+        "policyRef"
+      ],
+      "additionalProperties": false
+    },
+    "LifecycleAction": {
+      "type": "string",
+      "enum": [
+        "withdraw",
+        "reactivate",
+        "erase"
+      ]
+    },
+    "LifecycleScope": {
+      "type": "string",
+      "enum": [
+        "live_records",
+        "derived_artifacts",
+        "pending_work",
+        "caches",
+        "backups",
+        "restore_enforcement",
+        "external_copies"
+      ]
+    },
+    "LifecycleReactivationResult": {
+      "type": "object",
+      "properties": {
+        "lifecycleRequestId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "running",
+            "complete",
+            "blocked",
+            "failed"
+          ]
+        },
+        "access": {
+          "type": "string",
+          "enum": [
+            "reactivation_pending",
+            "sign_in_required"
+          ]
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "requestId": {
+          "$ref": "#/$defs/Id"
+        },
+        "reasonKey": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "lifecycleRequestId",
+        "revision",
+        "state",
+        "access",
+        "policyRef",
+        "requestId",
+        "reasonKey"
+      ],
+      "additionalProperties": false,
+      "description": "Safe status after valid reactivation proof; never a full session or a promise that erased data was restored. A protected limited recovery binding, issued through trusted cookie transport, permits lifecycle.inspect for this request alone while normal account authority remains unavailable.",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "complete"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "access": {
+                "const": "sign_in_required"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "accepted",
+                  "running",
+                  "blocked",
+                  "failed"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "access": {
+                "const": "reactivation_pending"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "LifecycleScopeDisposition": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "$ref": "#/$defs/LifecycleScope"
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "erased",
+            "retained_by_policy",
+            "revoked",
+            "not_applicable",
+            "pending",
+            "blocked"
+          ]
+        },
+        "evidenceReference": {
+          "$ref": "#/$defs/Id"
+        },
+        "reasonKey": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "scope",
+        "disposition",
+        "reasonKey"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "disposition": {
+                "type": "string",
+                "enum": [
+                  "erased",
+                  "retained_by_policy",
+                  "revoked",
+                  "not_applicable"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "evidenceReference"
+            ]
+          }
+        }
+      ]
+    },
+    "LifecycleParticipantDisposition": {
+      "type": "object",
+      "properties": {
+        "participantId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "acknowledged",
+            "failed",
+            "blocked"
+          ]
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LifecycleScopeDisposition"
+          },
+          "maxItems": 7
+        },
+        "observedAt": {
+          "$ref": "#/$defs/Time"
+        }
+      },
+      "required": [
+        "participantId",
+        "revision",
+        "state",
+        "scopes",
+        "observedAt"
+      ],
+      "additionalProperties": false
+    },
+    "LifecycleRequest": {
+      "type": "object",
+      "properties": {
+        "lifecycleRequestId": {
+          "$ref": "#/$defs/Id"
+        },
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "action": {
+          "$ref": "#/$defs/LifecycleAction"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "manifestRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "authorityRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "revocation": {
+          "type": "string",
+          "enum": [
+            "not_required",
+            "pending",
+            "effective"
+          ]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "running",
+            "complete",
+            "blocked",
+            "failed"
+          ]
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LifecycleParticipantDisposition"
+          },
+          "maxItems": 13
+        },
+        "completionEvidenceRef": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "lifecycleRequestId",
+        "accountId",
+        "action",
+        "revision",
+        "policyRef",
+        "manifestRevision",
+        "authorityRevision",
+        "revocation",
+        "state",
+        "participants"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "complete"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "completionEvidenceRef"
+            ],
+            "properties": {
+              "revocation": {
+                "type": "string",
+                "enum": [
+                  "not_required",
+                  "effective"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "LibrarySavedPaper": {
+      "type": "object",
+      "properties": {
+        "savedPaperId": {
+          "$ref": "#/$defs/Id"
+        },
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "savedPaper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "resolvedPaper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "savedTitle": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-bound": "paper metadata display policy",
+          "description": "Bound by the named approved policy before processing."
+        },
+        "sourceDisposition": {
+          "type": "string",
+          "enum": [
+            "available",
+            "source_only",
+            "canonicalized",
+            "withdrawn",
+            "unavailable",
+            "restricted"
+          ]
+        },
+        "reasonKey": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "savedPaperId",
+        "accountId",
+        "revision",
+        "savedPaper",
+        "sourceDisposition",
+        "reasonKey"
+      ],
+      "additionalProperties": false
+    },
+    "LibraryPaperPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LibrarySavedPaper"
+          },
+          "x-policy-bound": "accepted PageRequest.limit and approved list policy"
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        },
+        "appliedLimit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "appliedLimit",
+        "policyRef"
+      ],
+      "additionalProperties": false
+    },
+    "LibrarySavedSearch": {
+      "type": "object",
+      "properties": {
+        "savedSearchId": {
+          "$ref": "#/$defs/Id"
+        },
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "queryContext": {
+          "$ref": "#/$defs/LibraryQueryContext"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-bound": "saved-search label policy",
+          "description": "Bound by the named approved policy before processing."
+        }
+      },
+      "required": [
+        "savedSearchId",
+        "accountId",
+        "revision",
+        "queryContext"
+      ],
+      "additionalProperties": false
+    },
+    "LibrarySearchPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LibrarySavedSearch"
+          },
+          "x-policy-bound": "accepted PageRequest.limit and approved list policy"
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        },
+        "appliedLimit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "appliedLimit",
+        "policyRef"
+      ],
+      "additionalProperties": false
+    },
+    "LibraryHistoryRecord": {
+      "type": "object",
+      "properties": {
+        "historyId": {
+          "$ref": "#/$defs/Id"
+        },
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "searchExecutionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "queryContext": {
+          "$ref": "#/$defs/LibraryQueryContext"
+        },
+        "recordedAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "admissionSequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "completionSequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "clearBoundary": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "historyId",
+        "accountId",
+        "searchExecutionId",
+        "queryContext",
+        "recordedAt",
+        "admissionSequence",
+        "completionSequence",
+        "clearBoundary"
+      ],
+      "additionalProperties": false
+    },
+    "LibraryHistoryPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LibraryHistoryRecord"
+          },
+          "x-policy-bound": "accepted PageRequest.limit and approved list policy"
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        },
+        "appliedLimit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "clearBoundary": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "appliedLimit",
+        "policyRef",
+        "clearBoundary"
+      ],
+      "additionalProperties": false
+    },
+    "LibraryClearHistoryResult": {
+      "type": "object",
+      "properties": {
+        "ack": {
+          "$ref": "#/$defs/Ack"
+        },
+        "checkpoint": {
+          "$ref": "#/$defs/SearchHistoryCheckpoint"
+        },
+        "clearBoundary": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "ack",
+        "checkpoint",
+        "clearBoundary"
+      ],
+      "additionalProperties": false,
+      "description": "Server-captured Discovery admission checkpoint, not a caller-selected cutoff. Facts admitted at/before the cutoff remain suppressed even if they finish after clear."
+    },
+    "SettingsSearchDefaults": {
+      "type": "object",
+      "properties": {
+        "modeId": {
+          "$ref": "#/$defs/Id"
+        },
+        "orderId": {
+          "$ref": "#/$defs/Id"
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LibraryFilter"
+          },
+          "x-policy-bound": "retained filter vocabulary and search policy"
+        },
+        "vocabularyRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "modeId",
+        "orderId",
+        "filters",
+        "vocabularyRevision"
+      ],
+      "additionalProperties": false
+    },
+    "SettingsAssistanceDefaults": {
+      "type": "object",
+      "properties": {
+        "actionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "languageId": {
+          "$ref": "#/$defs/Id"
+        },
+        "presentationLevelId": {
+          "$ref": "#/$defs/Id"
+        },
+        "vocabularyRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "actionId",
+        "languageId",
+        "presentationLevelId",
+        "vocabularyRevision"
+      ],
+      "additionalProperties": false
+    },
+    "SettingsSnapshot": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "settingsId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "searchDefaults": {
+          "$ref": "#/$defs/SettingsSearchDefaults"
+        },
+        "assistanceDefaults": {
+          "$ref": "#/$defs/SettingsAssistanceDefaults"
+        },
+        "appearance": {
+          "type": "string",
+          "enum": [
+            "light",
+            "dark",
+            "system"
+          ]
+        },
+        "onboarding": {
+          "type": "string",
+          "enum": [
+            "not_started",
+            "in_progress",
+            "completed",
+            "skipped"
+          ]
+        },
+        "interestIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "x-policy-bound": "retained interest vocabulary and profile policy",
+          "uniqueItems": true
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "accountId",
+        "settingsId",
+        "revision",
+        "searchDefaults",
+        "assistanceDefaults",
+        "appearance",
+        "onboarding",
+        "interestIds",
+        "policyRef"
+      ],
+      "additionalProperties": false
+    },
+    "SettingsSuggestion": {
+      "type": "object",
+      "properties": {
+        "interestId": {
+          "$ref": "#/$defs/Id"
+        },
+        "labelKey": {
+          "$ref": "#/$defs/Id"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "orcid",
+            "retained_manual_vocabulary"
+          ]
+        },
+        "sourceRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "reasonKey": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "interestId",
+        "labelKey",
+        "source",
+        "sourceRevision",
+        "reasonKey"
+      ],
+      "additionalProperties": false
+    },
+    "SettingsSuggestionPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SettingsSuggestion"
+          },
+          "x-policy-bound": "accepted PageRequest.limit and approved list policy"
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        },
+        "appliedLimit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "appliedLimit",
+        "policyRef"
+      ],
+      "additionalProperties": false
+    },
+    "SettingsRecentPaper": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "lastActivityAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "activityReference": {
+          "$ref": "#/$defs/Id"
+        },
+        "sourceDisposition": {
+          "type": "string",
+          "enum": [
+            "available",
+            "source_only",
+            "withdrawn",
+            "unavailable",
+            "restricted"
+          ]
+        }
+      },
+      "required": [
+        "paper",
+        "lastActivityAt",
+        "activityReference",
+        "sourceDisposition"
+      ],
+      "additionalProperties": false
+    },
+    "SettingsRecentPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SettingsRecentPaper"
+          },
+          "x-policy-bound": "accepted PageRequest.limit and approved list policy"
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        },
+        "appliedLimit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "appliedLimit",
+        "policyRef"
+      ],
+      "additionalProperties": false
+    },
+    "SettingsResetResult": {
+      "type": "object",
+      "properties": {
+        "ack": {
+          "$ref": "#/$defs/Ack"
+        },
+        "inputBoundary": {
+          "$ref": "#/$defs/Revision"
+        },
+        "consentRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "pending",
+            "blocked"
+          ]
+        },
+        "remainingScopeReasonKey": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "ack",
+        "inputBoundary",
+        "consentRevision",
+        "disposition"
+      ],
+      "additionalProperties": false
+    },
+    "UsageOperation": {
+      "type": "object",
+      "properties": {
+        "operationOwner": {
+          "type": "string",
+          "enum": [
+            "AccountAccess",
+            "CorpusContent",
+            "Discovery",
+            "Library",
+            "PaperAssistance",
+            "ResearchWorkspace",
+            "Personalization",
+            "TopicsDigests",
+            "ApprovedExport",
+            "UsageEntitlements",
+            "ServiceOperations",
+            "PlatformControl",
+            "WebWorkspace"
+          ]
+        },
+        "operationId": {
+          "$ref": "#/$defs/Id"
+        },
+        "inputRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "operationOwner",
+        "operationId",
+        "inputRevision"
+      ],
+      "additionalProperties": false
+    },
+    "UsageQuantity": {
+      "type": "object",
+      "properties": {
+        "metricId": {
+          "$ref": "#/$defs/Id"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "metricId",
+        "quantity"
+      ],
+      "additionalProperties": false
+    },
+    "UsageKnownMeasure": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "const": "known"
+        },
+        "metricId": {
+          "$ref": "#/$defs/Id"
+        },
+        "allocated": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "used": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reserved": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "remaining": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "periodId": {
+          "$ref": "#/$defs/Id"
+        },
+        "periodStart": {
+          "$ref": "#/$defs/Time"
+        },
+        "periodEnd": {
+          "$ref": "#/$defs/Time"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "state",
+        "metricId",
+        "allocated",
+        "used",
+        "reserved",
+        "remaining",
+        "periodId",
+        "periodStart",
+        "periodEnd",
+        "policyRef"
+      ],
+      "additionalProperties": false
+    },
+    "UsageUnknownMeasure": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "const": "unknown"
+        },
+        "metricId": {
+          "$ref": "#/$defs/Id"
+        },
+        "reasonKey": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "state",
+        "metricId",
+        "reasonKey"
+      ],
+      "additionalProperties": false
+    },
+    "UsageMeasure": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/UsageKnownMeasure"
+        },
+        {
+          "$ref": "#/$defs/UsageUnknownMeasure"
+        }
+      ]
+    },
+    "UsageMeasurePage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UsageMeasure"
+          },
+          "x-policy-bound": "accepted PageRequest.limit and approved list policy"
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        },
+        "appliedLimit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "appliedLimit",
+        "policyRef"
+      ],
+      "additionalProperties": false
+    },
+    "UsagePlanPresentation": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "tierId": {
+          "$ref": "#/$defs/Id"
+        },
+        "labelKey": {
+          "$ref": "#/$defs/Id"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "mock",
+            "administrative_assignment"
+          ]
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "paymentOccurred": {
+          "const": false
+        }
+      },
+      "required": [
+        "accountId",
+        "tierId",
+        "labelKey",
+        "source",
+        "revision",
+        "policyRef",
+        "paymentOccurred"
+      ],
+      "additionalProperties": false
+    },
+    "UsageEntitlement": {
+      "type": "object",
+      "properties": {
+        "entitlementId": {
+          "$ref": "#/$defs/Id"
+        },
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "tierId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "assignmentSource": {
+          "type": "string",
+          "enum": [
+            "mock",
+            "administrative_assignment"
+          ]
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "effectiveAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "active",
+            "revoked"
+          ]
+        }
+      },
+      "required": [
+        "entitlementId",
+        "accountId",
+        "tierId",
+        "revision",
+        "assignmentSource",
+        "policyRef",
+        "effectiveAt",
+        "disposition"
+      ],
+      "additionalProperties": false
+    },
+    "UsageRecord": {
+      "type": "object",
+      "properties": {
+        "usageRecordId": {
+          "$ref": "#/$defs/Id"
+        },
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "operation": {
+          "$ref": "#/$defs/UsageOperation"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "periodId": {
+          "$ref": "#/$defs/Id"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "reserved",
+            "committed",
+            "released",
+            "refunded",
+            "unknown"
+          ]
+        },
+        "quantities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UsageQuantity"
+          },
+          "x-policy-bound": "registered operation accounting metrics"
+        },
+        "effectReference": {
+          "$ref": "#/$defs/Id"
+        },
+        "reasonKey": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "usageRecordId",
+        "accountId",
+        "operation",
+        "revision",
+        "periodId",
+        "policyRef",
+        "disposition",
+        "quantities",
+        "reasonKey"
+      ],
+      "additionalProperties": false
+    },
+    "UsageRecordsPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UsageRecord"
+          },
+          "x-policy-bound": "accepted PageRequest.limit and approved list policy"
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        },
+        "appliedLimit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "appliedLimit",
+        "policyRef"
+      ],
+      "additionalProperties": false
+    },
+    "CorpusIdentity": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "requestedIdentifier": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "canonicalDisposition": {
+          "type": "string",
+          "enum": [
+            "same",
+            "alias",
+            "withdrawn",
+            "unavailable",
+            "restricted"
+          ]
+        },
+        "metadataRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "sourceUrls": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "format": "uri"
+          }
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "paper",
+        "requestedIdentifier",
+        "canonicalDisposition",
+        "metadataRevision",
+        "title",
+        "sourceUrls",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "CorpusSection": {
+      "type": "object",
+      "properties": {
+        "sectionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "heading": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "anchor": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "sectionId",
+        "heading",
+        "text",
+        "anchor"
+      ],
+      "additionalProperties": false
+    },
+    "CorpusAssetRef": {
+      "type": "object",
+      "properties": {
+        "assetId": {
+          "$ref": "#/$defs/Id"
+        },
+        "mediaType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contentHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "altText": {
+          "type": "string"
+        },
+        "sectionId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "assetId",
+        "mediaType",
+        "contentHash",
+        "altText"
+      ],
+      "additionalProperties": false
+    },
+    "CorpusContent": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "contentRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "contentHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CorpusSection"
+          }
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CorpusAssetRef"
+          }
+        },
+        "sourceUrls": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "format": "uri"
+          }
+        },
+        "coverage": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial"
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+          }
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "paper",
+        "contentRevision",
+        "contentHash",
+        "sections",
+        "assets",
+        "sourceUrls",
+        "coverage",
+        "limitations",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "CorpusContentRead": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "availability": {
+              "const": "ready"
+            },
+            "content": {
+              "$ref": "#/$defs/CorpusContent"
+            }
+          },
+          "required": [
+            "availability",
+            "content"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "availability": {
+              "type": "string",
+              "enum": [
+                "absent",
+                "building",
+                "unsupported",
+                "failed",
+                "withdrawn",
+                "restricted"
+              ]
+            },
+            "paper": {
+              "$ref": "#/$defs/PaperRef"
+            },
+            "reasonKey": {
+              "type": "string",
+              "minLength": 1
+            },
+            "retryable": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "availability",
+            "paper",
+            "reasonKey",
+            "retryable"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "CorpusAsset": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "asset": {
+          "$ref": "#/$defs/CorpusAssetRef"
+        },
+        "readHandle": {
+          "$ref": "#/$defs/Id"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "paper",
+        "asset",
+        "readHandle",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "CorpusEffectDisposition": {
+      "type": "object",
+      "properties": {
+        "effectId": {
+          "$ref": "#/$defs/Id"
+        },
+        "stage": {
+          "type": "string",
+          "enum": [
+            "source",
+            "control",
+            "content",
+            "projection",
+            "publication"
+          ]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "committed",
+            "failed",
+            "unknown"
+          ]
+        },
+        "evidenceHash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Hash"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Error"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "effectId",
+        "stage",
+        "state",
+        "evidenceHash",
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "CorpusRun": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "job": {
+          "$ref": "#/$defs/JobSnapshot"
+        },
+        "inputManifestHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "effects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CorpusEffectDisposition"
+          }
+        },
+        "committedWatermark": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "publicationGeneration": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "runId",
+        "revision",
+        "job",
+        "inputManifestHash",
+        "effects",
+        "committedWatermark",
+        "publicationGeneration"
+      ],
+      "additionalProperties": false
+    },
+    "CorpusPublication": {
+      "type": "object",
+      "properties": {
+        "generationId": {
+          "$ref": "#/$defs/Id"
+        },
+        "publicationRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "manifestHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "compatibilityRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "eligibilityRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "publishedAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "complete": {
+          "const": true
+        }
+      },
+      "required": [
+        "generationId",
+        "publicationRevision",
+        "manifestHash",
+        "compatibilityRevision",
+        "eligibilityRevision",
+        "publishedAt",
+        "complete"
+      ],
+      "additionalProperties": false
+    },
+    "SearchHit": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "authors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+          }
+        },
+        "publishedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "snippet": {
+          "type": "string"
+        },
+        "sourceUrl": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uri"
+        },
+        "availability": {
+          "type": "string",
+          "enum": [
+            "readable",
+            "source-only",
+            "building",
+            "unavailable",
+            "restricted"
+          ]
+        },
+        "matchExplanation": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "paper",
+        "title",
+        "authors",
+        "publishedAt",
+        "snippet",
+        "sourceUrl",
+        "availability",
+        "matchExplanation"
+      ],
+      "additionalProperties": false
+    },
+    "SearchResponse": {
+      "type": "object",
+      "properties": {
+        "executionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "query": {
+          "$ref": "#/$defs/LibraryQueryContext"
+        },
+        "hits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SearchHit"
+          }
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        },
+        "publication": {
+          "$ref": "#/$defs/CorpusPublication"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial",
+            "degraded"
+          ]
+        },
+        "effectiveModeId": {
+          "$ref": "#/$defs/Id"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+          }
+        }
+      },
+      "required": [
+        "executionId",
+        "query",
+        "hits",
+        "page",
+        "publication",
+        "outcome",
+        "effectiveModeId",
+        "limitations"
+      ],
+      "additionalProperties": false
+    },
+    "SearchHistoryCheckpoint": {
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "admissionSequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "ownerId",
+        "admissionSequence",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    "CitationNode": {
+      "type": "object",
+      "properties": {
+        "nodeId": {
+          "$ref": "#/$defs/Id"
+        },
+        "paper": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PaperRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourceUrl": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "format": "uri"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "eligible",
+            "unknown",
+            "incomplete",
+            "restricted",
+            "withdrawn"
+          ]
+        }
+      },
+      "required": [
+        "nodeId",
+        "paper",
+        "title",
+        "sourceUrl",
+        "disposition"
+      ],
+      "additionalProperties": false
+    },
+    "CitationEdge": {
+      "type": "object",
+      "properties": {
+        "fromNodeId": {
+          "$ref": "#/$defs/Id"
+        },
+        "toNodeId": {
+          "$ref": "#/$defs/Id"
+        },
+        "sourceUrl": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uri"
+        },
+        "observedAt": {
+          "$ref": "#/$defs/Time"
+        }
+      },
+      "required": [
+        "fromNodeId",
+        "toNodeId",
+        "sourceUrl",
+        "observedAt"
+      ],
+      "additionalProperties": false
+    },
+    "CitationResponse": {
+      "type": "object",
+      "properties": {
+        "snapshotId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "root": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CitationNode"
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CitationEdge"
+          }
+        },
+        "freshness": {
+          "type": "string",
+          "enum": [
+            "current",
+            "stale",
+            "unknown"
+          ]
+        },
+        "coverage": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial"
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+          }
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        }
+      },
+      "required": [
+        "snapshotId",
+        "revision",
+        "root",
+        "nodes",
+        "edges",
+        "freshness",
+        "coverage",
+        "limitations",
+        "page"
+      ],
+      "additionalProperties": false
+    },
+    "AssistanceOption": {
+      "type": "object",
+      "properties": {
+        "optionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "summary",
+            "translation"
+          ]
+        },
+        "sourceLanguageId": {
+          "$ref": "#/$defs/Id"
+        },
+        "targetLanguageId": {
+          "$ref": "#/$defs/Id"
+        },
+        "presentationLevelId": {
+          "$ref": "#/$defs/Id"
+        },
+        "labelKey": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "optionId",
+        "operation",
+        "sourceLanguageId",
+        "targetLanguageId",
+        "presentationLevelId",
+        "labelKey"
+      ],
+      "additionalProperties": false
+    },
+    "AssistanceOptions": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AssistanceOption"
+          }
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+          }
+        }
+      },
+      "required": [
+        "revision",
+        "options",
+        "policy",
+        "limitations"
+      ],
+      "additionalProperties": false
+    },
+    "AssistanceResult": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/$defs/ResultRef"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "jobId": {
+          "$ref": "#/$defs/Id"
+        },
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "sourceContentHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "summary",
+            "translation"
+          ]
+        },
+        "optionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "glossaryRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CorpusSection"
+          }
+        },
+        "coverage": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial",
+            "abstained"
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+          }
+        },
+        "methodRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "result",
+        "ownerId",
+        "jobId",
+        "paper",
+        "sourceContentHash",
+        "operation",
+        "optionId",
+        "glossaryRevision",
+        "sections",
+        "coverage",
+        "limitations",
+        "methodRevision"
+      ],
+      "additionalProperties": false
+    },
+    "AssistanceResultRead": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "availability": {
+              "const": "ready"
+            },
+            "prepared": {
+              "$ref": "#/$defs/AssistanceResult"
+            }
+          },
+          "required": [
+            "availability",
+            "prepared"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "availability": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "failed",
+                "expired",
+                "withdrawn",
+                "restricted"
+              ]
+            },
+            "jobId": {
+              "$ref": "#/$defs/Id"
+            },
+            "reasonKey": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "availability",
+            "jobId",
+            "reasonKey"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AssistanceGlossaryTerm": {
+      "type": "object",
+      "properties": {
+        "termId": {
+          "$ref": "#/$defs/Id"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "preferred": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "languageId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "termId",
+        "source",
+        "preferred",
+        "languageId"
+      ],
+      "additionalProperties": false
+    },
+    "AssistanceGlossary": {
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "normalizationPolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AssistanceGlossaryTerm"
+          }
+        }
+      },
+      "required": [
+        "ownerId",
+        "revision",
+        "normalizationPolicy",
+        "terms"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchScope": {
+      "type": "object",
+      "properties": {
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "publicPapers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PaperRef"
+          }
+        },
+        "attachmentIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "uniqueItems": true
+        },
+        "webReferences": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "format": "uri"
+          }
+        },
+        "scopePolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "contextId",
+        "publicPapers",
+        "attachmentIds",
+        "webReferences",
+        "scopePolicy"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchContext": {
+      "type": "object",
+      "properties": {
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "purpose": {
+          "type": "string",
+          "enum": [
+            "research",
+            "novelty"
+          ]
+        },
+        "lifecycle": {
+          "type": "string",
+          "enum": [
+            "active",
+            "deleting",
+            "deleted"
+          ]
+        }
+      },
+      "required": [
+        "contextId",
+        "ownerId",
+        "revision",
+        "purpose",
+        "lifecycle"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchSession": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "scope": {
+          "$ref": "#/$defs/ResearchScope"
+        },
+        "lifecycle": {
+          "type": "string",
+          "enum": [
+            "active",
+            "deleting",
+            "deleted"
+          ]
+        },
+        "turnIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          }
+        },
+        "pendingJobIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          }
+        },
+        "deletionBoundary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Revision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "sessionId",
+        "ownerId",
+        "revision",
+        "scope",
+        "lifecycle",
+        "turnIds",
+        "pendingJobIds",
+        "deletionBoundary"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchSessions": {
+      "type": "object",
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ResearchSession"
+          }
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        }
+      },
+      "required": [
+        "sessions",
+        "page"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchDeletion": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "in-progress",
+            "complete",
+            "limited",
+            "failed"
+          ]
+        },
+        "tombstoneBoundary": {
+          "$ref": "#/$defs/Revision"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "remainingJobIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+          }
+        }
+      },
+      "required": [
+        "requestId",
+        "revision",
+        "state",
+        "tombstoneBoundary",
+        "policy",
+        "remainingJobIds",
+        "limitations"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchUploadPermit": {
+      "type": "object",
+      "properties": {
+        "uploadId": {
+          "$ref": "#/$defs/Id"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "contentHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "writeHandle": {
+          "$ref": "#/$defs/Id"
+        },
+        "expiresAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "uploadId",
+        "ownerId",
+        "contextId",
+        "contentHash",
+        "writeHandle",
+        "expiresAt",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchAttachment": {
+      "type": "object",
+      "properties": {
+        "attachmentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "contentHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "processing",
+            "ready",
+            "partial",
+            "unsupported",
+            "failed",
+            "deleted"
+          ]
+        },
+        "assetIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+          }
+        }
+      },
+      "required": [
+        "attachmentId",
+        "ownerId",
+        "contextId",
+        "revision",
+        "contentHash",
+        "state",
+        "assetIds",
+        "limitations"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchPrivateAsset": {
+      "type": "object",
+      "properties": {
+        "attachmentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "assetId": {
+          "$ref": "#/$defs/Id"
+        },
+        "mediaType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contentHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "readHandle": {
+          "$ref": "#/$defs/Id"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "attachmentId",
+        "contextId",
+        "assetId",
+        "mediaType",
+        "contentHash",
+        "readHandle",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "DraftRef": {
+      "type": "object",
+      "properties": {
+        "draftId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "contentHash": {
+          "$ref": "#/$defs/Hash"
+        }
+      },
+      "required": [
+        "draftId",
+        "revision",
+        "contentHash"
+      ],
+      "additionalProperties": false
+    },
+    "DraftRevision": {
+      "type": "object",
+      "properties": {
+        "draft": {
+          "$ref": "#/$defs/DraftRef"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "research-question",
+            "novelty-topic",
+            "novelty-manuscript",
+            "novelty-discussion"
+          ]
+        },
+        "parentRevision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Revision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "acknowledgedAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "draft",
+        "ownerId",
+        "contextId",
+        "kind",
+        "parentRevision",
+        "text",
+        "acknowledgedAt",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "DraftWriteResult": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "const": "saved"
+            },
+            "acknowledged": {
+              "$ref": "#/$defs/DraftRevision"
+            }
+          },
+          "required": [
+            "outcome",
+            "acknowledged"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "const": "conflict"
+            },
+            "current": {
+              "$ref": "#/$defs/DraftRevision"
+            },
+            "proposedText": {
+              "type": "string"
+            },
+            "proposedBaseRevision": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Revision"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "outcome",
+            "current",
+            "proposedText",
+            "proposedBaseRevision"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "DraftRecovery": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "state": {
+              "const": "recoverable"
+            },
+            "acknowledged": {
+              "$ref": "#/$defs/DraftRevision"
+            }
+          },
+          "required": [
+            "state",
+            "acknowledged"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "state": {
+              "type": "string",
+              "enum": [
+                "missing",
+                "consumed",
+                "discarded",
+                "expired",
+                "deleted"
+              ]
+            },
+            "draftId": {
+              "$ref": "#/$defs/Id"
+            },
+            "reasonKey": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "state",
+            "draftId",
+            "reasonKey"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ResearchTurn": {
+      "type": "object",
+      "properties": {
+        "turnId": {
+          "$ref": "#/$defs/Id"
+        },
+        "sessionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "inputMode": {
+          "type": "string",
+          "enum": [
+            "question",
+            "compare",
+            "quote"
+          ]
+        },
+        "committedText": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "submittedDraft": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DraftRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "job": {
+          "$ref": "#/$defs/JobSnapshot"
+        },
+        "artifact": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ResearchArtifactRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "turnId",
+        "sessionId",
+        "ownerId",
+        "revision",
+        "inputMode",
+        "committedText",
+        "submittedDraft",
+        "job",
+        "artifact"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchArtifactRef": {
+      "type": "object",
+      "properties": {
+        "artifactId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "contentHash": {
+          "$ref": "#/$defs/Hash"
+        }
+      },
+      "required": [
+        "artifactId",
+        "revision",
+        "contentHash"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchEvidence": {
+      "type": "object",
+      "properties": {
+        "evidenceId": {
+          "$ref": "#/$defs/Id"
+        },
+        "sourceKind": {
+          "type": "string",
+          "enum": [
+            "public-paper",
+            "private-attachment",
+            "retrieved-web",
+            "unread-reference"
+          ]
+        },
+        "sourceId": {
+          "$ref": "#/$defs/Id"
+        },
+        "sourceVersion": {
+          "$ref": "#/$defs/Revision"
+        },
+        "sourceContentHash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Hash"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "readCoverage": {
+          "type": "string",
+          "enum": [
+            "read",
+            "partial",
+            "not-read"
+          ]
+        },
+        "quote": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "claim": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "stance": {
+          "type": "string",
+          "enum": [
+            "supports",
+            "contradicts",
+            "uncertain"
+          ]
+        },
+        "sourceUrl": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "format": "uri"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "evidenceId",
+        "sourceKind",
+        "sourceId",
+        "sourceVersion",
+        "sourceContentHash",
+        "location",
+        "readCoverage",
+        "quote",
+        "claim",
+        "stance",
+        "sourceUrl"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchOutput": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ResearchEvidence"
+          }
+        },
+        "coverage": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial",
+            "abstained"
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+          }
+        },
+        "methodRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "assessments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ResearchAssessment"
+          }
+        }
+      },
+      "required": [
+        "summary",
+        "evidence",
+        "coverage",
+        "limitations",
+        "methodRevision"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchAssessment": {
+      "type": "object",
+      "properties": {
+        "criterionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "score": {
+          "type": "number"
+        },
+        "scaleMinimum": {
+          "type": "number"
+        },
+        "scaleMaximum": {
+          "type": "number"
+        },
+        "evidenceIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+          }
+        }
+      },
+      "required": [
+        "criterionId",
+        "label",
+        "evidenceIds",
+        "limitations"
+      ],
+      "additionalProperties": false,
+      "dependentRequired": {
+        "score": [
+          "scaleMinimum",
+          "scaleMaximum"
+        ],
+        "scaleMinimum": [
+          "score",
+          "scaleMaximum"
+        ],
+        "scaleMaximum": [
+          "score",
+          "scaleMinimum"
+        ]
+      }
+    },
+    "ResearchArtifact": {
+      "type": "object",
+      "properties": {
+        "artifact": {
+          "$ref": "#/$defs/ResearchArtifactRef"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "operationId": {
+          "$ref": "#/$defs/Id"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "research-answer",
+            "novelty-result",
+            "novelty-discussion"
+          ]
+        },
+        "output": {
+          "$ref": "#/$defs/ResearchOutput"
+        },
+        "currentEligibilityRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "mediaType": {
+          "const": "application/json"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "artifact",
+        "ownerId",
+        "contextId",
+        "operationId",
+        "kind",
+        "output",
+        "currentEligibilityRevision",
+        "mediaType",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchArtifactResponse": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "availability": {
+              "const": "ready"
+            },
+            "prepared": {
+              "$ref": "#/$defs/ResearchArtifact"
+            }
+          },
+          "required": [
+            "availability",
+            "prepared"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "availability": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "failed",
+                "expired",
+                "deleted",
+                "restricted"
+              ]
+            },
+            "artifactId": {
+              "$ref": "#/$defs/Id"
+            },
+            "reasonKey": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "availability",
+            "artifactId",
+            "reasonKey"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "DigestSchedule": {
+      "type": "object",
+      "properties": {
+        "cadenceId": {
+          "$ref": "#/$defs/Id"
+        },
+        "timeZone": {
+          "type": "string",
+          "minLength": 1
+        },
+        "windowPolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "cadenceId",
+        "timeZone",
+        "windowPolicy"
+      ],
+      "additionalProperties": false
+    },
+    "DigestSubscription": {
+      "type": "object",
+      "properties": {
+        "subscriptionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "topic": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "schedule": {
+          "$ref": "#/$defs/DigestSchedule"
+        },
+        "unsubscribeBoundary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Revision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "subscriptionId",
+        "ownerId",
+        "topic",
+        "revision",
+        "enabled",
+        "schedule",
+        "unsubscribeBoundary"
+      ],
+      "additionalProperties": false
+    },
+    "DigestSubscriptions": {
+      "type": "object",
+      "properties": {
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DigestSubscription"
+          }
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        }
+      },
+      "required": [
+        "subscriptions",
+        "page"
+      ],
+      "additionalProperties": false
+    },
+    "DigestWindow": {
+      "type": "object",
+      "properties": {
+        "startInclusive": {
+          "$ref": "#/$defs/Time"
+        },
+        "endExclusive": {
+          "$ref": "#/$defs/Time"
+        },
+        "timeZone": {
+          "type": "string",
+          "minLength": 1
+        },
+        "windowPolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "startInclusive",
+        "endExclusive",
+        "timeZone",
+        "windowPolicy"
+      ],
+      "additionalProperties": false
+    },
+    "DigestDelivery": {
+      "type": "object",
+      "properties": {
+        "deliveryId": {
+          "$ref": "#/$defs/Id"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "subscriptionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "window": {
+          "$ref": "#/$defs/DigestWindow"
+        },
+        "papers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PaperRef"
+          }
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "prepared",
+            "no-content",
+            "queued",
+            "sending",
+            "sent",
+            "failed",
+            "unknown",
+            "suppressed"
+          ]
+        },
+        "effectKey": {
+          "$ref": "#/$defs/Id"
+        },
+        "remoteReference": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+          }
+        }
+      },
+      "required": [
+        "deliveryId",
+        "ownerId",
+        "subscriptionId",
+        "revision",
+        "window",
+        "papers",
+        "state",
+        "effectKey",
+        "remoteReference",
+        "limitations"
+      ],
+      "additionalProperties": false
+    },
+    "DigestUnsubscribeResult": {
+      "type": "object",
+      "properties": {
+        "outcome": {
+          "const": "acknowledged"
+        },
+        "requestId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "outcome",
+        "requestId"
+      ],
+      "additionalProperties": false
+    },
+    "ExportConnection": {
+      "type": "object",
+      "properties": {
+        "connectionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "provider": {
+          "const": "notion"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "connected",
+            "disconnected",
+            "revoked",
+            "unavailable"
+          ]
+        },
+        "destinationScopeIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+          }
+        }
+      },
+      "required": [
+        "connectionId",
+        "ownerId",
+        "revision",
+        "provider",
+        "state",
+        "destinationScopeIds",
+        "limitations"
+      ],
+      "additionalProperties": false
+    },
+    "ExportDestination": {
+      "type": "object",
+      "properties": {
+        "connectionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/Id"
+        },
+        "parentPageId": {
+          "$ref": "#/$defs/Id"
+        },
+        "formatRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "connectionId",
+        "workspaceId",
+        "parentPageId",
+        "formatRevision"
+      ],
+      "additionalProperties": false
+    },
+    "ExportDestinations": {
+      "type": "object",
+      "properties": {
+        "connectionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "connectionRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "destinations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExportDestination"
+          }
+        }
+      },
+      "required": [
+        "connectionId",
+        "connectionRevision",
+        "destinations"
+      ],
+      "additionalProperties": false
+    },
+    "ExportPreview": {
+      "type": "object",
+      "properties": {
+        "previewId": {
+          "$ref": "#/$defs/Id"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "source": {
+          "$ref": "#/$defs/ResearchArtifactRef"
+        },
+        "sourceEligibilityRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "connectionRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "destination": {
+          "$ref": "#/$defs/ExportDestination"
+        },
+        "renderedText": {
+          "type": "string"
+        },
+        "renderedContentHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "bindingHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "renderPolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "previewId",
+        "ownerId",
+        "revision",
+        "source",
+        "sourceEligibilityRevision",
+        "connectionRevision",
+        "destination",
+        "renderedText",
+        "renderedContentHash",
+        "bindingHash",
+        "renderPolicy"
+      ],
+      "additionalProperties": false
+    },
+    "ExportApproval": {
+      "type": "object",
+      "properties": {
+        "approvalId": {
+          "$ref": "#/$defs/Id"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "previewId": {
+          "$ref": "#/$defs/Id"
+        },
+        "previewRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "bindingHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "approvedAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "expiresAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "approved",
+            "invalidated",
+            "consumed",
+            "cancelled",
+            "expired"
+          ]
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "approvalId",
+        "ownerId",
+        "previewId",
+        "previewRevision",
+        "bindingHash",
+        "approvedAt",
+        "expiresAt",
+        "state",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "ExportEffect": {
+      "type": "object",
+      "properties": {
+        "effectId": {
+          "$ref": "#/$defs/Id"
+        },
+        "approvalId": {
+          "$ref": "#/$defs/Id"
+        },
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "bindingHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "executing",
+            "succeeded",
+            "failed",
+            "unknown",
+            "cancelled",
+            "invalidated"
+          ]
+        },
+        "remoteReference": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "remoteUrl": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "format": "uri"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reconciliationEvidenceHash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Hash"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+          }
+        }
+      },
+      "required": [
+        "effectId",
+        "approvalId",
+        "ownerId",
+        "revision",
+        "bindingHash",
+        "state",
+        "remoteReference",
+        "remoteUrl",
+        "reconciliationEvidenceHash",
+        "limitations"
+      ],
+      "additionalProperties": false
+    },
+    "SessionBootstrap": {
+      "type": "object",
+      "properties": {
+        "signedIn": {
+          "type": "boolean"
+        },
+        "accountId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "authorityRevision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Revision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "csrfToken": {
+          "type": "string",
+          "minLength": 1,
+          "x-limit-policy": "AdmissionPolicy bounds bytes and characters before persistence/processing."
+        }
+      },
+      "required": [
+        "signedIn",
+        "accountId",
+        "authorityRevision",
+        "csrfToken"
+      ],
+      "additionalProperties": false
+    },
+    "CapabilityCatalog": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/Id"
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "available",
+                  "degraded",
+                  "unavailable",
+                  "policy_pending"
+                ]
+              },
+              "modeIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Id"
+                },
+                "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+              },
+              "languageIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Id"
+                },
+                "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+              },
+              "levelIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Id"
+                },
+                "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+              },
+              "formatIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Id"
+                },
+                "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+              },
+              "policy": {
+                "$ref": "#/$defs/PolicyRef"
+              }
+            },
+            "required": [
+              "id",
+              "state",
+              "modeIds",
+              "languageIds",
+              "levelIds",
+              "formatIds",
+              "policy"
+            ],
+            "additionalProperties": false
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        }
+      },
+      "required": [
+        "revision",
+        "capabilities"
+      ],
+      "additionalProperties": false
+    },
+    "UploadAck": {
+      "type": "object",
+      "properties": {
+        "uploadId": {
+          "$ref": "#/$defs/Id"
+        },
+        "contentHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "receivedBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "uploadId",
+        "contentHash",
+        "receivedBytes",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    "HostNavigationInputHttp": {
+      "type": "object",
+      "properties": {
+        "routeId": {
+          "$ref": "#/$defs/Id"
+        },
+        "returnContext": {
+          "$ref": "#/$defs/HostReturnContext"
+        }
+      },
+      "required": [
+        "routeId"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessSessionInputHttp": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessRegisterInputHttp": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "$ref": "#/$defs/AccessEmail"
+        },
+        "password": {
+          "$ref": "#/$defs/AccessSecret"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-bound": "profile display-name policy",
+          "description": "Bound by the named approved policy before processing."
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "email",
+        "password",
+        "policyRef"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessEmailRequestInputHttp": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "$ref": "#/$defs/AccessEmail"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "email",
+        "policyRef"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessVerifyEmailInputHttp": {
+      "type": "object",
+      "properties": {
+        "verification": {
+          "$ref": "#/$defs/AccessChallengeProof"
+        }
+      },
+      "required": [
+        "verification"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessLoginInputHttp": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "$ref": "#/$defs/AccessEmail"
+        },
+        "password": {
+          "$ref": "#/$defs/AccessSecret"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "email",
+        "password",
+        "policyRef"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessLogoutInputHttp": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessPasswordResetInputHttp": {
+      "type": "object",
+      "properties": {
+        "verification": {
+          "$ref": "#/$defs/AccessChallengeProof"
+        },
+        "newPassword": {
+          "$ref": "#/$defs/AccessSecret"
+        }
+      },
+      "required": [
+        "verification",
+        "newPassword"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessPasswordChangeInputHttp": {
+      "type": "object",
+      "properties": {
+        "currentPassword": {
+          "$ref": "#/$defs/AccessSecret"
+        },
+        "newPassword": {
+          "$ref": "#/$defs/AccessSecret"
+        }
+      },
+      "required": [
+        "currentPassword",
+        "newPassword"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessEmailChangeInputHttp": {
+      "type": "object",
+      "properties": {
+        "currentProof": {
+          "$ref": "#/$defs/AccessSecret"
+        },
+        "newEmail": {
+          "$ref": "#/$defs/AccessEmail"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "currentProof",
+        "newEmail",
+        "policyRef"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessEmailChangeCompleteInputHttp": {
+      "type": "object",
+      "properties": {
+        "verification": {
+          "$ref": "#/$defs/AccessChallengeProof"
+        }
+      },
+      "required": [
+        "verification"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessBeginIdentityInputHttp": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": [
+            "google",
+            "orcid"
+          ]
+        },
+        "intent": {
+          "type": "string",
+          "enum": [
+            "sign_in",
+            "link"
+          ]
+        },
+        "returnRouteId": {
+          "$ref": "#/$defs/Id"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "provider",
+        "intent",
+        "returnRouteId",
+        "policyRef"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessIdentityListInputHttp": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessUnlinkIdentityInputHttp": {
+      "type": "object",
+      "properties": {
+        "identityLinkId": {
+          "$ref": "#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "identityLinkId",
+        "expectedRevision"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessOrcidProfileInputHttp": {
+      "type": "object",
+      "properties": {
+        "identityLinkId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "identityLinkId"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessMfaEnrollmentInputHttp": {
+      "type": "object",
+      "properties": {
+        "currentProof": {
+          "$ref": "#/$defs/AccessSecret"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "currentProof",
+        "policyRef"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessMfaMaterialInputHttp": {
+      "type": "object",
+      "properties": {
+        "enrollmentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "deliveryReference": {
+          "$ref": "#/$defs/Id"
+        },
+        "currentProof": {
+          "$ref": "#/$defs/AccessSecret"
+        }
+      },
+      "required": [
+        "enrollmentId",
+        "deliveryReference",
+        "currentProof"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessMfaConfirmInputHttp": {
+      "type": "object",
+      "properties": {
+        "enrollmentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "verification": {
+          "$ref": "#/$defs/AccessChallengeProof"
+        }
+      },
+      "required": [
+        "enrollmentId",
+        "verification"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessMfaVerifyInputHttp": {
+      "type": "object",
+      "properties": {
+        "verification": {
+          "$ref": "#/$defs/AccessChallengeProof"
+        },
+        "factorKind": {
+          "type": "string",
+          "enum": [
+            "totp",
+            "recovery_proof"
+          ]
+        }
+      },
+      "required": [
+        "verification",
+        "factorKind"
+      ],
+      "additionalProperties": false,
+      "description": "Pre-authentication request: context may contain an anonymous principal. The trusted transport separately validates the protected primary-authentication continuation cookie, binds it to verification.challengeId/flowBinding and the server-owned primary-authentication record, and passes only a verified invocation. The factor proof is untrusted until checked; neither a full session nor a caller-claimed account is required."
+    },
+    "AccessMfaRecoveryInputHttp": {
+      "type": "object",
+      "properties": {
+        "verification": {
+          "$ref": "#/$defs/AccessChallengeProof"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "verification",
+        "policyRef"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessProfileInputHttp": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessProfileUpdateInputHttp": {
+      "type": "object",
+      "properties": {
+        "fieldVocabularyRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccessProfileField"
+          },
+          "x-policy-bound": "retained mutable-profile field vocabulary"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "fieldVocabularyRevision",
+        "changes",
+        "policyRef",
+        "expectedRevision"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessConsentListInputHttp": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessConsentUpdateInputHttp": {
+      "type": "object",
+      "properties": {
+        "purposeId": {
+          "$ref": "#/$defs/Id"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "granted",
+            "revoked"
+          ]
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "purposeId",
+        "decision",
+        "policyRef"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "LifecycleRequestInputHttp": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "withdraw",
+            "erase"
+          ]
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "confirmationRef": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "action",
+        "policyRef",
+        "confirmationRef"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "LifecycleReactivationInputHttp": {
+      "type": "object",
+      "properties": {
+        "verification": {
+          "$ref": "#/$defs/AccessChallengeProof"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "confirmationRef": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "verification",
+        "policyRef",
+        "confirmationRef"
+      ],
+      "additionalProperties": false,
+      "description": "Public pre-authentication envelope; no caller account ID or active session is required. Account and withdrawn lifecycle identity are resolved exclusively from the verified purpose-bound reactivation proof. Trusted transport context may remain anonymous until this limited recovery authority is verified."
+    },
+    "LifecycleStatusInputHttp": {
+      "type": "object",
+      "properties": {
+        "lifecycleRequestId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "lifecycleRequestId"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "LibrarySavePaperInputHttp": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "paper",
+        "policyRef"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "LibrarySavedPaperInputHttp": {
+      "type": "object",
+      "properties": {
+        "savedPaperId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "savedPaperId"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "LibraryPaperListInputHttp": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "LibrarySaveSearchInputHttp": {
+      "type": "object",
+      "properties": {
+        "queryContext": {
+          "$ref": "#/$defs/LibraryQueryContext"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-bound": "saved-search label policy",
+          "description": "Bound by the named approved policy before processing."
+        }
+      },
+      "required": [
+        "queryContext"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "LibrarySavedSearchInputHttp": {
+      "type": "object",
+      "properties": {
+        "savedSearchId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "savedSearchId"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "LibrarySearchListInputHttp": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "LibraryHistoryListInputHttp": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "LibraryHistoryInputHttp": {
+      "type": "object",
+      "properties": {
+        "historyId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "historyId"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "LibraryClearHistoryInputHttp": {
+      "type": "object",
+      "properties": {
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "policyRef",
+        "expectedRevision"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "SettingsReadInputHttp": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "SettingsUpdateInputHttp": {
+      "type": "object",
+      "properties": {
+        "searchDefaults": {
+          "$ref": "#/$defs/SettingsSearchDefaults"
+        },
+        "assistanceDefaults": {
+          "$ref": "#/$defs/SettingsAssistanceDefaults"
+        },
+        "appearance": {
+          "type": "string",
+          "enum": [
+            "light",
+            "dark",
+            "system"
+          ]
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "policyRef",
+        "expectedRevision"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body.",
+      "anyOf": [
+        {
+          "required": [
+            "searchDefaults"
+          ]
+        },
+        {
+          "required": [
+            "assistanceDefaults"
+          ]
+        },
+        {
+          "required": [
+            "appearance"
+          ]
+        }
+      ]
+    },
+    "SettingsOnboardingInputHttp": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "save_interests",
+            "complete",
+            "skip"
+          ]
+        },
+        "interestIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "x-policy-bound": "retained interest vocabulary and onboarding policy",
+          "uniqueItems": true
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "action",
+        "interestIds",
+        "policyRef",
+        "expectedRevision"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "SettingsSuggestionInputHttp": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        },
+        "identityLinkId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "SettingsRecentInputHttp": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "SettingsResetInputHttp": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "delete_behavior",
+            "reset_profile"
+          ]
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "confirmationRef": {
+          "$ref": "#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "action",
+        "policyRef",
+        "confirmationRef",
+        "expectedRevision"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "UsageInspectInputHttp": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "UsagePlanInputHttp": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "UsageGrantInputHttp": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "tierId": {
+          "$ref": "#/$defs/Id"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "reasonKey": {
+          "$ref": "#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "accountId",
+        "tierId",
+        "policyRef",
+        "reasonKey",
+        "expectedRevision"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "UsageRevokeInputHttp": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "entitlementId": {
+          "$ref": "#/$defs/Id"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "reasonKey": {
+          "$ref": "#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "accountId",
+        "entitlementId",
+        "policyRef",
+        "reasonKey",
+        "expectedRevision"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "UsageRecordsInputHttp": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "CorpusResolveHttp": {
+      "type": "object",
+      "properties": {
+        "identifier": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "versionLabel": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "identifier"
+      ],
+      "additionalProperties": false
+    },
+    "CorpusReadHttp": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "purpose": {
+          "type": "string",
+          "enum": [
+            "metadata",
+            "read",
+            "assistance",
+            "research",
+            "citation",
+            "saved-reference"
+          ]
+        }
+      },
+      "required": [
+        "paper",
+        "purpose"
+      ],
+      "additionalProperties": false
+    },
+    "CorpusAssetReadHttp": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "contentRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "assetId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "paper",
+        "contentRevision",
+        "assetId"
+      ],
+      "additionalProperties": false
+    },
+    "CorpusRunRequestHttp": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": [
+            "ingest",
+            "incremental-refresh",
+            "rebuild",
+            "reprocess"
+          ]
+        },
+        "sourceScopeIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "authoritativeInputRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "inputManifestHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "sourcePolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "compatibilityRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "operation",
+        "sourceScopeIds",
+        "authoritativeInputRevision",
+        "inputManifestHash",
+        "sourcePolicy",
+        "compatibilityRevision"
+      ],
+      "additionalProperties": false
+    },
+    "CorpusRunReadHttp": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "runId"
+      ],
+      "additionalProperties": false
+    },
+    "CorpusEligibilityChangeHttp": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "eligible",
+            "withdrawn",
+            "restricted",
+            "unavailable"
+          ]
+        },
+        "reasonKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceEvidenceHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "paper",
+        "disposition",
+        "reasonKey",
+        "sourceEvidenceHash",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "SearchRequestHttp": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "$ref": "#/$defs/LibraryQueryContext"
+        },
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        },
+        "snapshotRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "query",
+        "page"
+      ],
+      "additionalProperties": false
+    },
+    "CitationRequestHttp": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "cited",
+            "citing",
+            "both"
+          ]
+        },
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        },
+        "traversalPolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "snapshotRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "paper",
+        "direction",
+        "page",
+        "traversalPolicy"
+      ],
+      "additionalProperties": false
+    },
+    "AssistanceOptionsReadHttp": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        }
+      },
+      "required": [
+        "paper"
+      ],
+      "additionalProperties": false
+    },
+    "AssistanceRequestHttp": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "contentRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "contentHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "summary",
+            "translation"
+          ]
+        },
+        "optionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "optionsRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "glossaryRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "processingPolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "paper",
+        "contentRevision",
+        "contentHash",
+        "operation",
+        "optionId",
+        "optionsRevision",
+        "glossaryRevision",
+        "processingPolicy"
+      ],
+      "additionalProperties": false
+    },
+    "AssistanceJobReadHttp": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "jobId"
+      ],
+      "additionalProperties": false
+    },
+    "AssistanceResultRequestHttp": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "$ref": "#/$defs/Id"
+        },
+        "result": {
+          "$ref": "#/$defs/ResultRef"
+        }
+      },
+      "required": [
+        "jobId"
+      ],
+      "additionalProperties": false
+    },
+    "AssistanceGlossaryReadHttp": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "AssistanceGlossaryWriteHttp": {
+      "type": "object",
+      "properties": {
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "normalizationPolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AssistanceGlossaryTerm"
+          }
+        }
+      },
+      "required": [
+        "expectedRevision",
+        "normalizationPolicy",
+        "terms"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchContextCreateHttp": {
+      "type": "object",
+      "properties": {
+        "purpose": {
+          "type": "string",
+          "enum": [
+            "research",
+            "novelty"
+          ]
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "purpose",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchSessionCreateHttp": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "scope": {
+          "$ref": "#/$defs/ResearchScope"
+        }
+      },
+      "required": [
+        "title",
+        "scope"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchSessionReadHttp": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "sessionId"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchSessionListHttp": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchDeleteHttp": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "enum": [
+            "one-session",
+            "all-sessions"
+          ]
+        },
+        "sessionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "confirmed": {
+          "const": true
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "scope",
+        "expectedRevision",
+        "confirmed",
+        "policy"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "scope": {
+                "const": "one-session"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "sessionId"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "sessionId"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "ResearchAttachmentStartHttp": {
+      "type": "object",
+      "properties": {
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "fileName": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "mediaType": {
+          "type": "string",
+          "enum": [
+            "application/pdf",
+            "text/plain"
+          ]
+        },
+        "byteLength": {
+          "type": "integer",
+          "minimum": 1,
+          "x-policy-limit": "Maximum permitted attachment bytes; unresolved means refuse."
+        },
+        "contentHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "contextId",
+        "fileName",
+        "mediaType",
+        "byteLength",
+        "contentHash",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchAttachmentFinishHttp": {
+      "type": "object",
+      "properties": {
+        "uploadId": {
+          "$ref": "#/$defs/Id"
+        },
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "contentHash": {
+          "$ref": "#/$defs/Hash"
+        }
+      },
+      "required": [
+        "uploadId",
+        "contextId",
+        "contentHash"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchAttachmentReadHttp": {
+      "type": "object",
+      "properties": {
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "attachmentId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "contextId",
+        "attachmentId"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchPrivateAssetReadHttp": {
+      "type": "object",
+      "properties": {
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "attachmentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "assetId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "contextId",
+        "attachmentId",
+        "assetId"
+      ],
+      "additionalProperties": false
+    },
+    "DraftWriteHttp": {
+      "type": "object",
+      "properties": {
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "draftId": {
+          "$ref": "#/$defs/Id"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "research-question",
+            "novelty-topic",
+            "novelty-manuscript",
+            "novelty-discussion"
+          ]
+        },
+        "baseRevision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Revision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "text": {
+          "type": "string",
+          "x-policy-limit": "Resolved owner draft text bounds."
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "contextId",
+        "draftId",
+        "kind",
+        "baseRevision",
+        "text",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "DraftReadHttp": {
+      "type": "object",
+      "properties": {
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "draftId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "contextId",
+        "draftId"
+      ],
+      "additionalProperties": false
+    },
+    "DraftDiscardHttp": {
+      "type": "object",
+      "properties": {
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        },
+        "draft": {
+          "$ref": "#/$defs/DraftRef"
+        },
+        "confirmed": {
+          "const": true
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "contextId",
+        "draft",
+        "confirmed",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchTurnRequestHttp": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "scope": {
+          "$ref": "#/$defs/ResearchScope"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "question",
+            "compare",
+            "quote"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "submittedDraft": {
+          "$ref": "#/$defs/DraftRef"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "sessionId",
+        "scope",
+        "mode",
+        "text",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchTurnReadHttp": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "turnId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "sessionId",
+        "turnId"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchNoveltyRequestHttp": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "$ref": "#/$defs/ResearchScope"
+        },
+        "inputMode": {
+          "type": "string",
+          "enum": [
+            "topic",
+            "manuscript"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "submittedDraft": {
+          "$ref": "#/$defs/DraftRef"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "scope",
+        "inputMode",
+        "text",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchNoveltyDiscussionHttp": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/ResearchArtifactRef"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "submittedDraft": {
+          "$ref": "#/$defs/DraftRef"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "source",
+        "text",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchJobReadHttp": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "research-turn",
+            "novelty-analysis",
+            "novelty-discussion"
+          ]
+        },
+        "jobId": {
+          "$ref": "#/$defs/Id"
+        },
+        "contextId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "kind",
+        "jobId",
+        "contextId"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchArtifactReadHttp": {
+      "type": "object",
+      "properties": {
+        "artifact": {
+          "$ref": "#/$defs/ResearchArtifactRef"
+        }
+      },
+      "required": [
+        "artifact"
+      ],
+      "additionalProperties": false
+    },
+    "DigestSubscriptionWriteHttp": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "minLength": 1,
+          "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "schedule": {
+          "$ref": "#/$defs/DigestSchedule"
+        },
+        "expectedRevision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Revision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "topic",
+        "enabled",
+        "schedule",
+        "expectedRevision",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "DigestSubscriptionsReadHttp": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "additionalProperties": false
+    },
+    "DigestSubscriptionReadHttp": {
+      "type": "object",
+      "properties": {
+        "subscriptionId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "subscriptionId"
+      ],
+      "additionalProperties": false
+    },
+    "DigestDeliveryReadHttp": {
+      "type": "object",
+      "properties": {
+        "deliveryId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "deliveryId"
+      ],
+      "additionalProperties": false
+    },
+    "DigestUnsubscribeHttp": {
+      "type": "object",
+      "properties": {
+        "signedToken": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confirmed": {
+          "const": true
+        }
+      },
+      "required": [
+        "signedToken",
+        "confirmed"
+      ],
+      "additionalProperties": false
+    },
+    "ExportConnectionConfigureHttp": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "minLength": 1,
+          "writeOnly": true,
+          "x-policy-limit": "Resolved credential input bounds; reject and redact invalid credentials."
+        },
+        "expectedRevision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Revision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "credentialPolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "token",
+        "expectedRevision",
+        "credentialPolicy"
+      ],
+      "additionalProperties": false
+    },
+    "ExportConnectionReadHttp": {
+      "type": "object",
+      "properties": {
+        "connectionId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "connectionId"
+      ],
+      "additionalProperties": false
+    },
+    "ExportPreviewRequestHttp": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/ResearchArtifactRef"
+        },
+        "destination": {
+          "$ref": "#/$defs/ExportDestination"
+        },
+        "renderPolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "source",
+        "destination",
+        "renderPolicy"
+      ],
+      "additionalProperties": false
+    },
+    "ExportApprovalRequestHttp": {
+      "type": "object",
+      "properties": {
+        "previewId": {
+          "$ref": "#/$defs/Id"
+        },
+        "previewRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "bindingHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "explicitApproval": {
+          "const": true
+        }
+      },
+      "required": [
+        "previewId",
+        "previewRevision",
+        "bindingHash",
+        "explicitApproval"
+      ],
+      "additionalProperties": false
+    },
+    "ExportExecuteHttp": {
+      "type": "object",
+      "properties": {
+        "approvalId": {
+          "$ref": "#/$defs/Id"
+        },
+        "bindingHash": {
+          "$ref": "#/$defs/Hash"
+        }
+      },
+      "required": [
+        "approvalId",
+        "bindingHash"
+      ],
+      "additionalProperties": false
+    },
+    "ExportEffectReadHttp": {
+      "type": "object",
+      "properties": {
+        "effectId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "effectId"
+      ],
+      "additionalProperties": false
+    },
+    "ExportCancelHttp": {
+      "type": "object",
+      "properties": {
+        "approvalId": {
+          "$ref": "#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "approvalId",
+        "expectedRevision"
+      ],
+      "additionalProperties": false
+    },
+    "OpsQueryHttp": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        },
+        "capability": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "additionalProperties": false
+    },
+    "OpsRecoveryRequestHttp": {
+      "type": "object",
+      "properties": {
+        "incidentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "ownerComponent": {
+          "$ref": "#/$defs/Id"
+        },
+        "operation": {
+          "$ref": "#/$defs/Id"
+        },
+        "targetId": {
+          "$ref": "#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "incidentId",
+        "ownerComponent",
+        "operation",
+        "targetId",
+        "expectedRevision",
+        "evidenceRefs",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "PreparedJobRead": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/AssistanceResultRead"
+        },
+        {
+          "$ref": "#/$defs/ResearchArtifactResponse"
+        }
+      ]
+    },
+    "LibraryRemoveSavedPaperInputHttp": {
+      "type": "object",
+      "properties": {
+        "savedPaperId": {
+          "$ref": "#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "savedPaperId",
+        "expectedRevision"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "LibraryRemoveSavedSearchInputHttp": {
+      "type": "object",
+      "properties": {
+        "savedSearchId": {
+          "$ref": "#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        }
+      },
+      "required": [
+        "savedSearchId",
+        "expectedRevision"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "UsageAssignmentReadHttp": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "accountId"
+      ],
+      "additionalProperties": false
+    },
+    "UsageAssignmentSnapshot": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "entitlement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UsageEntitlement"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "accountId",
+        "revision",
+        "entitlement"
+      ],
+      "additionalProperties": false
+    },
+    "AssistanceHistoryReadHttp": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "page": {
+          "$ref": "#/$defs/PageRequest"
+        }
+      },
+      "required": [
+        "paper",
+        "page"
+      ],
+      "additionalProperties": false
+    },
+    "AssistanceHistoryRow": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "$ref": "#/$defs/Id"
+        },
+        "paper": {
+          "$ref": "#/$defs/PaperRef"
+        },
+        "contentRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "contentHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "operation": {
+          "enum": [
+            "summary",
+            "translation"
+          ]
+        },
+        "optionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "optionsRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "glossaryRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "state": {
+          "enum": [
+            "accepted",
+            "running",
+            "succeeded",
+            "failed"
+          ]
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "createdAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "availability": {
+          "enum": [
+            "ready",
+            "pending",
+            "failed",
+            "expired",
+            "withdrawn",
+            "restricted"
+          ]
+        },
+        "result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ResultRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "jobId",
+        "paper",
+        "contentRevision",
+        "contentHash",
+        "operation",
+        "optionId",
+        "optionsRevision",
+        "glossaryRevision",
+        "state",
+        "revision",
+        "seq",
+        "createdAt",
+        "availability",
+        "result"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "availability": {
+                "const": "ready"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "state": {
+                "const": "succeeded"
+              },
+              "result": {
+                "$ref": "#/$defs/ResultRef"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "result": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AssistanceHistoryPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AssistanceHistoryRow"
+          },
+          "x-policy-bound": "accepted PageRequest.limit"
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        }
+      },
+      "required": [
+        "items",
+        "page"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
