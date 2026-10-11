@@ -5799,3 +5799,45 @@
 **Stage**: domain-design
 
 ---
+
+## Human Turn
+**Timestamp**: 2026-10-11T04:21:36Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Gate Approved
+**Timestamp**: 2026-10-11T04:21:43Z
+**Event**: GATE_APPROVED
+**Stage**: domain-design
+**User Input**: Approve
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_e5089f0fb4ae4a769e9660f00ba20e1d\",0]","question":"Domain Design is ready for approval. Review the [component catalogue](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/components.md), [architecture decisions](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/decisions.md) and [architecture review](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/reviews/review-01.md). The design covers 13 components, 42 entities and all 70 requirement IDs; consistency checks passed. Two Minor findings remain: search-projection write ownership and the research artifact revision bound by export approval. Approve accepts these findings, completes this stage and continues to Units Generation; I’ll merge the completed branch into develop through a PR. Request Changes revises the design before continuing. How would you like to proceed?","answer":"Approve"}]\n</send_user_message_question_reply>
+**Review Finding Dispositions**: {"version":1,"dispositions":[{"artifact":"aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/components.md","id":"R-01","fingerprint":"sha256:d4fc72f39db05e4459f79afcffbec5be04190b43747d3cc36aca59020bcfe35e","status":"Accepted risk","decided_at_severity":"Minor","reviewed_record":{"path":".aidlc-engine/reviews/domain-design/stage/11445c36e6c85ce6/1.json","digest":"sha256:b73b3f85591143dd32805ae6cd62e0842051ae8847618811fbe4d73c6c42cde7"}},{"artifact":"aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/components.md","id":"R-02","fingerprint":"sha256:0e566dd07eb1f52a8dd6bae9886a59addacf884969abb56991a70c4e3765c262","status":"Accepted risk","decided_at_severity":"Minor","reviewed_record":{"path":".aidlc-engine/reviews/domain-design/stage/11445c36e6c85ce6/1.json","digest":"sha256:b73b3f85591143dd32805ae6cd62e0842051ae8847618811fbe4d73c6c42cde7"}}]}
+
+---
+
+## Stage Completion
+**Timestamp**: 2026-10-11T04:21:43Z
+**Event**: STAGE_COMPLETED
+**Stage**: domain-design
+**Validation Basis**: {"graphContract":"sha256:4e5ba0b6334a8c25f8dea5929cee93c113f34e58b422ef110b998ef5ff29e179","inputs":[{"artifact":"architecture","contentHash":"sha256:7c90bc83aa2ee6ffcae51a84e5831102cd2c16a1317dea994f0b626c872128a3","instanceCount":1,"presentCount":1,"producer":"reverse-engineering","required":false,"structureHash":"sha256:515a155860b698923ec1ad84a333650aa49c78c42121e237a134b4c4d48129ba"},{"artifact":"component-inventory","contentHash":"sha256:614043a5d925f7bce7558f034bbff1b195d527f79161cdd3784e22306ab45663","instanceCount":1,"presentCount":1,"producer":"reverse-engineering","required":false,"structureHash":"sha256:bbdbb33c92ab4edd5fd621c8a8a04f5bdf4f237c40aea992394a2c5c0c8d5873"},{"artifact":"requirements","contentHash":"sha256:6f20903a40e5aa97dac918075fdcab25056fa95eb820c8e768da11344dd18f8b","instanceCount":1,"presentCount":1,"producer":"requirements-analysis","required":true,"structureHash":"sha256:279106f77e0d58b2e8995a0ad005efc79e094e5c00a4c3431ead5e3b22c4c593"}],"outputs":[{"artifact":"components","contentHash":"sha256:48ad6dcebd23b56a0d815d491ff0807a15bc9faea3f1bf71aac7cd9e435fd161","instanceCount":1,"presentCount":1,"producer":"domain-design","required":true,"structureHash":"sha256:5f1fd9553d673ba09932fab9ecb3e74d0b6f9195f1328053ce1d1d32dced9e7e"},{"artifact":"decisions","contentHash":"sha256:c85a29eadad0666ccaa728910867f3084def167189589d6ea3327fa6d1ce2946","instanceCount":1,"presentCount":1,"producer":"domain-design","required":true,"structureHash":"sha256:7b8eccf2498c394430945f487459839ee68ed161eaedf4313742e6b6b0434202"},{"artifact":"traceability","contentHash":"sha256:91bfa92e77f0e5351894ca9d53773e7490c3eb2fc6e46171b258c1a718d23b87","instanceCount":1,"presentCount":1,"producer":"domain-design","required":true,"structureHash":"sha256:0de8679015058e06219797255627358837cbe7ce0b2700154f787940ca027024"}],"projectType":"brownfield","schema":3}
+**Details**: Stage Domain Design approved by gate
+
+---
+
+## Stage Start
+**Timestamp**: 2026-10-11T04:21:43Z
+**Event**: STAGE_STARTED
+**Stage**: units-generation
+**Agent**: aidlc-architect-agent
+**Answer Mode**: guide (reused from intent-capture)
+
+---
+
+## Memory Empty
+**Timestamp**: 2026-10-11T04:21:43Z
+**Event**: MEMORY_EMPTY
+**Stage**: domain-design
+
+---
