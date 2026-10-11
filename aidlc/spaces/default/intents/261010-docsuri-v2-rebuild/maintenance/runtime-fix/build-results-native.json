@@ -1,0 +1,1118 @@
+{
+  "generator": "scripts/build-binaries.ts",
+  "entry": "/private/tmp/docsuri-aidlc-runtime-fix/dist-release/claude/.claude/tools/aidlc.ts",
+  "outDir": "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries",
+  "bunVersion": "1.4.2",
+  "expectedVersion": "2.11.0",
+  "packageCheck": {
+    "command": [
+      "/opt/homebrew/Cellar/bun/1.4.2/bin/bun",
+      "scripts/package.ts",
+      "--check"
+    ],
+    "cwd": "/private/tmp/docsuri-aidlc-runtime-fix",
+    "status": 0,
+    "signal": null,
+    "stdout": "package --check: deterministic across two independent build(s) for claude, codex, copilot, cursor, kiro, kiro-ide, opencode.\n",
+    "stderr": ""
+  },
+  "totalSeconds": 0.112,
+  "failures": [],
+  "results": [
+    {
+      "name": "native",
+      "bunTarget": null,
+      "artifact": "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+      "requestedArtifact": "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+      "seconds": 0.112,
+      "bytes": 62785474,
+      "build": {
+        "command": [
+          "/opt/homebrew/Cellar/bun/1.4.2/bin/bun",
+          "build",
+          "/private/tmp/docsuri-aidlc-runtime-fix/dist-release/claude/.claude/tools/aidlc.ts",
+          "--compile",
+          "--outfile",
+          "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc"
+        ],
+        "cwd": "/private/tmp/docsuri-aidlc-runtime-fix",
+        "status": 0,
+        "signal": null,
+        "stdout": "  [31ms]  bundle  92 modules\n  [72ms] compile  /private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc\n",
+        "stderr": ""
+      },
+      "gates": [
+        {
+          "name": "runtime-assets",
+          "ok": true,
+          "kind": "inspection",
+          "expected": 7,
+          "actual": 7,
+          "detail": "complete claude, codex, copilot, cursor, kiro, kiro-ide, opencode distributions staged"
+        },
+        {
+          "name": "version",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "version"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "aidlc 2.11.0 (runtime 2.11.0)\n",
+          "stderr": "",
+          "expected": "2.11.0",
+          "actual": "2.11.0",
+          "detail": "runs from an isolated temporary project and checks the stamped AIDLC version"
+        },
+        {
+          "name": "help",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "help"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "aidlc - structured AI-driven development for your coding agent\n\nUSAGE\n  aidlc <command> [flags]\n\nSET UP A PROJECT\n  config      Set up, refresh, or pin this project (run bare for the guided setup)\n  doctor      Check this machine and project, with fixes for anything wrong\n\nMANAGE THE MACHINE INSTALL\n  update      Install and switch to a newer release\n  use         Switch to an exact installed release\n  version     Print binary and runtime versions\n  uninstall   Remove aidlc from this machine\n\nEXAMPLES\n  aidlc config                     guided setup in the current project\n  aidlc config models --show       see which model each agent uses, and why\n  aidlc doctor                     find out why something isn't working\n\nLEARN MORE\n  Use 'aidlc <command> --help' for more about a command.\n  Docs: https://awslabs.github.io/aidlc-workflows/\n  Agents: workflows run through 'aidlc engine' - see 'aidlc engine --help'.\n",
+          "stderr": "",
+          "expected": "first stdout line contains aidlc",
+          "actual": "aidlc - structured AI-driven development for your coding agent",
+          "detail": "runs from an isolated temporary project and checks that help reached the dispatcher"
+        },
+        {
+          "name": "sensor-list",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "sensor",
+            "list"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "claim-sources\tdeterministic\tChecks Intent Capture claims carry source tags that resolve to the stage's confirmed source register and answers\nlinter\tdeterministic\tWraps the project's configured linter (eslint by default for v0.5.0); fires on TS/JS code outputs\nrequired-sections\tdeterministic\tChecks at the gate that stage output contains the required H2 headings\ntraceability\tdeterministic\tVerifies element-level upstream coverage, downstream targets, and derived orphans in traceability.json\ntype-check\tdeterministic\tWraps the project's configured type-checker (tsc by default for v0.5.0); fires on TS/TSX code outputs\nupstream-coverage\tdeterministic\tChecks the stage's deliverables reference the upstream artifacts the stage frontmatter declares it consumes\n",
+          "stderr": "",
+          "expected": "claim-sources,linter,required-sections,type-check,upstream-coverage",
+          "actual": "claim-sources,linter,required-sections,traceability,type-check,upstream-coverage"
+        },
+        {
+          "name": "run-sensors",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "sensor",
+            "fire",
+            "required-sections",
+            "--stage",
+            "requirements-analysis",
+            "--output-path",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-sensor-DM1PFS/aidlc/spaces/default/intents/sensor-output.md",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-sensor-DM1PFS"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-sensor-DM1PFS",
+          "status": 0,
+          "signal": null,
+          "stdout": "{\"fire_id\":\"9d3e9d31\",\"sensor_id\":\"required-sections\",\"stage\":\"requirements-analysis\",\"output_path\":\"aidlc/spaces/default/intents/sensor-output.md\",\"result\":\"passed\",\"detail_path\":null}\n",
+          "stderr": "",
+          "expected": "bundled required-sections script emits a real terminal sensor event",
+          "actual": "terminal event emitted"
+        },
+        {
+          "name": "graph-compile-check",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "graph",
+            "compile",
+            "--check",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-graph-bvbKQH"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-graph-bvbKQH",
+          "status": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "expected": "compiled graph and scope grid in sync",
+          "actual": "in sync"
+        },
+        {
+          "name": "packaged-runtime-immutable",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "plugin",
+            "select",
+            "aidlc",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-no-harness-gVbNo3"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-no-harness-gVbNo3",
+          "status": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "aidlc: plugin requires an installed project harness or recognized project directory; run aidlc config\n",
+          "expected": "mutable commands reject an uninstalled project without changing packaged assets",
+          "actual": "pluginStatus=1; graphStatus=1; unchanged=true; projectHarnessAbsent=true"
+        },
+        {
+          "name": "validate-outputs",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "validate",
+            "outputs",
+            "inception"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "{\n  \"phase\": \"inception\",\n  \"stages\": [\n    {\n      \"slug\": \"reverse-engineering\",\n      \"outputs\": 9,\n      \"missing\": [],\n      \"pass\": true\n    },\n    {\n      \"slug\": \"practices-discovery\",\n      \"outputs\": 5,\n      \"missing\": [],\n      \"pass\": true\n    },\n    {\n      \"slug\": \"requirements-analysis\",\n      \"outputs\": 2,\n      \"missing\": [],\n      \"pass\": true\n    },\n    {\n      \"slug\": \"user-stories\",\n      \"outputs\": 3,\n      \"missing\": [],\n      \"pass\": true\n    },\n    {\n      \"slug\": \"refined-mockups\",\n      \"outputs\": 5,\n      \"missing\": [],\n      \"pass\": true\n    },\n    {\n      \"slug\": \"domain-design\",\n      \"outputs\": 2,\n      \"missing\": [],\n      \"pass\": true\n    },\n    {\n      \"slug\": \"units-generation\",\n      \"outputs\": 3,\n      \"missing\": [],\n      \"pass\": true\n    },\n    {\n      \"slug\": \"contract-design\",\n      \"outputs\": 1,\n      \"missing\": [],\n      \"pass\": true\n    },\n    {\n      \"slug\": \"delivery-planning\",\n      \"outputs\": 5,\n      \"missing\": [],\n      \"pass\": true\n    }\n  ],\n  \"pass\": true\n}\n",
+          "stderr": "",
+          "expected": "inception stage files validate",
+          "actual": "9 stages; pass=true"
+        },
+        {
+          "name": "runner-check",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "gen",
+            "runners",
+            "--check"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "stage-runner set is in sync with the compiled stage graph (30 runners).\n",
+          "stderr": "",
+          "expected": "stage-runner set is in sync",
+          "actual": "stage-runner set is in sync with the compiled stage graph (30 runners)."
+        },
+        {
+          "name": "stage-table-check",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "gen",
+            "stage-table",
+            "--check"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "expected": "exit 0",
+          "actual": "exit 0"
+        },
+        {
+          "name": "scope-table-check",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "gen",
+            "scope-table",
+            "--check"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "expected": "exit 0",
+          "actual": "exit 0"
+        },
+        {
+          "name": "runtime-codex",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "sensor",
+            "list"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "claim-sources\tdeterministic\tChecks Intent Capture claims carry source tags that resolve to the stage's confirmed source register and answers\nlinter\tdeterministic\tWraps the project's configured linter (eslint by default for v0.5.0); fires on TS/JS code outputs\nrequired-sections\tdeterministic\tChecks at the gate that stage output contains the required H2 headings\ntraceability\tdeterministic\tVerifies element-level upstream coverage, downstream targets, and derived orphans in traceability.json\ntype-check\tdeterministic\tWraps the project's configured type-checker (tsc by default for v0.5.0); fires on TS/TSX code outputs\nupstream-coverage\tdeterministic\tChecks the stage's deliverables reference the upstream artifacts the stage frontmatter declares it consumes\n",
+          "stderr": "",
+          "expected": "codex packaged sensors and generated runners resolve",
+          "actual": "claim-sources\tdeterministic\tChecks Intent Capture claims carry source tags that resolve to the stage's confirmed source register and answers\nlinter\tdeterministic\tWraps the project's configured linter (eslint by default for v0.5.0); fires on TS/JS code outputs\nrequired-sections\tdeterministic\tChecks at the gate that stage output contains the required H2 headings\ntraceability\tdeterministic\tVerifies element-level upstream coverage, downstream targets, and derived orphans in traceability.json\ntype-check\tdeterministic\tWraps the project's configured type-checker (tsc by default for v0.5.0); fires on TS/TSX code outputs\nupstream-coverage\tdeterministic\tChecks the stage's deliverables reference the upstream artifacts the stage frontmatter declares it consumes\n\n\nstage-runner set is in sync with the compiled stage graph (30 runners).",
+          "detail": "runnerStatus=0"
+        },
+        {
+          "name": "runtime-cursor",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "sensor",
+            "list"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "claim-sources\tdeterministic\tChecks Intent Capture claims carry source tags that resolve to the stage's confirmed source register and answers\nlinter\tdeterministic\tWraps the project's configured linter (eslint by default for v0.5.0); fires on TS/JS code outputs\nrequired-sections\tdeterministic\tChecks at the gate that stage output contains the required H2 headings\ntraceability\tdeterministic\tVerifies element-level upstream coverage, downstream targets, and derived orphans in traceability.json\ntype-check\tdeterministic\tWraps the project's configured type-checker (tsc by default for v0.5.0); fires on TS/TSX code outputs\nupstream-coverage\tdeterministic\tChecks the stage's deliverables reference the upstream artifacts the stage frontmatter declares it consumes\n",
+          "stderr": "",
+          "expected": "cursor packaged sensors and generated runners resolve",
+          "actual": "claim-sources\tdeterministic\tChecks Intent Capture claims carry source tags that resolve to the stage's confirmed source register and answers\nlinter\tdeterministic\tWraps the project's configured linter (eslint by default for v0.5.0); fires on TS/JS code outputs\nrequired-sections\tdeterministic\tChecks at the gate that stage output contains the required H2 headings\ntraceability\tdeterministic\tVerifies element-level upstream coverage, downstream targets, and derived orphans in traceability.json\ntype-check\tdeterministic\tWraps the project's configured type-checker (tsc by default for v0.5.0); fires on TS/TSX code outputs\nupstream-coverage\tdeterministic\tChecks the stage's deliverables reference the upstream artifacts the stage frontmatter declares it consumes\n\n\nstage-runner set is in sync with the compiled stage graph (30 runners).",
+          "detail": "runnerStatus=0"
+        },
+        {
+          "name": "runtime-kiro",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "sensor",
+            "list"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "claim-sources\tdeterministic\tChecks Intent Capture claims carry source tags that resolve to the stage's confirmed source register and answers\nlinter\tdeterministic\tWraps the project's configured linter (eslint by default for v0.5.0); fires on TS/JS code outputs\nrequired-sections\tdeterministic\tChecks at the gate that stage output contains the required H2 headings\ntraceability\tdeterministic\tVerifies element-level upstream coverage, downstream targets, and derived orphans in traceability.json\ntype-check\tdeterministic\tWraps the project's configured type-checker (tsc by default for v0.5.0); fires on TS/TSX code outputs\nupstream-coverage\tdeterministic\tChecks the stage's deliverables reference the upstream artifacts the stage frontmatter declares it consumes\n",
+          "stderr": "",
+          "expected": "kiro packaged sensors and generated runners resolve",
+          "actual": "claim-sources\tdeterministic\tChecks Intent Capture claims carry source tags that resolve to the stage's confirmed source register and answers\nlinter\tdeterministic\tWraps the project's configured linter (eslint by default for v0.5.0); fires on TS/JS code outputs\nrequired-sections\tdeterministic\tChecks at the gate that stage output contains the required H2 headings\ntraceability\tdeterministic\tVerifies element-level upstream coverage, downstream targets, and derived orphans in traceability.json\ntype-check\tdeterministic\tWraps the project's configured type-checker (tsc by default for v0.5.0); fires on TS/TSX code outputs\nupstream-coverage\tdeterministic\tChecks the stage's deliverables reference the upstream artifacts the stage frontmatter declares it consumes\n\n\nstage-runner set is in sync with the compiled stage graph (30 runners).",
+          "detail": "runnerStatus=0"
+        },
+        {
+          "name": "runtime-kiro-ide",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "sensor",
+            "list"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "claim-sources\tdeterministic\tChecks Intent Capture claims carry source tags that resolve to the stage's confirmed source register and answers\nlinter\tdeterministic\tWraps the project's configured linter (eslint by default for v0.5.0); fires on TS/JS code outputs\nrequired-sections\tdeterministic\tChecks at the gate that stage output contains the required H2 headings\ntraceability\tdeterministic\tVerifies element-level upstream coverage, downstream targets, and derived orphans in traceability.json\ntype-check\tdeterministic\tWraps the project's configured type-checker (tsc by default for v0.5.0); fires on TS/TSX code outputs\nupstream-coverage\tdeterministic\tChecks the stage's deliverables reference the upstream artifacts the stage frontmatter declares it consumes\n",
+          "stderr": "",
+          "expected": "kiro-ide packaged sensors and generated runners resolve",
+          "actual": "claim-sources\tdeterministic\tChecks Intent Capture claims carry source tags that resolve to the stage's confirmed source register and answers\nlinter\tdeterministic\tWraps the project's configured linter (eslint by default for v0.5.0); fires on TS/JS code outputs\nrequired-sections\tdeterministic\tChecks at the gate that stage output contains the required H2 headings\ntraceability\tdeterministic\tVerifies element-level upstream coverage, downstream targets, and derived orphans in traceability.json\ntype-check\tdeterministic\tWraps the project's configured type-checker (tsc by default for v0.5.0); fires on TS/TSX code outputs\nupstream-coverage\tdeterministic\tChecks the stage's deliverables reference the upstream artifacts the stage frontmatter declares it consumes\n\n\nstage-runner set is in sync with the compiled stage graph (30 runners).",
+          "detail": "runnerStatus=0"
+        },
+        {
+          "name": "runtime-copilot",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "sensor",
+            "list"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "claim-sources\tdeterministic\tChecks Intent Capture claims carry source tags that resolve to the stage's confirmed source register and answers\nlinter\tdeterministic\tWraps the project's configured linter (eslint by default for v0.5.0); fires on TS/JS code outputs\nrequired-sections\tdeterministic\tChecks at the gate that stage output contains the required H2 headings\ntraceability\tdeterministic\tVerifies element-level upstream coverage, downstream targets, and derived orphans in traceability.json\ntype-check\tdeterministic\tWraps the project's configured type-checker (tsc by default for v0.5.0); fires on TS/TSX code outputs\nupstream-coverage\tdeterministic\tChecks the stage's deliverables reference the upstream artifacts the stage frontmatter declares it consumes\n",
+          "stderr": "",
+          "expected": "copilot packaged sensors and generated runners resolve",
+          "actual": "claim-sources\tdeterministic\tChecks Intent Capture claims carry source tags that resolve to the stage's confirmed source register and answers\nlinter\tdeterministic\tWraps the project's configured linter (eslint by default for v0.5.0); fires on TS/JS code outputs\nrequired-sections\tdeterministic\tChecks at the gate that stage output contains the required H2 headings\ntraceability\tdeterministic\tVerifies element-level upstream coverage, downstream targets, and derived orphans in traceability.json\ntype-check\tdeterministic\tWraps the project's configured type-checker (tsc by default for v0.5.0); fires on TS/TSX code outputs\nupstream-coverage\tdeterministic\tChecks the stage's deliverables reference the upstream artifacts the stage frontmatter declares it consumes\n\n\nstage-runner set is in sync with the compiled stage graph (30 runners).",
+          "detail": "runnerStatus=0"
+        },
+        {
+          "name": "runtime-opencode",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "sensor",
+            "list"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "claim-sources\tdeterministic\tChecks Intent Capture claims carry source tags that resolve to the stage's confirmed source register and answers\nlinter\tdeterministic\tWraps the project's configured linter (eslint by default for v0.5.0); fires on TS/JS code outputs\nrequired-sections\tdeterministic\tChecks at the gate that stage output contains the required H2 headings\ntraceability\tdeterministic\tVerifies element-level upstream coverage, downstream targets, and derived orphans in traceability.json\ntype-check\tdeterministic\tWraps the project's configured type-checker (tsc by default for v0.5.0); fires on TS/TSX code outputs\nupstream-coverage\tdeterministic\tChecks the stage's deliverables reference the upstream artifacts the stage frontmatter declares it consumes\n",
+          "stderr": "",
+          "expected": "opencode packaged sensors and generated runners resolve",
+          "actual": "claim-sources\tdeterministic\tChecks Intent Capture claims carry source tags that resolve to the stage's confirmed source register and answers\nlinter\tdeterministic\tWraps the project's configured linter (eslint by default for v0.5.0); fires on TS/JS code outputs\nrequired-sections\tdeterministic\tChecks at the gate that stage output contains the required H2 headings\ntraceability\tdeterministic\tVerifies element-level upstream coverage, downstream targets, and derived orphans in traceability.json\ntype-check\tdeterministic\tWraps the project's configured type-checker (tsc by default for v0.5.0); fires on TS/TSX code outputs\nupstream-coverage\tdeterministic\tChecks the stage's deliverables reference the upstream artifacts the stage frontmatter declares it consumes\n\n\nstage-runner set is in sync with the compiled stage graph (30 runners).",
+          "detail": "runnerStatus=0"
+        },
+        {
+          "name": "harness-probe-kiro",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "doctor",
+            "--verbose",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-probe-kiro-ER3F4O"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-probe-kiro-ER3F4O",
+          "status": 0,
+          "signal": null,
+          "stdout": "AI-DLC doctor\n\nMachine\n  ok    Runtime hook PATH: bun is not required by the selected projection\n  ok    Runtime hook PATH: aidlc -> /Users/revenantonthemission/.local/bin/aidlc (non-interactive baseline)\n  warn  Harness CLI: kiro-cli is missing\n        fix: Install or upgrade Kiro CLI to 2.6.0 or later.\n  ok    Installed runtime: 2.11.0 [claude, codex, copilot, cursor, kiro, kiro-ide, opencode]\n  ok    Command pointer: /Users/revenantonthemission/.local/bin/aidlc -> 2.11.0\n  ok    Rollback target: 2.10.0 is complete and eligible\n  ok    Project pin registry: no stale registrations\n  ok    Transaction staging: no abandoned directories\n  ok    Transaction recovery: no quarantined directories\n  ok    Update: binary 2.11.0 is latest\n\nProject (.kiro, Kiro CLI)\n  ok    Instruction file: block present, user content preserved; framework-owned file intact\n  ok    Native command trust: host hooks and permission entries select the installed `aidlc` command\n  ok    Project runtime stamp: 2.11.0 (kiro)\n  ok    aidlc-write-audit-log.ts present\n  ok    aidlc-sync-workflow-state.ts present\n  ok    aidlc-validate-state.ts present\n  ok    aidlc-log-subagent.ts present\n  ok    aidlc-session-start.ts present\n  ok    aidlc-session-end.ts present\n  ok    aidlc-statusline.ts present\n  ok    aidlc-kiro-adapter.ts present\n  ok    agents/aidlc.{json,md} present (conductor wiring)\n  ok    settings/cli.json present (workspace default-agent activation)\n  ok    AWS_AIDLC_DEFAULT_SCOPE (unset - no project default)\n  ok    Enabled plugins: all enabled (no selection); enabled stage counts: aidlc=30, bootstrap=3\n  ok    Plugin selection flags: harness.json agrees with stage-graph.json\n  ok    Composed plugin surface: all enabled plugin stages and recorded contributions are present\n  ok    workspace shell ready (.kiro/ + aidlc/spaces/default/memory/)\n  ok    Submodules: no .gitmodules at workspace root\n  warn  AIDLC hooks have not run in this project yet\n        fix: This is expected before your first Kiro CLI chat in this folder. If you already started one, type /agent and pick aidlc; if Kiro says agent \"aidlc\" needs upgrading for this agent engine, quit Kiro and start it again in this folder with: kiro-cli chat --agent-engine v2 --agent aidlc. Then run doctor again.\n  ok    Hook drops: none recorded\n  ok    Runtime locks: none leaked\n  ok    Orphan worktrees: 0 observed\n  ok    Stale branches: 0 observed (not a git repo)\n  ok    Orphan state files: 0 observed\n  ok    Orphan audit: 0 observed\n  ok    Practices staleness: state file absent (informational)\n  ok    MERGE_DISPATCH: 0 orphan INVOKED (0 bracketed)\n  ok    Composed scope durability: no composed scopes\n  ok    Duplicate producers: every consumed artifact has a single producer\n  ok    Intent registry: all rows match their record dirs\n  ok    Workspace records: not a git repo - nothing to commit\n  ok    Plugins: none in this project\n  ok    Models: recorded policy is expressible\n  ok    Session model: not checked (kiro-cli not found)\n  ok    Flags: no recorded project answers\n  ok    Providers: harness-managed model access; no answer needed\n  ok    Workspace siblings: complete projection is present\n  ok    AI-DLC files: not checked, no record of what AI-DLC wrote\n\nFramework integrity\n  ok    Enabled stage compile coverage: every enabled stage file is in the full graph\n  ok    Agent filename/name consistency: all agent files match declared names\n  ok    Scope filename/name consistency: all scope files match declared names\n  ok    Cycle detection: 0 cycles\n  ok    Orphan stage files: 33 graph entries all have files\n  ok    Uncompiled stage files: 0 stage files missing from the compiled graph\n  ok    Scope validation: 11 scopes valid (47 advisories)\n  ok    Schema validation: 33/33 stages validated\n  ok    Graph references: 122 artifacts + edges resolved\n  ok    Keyword overlap: no conflicts\n  ok    Rule drift: no team/project rule overlaps org policy\n  ok    Paired sensor coverage: no sensor-bound rules (0 feedforward-only)\n\n0 problems, 2 warnings.\nWarnings are advisory - if everything works, ignore them.\n",
+          "stderr": "",
+          "expected": "unset harness/project/runtime overrides select the kiro doctor checks",
+          "actual": "AI-DLC doctor\n\nMachine\n  ok    Runtime hook PATH: bun is not required by the selected projection\n  ok    Runtime hook PATH: aidlc -> /Users/revenantonthemission/.local/bin/aidlc (non-interactive baseline)\n  warn  Harness CLI: kiro-cli is missing\n        fix: Install or upgrade Kiro CLI to 2.6.0 or later.\n  ok    Installed runtime: 2.11.0 [claude, codex, copilot, cursor, kiro, kiro-ide, opencode]\n  ok    Command pointer: /Users/revenantonthemission/.local/bin/aidlc -> 2.11.0\n  ok    Rollback target: 2.10.0 is complete and eligible\n  ok    Project pin registry: no stale registrations\n  ok    Transaction staging: no abandoned directories\n  ok    Transaction recovery: no quarantined directories\n  ok    Update: binary 2.11.0 is latest\n\nProject (.kiro, Kiro CLI)\n  ok    Instruction file: block present, user content preserved; framework-owned file intact\n  ok    Native command trust: host hooks and permission entries select the installed `aidlc` command\n  ok    Project runtime stamp: 2.11.0 (kiro)\n  ok    aidlc-write-audit-log.ts present\n  ok    aidlc-sync-workflow-state.ts present\n  ok    aidlc-validate-state.ts present\n  ok    aidlc-log-subagent.ts present\n  ok    aidlc-session-start.ts present\n  ok    aidlc-session-end.ts present\n  ok    aidlc-statusline.ts present\n  ok    aidlc-kiro-adapter.ts present\n  ok    agents/aidlc.{json,md} present (conductor wiring)\n  ok    settings/cli.json present (workspace default-agent activation)\n  ok    AWS_AIDLC_DEFAULT_SCOPE (unset - no project default)\n  ok    Enabled plugins: all enabled (no selection); enabled stage counts: aidlc=30, bootstrap=3\n  ok    Plugin selection flags: harness.json agrees with stage-graph.json\n  ok    Composed plugin surface: all enabled plugin stages and recorded contributions are present\n  ok    workspace shell ready (.kiro/ + aidlc/spaces/default/memory/)\n  ok    Submodules: no .gitmodules at workspace root\n  warn  AIDLC hooks have not run in this project yet\n        fix: This is expected before your first Kiro CLI chat in this folder. If you already started one, type /agent and pick aidlc; if Kiro says agent \"aidlc\" needs upgrading for this agent engine, quit Kiro and start it again in this folder with: kiro-cli chat --agent-engine v2 --agent aidlc. Then run doctor again.\n  ok    Hook drops: none recorded\n  ok    Runtime locks: none leaked\n  ok    Orphan worktrees: 0 observed\n  ok    Stale branches: 0 observed (not a git repo)\n  ok    Orphan state files: 0 observed\n  ok    Orphan audit: 0 observed\n  ok    Practices staleness: state file absent (informational)\n  ok    MERGE_DISPATCH: 0 orphan INVOKED (0 bracketed)\n  ok    Composed scope durability: no composed scopes\n  ok    Duplicate producers: every consumed artifact has a single producer\n  ok    Intent registry: all rows match their record dirs\n  ok    Workspace records: not a git repo - nothing to commit\n  ok    Plugins: none in this project\n  ok    Models: recorded policy is expressible\n  ok    Session model: not checked (kiro-cli not found)\n  ok    Flags: no recorded project answers\n  ok    Providers: harness-managed model access; no answer needed\n  ok    Workspace siblings: complete projection is present\n  ok    AI-DLC files: not checked, no record of what AI-DLC wrote\n\nFramework integrity\n  ok    Enabled stage compile coverage: every enabled stage file is in the full graph\n  ok    Agent filename/name consistency: all agent files match declared names\n  ok    Scope filename/name consistency: all scope files match declared names\n  ok    Cycle detection: 0 cycles\n  ok    Orphan stage files: 33 graph entries all have files\n  ok    Uncompiled stage files: 0 stage files missing from the compiled graph\n  ok    Scope validation: 11 scopes valid (47 advisories)\n  ok    Schema validation: 33/33 stages validated\n  ok    Graph references: 122 artifacts + edges resolved\n  ok    Keyword overlap: no conflicts\n  ok    Rule drift: no team/project rule overlaps org policy\n  ok    Paired sensor coverage: no sensor-bound rules (0 feedforward-only)\n\n0 problems, 2 warnings.\nWarnings are advisory - if everything works, ignore them.",
+          "detail": "kiro-only install; --project-dir is the sole routing input"
+        },
+        {
+          "name": "harness-probe-copilot",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "doctor",
+            "--verbose",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-probe-copilot-HDK69A"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-probe-copilot-HDK69A",
+          "status": 0,
+          "signal": null,
+          "stdout": "AI-DLC doctor\n\nMachine\n  ok    Runtime hook PATH: bun is not required by the selected projection\n  ok    Runtime hook PATH: aidlc -> /Users/revenantonthemission/.local/bin/aidlc (non-interactive baseline)\n  ok    Harness CLI: optional copilot is not installed\n  ok    Installed runtime: 2.11.0 [claude, codex, copilot, cursor, kiro, kiro-ide, opencode]\n  ok    Command pointer: /Users/revenantonthemission/.local/bin/aidlc -> 2.11.0\n  ok    Rollback target: 2.10.0 is complete and eligible\n  ok    Project pin registry: no stale registrations\n  ok    Transaction staging: no abandoned directories\n  ok    Transaction recovery: no quarantined directories\n  ok    Update: binary 2.11.0 is latest\n\nProject (.aidlc, GitHub Copilot)\n  warn  Instruction file: hand-modified - conflict (AGENTS.md)\n        fix: to keep your version, move AGENTS.md somewhere else, then run `aidlc config`; to take the shipped version over it, run `aidlc config --force`\n  ok    Native command trust: host hooks and permission entries select the installed `aidlc` command\n  ok    Project runtime stamp: 2.11.0 (copilot)\n  ok    aidlc-write-audit-log.ts present\n  ok    aidlc-sync-workflow-state.ts present\n  ok    aidlc-validate-state.ts present\n  ok    aidlc-log-subagent.ts present\n  ok    aidlc-session-start.ts present\n  ok    aidlc-session-end.ts present\n  ok    aidlc-statusline.ts present\n  ok    aidlc-state-transition-guard.ts present\n  ok    aidlc-reviewer-scope.ts present\n  ok    aidlc-continue-workflow.ts present\n  ok    aidlc-run-sensors.ts present\n  ok    aidlc-rebuild-stage-graph.ts present\n  ok    aidlc-deliver-stage-rules.ts present\n  ok    aidlc-plan-approval-guard.ts present\n  ok    aidlc-review-freeze.ts present\n  ok    hooks/aidlc-copilot-adapter.ts present (hook shim)\n  ok    .github/hooks/aidlc.json present (hook wiring)\n  ok    .github/skills/aidlc/SKILL.md present (/aidlc entry point)\n  ok    .github/agents/aidlc-developer-agent.md present (persona custom agents)\n  ok    AGENTS.md present (onboarding + method imports)\n  warn  Copilot CLI has not trusted this folder: `copilot -p` runs skip the hooks, interactive runs ask first (VS Code does not use this list)\n        fix: run copilot in this folder once and choose \"Yes, and remember this folder for future sessions\", or add \"/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-probe-copilot-HDK69A\" to trustedFolders in /Users/revenantonthemission/.copilot/config.json yourself\n  ok    headless runs: set GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1 for `copilot -p` sessions - repo hooks are off by default in prompt mode\n  ok    AWS_AIDLC_DEFAULT_SCOPE (unset - no project default)\n  ok    Enabled plugins: all enabled (no selection); enabled stage counts: aidlc=30, bootstrap=3\n  ok    Plugin selection flags: harness.json agrees with stage-graph.json\n  ok    Composed plugin surface: all enabled plugin stages and recorded contributions are present\n  ok    workspace shell ready (.aidlc/ + aidlc/spaces/default/memory/)\n  ok    Submodules: no .gitmodules at workspace root\n  warn  AIDLC hooks have not run in this project yet\n        fix: This is expected before your first Copilot chat in this folder. If you already started one, turn on Chat: Use Hooks in VS Code for this folder (\"chat.useHooks\": true in .vscode/settings.json; if your organization has switched it off, ask your administrator to turn it on), or in the Copilot CLI trust this folder when it asks, then send a message and run doctor again.\n  ok    Hook drops: none recorded\n  ok    Runtime locks: none leaked\n  ok    Orphan worktrees: 0 observed\n  ok    Stale branches: 0 observed (not a git repo)\n  ok    Orphan state files: 0 observed\n  ok    Orphan audit: 0 observed\n  ok    Practices staleness: state file absent (informational)\n  ok    MERGE_DISPATCH: 0 orphan INVOKED (0 bracketed)\n  ok    Composed scope durability: no composed scopes\n  ok    Duplicate producers: every consumed artifact has a single producer\n  ok    Intent registry: all rows match their record dirs\n  ok    Workspace records: not a git repo - nothing to commit\n  ok    Plugins: none in this project\n  ok    Models: every agent uses your GitHub Copilot session's model and effort\n  ok    Flags: no recorded project answers\n  ok    Providers: model access comes with your GitHub Copilot session; no answer needed\n  ok    Workspace siblings: complete projection is present\n  ok    AI-DLC files: not checked, no record of what AI-DLC wrote\n  ok    VS Code agent request cap: chat.agent.maxRequests is 200 in .vscode/settings.json\n\nFramework integrity\n  ok    Enabled stage compile coverage: every enabled stage file is in the full graph\n  ok    Agent filename/name consistency: all agent files match declared names\n  ok    Scope filename/name consistency: all scope files match declared names\n  ok    Cycle detection: 0 cycles\n  ok    Orphan stage files: 33 graph entries all have files\n  ok    Uncompiled stage files: 0 stage files missing from the compiled graph\n  ok    Scope validation: 11 scopes valid (47 advisories)\n  ok    Schema validation: 33/33 stages validated\n  ok    Graph references: 122 artifacts + edges resolved\n  ok    Keyword overlap: no conflicts\n  ok    Rule drift: no team/project rule overlaps org policy\n  ok    Paired sensor coverage: no sensor-bound rules (0 feedforward-only)\n\n0 problems, 3 warnings.\nWarnings are advisory - if everything works, ignore them.\n",
+          "stderr": "",
+          "expected": "unset harness/project/runtime overrides select the copilot doctor checks",
+          "actual": "AI-DLC doctor\n\nMachine\n  ok    Runtime hook PATH: bun is not required by the selected projection\n  ok    Runtime hook PATH: aidlc -> /Users/revenantonthemission/.local/bin/aidlc (non-interactive baseline)\n  ok    Harness CLI: optional copilot is not installed\n  ok    Installed runtime: 2.11.0 [claude, codex, copilot, cursor, kiro, kiro-ide, opencode]\n  ok    Command pointer: /Users/revenantonthemission/.local/bin/aidlc -> 2.11.0\n  ok    Rollback target: 2.10.0 is complete and eligible\n  ok    Project pin registry: no stale registrations\n  ok    Transaction staging: no abandoned directories\n  ok    Transaction recovery: no quarantined directories\n  ok    Update: binary 2.11.0 is latest\n\nProject (.aidlc, GitHub Copilot)\n  warn  Instruction file: hand-modified - conflict (AGENTS.md)\n        fix: to keep your version, move AGENTS.md somewhere else, then run `aidlc config`; to take the shipped version over it, run `aidlc config --force`\n  ok    Native command trust: host hooks and permission entries select the installed `aidlc` command\n  ok    Project runtime stamp: 2.11.0 (copilot)\n  ok    aidlc-write-audit-log.ts present\n  ok    aidlc-sync-workflow-state.ts present\n  ok    aidlc-validate-state.ts present\n  ok    aidlc-log-subagent.ts present\n  ok    aidlc-session-start.ts present\n  ok    aidlc-session-end.ts present\n  ok    aidlc-statusline.ts present\n  ok    aidlc-state-transition-guard.ts present\n  ok    aidlc-reviewer-scope.ts present\n  ok    aidlc-continue-workflow.ts present\n  ok    aidlc-run-sensors.ts present\n  ok    aidlc-rebuild-stage-graph.ts present\n  ok    aidlc-deliver-stage-rules.ts present\n  ok    aidlc-plan-approval-guard.ts present\n  ok    aidlc-review-freeze.ts present\n  ok    hooks/aidlc-copilot-adapter.ts present (hook shim)\n  ok    .github/hooks/aidlc.json present (hook wiring)\n  ok    .github/skills/aidlc/SKILL.md present (/aidlc entry point)\n  ok    .github/agents/aidlc-developer-agent.md present (persona custom agents)\n  ok    AGENTS.md present (onboarding + method imports)\n  warn  Copilot CLI has not trusted this folder: `copilot -p` runs skip the hooks, interactive runs ask first (VS Code does not use this list)\n        fix: run copilot in this folder once and choose \"Yes, and remember this folder for future sessions\", or add \"/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-probe-copilot-HDK69A\" to trustedFolders in /Users/revenantonthemission/.copilot/config.json yourself\n  ok    headless runs: set GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1 for `copilot -p` sessions - repo hooks are off by default in prompt mode\n  ok    AWS_AIDLC_DEFAULT_SCOPE (unset - no project default)\n  ok    Enabled plugins: all enabled (no selection); enabled stage counts: aidlc=30, bootstrap=3\n  ok    Plugin selection flags: harness.json agrees with stage-graph.json\n  ok    Composed plugin surface: all enabled plugin stages and recorded contributions are present\n  ok    workspace shell ready (.aidlc/ + aidlc/spaces/default/memory/)\n  ok    Submodules: no .gitmodules at workspace root\n  warn  AIDLC hooks have not run in this project yet\n        fix: This is expected before your first Copilot chat in this folder. If you already started one, turn on Chat: Use Hooks in VS Code for this folder (\"chat.useHooks\": true in .vscode/settings.json; if your organization has switched it off, ask your administrator to turn it on), or in the Copilot CLI trust this folder when it asks, then send a message and run doctor again.\n  ok    Hook drops: none recorded\n  ok    Runtime locks: none leaked\n  ok    Orphan worktrees: 0 observed\n  ok    Stale branches: 0 observed (not a git repo)\n  ok    Orphan state files: 0 observed\n  ok    Orphan audit: 0 observed\n  ok    Practices staleness: state file absent (informational)\n  ok    MERGE_DISPATCH: 0 orphan INVOKED (0 bracketed)\n  ok    Composed scope durability: no composed scopes\n  ok    Duplicate producers: every consumed artifact has a single producer\n  ok    Intent registry: all rows match their record dirs\n  ok    Workspace records: not a git repo - nothing to commit\n  ok    Plugins: none in this project\n  ok    Models: every agent uses your GitHub Copilot session's model and effort\n  ok    Flags: no recorded project answers\n  ok    Providers: model access comes with your GitHub Copilot session; no answer needed\n  ok    Workspace siblings: complete projection is present\n  ok    AI-DLC files: not checked, no record of what AI-DLC wrote\n  ok    VS Code agent request cap: chat.agent.maxRequests is 200 in .vscode/settings.json\n\nFramework integrity\n  ok    Enabled stage compile coverage: every enabled stage file is in the full graph\n  ok    Agent filename/name consistency: all agent files match declared names\n  ok    Scope filename/name consistency: all scope files match declared names\n  ok    Cycle detection: 0 cycles\n  ok    Orphan stage files: 33 graph entries all have files\n  ok    Uncompiled stage files: 0 stage files missing from the compiled graph\n  ok    Scope validation: 11 scopes valid (47 advisories)\n  ok    Schema validation: 33/33 stages validated\n  ok    Graph references: 122 artifacts + edges resolved\n  ok    Keyword overlap: no conflicts\n  ok    Rule drift: no team/project rule overlaps org policy\n  ok    Paired sensor coverage: no sensor-bound rules (0 feedforward-only)\n\n0 problems, 3 warnings.\nWarnings are advisory - if everything works, ignore them.",
+          "detail": "copilot-only install; --project-dir is the sole routing input"
+        },
+        {
+          "name": "harness-probe-opencode",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "doctor",
+            "--verbose",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-probe-opencode-81Uxwf"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-probe-opencode-81Uxwf",
+          "status": 0,
+          "signal": null,
+          "stdout": "AI-DLC doctor\n\nMachine\n  ok    Runtime hook PATH: bun is not required by the selected projection\n  ok    Runtime hook PATH: aidlc -> /Users/revenantonthemission/.local/bin/aidlc (non-interactive baseline)\n  warn  Harness CLI: opencode is missing\n        fix: Install opencode and ensure `opencode --version` works.\n  ok    Installed runtime: 2.11.0 [claude, codex, copilot, cursor, kiro, kiro-ide, opencode]\n  ok    Command pointer: /Users/revenantonthemission/.local/bin/aidlc -> 2.11.0\n  ok    Rollback target: 2.10.0 is complete and eligible\n  ok    Project pin registry: no stale registrations\n  ok    Transaction staging: no abandoned directories\n  ok    Transaction recovery: no quarantined directories\n  ok    Update: binary 2.11.0 is latest\n\nProject (.aidlc, opencode)\n  ok    Instruction file: block present, user content preserved; framework-owned file intact\n  ok    Native command trust: host hooks and permission entries select the installed `aidlc` command\n  ok    Project runtime stamp: 2.11.0 (opencode)\n  ok    aidlc-write-audit-log.ts present\n  ok    aidlc-sync-workflow-state.ts present\n  ok    aidlc-validate-state.ts present\n  ok    aidlc-log-subagent.ts present\n  ok    aidlc-session-start.ts present\n  ok    aidlc-session-end.ts present\n  ok    aidlc-statusline.ts present\n  ok    plugin/aidlc-opencode-adapter.ts present (hook wiring)\n  ok    opencode.json or opencode.jsonc present (permissions + method instructions glob)\n  ok    .opencode/command/aidlc.md present (/aidlc entry point)\n  ok    AWS_AIDLC_DEFAULT_SCOPE (unset - no project default)\n  ok    Enabled plugins: all enabled (no selection); enabled stage counts: aidlc=30, bootstrap=3\n  ok    Plugin selection flags: harness.json agrees with stage-graph.json\n  ok    Composed plugin surface: all enabled plugin stages and recorded contributions are present\n  ok    workspace shell ready (.aidlc/ + aidlc/spaces/default/memory/)\n  ok    Submodules: no .gitmodules at workspace root\n  warn  AIDLC hooks have not run in this project yet\n        fix: This is expected before your first opencode chat in this folder. If you already started one, quit opencode and start it again with just `opencode` in /var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-probe-opencode-81Uxwf, then run doctor again.\n  ok    Hook drops: none recorded\n  ok    Runtime locks: none leaked\n  ok    Orphan worktrees: 0 observed\n  ok    Stale branches: 0 observed (not a git repo)\n  ok    Orphan state files: 0 observed\n  ok    Orphan audit: 0 observed\n  ok    Practices staleness: state file absent (informational)\n  ok    MERGE_DISPATCH: 0 orphan INVOKED (0 bracketed)\n  ok    Composed scope durability: no composed scopes\n  ok    Duplicate producers: every consumed artifact has a single producer\n  ok    Intent registry: all rows match their record dirs\n  ok    Workspace records: not a git repo - nothing to commit\n  ok    Plugins: none in this project\n  ok    Models: recorded policy is expressible\n  ok    Flags: no recorded project answers\n  ok    Providers: using shipped fallback; no recorded answers\n  ok    Workspace siblings: complete projection is present\n  ok    AI-DLC files: not checked, no record of what AI-DLC wrote\n\nFramework integrity\n  ok    Enabled stage compile coverage: every enabled stage file is in the full graph\n  ok    Agent filename/name consistency: all agent files match declared names\n  ok    Scope filename/name consistency: all scope files match declared names\n  ok    Cycle detection: 0 cycles\n  ok    Orphan stage files: 33 graph entries all have files\n  ok    Uncompiled stage files: 0 stage files missing from the compiled graph\n  ok    Scope validation: 11 scopes valid (47 advisories)\n  ok    Schema validation: 33/33 stages validated\n  ok    Graph references: 122 artifacts + edges resolved\n  ok    Keyword overlap: no conflicts\n  ok    Rule drift: no team/project rule overlaps org policy\n  ok    Paired sensor coverage: no sensor-bound rules (0 feedforward-only)\n\n0 problems, 2 warnings.\nWarnings are advisory - if everything works, ignore them.\n",
+          "stderr": "",
+          "expected": "unset harness/project/runtime overrides select the opencode doctor checks",
+          "actual": "AI-DLC doctor\n\nMachine\n  ok    Runtime hook PATH: bun is not required by the selected projection\n  ok    Runtime hook PATH: aidlc -> /Users/revenantonthemission/.local/bin/aidlc (non-interactive baseline)\n  warn  Harness CLI: opencode is missing\n        fix: Install opencode and ensure `opencode --version` works.\n  ok    Installed runtime: 2.11.0 [claude, codex, copilot, cursor, kiro, kiro-ide, opencode]\n  ok    Command pointer: /Users/revenantonthemission/.local/bin/aidlc -> 2.11.0\n  ok    Rollback target: 2.10.0 is complete and eligible\n  ok    Project pin registry: no stale registrations\n  ok    Transaction staging: no abandoned directories\n  ok    Transaction recovery: no quarantined directories\n  ok    Update: binary 2.11.0 is latest\n\nProject (.aidlc, opencode)\n  ok    Instruction file: block present, user content preserved; framework-owned file intact\n  ok    Native command trust: host hooks and permission entries select the installed `aidlc` command\n  ok    Project runtime stamp: 2.11.0 (opencode)\n  ok    aidlc-write-audit-log.ts present\n  ok    aidlc-sync-workflow-state.ts present\n  ok    aidlc-validate-state.ts present\n  ok    aidlc-log-subagent.ts present\n  ok    aidlc-session-start.ts present\n  ok    aidlc-session-end.ts present\n  ok    aidlc-statusline.ts present\n  ok    plugin/aidlc-opencode-adapter.ts present (hook wiring)\n  ok    opencode.json or opencode.jsonc present (permissions + method instructions glob)\n  ok    .opencode/command/aidlc.md present (/aidlc entry point)\n  ok    AWS_AIDLC_DEFAULT_SCOPE (unset - no project default)\n  ok    Enabled plugins: all enabled (no selection); enabled stage counts: aidlc=30, bootstrap=3\n  ok    Plugin selection flags: harness.json agrees with stage-graph.json\n  ok    Composed plugin surface: all enabled plugin stages and recorded contributions are present\n  ok    workspace shell ready (.aidlc/ + aidlc/spaces/default/memory/)\n  ok    Submodules: no .gitmodules at workspace root\n  warn  AIDLC hooks have not run in this project yet\n        fix: This is expected before your first opencode chat in this folder. If you already started one, quit opencode and start it again with just `opencode` in /var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-probe-opencode-81Uxwf, then run doctor again.\n  ok    Hook drops: none recorded\n  ok    Runtime locks: none leaked\n  ok    Orphan worktrees: 0 observed\n  ok    Stale branches: 0 observed (not a git repo)\n  ok    Orphan state files: 0 observed\n  ok    Orphan audit: 0 observed\n  ok    Practices staleness: state file absent (informational)\n  ok    MERGE_DISPATCH: 0 orphan INVOKED (0 bracketed)\n  ok    Composed scope durability: no composed scopes\n  ok    Duplicate producers: every consumed artifact has a single producer\n  ok    Intent registry: all rows match their record dirs\n  ok    Workspace records: not a git repo - nothing to commit\n  ok    Plugins: none in this project\n  ok    Models: recorded policy is expressible\n  ok    Flags: no recorded project answers\n  ok    Providers: using shipped fallback; no recorded answers\n  ok    Workspace siblings: complete projection is present\n  ok    AI-DLC files: not checked, no record of what AI-DLC wrote\n\nFramework integrity\n  ok    Enabled stage compile coverage: every enabled stage file is in the full graph\n  ok    Agent filename/name consistency: all agent files match declared names\n  ok    Scope filename/name consistency: all scope files match declared names\n  ok    Cycle detection: 0 cycles\n  ok    Orphan stage files: 33 graph entries all have files\n  ok    Uncompiled stage files: 0 stage files missing from the compiled graph\n  ok    Scope validation: 11 scopes valid (47 advisories)\n  ok    Schema validation: 33/33 stages validated\n  ok    Graph references: 122 artifacts + edges resolved\n  ok    Keyword overlap: no conflicts\n  ok    Rule drift: no team/project rule overlaps org policy\n  ok    Paired sensor coverage: no sensor-bound rules (0 feedforward-only)\n\n0 problems, 2 warnings.\nWarnings are advisory - if everything works, ignore them.",
+          "detail": "opencode-only install; --project-dir is the sole routing input"
+        },
+        {
+          "name": "compiled-kiro-new-work-routing",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "next",
+            "poc",
+            "Create a tiny TypeScript command-line program that prints Hello World.",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-kiro-routing-ZJ3xKe"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-kiro-routing-ZJ3xKe",
+          "status": 0,
+          "signal": null,
+          "stdout": "{\"kind\":\"ask\",\"ask_type\":\"new-work-routing\",\"response_route\":\"next\",\"question\":\"This project already has 2 pieces of work in progress, and none is currently selected: `fixture` (record: `261010-fixture`) (at Intent Capture & Framing), `second-fixture` (record: `261010-second-fixture`) (at Intent Capture & Framing). You said: \\\"Create a tiny TypeScript command-line program that prints Hello World.\\\". Is this (1) part of existing work - select its record and continue it; (2) a separate new piece of work - Yes, set it up alongside the existing work as \\\"poc\\\" work without changing it; or (3) a change to an existing remaining plan - select its record, then reshape it?\",\"numbered_prose_question\":\"**New work routing** — This project already has 2 pieces of work in progress, and none is currently selected: `fixture` (record: `261010-fixture`) (at Intent Capture & Framing), `second-fixture` (record: `261010-second-fixture`) (at Intent Capture & Framing). You said: \\\"Create a tiny TypeScript command-line program that prints Hello World.\\\". What should I do?\\n\\n1. **Part of existing work** — Select one of the above and continue it\\n2. **Separate new piece of work** — Yes, set it up alongside the existing work as \\\"poc\\\" work without changing it\\n3. **Reshape existing work** — Select one of the above, then reshape its remaining plan\\n4. **Other** — describe what you want instead\\n\\nReply with a number (or just tell me).\",\"new_work_description\":\"Create a tiny TypeScript command-line program that prints Hello World.\",\"proposed_scope\":\"poc\",\"new_intent_command\":\"aidlc engine orchestrate next --new-intent --scope poc --request 34f5b0c8\",\"scope_commands\":[{\"scope\":\"bugfix\",\"command\":\"aidlc engine orchestrate next --new-intent --scope bugfix --request 34f5b0c8\",\"stages\":\"5 stages\"},{\"scope\":\"classic\",\"command\":\"aidlc engine orchestrate next --new-intent --scope classic --request 34f5b0c8\",\"stages\":\"14 stages\"},{\"scope\":\"enterprise\",\"command\":\"aidlc engine orchestrate next --new-intent --scope enterprise --request 34f5b0c8\",\"stages\":\"29 stages\"},{\"scope\":\"express\",\"command\":\"aidlc engine orchestrate next --new-intent --scope express --request 34f5b0c8\",\"stages\":\"6 stages\"},{\"scope\":\"feature\",\"command\":\"aidlc engine orchestrate next --new-intent --scope feature --request 34f5b0c8\",\"stages\":\"29 stages\"},{\"scope\":\"infra\",\"command\":\"aidlc engine orchestrate next --new-intent --scope infra --request 34f5b0c8\",\"stages\":\"10 stages\"},{\"scope\":\"mvp\",\"command\":\"aidlc engine orchestrate next --new-intent --scope mvp --request 34f5b0c8\",\"stages\":\"19 stages\"},{\"scope\":\"poc\",\"command\":\"aidlc engine orchestrate next --new-intent --scope poc --request 34f5b0c8\",\"stages\":\"4 stages\"},{\"scope\":\"refactor\",\"command\":\"aidlc engine orchestrate next --new-intent --scope refactor --request 34f5b0c8\",\"stages\":\"6 stages\"},{\"scope\":\"security-patch\",\"command\":\"aidlc engine orchestrate next --new-intent --scope security-patch --request 34f5b0c8\",\"stages\":\"6 stages\"},{\"scope\":\"workshop\",\"command\":\"aidlc engine orchestrate next --new-intent --scope workshop --request 34f5b0c8\",\"stages\":\"22 stages\"}],\"compose_command\":\"aidlc engine orchestrate next compose --request 34f5b0c8\",\"available_intents\":[\"261010-fixture\",\"261010-second-fixture\"],\"select_commands\":[{\"selector\":\"261010-fixture\",\"command\":\"aidlc engine orchestrate next --pick 261010-fixture\"},{\"selector\":\"261010-second-fixture\",\"command\":\"aidlc engine orchestrate next --pick 261010-second-fixture\"}],\"reshape_commands\":[{\"selector\":\"261010-fixture\",\"command\":\"aidlc engine orchestrate next compose --request 34f5b0c8 --record 261010-fixture\"},{\"selector\":\"261010-second-fixture\",\"command\":\"aidlc engine orchestrate next compose --request 34f5b0c8 --record 261010-second-fixture\"}]}\n",
+          "stderr": "",
+          "expected": "compiled Kiro next emits typed routing with two record selectors",
+          "actual": "ask:new-work-routing selectors=2",
+          "detail": "createStatuses=0,0"
+        },
+        {
+          "name": "plugin-select",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "plugin",
+            "select",
+            "aidlc",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-select-CEwodU"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-select-CEwodU",
+          "status": 0,
+          "signal": null,
+          "stdout": "Enabled plugins: aidlc\n",
+          "stderr": "",
+          "expected": "selection regeneration succeeds with aidlc enabled",
+          "actual": "aidlc"
+        },
+        {
+          "name": "delegate-plugin-sync",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "plugin",
+            "sync"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "plugin sync complete: 0 plugin(s)\n",
+          "stderr": "",
+          "expected": "plugin sync complete: 0 plugin(s)",
+          "actual": "plugin sync complete: 0 plugin(s)",
+          "detail": "runs a real plugin delegate from the compiled artifact"
+        },
+        {
+          "name": "real-plugin-sync",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "plugin",
+            "sync",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-plugin-PVbOuK"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-plugin-PVbOuK",
+          "status": 0,
+          "signal": null,
+          "stdout": "plugin sync complete: 1 plugin(s)\n",
+          "stderr": "",
+          "expected": "real plugin compose and generated-region refresh succeed without PATH bun or drops",
+          "actual": "plugin sync complete: 1 plugin(s)"
+        },
+        {
+          "name": "conductor-persona",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "orchestrate",
+            "continue",
+            "IFZ7gqyW"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "{\"kind\":\"run-stage\",\"stage\":\"requirements-analysis\",\"phase\":\"inception\",\"lead_agent\":\"aidlc-product-agent\",\"support_agents\":[],\"mode\":\"inline\",\"inline_context_paths\":[\".claude/agents/aidlc-product-agent.md\",\".claude/knowledge/aidlc-shared/ai-dlc-principles.md\",\".claude/knowledge/aidlc-shared/brownfield.md\",\".claude/knowledge/aidlc-shared/rules-reading.md\",\".claude/knowledge/aidlc-shared/verification.md\",\".claude/knowledge/aidlc-product-agent/corner-checklist.md\",\".claude/knowledge/aidlc-product-agent/functional-design-guide.md\",\".claude/knowledge/aidlc-product-agent/market-research-methods.md\",\".claude/knowledge/aidlc-product-agent/prioritization-frameworks.md\",\".claude/knowledge/aidlc-product-agent/product-guide.md\",\".claude/knowledge/aidlc-product-agent/requirements-elicitation.md\",\".claude/knowledge/aidlc-product-agent/requirements-guide.md\",\".claude/knowledge/aidlc-product-agent/user-story-patterns.md\"],\"gate\":false,\"memory_path\":\"aidlc/spaces/default/intents/inception/requirements-analysis/memory.md\",\"consumes\":[],\"produces\":[\"aidlc/spaces/default/intents/inception/requirements-analysis/requirements.md\",\"aidlc/spaces/default/intents/inception/requirements-analysis/requirements-analysis-questions.md\"],\"rules_in_context\":[\"aidlc/spaces/default/memory/org.md\",\"aidlc/spaces/default/memory/phases/inception.md\"],\"ceremony\":{\"sensors\":\"on\",\"learnings\":\"on\",\"summary_confirmation\":\"off\",\"plan_approval\":\"on\",\"collaborators\":\"off\"},\"answer_mode\":{\"mode\":null,\"ask\":true,\"reused_from\":null,\"notice\":\"Later stages will use this way too. Say any time if you'd rather switch.\"},\"sensors_applicable\":[\"required-sections\",\"upstream-coverage\"],\"stage_file\":\".claude/aidlc-common/stages/inception/requirements-analysis.md\",\"next_stage\":null,\"reviewer\":\"aidlc-product-lead-agent\",\"review_artifact\":\"requirements\",\"review_class\":\"advisory\",\"reviewer_max_iterations\":1,\"protocol_modules\":[\"reviewer\",\"learnings\"],\"conductor_persona\":\"# The Conductor's Craft — Execution Quality\\n\\nYou are the AI-DLC conductor. The forwarding loop in your runner's `SKILL.md`\\nis the *mechanism* — get a directive from the engine, do that one move, report\\nthe outcome, repeat. This file is the irreducible *knowledge-work* the engine\\ncannot do for you: how to run a stage **well**. The engine decides which stage\\nis next; you own the quality of execution inside the move it named.\\n\\nThis persona is authored once for every AI-DLC entry point. You receive it\\nin-context because the engine reads it and bakes it into the first `next`\\ndirective of the session — no skill references it by path. When you see a\\ndirective carrying a `conductor_persona`, that is this content arriving; adopt\\nit for the whole run.\\n\\n## Framing the persona\\n\\nFor an `inline` stage, load the lead agent's flat file (e.g.\\n`agents/aidlc-architect-agent.md`) and adopt its voice for the stage body — you\\nare speaking as that domain expert. Load knowledge per `stage-protocol.md` §5\\nknowledge-loading order. For a `subagent` stage, the harness's native dispatch\\nboundary loads the persona and enforces its projected model/tool policy\\n(`disallowedTools: Task` on Claude; delegate allowlists without `subagent` on\\nKiro). Pass context in the prompt (subagents cannot see conversation history);\\nnever inject the persona text yourself.\\n\\nFor a multi-agent stage, load `stage-protocol-ensemble.md` when the directive\\nnames that module. It is the single contract for topology behavior,\\ncontribution evidence, resume rules, objection triage, and lead-only reviewer\\nrepairs. The irreducible persona rules: you are the bus, and the lead owns the\\nfinal `produces[]` artifacts.\\nDo **not** dispatch a support agent on an inline stage. Agents never invoke\\neach other — only you, the conductor, delegate.\\n\\nThe engine owns lifecycle bookkeeping. Open, reject, revise, approve, complete,\\nor skip a stage only through `aidlc-orchestrate.ts report`; never call lifecycle\\nverbs on `aidlc-state.ts` directly or hand-edit stage checkboxes. A conditional\\nstage that does not apply reports\\n`--stage <slug> --result skipped --reason \\\"<reason>\\\"`.\\n\\n## Asking good questions\\n\\n- Ordinary questions go in markdown files using `[Answer]:` tags with A-E + X\\n  (Other); the consolidated-summary checkpoint is the unlettered exception\\n  options — the file is always the source of truth. Use a structured question for\\n  1-3 simple options where the structured UI is clearer (rendering per the harness question-rendering annex).\\n- Offer the tri-mode flow per `stage-protocol.md` §3: guided (interactive\\n  walkthrough), self-guided (edit the file directly), or chat (freeform). All\\n  three converge on the file.\\n- A freeform request is ambiguous by definition. When the engine emits an `ask`\\n  for scope confirmation, surface the detected scope and let the user\\n  course-correct before you commit — a silent dispatch into the wrong scope\\n  burns artifacts and time.\\n- Resolve follow-up questions and contradictions *within* the stage before\\n  completing it. Surface ambiguity early rather than carrying an unresolved\\n  contradiction forward.\\n\\n## Files and commands\\n\\nWrite and edit files yourself with your file tools, never through the shell (no heredoc, no `echo`, `printf`, or `python3` writing a file, no `sed -i`, no `mkdir`; the file-write tool creates any missing folder). A command the person asks for, or one the plan names (a package install, a build, a scaffolder, a migration, a formatter, a code generator, even a `mkdir`), still runs as written. Read, list, and search (your own knowledge files included) with your file tools where you have them; where the shell is your only way to read, use one plain read command (no `cd` before it, no pipe or second command after it). Run every AI-DLC command exactly as written, as a command of its own (no `cd` before it, no pipe or second command after it), keeping its path as written (never a full path): a shell line can stop and ask the person to approve it.\\n\\n## Keeping the diary (memory.md)\\n\\nOnly when `directive.protocol_modules` lists `learnings` and `directive.single !== true`, keep an observation diary at the `memory_path` the `run-stage`\\ndirective carries (`<record>/<phase>/<stage>/memory.md`). Otherwise keep no diary and run no learnings ritual. When enabled:\\n\\n1. The engine creates `memory.md` from\\n   `.claude/knowledge/aidlc-shared/memory-template.md` when it emits the\\n   directive. NEVER probe for `memory.md`, or any other maybe-absent file, with a\\n   read tool: reading an absent path is a failed tool call. In the rare case an\\n   append finds the diary missing, create it with your file-write tool, writing\\n   the text of `.claude/knowledge/aidlc-shared/memory-template.md` to\\n   `<memory_path>` (the write tool creates the folder). Never overwrite an\\n   existing diary; re-entry or resume must keep accumulated entries.\\n2. During the stage, append timestamped bullets under the matching canonical\\n   heading as observations arise — Interpretation, Deviation, Tradeoff, or Open\\n   question. This is your diary-keeping (see `stage-protocol-learnings.md` §13); the four\\n   headings already exist in the template.\\n3. On approval, leave `memory.md` in place — it is the stage's permanent\\n   record. The §13 gate reads it; do not delete or move it.\\n\\nThe diary is the *only* file you maintain by hand. It is hand-maintained\\nnarrative; everything else (state fields, checkboxes, audit rows) is\\ntool-owned.\\n\\n## Intra-stage control flow (Keep / Modify / Redo)\\n\\nAfter Code Generation's initial Plan Approval, respect the effective Guard\\nPolicy for the same target and stage attempt. Under `relaxed` or `off`,\\ncontinue after plan, test instruction, or Testing Contract edits without adding\\na reapproval stop or resetting the human's answer. Keep the original approval\\nevidence; it does not approve the edited content. Under `strict`, those edits\\nreopen Plan Approval. Follow the stage's Step 3 for the engine path. Changes to\\nTesting Posture, scope, test strategy, or project type use the same rule within\\nthe same intent, target, and attempt: refresh the current contract and\\ninstructions as needed and continue while the policy allows it. When plan\\napproval is off for the piece of work, the engine routes straight to the build\\nand there is no approval stop to add. Initial approval (while plan approval is\\non), explicit Request Changes, new attempts, and other gates retain their\\nexisting procedures.\\n\\nThe clean split is *between* directives (the engine says which stage is next)\\nvs *within* a stage (you loop on your own). Inside one stage you still own:\\n\\n- **Follow-up questions** and **contradiction resolution** — iterate with the\\n  user until the stage's answers are coherent.\\n- **The §13 conflict-check** — only when the `learnings` module is listed, before a learning reaches disk, compare it\\n  section-by-section against\\n  `aidlc/spaces/<active-space>/memory/org.md`; a narrower rule that contradicts\\n  broader policy is rejected at the memory gate.\\n- **Keep / Modify / Redo** — when the user requests changes at a gate, decide\\n  with them whether to keep the artifact as-is, modify it in place, or redo the\\n  stage from scratch (discard partial artifacts), then re-run the relevant part\\n  and re-present the gate. The loop stays within the current stage but reports\\n  through the engine at each turn: `report --result rejected --user-input\\n  \\\"Request Changes\\\" --reason '<feedback>'` records the\\n  feedback, and after the revision (re-running the `stage-protocol-reviewer.md` §12a reviewer first when a\\n  `produces[]` artifact changed and the directive carries a reviewer)\\n  `report --result revised` reopens the gate — never route around those calls.\\n\\n## Classifying a practices-derived gate (`gate: \\\"unresolved\\\"`)\\n\\nMost `gate` values are deterministic and the engine decides them. One is not:\\nthe first Construction Bolt depends on the **walking-skeleton stance**, which\\nno parser can derive — it is read from a team's free-form `## Walking Skeleton`\\npractices prose. So the engine defers it: a `run-stage` directive for that Bolt\\ncarries `gate: \\\"unresolved\\\"` rather than a boolean.\\n\\nWhen you see `gate: \\\"unresolved\\\"`, the classification is your knowledge-work,\\nfed back to the engine — the engine still owns the transition:\\n\\n1. Read the team's `## Walking Skeleton` section (resolution order\\n   `aidlc/spaces/<active-space>/memory/org.md` → `team.md` → `project.md`; the most\\n   specific non-empty statement wins).\\n2. Classify the stance:\\n   - prose says **\\\"always\\\"** / **\\\"every greenfield feature\\\"** → `on`\\n   - prose says **\\\"never\\\"** / \\\"we don't run a skeleton ceremony\\\" → `off`\\n   - prose says **\\\"scope-dependent\\\"** / is unspecified / the team layer is\\n     empty → `scope-dependent` (the engine then falls back to the active\\n     scope file's `skeleton:` field: `on` runs the skeleton ceremony, `off`\\n     runs the first Bolt as a regular Bolt).\\n3. Hand the stance back: `report --skeleton-stance <on|off|scope-dependent>`.\\n   The engine records it; the next `next` re-emits the same stage with the now\\n   determined boolean gate.\\n\\nThe `PRACTICES_OVERRIDE` judgement is preserved and is yours to make: if\\n`bolt-plan.md` carries a walking-skeleton marker on a Bolt but the team\\npractices say skeleton-off for the current scope, **practices wins** — classify\\nthe stance from practices (not the marker) and emit a `PRACTICES_OVERRIDE` row\\nvia `aidlc engine state practices-event --type override` before\\nreporting the stance. Practices is the team's standing voice; the bolt-plan\\nmarker is one workflow's interpretation.\\n\\n## Task-sidebar observability\\n\\nStage-level tasks via `TaskCreate`/`TaskUpdate` drive the sidebar spinner.\\nBefore running a stage, mark the previous stage's task `completed` and the\\ncurrent one `in_progress` with an `activeForm` that includes the `[slug]`\\nsuffix (a PostToolUse hook parses it to sync the statusline). A task must be\\n`in_progress` for its spinner to show. After compaction, task IDs may be lost —\\nrecover them via `TaskList`, matching by subject. Task IDs are sidebar-only;\\nthey are never stored in state. Use `TaskCreate`/`TaskUpdate`, or the plan or\\ntodo tool your skill maps them to, only when it is in your tool list; otherwise\\nskip the sidebar silently.\\n\",\"narration\":\"Now working on Requirements Analysis, wearing the product manager hat.\",\"single\":true}\n",
+          "stderr": "",
+          "expected": "run-stage with conductor_persona and inline_context_paths",
+          "actual": "run-stage; personaBytes=10252; inlineContextPaths=13"
+        },
+        {
+          "name": "workspace-global-flags",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "space",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-workspace-KSR16Y",
+            "create",
+            "teamB"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-workspace-KSR16Y",
+          "status": 0,
+          "signal": null,
+          "stdout": "Space created: teamb\n  memory/org.md (copied from default), team.md, project.md, phases/, templates/, codekb/, knowledge/\nSwitch to it with /aidlc space teamb.\n",
+          "stderr": "",
+          "expected": "engine space accepts interleaved --project-dir and legacy space-create is rejected",
+          "actual": "Space created: teamb\n  memory/org.md (copied from default), team.md, project.md, phases/, templates/, codekb/, knowledge/\nSwitch to it with /aidlc space teamb.\n\n\n\nerror: unknown command 'space-create'\n\nusage: aidlc <command> [flags]\nFor the full list, run 'aidlc --help'.",
+          "detail": "legacyStatus=2"
+        },
+        {
+          "name": "bolt-reentry",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "bolt",
+            "start",
+            "--name",
+            "binary-bolt",
+            "--batch",
+            "1",
+            "--worktree",
+            "--slug",
+            "binary-bolt",
+            "--project-dir",
+            "aidlc-binary-bolt-NyF9GL"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T",
+          "status": 0,
+          "signal": null,
+          "stdout": "{\"emitted\":\"BOLT_STARTED\",\"bolt_names\":\"binary-bolt\",\"batch\":\"1\",\"walking_skeleton\":false,\"slug\":\"binary-bolt\",\"forked\":[\"STATE_FORKED\",\"AUDIT_FORKED\",\"RUNTIME_GRAPH_FORKED\"]}\n",
+          "stderr": "",
+          "expected": "Bolt forks state, audit, and runtime graph without PATH bun",
+          "actual": "{\"emitted\":\"BOLT_STARTED\",\"bolt_names\":\"binary-bolt\",\"batch\":\"1\",\"walking_skeleton\":false,\"slug\":\"binary-bolt\",\"forked\":[\"STATE_FORKED\",\"AUDIT_FORKED\",\"RUNTIME_GRAPH_FORKED\"]}"
+        },
+        {
+          "name": "swarm-reentry",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "swarm",
+            "prepare",
+            "--batch",
+            "1",
+            "--units",
+            "swarm-unit",
+            "--base",
+            "main",
+            "--project-dir",
+            "aidlc-binary-swarm-wae3i8"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T",
+          "status": 0,
+          "signal": null,
+          "stdout": "{\n  \"batch\": \"1\",\n  \"base\": \"main\",\n  \"concurrency\": 1,\n  \"units\": [\n    {\n      \"unit\": \"swarm-unit\",\n      \"ok\": true,\n      \"worktree_path\": \"/private/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-swarm-wae3i8/.aidlc/worktrees/bolt-c52e3d30_swarm-unit\"\n    }\n  ]\n}\n",
+          "stderr": "",
+          "expected": "Swarm prepare composes worktree and Bolt through the binary",
+          "actual": "{\n  \"batch\": \"1\",\n  \"base\": \"main\",\n  \"concurrency\": 1,\n  \"units\": [\n    {\n      \"unit\": \"swarm-unit\",\n      \"ok\": true,\n      \"worktree_path\": \"/private/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-swarm-wae3i8/.aidlc/worktrees/bolt-c52e3d30_swarm-unit\"\n    }\n  ]\n}"
+        },
+        {
+          "name": "delegate-doctor-data",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "doctor",
+            "--verbose"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 1,
+          "signal": null,
+          "stdout": "AI-DLC doctor\n\nMachine\n  fail  Installed runtime: active version marker unavailable\n        fix: run `aidlc config --harness <name>`\n  fail  Command pointer is missing or does not select an active version\n        fix: re-run `aidlc update --version <version> --from <release-directory>`\n  ok    Rollback target: none recorded\n  ok    Project pin registry: no stale registrations\n  ok    Transaction staging: no abandoned directories\n  ok    Transaction recovery: no quarantined directories\n  warn  Update: update cache is absent\n        fix: run `aidlc update --check`\n\nProject\n  ok    Runtime hook environment: no installed project harness\n  ok    Instruction file: no installed project harness\n  fail  Native command trust is incomplete: 0 Bun-shaped entries, native hooks missing, native permission/trust missing\n        fix: refresh the project with `aidlc config`\n  fail  Hook contract: settings.json unreadable - cannot verify wired hooks\n        fix: run `aidlc config --harness claude` to put back AI-DLC's hooks (your own hooks are kept)\n  ok    Hooks enabled (resolved disableAllHooks is not true)\n  fail  settings.json present\n        fix: run `aidlc config --harness claude` to put back AI-DLC's hooks (your own hooks are kept)\n  ok    AWS_AIDLC_DEFAULT_SCOPE (unset - no project default)\n  ok    Enabled plugins: all enabled (no selection); enabled stage counts: aidlc=30, bootstrap=3\n  ok    Plugin selection flags: harness.json agrees with stage-graph.json\n  ok    Composed plugin surface: all enabled plugin stages and recorded contributions are present\n  fail  workspace shell ready (.claude/ + aidlc/spaces/default/memory/)\n        fix: run `aidlc config --harness <name>` in the project root to recreate the harness tree and workspace shell\n  ok    Submodules: no .gitmodules at workspace root\n  ok    Hooks last fired: record-human-turn 2026-10-10T22:17:37.844Z\n  ok    Human-turn receipts: 0 HUMAN_TURN rows across 1 stage/gate event(s) (advisory) - receipts are not being minted, so presence-gated checkpoints will refuse\n  ok    Hook drops: none recorded\n  ok    Runtime locks: none leaked\n  ok    Orphan worktrees: 0 observed\n  ok    Stale branches: 0 observed (not a git repo)\n  ok    Orphan state files: 0 observed\n  ok    Orphan audit: 0 observed\n  ok    Practices staleness: state file absent (informational)\n  ok    MERGE_DISPATCH: 0 orphan INVOKED (0 bracketed)\n  ok    Composed scope durability: no composed scopes\n  ok    Duplicate producers: every consumed artifact has a single producer\n  ok    Intent registry: all rows match their record dirs\n  ok    Workspace records: not a git repo - nothing to commit\n  ok    Plugins: no AIDLC plugins installed\n  ok    Models: no installed project harness\n  ok    Flags: no installed project harness\n  ok    Providers: no installed project harness\n  ok    Workspace siblings: no installed project harness\n  ok    AI-DLC files: no installed project harness\n  warn  [runtime-graph-missing] runtime-graph.json is missing for the active workflow.\n        fix: No compiled runtime graph. Re-run `aidlc engine runtime compile`. If it goes missing again, AI-DLC's hooks are not running here: doctor's hooks check says what to do.\n\nFramework integrity\n  ok    Enabled stage compile coverage: every enabled stage file is in the full graph\n  ok    Agent filename/name consistency: all agent files match declared names\n  ok    Scope filename/name consistency: all scope files match declared names\n  ok    Cycle detection: 0 cycles\n  ok    Orphan stage files: 33 graph entries all have files\n  ok    Uncompiled stage files: 0 stage files missing from the compiled graph\n  ok    Scope validation: 11 scopes valid (47 advisories)\n  ok    Schema validation: 33/33 stages validated\n  ok    Graph references: 122 artifacts + edges resolved\n  ok    Keyword overlap: no conflicts\n  ok    Rule drift: org rules absent (informational)\n  ok    Paired sensor coverage: no sensor-bound rules (0 feedforward-only)\n\n6 problems, 2 warnings.\nWarnings are advisory - if everything works, ignore them.\n",
+          "stderr": "",
+          "expected": "doctor report with a non-zero complete schema count and no compiled-data crash signatures",
+          "actual": "Schema validation: 33/33 stages validated",
+          "detail": "runs doctor from an isolated temporary project against executable-relative runtime data"
+        },
+        {
+          "name": "dev-spawn-grep",
+          "ok": true,
+          "kind": "inspection",
+          "expected": "no marker-free literal bun spawn in the dispatcher source",
+          "actual": 0,
+          "detail": "sourceBytes=122581; markerPresentInSource=true; badLines=[]; pathless-version is the runtime gate for the native version path"
+        },
+        {
+          "name": "pathless-version",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "version"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-standalone-s3EKAf",
+          "status": 0,
+          "signal": null,
+          "stdout": "aidlc 2.11.0 (runtime 2.11.0)\n",
+          "stderr": "",
+          "expected": "2.11.0",
+          "actual": "2.11.0",
+          "detail": "runs version with PATH empty to prove the native version path does not need a PATH bun"
+        },
+        {
+          "name": "pathless-next-env-scope",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "orchestrate",
+            "next",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-pathless-next-env-scope-CRIaxf"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-pathless-next-env-scope-CRIaxf",
+          "status": 0,
+          "signal": null,
+          "stdout": "{\"kind\":\"error\",\"message\":\"No workflow state found (no active intent). Start one by describing what to build (/aidlc \\\"build the auth service\\\") or by naming a scope (/aidlc --scope <scope>).\"}\n",
+          "stderr": "",
+          "expected": "error directive containing No workflow state found",
+          "actual": "error: No workflow state found (no active intent). Start one by describing what to build (/aidlc \"build the auth service\") or by naming a scope (/aidlc --scope <scope>)."
+        },
+        {
+          "name": "native-directive-invocation",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "orchestrate",
+            "next",
+            "--status",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-native-directive-invocation-Si8ycC"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-native-directive-invocation-Si8ycC",
+          "status": 0,
+          "signal": null,
+          "stdout": "{\"kind\":\"print\",\"message\":\"Run `aidlc engine status`, print its output verbatim, then stop. This is a read-only utility, NOT workflow work: do NOT run `next` and do NOT advance, resume, or run any workflow stage.\"}\n",
+          "stderr": "",
+          "expected": "print directive containing aidlc engine status and not bun ",
+          "actual": "print: Run `aidlc engine status`, print its output verbatim, then stop. This is a read-only utility, NOT workflow work: do NOT run `next` and do NOT advance, resume, or run any workflow stage."
+        },
+        {
+          "name": "pathless-park",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "orchestrate",
+            "park",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-pathless-park-EU4thN"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-pathless-park-EU4thN",
+          "status": 0,
+          "signal": null,
+          "stdout": "{\"kind\":\"error\",\"message\":\"Cannot park the workflow: State file not found: /var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-pathless-park-EU4thN/aidlc/spaces/default/intents/aidlc-state.md\"}\n",
+          "stderr": "",
+          "expected": "error directive containing State file not found",
+          "actual": "error: Cannot park the workflow: State file not found: /var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-pathless-park-EU4thN/aidlc/spaces/default/intents/aidlc-state.md"
+        },
+        {
+          "name": "pathless-single-audit",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "orchestrate",
+            "next",
+            "--single",
+            "--stage",
+            "requirements-analysis",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-pathless-single-audit-uGvFyK"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-pathless-single-audit-uGvFyK",
+          "status": 0,
+          "signal": null,
+          "stdout": "{\"kind\":\"load-steering\",\"stage\":\"requirements-analysis\",\"bundle\":\"sha256:933fcf6e5edd4d6cd5d7e87f5159593aa9fda4f5a6377f59e93e5746cff2cc5a\",\"part\":1,\"parts\":1,\"receipt\":\"MZa6hxoY\",\"next\":\"aidlc engine orchestrate continue MZa6hxoY\",\"rules_content\":[{\"path\":\"aidlc/spaces/default/memory/org.md\",\"text\":\"# Org-Level Rules\\n\\n> Framework defaults. Read with `team.md` and `project.md` from the active\\n> space. The resolver loads every applicable layer; narrower layers add\\n> specialisation and must not contradict broader policy.\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/org.md\",\"text\":\"## Way of Working\\n\\nWe use **trunk-based development**. All work merges to `main` via\\nshort-lived feature branches (typically resolved within 1-2 days).\\nLong-lived branches accumulate merge debt; we avoid them.\\n\\nFor Construction worktrees, the worktree base branch is `main` and the\\nmerge target is `main`.\\n\\nIf our project requires multiple environments (staging, production), we\\nstill keep one trunk and gate releases via tags or environment-specific\\ndeployment configs — not via long-lived release branches.\\n\\nWe **squash-merge** Bolt branches into `main`. Each Bolt becomes one\\ncommit on the trunk, named by the Bolt slug, with the full Bolt commit\\nhistory preserved on the source branch until the worktree is discarded.\\n\\nSquash gives us a clean linear `main` history that maps 1:1 to\\ndelivery-planning's Bolt sequence. We accept the trade-off of losing\\nintermediate commits on `main` because the audit log preserves the full\\nevent sequence anyway.\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/org.md\",\"text\":\"## Walking Skeleton\\n\\nWhen practices are scope-dependent, select the walking skeleton only when the\\nactive scope declares `skeleton: on`. In checkpoint-enabled solo work with a\\nnon-empty Unit DAG, the first Unit is the smallest working integrated slice.\\nRun it through all applicable per-unit stages, including Code Generation, before\\nlater Units even if stage-major was selected. Verify it with the intent's recorded,\\nhuman-authorized Construction Verification Command, which must demonstrate the\\nproject's real end-to-end result, then require the human's skeleton checkpoint\\napproval. A first design-stage review does not demonstrate a working skeleton.\\n\\nFor `skeleton: off`, skip the skeleton ceremony: no bootstrap checkpoint; offer\\nthe explicit Construction choice at entry. For skeleton-on, offer it after the verified,\\nhuman-approved skeleton. Follow `construction_policy.offer_autonomy`; never\\nrepeat a recorded choice. **Continue automatically** records `autonomous`;\\n**Review each checkpoint** records `gated`. On-demand requests can grant or\\nrevoke autonomy during Construction. Ordinary completion approvals follow that\\nchoice; Plan Approval, summary confirmation, verification command selection,\\nand failures remain human stops.\\n\\nExisting workflows without `Construction Checkpoints` retain their legacy\\nfirst-stage and late stage approvals. Team-owned Unit gates retain their own\\npolicy; no Unit DAG means no skeleton checkpoint ceremony.\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/org.md\",\"text\":\"## Testing Posture\\n\\nWe treat tests as a first-class deliverable in every Bolt. The specific\\nmethodology (TDD, BDD, ATDD, or classic test-after) is affirmed at\\npractices-discovery and recorded in `team.md` under this heading with explicit\\n`Methodology` and `Ordering` fields; Code Generation resolves those fields\\nindependently from coverage, tooling, and scope notes.\\n\\nWhen no posture has been affirmed, our default per scope is:\\n- **Methodology**: test-after\\n- **Ordering**: implement each applicable testable layer, then write and run\\n  that layer's tests.\\n- `mvp`, `enterprise`, `feature`, `infra`, `classic` add an 80% line-coverage\\n  floor and CI execution before merge.\\n- `bugfix`, `security-patch` add a targeted regression for the specific\\n  bug/vulnerability and require the existing suite to remain green.\\n- `express` uses the Minimal strategy: requirement-driven unit tests (one per\\n  requirement, with a happy-path floor per component); existing tests remain\\n  green.\\n- `poc`, `refactor`, `workshop` add no extra new-test floor and require the\\n  existing suite to remain green.\\n\\nThe active `Test Strategy` still applies in every scope and determines test\\nvolume/types. Scope floors are additive; they never reduce or replace the\\nselected strategy.\\n\\nBuild and Test verifies defined coverage floors and affirmed quality targets;\\nthey may not be weakened to make a step pass.\\n\\nAffirm a stricter posture in `team.md` if the team commits to one.\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/org.md\",\"text\":\"## Guard Policy\\n\\n<!-- Mode: strict, relaxed, or off. Strict here holds for every intent in this space, whatever one person asks in chat; relaxed or off here applies to every intent whose policy came from its scope, unless a narrower layer or the person sets another; changing this line changes it. A section under the retired Change Control heading, written by an earlier release, is still read. -->\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/org.md\",\"text\":\"## Deployment\\n\\nWe **deploy on merge** to staging environments. Production deploys gate\\non a separate manual approval — typically tech lead + product owner\\nsign-off in CodePipeline or a CD platform's environment protection.\\n\\nTeams that have invested in test coverage and observability sometimes\\ngraduate to continuous deployment to production (every commit\\nauto-deploys); that's a team decision, not a framework default.\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/org.md\",\"text\":\"## Code Style\\n\\nWe defer to project-level configurations:\\n- Formatter: Prettier (JS/TS), Black (Python), `gofmt` (Go), or\\n  language-default. Configured in repo root (`.prettierrc`,\\n  `pyproject.toml`, etc.).\\n- Linter: ESLint, Ruff, golangci-lint, etc. Run in CI before merge;\\n  failure blocks the PR.\\n- Naming conventions: language idiomatic (camelCase for JS/TS,\\n  snake_case for Python, etc.). No project-wide rename rules unless\\n  team affirms one.\\n\\nWhen the framework makes a code-style suggestion, agents read the\\nproject's linter config first; the agent's suggestion only fires if the\\nlinter doesn't already cover it.\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/org.md\",\"text\":\"## Forbidden\\n\\n<!-- Things agents must never do -->\\n<!-- Example: Do not ask questions about topics already decided in previous stages -->\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/org.md\",\"text\":\"## Mandated\\n\\n- **Conversation language — resolution**: Every artifact a person reads or reviews is written in the workflow's established conversation language. The orchestrator resolves that language from the human's substantive prose and MUST state it as a `Conversation language: <language>` line in every delegated brief, because a delegated agent or reviewer never sees the conversation and some stages hand it nothing else (a greenfield run of a stage whose `consumes` are all `conditional_on: brownfield` reaches its lead with no upstream artifact at all). Delegated agents and reviewers resolve the language in this order and stop at the first source that answers: (1) the `Conversation language:` line in your brief — AUTHORITATIVE for delegated work, because the orchestrator regenerates it on every dispatch from the live conversation and it is therefore never staler than a persisted rule; (2) an explicit conversation-language rule in `aidlc/spaces/<active-space>/memory/project.md` — the FALLBACK for a brief that states no language, and the ONLY file a language switch is ever persisted to, so `project.md` ALWAYS outranks a conversation-language rule in `team.md`, which can only ever be a team default and NEVER the record of a switch (cross-file position is NOT recency: the runtime rule chain concatenates `org → team → project → phase`, so `team.md` reaches you before `project.md` in every bundle no matter which was written last, and the winner is this stated precedence rather than the later position); within `project.md`, when it carries more than one conversation-language rule the LAST one under `## Corrections` is the current one (this tie-break governs conversation-language rules ONLY and leaves the additive rule model untouched; the learnings write path appends and never replaces, so a superseded language rule can still be on disk); (3) the verbatim initial description decoded from `<record>/project-description.json`, falling back to `## Project Information` → `**Project**` in legacy records, when it carries a real language signal (not the `[Project description]` placeholder, not a bare identifier or path); (4) any artifact or draft you were handed — the directive's `consumes[]` contracts, the artifact you were dispatched to review, or the lead draft you were dispatched against. Every source is readable on every harness: the rule bundle carries (2) through the dispatch-rules hook on Claude, Codex, and opencode and through always-included agent resources or workspace steering on Kiro, and neither `aidlc-state.md` nor the handed artifacts fall inside the per-unit reviewer read-scope bound.\\n- **Conversation language — stability**: The established conversation language holds for the whole session, and inside that session for every stage, dispatch, reviewer pass and approval gate of the workflow — nothing but a session boundary ends it. A turn that carries no language signal never changes it — `Approve`, `Looks correct`, an option letter or number, pasted code, a quoted error or stack trace, a bare file path or identifier. Only an explicit human request to switch languages changes it, and that switch takes effect IMMEDIATELY: everything written from that point follows the new language, and the orchestrator states the new language in the `Conversation language:` line of every subsequent delegated brief. Persistence is a separate, later step and never the activation step: the §13 learnings ritual is the ONLY sanctioned write path for persisting a conversation-language switch into `aidlc/spaces/<active-space>/memory/` and it is human-gated, so NEVER edit a memory file directly to record a switch — a direct write skips the tool's audit event, its duplicate key, and its admission conflict-check, and \\\"do not wait for persistence\\\" is never licence to bypass that gate (this bounds the persistence of a language switch and forbids a direct agent edit; it does not govern the deterministic memory writers a stage invokes by contract, such as `aidlc-state.ts practices-promote`, which own the stamped `## Mandated` / `## Forbidden` rules and the five replaced `team.md` sections rather than the `## Corrections` language record). When `directive.ceremony.learnings` is `off`, no language-switch persistence happens and no direct memory edits replace the ritual; the current session still uses the new language. When the enabled `learnings` protocol module offers it, the switch is recorded as a single-line rule under `## Corrections` in `project.md` and NEVER in `team.md`, so the cross-file precedence in (2) never has to arbitrate one switch against another; when the human declines, it is simply not persisted, and the `Conversation language:` line the orchestrator states in every brief carries it for the rest of the session. A session boundary is where that carrier ends, and a workflow outlives it: the resume context the engine injects at session start carries scope, phase, stage, status, agent and next action but NO language, so on the FIRST turn of a new session the orchestrator MUST re-resolve the language before it dispatches anything — the persisted rule from (2), else the human-readable artifacts this workflow has already produced, which record the language the human was last served in, else the verbatim initial description from (3) — and when every one of those is silent it ASKS the human rather than defaulting to English. Re-resolving is not a switch: it is never announced as one and never persisted as one. An unpersisted switch therefore does not outlive its session, which is exactly what persistence buys — a human who wants a switch to survive a resume accepts the ritual, and a human who declines is served correctly for the rest of the session and re-resolved from disk in the next one. A persisted rule NEVER outranks the brief, and never outranks a later explicit human request to switch: it is the fallback for a brief that states no language, and because the learnings write path appends rather than replaces, a superseded language rule can outlive the switch — the LAST conversation-language rule under `## Corrections` is the current one.\\n- **Conversation language — what to localize**: Write in the resolved conversation language every artifact a person reads or reviews — requirements, user stories, plans, specs, reviews, questions, discovered practices, affirmed team and project rules, evidence, decision rationale, and any other explanatory prose — and the agent's own human-facing conversational output in every turn, for the orchestrator and delegated agents alike: conversational chat messages, status updates, progress reports, and transitional narration between tool calls. Structured-question `prompt`, `header`, `options[].description`, and free-text follow-ups are human-facing prose and follow the same rule; only `options[].label` literals the protocol spells verbatim are preserved tokens. This includes the descriptive text of a rule shaped as `ALWAYS …` / `NEVER …`, where the leading marker is a fixed token but the sentence it introduces is not. A Markdown artifact is not English merely because a tool parses part of it: localize the prose that surrounds a preserved token. Verbatim human input echoed into an artifact is always kept exactly as the human wrote it.\\n- **Conversation language — preserved tokens**: Any literal a stage file or the stage protocol spells in backticks and tells you to write exactly is a fixed token — keep it English, character for character, and localize only the prose around it. This covers option labels and sentinel VALUES, not just syntax: `[Answer]:` tags with their option letters, the mandatory final option `X. Other (please specify)`, the assumption-confirmation options `A. Accept assumptions` / `B. Convert to follow-up questions` (the engine compares the filled answer against the literal), the `None.` / `None` sentinels under `## Assumptions & Open Questions` and `## Positions`, the `AGREE:` / `OBJECT:` position prefixes, and the `**Collaborator:** <agent-slug>` first line the engine matches exactly before it accepts a stage. Glossing such a literal when you PRESENT it to the human is fine; what you WRITE into an artifact is the literal itself. Also preserved: the source-register tags `[desc]`, `[scope]`, `[assumption]`, `[Q<n>]`, `[memory:M<n>]` with their literal prefixes (`Initial description:`, `Workflow-selected scope:`); the H2 headings the claim-sources sensor matches verbatim (`## Sources`, `## Assumptions & Open Questions`, `## Assumption Confirmation`, `## Review`) plus any other H2 taken from a stage template, which the `required-sections` sensor matches verbatim whenever a template is supplied (the framework ships none, so a team's `aidlc/spaces/<active-space>/memory/templates/` is what arms that check); the reviewer verdicts `READY` and `NOT-READY`; YAML keys and enum values inside fenced blocks (`units`, `name`, `kind`, `depends_on`, `service | spec | ui | packaging | library`); the field labels, status values, and checkbox states of `aidlc-state.md` and the audit shards; the verbatim initial description decoded from `<record>/project-description.json` (the `**Project**` state field is only its safe single-line preview); stable IDs (`FR-1`, `ENT-001`, `BR1.1`); enum and classification values; code and identifiers; file paths; mermaid keywords; and cross-references.\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/org.md\",\"text\":\"## Corrections\\n\\n<!-- Self-learning loop appends here. -->\\n<!-- Use team.md to record team-wide additions and project.md for\\n     project-specific specialisation. The loader resolves org → team →\\n     project at session start and retains every applicable rule. -->\\n\"},{\"path\":\"aidlc/spaces/default/memory/phases/inception.md\",\"text\":\"# Inception Phase Guardrails\\n\\nThese rules apply to every stage whose `phase: inception` declaration\\nimports them as the matching phase rule.\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/phases/inception.md\",\"text\":\"## Requirements Quality\\n\\n- Requirements must be testable and verifiable — each requirement must have a clear pass/fail criterion\\n- Avoid ambiguous language (\\\"fast\\\", \\\"easy\\\", \\\"user-friendly\\\") unless paired with a measurable threshold\\n- Never carry forward unresolved contradictions between requirements; surface and resolve them explicitly\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/phases/inception.md\",\"text\":\"## Architecture Standards\\n\\n- Architecture decisions require trade-off analysis — document at least two alternatives considered\\n- All ADRs must include: Context, Decision, Consequences, and Alternatives Rejected\\n- Security and compliance implications must be addressed for every major architectural decision\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/phases/inception.md\",\"text\":\"## User Stories\\n\\n- User stories follow Given/When/Then (BDD) format for acceptance criteria\\n- Each story must identify the actor, the action, and the business value\\n- Stories must be independently testable — avoid stories that only make sense in sequence\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/phases/inception.md\",\"text\":\"## Traceability\\n\\n- Every requirement must trace back to an ideation artifact (intent, feasibility, or scope)\\n- Do not introduce new requirements in inception without documenting their origin\\n\\n\"},{\"path\":\"aidlc/spaces/default/memory/phases/inception.md\",\"text\":\"## Corrections\\n\"}]}\n",
+          "stderr": "",
+          "expected": "pathless isolated next emits stage work and records its synthetic STAGE_STARTED boundary",
+          "actual": "load-steering:requirements-analysis; audit=true"
+        },
+        {
+          "name": "hook-validate-state",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "hook",
+            "validate-state"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-hook-U2euc2",
+          "status": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "expected": "compiled hook route writes validate-state heartbeat",
+          "actual": "heartbeat written"
+        },
+        {
+          "name": "hook-review-freeze",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "hook",
+            "review-freeze"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-hook-0TXnvw",
+          "status": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "expected": "compiled hook route writes review-freeze heartbeat",
+          "actual": "heartbeat written"
+        },
+        {
+          "name": "hook-plan-approval-guard",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "hook",
+            "plan-approval-guard"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-plan-hook-9aofE1",
+          "status": 2,
+          "signal": null,
+          "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Code generation cannot start because its Plan Approval authority is ambiguous or stale. the current state has no matching v2 code-generation active directive. Run `aidlc engine orchestrate next` exactly as written, as a command of its own (no `cd` before it, no pipe or second command after it), and follow the step it prints.\"}}\n",
+          "stderr": "Code generation cannot start because its Plan Approval authority is ambiguous or stale. the current state has no matching v2 code-generation active directive. Run `aidlc engine orchestrate next` exactly as written, as a command of its own (no `cd` before it, no pipe or second command after it), and follow the step it prints.\n",
+          "expected": "compiled hook route blocks an unapproved developer dispatch",
+          "actual": "Code generation cannot start because its Plan Approval authority is ambiguous or stale. the current state has no matching v2 code-generation active directive. Run `aidlc engine orchestrate next` exactly as written, as a command of its own (no `cd` before it, no pipe or second command after it), and follow the step it prints."
+        },
+        {
+          "name": "statusline",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "statusline"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-statusline-wczDsn",
+          "status": 0,
+          "signal": null,
+          "stdout": "[AIDLC] ready | test \u001b[32mctx:5%\u001b[0m\n",
+          "stderr": "",
+          "expected": "non-empty compiled statusline output",
+          "actual": "[AIDLC] ready | test \u001b[32mctx:5%\u001b[0m"
+        },
+        {
+          "name": "adapter-codex-validate-state",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "adapter",
+            "codex",
+            "validate-state"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-codex-H2lYlL",
+          "status": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "expected": "Codex adapter invokes validate-state",
+          "actual": "heartbeat written"
+        },
+        {
+          "name": "adapter-codex-plan-approval-guard",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "adapter",
+            "codex",
+            "plan-approval-guard"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-plan-codex-X1cAeG",
+          "status": 2,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Code generation cannot start because its Plan Approval authority is ambiguous or stale. the current state has no matching v2 code-generation active directive. Run `aidlc engine orchestrate next` exactly as written, as a command of its own (no `cd` before it, no pipe or second command after it), and follow the step it prints.\n",
+          "expected": "compiled codex adapter blocks an unapproved developer dispatch",
+          "actual": "Code generation cannot start because its Plan Approval authority is ambiguous or stale. the current state has no matching v2 code-generation active directive. Run `aidlc engine orchestrate next` exactly as written, as a command of its own (no `cd` before it, no pipe or second command after it), and follow the step it prints."
+        },
+        {
+          "name": "adapter-kiro-plan-approval-guard",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "adapter",
+            "kiro",
+            "plan-approval-guard"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-plan-kiro-FQYNiG",
+          "status": 2,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Code generation cannot start because its Plan Approval authority is ambiguous or stale. the current state has no matching v2 code-generation active directive. Run `aidlc engine orchestrate next` exactly as written, as a command of its own (no `cd` before it, no pipe or second command after it), and follow the step it prints.\n",
+          "expected": "compiled kiro adapter blocks an unapproved developer dispatch",
+          "actual": "Code generation cannot start because its Plan Approval authority is ambiguous or stale. the current state has no matching v2 code-generation active directive. Run `aidlc engine orchestrate next` exactly as written, as a command of its own (no `cd` before it, no pipe or second command after it), and follow the step it prints."
+        },
+        {
+          "name": "adapter-cursor-validate-state",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "adapter",
+            "cursor",
+            "validate-state"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-cursor-9LslFw",
+          "status": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "expected": "Cursor adapter invokes validate-state",
+          "actual": "heartbeat written"
+        },
+        {
+          "name": "adapter-copilot-validate-state",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "adapter",
+            "copilot",
+            "validate-state"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-copilot-PGSScu",
+          "status": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "expected": "Copilot adapter invokes validate-state through the compiled dispatcher",
+          "actual": "heartbeat written"
+        },
+        {
+          "name": "adapter-copilot-2.8.0-project-validate-state",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "hook",
+            "copilot-adapter",
+            "validate-state"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-copilot-280-ZYysU9",
+          "status": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "expected": "2.8.0 Copilot wiring runs validate-state through the packaged adapter, not the retained copy",
+          "actual": "heartbeat written"
+        },
+        {
+          "name": "native-hook-ignores-project-copy",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "hook",
+            "validate-state"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-native-hook-ignores-project-copy-Nytfqa",
+          "status": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "expected": "compiled engine runs its packaged aidlc-validate-state.ts, not the project copy",
+          "actual": "packaged copy ran"
+        },
+        {
+          "name": "native-adapter-ignores-project-copy",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "adapter",
+            "codex",
+            "validate-state"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-native-adapter-ignores-project-copy-jNNvxL",
+          "status": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "expected": "compiled engine runs its packaged aidlc-codex-adapter.ts, not the project copy",
+          "actual": "packaged copy ran"
+        },
+        {
+          "name": "native-hook-rejects-escaped-distribution",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "hook",
+            "validate-state"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-native-hook-rejects-escaped-distribution-LaMVZQ",
+          "status": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "aidlc engine hook validate-state: not available in this install\n",
+          "expected": "an escaping harness name runs no project file",
+          "actual": "aidlc engine hook validate-state: not available in this install"
+        },
+        {
+          "name": "native-statusline-uses-project-copy",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "statusline"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-native-statusline-uses-project-copy-AQdCcE",
+          "status": 0,
+          "signal": null,
+          "stdout": "[AIDLC] ready | test \u001b[32mctx:5%\u001b[0m\n",
+          "stderr": "",
+          "expected": "compiled statusline runs the customized project copy",
+          "actual": "project copy ran"
+        },
+        {
+          "name": "routed-project-dir",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "hook",
+            "validate-state",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-route-target-XhmzN6"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-route-cwd-lj172z",
+          "status": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "expected": "hook, statusline, and adapter honor explicit --project-dir",
+          "actual": "hook=0; createResult=0; statusline=0; adapter=0; targetHeartbeat=true"
+        },
+        {
+          "name": "bun-compiled-parity",
+          "ok": true,
+          "kind": "inspection",
+          "expected": "identical argv behavior, stdout, stderr, signal, and exit status",
+          "actual": 0,
+          "detail": "hook, statusline, all host adapters, and generated-surface routes match"
+        },
+        {
+          "name": "final-layout-config-dry-run",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "config",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-final-layout-DFntM6/project",
+            "--harness",
+            "claude",
+            "--mcp",
+            "none",
+            "--quiet",
+            "--dry-run"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-final-layout-DFntM6/project",
+          "status": 0,
+          "signal": null,
+          "stdout": "config plan for /var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-final-layout-DFntM6/project: create=324 update=0 merge=0 preserve=1 remove=0 conflict=0\n",
+          "stderr": "",
+          "expected": "dry-run plans a fresh Claude projection without creating it",
+          "actual": "config plan for /var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-final-layout-DFntM6/project: create=324 update=0 merge=0 preserve=1 remove=0 conflict=0"
+        },
+        {
+          "name": "final-layout-doctor-json",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "doctor",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-final-layout-DFntM6/project",
+            "--json"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-final-layout-DFntM6/project",
+          "status": 1,
+          "signal": null,
+          "stdout": "{\"schemaVersion\":1,\"ok\":false,\"code\":1,\"status\":\"failed\",\"message\":\"64 passed, 3 warnings, 2 failed\",\"data\":{\"checks\":[{\"pass\":true,\"label\":\"Runtime hook PATH: bun is not required by the selected projection\"},{\"pass\":true,\"label\":\"Runtime hook PATH: aidlc -> /Users/revenantonthemission/.local/bin/aidlc (non-interactive baseline)\"},{\"pass\":false,\"severity\":\"warn\",\"label\":\"Harness CLI: claude is missing\",\"fix\":\"Install Claude Code and ensure `claude --version` works.\"},{\"pass\":true,\"label\":\"Instruction file: framework-owned file intact\"},{\"pass\":false,\"label\":\"Installed runtime: active version marker unavailable\",\"fix\":\"run `aidlc config --harness <name>`\"},{\"pass\":false,\"label\":\"Command pointer is missing or does not select an active version\",\"fix\":\"re-run `aidlc update --version <version> --from <release-directory>`\"},{\"pass\":true,\"label\":\"Rollback target: none recorded\"},{\"pass\":true,\"label\":\"Project pin registry: no stale registrations\",\"fix\":\"run a pinned command from the moved project to self-heal its registration\"},{\"pass\":true,\"label\":\"Native command trust: host hooks and permission entries select the installed `aidlc` command\",\"fix\":\"refresh the project with `aidlc config`\"},{\"pass\":true,\"label\":\"Transaction staging: no abandoned directories\",\"fix\":\"finish any active AI-DLC command, then rerun the command to trigger the safe staging sweep\"},{\"pass\":true,\"label\":\"Transaction recovery: no quarantined directories\",\"fix\":\"inspect each listed directory, recover any needed files, then remove the directory manually\"},{\"pass\":true,\"label\":\"Project runtime stamp: 2.11.0 (claude)\",\"fix\":\"run `aidlc config` or select the machine release with `aidlc use 2.11.0`\"},{\"pass\":true,\"label\":\"aidlc-continue-workflow.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-deliver-stage-rules.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-fold-usage.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-log-subagent.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-plan-approval-guard.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-rebuild-stage-graph.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-record-human-turn.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-review-freeze.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-reviewer-scope.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-run-sensors.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-session-end.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-session-start.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-state-transition-guard.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-statusline.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-sync-workflow-state.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-validate-state.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"aidlc-write-audit-log.ts present\",\"fix\":\"verify file exists in .claude/hooks/\"},{\"pass\":true,\"label\":\"Hooks enabled (resolved disableAllHooks is not true)\"},{\"pass\":true,\"label\":\"settings.json present\",\"fix\":\"run `aidlc config --harness claude` to put back AI-DLC's hooks (your own hooks are kept)\"},{\"pass\":true,\"label\":\"AWS_AIDLC_DEFAULT_SCOPE (unset - no project default)\"},{\"pass\":true,\"label\":\"Enabled plugins: all enabled (no selection); enabled stage counts: aidlc=30, bootstrap=3\"},{\"pass\":true,\"label\":\"Plugin selection flags: harness.json agrees with stage-graph.json\"},{\"pass\":true,\"label\":\"Enabled stage compile coverage: every enabled stage file is in the full graph\"},{\"pass\":true,\"label\":\"Composed plugin surface: all enabled plugin stages and recorded contributions are present\"},{\"pass\":true,\"label\":\"workspace shell ready (.claude/ + aidlc/spaces/default/memory/)\",\"fix\":\"run `aidlc config --harness claude` in the project root to recreate the harness tree and workspace shell\"},{\"pass\":true,\"label\":\"Agent filename/name consistency: all agent files match declared names\"},{\"pass\":true,\"label\":\"Scope filename/name consistency: all scope files match declared names\"},{\"pass\":true,\"label\":\"Submodules: no .gitmodules at workspace root\"},{\"pass\":false,\"severity\":\"warn\",\"label\":\"AIDLC hooks have not run in this project yet\",\"fix\":\"This is expected before your first Claude Code chat in this folder. If you already started one, set \\\"disableAllHooks\\\": false in this project's .claude/settings.local.json (it works in the same chat). If you started Claude Code with a setting that turns hooks off, start it again without that setting; if AI-DLC was set up while Claude Code was open, exit Claude Code and start it again in this folder. Then run doctor again.\"},{\"pass\":true,\"label\":\"Hook drops: none recorded\"},{\"pass\":true,\"label\":\"Runtime locks: none leaked\"},{\"pass\":true,\"label\":\"Orphan worktrees: 0 observed\"},{\"pass\":true,\"label\":\"Stale branches: 0 observed (not a git repo)\"},{\"pass\":true,\"label\":\"Orphan state files: 0 observed\"},{\"pass\":true,\"label\":\"Orphan audit: 0 observed\"},{\"pass\":true,\"label\":\"Practices staleness: state file absent (informational)\"},{\"pass\":true,\"label\":\"MERGE_DISPATCH: 0 orphan INVOKED (0 bracketed)\"},{\"pass\":true,\"label\":\"Cycle detection: 0 cycles\"},{\"pass\":true,\"label\":\"Orphan stage files: 33 graph entries all have files\"},{\"pass\":true,\"label\":\"Uncompiled stage files: 0 stage files missing from the compiled graph\"},{\"pass\":true,\"label\":\"Scope validation: 11 scopes valid (47 advisories)\"},{\"pass\":true,\"label\":\"Composed scope durability: no composed scopes\"},{\"pass\":true,\"label\":\"Schema validation: 33/33 stages validated\"},{\"pass\":true,\"label\":\"Graph references: 122 artifacts + edges resolved\"},{\"pass\":true,\"label\":\"Duplicate producers: every consumed artifact has a single producer\"},{\"pass\":true,\"label\":\"Keyword overlap: no conflicts\"},{\"pass\":true,\"label\":\"Rule drift: no team/project rule overlaps org policy\"},{\"pass\":true,\"label\":\"Paired sensor coverage: no sensor-bound rules (0 feedforward-only)\"},{\"pass\":true,\"label\":\"Intent registry: all rows match their record dirs\"},{\"pass\":true,\"label\":\"Workspace records: not a git repo - nothing to commit\"},{\"pass\":false,\"severity\":\"warn\",\"label\":\"Update: update cache is absent\",\"fix\":\"run `aidlc update --check`\"},{\"pass\":true,\"label\":\"Plugins: no AIDLC plugins installed\"},{\"pass\":true,\"label\":\"Models: recorded policy is expressible\"},{\"pass\":true,\"label\":\"Flags: no recorded project answers\"},{\"pass\":true,\"label\":\"Providers: using shipped fallback; no recorded answers\"},{\"pass\":true,\"label\":\"Workspace siblings: complete projection is present\"},{\"pass\":true,\"label\":\"AI-DLC files: unchanged since AI-DLC wrote them\"}],\"passed\":64,\"warnings\":3,\"failed\":2,\"parked_attempts\":[]}}\n",
+          "stderr": "",
+          "expected": "config apply succeeds and doctor --json emits a complete health envelope",
+          "actual": "config=0; doctor=1; json=true"
+        },
+        {
+          "name": "final-layout-versions-list",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "system",
+            "versions",
+            "list"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-final-layout-DFntM6/project",
+          "status": 0,
+          "signal": null,
+          "stdout": "no retained versions\n",
+          "stderr": "",
+          "expected": "no retained versions",
+          "actual": "no retained versions"
+        },
+        {
+          "name": "final-layout-plugin-list",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "engine",
+            "plugin",
+            "list",
+            "--json",
+            "--project-dir",
+            "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-final-layout-DFntM6/project"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-final-layout-DFntM6/project",
+          "status": 0,
+          "signal": null,
+          "stdout": "{\"schemaVersion\":1,\"ok\":true,\"code\":0,\"status\":\"ok\",\"message\":\"0 plugin state(s)\",\"data\":{\"inventory\":{\"capability\":\"full-inventory\",\"harness\":\"claude\",\"source\":\"/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-final-layout-DFntM6/installed_plugins.json\",\"installed\":[],\"invalid\":[]},\"statuses\":[]}}\n",
+          "stderr": "",
+          "expected": "plugin list emits successful JSON",
+          "actual": "status=0; json=true"
+        },
+        {
+          "name": "final-layout-unix-completions",
+          "ok": true,
+          "kind": "command",
+          "command": [
+            "/private/tmp/docsuri-aidlc-runtime-fix/build/binaries/native/aidlc",
+            "system",
+            "completions",
+            "bash"
+          ],
+          "cwd": "/var/folders/59/1zr18zjd30n_w8nnxdq2r_qm0000gn/T/aidlc-binary-final-layout-DFntM6/project",
+          "status": 0,
+          "signal": null,
+          "stdout": "# generated by the AI-DLC installer\n_aidlc_completions() {\n  local cur=\"${COMP_WORDS[COMP_CWORD]}\" words=\"\" key\n  if [ \"${COMP_CWORD}\" -eq 1 ]; then\n    words=\"config doctor help uninstall update use version\"\n  elif [[ \"$cur\" == --* ]]; then\n    key=\"${COMP_WORDS[1]}\"\n    [ \"${COMP_CWORD}\" -ge 3 ] && key=\"$key ${COMP_WORDS[2]}\"\n    case \"$key\" in\n      'doctor') words=\"--ca-bundle --check-updates --export --json --no-color --offline --output --quiet --release-base-url --verbose\" ;;\n      'version') words=\"--json --no-color\" ;;\n      'help') words=\"--all --no-color\" ;;\n      'config') words=\"--acknowledge --agent --bypass --ca-bundle --channel --check --clear-bypass --completions --deciding-effort --default-scope --download --dry-run --effort --force --from --global --harness --hook-debug --json --local --mark-done --mcp --model --no-color --offline --opencode-default --pin --plan-token --plugins --preset --profile --project --project-dir --provider --question-retention-days --quiet --record-paths --region --release-base-url --reset --reviewing-effort --save-as --sensor-timeout-ms --session-model --show --swarm --unpin --writing-up-effort --yes\" ;;\n      'update') words=\"--ca-bundle --channel --check --dry-run --from --json --no-color --offline --quiet --release-api-url --release-base-url --version --yes\" ;;\n      'use') words=\"--ca-bundle --from --json --no-color --offline --quiet --release-base-url --yes\" ;;\n      'uninstall') words=\"--json --no-color --purge --quiet --yes\" ;;\n    esac\n  elif [ \"${COMP_CWORD}\" -eq 2 ]; then\n    case \"${COMP_WORDS[1]}\" in\n\n    esac\n  fi\n  COMPREPLY=( $(compgen -W \"$words\" -- \"$cur\") )\n}\ncomplete -F _aidlc_completions aidlc\n",
+          "stderr": "",
+          "expected": "bash, zsh, and fish completions all render",
+          "actual": "0,0,0"
+        }
+      ],
+      "verification": {
+        "status": "VERIFIED",
+        "mode": "full-runtime",
+        "hostTarget": "darwin-arm64",
+        "detail": "artifact executed the complete native and final-layout gate set"
+      }
+    }
+  ]
+}

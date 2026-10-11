@@ -1,0 +1,144 @@
+diff --git a/core/tools/aidlc-orchestrate.ts b/core/tools/aidlc-orchestrate.ts
+index 33a626b..c1ecd88 100644
+--- a/core/tools/aidlc-orchestrate.ts
++++ b/core/tools/aidlc-orchestrate.ts
+@@ -223,0 +224 @@ import {
++  hookChildEnv,
+@@ -343,0 +345 @@ import {
++  validSessionId,
+@@ -442,0 +445 @@ import {
++  runtimeHarnessDir,
+@@ -659,0 +663,13 @@ function engineChildEnv(
++  // The selection resolver already accepted native Codex identity. Pinning it
++  // as a bare override would hide that authority from the child's resolver.
++  // Preserve its provenance, but never promote an inherited bare override:
++  // the parent may have accepted one only because its ancestry lookup missed.
++  if (
++    engineProjectDir &&
++    engineSessionId &&
++    validSessionId(process.env.AIDLC_SESSION_OVERRIDE) === null &&
++    runtimeHarnessDir(engineProjectDir) === ".codex" &&
++    validSessionId(process.env.CODEX_THREAD_ID) === engineSessionId
++  ) {
++    return hookChildEnv(engineProjectDir, engineSessionId, extra);
++  }
+diff --git a/tests/unit/t312-orchestrate-session-binding.test.ts b/tests/unit/t312-orchestrate-session-binding.test.ts
+index 68e9da9..2222b7e 100644
+--- a/tests/unit/t312-orchestrate-session-binding.test.ts
++++ b/tests/unit/t312-orchestrate-session-binding.test.ts
+@@ -13 +13,2 @@ import { copyFileSync, readFileSync, rmSync } from "node:fs";
+-import { join } from "node:path";
++import { dirname, join } from "node:path";
++import { pathToFileURL } from "node:url";
+@@ -28,0 +30 @@ import {
++  REPO_ROOT,
+@@ -34,0 +37 @@ const ORCH = join(AIDLC_SRC, "tools", "aidlc-orchestrate.ts");
++const CODEX_ORCH = join(REPO_ROOT, "dist", "codex", ".codex", "tools", "aidlc-orchestrate.ts");
+@@ -43,0 +47,3 @@ function cleanEnv(): Record<string, string | undefined> {
++  delete env.CODEX_THREAD_ID;
++  delete env.AIDLC_HARNESS_DIR;
++  delete env.AIDLC_HARNESS_NAME;
+@@ -92,0 +99,29 @@ function statePath(intent: string): string {
++// The orchestrator cannot see its own PID in its ancestry, but its real state
++// child can. This deterministically covers a parent ancestry miss followed by
++// a conflicting child lookup without racing processes or mocking the resolver.
++function parkWithChildOnlyAncestry(
++  tool: string,
++  env: Record<string, string | undefined>,
++): { status: number; out: string } {
++  const source = `
++    import { main } from ${JSON.stringify(pathToFileURL(tool).href)};
++    import { resolveSessionIdFromAncestry, writeSessionPidEntry }
++      from ${JSON.stringify(pathToFileURL(join(dirname(tool), "aidlc-lib.ts")).href)};
++    const projectDir = ${JSON.stringify(proj)};
++    writeSessionPidEntry(projectDir, process.pid, "session-b");
++    if (resolveSessionIdFromAncestry(projectDir) !== null) {
++      throw new Error("Fixture parent unexpectedly has mapped ancestry");
++    }
++    main(["park", "--project-dir", projectDir]);
++  `;
++  const result = Bun.spawnSync({
++    timeout: remainingOperationTimeoutMs(NATIVE_STARTUP_TIMEOUT_MS),
++    cmd: [process.execPath, "--eval", source],
++    stdout: "pipe",
++    stderr: "pipe",
++    cwd: proj,
++    env,
++  });
++  return { status: result.exitCode, out: result.stdout.toString() + result.stderr.toString() };
++}
++
+@@ -93,0 +129,73 @@ describe("t312 orchestrate session binding", () => {
++  test("native Codex identity reaches the state child despite conflicting ancestry", () => {
++    writeSessionBinding(proj, "session-a", "default", firstDir, "switch");
++    writeSessionBinding(proj, "session-b", "default", secondDir, "switch");
++    writeSessionPidEntry(proj, process.pid, "session-b");
++    const secondBefore = readFileSync(statePath(secondDir), "utf-8");
++    const secondAuditBefore = readAllAuditShards(proj, secondDir, "default");
++
++    const result = Bun.spawnSync({
++      timeout: remainingOperationTimeoutMs(NATIVE_STARTUP_TIMEOUT_MS),
++      cmd: [process.execPath, CODEX_ORCH, "park", "--project-dir", proj],
++      stdout: "pipe",
++      stderr: "pipe",
++      cwd: proj,
++      env: { ...cleanEnv(), CODEX_THREAD_ID: "session-a" },
++    });
++    const out = result.stdout.toString() + result.stderr.toString();
++
++    expect(result.exitCode, out).toBe(0);
++    expect(JSON.parse(out).kind, out).toBe("parked");
++    expect(readFileSync(statePath(firstDir), "utf-8")).toContain("- **Parked**:");
++    expect(readAllAuditShards(proj, firstDir, "default")).toContain("WORKFLOW_PARKED");
++    expect(readFileSync(statePath(secondDir), "utf-8")).toBe(secondBefore);
++    expect(readAllAuditShards(proj, secondDir, "default")).toBe(secondAuditBefore);
++  });
++
++  test("native Codex identity survives a parent ancestry miss and child conflict", () => {
++    writeSessionBinding(proj, "session-a", "default", firstDir, "switch");
++    writeSessionBinding(proj, "session-b", "default", secondDir, "switch");
++    rmSync(sessionPidMapDir(proj), { recursive: true, force: true });
++    const secondBefore = readFileSync(statePath(secondDir), "utf-8");
++    const secondAuditBefore = readAllAuditShards(proj, secondDir, "default");
++
++    const result = parkWithChildOnlyAncestry(CODEX_ORCH, {
++      ...cleanEnv(),
++      CODEX_THREAD_ID: "session-a",
++    });
++
++    expect(result.status, result.out).toBe(0);
++    expect(JSON.parse(result.out).kind, result.out).toBe("parked");
++    expect(readFileSync(statePath(firstDir), "utf-8")).toContain("- **Parked**:");
++    expect(readAllAuditShards(proj, firstDir, "default")).toContain("WORKFLOW_PARKED");
++    expect(readFileSync(statePath(secondDir), "utf-8")).toBe(secondBefore);
++    expect(readAllAuditShards(proj, secondDir, "default")).toBe(secondAuditBefore);
++  });
++
++  for (const threadId of [undefined, "session-a"]) {
++    test(`bare override is not promoted after parent ancestry miss (native ID ${threadId ?? "absent"})`, () => {
++      writeSessionBinding(proj, "session-a", "default", firstDir, "switch");
++      writeSessionBinding(proj, "session-b", "default", secondDir, "switch");
++      rmSync(sessionPidMapDir(proj), { recursive: true, force: true });
++      const firstBefore = readFileSync(statePath(firstDir), "utf-8");
++      const secondBefore = readFileSync(statePath(secondDir), "utf-8");
++      const firstAuditBefore = readAllAuditShards(proj, firstDir, "default");
++      const secondAuditBefore = readAllAuditShards(proj, secondDir, "default");
++
++      const result = parkWithChildOnlyAncestry(CODEX_ORCH, {
++        ...cleanEnv(),
++        AIDLC_SESSION_OVERRIDE: "session-a",
++        CODEX_THREAD_ID: threadId,
++      });
++
++      expect(result.status, result.out).toBe(0);
++      expect(JSON.parse(result.out).kind, result.out).toBe("error");
++      expect(result.out).toContain(
++        'Session override \\"session-a\\" conflicts with the owning conversation \\"session-b\\"',
++      );
++      expect(readFileSync(statePath(firstDir), "utf-8")).toBe(firstBefore);
++      expect(readFileSync(statePath(secondDir), "utf-8")).toBe(secondBefore);
++      expect(readAllAuditShards(proj, firstDir, "default")).toBe(firstAuditBefore);
++      expect(readAllAuditShards(proj, secondDir, "default")).toBe(secondAuditBefore);
++    });
++  }
++

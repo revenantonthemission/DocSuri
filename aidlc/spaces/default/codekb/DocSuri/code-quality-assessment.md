@@ -1,240 +1,96 @@
-# Code Quality Assessment — DocSuri Frontend
+# DocSuri Code Quality Assessment
 
-**Project:** DocSuri
-**Date:** 2026-10-02
-**Scope:** Phase 7 Reverse Engineering Baseline
+## Assessment basis
 
----
+Standard-depth source scan with Tier 2 graph verification and bounded direct-source fallback. This is not a full security audit, runtime certification or complete test baseline. Findings below separate executed evidence from source inference. Exact deep/shallow scope is in [coverage](reverse-engineering-timestamp.md).
 
-## Executive Summary
+## Priority findings
 
-| Metric | Status | Notes |
-|--------|--------|-------|
-| **TypeScript Strict Mode** | ✅ Enabled | No `any`, strict null checks |
-| **ESLint** | ✅ Configured | Flat config, React, TS, a11y rules |
-| **Prettier** | ✅ Configured | Tailwind plugin, consistent formatting |
-| **Unit Test Coverage** | ⚠️ Partial | 356 tests passing, but Phase 7 components untested |
-| **E2E Test Coverage** | ⚠️ Partial | Playwright configured, needs Phase 7 flows |
-| **Type Safety** | ✅ High | Strict TS, generated types from OpenAPI |
-| **Bundle Size** | ✅ Within budget | Standalone output, code splitting |
-| **Accessibility** | ⚠️ Baseline | JSX a11y linting, needs Phase 7 ARIA |
-| **Security Headers** | ✅ Strong | CSP nonce, HSTS, X-Frame-Options |
+### Q-01 — Mounted content-job state violates the browser contract
 
----
+**Source-confirmed boundary mismatch; not a live-browser reproduction.** `backend/wiring.py:495` mounts `summarization.api.router.build_router` with the constructed job service. In `backend/modules/summarization/src/summarization/api/router.py:106–111`, state is serialized as jobId/state plus optional error/resultRef, without seq. `frontend/lib/api/contentJobContracts.ts:143–148` rejects a state without a nonnegative integer seq; `frontend/lib/api/contentJobApi.ts:90` uses that parser. Poll fallback therefore cannot accept the mounted response.
 
-## Static Analysis Results
+An alternative domain serializer exists at `backend/modules/summarization/src/summarization/domain/job.py:217` and includes seq, but the mounted handler does not call it. Do not mistake the helper for a second functioning HTTP route.
 
-### TypeScript (`tsc --noEmit`)
-```
-Status: PASS
-Errors: 0
-Warnings: 0
-Strict mode: ENABLED
-```
+**Test boundary:** `backend/modules/summarization/tests/test_content_job_api.py:193–217` asserts state/error/resultRef without requiring seq. `frontend/test/u1JobContracts.test.ts:28–33` explicitly rejects missing seq; `u1ContentJobApi.test.ts:98` supplies a valid mocked seq. These focused tests describe separate shapes; they do not verify the mounted producer against the real browser parser. No tests for this finding were run in the scan.
 
-**Strict Flags Enabled:**
-- `strict: true`
-- `noImplicitAny: true`
-- `strictNullChecks: true`
-- `strictFunctionTypes: true`
-- `noUncheckedIndexedAccess: true`
-- `exactOptionalPropertyTypes: true`
-- `noImplicitReturns: true`
-- `noFallthroughCasesInSwitch: true`
+**Closure evidence:** one mounted-app state response accepted by the browser contract, including initial seq, later progress, replay and terminal behavior.
 
-### ESLint (`pnpm lint`)
-```
-Status: PASS
-Errors: 0
-Warnings: ~12 (mostly unused vars in test files)
-Rules: Flat config (eslint.config.mjs)
-Plugins: react, react-hooks, jsx-a11y, typescript-eslint, import, tailwindcss
+### Q-02 — Mounted result route does not supply the prepared result required by the UI
+
+**Source-confirmed mismatch.** Router `api/router.py:175–193` calls `ContentJobService.result_ref` and returns only `{resultRef}`. Service `service/job_service.py:269–282` returns no result for unfinished/expired jobs; handler maps both to 404. Browser `frontend/lib/api/contentJobContracts.ts:310–318` requires a preparedResult object with identity/task/timestamps/content. `contentJobApi.ts:120–134` distinguishes 409 not-ready, 410 expired and 422 unavailable, then parses the full envelope.
+
+`domain/prepared_result.py:317–339` can build the newer envelope, but this domain method is not called by the mounted result route. The source route inventory found one mounted content-job result declaration, not a replacement handler.
+
+**Test boundary:** backend `test_content_job_api.py:309–355` asserts resultRef and 404 for unfinished/expired cases. Frontend `u1PaperJobJourney.test.tsx:60–86,107–143` mocks a complete preparedResult, fake fetch and EventSource, so its “journey” cannot detect the server disagreement. No test for this mismatch was executed.
+
+**Closure evidence:** query-only result retrieval from the actual mounted producer, ownership and exact job identity, prepared summary/translation content, expiry/not-ready/unavailable semantics, and no regeneration on read.
+
+### Q-03 — Mounted durable submit accepts work without connecting queue dispatch
+
+**Source-confirmed composition gap.** `backend/wiring.py:477–481` constructs ContentJobService with `enqueue=lambda job: None`; `service/job_service.py:128–167` invokes the callback and advances to ACCEPTED when it does not throw. Inspected real wiring passes the same service into a ContentJobQueue adapter but does not replace this callback. Direct browser POST /api/content-jobs/submit therefore has no queue dispatch in this composition.
+
+**Distinct path:** `adapters/content_job_queue.py` is an orchestrator adapter: it calls the job service and then sends a queue message. Its existence serves the synchronous orchestrator's long-work path; it does not intercept the mounted submit handler. The adapter also deserves separate idempotency/dispatch-failure review because it tests accepted state after submission before sending. This scan does not claim observed duplicate or lost work.
+
+**Test boundary:** `test_content_job_api.py:74–77` deliberately uses the same no-op callback; `:127–135` asserts the acceptance receipt, not a mounted queue effect. Domain/service tests with injected queues do not establish app composition. No dispatch test was executed.
+
+**Closure evidence:** an isolated mounted submit produces exactly the intended durable dispatch/effect, an idempotent retry preserves identity without duplicate work, and queue failure/restart has a recoverable state.
+
+### Q-04 — SSE framing uses literal backslash-n; an existing isolated regression fails
+
+**Executed local regression failure.** Mounted router `api/router.py:156` yields a string containing literal `\\n` separators rather than newline characters. `test_content_job_api.py:80–102` splits actual newline-delimited SSE; `:236–248` expects ACCEPTED, QUEUED, RUNNING, COMPLETED and received no parsed events.
+
+The parent ran, from `backend/modules/summarization`:
+
+```sh
+PYTHONPATH=src:../../../shared/python/src:../../.. ../../.venv/bin/python -m pytest tests/test_content_job_api.py::test_events_streams_from_after_seq -q
 ```
 
-**Key Rule Categories:**
-| Category | Status | Notable Rules |
-|----------|--------|---------------|
-| TypeScript | ✅ | `@typescript-eslint/*` strict |
-| React | ✅ | `react-hooks/exhaustive-deps`, `react/no-unstable-nested-components` |
-| Accessibility | ✅ | `jsx-a11y/*` (warn) |
-| Import Order | ✅ | `import/order` (alphabetical, groups) |
-| Unused Vars | ⚠️ | Warn in tests, error in source |
+Result: exit 1, the assertion at line 248 compared an empty list to the four expected states. One test, no skip, in-memory job store/fake requests, no external services. The earlier module-local interpreter attempt exited 4 at collection because FastAPI was missing. These are different outcomes, not two behavioral failures. [Saved test evidence](../../intents/261010-docsuri-v2-rebuild/verification/reverse-engineering-test-evidence.md).
 
-### Prettier (`pnpm prettier --check .`)
-```
-Status: PASS
-Config: .prettierrc + prettier-plugin-tailwindcss
-```
+**Test boundary:** this focused server test already detects malformed frames when executed with required dependencies. Browser EventSource tests inject parsed messages, so they cannot establish wire framing. No live browser, reconnect or complete suite was run.
 
----
+**Closure evidence:** rerun this existing regression and existing resume tests after correction, then verify real BFF/browser-compatible frame boundaries and durable cursor recovery.
 
-## Test Coverage Analysis
+### Q-05 — Module presence and readiness can overstate capability availability
 
-### Current State (Pre-Phase 7)
+`backend/wiring.py:108–127` catches missing imports and other mount exceptions and continues. `backend/health.py:30` reports readiness against a required subset; onboarding, trends, plans and evidence are not in that required set. Configured mounts can also contain memory/mock adapters. Readiness therefore does not prove full capability parity, dependency health or a completed paper journey.
 
-| Test Type | Count | Coverage | Notes |
-|-----------|-------|----------|-------|
-| **Unit (Vitest)** | 356 | ~65% | Core hooks, utils, API client |
-| **Integration** | ~40 | ~40% | API flows, auth |
-| **E2E (Playwright)** | ~25 | ~30% | Critical paths only |
+**Impact:** partial startup may look superficially healthy while a retained feature is missing. **Closure:** define critical capabilities/dependencies and exercise mounted routes under missing-dependency/configuration cases; preserve intentional optional/degraded behavior. This is a source assessment, not a reported production outage.
 
-### Coverage by Module (Estimated)
+### Q-06 — Authority, deployment and recovery evidence is unresolved
 
-| Module | Lines | Functions | Branches | Notes |
-|--------|-------|-----------|----------|-------|
-| `lib/api/contentJobApi.ts` | 45% | 40% | 30% | **Phase 7 target** — needs BFF routing, idempotency |
-| `lib/api/routeHandlerTransport.ts` | 85% | 80% | 75% | Well-tested |
-| `lib/api/httpTransport.ts` | 80% | 75% | 70% | Well-tested |
-| `components/JobStatus.tsx` | 0% | 0% | 0% | **UNTESTED** — exists but unmounted |
-| `components/AssetViewer.tsx` | 30% | 25% | 20% | Partial, needs same-origin tests |
-| `components/PaperDetailIsland.tsx` | 40% | 35% | 30% | Core flow tested |
-| `components/SummaryModal.tsx` | 50% | 45% | 40% | Modal flow tested |
-| `hooks/usePaperMeta.ts` | 70% | 65% | 60% | Well-tested |
+The backend compose and server runbook describe a local serving stack; the separate Colima compose explicitly describes a development stack with different objects/credentials; AWS/CDK material remains. Source does not identify authoritative user data, current queue/store/model endpoints or restore-tested backups. The newer local stack even documents an unwired stand-in object credential path; that comment is an investigation lead, not a fresh runtime result.
 
----
+**Impact:** migration/cleanup/stack replacement could preserve source while losing essential state or capabilities. **Closure:** read-only deployment and data inventory, owner-approved continuity policy, restore exercise, measured free/local capacity and provider/license review. No data was read or altered here.
 
-## Phase 7 Quality Gaps
+### Q-07 — Test/environment and documentation drift reduce reproducibility
 
-### Critical (Must Fix Before Merge)
+The isolated summary module environment lacked FastAPI; module dev dependencies do not declare pytest-asyncio although the focused test uses its marker. The backend environment could execute the test. Root pytest configuration scopes accounts/library, while other packages have separate lanes. Existing test counts and past “green” prose are not a whole-repository baseline.
 
-| Gap | Location | Required Fix |
-|-----|----------|--------------|
-| **JobStatus untested** | `components/JobStatus.tsx` | Add unit tests: SSE connect, state transitions, reconnect, polling fallback, retry, a11y |
-| **AssetViewer migration untested** | `components/AssetViewer.tsx` | Add tests: same-origin load, auth error (403), not found (404), error boundary |
-| **contentJobApi BFF routing untested** | `lib/api/contentJobApi.ts` | Add tests: BFF path, idempotency key gen/storage, SSE URL |
-| **PaperDetailIsland JobStatus mount untested** | `components/PaperDetailIsland.tsx` | Add tests: mount on submit, activeJobId tracking |
-| **No Error Boundary for JobStatus** | New component | Create `JobStatusErrorBoundary`, test fallback |
+`shared/README.md` still references aidlc-docs paths and deferred TypeScript generation despite current consumer tooling; CODEOWNERS retains historical three-track assignments. Release workflow prose mentions deployment while its actual deploy job was removed. These are repairability/documentation mismatches; they do not supersede the approved one-human plan or CONVENTIONS Git flow.
 
-### High Priority
+### Q-08 — Responsibility concentrations and multiple contract layers warrant bounded simplification
 
-| Gap | Location | Required Fix |
-|-----|----------|--------------|
-| **No polling fallback** | `JobStatus.tsx` | Add SWR polling to `/state` on SSE error |
-| **No inline Retry on FAILED** | `JobStatus.tsx` | Add retry button with idempotency key |
-| **No ARIA live region** | `JobStatus.tsx` | Add `role="status" aria-live="polite"` |
-| **No progressbar role** | `JobStatus.tsx` | Add `role="progressbar"` with `aria-valuenow` |
-| **AssetViewer props not updated** | `DocModelViewer.tsx` | Update to pass `paperId` + `assetId` |
+Large wiring/controllers/adapters and handwritten job serializers coexist with shared schemas/generated types. Q-01/Q-02 demonstrate a concrete cost of that separation. Source line counts in [code structure](code-structure.md) are navigation indicators, not measured complexity or proof of unused code. Preserve behavior with boundary checks before reorganizing.
 
-### Medium Priority
+## Strengths observed in source
 
-| Gap | Location | Required Fix |
-|-----|----------|--------------|
-| **Loading skeleton** | `JobStatus.tsx` | Add skeleton while connecting |
-| **Keyboard accessibility** | `JobStatus.tsx` | Retry button keyboard accessible |
-| **Error details expandable** | `JobStatus.tsx` | Add expandable error stack on FAILED |
-| **Dark mode tokens** | `JobStatus.tsx`, `AssetViewer.tsx` | CSS variable overrides |
+Owner-scoped repositories/private identities, shared schema tooling, explicit abstention/degraded states, idempotency and event sequence concepts, bounded provider calls, query-only result intent, and preview/approval export gates are valuable existing design constraints. Their presence is not proof every adapter or runtime configuration enforces them correctly.
 
----
+## Test and CI inventory
 
-## Code Smells & Technical Debt
+| Surface | Existing mechanism inspected / inventoried | Limit |
+|---|---|---|
+| Python packages | pytest, Hypothesis, coverage; separate backend/discovery/summary/ingestion/ops/shared/platform suites | no aggregate test count or full passing baseline established |
+| Frontend | Vitest/jsdom, testing-library, contract/consumer checks; Playwright mobile mock-mode E2E | fake transports do not prove a mounted real backend contract |
+| Real persistence | isolated PostgreSQL lane and zero-skip guard in CI; local-store integration tests | configured jobs were not executed here |
+| Property/security | nightly higher-example PBT, pip-audit, pnpm audit, Gitleaks and CodeQL | no current vulnerability or recent pipeline outcome queried |
+| Lint/build | Ruff scopes, TypeScript strict, ESLint/Next build/schema generation checks | package exclusions and optional dependencies matter |
+| Performance | load-test script and reliability evaluation tooling | no task success, responsiveness, recovery or repair-time baseline measured |
 
-| Smell | Location | Severity | Recommendation |
-|-------|----------|----------|----------------|
-| **Hardcoded API base** | `contentJobApi.ts:46` | High | Use `/bff/api/content-jobs` constant |
-| **BFF bypass** | `contentJobApi.ts` | Critical | All calls through `/bff` |
-| **Presigned URL pattern** | `AssetViewer.tsx` | Critical | SECURITY-08 violation |
-| **Missing idempotency** | `contentJobApi.ts` | High | Add SHA-256 key generation |
-| **JobStatus unmounted** | `PaperDetailIsland.tsx` | Critical | Mount near action buttons |
-| **No polling fallback** | `JobStatus.tsx` | High | SWR 2s interval |
-| **No error boundary** | `JobStatus.tsx` | High | Wrap in Error Boundary |
-| **No ARIA on JobStatus** | `JobStatus.tsx` | Medium | Add live region + progressbar |
-| **Inline event handlers** | `JobStatus.tsx:60-79` | Low | Extract to `useJobEvents` hook |
+`frontend/vitest.config.ts` does not itself establish a universal coverage threshold; unit-specific configurations and CI scopes must be read before claiming one. The CI closure audit has pending-package handling, so audit job existence does not prove the entire dependency closure passed.
 
----
+## Recommendations for the approved next stages
 
-## Architecture Quality
-
-### Strengths
-| Area | Assessment |
-|------|------------|
-| **Transport Abstraction** | ✅ Clean `Transport` interface with `HttpTransport`/`MockTransport`/`RouteHandlerTransport` |
-| **BFF Proxy** | ✅ Well-implemented in `route.ts` with cookie forwarding, SSE proxy, asset relay |
-| **Type Safety** | ✅ Strict TS, generated types, strict null checks |
-| **Component Architecture** | ✅ Islands pattern, SSR shell + client islands |
-| **Security** | ✅ CSP nonce, HSTS, cookie-only auth, no token in client JS |
-
-### Areas for Improvement
-| Area | Assessment |
-|------|------------|
-| **Testing** | ⚠️ Phase 7 components completely untested |
-| **Error Handling** | ⚠️ No Error Boundaries, limited retry logic |
-| **Accessibility** | ⚠️ Baseline only, Phase 7 needs ARIA |
-| **Observability** | ⚠️ No client-side error tracking (Sentry/etc.) |
-| **Bundle Analysis** | ⚠️ Not automated in CI |
-
----
-
-## Security Assessment
-
-### Current State: **GOOD** (Backend) / **NEEDS WORK** (Frontend Phase 7)
-
-| Control | Status | Notes |
-|---------|--------|-------|
-| CSP Nonce | ✅ | Per-request in middleware |
-| HSTS | ✅ | `max-age=31536000; includeSubDomains` |
-| X-Frame-Options | ✅ | `SAMEORIGIN` |
-| X-Content-Type-Options | ✅ | `nosniff` |
-| Referrer-Policy | ✅ | `strict-origin-when-cross-origin` |
-| Cookie Security | ✅ | HttpOnly, Secure, SameSite=Lax (via BFF) |
-| **BFF Routing (SEC-8)** | ❌ Frontend | `contentJobApi.ts` bypasses BFF |
-| **Asset Auth Re-check (SEC-9)** | ❌ Frontend | `AssetViewer` uses presigned 307 |
-| **No Presigned URLs (SECURITY-08)** | ❌ Frontend | `AssetViewer` expects 307 redirect |
-| **Idempotency** | ❌ Frontend | Optional in API, not generated |
-
----
-
-## Performance Baseline
-
-| Metric | Current | Target | Notes |
-|--------|---------|--------|-------|
-| **FCP** | ~1.2s | < 1.8s | Good |
-| **LCP** | ~2.0s | < 2.5s | Good |
-| **CLS** | ~0.05 | < 0.1 | Good |
-| **TBT** | ~150ms | < 200ms | Good |
-| **JS Bundle** | ~130 KB gz | < 150 KB | Good |
-| **CSS Bundle** | ~25 KB gz | < 30 KB | Good |
-| **SSE Connect Time** | ~300ms | < 500ms | Need measurement |
-| **Asset Load Time** | ~800ms | < 1s | Need measurement |
-
----
-
-## Recommendations Priority Matrix
-
-| Priority | Item | Effort | Impact |
-|----------|------|--------|--------|
-| **P0** | Fix BFF bypass in `contentJobApi.ts` | Low | Critical (SEC-8) |
-| **P0** | Migrate `AssetViewer` to same-origin | Medium | Critical (SEC-08, SEC-9) |
-| **P0** | Mount `JobStatus` in `PaperDetailIsland` | Low | Critical (Feature) |
-| **P0** | Add idempotency key generation | Medium | Critical (Reliability) |
-| **P1** | Add polling fallback to `JobStatus` | Medium | High (Resilience) |
-| **P1** | Add Error Boundary for `JobStatus` | Low | High (Graceful degradation) |
-| **P1** | Add inline Retry on FAILED | Low | High (UX) |
-| **P1** | Add ARIA live region + progressbar | Low | High (Accessibility) |
-| **P2** | Unit tests for all Phase 7 components | High | Quality gate |
-| **P2** | E2E test for full content job flow | Medium | Quality gate |
-| **P3** | Loading skeleton for JobStatus | Low | Polish |
-| **P3** | Dark mode support | Low | Polish |
-| **P3** | Expandable error details | Low | UX improvement |
-
----
-
-## Compliance Checklist (Phase 7 Definition of Done)
-
-- [ ] `contentJobApi.ts` uses `/bff/api/content-jobs` base URL
-- [ ] `contentJobApi.ts` generates SHA-256 idempotency keys
-- [ ] `contentJobApi.ts` stores keys in localStorage
-- [ ] `AssetViewer.tsx` accepts `paperId` + `assetId` props
-- [ ] `AssetViewer.tsx` uses `<img src="/bff/api/papers/{paperId}/assets/{assetId}" />`
-- [ ] `JobStatus.tsx` mounted in `PaperDetailIsland.tsx`
-- [ ] `JobStatus.tsx` has polling fallback (SWR 2s)
-- [ ] `JobStatus.tsx` wrapped in Error Boundary
-- [ ] `JobStatus.tsx` has inline Retry button on FAILED
-- [ ] `JobStatus.tsx` has `role="status" aria-live="polite"`
-- [ ] `JobStatus.tsx` has `role="progressbar" aria-valuenow`
-- [ ] All new code ≥80% line coverage
-- [ ] All existing tests pass (356 + new)
-- [ ] E2E test: submit → SSE → COMPLETED → result
-- [ ] E2E test: submit → SSE → FAILED → Retry → COMPLETED
-- [ ] E2E test: AssetViewer same-origin load
-- [ ] Lint + Typecheck pass
-- [ ] Security review sign-off (SEC-8, SEC-9)
+Carry Q-01–Q-04 as explicit journey risks into requirements and acceptance design. Establish authoritative environment/data and full capability inventory closure before migration/hosting choices. Measure actual task completion, responsiveness, interruption recovery and defect reproduction/repair, then agree numeric targets. Do not interpret this assessment as selecting a stack, reducing parity or authorizing spending. Git remains working branch → PR into develop → release promotion to main.

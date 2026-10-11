@@ -1,279 +1,39 @@
-# Technology Stack — DocSuri Frontend
+# DocSuri Technology Stack
 
-**Project:** DocSuri
-**Date:** 2026-10-02
+## Declared application stack
 
----
+Values below are manifest constraints/pins read on 2026-10-11, not claims about installed or deployed versions. Lockfiles exist but their full transitive resolution was not audited.
 
-## Core Framework
+| Area | Language/runtime constraint | Frameworks and key libraries |
+|---|---|---|
+| Backend shell | Python >=3.13; package version 0.1.0 | FastAPI >=0.110, Uvicorn >=0.29, SQLAlchemy >=2,<3, psycopg >=3.1, Redis >=5, Pydantic >=2.7,<3, HTTPX, Argon2, cryptography, pyotp, boto3, Lambda runtime adapter |
+| Discovery | Python >=3.11 | Pydantic/shared; optional FastAPI; real extras OpenSearch client >=2.4 and boto3 |
+| Summarization | Python >=3.11 | Pydantic/shared; optional FastAPI; real extras boto3, Redis, psycopg and psycopg_pool |
+| Ingestion | Python >=3.11 | Pydantic/settings, HTTPX, boto3, opensearch-py >=2.6,<3, psycopg >=3.2/pool, structlog, pdfplumber, lxml >=6.1, BeautifulSoup, defusedxml; optional PDFium/Pillow assets |
+| Ops | Python >=3.13 | shared, docsuri-platform-integrity 0.1.0, Pydantic, psutil |
+| Platform integrity | Python >=3.13 | Pydantic >=2.13.4, RFC8785, cryptography >=50; optional API FastAPI >=0.138/Uvicorn >=0.49; PostgreSQL psycopg >=3.3.4; tooling/REM extras |
+| Shared Python | Python >=3.11 | Pydantic bindings/utilities; datamodel-code-generator/jsonschema tooling |
+| Frontend | TypeScript 5.7.3; pnpm 9.15.9 | Next.js 15.5.26, React 19.0.0, SWR 2.5.1, Tailwind 4.3.3, Sentry 11.4.0, clsx 2.1.1, tailwind-merge 3.7.0, MathJax ^3.2.2 |
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Next.js** | 15.x (App Router) | React framework, SSR, standalone output |
-| **React** | 18.x | UI library, concurrent features |
-| **TypeScript** | 5.x (strict) | Type safety, strict mode enabled |
+Sources: each package's `pyproject.toml`, `frontend/package.json`. Backend's uv sources use local shared/discovery/summarization/ops paths; Hatch builds the standalone Python package wheels. Python minimum versions differ across packages; the assembled supported runtime must satisfy all selected packages, not just a module's minimum.
 
----
+## Build and validation tools
 
-## Runtime & Build
+- Python uv dependency environments and lockfiles, Hatchling package builds, pytest/Hypothesis, Ruff, coverage/pytest-cov and pip-audit.
+- Frontend Next standalone output, strict TypeScript, ESLint 9.18, Prettier 3.4.2, Vitest 3.2.6 and Playwright 1.55.1; schema/type consumer generation checks.
+- GitHub Actions CI, CodeQL, Gitleaks, dependency audit and release automation. Configuration is not evidence of a recent successful run.
+- Docker/Compose and AWS CDK/serverless-era definitions coexist with native/local launchd tooling. No infrastructure was provisioned or selected for v2.
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| **Node.js** | 20.x LTS | JavaScript runtime |
-| **pnpm** | 9.x | Package manager (fast, disk-efficient) |
-| **Turbopack** | Built-in | Next.js dev/build bundler |
-| **SWCs** | Built-in | Fast TypeScript/JS compilation |
+## Storage and integration technology
 
----
+Application adapters target PostgreSQL, Redis, OpenSearch, S3-compatible storage and SQS-compatible queues. `backend/docker-compose.yml` declares digest-pinned PostgreSQL 16, Redis 7.4.11, OpenSearch 2.19.5, MinIO and ElasticMQ. `ops/local-stack/colima-stack.compose.yaml` is explicitly a development stack with different PostgreSQL and SeaweedFS stand-in choices and local security relaxations. Neither file proves running versions or usable credentials.
 
-## Styling
+LLM/embedding adapters include AWS Bedrock and OpenAI-compatible/local endpoints; the inspected summary real wiring selects an OpenAI-compatible provider only when explicitly configured and otherwise constructs Bedrock. Source default/local model strings are not measured capacity or quality guarantees. External metadata/auth/export/email providers are inventoried in [dependencies](dependencies.md).
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **CSS Modules** | Native | Component-scoped styles (`.module.css`) |
-| **Tailwind CSS** | 3.x | Utility-first utilities (via className) |
-| **CSS Variables** | Native | Design tokens (colors, spacing, radii) |
+## One observed test environment
 
-**Design Token Pattern:**
-```css
-:root {
-  --color-status-running: #3B82F6;
-  --color-status-completed: #22C55E;
-  --color-status-failed: #EF4444;
-  --progress-height: 8px;
-  --jobstatus-radius: 8px;
-}
-```
+The parent independently ran one existing isolated SSE regression using the already-installed backend environment: Python 3.13.7, pytest 9.1.0, pytest-asyncio 1.4.0, FastAPI 0.137.1 and Starlette 1.3.1. This is only that test's environment, not a v2 selection or proof all manifests agree. The module-local interpreter lacked FastAPI and could not collect it. See [test evidence](../../intents/261010-docsuri-v2-rebuild/verification/reverse-engineering-test-evidence.md).
 
----
+## Upgrade and feasibility boundary
 
-## Data Fetching & State
-
-| Library | Version | Purpose |
-|---------|---------|---------|
-| **SWR** | 2.x | Server state, caching, polling fallback (planned) |
-| **TanStack Query** | 5.x | Alternative for complex server state (evaluated) |
-| **React useState/useEffect** | Native | Local component state |
-| **React Context** | Native | Global state (auth, theme) |
-| **localStorage** | Native | Idempotency key persistence |
-
-**Transport Layer (Custom):**
-- `HttpTransport` — Production gateway communication
-- `MockTransport` — Dev/preview without infra
-- `RouteHandlerTransport` — Client → BFF (`/bff/*`)
-- `Transport` interface — Unified send() contract
-
----
-
-## Real-time Communication
-
-| Technology | Purpose |
-|------------|---------|
-| **EventSource (SSE)** | Job progress events (`/api/content-jobs/{jobId}/events`) |
-| **Last-Event-ID** | Resume missed events on reconnect |
-| **EventSource Polyfill** | Not needed (native browser support) |
-
----
-
-## Testing
-
-| Tool | Version | Purpose |
-|------|---------|---------|
-| **Vitest** | 2.x | Unit & integration tests (fast, Vite-native) |
-| **React Testing Library** | 15.x | Component testing (user-centric) |
-| **Playwright** | 1.4x | E2E tests (Chromium, Firefox, WebKit) |
-| **MSW (Mock Service Worker)** | 2.x | API mocking for tests/dev |
-| **@testing-library/jest-dom** | 6.x | Custom matchers |
-| **axe-core** | 4.x | Accessibility testing |
-
-**Coverage Targets (Feature Scope):**
-- Line coverage: ≥80% (new code)
-- Branch coverage: ≥70% (new code)
-- Function coverage: ≥80% (new code)
-
----
-
-## Linting & Formatting
-
-| Tool | Version | Config |
-|------|---------|--------|
-| **ESLint** | 9.x (flat config) | `eslint.config.mjs` |
-| **Prettier** | 3.x | `.prettierrc` |
-| **TypeScript ESLint** | 8.x | Type-aware linting |
-| **React Hooks ESLint** | 5.x | Rules of hooks |
-
-**Key Rules:**
-- `@typescript-eslint/no-explicit-any` — error
-- `react-hooks/exhaustive-deps` — error
-- `jsx-a11y/*` — warn (accessibility)
-- `no-console` — warn (allow in dev)
-
----
-
-## TypeScript Configuration
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [{ "name": "next" }],
-    "paths": {
-      "@/*": ["./*"],
-      "@/components/*": ["./components/*"],
-      "@/lib/*": ["./lib/*"],
-      "@/types/*": ["./types/*"]
-    }
-  }
-}
-```
-
-**Strict Mode:** Enabled — no `any`, no implicit any, strict null checks, strict function types.
-
----
-
-## Package Manager & Scripts
-
-**pnpm** — Fast, disk-efficient, strict peer dependencies.
-
-**Key Scripts (`package.json`):**
-```json
-{
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
-  }
-}
-```
-
----
-
-## Development Environment
-
-| Tool | Version | Notes |
-|------|---------|-------|
-| **VS Code** | Latest | Recommended IDE |
-| **ESLint Extension** | — | Auto-fix on save |
-| **Prettier Extension** | — | Format on save |
-| **Tailwind CSS IntelliSense** | — | Class completion |
-| **Playwright Test for VS Code** | — | E2E debugging |
-
----
-
-## CI/CD Pipeline (GitHub Actions)
-
-| Stage | Command | Gate |
-|-------|---------|------|
-| Install | `pnpm install --frozen-lockfile` | — |
-| Lint | `pnpm lint` | Must pass |
-| Typecheck | `pnpm typecheck` | Must pass |
-| Unit Tests | `pnpm test:coverage` | ≥80% new code |
-| E2E Tests | `pnpm test:e2e` | Must pass |
-| Build | `pnpm build` | Must pass |
-
----
-
-## Deployment
-
-| Environment | Platform | Config |
-|-------------|----------|--------|
-| **Preview** | Vercel / Preview Deploy | Auto on PR |
-| **Staging** | Container (Docker) | `output: 'standalone'` |
-| **Production** | Container (Docker) | `output: 'standalone'` |
-
-**Dockerfile:** Multi-stage build, copies `public`, `.next/standalone`, `node_modules` from build stage.
-
----
-
-## Browser Support
-
-| Browser | Version | Notes |
-|---------|---------|-------|
-| Chrome | 120+ | Full support |
-| Firefox | 121+ | Full support |
-| Safari | 17+ | Full support (EventSource native) |
-| Edge | 120+ | Full support |
-
-**Polyfills:** None required for target browsers. EventSource is native.
-
----
-
-## Performance Budgets
-
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| **FCP** | < 1.8s | Lighthouse |
-| **LCP** | < 2.5s | Lighthouse |
-| **CLS** | < 0.1 | Lighthouse |
-| **TBT** | < 200ms | Lighthouse |
-| **JS Bundle (gz)** | < 150KB | webpack-bundle-analyzer |
-| **CSS Bundle (gz)** | < 30KB | — |
-
----
-
-## Security Headers (Middleware)
-
-| Header | Value | Purpose |
-|--------|-------|---------|
-| `Content-Security-Policy` | Nonce-based, strict | XSS prevention |
-| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | HTTPS enforcement |
-| `X-Content-Type-Options` | `nosniff` | MIME sniffing prevention |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` | Referrer control |
-| `X-Frame-Options` | `SAMEORIGIN` | Clickjacking prevention |
-
-**CSP Nonce:** Per-request `crypto.randomUUID()` in Edge middleware.
-
----
-
-## Environment Variables
-
-| Variable | Required | Environments | Description |
-|----------|----------|--------------|-------------|
-| `DOCSURI_GATEWAY_URL` | Yes (prod) | Prod, Staging | Backend gateway base URL |
-| `DOCSURI_BFF_ALLOW_MOCK` | No | Prod (optional) | Allow MockTransport in prod |
-| `NEXT_PUBLIC_*` | As needed | All | Client-exposed config |
-
----
-
-## Version Compatibility Matrix
-
-| Package | Version Constraint | Rationale |
-|---------|-------------------|-----------|
-| `next` | `^15.0.0` | App Router, standalone output |
-| `react` | `^18.2.0` | Concurrent features, Suspense |
-| `react-dom` | `^18.2.0` | — |
-| `typescript` | `^5.4.0` | Strict mode, satisfies |
-| `vitest` | `^2.0.0` | Vite-native, fast |
-| `playwright` | `^1.44.0` | Cross-browser E2E |
-| `eslint` | `^9.0.0` | Flat config |
-| `prettier` | `^3.2.0` | Consistent formatting |
-| `tailwindcss` | `^3.4.0` | Utility-first CSS |
-| `swr` | `^2.2.0` | Stale-while-revalidate |
-
----
-
-## Dependency Philosophy
-
-1. **Minimize runtime dependencies** — Prefer native Web APIs (EventSource, crypto.subtle, fetch)
-2. **Custom transport layer** — No Axios, no TanStack Query (yet), custom Transport interface
-3. **Type-safe contracts** — Shared types from `shared/` or generated from OpenAPI
-4. **Dev/Prod parity** — MockTransport for dev, HttpTransport for prod, same interface
+No vulnerability database or upstream release lookup was performed; no claim of latest, secure or supported versions is made. Current manifest pins/ranges, existing environments, local resource capacity and free-service/provider terms require verification before v2 technology decisions. The approved budget remains $0; existing paid-capable adapters cannot silently become a paid fallback.

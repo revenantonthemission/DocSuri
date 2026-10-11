@@ -1,266 +1,62 @@
-# Code Structure — DocSuri Frontend
+# DocSuri Code Structure
 
-**Project:** DocSuri
-**Type:** Brownfield (Next.js 15 App Router)
-**Date:** 2026-10-02
+## Repository layout and classification
 
----
+The application is a monorepo. Current tracked counts below are **files**, not functions, test cases, authored-source totals or passing checks. They include manifests, tests, lockfiles and generated contract bindings. Counts came from `git ls-files` on the scan checkout.
 
-## Repository Layout
+| Area | Tracked files | Primary roles |
+|---|---:|---|
+| backend/ | 392 | application shell, middleware, domain modules, repositories/adapters, migrations, tests, packaging |
+| frontend/ | 307 | Next routes, React UI, browser/BFF contracts, state/hooks, tests, styles/assets, packaging |
+| ingestion/ | 81 | corpus application/domain/adapters, worker/CLI, SQL control plane, tests |
+| ops/ | 108 | reliability application, deployment/CDK/local/server tooling, tests |
+| platform_integrity/ | 117 | authority/evidence domain, adapters, restricted API/CLI, migrations, tests |
+| shared/ | 107 | schemas, vector spec, ports, authored Python utilities and generated bindings, contract tooling/tests |
+| tests/ | 35 | account/library tests, load-test script and lint configuration |
+| .github/ | 6 | four workflows, CODEOWNERS and PR template |
 
-```
-DocSuri/
-├── frontend/                    # Next.js 15 App Router (this analysis focus)
-│   ├── app/                     # App Router pages & routes
-│   │   ├── paper/[id]/          # Paper detail page (SSR shell + island)
-│   │   ├── paper/[id]/doc-model/# Full text view
-│   │   ├── paper/[id]/translate/ # Translation view
-│   │   ├── bff/[...path]/       # BFF proxy catch-all
-│   │   ├── search/              # Search page
-│   │   ├── library/             # Personal library
-│   │   ├── mypage/              # User profile
-│   │   ├── login/               # Auth
-│   │   ├── layout.tsx           # Root layout
-│   │   ├── globals.css          # Global styles
-│   │   └── middleware.ts        # CSP, security headers, nonce
-│   ├── components/              # React components
-│   │   ├── PaperDetailIsland.tsx    # Main detail island (actions, modals)
-│   │   ├── JobStatus.tsx            # SSE job progress (exists, unmounted)
-│   │   ├── AssetViewer.tsx          # Asset display (presigned → same-origin)
-│   │   ├── SummaryModal.tsx         # 요약/번역 modal
-│   │   ├── DocModelViewer.tsx       # Full text viewer
-│   │   ├── CitationTreePanel.tsx    # Citation tree
-│   │   ├── AppHeader.tsx            # Top header with back nav
-│   │   ├── BottomNav.tsx            # Mobile bottom navigation
-│   │   ├── RouteGuard.tsx           # Auth guard
-│   │   └── ...                      # Other UI components
-│   ├── lib/                       # Shared utilities & API
-│   │   ├── api/                   # API client layer
-│   │   │   ├── contentJobApi.ts      # Content jobs (bypasses BFF ❌)
-│   │   │   ├── apiClient.ts          # Main API client
-│   │   │   ├── httpTransport.ts      # Production transport
-│   │   │   ├── mockTransport.ts      # Dev mock transport
-│   │   │   ├── routeHandlerTransport.ts # BFF transport
-│   │   │   ├── transport.ts          # Transport interface
-│   │   │   ├── assetSrc.ts           # Asset URL helpers
-│   │   │   ├── classify*.ts          # Classification APIs
-│   │   │   └── errors.ts             # Error types
-│   │   ├── usePaperMeta.ts          # Paper metadata hook
-│   │   ├── useSummarize.ts          # Summarize hook
-│   │   ├── useAssets.ts             # Asset hooks
-│   │   ├── useDocModel.ts           # Doc-model hook
-│   │   ├── personalization.ts       # User personalization
-│   │   ├── renderMath.tsx           # Math rendering
-│   │   └── ...                      # Other hooks/utils
-│   ├── types/                       # TypeScript types
-│   │   └── generated/               # Generated types (OpenAPI)
-│   ├── test/                        # Test utilities & fixtures
-│   ├── e2e/                         # Playwright E2E tests
-│   ├── mocks/                       # MSW mocks
-│   ├── scripts/                     # Build/scripts
-│   ├── public/                      # Static assets
-│   ├── next.config.mjs              # Next.js config (minimal)
-│   ├── tsconfig.json                # TypeScript config
-│   ├── eslint.config.mjs            # ESLint flat config
-│   ├── vitest.config.ts             # Vitest config
-│   ├── playwright.config.ts         # Playwright config
-│   └── package.json                 # Dependencies
-│
-├── backend/                         # Python backend (FastAPI)
-├── ingestion/                       # Document ingestion pipeline
-├── shared/                          # Shared types/contracts
-├── ops/                             # Operational configs
-├── platform_integrity/              # Platform integrity tests
-└── tools/                           # Internal tools
-```
+Root application/config context includes `CONVENTIONS.md`, `pytest.ini`, `.gitignore` and `.dockerignore`. Root agent/MCP/lifecycle settings and AI-DLC contribution blocks are tooling context, excluded from the application inventory. There is no claim that every tracked file was deeply reviewed; the dated coverage file is authoritative.
 
----
+### Exhaustive classification rule at inventory depth
 
-## Frontend Module Dependency Graph
+Within the inventoried application roots, classify `tests/`, `test/`, `e2e/` and `test_*`/`*.test.*` as tests/fixtures; `migrations/` as schema/control changes; manifests/lockfiles/Docker/compose/workflow/settings files as build/configuration; README/runbooks as documentation; frontend `app/` as routes/layouts, `components/` as presentation, `lib/` as orchestration/state/API utilities, and `types/` as contracts. Python `domain/` and models/schemas files hold domain/data contracts; controller/api files are HTTP boundaries; service/application files orchestrate; repository/adapters/integrations implement persistence/external ports; worker/CLI files are execution entrypoints. Remaining assets/styles are presentation resources and package initializers are packaging glue. Generated contract output is recognized but excluded from manual source analysis.
 
-```
-app/paper/[id]/page.tsx (SSR)
-    │
-    └─▶ PaperDetailIsland (Client Island)
-            │
-            ├─▶ lib/api/contentJobApi.ts
-            │       ├─▶ fetch('/api/content-jobs/*')  ❌ BYPASSES BFF
-            │       └─▶ EventSource('/api/content-jobs/{jobId}/events')  ❌ BYPASSES BFF
-            │
-            ├─▶ components/JobStatus.tsx (EXISTS, UNMOUNTED)
-            │       ├─▶ lib/api/contentJobApi.subscribeJobEvents()
-            │       └─▶ EventSource + lastEventId support ✅
-            │
-            ├─▶ components/AssetViewer.tsx
-            │       ├─▶ lib/api/contentJobApi.getAssetUrl() → presigned 307 ❌
-            │       └─▶ <img src={presignedUrl} /> ❌ SECURITY-08
-            │
-            ├─▶ components/SummaryModal.tsx
-            │       ├─▶ contentJobApi.submitJob()
-            │       └─▶ Should mount JobStatus on submit
-            │
-            ├─▶ components/DocModelViewer.tsx
-            │       └─▶ Uses AssetViewer for figures/tables
-            │
-            └─▶ lib/api/routeHandlerTransport.ts (BFF transport)
-                    └─▶ POST/GET /bff/* (used by apiClient, NOT contentJobApi)
-```
+## Package boundaries and entrypoints
 
----
+| Package or area | Entry / main composition | Layout and pattern |
+|---|---|---|
+| Backend shell | `backend/app.py`, `backend/wiring.py` | imports independent module routers; owns configuration, middleware, authorities and persistence overrides |
+| Accounts/library/mypage | module `controller.py`, services/repository trees | FastAPI DI plus domain errors; SQL and memory seams |
+| Discovery | `backend/modules/discovery/src/discovery/` | standalone Python package: api, service, domain, adapters; real and mock composition |
+| Summarization | `backend/modules/summarization/src/summarization/` | standalone package: API, job/domain/protocol/result models, services, real adapters and worker |
+| Citation/personalization/onboarding/trends/plans | sibling backend modules | controller/service/repository models; citation implementation concentrates provider/cache/controller logic in one file |
+| Evidence/research | `backend/modules/evidence/`; research under `sessions/` | grounded orchestration, attachment tools, streaming, repository and worker |
+| Novelty | `backend/modules/novelty/` | controller/service/repository, large provider adapter and worker implementations |
+| Private documents | `backend/modules/user_docmodel/coordinator.py` | shared owner-bound upload/build/read coordinator |
+| Frontend | `frontend/app/`, `components/`, `lib/` | server routes plus client islands; BFF catchall mediates backend transport; explicit job state/contracts |
+| Ingestion | `ingestion/src/docsuri_ingestion/` | ports, domain, application, adapters, resilience, CLI and worker |
+| Ops | `ops/src/docsuri_ops/` | telemetry/cost/grounding/incident/evaluation services and CLI; deployment material is outside package src |
+| Platform integrity | `platform_integrity/src/docsuri_platform_integrity/` | contracts/domain/application/adapters/api/cli/deployment; standalone controlled operational subsystem |
+| Shared | `shared/python/src/docsuri_shared/`, JSON schema groups | authored ports/authz/identity/vector utilities plus generated bindings |
 
-## Key Files for Phase 7 Changes
+## Frontend navigation surface
 
-### 1. `frontend/lib/api/contentJobApi.ts` — **PRIMARY TARGET**
-```typescript
-// Line 46: CURRENT (bypasses BFF)
-const API_BASE = '/api/content-jobs';
+The route inventory covers home/search, paper detail and document model/translation, agent workspace, library/saved/history, mypage/account library/recent/settings/subscription, login/signup/reset-password/verify-email/social-link-required, unsubscribe, privacy and terms. Error/global-error routes provide fallback rendering. BFF lives at `app/bff/[...path]/route.ts`.
 
-// REQUIRED CHANGE:
-const API_BASE = '/bff/api/content-jobs';
+Route existence is distinct from feature availability. UI component internals and browser persistence beyond the inspected job client were shallowly inventoried, not a full accessibility or interaction audit.
 
-// Functions to update:
-// - submitJob()           → POST /bff/api/content-jobs/submit
-// - getJobState()         → GET /bff/api/content-jobs/{jobId}/state
-// - subscribeJobEvents()  → EventSource /bff/api/content-jobs/{jobId}/events
-// - translate()           → POST /bff/api/content-jobs/translate
-// - getAssetUrl()         → REMOVE (presigned URL pattern) ❌
-// - issueAssetToken()     → POST /bff/api/content-jobs/assets/{assetId}/token
-```
+## Code patterns worth preserving
 
-### 2. `frontend/components/JobStatus.tsx` — **MOUNT TARGET**
-```typescript
-// Current: Exists, fully implemented SSE with Last-Event-ID ✅
-// Missing:
-// - Mount in PaperDetailIsland (near action buttons)
-// - Polling fallback (SWR 2s interval to /state)
-// - Error Boundary wrapper
-// - Inline Retry button on FAILED (with idempotency key)
-// - Accessibility: ARIA live region, progressbar role
-```
+- Typed request/domain models and explicit result unions; ports separate algorithms from external stores/providers.
+- FastAPI dependency overrides connect module-local defaults to app-level configuration.
+- BFF normalizes transport, selected retries, cookies, SSE and binary assets.
+- Content jobs use owner-scoped idempotency, ordered events and terminal state rules; frontend applies sequence watermarks.
+- Generated schema consumers have drift/inventory tooling, while private document identity has shared helpers.
 
-### 3. `frontend/components/AssetViewer.tsx` — **MIGRATION TARGET**
-```typescript
-// Current: getAssetUrl(assetId, token) → presigned 307 redirect ❌
-// Required:
-// - Remove getAssetUrl() usage
-// - Accept paperId + assetId props (not assetId + token)
-// - Direct: <img src="/bff/api/papers/{paperId}/assets/{assetId}" />
-// - BFF proxyAssetImage() already handles auth re-check & streaming
-```
+## Repairability concentrations
 
-### 4. `frontend/components/PaperDetailIsland.tsx` — **MOUNT POINT**
-```typescript
-// Current: Actions bar with 요약/초록 번역/각주 트리/전문 번역
-// Required:
-// - Import JobStatus
-// - Track active jobId state (from submitJob response)
-// - Mount <JobStatus jobId={activeJobId} /> below action buttons
-// - Pass onComplete handler for result navigation
-```
+Measured file lengths identify navigation/ownership hotspots, not cyclomatic complexity: `backend/wiring.py` 1,037 lines, `backend/modules/accounts/controller.py` 1,180, `backend/modules/novelty/adapters.py` 1,818, `ingestion/src/docsuri_ingestion/application.py` 1,167, `frontend/lib/api/apiClient.ts` 1,494 and `frontend/components/agent/AgentChatScreen.tsx` 1,146. Adapter/UI internals in this list remain shallow coverage. Prefer responsibility-based extraction after behavior is captured; size alone does not authorize deletion or prove dead code.
 
-### 5. `frontend/components/SummaryModal.tsx` — **TRIGGER POINT**
-```typescript
-// Current: Opens modal, calls submitJob()
-// Required:
-// - On submitJob success: set activeJobId, mount JobStatus
-// - Handle idempotency key generation/storage
-```
+## Coverage exclusions
 
-### 6. `frontend/app/bff/[...path]/route.ts` — **BFF PROXY (READY ✅)**
-```typescript
-// Already implemented:
-// - proxyAssetImage() for same-origin asset delivery
-// - SSE proxy with Last-Event-ID support
-// - Cookie forwarding for auth
-// - Set-Cookie relay
-// - Timeout config per path
-```
-
----
-
-## Testing Structure
-
-```
-frontend/test/
-├── unit/                          # Vitest unit tests
-│   ├── components/
-│   │   ├── JobStatus.test.tsx     # SSE, polling, retry
-│   │   ├── AssetViewer.test.tsx   # Same-origin, error states
-│   │   └── PaperDetailIsland.test.tsx
-│   └── lib/api/
-│       └── contentJobApi.test.ts  # BFF routing, idempotency
-├── integration/                   # Integration tests
-│   └── contentJobs.integration.test.ts
-├── e2e/                           # Playwright E2E
-│   ├── content-jobs.spec.ts       # Full flow: submit → SSE → result
-│   └── asset-viewer.spec.ts       # Asset loading, auth
-└── fixtures/                      # Test data
-```
-
----
-
-## TypeScript Path Aliases (`tsconfig.json`)
-
-```json
-{
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./*"],
-      "@/components/*": ["./components/*"],
-      "@/lib/*": ["./lib/*"],
-      "@/types/*": ["./types/*"]
-    }
-  }
-}
-```
-
----
-
-## Build & Quality Commands
-
-```bash
-# Development
-pnpm dev                    # Next.js dev server
-
-# Quality Gates (must pass before merge)
-pnpm lint                   # ESLint (flat config)
-pnpm typecheck              # tsc --noEmit
-pnpm test                   # Vitest (unit + integration)
-pnpm test:e2e               # Playwright E2E
-
-# Coverage
-pnpm test --coverage        # ≥80% for new code (feature scope)
-```
-
----
-
-## Environment Files
-
-| File | Purpose |
-|------|---------|
-| `.env.local` | Local dev overrides |
-| `.env.production` | Production config |
-| `DOCSURI_GATEWAY_URL` | Backend gateway URL (required for BFF) |
-| `DOCSURI_BFF_ALLOW_MOCK` | Allow MockTransport in prod |
-
----
-
-## Migration Checklist (Phase 7)
-
-| Task | File | Status |
-|------|------|--------|
-| Update API_BASE to `/bff/api/content-jobs` | `contentJobApi.ts` | ⬜ |
-| Remove `getAssetUrl()` / `issueAssetToken()` | `contentJobApi.ts` | ⬜ |
-| Add idempotency key generation (SHA-256 hash) | `contentJobApi.ts` | ⬜ |
-| Add idempotency key to `submitJob()` | `contentJobApi.ts` | ⬜ |
-| Add polling fallback (SWR) to `JobStatus` | `JobStatus.tsx` | ⬜ |
-| Add Error Boundary wrapper | `JobStatus.tsx` | ⬜ |
-| Add inline Retry button on FAILED | `JobStatus.tsx` | ⬜ |
-| Add ARIA live region + progressbar | `JobStatus.tsx` | ⬜ |
-| Migrate AssetViewer to same-origin | `AssetViewer.tsx` | ⬜ |
-| Accept paperId + assetId props | `AssetViewer.tsx` | ⬜ |
-| Mount JobStatus in PaperDetailIsland | `PaperDetailIsland.tsx` | ⬜ |
-| Track activeJobId from submitJob | `PaperDetailIsland.tsx` / `SummaryModal.tsx` | ⬜ |
-| Add unit tests for new logic | `test/` | ⬜ |
-| Add E2E test for full flow | `e2e/` | ⬜ |
+AI-DLC installations/workspace/generated agents and `.aidlc-rule-details/` are not product modules. Dependency environments, node_modules, caches, .next/build output, generated DTO implementation bodies, secrets/environment values and user databases were not inspected. SQL parsing gaps and graph limitations are recorded in [coverage](reverse-engineering-timestamp.md). Historical docs were not used to claim current runtime health.

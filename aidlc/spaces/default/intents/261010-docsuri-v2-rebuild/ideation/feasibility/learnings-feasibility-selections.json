@@ -1,0 +1,16 @@
+{
+  "stage_slug": "feasibility",
+  "space": "default",
+  "intent": "261010-docsuri-v2-rebuild",
+  "selections": [
+    {
+      "candidate_id": "user-addition-feasibility-zero-budget",
+      "type": "learning",
+      "scope": "project",
+      "heading": "Corrections",
+      "source_heading": "Interpretations",
+      "text": "The budget should be $0. Only use free or local stacks.",
+      "source": "user_addition"
+    }
+  ]
+}

@@ -1,288 +1,194 @@
-# API Documentation — DocSuri Frontend
+# DocSuri API Documentation
 
-**Project:** DocSuri
-**Date:** 2026-10-02
+## Scope and transport
 
----
+Static source inventory found **108 application HTTP method/path declarations** across health and fourteen module groups, plus **4 operations in the separate platform-integrity API**. Counts are declaration counts, not proof that all routes mount in an environment: module failures/configuration/feature gates can remove or reject surfaces. FastAPI-generated documentation endpoints and Next page routes are not included.
 
-## Content Job API (Current vs Required)
+Graph Route nodes were insufficient (only three backend candidates), so a direct Python AST pass over application Python, excluding tests/environments, enumerated HTTP decorators and router prefixes. This is not generated live OpenAPI; dynamic route availability and every field/error branch remain to be verified. Source paths below are relative to the repository.
 
-### Current Implementation (`contentJobApi.ts`)
+Browser requests usually use `/bff/<backend-path>`. `frontend/app/bff/[...path]/route.ts` forwards GET/POST/PUT/PATCH/DELETE/OPTIONS, cookies and Set-Cookie; handles selected SSE and image routes; disables job caching; retries eligible GET failures once but not mutations. Production requires an upstream unless explicitly allowing mock mode. Backend paths below omit `/bff`.
 
-| Function | Current Endpoint | Method | Bypasses BFF? |
-|----------|------------------|--------|---------------|
-| `submitJob()` | `/api/content-jobs/submit` | POST | ❌ Yes |
-| `getJobState()` | `/api/content-jobs/{jobId}/state` | GET | ❌ Yes |
-| `subscribeJobEvents()` | `/api/content-jobs/{jobId}/events` | SSE | ❌ Yes |
-| `translate()` | `/api/content-jobs/translate` | POST | ❌ Yes |
-| `getAssetUrl()` | `/api/content-jobs/assets/{assetId}?token=` | GET (307) | ❌ Yes |
-| `issueAssetToken()` | `/api/content-jobs/assets/{assetId}/token` | POST | ❌ Yes |
+Authentication comes from gateway principal/session handling and controller dependencies. Search and session inspection have optional-auth handling; account entry/token flows and signed unsubscribe have distinct rules. Administrator routes require role/MFA. A module-local development app or a direct fake-request test is not the assembled authentication boundary.
 
-### Required Endpoints (Through BFF `/bff`)
+## Route inventory
 
-| Function | Required Endpoint | Method | Notes |
-|----------|-------------------|--------|-------|
-| `submitJob()` | `/bff/api/content-jobs/submit` | POST | Add idempotencyKey |
-| `getJobState()` | `/bff/api/content-jobs/{jobId}/state` | GET | For polling fallback |
-| `subscribeJobEvents()` | `/bff/api/content-jobs/{jobId}/events` | SSE | Last-Event-ID support |
-| `translate()` | `/bff/api/content-jobs/translate` | POST | Cache-aware |
-| `getAssetUrl()` | **REMOVE** | — | Replace with same-origin pattern |
-| Asset Delivery | `/bff/api/papers/{paperId}/assets/{assetId}` | GET | Direct `<img src>`, auth re-check |
-| `issueAssetToken()` | `/bff/api/content-jobs/assets/{assetId}/token` | POST | Keep for token issuance |
+Methods sharing a path are listed together; brace names are path parameters, not literal URLs.
 
----
+### Health and operations — 5 declarations
 
-## BFF Proxy Endpoints (`/bff/[...path]`)
+Sources: `backend/health.py:19`, `backend/modules/ops/controller.py:80,140`.
 
-### Content Jobs
+| Methods | Path | Purpose / access |
+|---|---|---|
+| GET | /health; /healthz | application liveness |
+| GET | /readyz | configured required-module readiness, not full journey proof |
+| GET | /ops/dashboard | administrator/MFA operational summary |
+| GET | /ops/incidents | administrator/MFA incident listing |
 
-| Path | Method | Upstream | Notes |
-|------|--------|----------|-------|
-| `/bff/api/content-jobs/submit` | POST | `/api/content-jobs/submit` | Cookie forwarded |
-| `/bff/api/content-jobs/{jobId}/state` | GET | `/api/content-jobs/{jobId}/state` | Polling fallback |
-| `/bff/api/content-jobs/{jobId}/events` | GET | `/api/content-jobs/{jobId}/events` | SSE proxy, Last-Event-ID |
-| `/bff/api/content-jobs/translate` | POST | `/api/content-jobs/translate` | Cache-aware |
-| `/bff/api/content-jobs/assets/{assetId}/token` | POST | `/api/content-jobs/assets/{assetId}/token` | Token issuance |
-| `/bff/api/content-jobs/assets/{assetId}` | GET | `/api/content-jobs/assets/{assetId}` | **REMOVED** — use paper assets |
+### Accounts — 22 declarations
 
-### Asset Delivery (Same-Origin)
+Source: `backend/modules/accounts/controller.py:482–1178`. Controller declarations inventoried; all lifecycle payload/error semantics were not deeply audited.
 
-| Path | Method | Upstream | Notes |
-|------|--------|----------|-------|
-| `/bff/api/papers/{paperId}/assets/{assetId}` | GET | `/api/papers/{paperId}/assets/{assetId}` | Auth re-check, streams bytes, `cache-control: private, max-age=60`, no 307 |
+| Methods | Path under /auth | Contract family |
+|---|---|---|
+| POST | /signup; /login; /resend-verification | credential/verification inputs; session/cookie and public response mapping |
+| GET | /verify-email | verification token |
+| POST | /password-reset/request; /password-reset/confirm | reset request/token/new credential |
+| POST | /change-password | authenticated credential change |
+| POST | /email-change/request | authenticated email change request |
+| GET | /email-change/confirm; /email-change/revoke | lifecycle token confirmation/revocation |
+| POST | /account/delete; /account/reactivate | withdrawal/reactivation |
+| GET | /social/google/start; /social/google/callback | OAuth/OIDC redirect and state/code flow |
+| GET | /social/orcid/start; /social/orcid/callback | ORCID redirect and state/code flow |
+| POST | /social/link | explicit account-link confirmation |
+| GET | /session | current session view; optional-auth inspection |
+| POST | /logout | session termination |
+| POST | /mfa/enroll; /mfa/verify | MFA enrollment/verification |
+| GET | /admin/whoami | administrator identity gate |
 
-### SSE Endpoints
+### Discovery — 2 declarations
 
-| Path | Method | Upstream | Notes |
-|------|--------|----------|-------|
-| `/bff/api/content-jobs/{jobId}/events` | GET | `/api/content-jobs/{jobId}/events` | Last-Event-ID, 15s timeout |
-| `/bff/api/novelty/jobs/{jobId}/events` | GET | `/api/novelty/jobs/{jobId}/events` | Novelty SSE |
-| `/bff/api/evidence/turns` | POST | `/api/evidence/turns` | Evidence turns SSE |
-| `/bff/api/research/jobs` | POST | `/api/research/jobs` | Research jobs SSE |
+Source: `backend/modules/discovery/src/discovery/api/router.py:66,85`.
 
-### Search & Library
+| Method | Path | Input / output / relevant failures |
+|---|---|---|
+| POST | /api/search | shared SearchRequest → search result union; validation result 400, normal/degraded result 200, store outage mapped to generic 503 |
+| GET | /api/papers/{paper_id} | metadata when paper service is configured; 404 absent paper, generic 503 unavailable store |
 
-| Path | Method | Upstream | Notes |
-|------|--------|----------|-------|
-| `/bff/api/search` | GET/POST | `/api/search` | 30s timeout |
-| `/bff/api/library/*` | GET/POST | `/api/library/*` | Auth required |
+Production search ignores spoofable X-User-Id and uses the principal or server anonymous identity. Standalone `build_app` explicitly enables a development identity header; do not substitute it for mounted behavior.
 
----
+### Library — 10 declarations
 
-## Request/Response Schemas
+Source: `backend/modules/library/controller.py:111–256`. All owner authenticated. List operations accept bounded limit/cursor; saved-search list also accepts query. Domain validation → 422, quota/state conflict → 409, unavailable rerun gateway → 503, absent/foreign item → generalized 404.
 
-### Submit Job Request
-```typescript
-interface SubmitJobRequest {
-  taskType: 'translate' | 'summarize' | 'novelty' | 'evidence' | 'ingest_userdoc';
-  input: Record<string, unknown>;
-  idempotencyKey?: string;  // Should be required for Phase 7
-}
-```
+| Methods | Path | Contract |
+|---|---|---|
+| POST, GET | /library/saved-searches | SavedSearchCreateDTO → SavedSearchDTO; list → SavedSearchPageDTO |
+| DELETE | /library/saved-searches/{item_id} | 204 |
+| POST | /library/saved-searches/{item_id}/rerun | SearchResultSetDTO |
+| POST, GET | /library/items | LibraryItemCreateDTO → LibraryItemDTO; list → LibraryPageDTO |
+| DELETE | /library/items/{item_id} | 204 |
+| GET, DELETE | /library/history | HistoryPageDTO or clear 204 |
+| POST | /library/history/{item_id}/rerun | SearchResultSetDTO |
 
-### Submit Job Response
-```typescript
-interface SubmitJobResponse {
-  jobId: string;
-  state: 'SUBMITTED' | 'ACCEPTED' | 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'ABSTAINED';
-}
-```
+Create returns 201 for new items and 200 when a service reports an existing item.
 
-### Job State
-```typescript
-interface JobState {
-  jobId: string;
-  state: 'SUBMITTED' | 'ACCEPTED' | 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'ABSTAINED';
-  assetId?: string;
-  error?: {
-    errorType: string;
-    message: string;
-    retryable: boolean;
-    retryAfterSeconds?: number;
-  };
-  abstainReason?: string;
-}
-```
+### Summary, jobs and documents — 12 declarations
 
-### SSE Event
-```typescript
-interface JobEvent {
-  eventId: string;
-  jobId: string;
-  state: string;
-  timestampUs: number;
-  payload?: {
-    assetId?: string;
-    error?: { errorType: string; message: string; retryable: boolean };
-    abstainReason?: string;
-  };
-}
-```
+Source: `backend/modules/summarization/src/summarization/api/router.py`, mounted by `backend/wiring.py:495`.
 
-### Asset Token Response
-```typescript
-interface AssetTokenResponse {
-  token: string;
-  expiresIn: number;
-}
-```
+| Method | Path | Current mounted behavior |
+|---|---|---|
+| POST | /api/content-jobs/submit | taskType/input/idempotencyKey → 202 jobId/state receipt; auth 401, invalid task 400, unavailable service 503 |
+| GET | /api/content-jobs/{job_id}/state | owner jobId/state/error?/resultRef?; currently missing browser-required seq |
+| GET | /api/content-jobs/{job_id}/events | owner event stream; Last-Event-ID or lastEventId resume; current framing regression Q-04 |
+| GET | /api/content-jobs/{job_id}/result | owner resultRef only; absent/unready/expired currently 404 |
+| POST | /api/summarize | synchronous summary/translation request through orchestration; separate from durable submit |
+| GET, POST | /api/glossary | authenticated terminology list/update |
+| GET | /api/papers/{paper_id}/doc-model | version query; ok/docModel, building/retryAfterMs, source_unavailable or license_unavailable; storage fault 503 |
+| GET | /api/papers/{paper_id}/assets | gated public asset manifest |
+| GET | /api/papers/{paper_id}/assets/{asset_id} | gated owned/authenticated public asset byte proxy |
+| GET | /api/userdoc/{doc_id}/doc-model | owner-scoped private document read |
+| GET | /api/summarization/ready | summary service/store readiness check |
 
-### Translate Response
-```typescript
-interface TranslateResponse {
-  assetId?: string;
-  jobId?: string;
-  state: string;
-  source: 'cache' | 'job';
-}
-```
+Submit recognizes summarize, translate, novelty, evidence and ingest_userdoc. Do not infer these are all worker-supported through the mounted callback. Public paper document routes refuse private namespace IDs before other branches. Browser result retrieval requires a versioned preparedResult envelope and distinguishes 409/410/422; current producer disagreement is owned in Q-01–Q-03 of [quality assessment](code-quality-assessment.md). The deprecated client-only translate-job helper is not an additional mounted route.
 
----
+### Citation graph — 2 declarations
 
-## Error Responses
+Source: `backend/modules/citation_graph/controller.py:374,436`. Feature flag and principal required.
 
-| Status | Scenario | Response Format |
-|--------|----------|-----------------|
-| 400 | Invalid request body | `{ message: "잘못된 요청 형식입니다." }` |
-| 401 | Unauthorized (no session) | Redirect to login |
-| 403 | Forbidden (owner check failed) | `{ message: "접근 권한이 없습니다." }` |
-| 404 | Job/Asset not found | `{ message: "리소스를 찾을 수 없습니다." }` |
-| 409 | Idempotency conflict | Returns existing job |
-| 410 | Result expired (TTL) | `{ message: "결과가 만료되었습니다." }` |
-| 500 | Internal server error | `{ message: "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." }` |
-| 502 | Bad gateway | `{ message: "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." }` |
-| 503 | Service unavailable | `{ message: "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." }` |
-| 504 | Gateway timeout | `{ message: "요청 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요." }` |
+| Method | Path | Contract |
+|---|---|---|
+| GET | /api/papers/{paper_id}/citation-tree | expandNodeId/refresh → nodes, edges, unresolved, depth/truncation/cache/provider status |
+| POST | /api/papers/{paper_id}/citation-tree/save | SaveCitationNodeRequest → library add; unsaveable node 422 |
 
----
+Provider timeout/rate limit can produce degraded results and cached fallback, not necessarily an HTTP error. Maximum visible nodes is capped at 50.
 
-## SSE Event Stream Format
+### Personalization and onboarding — 12 declarations
 
-```
-event: message
-data: {"eventId":"evt_123","jobId":"job_456","state":"RUNNING","timestampUs":1234567890123,"payload":{}}
+Sources: `backend/modules/personalization/controller.py:69–168`, `backend/modules/onboarding/controller.py:69–130`. Principal required; personalization routes feature gated.
 
-event: message
-data: {"eventId":"evt_124","jobId":"job_456","state":"COMPLETED","timestampUs":1234567890124,"payload":{"assetId":"asset_789"}}
-```
+| Methods | Path | Contract |
+|---|---|---|
+| POST | /api/personalization/events | behavior event validation/recording |
+| GET | /api/personalization/decision/search; /api/personalization/decision/summary-defaults | PersonalizationDecision |
+| GET, PATCH | /api/personalization/settings | settings / enabled update |
+| POST | /api/personalization/delete-events; /api/personalization/reset-profile | delete recorded events / reset profile |
+| GET | /mypage/recently-viewed | RecentlyViewedList |
+| GET | /onboarding/status | state and allowed categories |
+| POST | /onboarding/interests | InterestSelection → state/eventRecorded/reason |
+| POST | /onboarding/skip | skipped state |
+| GET | /onboarding/orcid-suggestions | suggestions/degraded; best-effort external lookup |
 
-**Reconnection:** Client sends `Last-Event-ID: evt_124` on reconnect; server replays missed events.
+### My page, trends and plans — 16 declarations
 
----
+Sources: `backend/modules/mypage/controller.py:70–153`, `trends/controller.py:91–190`, `plans/controller.py:70–129`.
 
-## BFF-Specific Headers
+| Methods | Path | Contract / access |
+|---|---|---|
+| GET, POST | /mypage/subscription | own SubscriptionDTO; POST 201; mock subscription behavior |
+| POST | /mypage/subscription/cancel | own subscription cancellation |
+| GET | /mypage/account-profile; /mypage/orcid-profile | own profile; missing profile 404 |
+| GET, POST | /mypage/consents | own ConsentsDTO / ConsentsUpdate |
+| GET, POST | /trends/follows | own FollowListResponse / topic create 201; duplicate/limit 409 |
+| DELETE | /trends/follows/{topic_id} | own removal; absent/foreign 404 |
+| GET, PUT | /trends/settings | DigestSettingsResponse / optedIn/cadence update |
+| POST | /trends/unsubscribe | signed owner token, no login dependency in handler; invalid token 400 |
+| GET | /plans/me | own resolved tier, quota and expiry |
+| POST | /plans/grants | ADMIN plus MFA, GrantRequest → GrantResponse 201 |
+| DELETE | /plans/grants/{user_id} | ADMIN plus MFA, revoke assignment; absent 404 |
 
-### Request Headers (BFF → Gateway)
-| Header | Source | Purpose |
-|--------|--------|---------|
-| `Cookie` | Browser request | Session auth |
-| `X-Recaptcha-Token` | Client (if present) | reCAPTCHA verification |
-| `X-Amz-Content-SHA256` | BFF (POST body) | Lambda Function URL requirement |
+No payment API is declared in these controllers.
 
-### Response Headers (Gateway → BFF → Browser)
-| Header | Purpose |
-|--------|---------|
-| `Set-Cookie` | Session refresh/rotation |
-| `Content-Type` | `application/json` or `text/event-stream` |
-| `Cache-Control` | `no-store` (SSE), `private, max-age=60` (assets) |
-| `X-Content-Type-Options` | `nosniff` (assets) |
+### Evidence and research sessions — 11 declarations
 
----
+Sources: `backend/modules/evidence/controller.py:168,276,325`; `evidence/sessions/controller.py:117–284`. Owner principal and configured agent/feature prerequisites; turn creation uses quota checks.
 
-## Idempotency Key Specification
+| Methods | Path | Contract |
+|---|---|---|
+| POST | /api/evidence/turns | topic/scope/papers/attachments → success, abstain, error or pending turn; negotiated SSE |
+| POST | /api/evidence/attachments | PDF bytes with fileName/id query → attachment identity/reference |
+| GET | /api/evidence/jobs/{job_id} | owner pending/completed turn job view |
+| POST, GET, DELETE | /api/research/jobs | create/list/reset sessions |
+| GET, DELETE | /api/research/jobs/{job_id} | detail/delete session; generalized 404 |
+| GET, POST | /api/research/jobs/{job_id}/messages | list/add messages; POST supports negotiated SSE or pending JSON |
+| POST | /api/research/attachments | PDF upload and build enqueue; 415 non-PDF, 422 invalid/unavailable upload |
 
-### Generation (Client-Side)
-```typescript
-// SHA-256 hash of: userId + paperId + taskType + JSON.stringify(params)
-async function generateIdempotencyKey(
-  userId: string,
-  paperId: string,
-  taskType: string,
-  params: Record<string, unknown>
-): Promise<string> {
-  const input = `${userId}:${paperId}:${taskType}:${JSON.stringify(params)}`;
-  const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
-  return Array.from(new Uint8Array(buffer))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-```
+SSE reports bounded progress and final validated results. A client must handle JSON pending responses even when it requested a stream; replay must not resubmit mutations blindly.
 
-### Storage
-```typescript
-// localStorage key format
-const STORAGE_KEY = `idempotency:${paperId}:${taskType}`;
+### Novelty and Notion — 16 declarations
 
-// On submit: check localStorage first, reuse if exists
-// On explicit clear: localStorage.removeItem(STORAGE_KEY)
-```
+Source: `backend/modules/novelty/controller.py:92–360`. Owner-scoped jobs and connections; feature/quota/configuration prerequisites apply.
 
-### Usage
-```typescript
-// Include in submitJob request
-const response = await submitJob({
-  taskType: 'summarize',
-  input: { paperId, version },
-  idempotencyKey: storedKey || await generateIdempotencyKey(...)
-});
-```
+| Methods | Path | Contract |
+|---|---|---|
+| POST, GET, DELETE | /api/novelty/jobs | create/list/reset jobs |
+| GET, DELETE | /api/novelty/jobs/{job_id} | status/delete |
+| POST | /api/novelty/jobs/{job_id}/manuscript | text/Markdown/PDF manuscript input |
+| GET | /api/novelty/jobs/{job_id}/result | job/artifacts/export |
+| GET | /api/novelty/jobs/{job_id}/events | resumable progress stream |
+| GET, POST | /api/novelty/jobs/{job_id}/messages | conversation history / add message |
+| POST | /api/novelty/jobs/{job_id}/cancel | cancellation state |
+| POST | /api/novelty/jobs/{job_id}/notion/preview | prepare export preview |
+| POST | /api/novelty/jobs/{job_id}/notion/approve | explicit approval before external export |
+| GET, PUT, DELETE | /api/novelty/notion/connection | own connection status / encrypted token configuration / disconnect |
 
----
+## Separate platform-integrity API — 4 declarations
 
-## Polling Fallback Specification
+Source: `platform_integrity/src/docsuri_platform_integrity/api/app.py:45–154`. Separate loopback/read-only daemon, not a backend mount. Peer identity is derived from verified client-certificate scope, never a caller identity header. Non-loopback peers get 404; metadata without verified identity gets 401; request bodies are rejected. Admission/deadline/response caps bound work.
 
-```typescript
-// SWR configuration for /state polling
-useSWR(`/bff/api/content-jobs/${jobId}/state`, fetcher, {
-  refreshInterval: 2000,        // 2s fixed interval
-  revalidateOnFocus: true,
-  dedupingInterval: 1000,
-  fallbackData: lastSSEState,   // Preserve last known state
-  onSuccess: (data) => {
-    if (data.state !== lastState) updateUI(data);
-    if (isTerminalState(data.state)) stopPolling();
-  }
-});
-```
+| Method | Path | Contract |
+|---|---|---|
+| GET | /healthz | liveness only |
+| GET | /readyz | shallow/deep/subjectEligible/reasons; 200 or 503 |
+| GET | /internal/v1/evidence/{subject:path} | authorized bounded GateEvaluation; absent/denied 404 |
+| GET | /internal/v1/compatibility/{release:path} | exact release compatibility verdict/reasons; absent/denied 404 |
 
-**Activation:** When SSE `EventSource` enters error state (after max reconnect attempts).
-**Deactivation:** When SSE reconnects successfully or job reaches terminal state.
+Compatibility observes manifest/artifact/generation/role/schema/config bindings; it does not grant mutation authority.
 
----
+## Non-HTTP/internal interfaces
 
-## Asset Delivery Headers
-
-### Request (Browser → BFF)
-```
-GET /bff/api/papers/{paperId}/assets/{assetId} HTTP/1.1
-Cookie: session=...
-Accept: image/*
-```
-
-### Response (BFF → Browser)
-```
-HTTP/1.1 200 OK
-Content-Type: image/webp
-Cache-Control: private, max-age=60
-X-Content-Type-Options: nosniff
-Content-Length: 12345
-Set-Cookie: session=...; HttpOnly; Secure; SameSite=Lax
-```
-
-**Error Cases:**
-- 401/403: Auth failed (owner check) → `{ message: "접근 권한이 없습니다." }`
-- 404: Asset not found → 404 with `cache-control: no-store`
-- 5xx: Gateway error → 404 degrade (no error UI for images)
-
----
-
-## Rate Limits & Timeouts (BFF Layer)
-
-| Path Pattern | Timeout | Retry |
-|--------------|---------|-------|
-| `/api/content-jobs/*` | Default (HttpTransport) | GET: once after 1.5s (SQ3) |
-| `/api/content-jobs/{jobId}/events` | 15s (SSE_PROXY_TIMEOUT_MS) | No (streaming) |
-| `/api/papers/{id}/assets/{assetId}` | 10s (ASSET_IMAGE_TIMEOUT_MS) | No (degrade to 404) |
-| `/api/evidence/turns` | 90s (EVIDENCE_GATEWAY_TIMEOUT_MS) | No |
-| `/api/search` | 30s (SEARCH_GATEWAY_TIMEOUT_MS) | No |
-| `/api/novelty/jobs/{jobId}/events` | 15s | No |
+- Ingestion CLI: ingest-one, trigger-full-rebuild, schedule-tick; queue worker consumes ingestion/build jobs.
+- Ops CLI: run-detectors, run-grounding-eval, run-reliability-eval, dashboard-summary.
+- Shared Protocols and JSON schema/event contracts connect retrieval, grounding, cost, history, ingestion and observability.
+- Worker queue messages, direct Python repository/service interfaces and platform operational CLI protocols require separate detailed contract extraction before replacement. This inventory does not pretend to be exhaustive message-field documentation.
