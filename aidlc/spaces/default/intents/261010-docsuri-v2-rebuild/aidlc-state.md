@@ -47,15 +47,10 @@
 
 - **Skeleton Stance**: off
 
-- **Active Unit**: u1-integrated-paper-journey
 
-- **Unit Stage**: functional-design
 
-- **Unit State**: paused
 
-- **Unit Pause Reason**: Awaiting human confirmation of the U1 Functional Design summary
 
-- **Unit Next Action**: Record the summary reply, resume this unit, then generate its functional design artifacts after confirmation
 
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
@@ -118,7 +113,7 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-10-11T07:31:21Z
+- **Last Updated**: 2026-10-11T07:52:47Z
 
 - **Construction Autonomy Mode**: autonomous
 
