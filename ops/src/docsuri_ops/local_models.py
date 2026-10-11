@@ -25,6 +25,8 @@ import httpx
 GIB = 1024**3
 COMPACT_PROFILE = "qwen-nonthinking-2048-224-v1"
 THINKING_PROFILE = "qwen-thinking-4096-2048-v1"
+VERIFY_PROFILE = "qwen-source-verification-4096-2048x2-v1"
+THINKING_PROFILES = (THINKING_PROFILE, VERIFY_PROFILE)
 MODEL_PINS = {
     "qwen3:8b": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
     "bge-m3:latest": "7907646426070047a77226ac3e684fbbe8410524f7b4a74d02837e43f2146bab",
@@ -55,14 +57,14 @@ def pressure() -> int:
 
 
 def validate_response(response: dict, *, model: str, profile: str = COMPACT_PROFILE) -> None:
-    if profile not in (COMPACT_PROFILE, THINKING_PROFILE):
+    if profile not in (COMPACT_PROFILE, *THINKING_PROFILES):
         raise ModelUnavailable("unknown response profile")
     if response.get("model") != model or response.get("error"):
         raise ModelUnavailable("model response identity or error mismatch")
     if model == "qwen3:8b":
         if response.get("done") is not True or response.get("done_reason") != "stop":
             raise ModelUnavailable("generation incomplete or output limit reached")
-        output_limit, input_limit = (2048, 2048) if profile == THINKING_PROFILE else (224, 1824)
+        output_limit, input_limit = (2048, 2048) if profile in THINKING_PROFILES else (224, 1824)
         if not 0 < response.get("eval_count", 0) <= output_limit:
             raise ModelUnavailable("generation token evidence outside policy")
         if not 0 < response.get("prompt_eval_count", 0) <= input_limit:
@@ -70,7 +72,7 @@ def validate_response(response: dict, *, model: str, profile: str = COMPACT_PROF
         message = response.get("message", {})
         if not isinstance(message.get("content"), str) or not message["content"].strip():
             raise ModelUnavailable("generation returned no usable text")
-        if profile == THINKING_PROFILE and (
+        if profile in THINKING_PROFILES and (
             not isinstance(message.get("thinking"), str) or not message["thinking"].strip()
         ):
             raise ModelUnavailable("thinking execution was not evidenced")
@@ -79,9 +81,9 @@ def validate_response(response: dict, *, model: str, profile: str = COMPACT_PROF
 def generation_options(seed: int | None = None, *, profile: str = COMPACT_PROFILE) -> dict:
     """Pinned diagnostic profiles; sampling never changes the execution allocation."""
     options = {"num_ctx": 2048, "num_thread": 2, "num_predict": 224, "temperature": 0}
-    if profile not in (COMPACT_PROFILE, THINKING_PROFILE):
+    if profile not in (COMPACT_PROFILE, *THINKING_PROFILES):
         raise ValueError("unknown generation profile")
-    if profile == THINKING_PROFILE:
+    if profile in THINKING_PROFILES:
         if type(seed) is not int or seed not in (42, 43):
             raise ValueError("thinking experiment requires a predeclared seed")
         return {
@@ -102,7 +104,7 @@ def generation_options(seed: int | None = None, *, profile: str = COMPACT_PROFIL
 
 
 def validate_request(model: str, body: dict, *, profile: str = COMPACT_PROFILE) -> None:
-    if profile not in (COMPACT_PROFILE, THINKING_PROFILE):
+    if profile not in (COMPACT_PROFILE, *THINKING_PROFILES):
         raise ModelUnavailable("unknown request profile")
     if body.get("model") != model or model not in MODEL_PINS or body.get("keep_alive") != 0:
         raise ModelUnavailable("request model or lifetime outside policy")
@@ -130,7 +132,7 @@ def validate_request(model: str, body: dict, *, profile: str = COMPACT_PROFILE) 
         if (
             set(body) != fields
             or body.get("stream") is not False
-            or body.get("think") is not (profile == THINKING_PROFILE)
+            or body.get("think") is not (profile in THINKING_PROFILES)
         ):
             raise ModelUnavailable("generation request policy mismatch")
         messages = body.get("messages", [])
@@ -237,7 +239,7 @@ class LocalModelRuntime:
     def __init__(
         self, root: Path, run_id: str, expires_at: float, *, profile: str = COMPACT_PROFILE
     ):
-        if profile not in (COMPACT_PROFILE, THINKING_PROFILE):
+        if profile not in (COMPACT_PROFILE, *THINKING_PROFILES):
             raise ValueError("unknown model runtime profile")
         self.profile = profile
         if root != Path("/tmp/docsuri-u1-run").resolve():
@@ -410,7 +412,7 @@ class LocalModelRuntime:
             "OLLAMA_MAX_LOADED_MODELS": "1",
             "OLLAMA_NUM_PARALLEL": "1",
             "OLLAMA_MAX_QUEUE": "1",
-            "OLLAMA_CONTEXT_LENGTH": "4096" if self.profile == THINKING_PROFILE else "2048",
+            "OLLAMA_CONTEXT_LENGTH": "4096" if self.profile in THINKING_PROFILES else "2048",
             "OLLAMA_KEEP_ALIVE": "0",
             "OLLAMA_LOAD_TIMEOUT": "60s",
         }
@@ -445,7 +447,7 @@ class LocalModelRuntime:
                 raise ModelUnavailable("effective model allowlist mismatch")
             self.identity["version"] = version
             self.identity["profile"] = self.profile
-            if self.profile == THINKING_PROFILE:
+            if self.profile in THINKING_PROFILES:
                 shown = self._request("/api/show", {"model": "qwen3:8b"})
                 self.identity["thinkingSupport"] = validate_thinking_support(shown)
             self.identity["environment"] = {k: v for k, v in env.items() if k.startswith("OLLAMA_")}
@@ -525,7 +527,7 @@ class LocalModelRuntime:
                                 "at": time.time(),
                             }
                             effective_contexts.append(observation)
-                            if self.profile == THINKING_PROFILE and model == "qwen3:8b":
+                            if self.profile in THINKING_PROFILES and model == "qwen3:8b":
                                 if item.get("context_length") != 4096:
                                     raise ModelUnavailable("effective thinking context unverified")
                 except Exception as exc:
@@ -549,7 +551,7 @@ class LocalModelRuntime:
             self.last_response = response
             if violations or time.monotonic() >= deadline:
                 raise ModelUnavailable("inference exceeded monitored policy")
-            if self.profile == THINKING_PROFILE and model == "qwen3:8b":
+            if self.profile in THINKING_PROFILES and model == "qwen3:8b":
                 if not effective_contexts:
                     raise ModelUnavailable("no effective thinking allocation observation")
                 with self.log_path.open("rb") as log:

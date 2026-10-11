@@ -18,7 +18,7 @@ from backend.artifacts import Artifact, PrivateArtifacts
 from backend.local_profile import LocalProfile
 from backend.modules.discovery.local_embedding import LocalEmbeddings, cosine
 from backend.modules.summarization.local_assistant import GroundedLocalAssistant
-from docsuri_ops.local_models import THINKING_PROFILE, LocalModelRuntime, generation_options
+from docsuri_ops.local_models import VERIFY_PROFILE, LocalModelRuntime, generation_options
 from scripts.load_docsuri_u1_papers import parser_identity, validate_manifest
 from scripts.verify_docsuri_u1 import private_json, source_identity
 
@@ -42,15 +42,16 @@ def model_context(request):
         "sourceIdentity": source_identity(),
         "paperManifest": manifest,
         "semanticReview": "pending",
-        "experiment": THINKING_PROFILE,
+        "experiment": VERIFY_PROFILE,
         "coverageScope": "explicitly selected source sections, not whole paper",
-        "samplingOptions": generation_options(request.param, profile=THINKING_PROFILE),
+        "samplingOptions": generation_options(request.param, profile=VERIFY_PROFILE),
+        "workLimits": {"calls": 2, "totalGeneratedTokens": 4096, "wholeWorkSeconds": 90},
         "cases": [],
     }
     evidence = profile.root / f"model-output-{time.time_ns()}.json"
     private_json(evidence, result)
     runtime = LocalModelRuntime(
-        profile.root, profile.run_id, profile.expires_at, profile=THINKING_PROFILE
+        profile.root, profile.run_id, profile.expires_at, profile=VERIFY_PROFILE
     )
     try:
         with runtime:
@@ -124,7 +125,7 @@ def test_real_bound_source_response(model_context, case_id, paper, anchors, task
         "startedAt": time.time(),
         "semanticReview": "pending",
     }
-    assistant = GroundedLocalAssistant(runtime, sampling_seed=seed, profile=THINKING_PROFILE)
+    assistant = GroundedLocalAssistant(runtime, sampling_seed=seed, profile=VERIFY_PROFILE)
     try:
         record["output"] = assistant.generate(chunks, task=task, language=language)
         record["status"] = "returned-bound-result"

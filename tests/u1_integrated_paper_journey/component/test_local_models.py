@@ -13,6 +13,7 @@ from backend.modules.discovery.local_embedding import LocalEmbeddings, cosine
 from backend.modules.summarization.local_assistant import GroundedLocalAssistant
 from docsuri_ops.local_models import (
     THINKING_PROFILE,
+    VERIFY_PROFILE,
     LocalModelRuntime,
     ModelUnavailable,
     generation_options,
@@ -149,6 +150,70 @@ class FaultRuntime:
         self.calls.append(kwargs)
         self.last_response = deepcopy(self.response)
         return deepcopy(self.response)
+
+
+class TwoPassFaultRuntime(FaultRuntime):
+    def __init__(self, responses):
+        super().__init__(None)
+        self.responses = responses
+
+    def infer(self, **kwargs):
+        self.response = self.responses[len(self.calls)]
+        return super().infer(**kwargs)
+
+
+def verification_response(text="Diagnostic candidate.", citations=None):
+    return {
+        "message": {"content": json.dumps({"text": text, "citations": citations or ["s1.p1"]})},
+        "model": "qwen3:8b",
+        "prompt_eval_count": 20,
+        "eval_count": 30,
+        "done_reason": "stop",
+    }
+
+
+def test_two_pass_uses_one_deadline_exact_two_calls_and_bound_candidate():
+    runtime = TwoPassFaultRuntime(
+        [verification_response(), verification_response("Corrected diagnostic.")]
+    )
+    assistant = GroundedLocalAssistant(runtime, sampling_seed=42, profile=VERIFY_PROFILE)
+    output = assistant.generate(source(), task="summary")
+    assert len(runtime.calls) == 2
+    assert runtime.calls[0]["work_deadline"] == runtime.calls[1]["work_deadline"]
+    for call in runtime.calls:
+        validate_request("qwen3:8b", call["body"], profile=VERIFY_PROFILE)
+        assert call["body"]["options"]["num_predict"] == 2048
+    second = runtime.calls[1]["body"]["messages"][1]["content"]
+    assert "Diagnostic candidate." in second and source()[0]["text"] in second
+    assert assistant.attempts[0]["candidate"]["requestHash"] in second
+    assert output["outputTokens"] == 60
+    assert output["sections"][0]["stageTokens"] == [{"prompt": 20, "output": 30}] * 2
+
+
+@pytest.mark.parametrize("bad_stage", [0, 1])
+def test_failed_verification_stage_never_returns_partial_success(bad_stage):
+    responses = [verification_response(), verification_response()]
+    responses[bad_stage] = verification_response(citations=["unknown"])
+    runtime = TwoPassFaultRuntime(responses)
+    assistant = GroundedLocalAssistant(runtime, sampling_seed=43, profile=VERIFY_PROFILE)
+    with pytest.raises(ModelUnavailable):
+        assistant.generate(source(), task="summary")
+    assert len(runtime.calls) == bad_stage + 1
+    assert assistant.attempts[0]["status"] == "failed"
+    assert ("candidate" in assistant.attempts[0]) == bool(bad_stage)
+
+
+def test_candidate_bytes_change_verification_identity_without_seed_search():
+    hashes = []
+    for text in ("Candidate A.", "Candidate B."):
+        runtime = TwoPassFaultRuntime(
+            [verification_response(text), verification_response("Same correction.")]
+        )
+        output = GroundedLocalAssistant(runtime, sampling_seed=42, profile=VERIFY_PROFILE).generate(
+            source(), task="summary"
+        )
+        hashes.append(output["requestHash"])
+    assert hashes[0] != hashes[1]
 
 
 def source():
