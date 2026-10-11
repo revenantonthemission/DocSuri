@@ -13,18 +13,27 @@ class GuardedDiscoveryRepository:
         self.transactions = transactions
 
     def candidates(self, authority: Authority | None) -> list[dict]:
+        return self.snapshot(authority)["candidates"]
+
+    def snapshot(self, authority: Authority | None) -> dict:
         def read(conn):
             if authority:
                 guard(conn, authority)
+            publication = conn.execute(
+                "SELECT * FROM corpus.guard_publication()"
+            ).fetchone()
             rows = conn.execute(
                 "SELECT c.*,v.paper_id,v.source_hash,v.version_label,p.title,p.authors,"
-                "p.published_on FROM corpus.projection c JOIN corpus.version v ON "
+                "p.published_on,v.source_url,v.eligibility_revision "
+                "FROM corpus.projection c JOIN corpus.version v ON "
                 "v.id=c.version_id JOIN corpus.paper p ON p.id=v.paper_id WHERE v.eligible AND "
-                "NOT p.withdrawn ORDER BY v.id,c.ordinal LIMIT 256"
+                "NOT p.withdrawn ORDER BY v.id,c.ordinal LIMIT 257"
             ).fetchall()
+            if len(rows) > 256:
+                raise ValueError("corpus projection exceeds declared allocation")
             for version in sorted({row["version_id"] for row in rows}):
                 conn.execute("SELECT corpus.guard_version(%s,%s)", (version, "local-research"))
-            return rows
+            return {"publication": publication, "candidates": rows}
 
         return self.transactions.run("discovery", read)
 

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
+
 from backend.artifacts import PrivateArtifacts
 from backend.transactions import OwnerTransactions
 from psycopg.types.json import Jsonb
@@ -28,9 +31,15 @@ class CorpusRepository:
     ) -> dict:
         if not 1 <= len(chunks) <= 256:
             raise ValueError("projection allocation exceeded")
+        projection_hash = hashlib.sha256(
+            json.dumps(chunks, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
         artifact = self.files.publish(raw)
 
         def write(conn):
+            # All publication writers use this barrier before paper/version locks.
+            # The shared allocation and cursor snapshot change atomically.
+            conn.execute("SELECT singleton FROM corpus.publication FOR UPDATE")
             conn.execute(
                 "INSERT INTO corpus.paper(id,title,authors,metadata) VALUES(%s,%s,%s,%s) ON "
                 "CONFLICT(id) DO NOTHING",
@@ -42,10 +51,20 @@ class CorpusRepository:
             if existing:
                 if existing["paper_id"] != paper or existing["source_hash"] != artifact.sha256:
                     raise ValueError("immutable source identity conflict")
+                if (
+                    existing["content"] != content
+                    or existing["provenance"].get("projectionHash") != projection_hash
+                ):
+                    raise ValueError("immutable parsed content conflict")
                 return existing
             count = conn.execute("SELECT count(*) AS count FROM corpus.version").fetchone()["count"]
             if count >= 2:
                 raise ValueError("source fixture allocation exhausted")
+            projected = conn.execute("SELECT count(*) AS count FROM corpus.projection").fetchone()[
+                "count"
+            ]
+            if projected + len(chunks) > 256:
+                raise ValueError("aggregate projection allocation exhausted")
             row = conn.execute(
                 "INSERT INTO corpus.version(id,paper_id,source_url,source_hash,version_label,"
                 "private_path,eligible,purpose,provenance,content) VALUES(%s,%s,%s,%s,%s,%s,"
@@ -57,7 +76,9 @@ class CorpusRepository:
                     artifact.sha256,
                     version_label,
                     artifact.name,
-                    Jsonb(dict(provenance, byteLength=artifact.size)),
+                    Jsonb(
+                        dict(provenance, byteLength=artifact.size, projectionHash=projection_hash)
+                    ),
                     Jsonb(content),
                 ),
             ).fetchone()
@@ -77,6 +98,7 @@ class CorpusRepository:
                         chunk.get("vectorPolicy"),
                     ),
                 )
+            self._advance_publication(conn)
             return row
 
         return self.transactions.run("corpus", write)
@@ -94,6 +116,7 @@ class CorpusRepository:
 
     def withdraw(self, version: str) -> None:
         def write(conn):
+            conn.execute("SELECT singleton FROM corpus.publication FOR UPDATE")
             row = conn.execute(
                 "SELECT paper_id FROM corpus.version WHERE id=%s", (version,)
             ).fetchone()
@@ -106,5 +129,23 @@ class CorpusRepository:
                 (version,),
             )
             conn.execute("DELETE FROM corpus.projection WHERE version_id=%s", (version,))
+            self._advance_publication(conn)
 
         self.transactions.run("corpus", write)
+
+    @staticmethod
+    def _advance_publication(conn) -> None:
+        rows = conn.execute(
+            "SELECT v.id,v.source_hash,v.eligibility_revision,v.eligible,"
+            "p.withdrawn,count(c.ordinal) AS chunks FROM corpus.version v "
+            "JOIN corpus.paper p ON p.id=v.paper_id LEFT JOIN corpus.projection c "
+            "ON c.version_id=v.id GROUP BY v.id,p.withdrawn ORDER BY v.id"
+        ).fetchall()
+        manifest = hashlib.sha256(
+            json.dumps(rows, sort_keys=True, default=str, separators=(",", ":")).encode()
+        ).hexdigest()
+        conn.execute(
+            "UPDATE corpus.publication SET revision=gen_random_uuid(),manifest_hash=%s,"
+            "published_at=clock_timestamp() WHERE singleton",
+            (manifest,),
+        )

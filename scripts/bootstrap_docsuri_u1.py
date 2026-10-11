@@ -43,6 +43,7 @@ AMENDMENTS = (
     ("assistance", "backend/modules/summarization/local_claim_guards.sql"),
     ("accounts", "backend/modules/accounts/local_entry.sql"),
     ("corpus", "backend/modules/corpus/local_availability.sql"),
+    ("corpus", "backend/modules/corpus/local_publication.sql"),
 )
 
 

@@ -50,6 +50,29 @@ def test_corpus_publication_and_readonly_projection_boundary(repositories, realm
             {"anchor": "diagnostic-1", "section": "Diagnostic", "text": "bounded storage fixture"}
         ],
     }
+    # One explicitly owned diagnostic projection makes 256 new chunks exceed
+    # the aggregate cap. The rejected transaction must publish no version.
+    with connect("corpus") as conn:
+        conn.execute(
+            "INSERT INTO corpus.projection(version_id,ordinal,content_hash,anchor,"
+            "section,text_content) VALUES('fixture-v1',2147483647,%s,"
+            "'allocation-control','Diagnostic','allocation control')",
+            ("a" * 64,),
+        )
+    try:
+        oversized = [dict(args["chunks"][0], anchor=f"diagnostic-{i}") for i in range(256)]
+        with pytest.raises(ValueError, match="aggregate projection"):
+            corpus.publish(**{**args, "chunks": oversized})
+        with connect("corpus") as conn:
+            assert not conn.execute(
+                "SELECT id FROM corpus.version WHERE id=%s", (args["version"],)
+            ).fetchone()
+    finally:
+        with connect("corpus") as conn:
+            conn.execute(
+                "DELETE FROM corpus.projection WHERE version_id='fixture-v1' "
+                "AND ordinal=2147483647 AND anchor='allocation-control'"
+            )
     row = corpus.publish(**args)
     with connect("corpus") as conn:
         # Re-enable only the same named diagnostic after an earlier run's withdrawal.
@@ -59,13 +82,25 @@ def test_corpus_publication_and_readonly_projection_boundary(repositories, realm
     assert corpus.publish(**args)["source_hash"] == row["source_hash"]
     assert corpus.read(args["version"])["title"] == args["title"]
     discovery = GuardedDiscoveryRepository(r["tx"])
+    before = discovery.snapshot(None)["publication"]
+    assert len(before["manifest_hash"]) == 64
+    with pytest.raises(ValueError, match="parsed content"):
+        corpus.publish(**{**args, "content": {"changed": True}})
+    assert discovery.snapshot(None)["publication"]["revision"] == before["revision"]
     assert any(item["version_id"] == args["version"] for item in discovery.candidates(None))
     with connect("discovery") as conn:
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             conn.execute("DELETE FROM corpus.projection")
+    with connect("discovery") as conn:
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            conn.execute("UPDATE corpus.publication SET revision=gen_random_uuid()")
     r["library"].save(r["authority"], args["paper"], args["version"], uuid4(), None)
     r["library"].save(r["authority"], r["ids"]["paper"], r["ids"]["version"], uuid4(), None)
     corpus.withdraw(args["version"])
+    after = discovery.snapshot(None)["publication"]
+    assert after["revision"] != before["revision"]
+    assert after["generation_id"] == before["generation_id"]
+    assert after["manifest_hash"] != before["manifest_hash"]
     saved = {item["version_id"]: item for item in r["library"].list_saved(r["authority"])}
     assert len(saved) == 2
     assert saved[args["version"]]["availability"] == "withdrawn"
