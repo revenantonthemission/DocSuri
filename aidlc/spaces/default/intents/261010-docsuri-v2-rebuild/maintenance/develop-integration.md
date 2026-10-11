@@ -249,3 +249,53 @@ branches were removed. U1 NFR Requirements continues on the fresh
 `docs/docsuri-v2-u1-nfr-requirements` branch from the merge. Enabled summary/plan
 confirmations, exact verification-command approval and failure decisions remain
 human stops. Main was not promoted.
+
+## U1 NFR Requirements integration
+
+[PR #41](https://github.com/revenantonthemission/DocSuri/pull/41) merged into
+develop at `7f9f956765569dfafd35a56740caa7261310cc02` on
+2026-10-11T08:21:21Z. Verified head:
+`3482960b2b36822b38c4f46a880ddec2c2adeab2`; exact base:
+`ee2957bac885549d4b5865e8bb939967f0dfbfb3`.
+
+U1 NFR Requirements completed under the confirmed summary and previously
+authorized automatic Construction policy. Six documents define 37 derived
+requirements across all ten inception NFRs. Local validation passed 73 design
+references and 70 local links, and the traceability sensor returned zero findings.
+Independent architecture review completed with one Major finding: the technology
+record's NFR10.2 assigns initial glossary ownership to Personalization, contrary
+to the approved domain/C06 owner PaperAssistance. The NFR Design proposal carries
+the correction before affected implementation; no executable closure is claimed.
+Technology, operating feasibility, continuity and numeric targets remain
+evidence-dependent.
+
+[Head CI 38124255936](https://github.com/revenantonthemission/DocSuri/actions/runs/38124255936)
+finished with 11 failed, three passed and one skipped job. All 230 normalized
+diagnostic lines and all 11 failed-step identities match
+[exact-base CI 38123120691](https://github.com/revenantonthemission/DocSuri/actions/runs/38123120691)
+(11 failed, two passed, two skipped). Complete normalized shared/frontend failure
+steps also match. The bounded comparison identified no new CI failure.
+Ingestion, discovery and PR-only dependency review passed, as did
+[CodeQL](https://github.com/revenantonthemission/DocSuri/actions/runs/38124255867)
+and [branch naming](https://github.com/revenantonthemission/DocSuri/actions/runs/38124255895).
+
+Matching failures remain in accounts/library and summarization lint, backend's
+tests.u1_integration import, shared/frontend consumer inventories, Ops dependency
+collection, Linux/macOS native platform assumptions, audit editable requirements
+and missing Postgres service setup. Shared lint/tests, accounts/library and
+summarization tests, frontend dependency audit/lint/tests/E2E/build, ingestion/ops
+security audits and Gitleaks, image digest verification, Postgres acceptance and
+non-vacuity, and Ops APFS tests were not reached. Full PBT was skipped. CI remains
+failed; this establishes neither application readiness nor security clearance.
+Application source, dependencies and CI workflows were unchanged.
+
+Raw head/comparison evidence is at `/tmp/docsuri-pr41-ci/`; exact-base evidence
+is at `/tmp/docsuri-nfr-ci-base-ee2957ba/`. These temporary paths support this
+inspection; the linked Actions runs and this record retain the durable summary.
+
+Integration followed CONVENTIONS.md. Develop and origin/develop were synchronized
+to the merge, completed local/remote requirements branches removed, and the fresh
+`docs/docsuri-v2-u1-nfr-design` branch created from the merge. A generated audit
+append prevented the initial checkout to the older local develop; it was preserved
+on the new branch while local develop was aligned to the verified merge. No audit
+content was discarded. Main was not promoted.

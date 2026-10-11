@@ -8654,3 +8654,71 @@
 **Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
 
 ---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T08:21:05Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a12a05-7ec1-7e50-95c9-3a88519127f0
+**Message**: PR #41 comparison completed: **no new CI failures identified** against exact base `ee2957ba`.\n\n- Head `3482960b`: CI **11 failed, 3 passed, 1 skipped**.\n- All **230 diagnostic lines** and 11 failed-st
+
+---
+
+## Unit Started
+**Timestamp**: 2026-10-11T08:22:34Z
+**Event**: UNIT_STARTED
+**Stage**: nfr-design
+**Unit**: u1-integrated-paper-journey
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:22:35Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/nfr-design-questions.md
+**Context**: construction > u1-integrated-paper-journey > nfr-design > nfr-design-questions.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:22:35Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/develop-integration.md
+**Context**: maintenance > develop-integration.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-11T08:22:50Z
+**Event**: DECISION_RECORDED
+**Stage**: nfr-design
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-design/nfr-design-questions.md
+**Unit**: u1-integrated-paper-journey
+
+---
+
+## Error Logged
+**Timestamp**: 2026-10-11T08:22:51Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-state
+**Command**: aidlc-state unit pause --stage nfr-design --unit u1-integrated-paper-journey --reason summary-confirmation
+**Error**: unit pause requires --next-action <text> (the exact next step on resume).
+
+---
+
+## Unit Paused
+**Timestamp**: 2026-10-11T08:23:01Z
+**Event**: UNIT_PAUSED
+**Stage**: nfr-design
+**Unit**: u1-integrated-paper-journey
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+**Reason**: summary-confirmation
+**Next Action**: Record the human NFR Design summary response; after Looks correct, resume U1 NFR Design and generate the confirmed artifacts.
+
+---

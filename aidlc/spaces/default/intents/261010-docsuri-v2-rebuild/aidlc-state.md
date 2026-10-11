@@ -57,6 +57,16 @@
 
 
 
+- **Active Unit**: u1-integrated-paper-journey
+
+- **Unit Stage**: nfr-design
+
+- **Unit State**: paused
+
+- **Unit Pause Reason**: summary-confirmation
+
+- **Unit Next Action**: Record the human NFR Design summary response; after Looks correct, resume U1 NFR Design and generate the confirmed artifacts.
+
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
 
@@ -118,7 +128,7 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-10-11T08:16:16Z
+- **Last Updated**: 2026-10-11T08:23:01Z
 
 - **Construction Autonomy Mode**: autonomous
 
