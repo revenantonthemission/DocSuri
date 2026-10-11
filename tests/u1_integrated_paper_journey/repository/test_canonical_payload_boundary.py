@@ -25,6 +25,7 @@ from backend.modules.summarization.requests import (
     AssistanceRequests,
     PROCESSING_POLICY,
 )
+from backend.modules.summarization.worker import PaperWorker, ExecutionRefused
 from backend.transactions import OwnerTransactions
 from docsuri_shared.workspace import execution as wire
 from scripts.verify_docsuri_u1 import private_json
@@ -35,6 +36,25 @@ pytestmark = pytest.mark.u1_repository
 class PrivateRecord(dict):
     def __repr__(self):
         return "<protected synthetic fixture identity>"
+
+
+class CanonicalDiagnosticRefusal:
+    """Validate actual handoff, then conclusively refuse without computation."""
+
+    def __init__(self):
+        self.received = None
+
+    def run(self, payload, deadline):
+        self.received = wire.AssistanceExecutionPayload.model_validate(payload).model_dump(
+            mode="json"
+        )
+        raise ExecutionRefused("dependency-unavailable")
+
+    def stopped(self):
+        return True
+
+    def abort_owned(self):
+        pass
 
 
 def journey_account(tx):
@@ -126,7 +146,7 @@ def test_actual_canonical_span_payload_and_guarded_release(realm):
                 (authority.account_id,),
             ).fetchall(),
         )
-        if len(jobs) >= 64 or any(row["state"] in {"accepted", "running"} for row in jobs):
+        if len(jobs) > 62 or any(row["state"] in {"accepted", "running"} for row in jobs):
             raise AssertionError(
                 "journey diagnostic history full or outstanding work needs reconciliation"
             )
@@ -224,6 +244,17 @@ def test_actual_canonical_span_payload_and_guarded_release(realm):
             )
             == 0
         )
+        second = AssistanceRequests(admission, corpus, lambda _: catalog).submit(
+            authority, uuid4(), request
+        )
+        diagnostic = CanonicalDiagnosticRefusal()
+        supervisor = PaperWorker(
+            uuid4(), claims, admission, diagnostic, payloads=ExecutionPayloads(claims, corpus)
+        )
+        assert supervisor.run(claims.binding(second))["state"] == "failed"
+        assert diagnostic.received["binding"] == claims.binding(second)
+        assert diagnostic.received["sections"][0]["text"] == chunk["text"][227:343]
+        assert usage.reservation(authority, second["id"])["disposition"] == "released"
     finally:
         try:
             if entry is not None and authority is not None:

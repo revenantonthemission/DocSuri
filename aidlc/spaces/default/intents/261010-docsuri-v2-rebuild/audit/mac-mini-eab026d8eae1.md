@@ -10417,3 +10417,12 @@
 **Context**: construction > u1-integrated-paper-journey > code-generation > typed-request-evidence.md
 
 ---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T16:32:49Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/code-generation/canonical-worker-evidence.md
+**Context**: construction > u1-integrated-paper-journey > code-generation > canonical-worker-evidence.md
+
+---

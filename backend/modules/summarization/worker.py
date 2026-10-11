@@ -15,6 +15,8 @@ from uuid import UUID, uuid5
 
 from backend.modules.summarization.admission import AssistanceAdmission
 from backend.modules.summarization.execution import ExecutionClaims
+from backend.modules.summarization.payload import ExecutionPayloads
+from docsuri_shared.workspace import execution as wire
 
 
 @dataclass(frozen=True)
@@ -65,12 +67,15 @@ class PaperWorker:
         claims: ExecutionClaims,
         admission: AssistanceAdmission,
         executor: OwnedExecutor,
+        *,
+        payloads: ExecutionPayloads | None = None,
     ):
         # This identity comes from operator construction, never a submitted claim.
         self.worker_id = UUID(str(worker_id))
         self.claims = claims
         self.admission = admission
         self.executor = executor
+        self.payloads = payloads
         self._active = threading.Lock()
         self._unavailable = False
 
@@ -84,6 +89,8 @@ class PaperWorker:
             claim = acquired["claim"]
             read_started = time.monotonic()
             bound = self.claims.read_input(claim)
+            if "acceptedInput" in bound.get("payload", {}) and self.payloads is None:
+                raise WorkerIntervention("canonical acceptance requires its guarded payload reader")
             # Conservatively subtract all payload-call time. Renewal never grants
             # a new execution deadline after a restart or a slow database reply.
             deadline = read_started + min(float(bound["remainingSeconds"]), 90.0)
@@ -140,7 +147,20 @@ class PaperWorker:
 
         def execute():
             try:
-                result = self.executor.run(bound, deadline)
+                execution_input = bound
+                if self.payloads is not None:
+                    execution_input = wire.AssistanceExecutionPayload.model_validate(
+                        self.payloads.read(dict(claim), trusted_worker=self.worker_id)
+                    ).model_dump(mode="json")
+                    if execution_input["binding"] != claim["binding"]:
+                        raise ValueError("canonical payload differs from acquired execution")
+                # Payload assembly is supervised by the same heartbeat/watchdog
+                # as inference, and never receives a fresh execution budget.
+                if interrupted.is_set() or time.monotonic() >= deadline:
+                    raise ExecutionInterrupted(
+                        "payload assembly exhausted original execution budget"
+                    )
+                result = self.executor.run(execution_input, deadline)
                 if not isinstance(result, PreparedExecution):
                     raise TypeError("executor returned no prepared execution")
                 output.append(result)
