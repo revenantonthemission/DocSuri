@@ -25,7 +25,11 @@ class ArtifactUnavailable(RuntimeError):
 class PrivateArtifacts:
     def __init__(self, root: Path, *, maximum_bytes: int = 131072):
         expected = Path("/tmp/docsuri-u1-run").resolve()
-        if root.parent != expected or root.name not in ("corpus-files", "assistance-files"):
+        if root.parent != expected or root.name not in (
+            "corpus-files",
+            "assistance-files",
+            "verification-mail",
+        ):
             raise ValueError("artifact root outside explicit fixture allocation")
         if maximum_bytes not in (131072, 2097152):
             raise ValueError("unapproved artifact bound")
