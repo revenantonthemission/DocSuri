@@ -1,8 +1,11 @@
 """Explicit faults in model contracts; useful-output evidence uses real models."""
 
 from copy import deepcopy
+from contextlib import contextmanager
 import hashlib
 import json
+import threading
+import time
 
 import pytest
 
@@ -95,9 +98,15 @@ class FaultRuntime:
     def __init__(self, response):
         self.response = response
         self.calls = []
+        self.last_response = None
+
+    @contextmanager
+    def work(self, *, seconds):
+        yield time.monotonic() + seconds
 
     def infer(self, **kwargs):
         self.calls.append(kwargs)
+        self.last_response = deepcopy(self.response)
         return deepcopy(self.response)
 
 
@@ -214,3 +223,68 @@ def test_clone_accounting_distinguishes_reuse_from_unrelated_disk_growth():
     with pytest.raises(ModelUnavailable, match="scratch growth"):
         validate_clone_allocation(["new-blob"], {}, existing, 65 * 1024**2)
     validate_clone_allocation(["new-blob"], {}, existing, 64 * 1024**2)
+
+
+def test_whole_work_timer_stops_during_blocking_work_and_holds_permit():
+    runtime = object.__new__(LocalModelRuntime)
+    runtime.permit = threading.RLock()
+    stopped = threading.Event()
+    calls = []
+
+    def close(*, force=False):
+        calls.append(force)
+        stopped.set()
+
+    runtime.close = close
+    with pytest.raises(ModelUnavailable, match="whole model work deadline"):
+        with runtime.work(seconds=0.05):
+            competing = []
+
+            def try_other_work():
+                try:
+                    with runtime.work(seconds=1):
+                        competing.append("incorrectly admitted")
+                except ModelUnavailable:
+                    competing.append("denied")
+
+            contender = threading.Thread(target=try_other_work)
+            contender.start()
+            contender.join(timeout=1)
+            assert competing == ["denied"]
+            assert stopped.wait(timeout=1)
+    assert calls == [True]
+
+
+def test_failed_section_rejects_whole_result_and_preserves_partial_diagnostics():
+    runtime = FaultRuntime(
+        {
+            "message": {
+                "content": json.dumps(
+                    {
+                        "text": "Diagnostic supported output.",
+                        "citations": ["s1.p1"],
+                    }
+                )
+            },
+            "model": "qwen3:8b",
+            "prompt_eval_count": 10,
+            "eval_count": 10,
+            "done_reason": "stop",
+        }
+    )
+    assistant = GroundedLocalAssistant(runtime)
+    chunks = source() + [dict(source()[0], anchor="s1.p2", section="Different diagnostic")]
+    with pytest.raises(ModelUnavailable, match="references"):
+        assistant.generate(chunks, task="summary")
+    assert [a["status"] for a in assistant.attempts] == ["returned-bound-section", "failed"]
+    assert runtime.calls[0]["work_deadline"] == runtime.calls[1]["work_deadline"]
+
+
+def test_invalid_later_source_is_rejected_before_any_inference_or_attempt_record():
+    runtime = FaultRuntime({})
+    for change in ({"text": "changed source"}, {"anchor": "invalid [anchor]"}):
+        assistant = GroundedLocalAssistant(runtime)
+        chunks = source() + [{**source()[0], "anchor": "s1.p2", **change}]
+        with pytest.raises(ValueError):
+            assistant.generate(chunks, task="summary")
+        assert not runtime.calls and not assistant.attempts

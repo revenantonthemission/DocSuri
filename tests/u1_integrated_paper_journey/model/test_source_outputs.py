@@ -119,16 +119,16 @@ def test_real_bound_source_response(model_context, case_id, paper, anchors, task
         "startedAt": time.time(),
         "semanticReview": "pending",
     }
+    assistant = GroundedLocalAssistant(runtime)
     try:
-        record["output"] = GroundedLocalAssistant(runtime).generate(
-            chunks, task=task, language=language
-        )
+        record["output"] = assistant.generate(chunks, task=task, language=language)
         record["status"] = "returned-bound-result"
         assert record["output"]["citations"]
     except Exception as exc:
         record.update(status="failed", error=type(exc).__name__ + ": " + str(exc))
         raise
     finally:
+        record["sectionAttempts"] = assistant.attempts
         record["rawResponse"] = runtime.last_response
         record["wallSeconds"] = time.time() - record["startedAt"]
         result["cases"].append(record)

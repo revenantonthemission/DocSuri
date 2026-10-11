@@ -17,6 +17,7 @@ import stat
 import subprocess
 import threading
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
 import httpx
@@ -156,7 +157,10 @@ class LocalModelRuntime:
         self.expires_at = expires_at
         self.process = None
         self.log = None
-        self.permit = threading.BoundedSemaphore(1)
+        # One owning thread may make several section calls for a single work
+        # item. Other work, including embeddings, cannot interleave those calls.
+        self.permit = threading.RLock()
+        self.close_lock = threading.Lock()
         self.samples = []
         self.last_response = None
         self.identity = {}
@@ -349,21 +353,46 @@ class LocalModelRuntime:
             self.close()
             raise
 
-    def close(self) -> None:
-        if self.process is not None and self.process.poll() is None:
-            os.killpg(self.process.pid, signal.SIGTERM)
-            try:
-                self.process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                os.killpg(self.process.pid, signal.SIGKILL)
-                self.process.wait(timeout=5)
-        if self.log is not None:
-            self.log.close()
+    def close(self, *, force: bool = False) -> None:
+        with self.close_lock:
+            if self.process is not None and self.process.poll() is None:
+                try:
+                    os.killpg(self.process.pid, signal.SIGKILL if force else signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+                try:
+                    self.process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    os.killpg(self.process.pid, signal.SIGKILL)
+                    self.process.wait(timeout=5)
+            if self.log is not None:
+                self.log.close()
+
+    @contextmanager
+    def work(self, *, seconds: float = 90):
+        if not 0 < seconds <= 90:
+            raise ValueError("work deadline exceeds finite allocation")
+        deadline = time.monotonic() + seconds
+        if not self.permit.acquire(blocking=False):
+            raise ModelUnavailable("one local model work item is already active")
+        # Unlike a between-call check, this stops owned computation while a
+        # section HTTP call or admission wait is still blocked.
+        timer = threading.Timer(seconds, lambda: self.close(force=True))
+        timer.daemon = True
+        timer.start()
+        try:
+            yield deadline
+            if time.monotonic() >= deadline:
+                raise ModelUnavailable("whole model work deadline reached")
+        finally:
+            timer.cancel()
+            timer.join(timeout=6)
+            self.permit.release()
 
     def __exit__(self, *args):
         self.close()
 
-    def infer(self, *, model: str, body: dict) -> dict:
+    def infer(self, *, model: str, body: dict, work_deadline: float | None = None) -> dict:
         validate_request(model, body)
         if not self.permit.acquire(blocking=False):
             raise ModelUnavailable("one local model execution is already active")
@@ -372,6 +401,8 @@ class LocalModelRuntime:
         self.last_response = None
         timeout = 90 if model == "qwen3:8b" else 60
         deadline = time.monotonic() + timeout
+        if work_deadline is not None:
+            deadline = min(deadline, work_deadline)
 
         def monitor():
             while not stopped.wait(0.5):
@@ -392,10 +423,13 @@ class LocalModelRuntime:
             if self.process is None or self.process.poll() is not None:
                 raise ModelUnavailable("owned model server is unavailable")
             self._wait_admission(deadline)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise ModelUnavailable("whole model work deadline reached")
             watcher = threading.Thread(target=monitor, daemon=True)
             watcher.start()
             response = self._request(
-                "/api/chat" if model == "qwen3:8b" else "/api/embed", body, timeout=timeout
+                "/api/chat" if model == "qwen3:8b" else "/api/embed", body, timeout=remaining
             )
             self.last_response = response
             if violations or time.monotonic() >= deadline:
