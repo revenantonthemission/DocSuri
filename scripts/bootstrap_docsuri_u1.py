@@ -49,6 +49,9 @@ AMENDMENTS = (
     ("accounts", "backend/modules/accounts/local_entry.sql"),
     ("corpus", "backend/modules/corpus/local_availability.sql"),
     ("corpus", "backend/modules/corpus/local_publication.sql"),
+    ("usage", "backend/modules/plans/local_rejection.sql"),
+    ("assistance", "backend/modules/summarization/local_admission_recovery.sql"),
+    ("usage", "backend/modules/plans/local_rejection_grants.sql"),
 )
 
 

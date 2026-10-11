@@ -27,6 +27,8 @@ class GuardedAssistanceRepository:
 
         def write(conn):
             guard(conn, authority, version=payload["versionId"])
+            # Serialize the finite global admission count, including absent rows.
+            conn.execute("SELECT pg_advisory_xact_lock(741901)")
             existing = conn.execute(
                 "SELECT * FROM assistance.admission WHERE operation_id=%s FOR UPDATE", (operation,)
             ).fetchone()
@@ -415,5 +417,133 @@ class GuardedAssistanceRepository:
                 "WHERE id=%s",
                 (Jsonb(receipt), job),
             )
+
+        self.transactions.run("assistance", write)
+
+    def settlement_proof(self, job: UUID) -> dict:
+        """Internal owner proof; callers cannot supply a terminal disposition.
+
+        Read no private result bytes. This trusted reconciliation seam remains
+        usable after revocation so existing accounting obligations can settle.
+        """
+
+        def read(conn):
+            row = conn.execute(
+                "SELECT id,reservation_id,state,input_hash,source_hash,failure_code "
+                "FROM assistance.job WHERE id=%s",
+                (job,),
+            ).fetchone()
+            if not row or row["state"] not in ("succeeded", "failed"):
+                raise ValueError("no durable terminal proof")
+            result = conn.execute(
+                "SELECT id,output_hash FROM assistance.result WHERE job_id=%s", (job,)
+            ).fetchone()
+            if (row["state"] == "succeeded") != (result is not None):
+                raise ValueError("terminal result binding requires intervention")
+            proof = {
+                "jobId": str(row["id"]),
+                "reservationId": str(row["reservation_id"]),
+                "state": row["state"],
+                "inputHash": row["input_hash"],
+                "sourceHash": row["source_hash"],
+                "failureCode": row["failure_code"],
+                "resultId": str(result["id"]) if result else None,
+                "outputHash": result["output_hash"] if result else None,
+            }
+            return {
+                "operation": row["id"],
+                "reservation": row["reservation_id"],
+                "disposition": "committed" if result else "released",
+                "proofHash": intent_digest(proof),
+            }
+
+        return self.transactions.run("assistance", read)
+
+    def rejected_admission_proof(self, authority: Authority, operation: UUID) -> dict:
+        def read(conn):
+            guard(conn, authority)
+            row = conn.execute(
+                "SELECT * FROM assistance.admission WHERE operation_id=%s AND account_id=%s",
+                (operation, authority.account_id),
+            ).fetchone()
+            if not row or row["disposition"] != "rejected":
+                raise ValueError("no durable rejected admission proof")
+            if conn.execute("SELECT id FROM assistance.job WHERE id=%s", (operation,)).fetchone():
+                raise ValueError("accepted work cannot be released as rejected admission")
+            return {
+                "operation": operation,
+                "operationId": str(operation),
+                "accountId": str(authority.account_id),
+                "intentHash": row["intent_hash"],
+                "proofHash": intent_digest(
+                    {
+                        "operation": str(operation),
+                        "owner": str(authority.account_id),
+                        "intentHash": row["intent_hash"],
+                        "disposition": "rejected",
+                    }
+                ),
+            }
+
+        return self.transactions.run("assistance", read)
+
+    def reject_abandoned(self, *, limit: int = 4) -> list[dict]:
+        """Owner sweep: five minutes selects candidates, a locked row proves rejection.
+
+        No session privilege or source content is returned. Accepted work cannot
+        enter this transition. Persisted unreconciled rejections survive any
+        crash between PA and Usage and are included in the next bounded pass.
+        """
+        if not 1 <= limit <= 4:
+            raise ValueError("invalid reconciliation bound")
+
+        def write(conn):
+            rows = conn.execute(
+                "SELECT * FROM assistance.admission WHERE NOT rejection_reconciled AND "
+                "(disposition='rejected' OR (disposition='open' AND "
+                "created_at<=clock_timestamp()-interval '5 minutes')) "
+                "ORDER BY created_at,operation_id LIMIT %s FOR UPDATE SKIP LOCKED",
+                (limit,),
+            ).fetchall()
+            proofs = []
+            for row in rows:
+                if conn.execute(
+                    "SELECT 1 FROM assistance.job WHERE id=%s", (row["operation_id"],)
+                ).fetchone():
+                    raise ValueError("contradictory admission/job binding")
+                if row["disposition"] == "open":
+                    conn.execute(
+                        "UPDATE assistance.admission SET disposition='rejected',"
+                        "revision=gen_random_uuid() WHERE operation_id=%s",
+                        (row["operation_id"],),
+                    )
+                proof = {
+                    "operation": str(row["operation_id"]),
+                    "owner": str(row["account_id"]),
+                    "intentHash": row["intent_hash"],
+                    "disposition": "rejected",
+                }
+                proofs.append(
+                    {
+                        "operationId": proof["operation"],
+                        "accountId": proof["owner"],
+                        "intentHash": proof["intentHash"],
+                        "proofHash": intent_digest(proof),
+                    }
+                )
+            return proofs
+
+        return self.transactions.run("assistance", write)
+
+    def confirm_rejection(self, proof: dict) -> None:
+        def write(conn):
+            row = conn.execute(
+                "UPDATE assistance.admission SET rejection_reconciled=true WHERE "
+                "operation_id=%s AND account_id=%s AND intent_hash=%s AND "
+                "disposition='rejected' RETURNING operation_id",
+                (UUID(proof["operationId"]), UUID(proof["accountId"]), proof["intentHash"]),
+            ).fetchone()
+            if not row:
+                raise ValueError("rejection acknowledgement binding mismatch")
 
         self.transactions.run("assistance", write)
