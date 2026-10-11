@@ -32,9 +32,55 @@ def test_finite_allocation_refuses_low_disk(monkeypatch):
         runner.headroom()
 
 
+def test_repeat_setup_accounts_for_installed_bytes_without_lowering_reserves(monkeypatch):
+    monkeypatch.setattr(
+        runner,
+        "require",
+        lambda args: subprocess.CompletedProcess(
+            args, 0, stdout=f"{runner.GIB // 1024}\tmeasured-build\n", stderr=""
+        ),
+    )
+    monkeypatch.setattr(
+        runner.shutil, "disk_usage", lambda _: type("Usage", (), {"free": 11 * runner.GIB})()
+    )
+    runner.headroom(existing=True)
+    monkeypatch.setattr(
+        runner.shutil, "disk_usage", lambda _: type("Usage", (), {"free": 11 * runner.GIB - 1})()
+    )
+    with pytest.raises(runner.Refused, match="headroom"):
+        runner.headroom(existing=True)
+    monkeypatch.setattr(
+        runner,
+        "require",
+        lambda args: subprocess.CompletedProcess(
+            args, 0, stdout=f"{3 * runner.GIB // 1024}\toversized-build\n", stderr=""
+        ),
+    )
+    with pytest.raises(runner.Refused, match="exceeds 2 GiB"):
+        runner.headroom(existing=True)
+
+
 def test_coverage_refuses_absent_source_inventory():
     with pytest.raises(runner.Refused, match="source inventory"):
         runner.phase_commands("coverage")
+
+
+def test_repeat_setup_without_build_paths_cannot_credit_working_directory(monkeypatch, tmp_path):
+    monkeypatch.setattr(runner, "ROOT", tmp_path)
+
+    def unexpected_command(*args, **kwargs):
+        pytest.fail("no build paths should mean no du invocation")
+
+    monkeypatch.setattr(runner, "require", unexpected_command)
+    monkeypatch.setattr(
+        runner.shutil, "disk_usage", lambda _: type("Usage", (), {"free": 11 * runner.GIB})()
+    )
+    with pytest.raises(runner.Refused, match="headroom"):
+        runner.headroom(existing=True)
+    monkeypatch.setattr(
+        runner.shutil, "disk_usage", lambda _: type("Usage", (), {"free": 12 * runner.GIB})()
+    )
+    runner.headroom(existing=True)
 
 
 def test_collection_is_exact_component_scope():

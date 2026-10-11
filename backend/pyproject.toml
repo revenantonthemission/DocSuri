@@ -8,6 +8,11 @@ license = "MIT"
 dependencies = [
     # Shared contracts (DTOs/events/vector-spec/ports) — single source of truth, never forked.
     "docsuri-shared",
+    # The local assembly imports the retained ingestion parser through its
+    # explicit source path, without importing the unrelated worker stack.
+    "beautifulsoup4==4.15.0",
+    "lxml==6.1.3",
+    "defusedxml==0.7.1",
     # U2 search domain — mounted by _mount_discovery (was graceful-skipped while undeclared).
     # [real] so a plain `uv sync` yields the SAME closure the prod image installs
     # (backend/Dockerfile pip-installs "discovery[real]"): without it opensearch-py is missing

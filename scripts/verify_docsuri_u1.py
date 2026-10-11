@@ -62,6 +62,7 @@ def source_identity() -> dict:
             "scripts",
             "tests/u1_integrated_paper_journey",
             "ops",
+            "ingestion",
         ]
     )
     files = {}
@@ -152,10 +153,30 @@ def require(args: list[str], **kwargs) -> subprocess.CompletedProcess:
     return result
 
 
-def headroom() -> None:
-    # Reserve the full remaining mounted/runtime + recovery + build allocation.
-    if shutil.disk_usage(ROOT).free < 12 * GIB:
-        raise Refused("less than 8 GiB host floor plus 4 GiB allocated headroom")
+def headroom(*, existing: bool = False) -> None:
+    # A repeat setup reserves the remaining allocation, not a second copy of
+    # already installed build files. Runtime/recovery reserves stay untouched.
+    occupied = 0
+    if existing:
+        paths = [
+            ROOT / name
+            for name in ("backend/.venv", "frontend/node_modules", "frontend/dist")
+        ]
+        for path in paths:
+            if path.is_symlink():
+                raise Refused("build allocation cannot follow a symlink")
+        present = [str(path) for path in paths if path.exists()]
+        if present:
+            measured = require(["du", "-sk", *present])
+            occupied = sum(
+                int(line.split()[0]) * 1024 for line in measured.stdout.splitlines()
+            )
+        if occupied > 2 * GIB:
+            raise Refused("measured build allocation exceeds 2 GiB")
+    if shutil.disk_usage(ROOT).free < 12 * GIB - occupied:
+        raise Refused(
+            "insufficient free space for host floor and remaining allocated headroom"
+        )
 
 
 def load_manifest(path: Path) -> dict:
@@ -287,9 +308,9 @@ def replace_database(value: dict) -> None:
 
 
 def setup(path: Path) -> dict:
-    headroom()
     if RUN.exists():
         value = load_manifest(path)
+        headroom(existing=True)
         if not resource_matches("container", value["container"], value["runId"]):
             raise Refused(
                 "existing manifest has missing or foreign container; recover explicitly"
@@ -321,6 +342,7 @@ def setup(path: Path) -> dict:
                 {"runId": value["runId"], "manifestSha256": digest(path)},
             )
         return value
+    headroom()
     require(["docker", "image", "inspect", IMAGE])  # Never pull an absent image.
     RUN.mkdir(mode=0o700)
     run_id = "docsuri-u1-" + secrets.token_hex(8)

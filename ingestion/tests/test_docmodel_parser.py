@@ -212,6 +212,27 @@ def test_figure_links_existing_webp_asset_by_ordinal() -> None:
     assert figure.assetRef.ordinal == 0
 
 
+def test_caption_without_img_preserves_ordinal_and_unresolved_asset_hint() -> None:
+    specs = []
+    html = '''<section class="ltx_section"><h2>Overview</h2>
+    <figure class="ltx_figure"><object data="diagram.svg"></object>
+    <figcaption class="ltx_caption"><span class="ltx_tag">Figure 1: </span>
+    An authored overview.</figcaption></figure>
+    <figure class="ltx_figure"><img src="second.png"/>
+    <figcaption class="ltx_caption"><span class="ltx_tag">Figure 2: </span>
+    Another authored view.</figcaption></figure></section>'''
+    model = parse_html_to_docmodel(
+        html, paper_id="2401.00001", version=2, title="Diagnostic", abstract=None,
+        source_tier=SourceTier.ar5iv, parser_version="docmodel-parser@1",
+        schema_version="1.0.0", generated_at=_FIXED_TS, figure_specs=specs,
+    )
+    figures = [block for block in _blocks(model.sections[0]) if isinstance(block, FigureBlock)]
+    assert [block.assetRef.ordinal for block in figures] == [0, 1]
+    assert figures[0].caption == "An authored overview."
+    assert specs[0].src == "" and specs[0].label == "Figure 1"
+    assert specs[1].src == "second.png"
+
+
 def test_subfigure_uses_own_caption_not_first_panel() -> None:
     """A figure with sub-panels takes its OWN "Figure N" caption, not the first panel's "(a)".
 
