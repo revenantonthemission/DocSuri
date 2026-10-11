@@ -73,3 +73,7 @@ class AssistanceAdmission:
             self.usage.reject_operation(proof)
             self.assistance.confirm_rejection(proof)
         return len(proofs)
+
+    def recover_execution(self, *, limit: int = 4) -> list[dict]:
+        self.assistance.recover_unexecutable(limit)
+        return self.reconcile_terminal(limit=limit)

@@ -52,6 +52,9 @@ AMENDMENTS = (
     ("usage", "backend/modules/plans/local_rejection.sql"),
     ("assistance", "backend/modules/summarization/local_admission_recovery.sql"),
     ("usage", "backend/modules/plans/local_rejection_grants.sql"),
+    ("accounts", "backend/modules/accounts/local_execution_status.sql"),
+    ("corpus", "backend/modules/corpus/local_execution_status.sql"),
+    ("assistance", "backend/modules/summarization/local_execution_deadline.sql"),
 )
 
 

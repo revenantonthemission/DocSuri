@@ -131,7 +131,13 @@ class ExecutionClaims:
                 "payload": job["payload"],
                 "acceptedAt": job["accepted_at"],
                 "startedAt": job["started_at"],
-                "remainingSeconds": max(0, 90 - (now - job["started_at"]).total_seconds()),
+                "remainingSeconds": max(
+                    0,
+                    min(
+                        90 - (now - job["started_at"]).total_seconds(),
+                        300 - (now - job["accepted_at"]).total_seconds(),
+                    ),
+                ),
                 "reservationId": job["reservation_id"],
                 "jobRevision": job["revision"],
             }

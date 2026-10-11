@@ -396,6 +396,71 @@ class GuardedAssistanceRepository:
             ).fetchall(),
         )
 
+    def recover_unexecutable(self, limit: int = 4) -> list[UUID]:
+        """Owner-only terminalization; no expired worker can authorize this action."""
+        if not 1 <= limit <= 4:
+            raise ValueError("invalid reconciliation bound")
+        candidates = self.transactions.run(
+            "assistance",
+            lambda conn: conn.execute(
+                "SELECT id FROM assistance.job WHERE state IN ('accepted','running') "
+                "ORDER BY accepted_at,id LIMIT %s",
+                (limit,),
+            ).fetchall(),
+        )
+
+        def recover(conn, identifier):
+            job = conn.execute("SELECT * FROM assistance.job WHERE id=%s", (identifier,)).fetchone()
+            if not job:
+                return None
+            account_ok = conn.execute(
+                "SELECT accounts.execution_allowed(%s,%s) AS allowed",
+                (job["account_id"], job["authority_revision"]),
+            ).fetchone()["allowed"]
+            source_ok = (
+                conn.execute(
+                    "SELECT corpus.execution_eligibility(%s) AS revision", (job["version_id"],)
+                ).fetchone()["revision"]
+                is not None
+            )
+            job = conn.execute(
+                "SELECT * FROM assistance.job WHERE id=%s FOR UPDATE", (identifier,)
+            ).fetchone()
+            if job["state"] not in ("accepted", "running"):
+                return None
+            now = conn.execute("SELECT clock_timestamp() AS now").fetchone()["now"]
+            reason = None
+            if not account_ok or not source_ok:
+                reason = "execution-authority-revoked"
+            elif (now - job["accepted_at"]).total_seconds() >= 300:
+                reason = "job-recovery-window-expired"
+            elif job["started_at"] and (now - job["started_at"]).total_seconds() >= 90:
+                reason = "execution-deadline-exceeded"
+            elif job["fence"] >= 3 and job["lease_expires_at"] <= now:
+                reason = "execution-attempts-exhausted"
+            if reason is None:
+                return None
+            if conn.execute(
+                "SELECT 1 FROM assistance.result WHERE job_id=%s", (identifier,)
+            ).fetchone():
+                raise ValueError("nonterminal result requires intervention")
+            conn.execute(
+                "UPDATE assistance.job SET state='failed',phase='failed',failure_code=%s,"
+                "revision=gen_random_uuid(),sequence=sequence+1,settlement_pending=true "
+                "WHERE id=%s",
+                (reason, identifier),
+            )
+            return identifier
+
+        recovered = []
+        for candidate in candidates:
+            identifier = self.transactions.run(
+                "assistance", lambda conn, key=candidate["id"]: recover(conn, key)
+            )
+            if identifier is not None:
+                recovered.append(identifier)
+        return recovered
+
     def confirm_settlement(self, job: UUID, receipt: dict) -> None:
         def write(conn):
             row = conn.execute(
