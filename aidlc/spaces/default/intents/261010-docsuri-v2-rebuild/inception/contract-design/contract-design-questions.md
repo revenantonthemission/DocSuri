@@ -10,7 +10,8 @@ The human approved [Units Generation](../units-generation/unit-of-work.md) on
 grouping, 13-component ownership model, full capability scope or $0 constraint.
 No additional ordinary interview question is needed for a decision already
 recorded below. The technical approach is a proposal awaiting the consolidated
-confirmation; no contract artifact has been generated yet.
+confirmation. The contract draft now exists and has passed specification checks;
+its save record must be renewed after this confirmation before independent review.
 
 | Topic | Existing answer or evidence | Contract Design consequence |
 |---|---|---|
@@ -139,9 +140,9 @@ focused question.
 - Follow CONVENTIONS.md: completed branches merge through PRs into develop under
   the interim CI policy; main promotion remains separate.
 
-Does this all look correct before I generate the artifact?
+Does this all look correct before I re-save the artifact from this summary?
 
 - Looks correct
 - Request changes
 
-[Answer]:
+[Answer]: Looks correct
