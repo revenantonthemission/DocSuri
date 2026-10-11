@@ -90,6 +90,22 @@ an affected capability ready while its required policy is unresolved. A new
 material policy conflict discovered during specification will return as a
 focused question.
 
+## Sources
+
+- [Approved unit catalogue](../units-generation/unit-of-work.md),
+  [dependency DAG](../units-generation/unit-of-work-dependency.md) and
+  [requirement map](../units-generation/unit-of-work-story-map.md).
+- [Approved domain catalogue](../domain-design/components.md),
+  [decisions](../domain-design/decisions.md) and
+  [accepted review findings](../domain-design/reviews/review-01.md).
+- [Approved requirements](../requirements-analysis/requirements.md), including
+  NFR10 and the explicit open questions/closure dependencies.
+- [Feasibility answers](../../ideation/feasibility/feasibility-questions.md),
+  [scope backlog](../../ideation/scope-definition/intent-backlog.md) and
+  [approved interaction specification](../refined-mockups/interaction-spec.md).
+- Current bounded source references above and the
+  [reference API inventory](../../../../codekb/DocSuri/api-documentation.md).
+
 ## Consolidated Summary Confirmation
 
 - Define formal interfaces across the approved eight units and retained external
@@ -129,19 +145,3 @@ Does this all look correct before I generate the artifact?
 - Request changes
 
 [Answer]:
-
-## Sources
-
-- [Approved unit catalogue](../units-generation/unit-of-work.md),
-  [dependency DAG](../units-generation/unit-of-work-dependency.md) and
-  [requirement map](../units-generation/unit-of-work-story-map.md).
-- [Approved domain catalogue](../domain-design/components.md),
-  [decisions](../domain-design/decisions.md) and
-  [accepted review findings](../domain-design/reviews/review-01.md).
-- [Approved requirements](../requirements-analysis/requirements.md), including
-  NFR10 and the explicit open questions/closure dependencies.
-- [Feasibility answers](../../ideation/feasibility/feasibility-questions.md),
-  [scope backlog](../../ideation/scope-definition/intent-backlog.md) and
-  [approved interaction specification](../refined-mockups/interaction-spec.md).
-- Current bounded source references above and the
-  [reference API inventory](../../../../codekb/DocSuri/api-documentation.md).

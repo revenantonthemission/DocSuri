@@ -6529,3 +6529,14 @@
 **Error**: Summary confirmation questions file <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-design-questions.md is invalid: unsupported H2 heading "Sources" after the consolidated summary; only Q<n>, "Requested Changes Feedback", or one "Assumption Confirmation" section may follow.
 
 ---
+
+## Decision Recorded
+**Timestamp**: 2026-10-11T05:22:28Z
+**Event**: DECISION_RECORDED
+**Stage**: contract-design
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-design-questions.md
+
+---
