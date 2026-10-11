@@ -5613,3 +5613,189 @@
 **Review Record Digest**: sha256:b73b3f85591143dd32805ae6cd62e0842051ae8847618811fbe4d73c6c42cde7
 
 ---
+
+## Decision Recorded
+**Timestamp**: 2026-10-11T03:52:28Z
+**Event**: DECISION_RECORDED
+**Stage**: domain-design
+**Decision**: Anything to add for next time?
+**Options**: Nothing to add,Add a note
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T03:52:46Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-11T03:50:55.198Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T03:52:47Z
+**Event**: HUMAN_TURN
+**Session**: 01a12917-732f-7210-b3dc-dc6462144383
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T03:53:27Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a12917-732f-7210-b3dc-dc6462144383 last seen 2026-10-11T03:52:46.746Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T03:53:28Z
+**Event**: HUMAN_TURN
+**Session**: 01a12918-1322-7773-baed-b17443c0bc25
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T04:20:24Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Question Answered
+**Timestamp**: 2026-10-11T04:20:31Z
+**Event**: QUESTION_ANSWERED
+**Stage**: domain-design
+**Details**: Nothing to add
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_10b2652f63874694bdcf9f2eb642e70e\",0]","question":"Anything to add for next time? The Domain Design documents and architecture review are committed as c9adc1dd. They cover 13 components, 42 entities and all 70 functional requirement IDs. Two Minor findings remain: search-projection write ownership and the artifact revision bound by export approval. Your $0 budget and CONVENTIONS.md Git flow, including merging completed branches into develop, are already recorded. You can add a reusable note before reviewing the design for approval.","answer":"Nothing to add"}]\n</send_user_message_question_reply>
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T04:20:32Z
+**Event**: SENSOR_FIRED
+**Fire id**: ae68a435
+**Sensor ID**: required-sections
+**Stage slug**: domain-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/components.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T04:20:32Z
+**Event**: SENSOR_PASSED
+**Fire id**: ae68a435
+**Sensor ID**: required-sections
+**Stage slug**: domain-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/components.md
+**Duration ms**: 29
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T04:20:32Z
+**Event**: SENSOR_FIRED
+**Fire id**: 672fa9e3
+**Sensor ID**: required-sections
+**Stage slug**: domain-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/decisions.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T04:20:32Z
+**Event**: SENSOR_PASSED
+**Fire id**: 672fa9e3
+**Sensor ID**: required-sections
+**Stage slug**: domain-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/decisions.md
+**Duration ms**: 26
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T04:20:32Z
+**Event**: SENSOR_FIRED
+**Fire id**: 111311aa
+**Sensor ID**: required-sections
+**Stage slug**: domain-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/traceability.json
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T04:20:32Z
+**Event**: SENSOR_PASSED
+**Fire id**: 111311aa
+**Sensor ID**: required-sections
+**Stage slug**: domain-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/traceability.json
+**Duration ms**: 26
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T04:20:32Z
+**Event**: SENSOR_FIRED
+**Fire id**: 6882a750
+**Sensor ID**: upstream-coverage
+**Stage slug**: domain-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/components.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T04:20:32Z
+**Event**: SENSOR_PASSED
+**Fire id**: 6882a750
+**Sensor ID**: upstream-coverage
+**Stage slug**: domain-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/components.md
+**Duration ms**: 26
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T04:20:32Z
+**Event**: SENSOR_FIRED
+**Fire id**: 32c089e1
+**Sensor ID**: upstream-coverage
+**Stage slug**: domain-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/decisions.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T04:20:32Z
+**Event**: SENSOR_PASSED
+**Fire id**: 32c089e1
+**Sensor ID**: upstream-coverage
+**Stage slug**: domain-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/decisions.md
+**Duration ms**: 29
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T04:20:32Z
+**Event**: SENSOR_FIRED
+**Fire id**: 774653aa
+**Sensor ID**: upstream-coverage
+**Stage slug**: domain-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/traceability.json
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T04:20:32Z
+**Event**: SENSOR_PASSED
+**Fire id**: 774653aa
+**Sensor ID**: upstream-coverage
+**Stage slug**: domain-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/domain-design/traceability.json
+**Duration ms**: 26
+
+---
+
+## Stage Awaiting Approval
+**Timestamp**: 2026-10-11T04:20:32Z
+**Event**: STAGE_AWAITING_APPROVAL
+**Stage**: domain-design
+
+---
