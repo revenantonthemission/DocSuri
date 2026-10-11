@@ -62,15 +62,10 @@
 
 
 
-- **Active Unit**: u1-integrated-paper-journey
 
-- **Unit Stage**: infrastructure-design
 
-- **Unit State**: paused
 
-- **Unit Pause Reason**: summary-confirmation
 
-- **Unit Next Action**: Record the human summary choice in infrastructure-design-questions.md; after Looks correct, log its answer receipt, resume this unit, evaluate the bounded evidence and generate the infrastructure design artifacts.
 
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
@@ -133,7 +128,7 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-10-11T08:47:40Z
+- **Last Updated**: 2026-10-11T09:53:15Z
 
 - **Construction Autonomy Mode**: autonomous
 

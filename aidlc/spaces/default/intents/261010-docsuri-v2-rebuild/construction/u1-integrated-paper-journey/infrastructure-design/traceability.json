@@ -1,0 +1,231 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "u1-integrated-paper-journey",
+  "upstream_ids": [
+    "NFR1.1",
+    "NFR1.2",
+    "NFR2.1",
+    "NFR2.2",
+    "NFR3.1",
+    "NFR3.2",
+    "NFR3.3",
+    "NFR3.4",
+    "NFR3.5",
+    "NFR4.1",
+    "NFR4.2",
+    "NFR4.3",
+    "NFR4.4",
+    "NFR4.5",
+    "NFR4.6",
+    "NFR5.1",
+    "NFR5.2",
+    "NFR5.3",
+    "NFR6.1",
+    "NFR6.2",
+    "NFR6.3",
+    "NFR7.1",
+    "NFR7.2",
+    "NFR7.3",
+    "NFR8.1",
+    "NFR8.2",
+    "NFR8.3",
+    "NFR8.4",
+    "NFR8.5",
+    "NFR9.1",
+    "NFR9.2",
+    "NFR9.3",
+    "NFR9.4",
+    "NFR10.1",
+    "NFR10.2",
+    "NFR10.3",
+    "NFR10.4"
+  ],
+  "coverage": [
+    {
+      "id": "NFR1.1",
+      "status": "OK",
+      "target": "monitoring-design.md: MON04"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA02"
+    },
+    {
+      "id": "NFR2.1",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA05"
+    },
+    {
+      "id": "NFR2.2",
+      "status": "OK",
+      "target": "monitoring-design.md: MON02"
+    },
+    {
+      "id": "NFR3.1",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA04"
+    },
+    {
+      "id": "NFR3.2",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA04"
+    },
+    {
+      "id": "NFR3.3",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA04"
+    },
+    {
+      "id": "NFR3.4",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA07"
+    },
+    {
+      "id": "NFR3.5",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA07"
+    },
+    {
+      "id": "NFR4.1",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA06"
+    },
+    {
+      "id": "NFR4.2",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA04"
+    },
+    {
+      "id": "NFR4.3",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA06"
+    },
+    {
+      "id": "NFR4.4",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA04"
+    },
+    {
+      "id": "NFR4.5",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA04"
+    },
+    {
+      "id": "NFR4.6",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA06"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA06"
+    },
+    {
+      "id": "NFR5.2",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA06"
+    },
+    {
+      "id": "NFR5.3",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA07"
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": "cicd-pipeline.md: PIPE03"
+    },
+    {
+      "id": "NFR6.2",
+      "status": "OK",
+      "target": "cicd-pipeline.md: PIPE03"
+    },
+    {
+      "id": "NFR6.3",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA06"
+    },
+    {
+      "id": "NFR7.1",
+      "status": "OK",
+      "target": "monitoring-design.md: MON06"
+    },
+    {
+      "id": "NFR7.2",
+      "status": "OK",
+      "target": "cicd-pipeline.md: PIPE06"
+    },
+    {
+      "id": "NFR7.3",
+      "status": "OK",
+      "target": "cicd-pipeline.md: PIPE04"
+    },
+    {
+      "id": "NFR8.1",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA05"
+    },
+    {
+      "id": "NFR8.2",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA04"
+    },
+    {
+      "id": "NFR8.3",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA05"
+    },
+    {
+      "id": "NFR8.4",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA05"
+    },
+    {
+      "id": "NFR8.5",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA09"
+    },
+    {
+      "id": "NFR9.1",
+      "status": "OK",
+      "target": "monitoring-design.md: MON06"
+    },
+    {
+      "id": "NFR9.2",
+      "status": "OK",
+      "target": "monitoring-design.md: MON05"
+    },
+    {
+      "id": "NFR9.3",
+      "status": "OK",
+      "target": "monitoring-design.md: MON04"
+    },
+    {
+      "id": "NFR9.4",
+      "status": "OK",
+      "target": "monitoring-design.md: MON05"
+    },
+    {
+      "id": "NFR10.1",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA04"
+    },
+    {
+      "id": "NFR10.2",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA04"
+    },
+    {
+      "id": "NFR10.3",
+      "status": "OK",
+      "target": "infrastructure-specification.md: INFRA03"
+    },
+    {
+      "id": "NFR10.4",
+      "status": "OK",
+      "target": "cicd-pipeline.md: PIPE03"
+    }
+  ],
+  "verification_boundary": "OK means concrete design mapping and named closure conditions, not passed runtime conformance."
+}
