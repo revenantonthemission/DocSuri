@@ -56,7 +56,7 @@ class LocalProfile:
         return LocalProfile(
             self.root,
             self.run_id,
-            self.origin,
+            "https://127.0.0.1:18039",
             self.database_port,
             self.expires_at,
             "docsuri_u1_journey",
