@@ -299,3 +299,54 @@ to the merge, completed local/remote requirements branches removed, and the fres
 append prevented the initial checkout to the older local develop; it was preserved
 on the new branch while local develop was aligned to the verified merge. No audit
 content was discarded. Main was not promoted.
+
+## U1 NFR Design integration
+
+[PR #42](https://github.com/revenantonthemission/DocSuri/pull/42) merged into
+develop at `7ba887abe8965d6b7ccb4fa4ab6e583baa2496a1` on
+2026-10-11T08:46:19Z. Verified head:
+`409cda587134c41b0e6fedc3f82b2648a25ee51d`; exact base:
+`7f9f956765569dfafd35a56740caa7261310cc02`.
+
+U1 NFR Design completed under the confirmed summary and automatic ordinary
+Construction policy. Six documents map all 37 detailed requirements to 37 named
+solutions. The document checker passed 80 local file links and nine exact
+functional references; traceability, upstream coverage and all six section
+checks passed. Independent architecture review found no new issues. The design
+corrects glossary ownership to PaperAssistance and selects an initial virtual
+empty snapshot, immutable original acceptance time, guarded effect ordering,
+fenced work and durable settlement reconciliation. Canonical amendments and
+runtime evidence remain open; this is not a service-readiness claim.
+
+[Head CI 38125739771](https://github.com/revenantonthemission/DocSuri/actions/runs/38125739771)
+finished with 11 failed, three passed and one skipped job. All 230 normalized
+diagnostic lines and all failed-step names match
+[exact-base CI 38124507711](https://github.com/revenantonthemission/DocSuri/actions/runs/38124507711)
+(11 failed, two passed, two skipped). Complete normalized shared/frontend failure
+steps match too. The only conclusion change is PR-only dependency review passing
+instead of being skipped. This bounded comparison identified no new CI failure.
+Ingestion, discovery and dependency review passed, as did both languages in
+[CodeQL](https://github.com/revenantonthemission/DocSuri/actions/runs/38125739761)
+and [branch naming](https://github.com/revenantonthemission/DocSuri/actions/runs/38125739779).
+
+Matching failures remain in accounts/library and summarization lint, backend
+integration import, shared/frontend consumer inventories, Ops dependency
+collection, native platform assumptions, editable audit dependencies and missing
+Postgres service setup. Shared lint/tests, accounts/library and summarization
+tests, frontend audit/lint/tests/E2E/build, Ops APFS, Postgres acceptance and
+non-vacuity, ingestion/Ops audits and Gitleaks, and image digest verification
+were not reached. Full PBT was skipped. CI remains failed; neither complete
+security clearance nor application conformance follows from this comparison.
+Application source, dependencies and CI workflows were unchanged.
+
+Temporary raw evidence and comparison are in `/tmp/docsuri-pr42-ci/`;
+exact-base evidence is in `/tmp/docsuri-nfr-design-ci-base-7f9f9567/`.
+The linked Actions runs, PR description and this record preserve the durable
+summary.
+
+Integration followed CONVENTIONS.md. Local develop and origin/develop were
+verified at the merge, and completed local/remote NFR Design branches were
+removed. The fresh `docs/docsuri-v2-u1-infrastructure-design` branch starts at
+that merge. A generated audit append was preserved on the new branch. Main
+was not promoted. Infrastructure Design is active; its enabled summary
+confirmation is the next human checkpoint.
