@@ -19,6 +19,7 @@ from docsuri_shared.workspace import wire
 
 VOCABULARY = "synthetic-paper-options-1"
 POLICY = {"policyId": "synthetic-paper-search", "revision": "1"}
+COMPATIBILITY = "local-search-2-paper-lexical"
 
 
 def validate_query(value: dict) -> dict:
@@ -84,7 +85,7 @@ class SearchPageBuilder:
             "query": hashlib.sha256(json.dumps(query, sort_keys=True).encode()).hexdigest(),
             "snapshot": revision,
             "limit": limit,
-            "contract": "local-search-1",
+            "contract": COMPATIBILITY,
         }
         offset = self._decode(cursor, context) if cursor else 0
         best = {}
@@ -126,7 +127,7 @@ class SearchPageBuilder:
                 "generationId": str(publication["generation_id"]),
                 "publicationRevision": revision,
                 "manifestHash": publication["manifest_hash"],
-                "compatibilityRevision": "local-search-1",
+                "compatibilityRevision": COMPATIBILITY,
                 "eligibilityRevision": revision,
                 "publishedAt": publication["published_at"].isoformat(),
                 "complete": True,

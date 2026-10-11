@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import date
 
 from backend.artifacts import PrivateArtifacts
 from backend.transactions import OwnerTransactions
@@ -28,9 +29,12 @@ class CorpusRepository:
         raw: bytes,
         provenance: dict,
         chunks: list[dict],
+        published_on: date | None = None,
     ) -> dict:
         if not 1 <= len(chunks) <= 256:
             raise ValueError("projection allocation exceeded")
+        if published_on is not None and type(published_on) is not date:
+            raise ValueError("publication date must be an explicit calendar date")
         projection_hash = hashlib.sha256(
             json.dumps(chunks, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()
@@ -41,10 +45,17 @@ class CorpusRepository:
             # The shared allocation and cursor snapshot change atomically.
             conn.execute("SELECT singleton FROM corpus.publication FOR UPDATE")
             conn.execute(
-                "INSERT INTO corpus.paper(id,title,authors,metadata) VALUES(%s,%s,%s,%s) ON "
+                "INSERT INTO corpus.paper(id,title,authors,published_on,metadata) "
+                "VALUES(%s,%s,%s,%s,%s) ON "
                 "CONFLICT(id) DO NOTHING",
-                (paper, title, Jsonb(authors), Jsonb({"localResearchOnly": True})),
+                (paper, title, Jsonb(authors), published_on, Jsonb({"localResearchOnly": True})),
             )
+            metadata = conn.execute(
+                "SELECT title,authors,published_on FROM corpus.paper WHERE id=%s FOR UPDATE",
+                (paper,),
+            ).fetchone()
+            if metadata != {"title": title, "authors": authors, "published_on": published_on}:
+                raise ValueError("immutable paper metadata conflict")
             existing = conn.execute(
                 "SELECT * FROM corpus.version WHERE id=%s FOR UPDATE", (version,)
             ).fetchone()
@@ -54,6 +65,8 @@ class CorpusRepository:
                 if (
                     existing["content"] != content
                     or existing["provenance"].get("projectionHash") != projection_hash
+                    or existing["source_url"] != source_url
+                    or existing["version_label"] != version_label
                 ):
                     raise ValueError("immutable parsed content conflict")
                 return existing
@@ -132,6 +145,24 @@ class CorpusRepository:
             self._advance_publication(conn)
 
         self.transactions.run("corpus", write)
+
+    def confirm_publication(self, expected: dict[str, str]) -> dict:
+        """Bind readiness to one locked publication and currently eligible sources."""
+        if not 1 <= len(expected) <= 2:
+            raise ValueError("publication source count outside local allocation")
+
+        def read(conn):
+            publication = conn.execute("SELECT * FROM corpus.publication FOR SHARE").fetchone()
+            for version, digest in sorted(expected.items()):
+                conn.execute("SELECT corpus.guard_version(%s,%s)", (version, "local-research"))
+                row = conn.execute(
+                    "SELECT source_hash FROM corpus.version WHERE id=%s", (version,)
+                ).fetchone()
+                if row["source_hash"] != digest:
+                    raise ValueError("current publication source binding differs")
+            return publication
+
+        return self.transactions.run("corpus", read)
 
     @staticmethod
     def _advance_publication(conn) -> None:

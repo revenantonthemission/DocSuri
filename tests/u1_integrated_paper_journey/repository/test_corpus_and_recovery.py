@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+from datetime import date
 from pathlib import Path
 from uuid import uuid4
 
@@ -42,6 +43,7 @@ def test_corpus_publication_and_readonly_projection_boundary(repositories, realm
         "version": "repository-fixture-v1",
         "title": "Repository diagnostic",
         "authors": ["Synthetic"],
+        "published_on": date(2020, 1, 2),
         "source_url": "https://fixture.invalid/repository",
         "version_label": "v1",
         "content": {"fixture": True},
@@ -82,8 +84,13 @@ def test_corpus_publication_and_readonly_projection_boundary(repositories, realm
         )
     assert corpus.publish(**args)["source_hash"] == row["source_hash"]
     assert corpus.read(args["version"])["title"] == args["title"]
+    with pytest.raises(ValueError, match="metadata conflict"):
+        corpus.publish(**{**args, "published_on": date(2021, 1, 2)})
     discovery = GuardedDiscoveryRepository(r["tx"])
     before = discovery.snapshot(None)["publication"]
+    assert corpus.confirm_publication({args["version"]: row["source_hash"]}) == before
+    with pytest.raises(ValueError, match="source binding"):
+        corpus.confirm_publication({args["version"]: "b" * 64})
     assert len(before["manifest_hash"]) == 64
     with pytest.raises(ValueError, match="parsed content"):
         corpus.publish(**{**args, "content": {"changed": True}})
@@ -94,6 +101,7 @@ def test_corpus_publication_and_readonly_projection_boundary(repositories, realm
         row for row in ranked_snapshot["candidates"] if row["version_id"] == args["version"]
     )
     assert scored["lexical_score"] > 0
+    assert scored["published_on"] == date(2020, 1, 2)
     page = SearchPageBuilder(b"diagnostic-cursor-key" * 2).build(
         snapshot=ranked_snapshot,
         query={
@@ -130,6 +138,8 @@ def test_corpus_publication_and_readonly_projection_boundary(repositories, realm
     )
     with pytest.raises(psycopg.errors.InsufficientPrivilege):
         corpus.read(args["version"])
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        corpus.confirm_publication({args["version"]: row["source_hash"]})
 
 
 def test_durable_history_delivery_after_clear_is_suppressed(repositories):

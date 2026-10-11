@@ -24,14 +24,24 @@ class GuardedDiscoveryRepository:
                 guard(conn, authority)
             publication = conn.execute("SELECT * FROM corpus.guard_publication()").fetchone()
             rows = conn.execute(
+                # Match all submitted terms within one immutable paper version.
+                # Chunk boundaries must not turn a matching paper into no-match.
+                "WITH ranked AS MATERIALIZED ("
+                "SELECT c.version_id,ts_rank_cd(setweight(to_tsvector('simple',p.title),'A') "
+                "|| to_tsvector('simple',string_agg(c.text_content,' ' ORDER BY c.ordinal)),"
+                "plainto_tsquery('simple',%s)) AS paper_score "
+                "FROM corpus.projection c JOIN corpus.version v ON v.id=c.version_id "
+                "JOIN corpus.paper p ON p.id=v.paper_id WHERE v.eligible AND NOT p.withdrawn "
+                "GROUP BY c.version_id,p.title) "
                 "SELECT c.*,v.paper_id,v.source_hash,v.version_label,p.title,p.authors,"
                 "p.published_on,v.source_url,v.eligibility_revision,"
-                "ts_rank_cd(setweight(to_tsvector('simple',p.title),'A') || c.lexical,"
-                "plainto_tsquery('simple',%s)) AS lexical_score "
+                "CASE WHEN p.id=%s OR v.id=%s THEN 1.0 ELSE ranked.paper_score "
+                "END AS lexical_score "
                 "FROM corpus.projection c JOIN corpus.version v ON "
-                "v.id=c.version_id JOIN corpus.paper p ON p.id=v.paper_id WHERE v.eligible AND "
+                "v.id=c.version_id JOIN ranked ON ranked.version_id=v.id "
+                "JOIN corpus.paper p ON p.id=v.paper_id WHERE v.eligible AND "
                 "NOT p.withdrawn ORDER BY v.id,c.ordinal LIMIT 257",
-                (query,),
+                (query, query.strip(), query.strip()),
             ).fetchall()
             if len(rows) > 256:
                 raise ValueError("corpus projection exceeds declared allocation")

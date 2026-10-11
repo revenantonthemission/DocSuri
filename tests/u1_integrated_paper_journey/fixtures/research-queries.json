@@ -1,0 +1,6 @@
+[
+  {"case": "P1", "query": "self attention sequence transduction without recurrence", "expectedPaper": "1706.03762"},
+  {"case": "P2", "query": "retrieval augmented generation parametric non parametric memory", "expectedPaper": "2005.11401"},
+  {"case": "P1-ko", "query": "순환 신경망 없이 셀프 어텐션으로 시퀀스를 변환하는 방법", "expectedPaper": "1706.03762"},
+  {"case": "P2-ko", "query": "언어 모델의 파라미터와 검색한 외부 문서 메모리를 결합하는 생성 모델", "expectedPaper": "2005.11401"}
+]
