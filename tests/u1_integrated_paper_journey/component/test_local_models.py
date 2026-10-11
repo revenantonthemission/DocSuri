@@ -14,6 +14,7 @@ from backend.modules.summarization.local_assistant import GroundedLocalAssistant
 from docsuri_ops.local_models import (
     LocalModelRuntime,
     ModelUnavailable,
+    generation_options,
     validate_request,
     validate_response,
 )
@@ -51,6 +52,43 @@ def test_model_request_cannot_select_remote_identity_or_unbounded_execution():
     for change in changes:
         with pytest.raises(ModelUnavailable):
             validate_request("qwen3:8b", {**original, **change})
+
+
+def test_sampling_profiles_keep_allocations_and_reject_unplanned_seed_or_options():
+    for seed in (42, 43):
+        body = request()
+        body["options"] = generation_options(seed)
+        validate_request("qwen3:8b", body)
+        assert body["options"]["num_ctx"] == 2048
+        assert body["options"]["num_predict"] == 224
+        for change in ({"top_k": 0}, {"seed": 44}, {"num_predict": 1024}):
+            with pytest.raises(ModelUnavailable):
+                validate_request("qwen3:8b", {**body, "options": {**body["options"], **change}})
+    for invalid in (True, 42.0, 44, "42"):
+        with pytest.raises(ValueError):
+            generation_options(invalid)
+
+
+def test_assistant_binds_sampling_seed_to_the_request_hash():
+    response = {
+        "message": {"content": json.dumps({"text": "Diagnostic.", "citations": ["s1.p1"]})},
+        "model": "qwen3:8b",
+        "prompt_eval_count": 10,
+        "eval_count": 10,
+        "done_reason": "stop",
+    }
+    hashes = []
+    for seed in (42, 43):
+        runtime = FaultRuntime(response)
+        result = GroundedLocalAssistant(runtime, sampling_seed=seed).generate(
+            source(), task="summary"
+        )
+        body = runtime.calls[0]["body"]
+        validate_request("qwen3:8b", body)
+        assert body["options"] == generation_options(seed)
+        assert body["think"] is False
+        hashes.append(result["requestHash"])
+    assert hashes[0] != hashes[1]
 
 
 def test_embedding_input_is_finite_and_cannot_silently_truncate():

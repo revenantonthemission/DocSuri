@@ -67,6 +67,16 @@ def validate_response(response: dict, *, model: str) -> None:
             raise ModelUnavailable("generation returned no usable text")
 
 
+def generation_options(seed: int | None = None) -> dict:
+    """Pinned diagnostic profiles; sampling never changes the execution allocation."""
+    options = {"num_ctx": 2048, "num_thread": 2, "num_predict": 224, "temperature": 0}
+    if seed is not None:
+        if type(seed) is not int or seed not in (42, 43):
+            raise ValueError("only predeclared decoding experiment seeds are supported")
+        options.update(temperature=0.7, top_p=0.8, top_k=20, min_p=0, seed=seed)
+    return options
+
+
 def validate_request(model: str, body: dict) -> None:
     if body.get("model") != model or model not in MODEL_PINS or body.get("keep_alive") != 0:
         raise ModelUnavailable("request model or lifetime outside policy")
@@ -75,7 +85,10 @@ def validate_request(model: str, body: dict) -> None:
     options = body.get("options", {})
     expected = {"num_ctx": 2048, "num_thread": 2}
     if model == "qwen3:8b":
-        expected.update(num_predict=224, temperature=0)
+        try:
+            expected = generation_options(options.get("seed"))
+        except (AttributeError, ValueError) as exc:
+            raise ModelUnavailable("unknown bounded decoding profile") from exc
         fields = {"model", "messages", "stream", "think", "keep_alive", "options"}
         if "format" in body:
             fields.add("format")

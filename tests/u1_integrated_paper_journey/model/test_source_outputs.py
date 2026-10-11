@@ -18,15 +18,15 @@ from backend.artifacts import Artifact, PrivateArtifacts
 from backend.local_profile import LocalProfile
 from backend.modules.discovery.local_embedding import LocalEmbeddings, cosine
 from backend.modules.summarization.local_assistant import GroundedLocalAssistant
-from docsuri_ops.local_models import LocalModelRuntime
+from docsuri_ops.local_models import LocalModelRuntime, generation_options
 from scripts.load_docsuri_u1_papers import parser_identity, validate_manifest
 from scripts.verify_docsuri_u1 import private_json, source_identity
 
 pytestmark = pytest.mark.u1_model
 
 
-@pytest.fixture(scope="module")
-def model_context():
+@pytest.fixture(scope="module", params=[42, 43], ids=["seed-42", "seed-43"])
+def model_context(request):
     profile = LocalProfile.load(Path(os.environ["DOCSURI_U1_ENVIRONMENT_FILE"]))
     manifest = json.loads((profile.root / "paper-fixtures.json").read_text())
     validate_manifest(manifest, profile.run_id)
@@ -42,6 +42,8 @@ def model_context():
         "sourceIdentity": source_identity(),
         "paperManifest": manifest,
         "semanticReview": "pending",
+        "experiment": "natural-section-neutral-recommended-nonthinking-two-fixed-seeds",
+        "samplingOptions": generation_options(request.param),
         "cases": [],
     }
     evidence = profile.root / f"model-output-{time.time_ns()}.json"
@@ -50,7 +52,7 @@ def model_context():
     try:
         with runtime:
             result["runtime"] = runtime.identity
-            yield runtime, papers, result, evidence
+            yield runtime, papers, result, evidence, request.param
     finally:
         result["runtime"] = runtime.identity
         result["samples"] = runtime.samples
@@ -95,7 +97,7 @@ CASES = [
 
 @pytest.mark.parametrize("case_id,paper,anchors,task,language", CASES)
 def test_real_bound_source_response(model_context, case_id, paper, anchors, task, language):
-    runtime, papers, result, evidence = model_context
+    runtime, papers, result, evidence, seed = model_context
     indexed = {c["anchor"]: c for c in papers[paper]["chunks"]}
     chunks = [dict(indexed[anchor]) for anchor in anchors]
     if task == "translate":
@@ -119,7 +121,7 @@ def test_real_bound_source_response(model_context, case_id, paper, anchors, task
         "startedAt": time.time(),
         "semanticReview": "pending",
     }
-    assistant = GroundedLocalAssistant(runtime)
+    assistant = GroundedLocalAssistant(runtime, sampling_seed=seed)
     try:
         record["output"] = assistant.generate(chunks, task=task, language=language)
         record["status"] = "returned-bound-result"
@@ -142,7 +144,7 @@ def test_real_bound_source_response(model_context, case_id, paper, anchors, task
 
 
 def test_real_embedding_retrieves_relevant_source_in_two_paper_diagnostic(model_context):
-    runtime, papers, result, evidence = model_context
+    runtime, papers, result, evidence, _ = model_context
     selected = [
         next(c for c in papers[p]["chunks"] if c["anchor"] == anchor)
         for p, anchor in [("1706.03762", "s3.5.p1"), ("2005.11401", "s1.p2")]

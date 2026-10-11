@@ -6,12 +6,18 @@ import hashlib
 import json
 import re
 
-from docsuri_ops.local_models import LocalModelRuntime, ModelUnavailable, grounded_format
+from docsuri_ops.local_models import (
+    LocalModelRuntime,
+    ModelUnavailable,
+    generation_options,
+    grounded_format,
+)
 
 
 class GroundedLocalAssistant:
-    def __init__(self, runtime: LocalModelRuntime):
+    def __init__(self, runtime: LocalModelRuntime, *, sampling_seed: int | None = None):
         self.runtime = runtime
+        self.generation_options = generation_options(sampling_seed)
         self.attempts = []
 
     def generate(self, chunks: list[dict], *, task: str, language: str = "en") -> dict:
@@ -119,11 +125,8 @@ class GroundedLocalAssistant:
                 f"{'Korean' if language == 'ko' else 'English'}. "
                 "Explain this source section accurately. Preserve its definitions, "
                 "equations' mathematical meaning, causal reasoning and important "
-                "distinctions. First include every explicitly defined term and what "
-                "it denotes, ahead of benchmark results, historical comparisons, "
-                "training details or model size. Keep uncertainties or hypotheses "
-                "attributed as in the source. Do not add benefits or guarantees absent "
-                "from the section."
+                "distinctions. Keep uncertainties or hypotheses attributed as in the "
+                "source. Do not add benefits or guarantees absent from the section."
             )
         )
         if task == "translate" and language != "ko":
@@ -134,7 +137,7 @@ class GroundedLocalAssistant:
             "stream": False,
             "think": False,
             "keep_alive": 0,
-            "options": {"num_ctx": 2048, "num_predict": 224, "temperature": 0, "num_thread": 2},
+            "options": dict(self.generation_options),
             "messages": [
                 {
                     "role": "system",
