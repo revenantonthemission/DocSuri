@@ -162,3 +162,48 @@ Integration followed CONVENTIONS.md and the user's interim policy. Local
 local and remote contract branches were deleted. Delivery Planning continues
 on `docs/docsuri-v2-delivery-planning`, created from that merge. Main was not
 promoted.
+
+## Approved Delivery Planning branch integration
+
+On 2026-10-11, the user approved Delivery Planning and completed Inception.
+[PR #39](https://github.com/revenantonthemission/DocSuri/pull/39) merged
+`docs/docsuri-v2-delivery-planning` into `develop` at
+`93b43f86639c51df1c82bcf919809f9a8d9c5002` on 2026-10-11T07:15:36Z.
+The verified head was `50d625ccde5c895e9483760a665a2a2af33786da`; its exact
+base was `d1bf16e1ae46e769cffc5b824705135e938687fb`.
+
+The delivery verifier passed eight serial build passes, all 19 dependencies,
+70 functional requirement IDs across both traceability records, ten NFR rows,
+15 external dependencies, local links and Mermaid syntax. Domain and unit
+consistency checks also passed. The three accepted contract findings remain
+open with early closure tasks. Operating feasibility remains conditional, and
+the construction verification command remains unset pending separate approval
+of a runnable v2 check. These results establish planning consistency only.
+
+[PR #39 CI](https://github.com/revenantonthemission/DocSuri/actions/runs/38120547668)
+finished with 11 failed jobs, three passed and one skipped. All 11 failure
+diagnostics matched the
+[exact-base CI](https://github.com/revenantonthemission/DocSuri/actions/runs/38117621096):
+230 normalized diagnostic lines matched, with additional complete failed-step
+comparisons for shared and frontend. This bounded comparison identified no new
+regression. Failures concern existing consumer inventories, lint,
+imports/dependencies, native platform fixtures, Postgres setup and audit inputs.
+Ingestion, discovery and dependency review passed, as did both
+[CodeQL analyses](https://github.com/revenantonthemission/DocSuri/actions/runs/38120547665)
+and the [branch-name check](https://github.com/revenantonthemission/DocSuri/actions/runs/38120547664).
+
+Shared lint/tests, accounts/library and summarization tests, frontend dependency
+audit/lint/tests/E2E/build, ingestion/ops security audits and secret scanning,
+declared-image digest verification, isolated Postgres tests and non-vacuity
+verification, and Ops tests on APFS were not reached. Full PBT was skipped.
+CI remains failed; this comparison does not establish full-suite success,
+security clearance or application readiness. Application source, dependencies
+and CI workflows were unchanged.
+
+Integration followed CONVENTIONS.md and the user's interim policy. Local
+`develop` and `origin/develop` were synchronized to the merge, and the completed
+local and remote Delivery Planning branches were deleted. Functional Design
+continues on `docs/docsuri-v2-u1-functional-design`, created from that merge.
+Construction retains serial, unit-major execution and no separate walking-
+skeleton ceremony as approved in Delivery Planning. The ordinary completion
+checkpoint approval choice remains pending. Main was not promoted.

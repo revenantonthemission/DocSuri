@@ -1,0 +1,1230 @@
+{
+  "stage": "functional-design",
+  "unit": "u1-integrated-paper-journey",
+  "semantics": "OK means the U1 partial design contribution is mapped, not execution, complete FR parity, operational fit or release readiness. Parent FR rows are rollups, not extra acceptance criteria. User Stories was skipped; inline FR acceptance text is authoritative; LC IDs are local checks. The release-wide ledger includes 41 N/A rows outside U1 assignment, naming their downstream owners. The 29 OK rows are the bounded U1 design contribution.",
+  "upstream_source": "../../../inception/requirements-analysis/requirements.md",
+  "assignment_source": "../../../inception/units-generation/unit-of-work-story-map.md",
+  "upstream_ids": [
+    "FR1",
+    "FR1.1",
+    "FR1.2",
+    "FR1.3",
+    "FR2",
+    "FR2.1",
+    "FR2.2",
+    "FR2.3",
+    "FR3",
+    "FR3.1",
+    "FR3.2",
+    "FR3.3",
+    "FR3.4",
+    "FR4",
+    "FR4.1",
+    "FR4.2",
+    "FR5",
+    "FR5.1",
+    "FR5.2",
+    "FR5.3",
+    "FR6",
+    "FR6.1",
+    "FR6.2",
+    "FR6.3",
+    "FR6.4",
+    "FR7",
+    "FR7.1",
+    "FR7.2",
+    "FR8",
+    "FR8.1",
+    "FR8.2",
+    "FR9",
+    "FR9.1",
+    "FR9.2",
+    "FR10",
+    "FR10.1",
+    "FR10.2",
+    "FR11",
+    "FR11.1",
+    "FR11.2",
+    "FR12",
+    "FR12.1",
+    "FR12.2",
+    "FR13",
+    "FR13.1",
+    "FR13.2",
+    "FR13.3",
+    "FR14",
+    "FR14.1",
+    "FR14.2",
+    "FR15",
+    "FR15.1",
+    "FR15.2",
+    "FR16",
+    "FR16.1",
+    "FR16.2",
+    "FR17",
+    "FR17.1",
+    "FR17.2",
+    "FR18",
+    "FR18.1",
+    "FR18.2",
+    "FR18.3",
+    "FR19",
+    "FR19.1",
+    "FR19.2",
+    "FR19.3",
+    "FR20",
+    "FR20.1",
+    "FR20.2"
+  ],
+  "coverage": [
+    {
+      "id": "FR1",
+      "status": "OK",
+      "target": "BR2.1, BR3.1, BR3.3, BR3.4, BR3.2, BR7.4, BR6.1",
+      "kind": "parent-rollup",
+      "children": [
+        "FR1.1",
+        "FR1.2",
+        "FR1.3"
+      ],
+      "extent": "U1 partial contribution; full parent remains open with upstream assigned units"
+    },
+    {
+      "id": "FR1.1",
+      "status": "OK",
+      "target": "BR2.1, BR3.1, BR3.3, BR3.4",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:33; FR1.1 Acceptance",
+      "acceptance_text": "a documented fixture query locates its expected paper; changing each retained filter changes only the intended result scope; reopening a result resolves the same identified paper/version.",
+      "workflows": [
+        "WF2",
+        "WF3"
+      ],
+      "local_checks": [
+        "LC02",
+        "LC03"
+      ],
+      "u1_contribution": "Selected P1/P2 research-query/refinement/order and exact open identity",
+      "remaining_full_parity": "U3 completes all retained filters, modes, refinements and ordering",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR1.2",
+      "status": "OK",
+      "target": "BR3.2, BR7.4",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:34; FR1.2 Acceptance",
+      "acceptance_text": "reference relevance cases exercise both supported modes; unavailable semantic resources produce a disclosed supported fallback or actionable unavailability, never a fabricated normal semantic result.",
+      "workflows": [
+        "WF2"
+      ],
+      "local_checks": [
+        "LC02",
+        "LC14"
+      ],
+      "u1_contribution": "Actual selected retrieval mode and explicit supported fallback/unavailability",
+      "remaining_full_parity": "U3 proves both lexical and semantic relevance across full reference set",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR1.3",
+      "status": "OK",
+      "target": "BR3.1, BR3.2, BR3.3, BR3.4, BR6.1",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:35; FR1.3 Acceptance",
+      "acceptance_text": "empty, whitespace, Unicode, punctuation and oversized queries have defined server-validated outcomes; timeout/index failure does not appear as a successful empty search; retry preserves the query and filters. Pagination and stable ordering do not silently duplicate or omit fixture results while the underlying snapshot is unchanged; changing data is identified rather than presented as a stable snapshot.",
+      "workflows": [
+        "WF2"
+      ],
+      "local_checks": [
+        "LC02",
+        "LC11"
+      ],
+      "u1_contribution": "Input boundaries, distinct list states, context-preserving retry and snapshot pagination",
+      "remaining_full_parity": "U3 completes every retained search-surface variant",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR2",
+      "status": "OK",
+      "target": "BR2.1, BR2.3, BR6.3, BR6.4, BR2.2, BR2.4",
+      "kind": "parent-rollup",
+      "children": [
+        "FR2.1",
+        "FR2.2"
+      ],
+      "extent": "U1 partial contribution; full parent remains open with upstream assigned units"
+    },
+    {
+      "id": "FR2.1",
+      "status": "OK",
+      "target": "BR2.1, BR2.3, BR6.3, BR6.4",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:41; FR2.1 Acceptance",
+      "acceptance_text": "fixture section and figure links resolve to the intended content; navigating away and back does not substitute another paper or version; a source-only paper remains distinguishable from one with readable full text.",
+      "workflows": [
+        "WF3"
+      ],
+      "local_checks": [
+        "LC03",
+        "LC11"
+      ],
+      "u1_contribution": "Pinned fixture text, figure, anchor, source-only and return identity",
+      "remaining_full_parity": "U3 completes all retained public representations; U4 private attachments",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR2.2",
+      "status": "OK",
+      "target": "BR2.2, BR2.3, BR2.4",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:42; FR2.2 Acceptance",
+      "acceptance_text": "missing assets or malformed document models produce bounded errors and usable navigation; unsupported content does not trigger endless loading or invented text. Content availability and source permissions are checked before display or processing under NFR5.",
+      "workflows": [
+        "WF3",
+        "WF5"
+      ],
+      "local_checks": [
+        "LC03",
+        "LC09"
+      ],
+      "u1_contribution": "Current eligibility and truthful availability/malformed/asset outcomes on selected path",
+      "remaining_full_parity": "U3 full corpus/availability processing; U4 private scope",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR2.3",
+      "status": "N/A",
+      "target": "U4 / `u4-research-novelty`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Authorize private documents, figures and downloads by owner/context; reject cross-user, anonymous, revoked, traversal and public-route resolution attempts."
+    },
+    {
+      "id": "FR3",
+      "status": "OK",
+      "target": "BR5.1, BR2.2, BR4.6, BR5.2, BR5.3, BR5.4, BR5.5, BR5.6, BR5.8, BR5.10, BR5.7, BR6.1, BR5.9, BR6.2, BR7.5",
+      "kind": "parent-rollup",
+      "children": [
+        "FR3.1",
+        "FR3.2",
+        "FR3.3",
+        "FR3.4"
+      ],
+      "extent": "U1 partial contribution; full parent remains open with upstream assigned units"
+    },
+    {
+      "id": "FR3.1",
+      "status": "OK",
+      "target": "BR5.1, BR2.2, BR4.6",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:49; FR3.1 Acceptance",
+      "acceptance_text": "each current action and level has a reference case showing usable output tied to paper/version, requested operation and language; missing content, unsupported requests or unavailable models produce an explicit reason and safe retry or alternative. No successful answer is fabricated when no result exists.",
+      "workflows": [
+        "WF4",
+        "WF5"
+      ],
+      "local_checks": [
+        "LC04",
+        "LC14"
+      ],
+      "u1_contribution": "Real source-bound summary and supported translation with P1/P2 rubrics",
+      "remaining_full_parity": "U3 all retained action/level/language/glossary/provider variants",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR3.2",
+      "status": "OK",
+      "target": "BR5.2, BR5.3, BR5.4, BR5.5, BR5.6, BR5.8, BR5.10",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:50; FR3.2 Acceptance",
+      "acceptance_text": "duplicate submission or retry after a lost response resolves the same intended job/effect; queue outage, crash between durable acceptance and dispatch, and worker restart either recover that work or expose a terminal actionable failure. An accepted job must not silently remain abandoned. Completion and quota effects are not duplicated by redelivery.",
+      "workflows": [
+        "WF4",
+        "WF5"
+      ],
+      "local_checks": [
+        "LC05",
+        "LC10"
+      ],
+      "u1_contribution": "Durable acceptance/dispatch, duplicate/lost response, restart and fenced completion/settlement",
+      "remaining_full_parity": "U3 full assistance variants; U2 full quota rules; U8 cumulative proof",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR3.3",
+      "status": "OK",
+      "target": "BR5.7, BR5.10, BR6.1",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:51; FR3.3 Acceptance",
+      "acceptance_text": "the actual mounted service and browser agree on state/event identity and ordering; reconnect after a known event recovers missed progress without regressing terminal state; stale, repeated or out-of-order events do not corrupt the view. A sleeping tab, interrupted stream and status polling recover the same authoritative job state. Do not prescribe an old sequence field or wire format as the only possible design.",
+      "workflows": [
+        "WF5",
+        "WF6"
+      ],
+      "local_checks": [
+        "LC06"
+      ],
+      "u1_contribution": "Mounted progress framing/order, interrupted stream/sleep, replay/reset/polling",
+      "remaining_full_parity": "U3 full transport/action parity; U8 cumulative proof",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR3.4",
+      "status": "OK",
+      "target": "BR5.8, BR5.9, BR6.2, BR7.5",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:52; FR3.4 Acceptance",
+      "acceptance_text": "result reads distinguish pending, completed, expired, failed and unauthorized cases; completed result retrieval does not regenerate work; refresh/revisit returns the same result while retained; expiry explains how to request again without claiming it is still available. Actual browser-to-service-to-worker-to-result checks cover the four known integration defects listed below.",
+      "workflows": [
+        "WF6",
+        "WF7"
+      ],
+      "local_checks": [
+        "LC06",
+        "LC07",
+        "LC09"
+      ],
+      "u1_contribution": "Exact retained result read, expiry/failure/pending and fresh-return discovery; reads never execute",
+      "remaining_full_parity": "U3 all result variants; canonical discovery binding before U1 code",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR4",
+      "status": "N/A",
+      "target": "U3 / `u3-paper-corpus-capabilities`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Complete owner glossary inspection/update/use with normalization, failures and concurrent edits; retain one glossary owner in PaperAssistance."
+    },
+    {
+      "id": "FR4.1",
+      "status": "N/A",
+      "target": "U3 / `u3-paper-corpus-capabilities`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Persist and reopen owner terminology; prove relevant eligible output uses the acknowledged preference and deny another user's reads/writes."
+    },
+    {
+      "id": "FR4.2",
+      "status": "N/A",
+      "target": "U3 / `u3-paper-corpus-capabilities`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify empty/duplicate/Unicode/conflicting/oversized inputs, failed writes, repeated submissions and visible concurrent-update resolution."
+    },
+    {
+      "id": "FR5",
+      "status": "OK",
+      "target": "BR4.1, BR4.2, BR4.3, BR6.1, BR3.5, BR4.4, BR1.2, BR4.5, BR2.4",
+      "kind": "parent-rollup",
+      "children": [
+        "FR5.1",
+        "FR5.2",
+        "FR5.3"
+      ],
+      "extent": "U1 partial contribution; full parent remains open with upstream assigned units"
+    },
+    {
+      "id": "FR5.1",
+      "status": "OK",
+      "target": "BR4.1, BR4.2, BR4.3, BR6.1",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:65; FR5.1 Acceptance",
+      "acceptance_text": "saving a fixture paper and a refined query survives reload and a new login; repeated saves do not create unintended duplicate entries; a failed persistence operation is not shown as a confirmed saved state.",
+      "workflows": [
+        "WF7"
+      ],
+      "local_checks": [
+        "LC07"
+      ],
+      "u1_contribution": "Durable paper/query save/list/remove and fresh login; duplicates/unknown/failed writes",
+      "remaining_full_parity": "U2 completes all library variants; U3 changed-source integration",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR5.2",
+      "status": "OK",
+      "target": "BR3.5, BR4.4",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:66; FR5.2 Acceptance",
+      "acceptance_text": "a qualifying authenticated search can be found and rerun with its recorded query/refinements; empty and paginated histories behave consistently; clearing A's history affects only A and does not unintentionally delete saved papers or searches. Failed clear operations report the actual remaining state.",
+      "workflows": [
+        "WF2",
+        "WF8"
+      ],
+      "local_checks": [
+        "LC08"
+      ],
+      "u1_contribution": "Recorded qualifying query/refinements, list/rerun/clear with failure and late-fact boundary",
+      "remaining_full_parity": "U2 full history behavior and controls; U8 cumulative proof",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR5.3",
+      "status": "OK",
+      "target": "BR1.2, BR4.2, BR4.3, BR4.5, BR2.4",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:67; FR5.3 Acceptance",
+      "acceptance_text": "withdrawn/unavailable papers and renamed or canonicalized identifiers have an explicit disposition; saved references are not silently redirected to unrelated content or lost. Read, write, list and delete paths reject cross-owner access; simultaneous tabs converge to the committed state after refresh.",
+      "workflows": [
+        "WF3",
+        "WF7"
+      ],
+      "local_checks": [
+        "LC03",
+        "LC07",
+        "LC09"
+      ],
+      "u1_contribution": "Owner isolation across paths, concurrent revisions and explicit original/canonical/source disposition",
+      "remaining_full_parity": "U2/U3 full reference-change behavior",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR6",
+      "status": "OK",
+      "target": "BR1.1, BR1.3, BR1.5, BR1.4, BR7.1, BR7.4, BR1.2",
+      "kind": "parent-rollup",
+      "children": [
+        "FR6.1",
+        "FR6.3",
+        "FR6.4"
+      ],
+      "extent": "U1 partial contribution; full parent remains open with upstream assigned units"
+    },
+    {
+      "id": "FR6.1",
+      "status": "OK",
+      "target": "BR1.1, BR1.3, BR1.5",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:73; FR6.1 Acceptance",
+      "acceptance_text": "a new eligible synthetic account completes the journey; duplicate or malformed registration and unverified access follow documented rules; failed email delivery exposes a recoverable state; expired/used verification links fail safely. Responses must not disclose another person's private account information.",
+      "workflows": [
+        "WF1"
+      ],
+      "local_checks": [
+        "LC01"
+      ],
+      "u1_contribution": "Synthetic public-registration verification/login/logout and negative/delivery recovery",
+      "remaining_full_parity": "U2 full public email/identity operation and retained lifecycle parity",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR6.2",
+      "status": "N/A",
+      "target": "U2 / `u2-account-personal-controls`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify password reset/change and email change, identity checks, interruption, token replay and documented credential/session revocation without losing committed work."
+    },
+    {
+      "id": "FR6.3",
+      "status": "OK",
+      "target": "BR1.4, BR7.1, BR7.4",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:75; FR6.3 Acceptance",
+      "acceptance_text": "the user can understand and confirm the operation; access is revoked when required; related saved/private data is handled consistently; reactivation restores only data that the approved policy lawfully and technically retains. Permanent erasure must not be represented as reversible. The retention periods and existing-data treatment remain open under O-03/O-04; do not invent them here.",
+      "workflows": [
+        "WF1",
+        "WF8",
+        "WF9"
+      ],
+      "local_checks": [
+        "LC09",
+        "LC12"
+      ],
+      "u1_contribution": "Immediate applicable revocation and installed-owner lifecycle participation; no erasure/reactivation promises",
+      "remaining_full_parity": "U2 policy-resolved deletion/withdrawal/reactivation; every later owner joins; U8 continuity",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR6.4",
+      "status": "OK",
+      "target": "BR1.2, BR1.3, BR1.5, BR7.4",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:76; FR6.4 Acceptance",
+      "acceptance_text": "repeated invalid/automated requests reach the configured bounded response, forged identity/session requests fail, and a logged-out or revoked session cannot regain protected access by replaying a browser request. Numeric rate limits are chosen from evidence, not an assumed traffic count.",
+      "workflows": [
+        "WF1"
+      ],
+      "local_checks": [
+        "LC01",
+        "LC09",
+        "LC10"
+      ],
+      "u1_contribution": "Server identity/session validation, bounded abuse policy prerequisite, replay and logout denial",
+      "remaining_full_parity": "U2 complete public-auth surface and evidence-based numeric configuration",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR7",
+      "status": "N/A",
+      "target": "U2 / `u2-account-personal-controls`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Complete retained external identity/profile behavior and administrator MFA boundaries; do not infer PlatformControl authority from an application role."
+    },
+    {
+      "id": "FR7.1",
+      "status": "N/A",
+      "target": "U2 / `u2-account-personal-controls`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify Google/ORCID sign-in/link/profile and retained unlink behavior, collisions, denied consent, callback replay and provider failure."
+    },
+    {
+      "id": "FR7.2",
+      "status": "N/A",
+      "target": "U2 / `u2-account-personal-controls`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify ordinary-user denial, current administrator MFA, replay/expiry and the controlled recovery procedure; no production bypass."
+    },
+    {
+      "id": "FR8",
+      "status": "N/A",
+      "target": "U2 / `u2-account-personal-controls`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Complete durable profile/consent controls and truthful existing mock/administrative plan presentation; verify processing consequences in consuming domains."
+    },
+    {
+      "id": "FR8.1",
+      "status": "N/A",
+      "target": "U2 / `u2-account-personal-controls`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify owner-isolated profile/consent updates, failed writes and governed future processing, including queued effects rechecking current permission."
+    },
+    {
+      "id": "FR8.2",
+      "status": "N/A",
+      "target": "U2 / `u2-account-personal-controls`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Present configured mock/administrative subscription state truthfully; never claim real charges, purchased entitlement or billing parity."
+    },
+    {
+      "id": "FR9",
+      "status": "N/A",
+      "target": "U3 / `u3-paper-corpus-capabilities`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Complete bounded cited/citing exploration and eligible saves; Discovery owns relationships and Library owns the saved reference."
+    },
+    {
+      "id": "FR9.1",
+      "status": "N/A",
+      "target": "U3 / `u3-paper-corpus-capabilities`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify cited/citing identity, traversal/duplicate bounds and eligible reference saves through the real library operation."
+    },
+    {
+      "id": "FR9.2",
+      "status": "N/A",
+      "target": "U3 / `u3-paper-corpus-capabilities`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify provider limits, incomplete/unknown/stale/unavailable citation data, freshness and recovery without fabricating edges or losing saved references."
+    },
+    {
+      "id": "FR10",
+      "status": "OK",
+      "target": "BR4.6, BR3.5, BR6.2",
+      "kind": "parent-rollup",
+      "children": [
+        "FR10.1"
+      ],
+      "extent": "U1 partial contribution; full parent remains open with upstream assigned units"
+    },
+    {
+      "id": "FR10.1",
+      "status": "OK",
+      "target": "BR4.6, BR3.5, BR6.2",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:103; FR10.1 Acceptance",
+      "acceptance_text": "supported settings persist and affect the appropriate subsequent action; recent paper identity and ordering match controlled activity; missing enrichment or cold-start profiles have a usable default and disclosed degradation where needed.",
+      "workflows": [
+        "WF1",
+        "WF2",
+        "WF8"
+      ],
+      "local_checks": [
+        "LC08"
+      ],
+      "u1_contribution": "Supported defaults apply next action, real recent identity where present, usable cold start/manual path",
+      "remaining_full_parity": "U2 full settings/recent behavior; U3 enrichment/assistance variants",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR10.2",
+      "status": "N/A",
+      "target": "U2 / `u2-account-personal-controls`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify opt-out, event deletion and profile reset, including delayed events/projections, without deleting the library or recreating prohibited behavior."
+    },
+    {
+      "id": "FR11",
+      "status": "N/A",
+      "target": "U2 / `u2-account-personal-controls`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Complete resumable interest onboarding/skip and optional attributable ORCID suggestions without blocking normal service use."
+    },
+    {
+      "id": "FR11.1",
+      "status": "N/A",
+      "target": "U2 / `u2-account-personal-controls`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify select/skip/stored state, interruption/revisit and prevention of redirect loops or unintended preference replacement."
+    },
+    {
+      "id": "FR11.2",
+      "status": "N/A",
+      "target": "U2 / `u2-account-personal-controls`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify eligible ORCID suggestions and manual/skip alternatives for missing data, denied authorization and provider failure."
+    },
+    {
+      "id": "FR12",
+      "status": "N/A",
+      "target": "U5 / `u5-topics-digests`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Complete topic following/configuration and recoverable consent-governed digest preparation/delivery/unsubscribe."
+    },
+    {
+      "id": "FR12.1",
+      "status": "N/A",
+      "target": "U5 / `u5-topics-digests`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify owner-isolated follow/unfollow/configuration, duplicate prevention, durable changes and retained input boundary behavior."
+    },
+    {
+      "id": "FR12.2",
+      "status": "N/A",
+      "target": "U5 / `u5-topics-digests`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify intended time/content windows, no-new-content, retry/crash/uncertain-send reconciliation and consent/unsubscribe recheck before delivery; prove sustainable public delivery."
+    },
+    {
+      "id": "FR13",
+      "status": "N/A",
+      "target": "U4 / `u4-research-novelty`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Complete grounded questions/comparison/quotes across retained source scopes, including private/web distinctions, partial coverage and meaningful abstention."
+    },
+    {
+      "id": "FR13.1",
+      "status": "N/A",
+      "target": "U4 / `u4-research-novelty`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify claims and literal quotations against accessible source/version/section, contradictions and insufficient-evidence behavior."
+    },
+    {
+      "id": "FR13.2",
+      "status": "N/A",
+      "target": "U4 / `u4-research-novelty`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify authorized text/PDF attachments and supported web references, malformed/oversized/truncated/unsupported cases and untrusted-source isolation."
+    },
+    {
+      "id": "FR13.3",
+      "status": "N/A",
+      "target": "U4 / `u4-research-novelty`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify structured output through extraction/model/context failures, explicit truncation and interrupted/duplicate requests with committed-input preservation."
+    },
+    {
+      "id": "FR14",
+      "status": "N/A",
+      "target": "U4 / `u4-research-novelty`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Complete persisted sessions/messages and authoritative pending work; include the approved distinct durable-draft lifecycle without equating draft acknowledgement to submission."
+    },
+    {
+      "id": "FR14.1",
+      "status": "N/A",
+      "target": "U4 / `u4-research-novelty`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify create/save/reopen, committed messages, pending/terminal progress, duplicate-turn prevention and late completion bound to the intended session/input."
+    },
+    {
+      "id": "FR14.2",
+      "status": "N/A",
+      "target": "U4 / `u4-research-novelty`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify one/all-session deletion, cross-owner isolation, failed deletion and stale-link/late-event behavior under the approved pending-work/retention policy."
+    },
+    {
+      "id": "FR15",
+      "status": "N/A",
+      "target": "U4 / `u4-research-novelty`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Complete topic/manuscript novelty, evidence/artifacts/discussion and recoverable jobs/cancellation; acknowledged manuscript drafts remain distinct from accepted analysis."
+    },
+    {
+      "id": "FR15.1",
+      "status": "N/A",
+      "target": "U4 / `u4-research-novelty`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify both input modes, supported formats, source-associated artifacts/discussion and limitations; generated scores do not prove scientific novelty."
+    },
+    {
+      "id": "FR15.2",
+      "status": "N/A",
+      "target": "U4 / `u4-research-novelty`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify duplicate submission, restart/reconnect, cancellation/completion races, final cancellation and owner-scoped artifact expiry without automatic export."
+    },
+    {
+      "id": "FR16",
+      "status": "N/A",
+      "target": "U6 / `u6-approved-export`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Complete per-owner Notion connection, current preview, explicit approval and reconciled external effect under verified free terms."
+    },
+    {
+      "id": "FR16.1",
+      "status": "N/A",
+      "target": "U6 / `u6-approved-export`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify owner connection/credential isolation, preview content/destination and revoked/invalid/disconnected recovery; read authorized novelty artifacts."
+    },
+    {
+      "id": "FR16.2",
+      "status": "N/A",
+      "target": "U6 / `u6-approved-export`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Bind approval to immutable artifact revision/content and destination; verify change/revocation, duplicate/timeout reconciliation and no effect from preview/cancel/expiry."
+    },
+    {
+      "id": "FR17",
+      "status": "OK",
+      "target": "BR1.2, BR1.3, BR5.4, BR7.3, BR5.2, BR5.3, BR5.8, BR7.4",
+      "kind": "parent-rollup",
+      "children": [
+        "FR17.1",
+        "FR17.2"
+      ],
+      "extent": "U1 partial contribution; full parent remains open with upstream assigned units"
+    },
+    {
+      "id": "FR17.1",
+      "status": "OK",
+      "target": "BR1.2, BR1.3, BR5.4, BR7.3",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:153; FR17.1 Acceptance",
+      "acceptance_text": "a user sees their applicable allocation/usage and an administrator can change it with an auditable outcome; unauthorized changes fail. Public users cannot choose an administrative entitlement by modifying request data.",
+      "workflows": [
+        "WF4",
+        "WF8"
+      ],
+      "local_checks": [
+        "LC10"
+      ],
+      "u1_contribution": "Own current allocation/usage and denial of forged administrator tier",
+      "remaining_full_parity": "U2 authorized audited grant/revoke with target revision; U8 integration",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR17.2",
+      "status": "OK",
+      "target": "BR5.2, BR5.3, BR5.4, BR5.8, BR7.4",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:154; FR17.2 Acceptance",
+      "acceptance_text": "boundary, exhausted, concurrent, retry and daily-reset/time-zone cases have documented accounting; unknown usage does not appear as zero; no double charge/debit occurs for the same intended effect; failures/retries apply the chosen refund/accounting rules visibly. Entitlement changes cannot activate paid resources under C-13. Values and reset semantics must be specified and checked before implementation acceptance.",
+      "workflows": [
+        "WF4",
+        "WF5"
+      ],
+      "local_checks": [
+        "LC05",
+        "LC10"
+      ],
+      "u1_contribution": "Reservation/settlement recovery, exhausted/unknown/concurrent/reset policy boundaries and no paid fallback",
+      "remaining_full_parity": "U2 complete allocation/reset/refund variants and consumer integration; all owners/U8",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR18",
+      "status": "N/A",
+      "target": "U3 / `u3-paper-corpus-capabilities`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Complete corpus ingestion/refresh/rebuild, canonical/version/dedup behavior, withdrawal and recoverable processing across authoritative inputs and derived representations."
+    },
+    {
+      "id": "FR18.1",
+      "status": "N/A",
+      "target": "U3 / `u3-paper-corpus-capabilities`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify source eligibility, duplicate/reordered records, versions, dedup and stage/watermark completion under failure; fixture loading alone is not ingestion parity."
+    },
+    {
+      "id": "FR18.2",
+      "status": "N/A",
+      "target": "U3 / `u3-paper-corpus-capabilities`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify withdrawal/license/access changes defeat stale projections/caches and give saved references explicit dispositions; resolve projection-writer responsibility."
+    },
+    {
+      "id": "FR18.3",
+      "status": "N/A",
+      "target": "U3 / `u3-paper-corpus-capabilities`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify retry/dead-letter/reprocessing, partial batches, object/control/index interruption, rate limits and compatibility failure with repeatable non-corrupting recovery."
+    },
+    {
+      "id": "FR19",
+      "status": "OK",
+      "target": "BR7.2, BR7.3, BR6.1, BR7.1, BR7.4, BR7.5",
+      "kind": "parent-rollup",
+      "children": [
+        "FR19.1",
+        "FR19.2",
+        "FR19.3"
+      ],
+      "extent": "U1 partial contribution; full parent remains open with upstream assigned units"
+    },
+    {
+      "id": "FR19.1",
+      "status": "OK",
+      "target": "BR7.2, BR7.3, BR6.1",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:168; FR19.1 Acceptance",
+      "acceptance_text": "controlled dependency outage and job failure can be detected and traced to the affected capability without exposing private content; unknown or stale measurements are labeled rather than reported as healthy or zero-cost.",
+      "workflows": [
+        "WF9"
+      ],
+      "local_checks": [
+        "LC12",
+        "LC13"
+      ],
+      "u1_contribution": "Actual U1 capability and incident/resource observations with safe correlation, unknown/stale distinct",
+      "remaining_full_parity": "U8 complete retained operational views/signals/actions",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR19.2",
+      "status": "OK",
+      "target": "BR7.1, BR7.2",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:169; FR19.2 Acceptance",
+      "acceptance_text": "an optional module that fails to mount, a missing required store or an unavailable execution path is visible to maintainers and affected users; a green process check alone cannot claim complete service readiness. Recovery changes the reported state only after appropriate capability checks succeed.",
+      "workflows": [
+        "WF9"
+      ],
+      "local_checks": [
+        "LC12"
+      ],
+      "u1_contribution": "Missing module/store/executor and required policy readiness with real recovery check",
+      "remaining_full_parity": "Each later unit registers contributions; U8 complete service readiness",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR19.3",
+      "status": "OK",
+      "target": "BR7.3, BR7.4, BR7.5",
+      "kind": "inline-acceptance",
+      "source_locator": "requirements.md:170; FR19.3 Acceptance",
+      "acceptance_text": "an operator can reproduce a controlled incident, identify affected work, recover it and verify service/user state; temporary telemetry failures do not silently erase required operational evidence or trigger unbounded resource use.",
+      "workflows": [
+        "WF9"
+      ],
+      "local_checks": [
+        "LC13",
+        "LC14"
+      ],
+      "u1_contribution": "Controlled incident diagnosis/reconciliation, retained evidence and reproducible repair",
+      "remaining_full_parity": "U8 full operational recovery and continuity; U7 controlled platform remains separate",
+      "execution_status": "not-executed",
+      "design_target": "functional-spec.md"
+    },
+    {
+      "id": "FR20",
+      "status": "N/A",
+      "target": "U7 / `u7-controlled-platform-protocols`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Complete retained platform evidence and controlled operator protocols with independent authority, compatibility and durable outcome reconciliation."
+    },
+    {
+      "id": "FR20.1",
+      "status": "N/A",
+      "target": "U7 / `u7-controlled-platform-protocols`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify current/stale/mismatched/missing platform evidence and restricted authenticated reads; U8 consumes it without claiming application readiness from it."
+    },
+    {
+      "id": "FR20.2",
+      "status": "N/A",
+      "target": "U7 / `u7-controlled-platform-protocols`",
+      "kind": "outside-U1-assignment",
+      "extent": "Retained release requirement assigned to later unit; not removed, not designed or implemented by U1.",
+      "upstream_acceptance_scope": "Verify actor/target/precondition/input binding, interrupted/duplicate outcomes and filesystem/disk/connectivity failures; retain explicit authority for destructive/release effects."
+    }
+  ],
+  "reverse": [
+    {
+      "id": "BR7.4",
+      "status": "N/A",
+      "target": "Cross-cutting evidence enabling rule sourced from NFR5/NFR8 and IB-02/03/05; also referenced by FR rows."
+    },
+    {
+      "id": "BR7.5",
+      "status": "N/A",
+      "target": "Cross-cutting design/implementation boundary from NFR1/NFR7/NFR10; application verification command remains deferred."
+    }
+  ],
+  "non_functional_obligations": [
+    {
+      "id": "NFR1",
+      "local_checks": [
+        "LC04",
+        "LC14"
+      ],
+      "rules": [
+        "BR7.5"
+      ],
+      "u1_contribution": "Complete P1/P2 normal and negative/recovery integration; no mock substitute",
+      "prerequisites": [
+        "E5",
+        "E6",
+        "E7"
+      ],
+      "status": "design-covered; evidence-pending"
+    },
+    {
+      "id": "NFR2",
+      "local_checks": [
+        "LC02",
+        "LC06",
+        "LC07",
+        "LC11",
+        "LC14"
+      ],
+      "rules": [
+        "BR6.1",
+        "BR6.3"
+      ],
+      "u1_contribution": "Distinct responsive feedback, timing boundaries/distributions before numeric target agreement",
+      "prerequisites": [
+        "E6"
+      ],
+      "status": "design-covered; evidence-pending"
+    },
+    {
+      "id": "NFR3",
+      "local_checks": [
+        "LC05",
+        "LC06",
+        "LC07",
+        "LC08"
+      ],
+      "rules": [
+        "BR4.3",
+        "BR5.2",
+        "BR5.8",
+        "BR5.10"
+      ],
+      "u1_contribution": "Durable acceptance, unknown-write recovery, fenced retries, restore responsibility",
+      "prerequisites": [
+        "E1",
+        "E4"
+      ],
+      "status": "design-covered; evidence-pending"
+    },
+    {
+      "id": "NFR4",
+      "local_checks": [
+        "LC01",
+        "LC09",
+        "LC10"
+      ],
+      "rules": [
+        "BR1.2",
+        "BR1.3",
+        "BR1.4",
+        "BR6.4"
+      ],
+      "u1_contribution": "Current authority at every boundary, safe content/session/asset handling and admin separation",
+      "prerequisites": [
+        "E4"
+      ],
+      "status": "design-covered; evidence-pending"
+    },
+    {
+      "id": "NFR5",
+      "local_checks": [
+        "LC03",
+        "LC09",
+        "LC12"
+      ],
+      "rules": [
+        "BR2.2",
+        "BR1.4",
+        "BR7.4"
+      ],
+      "u1_contribution": "Permitted source/model use and owner/consent lifecycle; retention/privacy before storage/effects",
+      "prerequisites": [
+        "E1",
+        "E2",
+        "E4"
+      ],
+      "status": "design-covered; evidence-pending"
+    },
+    {
+      "id": "NFR6",
+      "local_checks": [
+        "LC11"
+      ],
+      "rules": [
+        "BR6.1",
+        "BR6.2",
+        "BR6.3"
+      ],
+      "u1_contribution": "Approved WCAG2.2AA target: keyboard/focus/contrast/reflow/announcements/authentication matrix; no conformance claim",
+      "prerequisites": [
+        "E6"
+      ],
+      "status": "design-covered; evidence-pending"
+    },
+    {
+      "id": "NFR7",
+      "local_checks": [
+        "LC13",
+        "LC14"
+      ],
+      "rules": [
+        "BR7.1",
+        "BR7.3",
+        "BR7.5"
+      ],
+      "u1_contribution": "Clean setup and diagnosis/repair/regression proof with times and obstacles",
+      "prerequisites": [
+        "E6",
+        "E7"
+      ],
+      "status": "design-covered; evidence-pending"
+    },
+    {
+      "id": "NFR8",
+      "local_checks": [
+        "LC05",
+        "LC10",
+        "LC14"
+      ],
+      "rules": [
+        "BR5.4",
+        "BR7.4"
+      ],
+      "u1_contribution": "Finite free/local capacity, backpressure and no paid fallback; public path separate from test sink",
+      "prerequisites": [
+        "E3",
+        "E4"
+      ],
+      "status": "design-covered; evidence-pending"
+    },
+    {
+      "id": "NFR9",
+      "local_checks": [
+        "LC12",
+        "LC13"
+      ],
+      "rules": [
+        "BR7.2",
+        "BR7.3"
+      ],
+      "u1_contribution": "Safe correlation, timestamps, stale/unknown distinctions and bounded observation failure",
+      "prerequisites": [
+        "E4"
+      ],
+      "status": "design-covered; evidence-pending"
+    },
+    {
+      "id": "NFR10",
+      "local_checks": [
+        "LC05",
+        "LC06",
+        "LC07"
+      ],
+      "rules": [
+        "BR7.5",
+        "BR4.2",
+        "BR5.5",
+        "BR5.6"
+      ],
+      "u1_contribution": "Canonical contract coordination and actual mounted browser/service/worker consistency",
+      "prerequisites": [
+        "E5",
+        "E7"
+      ],
+      "status": "design-covered; evidence-pending"
+    }
+  ],
+  "evidence_obligations": [
+    {
+      "id": "IB-01",
+      "contribution": "Exact U1 subset and continuing parity ledger",
+      "local_checks": [
+        "LC14"
+      ],
+      "prerequisites": [
+        "E5"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "IB-02",
+      "contribution": "Authority provenance and isolated recovery evidence before continuity",
+      "local_checks": [
+        "LC09",
+        "LC14"
+      ],
+      "prerequisites": [
+        "E1"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "IB-03",
+      "contribution": "Source/model/public-email obligations and actual consumer inventory",
+      "local_checks": [
+        "LC01",
+        "LC03",
+        "LC04"
+      ],
+      "prerequisites": [
+        "E2",
+        "E3",
+        "E5"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "IB-04",
+      "contribution": "Real journey/recovery/repair baseline before agreed targets",
+      "local_checks": [
+        "LC13",
+        "LC14"
+      ],
+      "prerequisites": [
+        "E6"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "IB-05",
+      "contribution": "Free/local resources and effort fit with bounded exhaustion",
+      "local_checks": [
+        "LC10",
+        "LC14"
+      ],
+      "prerequisites": [
+        "E3",
+        "E4"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "IB-06",
+      "contribution": "Registered owners, executable host/contracts and repair instructions",
+      "local_checks": [
+        "LC12",
+        "LC13"
+      ],
+      "prerequisites": [
+        "E5",
+        "E7"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "IB-07",
+      "contribution": "Find-understand-save-revisit real P1/P2 and translation",
+      "local_checks": [
+        "LC02",
+        "LC04",
+        "LC07",
+        "LC14"
+      ],
+      "prerequisites": [
+        "E2",
+        "E3",
+        "E6",
+        "E7"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "IB-08",
+      "contribution": "Retained variants remain assigned U2-U7; U1 no full-parity claim",
+      "local_checks": [
+        "LC14"
+      ],
+      "prerequisites": [
+        "E5",
+        "E7"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "IB-09",
+      "contribution": "Supply unit evidence for U8 release/continuity consolidation",
+      "local_checks": [
+        "LC14"
+      ],
+      "prerequisites": [
+        "E1",
+        "E3",
+        "E6",
+        "E7"
+      ],
+      "status": "open"
+    }
+  ]
+}
