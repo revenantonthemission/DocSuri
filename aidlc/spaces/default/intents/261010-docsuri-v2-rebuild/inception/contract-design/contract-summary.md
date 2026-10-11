@@ -1,8 +1,11 @@
 # DocSuri v2 — Contract summary
 
-Date: 2026-10-11 (Asia/Seoul). Re-saved from the confirmed summary. Status: proposed formal contracts for independent
-review and human approval; no application implementation or deployment follows
-from this document alone. Basis: the [confirmed contract plan](contract-design-questions.md),
+Date: 2026-10-11 (Asia/Seoul). Contract release 2.0.0: coordinated U1 amendment
+under the approved Code Generation plan. The original review remains historical
+evidence for release 1.0.0; amended contracts require finished-work review and
+executable closure evidence. This document does not establish runtime readiness.
+See the [amendment and compatibility record](../../construction/u1-integrated-paper-journey/code-generation/contract-amendment.md).
+Basis: the [confirmed contract plan](contract-design-questions.md),
 [approved unit catalogue](../units-generation/unit-of-work.md),
 [unit DAG](../units-generation/unit-of-work-dependency.md),
 [domain ownership](../domain-design/components.md) and
@@ -57,8 +60,10 @@ baseline-dependent numeric targets or retention periods.
    restarted under its old key. Any explicit re-execution uses a new logical
    identity, rechecks policy and preserves the previous receipt.
 4. Use owner-scoped monotonically advancing revisions/sequences. Optimistic
-   writes compare the expected revision atomically; return conflict and the
-   authorized latest revision without overwriting it. Same-key replay still
+   writes compare the expected revision atomically; return safe conflict without
+   overwriting. The client obtains current state through a fresh authorized read;
+   Error.details remains fieldNames-only. Current authorization and exact original
+   normalized-intent receipt replay precede fresh CAS. Same-key replay still
    requires current read authority. A successful cancellation is terminal and
    excludes later effects; a cancellation request alone is not success.
 5. Lost responses/timeouts can mean an effect committed. Return/recover
@@ -531,17 +536,17 @@ $defs:
   Progress: {oneOf: [{type: object, properties: {mode: {const: indeterminate}}, required: [mode], additionalProperties: false}, {type: object,
           properties: {mode: {const: determinate}, current: {type: integer, minimum: 0}, total: {type: integer, minimum: 1}}, required: [
             mode, current, total], additionalProperties: false}]}
-  JobReceipt: {type: object, properties: {jobId: {$ref: '#/$defs/Id'}, revision: {$ref: '#/$defs/Revision'}, seq: {type: integer, minimum: 0},
-        state: {type: string, enum: [accepted, running, cancel_requested, succeeded, failed, cancelled]}, requestId: {$ref: '#/$defs/Id'}},
-      required: [jobId, revision, seq, state, requestId], additionalProperties: false}
-  JobSnapshot: {type: object, properties: {jobId: {$ref: '#/$defs/Id'}, kind: {$ref: '#/$defs/Id'}, state: {type: string, enum: [accepted, running,
-            cancel_requested, succeeded, failed, cancelled]}, revision: {$ref: '#/$defs/Revision'}, seq: {type: integer, minimum: 0},
-        ownerId: {$ref: '#/$defs/Id'}, progress: {$ref: '#/$defs/Progress'}, result: {anyOf: [{$ref: '#/$defs/ResultRef'}, {type: 'null'}]},
-        error: {anyOf: [{$ref: '#/$defs/Error'}, {type: 'null'}]}}, required: [jobId, kind, state, revision, seq, ownerId, progress,
-        result, error], additionalProperties: false, allOf: [{if: {properties: {state: {const: succeeded}}}, then: {properties: {result: {
-                $ref: '#/$defs/ResultRef'}, error: {type: 'null'}}}}, {if: {properties: {state: {const: failed}}}, then: {properties: {
-              error: {$ref: '#/$defs/Error'}, result: {type: 'null'}}}}, {if: {properties: {state: {enum: [accepted, running, cancel_requested,
-                  cancelled]}}}, then: {properties: {result: {type: 'null'}}}}]}
+  JobReceipt: {type: object, properties: {jobId: {$ref: '#/$defs/Id'}, revision: {$ref: '#/$defs/Revision'}, seq: {type: integer, minimum: 0}, state: {type: string,
+          enum: [accepted, running, cancel_requested, succeeded, failed, cancelled]}, requestId: {$ref: '#/$defs/Id'}, acceptedAt: {$ref: '#/$defs/Time'}},
+      required: [jobId, revision, seq, state, requestId, acceptedAt], additionalProperties: false}
+  JobSnapshot: {type: object, properties: {jobId: {$ref: '#/$defs/Id'}, kind: {$ref: '#/$defs/Id'}, state: {type: string, enum: [accepted, running, cancel_requested,
+            succeeded, failed, cancelled]}, revision: {$ref: '#/$defs/Revision'}, seq: {type: integer, minimum: 0}, ownerId: {$ref: '#/$defs/Id'},
+        progress: {$ref: '#/$defs/Progress'}, result: {anyOf: [{$ref: '#/$defs/ResultRef'}, {type: 'null'}]}, error: {anyOf: [{$ref: '#/$defs/Error'},
+            {type: 'null'}]}, acceptedAt: {$ref: '#/$defs/Time'}}, required: [jobId, kind, state, revision, seq, ownerId, progress, result, error,
+        acceptedAt], additionalProperties: false, allOf: [{if: {properties: {state: {const: succeeded}}}, then: {properties: {result: {$ref: '#/$defs/ResultRef'},
+              error: {type: 'null'}}}}, {if: {properties: {state: {const: failed}}}, then: {properties: {error: {$ref: '#/$defs/Error'}, result: {
+                type: 'null'}}}}, {if: {properties: {state: {enum: [accepted, running, cancel_requested, cancelled]}}}, then: {properties: {result: {
+                type: 'null'}}}}]}
   JsonValue: {anyOf: [{type: [string, number, boolean, 'null']}, {type: array, items: {$ref: '#/$defs/JsonValue'}}, {type: object, additionalProperties: {
             $ref: '#/$defs/JsonValue'}}]}
   OperatorEvidenceRequest: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, targetId: {$ref: '#/$defs/Id'}, inputHash: {$ref: '#/$defs/Hash'},
@@ -655,17 +660,22 @@ $defs:
           type: array, items: {$ref: '#/$defs/Id'}, x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.}},
       required: [requestId, adapterRevision, outcome, responseSchemaId, validatedPayload, remoteReference, retryAfterSeconds, evidenceRefs],
       additionalProperties: false}
-  DispatchCommand: {type: object, properties: {messageId: {$ref: '#/$defs/Id'}, contractVersion: {const: 1.0.0}, ownerComponent: {$ref: '#/$defs/Id'},
-        operationId: {$ref: '#/$defs/Id'}, operationKind: {$ref: '#/$defs/Id'}, ownerId: {$ref: '#/$defs/Id'}, inputRevision: {$ref: '#/$defs/Revision'},
-        inputHash: {$ref: '#/$defs/Hash'}, authorityRevision: {$ref: '#/$defs/Revision'}, policy: {$ref: '#/$defs/PolicyRef'}, payloadRef: {
-          $ref: '#/$defs/Id'}, acceptedAt: {$ref: '#/$defs/Time'}, attempt: {type: integer, minimum: 1}}, required: [messageId, contractVersion,
-        ownerComponent, operationId, operationKind, ownerId, inputRevision, inputHash, authorityRevision, policy, payloadRef, acceptedAt,
-        attempt], additionalProperties: false}
-  DispatchFact: {type: object, properties: {messageId: {$ref: '#/$defs/Id'}, causationId: {$ref: '#/$defs/Id'}, ownerComponent: {$ref: '#/$defs/Id'},
-        operationId: {$ref: '#/$defs/Id'}, revision: {$ref: '#/$defs/Revision'}, seq: {type: integer, minimum: 0}, kind: {$ref: '#/$defs/Id'},
-        outcome: {type: string, enum: [progress, succeeded, failed, cancelled, unknown]}, resultRef: {anyOf: [{$ref: '#/$defs/ResultRef'},
-            {type: 'null'}]}, error: {anyOf: [{$ref: '#/$defs/Error'}, {type: 'null'}]}}, required: [messageId, causationId, ownerComponent,
-        operationId, revision, seq, kind, outcome, resultRef, error], additionalProperties: false}
+  DispatchCommand: {type: object, properties: {messageId: {$ref: '#/$defs/Id'}, contractVersion: {const: 2.0.0}, ownerComponent: {$ref: '#/$defs/Id'}, operationId: {
+          $ref: '#/$defs/Id'}, operationKind: {$ref: '#/$defs/Id'}, ownerId: {$ref: '#/$defs/Id'}, inputRevision: {$ref: '#/$defs/Revision'}, inputHash: {
+          $ref: '#/$defs/Hash'}, authorityRevision: {$ref: '#/$defs/Revision'}, policy: {$ref: '#/$defs/PolicyRef'}, payloadRef: {$ref: '#/$defs/Id'},
+        acceptedAt: {$ref: '#/$defs/Time'}, attempt: {type: integer, minimum: 1}}, required: [messageId, contractVersion, ownerComponent, operationId,
+        operationKind, ownerId, inputRevision, inputHash, authorityRevision, policy, payloadRef, acceptedAt, attempt], additionalProperties: false}
+  DispatchFact: {type: object, properties: {messageId: {$ref: '#/$defs/Id'}, causationId: {$ref: '#/$defs/Id'}, ownerComponent: {$ref: '#/$defs/Id'}, operationId: {
+          $ref: '#/$defs/Id'}, kind: {$ref: '#/$defs/Id'}, outcome: {type: string, enum: [progress, succeeded, failed, cancelled, unknown]}, resultRef: {
+          anyOf: [{$ref: '#/$defs/ResultRef'}, {type: 'null'}]}, error: {anyOf: [{$ref: '#/$defs/Error'}, {type: 'null'}]}, claim: {$ref: '#/$defs/ExecutionClaim'},
+        expectedJobRevision: {$ref: '#/$defs/Revision'}, inputHash: {$ref: '#/$defs/Hash'}, progress: {anyOf: [{$ref: '#/$defs/Progress'}, {type: 'null'}]},
+        prepared: {anyOf: [{$ref: '#/$defs/AssistanceResult'}, {type: 'null'}]}, usageRecordId: {anyOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}},
+      required: [messageId, causationId, ownerComponent, operationId, kind, outcome, resultRef, error, claim, expectedJobRevision, inputHash, progress,
+        prepared, usageRecordId], additionalProperties: false, allOf: [{if: {properties: {outcome: {const: progress}}}, then: {properties: {progress: {
+                $ref: '#/$defs/Progress'}, error: {type: 'null'}, resultRef: {type: 'null'}, prepared: {type: 'null'}}}}, {if: {properties: {outcome: {
+                const: failed}}}, then: {properties: {error: {$ref: '#/$defs/Error'}, resultRef: {type: 'null'}, prepared: {type: 'null'}}}}, {if: {
+            properties: {ownerComponent: {const: PaperAssistance}, outcome: {const: succeeded}}}, then: {properties: {prepared: {$ref: '#/$defs/AssistanceResult'},
+              resultRef: {$ref: '#/$defs/ResultRef'}, usageRecordId: {$ref: '#/$defs/Id'}, error: {type: 'null'}}}}]}
   DispatchAck: {type: object, properties: {messageId: {$ref: '#/$defs/Id'}, operationId: {$ref: '#/$defs/Id'}, disposition: {type: string, enum: [
             committed, duplicate, rejected, retry_later]}, recordedRevision: {$ref: '#/$defs/Revision'}}, required: [messageId, operationId,
         disposition, recordedRevision], additionalProperties: false}
@@ -895,9 +905,9 @@ $defs:
   AccessIdentityMfa: {type: object, properties: {state: {const: mfa_required}, mfaChallenge: {$ref: '#/$defs/AccessMfaContinuation'}}, required: [state,
         mfaChallenge], additionalProperties: false}
   AccessIdentityResult: {oneOf: [{$ref: '#/$defs/AccessIdentitySignedIn'}, {$ref: '#/$defs/AccessIdentityLinked'}, {$ref: '#/$defs/AccessIdentityMfa'}]}
-  AccessUnlinkIdentityInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, identityLinkId: {$ref: '#/$defs/Id'}}, required: [context,
-        identityLinkId], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary,
-        never accepted from a public body.'}
+  AccessUnlinkIdentityInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, identityLinkId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}},
+      required: [context, identityLinkId, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived by the
+        trusted boundary, never accepted from a public body.'}
   AccessIdentityListInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, page: {$ref: '#/$defs/PageRequest'}}, required: [context,
         page], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted
         from a public body.'}
@@ -967,9 +977,9 @@ $defs:
           x-policy-bound: retained editable-profile field vocabulary}, fields: {type: array, items: {$ref: '#/$defs/AccessProfileField'},
           x-policy-bound: retained editable-profile field vocabulary}}, required: [accountId, revision, email, emailVerified, fieldVocabularyRevision,
         definitions, fields], additionalProperties: false}
-  AccessProfileUpdateInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, fieldVocabularyRevision: {$ref: '#/$defs/Revision'}, changes: {
-          type: array, items: {$ref: '#/$defs/AccessProfileField'}, x-policy-bound: retained mutable-profile field vocabulary}, policyRef: {
-          $ref: '#/$defs/PolicyRef'}}, required: [context, fieldVocabularyRevision, changes, policyRef], additionalProperties: false,
+  AccessProfileUpdateInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, fieldVocabularyRevision: {$ref: '#/$defs/Revision'}, changes: {type: array,
+          items: {$ref: '#/$defs/AccessProfileField'}, x-policy-bound: retained mutable-profile field vocabulary}, policyRef: {$ref: '#/$defs/PolicyRef'},
+        expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, fieldVocabularyRevision, changes, policyRef, expectedRevision], additionalProperties: false,
       description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   AccessConsentRecord: {type: object, properties: {consentId: {$ref: '#/$defs/Id'}, accountId: {$ref: '#/$defs/Id'}, purposeId: {$ref: '#/$defs/Id'},
         decision: {type: string, enum: [granted, revoked]}, revision: {$ref: '#/$defs/Revision'}, effectiveAt: {$ref: '#/$defs/Time'},
@@ -1107,9 +1117,9 @@ $defs:
   LibraryHistoryListInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, page: {$ref: '#/$defs/PageRequest'}}, required: [context,
         page], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted
         from a public body.'}
-  LibraryHistoryPage: {type: object, properties: {items: {type: array, items: {$ref: '#/$defs/LibraryHistoryRecord'}, x-policy-bound: accepted PageRequest.limit
-            and approved list policy}, page: {$ref: '#/$defs/PageInfo'}, appliedLimit: {type: integer, minimum: 1}, policyRef: {$ref: '#/$defs/PolicyRef'}},
-      required: [items, page, appliedLimit, policyRef], additionalProperties: false}
+  LibraryHistoryPage: {type: object, properties: {items: {type: array, items: {$ref: '#/$defs/LibraryHistoryRecord'}, x-policy-bound: accepted PageRequest.limit and
+            approved list policy}, page: {$ref: '#/$defs/PageInfo'}, appliedLimit: {type: integer, minimum: 1}, policyRef: {$ref: '#/$defs/PolicyRef'},
+        clearBoundary: {$ref: '#/$defs/Revision'}}, required: [items, page, appliedLimit, policyRef, clearBoundary], additionalProperties: false}
   LibraryHistoryInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, historyId: {$ref: '#/$defs/Id'}}, required: [context, historyId],
       additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted from
         a public body.'}
@@ -1119,9 +1129,9 @@ $defs:
   LibraryHistoryFactResult: {type: object, properties: {disposition: {type: string, enum: [recorded, duplicate, suppressed_by_clear, suppressed_by_lifecycle]},
         historyId: {$ref: '#/$defs/Id'}, clearBoundary: {$ref: '#/$defs/Revision'}, requestId: {$ref: '#/$defs/Id'}}, required: [disposition,
         clearBoundary, requestId], additionalProperties: false}
-  LibraryClearHistoryInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, policyRef: {$ref: '#/$defs/PolicyRef'}}, required: [context,
-        policyRef], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never
-        accepted from a public body.'}
+  LibraryClearHistoryInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, policyRef: {$ref: '#/$defs/PolicyRef'}, expectedRevision: {$ref: '#/$defs/Revision'}},
+      required: [context, policyRef, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted
+        boundary, never accepted from a public body.'}
   LibraryClearHistoryResult: {type: object, properties: {ack: {$ref: '#/$defs/Ack'}, checkpoint: {$ref: '#/$defs/SearchHistoryCheckpoint'}, clearBoundary: {
           $ref: '#/$defs/Revision'}}, required: [ack, checkpoint, clearBoundary], additionalProperties: false, description: 'Server-captured
         Discovery admission checkpoint, not a caller-selected cutoff. Facts admitted at/before the cutoff remain suppressed even if
@@ -1140,16 +1150,15 @@ $defs:
         assistanceDefaults, appearance, onboarding, interestIds, policyRef], additionalProperties: false}
   SettingsReadInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}}, required: [context], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
-  SettingsUpdateInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, searchDefaults: {$ref: '#/$defs/SettingsSearchDefaults'},
-        assistanceDefaults: {$ref: '#/$defs/SettingsAssistanceDefaults'}, appearance: {type: string, enum: [light, dark, system]},
-        policyRef: {$ref: '#/$defs/PolicyRef'}}, required: [context, policyRef], additionalProperties: false, description: 'Internal
-        envelope; context is derived by the trusted boundary, never accepted from a public body.', anyOf: [{required: [searchDefaults]},
-        {required: [assistanceDefaults]}, {required: [appearance]}]}
-  SettingsOnboardingInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, action: {type: string, enum: [save_interests, complete,
-            skip]}, interestIds: {type: array, items: {$ref: '#/$defs/Id'}, x-policy-bound: retained interest vocabulary and onboarding
-            policy, uniqueItems: true}, policyRef: {$ref: '#/$defs/PolicyRef'}}, required: [context, action, interestIds, policyRef],
-      additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted from
-        a public body.'}
+  SettingsUpdateInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, searchDefaults: {$ref: '#/$defs/SettingsSearchDefaults'}, assistanceDefaults: {
+          $ref: '#/$defs/SettingsAssistanceDefaults'}, appearance: {type: string, enum: [light, dark, system]}, policyRef: {$ref: '#/$defs/PolicyRef'},
+        expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, policyRef, expectedRevision], additionalProperties: false, description: 'Internal
+        envelope; context is derived by the trusted boundary, never accepted from a public body.', anyOf: [{required: [searchDefaults]}, {required: [
+            assistanceDefaults]}, {required: [appearance]}]}
+  SettingsOnboardingInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, action: {type: string, enum: [save_interests, complete, skip]}, interestIds: {
+          type: array, items: {$ref: '#/$defs/Id'}, x-policy-bound: retained interest vocabulary and onboarding policy, uniqueItems: true}, policyRef: {
+          $ref: '#/$defs/PolicyRef'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, action, interestIds, policyRef, expectedRevision],
+      additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   SettingsSuggestion: {type: object, properties: {interestId: {$ref: '#/$defs/Id'}, labelKey: {$ref: '#/$defs/Id'}, source: {type: string, enum: [orcid,
             retained_manual_vocabulary]}, sourceRevision: {$ref: '#/$defs/Revision'}, reasonKey: {$ref: '#/$defs/Id'}}, required: [
         interestId, labelKey, source, sourceRevision, reasonKey], additionalProperties: false}
@@ -1186,10 +1195,10 @@ $defs:
   SettingsProjectionInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, accountId: {$ref: '#/$defs/Id'}, purposeId: {$ref: '#/$defs/Id'}},
       required: [context, accountId, purposeId], additionalProperties: false, description: 'Internal envelope; context is derived by
         the trusted boundary, never accepted from a public body.'}
-  SettingsResetInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, action: {type: string, enum: [delete_behavior, reset_profile]},
-        policyRef: {$ref: '#/$defs/PolicyRef'}, confirmationRef: {$ref: '#/$defs/Id'}}, required: [context, action, policyRef, confirmationRef],
-      additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted from
-        a public body.'}
+  SettingsResetInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, action: {type: string, enum: [delete_behavior, reset_profile]}, policyRef: {
+          $ref: '#/$defs/PolicyRef'}, confirmationRef: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, action,
+        policyRef, confirmationRef, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted
+        boundary, never accepted from a public body.'}
   SettingsResetResult: {type: object, properties: {ack: {$ref: '#/$defs/Ack'}, inputBoundary: {$ref: '#/$defs/Revision'}, consentRevision: {$ref: '#/$defs/Revision'},
         disposition: {type: string, enum: [complete, pending, blocked]}, remainingScopeReasonKey: {$ref: '#/$defs/Id'}}, required: [
         ack, inputBoundary, consentRevision, disposition], additionalProperties: false}
@@ -1224,14 +1233,14 @@ $defs:
         revision: {$ref: '#/$defs/Revision'}, assignmentSource: {type: string, enum: [mock, administrative_assignment]}, policyRef: {
           $ref: '#/$defs/PolicyRef'}, effectiveAt: {$ref: '#/$defs/Time'}, disposition: {type: string, enum: [active, revoked]}}, required: [
         entitlementId, accountId, tierId, revision, assignmentSource, policyRef, effectiveAt, disposition], additionalProperties: false}
-  UsageGrantInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, accountId: {$ref: '#/$defs/Id'}, tierId: {$ref: '#/$defs/Id'},
-        policyRef: {$ref: '#/$defs/PolicyRef'}, reasonKey: {$ref: '#/$defs/Id'}}, required: [context, accountId, tierId, policyRef,
-        reasonKey], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never
-        accepted from a public body.'}
-  UsageRevokeInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, accountId: {$ref: '#/$defs/Id'}, entitlementId: {$ref: '#/$defs/Id'},
-        policyRef: {$ref: '#/$defs/PolicyRef'}, reasonKey: {$ref: '#/$defs/Id'}}, required: [context, accountId, entitlementId, policyRef,
-        reasonKey], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never
-        accepted from a public body.'}
+  UsageGrantInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, accountId: {$ref: '#/$defs/Id'}, tierId: {$ref: '#/$defs/Id'}, policyRef: {
+          $ref: '#/$defs/PolicyRef'}, reasonKey: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, accountId,
+        tierId, policyRef, reasonKey, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted
+        boundary, never accepted from a public body.'}
+  UsageRevokeInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, accountId: {$ref: '#/$defs/Id'}, entitlementId: {$ref: '#/$defs/Id'}, policyRef: {
+          $ref: '#/$defs/PolicyRef'}, reasonKey: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, accountId,
+        entitlementId, policyRef, reasonKey, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived by
+        the trusted boundary, never accepted from a public body.'}
   UsageReserveInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, operation: {$ref: '#/$defs/UsageOperation'}, quantities: {
           type: array, items: {$ref: '#/$defs/UsageQuantity'}, x-policy-bound: registered operation accounting metrics}, policyRef: {
           $ref: '#/$defs/PolicyRef'}}, required: [context, operation, quantities, policyRef], additionalProperties: false, description: 'Internal
@@ -1414,10 +1423,9 @@ $defs:
   AssistanceGlossaryWrite: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, expectedRevision: {$ref: '#/$defs/Revision'}, normalizationPolicy: {
           $ref: '#/$defs/PolicyRef'}, terms: {type: array, items: {$ref: '#/$defs/AssistanceGlossaryTerm'}}}, required: [context, expectedRevision,
         normalizationPolicy, terms], additionalProperties: false}
-  AssistanceComplete: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, jobId: {$ref: '#/$defs/Id'}, leaseId: {$ref: '#/$defs/Id'},
-        expectedJobRevision: {$ref: '#/$defs/Revision'}, inputHash: {$ref: '#/$defs/Hash'}, prepared: {$ref: '#/$defs/AssistanceResult'},
-        usageRecordId: {$ref: '#/$defs/Id'}}, required: [context, jobId, leaseId, expectedJobRevision, inputHash, prepared, usageRecordId],
-      additionalProperties: false}
+  AssistanceComplete: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, jobId: {$ref: '#/$defs/Id'}, factId: {$ref: '#/$defs/Id'}, claim: {$ref: '#/$defs/ExecutionClaim'},
+        expectedJobRevision: {$ref: '#/$defs/Revision'}, inputHash: {$ref: '#/$defs/Hash'}, prepared: {$ref: '#/$defs/AssistanceResult'}, usageRecordId: {
+          $ref: '#/$defs/Id'}}, required: [context, jobId, factId, claim, expectedJobRevision, inputHash, prepared, usageRecordId], additionalProperties: false}
   ResearchScope: {type: object, properties: {contextId: {$ref: '#/$defs/Id'}, publicPapers: {type: array, items: {$ref: '#/$defs/PaperRef'}}, attachmentIds: {
           type: array, items: {$ref: '#/$defs/Id'}, uniqueItems: true}, webReferences: {type: array, items: {type: string, minLength: 1,
             format: uri}}, scopePolicy: {$ref: '#/$defs/PolicyRef'}}, required: [contextId, publicPapers, attachmentIds, webReferences,
@@ -1692,8 +1700,8 @@ $defs:
       description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   AccessIdentityListInputHttp: {type: object, properties: {page: {$ref: '#/$defs/PageRequest'}}, required: [page], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
-  AccessUnlinkIdentityInputHttp: {type: object, properties: {identityLinkId: {$ref: '#/$defs/Id'}}, required: [identityLinkId], additionalProperties: false, description: 'Internal
-        envelope; context is derived by the trusted boundary, never accepted from a public body.'}
+  AccessUnlinkIdentityInputHttp: {type: object, properties: {identityLinkId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [identityLinkId, expectedRevision],
+      additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   AccessOrcidProfileInputHttp: {type: object, properties: {identityLinkId: {$ref: '#/$defs/Id'}}, required: [identityLinkId], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   AccessMfaEnrollmentInputHttp: {type: object, properties: {currentProof: {$ref: '#/$defs/AccessSecret'}, policyRef: {$ref: '#/$defs/PolicyRef'}}, required: [
@@ -1716,9 +1724,9 @@ $defs:
   AccessProfileInputHttp: {type: object, properties: {}, required: [], additionalProperties: false, description: 'Internal envelope; context is derived by
         the trusted boundary, never accepted from a public body.'}
   AccessProfileUpdateInputHttp: {type: object, properties: {fieldVocabularyRevision: {$ref: '#/$defs/Revision'}, changes: {type: array, items: {$ref: '#/$defs/AccessProfileField'},
-          x-policy-bound: retained mutable-profile field vocabulary}, policyRef: {$ref: '#/$defs/PolicyRef'}}, required: [fieldVocabularyRevision,
-        changes, policyRef], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary,
-        never accepted from a public body.'}
+          x-policy-bound: retained mutable-profile field vocabulary}, policyRef: {$ref: '#/$defs/PolicyRef'}, expectedRevision: {$ref: '#/$defs/Revision'}},
+      required: [fieldVocabularyRevision, changes, policyRef, expectedRevision], additionalProperties: false, description: 'Internal envelope; context
+        is derived by the trusted boundary, never accepted from a public body.'}
   AccessConsentListInputHttp: {type: object, properties: {page: {$ref: '#/$defs/PageRequest'}}, required: [page], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   AccessConsentUpdateInputHttp: {type: object, properties: {purposeId: {$ref: '#/$defs/Id'}, decision: {type: string, enum: [granted, revoked]}, policyRef: {$ref: '#/$defs/PolicyRef'}},
@@ -1752,35 +1760,35 @@ $defs:
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   LibraryHistoryInputHttp: {type: object, properties: {historyId: {$ref: '#/$defs/Id'}}, required: [historyId], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
-  LibraryClearHistoryInputHttp: {type: object, properties: {policyRef: {$ref: '#/$defs/PolicyRef'}}, required: [policyRef], additionalProperties: false, description: 'Internal
-        envelope; context is derived by the trusted boundary, never accepted from a public body.'}
+  LibraryClearHistoryInputHttp: {type: object, properties: {policyRef: {$ref: '#/$defs/PolicyRef'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [policyRef, expectedRevision],
+      additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   SettingsReadInputHttp: {type: object, properties: {}, required: [], additionalProperties: false, description: 'Internal envelope; context is derived by
         the trusted boundary, never accepted from a public body.'}
   SettingsUpdateInputHttp: {type: object, properties: {searchDefaults: {$ref: '#/$defs/SettingsSearchDefaults'}, assistanceDefaults: {$ref: '#/$defs/SettingsAssistanceDefaults'},
-        appearance: {type: string, enum: [light, dark, system]}, policyRef: {$ref: '#/$defs/PolicyRef'}}, required: [policyRef], additionalProperties: false,
-      description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.', anyOf: [{required: [
-            searchDefaults]}, {required: [assistanceDefaults]}, {required: [appearance]}]}
-  SettingsOnboardingInputHttp: {type: object, properties: {action: {type: string, enum: [save_interests, complete, skip]}, interestIds: {type: array, items: {
-            $ref: '#/$defs/Id'}, x-policy-bound: retained interest vocabulary and onboarding policy, uniqueItems: true}, policyRef: {
-          $ref: '#/$defs/PolicyRef'}}, required: [action, interestIds, policyRef], additionalProperties: false, description: 'Internal
+        appearance: {type: string, enum: [light, dark, system]}, policyRef: {$ref: '#/$defs/PolicyRef'}, expectedRevision: {$ref: '#/$defs/Revision'}},
+      required: [policyRef, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary,
+        never accepted from a public body.', anyOf: [{required: [searchDefaults]}, {required: [assistanceDefaults]}, {required: [appearance]}]}
+  SettingsOnboardingInputHttp: {type: object, properties: {action: {type: string, enum: [save_interests, complete, skip]}, interestIds: {type: array, items: {$ref: '#/$defs/Id'},
+          x-policy-bound: retained interest vocabulary and onboarding policy, uniqueItems: true}, policyRef: {$ref: '#/$defs/PolicyRef'}, expectedRevision: {
+          $ref: '#/$defs/Revision'}}, required: [action, interestIds, policyRef, expectedRevision], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   SettingsSuggestionInputHttp: {type: object, properties: {page: {$ref: '#/$defs/PageRequest'}, identityLinkId: {$ref: '#/$defs/Id'}}, required: [page], additionalProperties: false,
       description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   SettingsRecentInputHttp: {type: object, properties: {page: {$ref: '#/$defs/PageRequest'}}, required: [page], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
-  SettingsResetInputHttp: {type: object, properties: {action: {type: string, enum: [delete_behavior, reset_profile]}, policyRef: {$ref: '#/$defs/PolicyRef'},
-        confirmationRef: {$ref: '#/$defs/Id'}}, required: [action, policyRef, confirmationRef], additionalProperties: false, description: 'Internal
-        envelope; context is derived by the trusted boundary, never accepted from a public body.'}
+  SettingsResetInputHttp: {type: object, properties: {action: {type: string, enum: [delete_behavior, reset_profile]}, policyRef: {$ref: '#/$defs/PolicyRef'}, confirmationRef: {
+          $ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [action, policyRef, confirmationRef, expectedRevision], additionalProperties: false,
+      description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   UsageInspectInputHttp: {type: object, properties: {page: {$ref: '#/$defs/PageRequest'}}, required: [page], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   UsagePlanInputHttp: {type: object, properties: {}, required: [], additionalProperties: false, description: 'Internal envelope; context is derived by
         the trusted boundary, never accepted from a public body.'}
-  UsageGrantInputHttp: {type: object, properties: {accountId: {$ref: '#/$defs/Id'}, tierId: {$ref: '#/$defs/Id'}, policyRef: {$ref: '#/$defs/PolicyRef'},
-        reasonKey: {$ref: '#/$defs/Id'}}, required: [accountId, tierId, policyRef, reasonKey], additionalProperties: false, description: 'Internal
-        envelope; context is derived by the trusted boundary, never accepted from a public body.'}
-  UsageRevokeInputHttp: {type: object, properties: {accountId: {$ref: '#/$defs/Id'}, entitlementId: {$ref: '#/$defs/Id'}, policyRef: {$ref: '#/$defs/PolicyRef'},
-        reasonKey: {$ref: '#/$defs/Id'}}, required: [accountId, entitlementId, policyRef, reasonKey], additionalProperties: false,
-      description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
+  UsageGrantInputHttp: {type: object, properties: {accountId: {$ref: '#/$defs/Id'}, tierId: {$ref: '#/$defs/Id'}, policyRef: {$ref: '#/$defs/PolicyRef'}, reasonKey: {
+          $ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [accountId, tierId, policyRef, reasonKey, expectedRevision],
+      additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
+  UsageRevokeInputHttp: {type: object, properties: {accountId: {$ref: '#/$defs/Id'}, entitlementId: {$ref: '#/$defs/Id'}, policyRef: {$ref: '#/$defs/PolicyRef'}, reasonKey: {
+          $ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [accountId, entitlementId, policyRef, reasonKey, expectedRevision],
+      additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   UsageRecordsInputHttp: {type: object, properties: {page: {$ref: '#/$defs/PageRequest'}}, required: [page], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   CorpusResolveHttp: {type: object, properties: {identifier: {type: string, minLength: 1, x-policy-limit: Resolve content/input byte and character limits
@@ -1884,6 +1892,61 @@ $defs:
           x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.}, policy: {$ref: '#/$defs/PolicyRef'}},
       required: [incidentId, ownerComponent, operation, targetId, expectedRevision, evidenceRefs, policy], additionalProperties: false}
   PreparedJobRead: {oneOf: [{$ref: '#/$defs/AssistanceResultRead'}, {$ref: '#/$defs/ResearchArtifactResponse'}]}
+  LibraryRemoveSavedPaperInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, savedPaperId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}},
+      required: [context, savedPaperId, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived by the
+        trusted boundary, never accepted from a public body.'}
+  LibraryRemoveSavedPaperInputHttp: {type: object, properties: {savedPaperId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [savedPaperId, expectedRevision],
+      additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
+  LibraryRemoveSavedSearchInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, savedSearchId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}},
+      required: [context, savedSearchId, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived by the
+        trusted boundary, never accepted from a public body.'}
+  LibraryRemoveSavedSearchInputHttp: {type: object, properties: {savedSearchId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [savedSearchId, expectedRevision],
+      additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
+  UsageAssignmentRead: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, accountId: {$ref: '#/$defs/Id'}}, required: [context, accountId], additionalProperties: false}
+  UsageAssignmentReadHttp: {type: object, properties: {accountId: {$ref: '#/$defs/Id'}}, required: [accountId], additionalProperties: false}
+  UsageAssignmentSnapshot: {type: object, properties: {accountId: {$ref: '#/$defs/Id'}, revision: {$ref: '#/$defs/Revision'}, entitlement: {anyOf: [{$ref: '#/$defs/UsageEntitlement'},
+            {type: 'null'}]}}, required: [accountId, revision, entitlement], additionalProperties: false}
+  AssistanceHistoryRead: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, paper: {$ref: '#/$defs/PaperRef'}, page: {$ref: '#/$defs/PageRequest'}},
+      required: [context, paper, page], additionalProperties: false}
+  AssistanceHistoryReadHttp: {type: object, properties: {paper: {$ref: '#/$defs/PaperRef'}, page: {$ref: '#/$defs/PageRequest'}}, required: [paper, page], additionalProperties: false}
+  AssistanceHistoryRow: {type: object, properties: {jobId: {$ref: '#/$defs/Id'}, paper: {$ref: '#/$defs/PaperRef'}, contentRevision: {$ref: '#/$defs/Revision'}, contentHash: {
+          $ref: '#/$defs/Hash'}, operation: {enum: [summary, translation]}, optionId: {$ref: '#/$defs/Id'}, optionsRevision: {$ref: '#/$defs/Revision'},
+        glossaryRevision: {$ref: '#/$defs/Revision'}, state: {enum: [accepted, running, succeeded, failed]}, revision: {$ref: '#/$defs/Revision'},
+        seq: {type: integer, minimum: 0}, createdAt: {$ref: '#/$defs/Time'}, availability: {enum: [ready, pending, failed, expired, withdrawn, restricted]},
+        result: {anyOf: [{$ref: '#/$defs/ResultRef'}, {type: 'null'}]}}, required: [jobId, paper, contentRevision, contentHash, operation, optionId,
+        optionsRevision, glossaryRevision, state, revision, seq, createdAt, availability, result], additionalProperties: false, allOf: [{if: {properties: {
+              availability: {const: ready}}}, then: {properties: {state: {const: succeeded}, result: {$ref: '#/$defs/ResultRef'}}}, else: {properties: {
+              result: {type: 'null'}}}}]}
+  AssistanceHistoryPage: {type: object, properties: {items: {type: array, items: {$ref: '#/$defs/AssistanceHistoryRow'}, x-policy-bound: accepted PageRequest.limit}, page: {
+          $ref: '#/$defs/PageInfo'}}, required: [items, page], additionalProperties: false}
+  ExecutionBinding: {type: object, properties: {ownerComponent: {$ref: '#/$defs/Id'}, operationId: {$ref: '#/$defs/Id'}, inputRevision: {$ref: '#/$defs/Revision'},
+        inputHash: {$ref: '#/$defs/Hash'}, payloadRef: {$ref: '#/$defs/Id'}}, required: [ownerComponent, operationId, inputRevision, inputHash, payloadRef],
+      additionalProperties: false}
+  ExecutionClaim: {type: object, properties: {binding: {$ref: '#/$defs/ExecutionBinding'}, workerId: {$ref: '#/$defs/Id'}, leaseId: {$ref: '#/$defs/Id'}, fence: {
+          type: integer, minimum: 1}, leaseRevision: {$ref: '#/$defs/Revision'}, expiresAt: {$ref: '#/$defs/Time'}}, required: [binding, workerId,
+        leaseId, fence, leaseRevision, expiresAt], additionalProperties: false}
+  ExecutionAcquire: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, binding: {$ref: '#/$defs/ExecutionBinding'}, deliveryId: {$ref: '#/$defs/Id'}},
+      required: [context, binding, deliveryId], additionalProperties: false}
+  ExecutionRenew: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, claim: {$ref: '#/$defs/ExecutionClaim'}, expectedLeaseRevision: {$ref: '#/$defs/Revision'}},
+      required: [context, claim, expectedLeaseRevision], additionalProperties: false}
+  ExecutionReclaim: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, binding: {$ref: '#/$defs/ExecutionBinding'}, previousFence: {type: integer,
+          minimum: 1}, deliveryId: {$ref: '#/$defs/Id'}}, required: [context, binding, previousFence, deliveryId], additionalProperties: false}
+  ExecutionClaimRead: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, claim: {$ref: '#/$defs/ExecutionClaim'}}, required: [context, claim], additionalProperties: false}
+  ExecutionClaimResult: {type: object, properties: {claim: {$ref: '#/$defs/ExecutionClaim'}, jobRevision: {$ref: '#/$defs/Revision'}, acceptedAt: {$ref: '#/$defs/Time'}},
+      required: [claim, jobRevision, acceptedAt], additionalProperties: false}
+  AssistanceAcceptedInput: {type: object, properties: {paper: {$ref: '#/$defs/PaperRef'}, contentRevision: {$ref: '#/$defs/Revision'}, contentHash: {$ref: '#/$defs/Hash'},
+        operation: {type: string, enum: [summary, translation]}, optionId: {$ref: '#/$defs/Id'}, optionsRevision: {$ref: '#/$defs/Revision'}, glossaryRevision: {
+          $ref: '#/$defs/Revision'}, processingPolicy: {$ref: '#/$defs/PolicyRef'}, glossary: {$ref: '#/$defs/AssistanceGlossary'}}, required: [paper,
+        contentRevision, contentHash, operation, optionId, optionsRevision, glossaryRevision, processingPolicy, glossary], additionalProperties: false}
+  AssistanceExecutionPayload: {type: object, properties: {binding: {$ref: '#/$defs/ExecutionBinding'}, acceptedAt: {$ref: '#/$defs/Time'}, input: {$ref: '#/$defs/AssistanceAcceptedInput'},
+        sections: {type: array, items: {$ref: '#/$defs/CorpusSection'}, x-policy-bound: accepted input and context policy}, usageRecordId: {$ref: '#/$defs/Id'}},
+      required: [binding, acceptedAt, input, sections, usageRecordId], additionalProperties: false}
+  AssistanceProgress: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, jobId: {$ref: '#/$defs/Id'}, factId: {$ref: '#/$defs/Id'}, claim: {$ref: '#/$defs/ExecutionClaim'},
+        expectedJobRevision: {$ref: '#/$defs/Revision'}, inputHash: {$ref: '#/$defs/Hash'}, progress: {$ref: '#/$defs/Progress'}}, required: [context,
+        jobId, factId, claim, expectedJobRevision, inputHash, progress], additionalProperties: false}
+  AssistanceFailure: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, jobId: {$ref: '#/$defs/Id'}, factId: {$ref: '#/$defs/Id'}, claim: {$ref: '#/$defs/ExecutionClaim'},
+        expectedJobRevision: {$ref: '#/$defs/Revision'}, inputHash: {$ref: '#/$defs/Hash'}, error: {$ref: '#/$defs/Error'}, usageRecordId: {$ref: '#/$defs/Id'}},
+      required: [context, jobId, factId, claim, expectedJobRevision, inputHash, error, usageRecordId], additionalProperties: false}
 ```
 
 ## C01 — Trusted host composition and coherent web context
@@ -1926,8 +1989,8 @@ operations:
   - CONFLICT
   - INCOMPATIBLE
   - POLICY_UNRESOLVED
-  semantics: Compare manifest revision and schema digests before activation. Unknown/incompatible bindings and missing required
-    participants keep the contribution unavailable; no domain data is written by registration.
+  semantics: Compare manifest revision and schema digests before activation. Unknown/incompatible bindings and missing required participants keep
+    the contribution unavailable; no domain data is written by registration.
   surface: internal
 - name: host.inspectManifest
   input: HostInspectInput
@@ -1967,8 +2030,8 @@ operations:
   - NOT_FOUND
   - INCOMPATIBLE
   - DEPENDENCY_UNAVAILABLE
-  semantics: Return only permitted navigation. Owner changes invalidate prior private rendering state; navigation never submits
-    work. Preserve authorized paper/query context without private drafts in URLs or telemetry.
+  semantics: Return only permitted navigation. Owner changes invalidate prior private rendering state; navigation never submits work. Preserve
+    authorized paper/query context without private drafts in URLs or telemetry.
   surface: browser
 - name: host.recordObservation
   input: HostObservationInput
@@ -1982,29 +2045,27 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Admit only registered non-sensitive outcome codes and safe opaque correlation references; duplicate observation
-    identity is reconciled. Observation failure never changes a domain job into success.
+  semantics: Admit only registered non-sensitive outcome codes and safe opaque correlation references; duplicate observation identity is reconciled.
+    Observation failure never changes a domain job into success.
   surface: internal
 invariants:
-- U1's executable host starts without importing future unit implementations. Contributions have their own mounted integration
-  assemblies; U8 supplies final composition, not another business-state owner.
-- Principal, component identity and composition authority come from trusted transport/runtime bindings, never user-submitted
-  context fields.
-- The required contribution/capability/lifecycle manifests are finite trusted build inputs. Policy-dependent string/list limits
-  must be loaded and enforced before allocation; unresolved bounds prevent activation.
-- Shared UI retains Korean labels, approved colors/HIG web adaptations, responsive behavior, Light/Dark/System, focus and
-  status semantics. This contract does not choose a frontend framework.
-- Private drafts, tokens, manuscripts and secret provider data never enter observation fields, route templates, query return-context
-  substitutes or other-account caches. A route being visible is never the sole authorization check.
-- Schemas are producer-owned. Initial and complete implementations honor the same named contract or an explicitly negotiated
-  revision; unknown authorization states are denied, not treated as ordinary additive fields.
+- U1's executable host starts without importing future unit implementations. Contributions have their own mounted integration assemblies; U8 supplies
+  final composition, not another business-state owner.
+- Principal, component identity and composition authority come from trusted transport/runtime bindings, never user-submitted context fields.
+- The required contribution/capability/lifecycle manifests are finite trusted build inputs. Policy-dependent string/list limits must be loaded
+  and enforced before allocation; unresolved bounds prevent activation.
+- Shared UI retains Korean labels, approved colors/HIG web adaptations, responsive behavior, Light/Dark/System, focus and status semantics. This
+  contract does not choose a frontend framework.
+- Private drafts, tokens, manuscripts and secret provider data never enter observation fields, route templates, query return-context substitutes
+  or other-account caches. A route being visible is never the sole authorization check.
+- Schemas are producer-owned. Initial and complete implementations honor the same named contract or an explicitly negotiated revision; unknown
+  authorization states are denied, not treated as ordinary additive fields.
 checks:
 - Reject incompatible schema digest, absent required contribution and absent lifecycle participant.
 - Boot the U1 assembly with no future modules, then each real contribution assembly and U8's full assembly.
-- Account switch/expiry clears private DOM, accessibility and transient cache state; valid search/paper return context remains
-  coherent.
+- Account switch/expiry clears private DOM, accessibility and transient cache state; valid search/paper return context remains coherent.
 - A missing execution path is unavailable and a failed observation cannot fabricate success.
-version: 1.0.0
+version: 2.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -2072,9 +2133,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
-  semantics: Durably reconcile one intended registration; duplicate/existing email responses are existence-neutral. Issue
-    bound verification through the approved delivery path; never claim verification or public email delivery from local-sink
-    success.
+  semantics: Durably reconcile one intended registration; duplicate/existing email responses are existence-neutral. Issue bound verification through
+    the approved delivery path; never claim verification or public email delivery from local-sink success.
   surface: browser
 - name: access.requestVerification
   input: AccessEmailRequestInput
@@ -2119,8 +2179,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
-  semantics: Issue current principal only after verification and required MFA. Session cookie/token issuance travels through
-    trusted transport Set-Cookie handling, never JSON token fields. Failures do not enumerate accounts.
+  semantics: Issue current principal only after verification and required MFA. Session cookie/token issuance travels through trusted transport
+    Set-Cookie handling, never JSON token fields. Failures do not enumerate accounts.
   surface: browser
 - name: access.logout
   input: AccessLogoutInput
@@ -2135,8 +2195,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
-  semantics: Revoke the current session before acknowledging. Browser clearing alone is insufficient; replay cannot recover
-    access. Protected retained data is not silently erased.
+  semantics: Revoke the current session before acknowledging. Browser clearing alone is insufficient; replay cannot recover access. Protected
+    retained data is not silently erased.
   surface: browser
 - name: access.requestPasswordReset
   input: AccessEmailRequestInput
@@ -2151,8 +2211,7 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
-  semantics: Deliver a purpose-bound recovery challenge only through the approved path; reveal no other account's existence
-    or delivery state.
+  semantics: Deliver a purpose-bound recovery challenge only through the approved path; reveal no other account's existence or delivery state.
   surface: browser
 - name: access.completePasswordReset
   input: AccessPasswordResetInput
@@ -2168,14 +2227,14 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
   - UNKNOWN_OUTCOME
-  semantics: Atomically reconcile password change, proof consumption and policy-defined session revocation; uncertain outcomes
-    are read/reconciled, not blindly repeated.
+  semantics: Atomically reconcile password change, proof consumption and policy-defined session revocation; uncertain outcomes are read/reconciled,
+    not blindly repeated.
   surface: browser
 - name: access.changePassword
   input: AccessPasswordChangeInput
   output: Ack
-  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
-    Required current credential/reauthentication proof.
+  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect. Required current
+    credential/reauthentication proof.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2186,14 +2245,13 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
   - UNKNOWN_OUTCOME
-  semantics: Preserve authoritative identity through failure; apply configured session revocation and never drop committed
-    library/research work.
+  semantics: Preserve authoritative identity through failure; apply configured session revocation and never drop committed library/research work.
   surface: browser
 - name: access.requestEmailChange
   input: AccessEmailChangeInput
   output: AccessChallengeDelivery
-  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
-    Required reauthentication proof.
+  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect. Required reauthentication
+    proof.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2219,8 +2277,7 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
   - UNKNOWN_OUTCOME
-  semantics: Reconcile challenge consumption, intended identity update and revocation policy; collisions cannot bind a different
-    account.
+  semantics: Reconcile challenge consumption, intended identity update and revocation policy; collisions cannot bind a different account.
   surface: browser
 - name: access.beginIdentityFlow
   input: AccessBeginIdentityInput
@@ -2235,8 +2292,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
-  semantics: Generate allowlisted provider/callback state with purpose and owner binding; caller returnRouteId must resolve
-    to a registered local route.
+  semantics: Generate allowlisted provider/callback state with purpose and owner binding; caller returnRouteId must resolve to a registered local
+    route.
   surface: browser
 - name: access.completeIdentityFlow
   input: AccessCompleteIdentityInput
@@ -2252,8 +2309,8 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
   - MFA_REQUIRED
-  semantics: Validate callback state, issuer, audience, nonce/PKCE where applicable, purpose and single use before exchange/link.
-    Collision or denied consent never silently creates a different owner. Credential material stays protected.
+  semantics: Validate callback state, issuer, audience, nonce/PKCE where applicable, purpose and single use before exchange/link. Collision or
+    denied consent never silently creates a different owner. Credential material stays protected.
   surface: internal
 - name: access.listIdentityLinks
   input: AccessIdentityListInput
@@ -2272,8 +2329,7 @@ operations:
 - name: access.unlinkIdentity
   input: AccessUnlinkIdentityInput
   output: Ack
-  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
-    Required reauthentication.
+  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect. Required reauthentication.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2283,8 +2339,10 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
-  semantics: Apply retained unlink/account-recovery policy and expected revision; do not invent a lockout bypass or remove
-    other identities.
+  semantics: Apply retained unlink/account-recovery policy and expected revision; do not invent a lockout bypass or remove other identities. Required
+    top-level expectedRevision is the original observed control token; trusted mapping sets context.expectedRevision to the identical value and
+    rejects disagreement. Current authorization then exact normalized-intent receipt replay precede fresh CAS. Missing, empty or null existing-state
+    tokens reject; conflict uses an authorized fresh named read, never latestRevision in Error.details.
   surface: browser
 - name: access.readOrcidProfile
   input: AccessOrcidProfileInput
@@ -2299,14 +2357,14 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
-  semantics: Read permitted linked profile with provenance/coverage. Unavailable profile is optional enrichment, not permission
-    to block account/core paper use.
+  semantics: Read permitted linked profile with provenance/coverage. Unavailable profile is optional enrichment, not permission to block account/core
+    paper use.
   surface: browser
 - name: access.beginMfaEnrollment
   input: AccessMfaEnrollmentInput
   output: AccessMfaEnrollment
-  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
-    Currently verified administrator enrollment authority and reauthentication.
+  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect. Currently verified
+    administrator enrollment authority and reauthentication.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2317,15 +2375,14 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
   - MFA_REQUIRED
-  semantics: Create a bounded single-use enrollment. Seed/recovery material is delivered by a separately protected one-time
-    channel, not this ordinary result schema.
+  semantics: Create a bounded single-use enrollment. Seed/recovery material is delivered by a separately protected one-time channel, not this
+    ordinary result schema.
   surface: admin
 - name: access.retrieveMfaEnrollmentMaterial
   input: AccessMfaMaterialInput
   output: AccessMfaMaterial
-  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
-    Bound enrollment owner, current administrator enrollment authority, valid current reauthentication proof and unused delivery
-    reference.
+  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect. Bound enrollment
+    owner, current administrator enrollment authority, valid current reauthentication proof and unused delivery reference.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2337,12 +2394,11 @@ operations:
   - EXPIRED
   - MFA_REQUIRED
   - UNKNOWN_OUTCOME
-  semantics: 'Consume the delivery reference exactly once and return the typed secret material only through the dedicated
-    protected response. Set Cache-Control: no-store; exclude request/response secrets from logs, traces, generic idempotency/result
-    caches, service-worker caches and persisted browser storage. Render QR locally; clear transient material on exit, expiry,
-    logout or account switch. Lost response never permits replay of secret material: return EXPIRED on repeated retrieval
-    and require a replacement enrollment, invalidating prior seed/codes before activation. Confirmation alone activates the
-    bound verified enrollment.'
+  semantics: 'Consume the delivery reference exactly once and return the typed secret material only through the dedicated protected response.
+    Set Cache-Control: no-store; exclude request/response secrets from logs, traces, generic idempotency/result caches, service-worker caches
+    and persisted browser storage. Render QR locally; clear transient material on exit, expiry, logout or account switch. Lost response never
+    permits replay of secret material: return EXPIRED on repeated retrieval and require a replacement enrollment, invalidating prior seed/codes
+    before activation. Confirmation alone activates the bound verified enrollment.'
   surface: admin
 - name: access.confirmMfaEnrollment
   input: AccessMfaConfirmInput
@@ -2362,8 +2418,8 @@ operations:
 - name: access.verifyMfa
   input: AccessMfaVerifyInput
   output: AccessLoginResult
-  auth: Valid protected primary-authentication continuation and second-factor proof; an active full session is not required
-    and anonymous context is permitted.
+  auth: Valid protected primary-authentication continuation and second-factor proof; an active full session is not required and anonymous context
+    is permitted.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2374,11 +2430,10 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
   - MFA_REQUIRED
-  semantics: Login/provider sign-in issues the primary-authentication continuation via protected trusted cookie transport,
-    never as a full session or browser-asserted principal. Validate that cookie against the challengeId/flowBinding, server-owned
-    primary-authentication success, intended account and current revocation state before checking the factor. Reject expired/replayed
-    factors; only then issue the full session through trusted Set-Cookie transport for the existing role. Missing continuation
-    cannot be replaced with caller account/context claims.
+  semantics: Login/provider sign-in issues the primary-authentication continuation via protected trusted cookie transport, never as a full session
+    or browser-asserted principal. Validate that cookie against the challengeId/flowBinding, server-owned primary-authentication success, intended
+    account and current revocation state before checking the factor. Reject expired/replayed factors; only then issue the full session through
+    trusted Set-Cookie transport for the existing role. Missing continuation cannot be replaced with caller account/context claims.
   surface: browser
 - name: access.recoverMfa
   input: AccessMfaRecoveryInput
@@ -2394,8 +2449,8 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
   - MFA_REQUIRED
-  semantics: Require the approved recovery policy and auditable proof; if the procedure is unresolved, deny with POLICY_UNRESOLVED
-    rather than disabling MFA.
+  semantics: Require the approved recovery policy and auditable proof; if the procedure is unresolved, deny with POLICY_UNRESOLVED rather than
+    disabling MFA.
   surface: admin
 - name: access.readProfile
   input: AccessProfileInput
@@ -2409,8 +2464,7 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Read owner profile and retained mutable-field vocabulary; email/roles/identity cannot be patched through generic
-    profile fields.
+  semantics: Read owner profile and retained mutable-field vocabulary; email/roles/identity cannot be patched through generic profile fields.
   surface: browser
 - name: access.updateProfile
   input: AccessProfileUpdateInput
@@ -2425,8 +2479,11 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
-  semantics: Require expected revision and current field vocabulary. Reject duplicate/unknown/read-only fields and value-kind
-    violations. Preserve committed values on failed/conflicting writes.
+  semantics: Require expected revision and current field vocabulary. Reject duplicate/unknown/read-only fields and value-kind violations. Preserve
+    committed values on failed/conflicting writes. Required top-level expectedRevision is the original observed control token; trusted mapping
+    sets context.expectedRevision to the identical value and rejects disagreement. Current authorization then exact normalized-intent receipt
+    replay precede fresh CAS. Missing, empty or null existing-state tokens reject; conflict uses an authorized fresh named read, never latestRevision
+    in Error.details.
   surface: browser
 - name: access.listConsents
   input: AccessConsentListInput
@@ -2455,14 +2512,13 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
-  semantics: Persist one intended purpose decision and revision. Current revocation controls future effects even while participant
-    cleanup is incomplete; never report revoked before durable acknowledgement.
+  semantics: Persist one intended purpose decision and revision. Current revocation controls future effects even while participant cleanup is
+    incomplete; never report revoked before durable acknowledgement.
   surface: browser
 - name: access.evaluateAuthority
   input: AccessAuthorityInput
   output: AccessAuthorityDecision
-  auth: Registered trusted component; verify producer identity separately from context and recheck the affected owner's current
-    authority.
+  auth: Registered trusted component; verify producer identity separately from context and recheck the affected owner's current authority.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2471,8 +2527,8 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Evaluate current session/account/role/MFA/owner/purpose policy. A decision is a checked revision, not an indefinitely
-    valid bearer grant; effect/read boundaries must recheck or enforce a version guard.
+  semantics: Evaluate current session/account/role/MFA/owner/purpose policy. A decision is a checked revision, not an indefinitely valid bearer
+    grant; effect/read boundaries must recheck or enforce a version guard.
   surface: internal
 - name: lifecycle.configureManifest
   input: LifecycleManifestInput
@@ -2484,14 +2540,14 @@ operations:
   - CONFLICT
   - INCOMPATIBLE
   - POLICY_UNRESOLVED
-  semantics: Register complete required owners and scope obligations before their data can persist; reject duplicates, missing
-    participants, incompatible contracts or unresolved policy.
+  semantics: Register complete required owners and scope obligations before their data can persist; reject duplicates, missing participants, incompatible
+    contracts or unresolved policy.
   surface: internal
 - name: lifecycle.request
   input: LifecycleRequestInput
   output: LifecycleRequest
-  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
-    Required recent reauthentication and explicit action/scope confirmation.
+  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect. Required recent
+    reauthentication and explicit action/scope confirmation.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2503,14 +2559,13 @@ operations:
   - EXPIRED
   - MFA_REQUIRED
   - UNKNOWN_OUTCOME
-  semantics: Accept only an action permitted by the current approved retention/reactivation/erasure policy. If policy, participant
-    or restore/derived-data obligations are unresolved, fail closed; revocation and cleanup completion remain distinct.
+  semantics: Accept only an action permitted by the current approved retention/reactivation/erasure policy. If policy, participant or restore/derived-data
+    obligations are unresolved, fail closed; revocation and cleanup completion remain distinct.
   surface: browser
 - name: access.requestReactivation
   input: AccessEmailRequestInput
   output: AccessChallengeDelivery
-  auth: Public pre-authentication request under current abuse and reactivation-delivery policy; no active session or caller
-    account authority.
+  auth: Public pre-authentication request under current abuse and reactivation-delivery policy; no active session or caller account authority.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2520,16 +2575,16 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
-  semantics: Return the same existence-neutral acknowledgement for unknown, active, withdrawn or erased accounts. For an eligible
-    withdrawn account only, deliver a single-use proof bound to that account, withdrawn lifecycle revision, reactivation purpose,
-    flow and current policy through the approved verified recovery path. Do not reveal eligibility or delivery state and do
-    not issue a full session. Unresolved policy cannot authorize delivery or recovery.
+  semantics: Return the same existence-neutral acknowledgement for unknown, active, withdrawn or erased accounts. For an eligible withdrawn account
+    only, deliver a single-use proof bound to that account, withdrawn lifecycle revision, reactivation purpose, flow and current policy through
+    the approved verified recovery path. Do not reveal eligibility or delivery state and do not issue a full session. Unresolved policy cannot
+    authorize delivery or recovery.
   surface: browser
 - name: lifecycle.reactivate
   input: LifecycleReactivationInput
   output: LifecycleReactivationResult
-  auth: Valid unused purpose-bound reactivation proof and bound scope confirmation; no active full session is required. Resolve
-    the account from the proof, never from caller principal or account identifiers.
+  auth: Valid unused purpose-bound reactivation proof and bound scope confirmation; no active full session is required. Resolve the account from
+    the proof, never from caller principal or account identifiers.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2541,19 +2596,17 @@ operations:
   - EXPIRED
   - MFA_REQUIRED
   - UNKNOWN_OUTCOME
-  semantics: Atomically reconcile proof consumption and one reactivation request against the current withdrawn-account authority,
-    policy and participant manifest. Apply policy-required additional verification before restoration. Reject erased, superseded,
-    expired, purpose-mismatched or ineligible states. Restore only demonstrably retained permissible data; never recreate
-    erased records or reverse erasure tombstones. A lost-response retry may return only the same safe recorded result under
-    the same validated bound flow/idempotency identity, not repeat effects or grant broad access. Trusted transport can issue
-    a limited protected recovery cookie for lifecycle.inspect of this request only; completion requires normal sign-in and
-    any required MFA before a full session.
+  semantics: Atomically reconcile proof consumption and one reactivation request against the current withdrawn-account authority, policy and participant
+    manifest. Apply policy-required additional verification before restoration. Reject erased, superseded, expired, purpose-mismatched or ineligible
+    states. Restore only demonstrably retained permissible data; never recreate erased records or reverse erasure tombstones. A lost-response
+    retry may return only the same safe recorded result under the same validated bound flow/idempotency identity, not repeat effects or grant
+    broad access. Trusted transport can issue a limited protected recovery cookie for lifecycle.inspect of this request only; completion requires
+    normal sign-in and any required MFA before a full session.
   surface: browser
 - name: lifecycle.inspect
   input: LifecycleStatusInput
   output: LifecycleRequest
-  auth: Current owner or separately authorized lifecycle auditor; withdrawn-account recovery uses only the configured bound
-    recovery authority.
+  auth: Current owner or separately authorized lifecycle auditor; withdrawn-account recovery uses only the configured bound recovery authority.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2562,8 +2615,8 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Return honest participant/scope progress. Do not infer complete erasure from account status or message delivery;
-    hide private operational evidence from unauthorized callers.
+  semantics: Return honest participant/scope progress. Do not infer complete erasure from account status or message delivery; hide private operational
+    evidence from unauthorized callers.
   surface: browser
 - name: lifecycle.listPendingWork
   input: LifecyclePendingInput
@@ -2577,8 +2630,8 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Read only that participant's current required work. Poll/event delivery choice is open; recoverable redelivery
-    does not transfer data ownership.
+  semantics: Read only that participant's current required work. Poll/event delivery choice is open; recoverable redelivery does not transfer
+    data ownership.
   surface: internal
 - name: lifecycle.acknowledge
   input: LifecycleAcknowledgeInput
@@ -2592,9 +2645,8 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Validate ticket, policy/manifest/request revision and evidence. Reject conflicting/stale acknowledgements; duplicate
-    same evidence is safe. Complete only when every current required scope has policy-valid evidence, including restore/backup
-    dispositions.
+  semantics: Validate ticket, policy/manifest/request revision and evidence. Reject conflicting/stale acknowledgements; duplicate same evidence
+    is safe. Complete only when every current required scope has policy-valid evidence, including restore/backup dispositions.
   surface: internal
 - name: lifecycle.evaluateRestore
   input: LifecycleRestoreInput
@@ -2607,53 +2659,48 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Compare current authority/tombstones and approved restore policy against snapshot records. Deny revival of erased/prohibited
-    data; policy uncertainty blocks restoration. Any allow decision requires a current version guard at actual restore.
+  semantics: Compare current authority/tombstones and approved restore policy against snapshot records. Deny revival of erased/prohibited data;
+    policy uncertainty blocks restoration. Any allow decision requires a current version guard at actual restore.
   surface: internal
 invariants:
-- U1 seeds safe initial account contracts; U2 completes the same AccountAccess authority. No second account/session/consent
-  store or shared cross-owner writer is created.
-- Read and effect authorization uses current authority and owner context. UserId headers, submitted Principal objects and
-  stale consent snapshots are not authority.
-- Passwords, proof tokens, factor seeds, provider codes and session credentials are excluded from normal logs, errors and
-  ordinary public output DTOs. The explicit single-use AccessMfaMaterial protected response is the only enrollment seed/recovery-code
-  output; no-store, local-only QR rendering, client clearing and runtime redaction are mandatory. Secret schema annotations
-  alone do not enforce any of these rules.
-- Account-existence privacy applies to public registration/recovery acknowledgements and error mapping; internal resource
-  identifiers must not be reflected for another account.
-- Identity-provider and MFA callbacks bind purpose, intended owner, current flow and use disposition. Safe return routes are
-  registry identifiers, never caller-controlled redirect URLs.
-- Primary-authentication and reactivation recovery cookies are limited purpose-bound transport credentials, not full account
-  sessions. Their server-verified invocation cannot be synthesized from an anonymous principal's body fields. MFA verification
-  and withdrawn-account recovery must remain reachable without an active full session.
-- Mutable profile fields are finite retained vocabulary entries; value kinds, limits and clear/null behavior are validated
-  under the vocabulary revision. This is not arbitrary account-field assignment or new profile feature scope.
-- The policy references must resolve to explicit approved rules before relevant changes. No retention duration, automatic
-  erasure, resurrection, draft-storage rule, abuse threshold or public-service capacity is selected by these schemas.
-- Lifecycle participant acknowledgements prove only their declared scope. Complete requires all required current participants,
-  owned/derived/pending/cache and backup/restore dispositions; stale events and restored snapshots cannot recreate erased
-  or prohibited data.
-- An accepted lifecycle action records policy and manifest revisions. Changes during execution require reconciliation; reactivation
-  can restore only data lawfully and technically retained, never erased data.
-- Anonymous session inspection and verified guest search are retained; this contract does not grant anonymous private work
-  or unverified additional public capability.
+- U1 seeds safe initial account contracts; U2 completes the same AccountAccess authority. No second account/session/consent store or shared cross-owner
+  writer is created.
+- Read and effect authorization uses current authority and owner context. UserId headers, submitted Principal objects and stale consent snapshots
+  are not authority.
+- Passwords, proof tokens, factor seeds, provider codes and session credentials are excluded from normal logs, errors and ordinary public output
+  DTOs. The explicit single-use AccessMfaMaterial protected response is the only enrollment seed/recovery-code output; no-store, local-only QR
+  rendering, client clearing and runtime redaction are mandatory. Secret schema annotations alone do not enforce any of these rules.
+- Account-existence privacy applies to public registration/recovery acknowledgements and error mapping; internal resource identifiers must not
+  be reflected for another account.
+- Identity-provider and MFA callbacks bind purpose, intended owner, current flow and use disposition. Safe return routes are registry identifiers,
+  never caller-controlled redirect URLs.
+- Primary-authentication and reactivation recovery cookies are limited purpose-bound transport credentials, not full account sessions. Their server-verified
+  invocation cannot be synthesized from an anonymous principal's body fields. MFA verification and withdrawn-account recovery must remain reachable
+  without an active full session.
+- Mutable profile fields are finite retained vocabulary entries; value kinds, limits and clear/null behavior are validated under the vocabulary
+  revision. This is not arbitrary account-field assignment or new profile feature scope.
+- The policy references must resolve to explicit approved rules before relevant changes. No retention duration, automatic erasure, resurrection,
+  draft-storage rule, abuse threshold or public-service capacity is selected by these schemas.
+- Lifecycle participant acknowledgements prove only their declared scope. Complete requires all required current participants, owned/derived/pending/cache
+  and backup/restore dispositions; stale events and restored snapshots cannot recreate erased or prohibited data.
+- An accepted lifecycle action records policy and manifest revisions. Changes during execution require reconciliation; reactivation can restore
+  only data lawfully and technically retained, never erased data.
+- Anonymous session inspection and verified guest search are retained; this contract does not grant anonymous private work or unverified additional
+  public capability.
 checks:
-- Registration/verification/login/logout, lost response and email-delivery failure against real host boundaries with synthetic
-  accounts.
-- Cross-owner/session replay, OAuth state/collision/denial, MFA expiry/replay and controlled recovery denial when policy is
-  unresolved.
-- A primary-authenticated MFA continuation succeeds without a full session, while absent/mismatched continuation and another
-  account's challenge fail; no administrator role is created by factor verification.
-- Retrieve enrollment seed/local-QR payload and recovery codes exactly once with current reauthentication; verify no-store/redaction/client
-  clearing, reject retrieval replay and invalidate replaced enrollment material after response loss.
-- Withdrawn-account recovery accepts the bound reactivation proof without an active session; active/erased/unknown accounts
-  remain existence-neutral at request, stale/purpose-mismatched proof fails, and erased data never returns. Completion still
-  requires sign-in/MFA.
+- Registration/verification/login/logout, lost response and email-delivery failure against real host boundaries with synthetic accounts.
+- Cross-owner/session replay, OAuth state/collision/denial, MFA expiry/replay and controlled recovery denial when policy is unresolved.
+- A primary-authenticated MFA continuation succeeds without a full session, while absent/mismatched continuation and another account's challenge
+  fail; no administrator role is created by factor verification.
+- Retrieve enrollment seed/local-QR payload and recovery codes exactly once with current reauthentication; verify no-store/redaction/client clearing,
+  reject retrieval replay and invalidate replaced enrollment material after response loss.
+- Withdrawn-account recovery accepts the bound reactivation proof without an active session; active/erased/unknown accounts remain existence-neutral
+  at request, stale/purpose-mismatched proof fails, and erased data never returns. Completion still requires sign-in/MFA.
 - Password/email changes reconcile interrupted writes and preserve acknowledged saved work.
 - Reject profile role/email mutation through unknown fields and contradictory/duplicate field patches.
 - Lifecycle request with missing participant/policy fails closed; lost/duplicate/stale ack never fabricates completion.
 - Queued effect after consent revocation and restore after deletion cannot resurrect prohibited owner work.
-version: 1.0.0
+version: 2.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -2706,8 +2753,8 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Resolve the intended eligible public paper/version through its owner. Repeated intended saves reconcile one record;
-    do not trust caller-supplied metadata or silently redirect identity.
+  semantics: Resolve the intended eligible public paper/version through its owner. Repeated intended saves reconcile one record; do not trust
+    caller-supplied metadata or silently redirect identity.
   surface: browser
 - name: library.readSavedPaper
   input: LibrarySavedPaperInput
@@ -2721,8 +2768,7 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Preserve original saved identity and report current source/canonical disposition; read cannot substitute unrelated
-    content.
+  semantics: Preserve original saved identity and report current source/canonical disposition; read cannot substitute unrelated content.
   surface: browser
 - name: library.listSavedPapers
   input: LibraryPaperListInput
@@ -2739,7 +2785,7 @@ operations:
   semantics: Read a stable owner-bound page; unavailable storage is an error, never a successful empty list.
   surface: browser
 - name: library.removeSavedPaper
-  input: LibrarySavedPaperInput
+  input: LibraryRemoveSavedPaperInput
   output: Ack
   auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
   errors:
@@ -2750,8 +2796,10 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Remove only the acknowledged owner's saved reference using expected revision/idempotency; never remove public
-    corpus content.
+  semantics: Remove only the acknowledged owner's saved reference using expected revision/idempotency; never remove public corpus content. Required
+    top-level expectedRevision is the original observed control token; trusted mapping sets context.expectedRevision to the identical value and
+    rejects disagreement. Current authorization then exact normalized-intent receipt replay precede fresh CAS. Missing, empty or null existing-state
+    tokens reject; conflict uses an authorized fresh named read, never latestRevision in Error.details.
   surface: browser
 - name: library.saveSearch
   input: LibrarySaveSearchInput
@@ -2765,8 +2813,8 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Persist canonical query/refinement context under the declared retained vocabulary; duplicate intended saves reconcile
-    without losing prior committed values.
+  semantics: Persist canonical query/refinement context under the declared retained vocabulary; duplicate intended saves reconcile without losing
+    prior committed values.
   surface: browser
 - name: library.readSavedSearch
   input: LibrarySavedSearchInput
@@ -2780,8 +2828,7 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Return exact saved query context for a separate explicit Discovery rerun. Reading does not run a new query or
-    add history.
+  semantics: Return exact saved query context for a separate explicit Discovery rerun. Reading does not run a new query or add history.
   surface: browser
 - name: library.listSavedSearches
   input: LibrarySearchListInput
@@ -2798,7 +2845,7 @@ operations:
   semantics: Paginate confirmed records and stable ordering; errors and changed snapshots remain distinct.
   surface: browser
 - name: library.removeSavedSearch
-  input: LibrarySavedSearchInput
+  input: LibraryRemoveSavedSearchInput
   output: Ack
   auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
   errors:
@@ -2809,7 +2856,10 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Remove the intended saved query only; history and saved papers are separate owners' records within Library.
+  semantics: Remove the intended saved query only; history and saved papers are separate owners' records within Library. Required top-level expectedRevision
+    is the original observed control token; trusted mapping sets context.expectedRevision to the identical value and rejects disagreement. Current
+    authorization then exact normalized-intent receipt replay precede fresh CAS. Missing, empty or null existing-state tokens reject; conflict
+    uses an authorized fresh named read, never latestRevision in Error.details.
   surface: browser
 - name: library.listHistory
   input: LibraryHistoryListInput
@@ -2823,8 +2873,9 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: List only qualifying recorded owner searches above the current clear boundary; expired or changed page snapshots
-    are explicit.
+  semantics: List only qualifying recorded owner searches above the current clear boundary; expired or changed page snapshots are explicit. Return
+    non-null clearBoundary even for virtual empty history, without allocating a row; page.snapshotRevision and Discovery admission cutoff are
+    different values.
   surface: browser
 - name: library.readHistory
   input: LibraryHistoryInput
@@ -2838,8 +2889,7 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Read the historical submitted context for an explicit Discovery rerun. Cleared/deleted records cannot reappear
-    through direct IDs.
+  semantics: Read the historical submitted context for an explicit Discovery rerun. Cleared/deleted records cannot reappear through direct IDs.
   surface: browser
 - name: library.recordSearchCompletion
   input: LibraryHistoryFactInput
@@ -2853,9 +2903,8 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Check the current lifecycle/clear boundary and deduplicate by execution/fact identity. A fact whose admissionSequence
-    is at or below the captured clear cutoff is suppressed even if completionSequence is later; current consent/history policy
-    also applies.
+  semantics: Check the current lifecycle/clear boundary and deduplicate by execution/fact identity. A fact whose admissionSequence is at or below
+    the captured clear cutoff is suppressed even if completionSequence is later; current consent/history policy also applies.
   surface: internal
 - name: library.clearHistory
   input: LibraryClearHistoryInput
@@ -2869,9 +2918,13 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - UNKNOWN_OUTCOME
-  semantics: Capture current owner's SearchHistoryCheckpoint from Discovery through the declared U1 interface, then durably
-    record the clear boundary and clear included records. Never accept a browser-supplied cutoff. Lost acknowledgement reconciles
-    the same boundary; a failed checkpoint/write cannot claim successful clear.
+  semantics: Capture current owner's SearchHistoryCheckpoint from Discovery through the declared U1 interface, then durably record the clear boundary
+    and clear included records. Never accept a browser-supplied cutoff. Lost acknowledgement reconciles the same boundary; a failed checkpoint/write
+    cannot claim successful clear. Required top-level expectedRevision is the original observed control token; trusted mapping sets context.expectedRevision
+    to the identical value and rejects disagreement. Current authorization then exact normalized-intent receipt replay precede fresh CAS. Missing,
+    empty or null existing-state tokens reject; conflict uses an authorized fresh named read, never latestRevision in Error.details. Compare the
+    supplied clearBoundary control token and capture Discovery cutoff on the server. Atomically advance boundary/receipt; delayed facts at or
+    before cutoff remain suppressed.
   surface: browser
 - name: settings.read
   input: SettingsReadInput
@@ -2899,8 +2952,12 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Require at least one settings change and expected revision; resolve all choices in retained vocabularies and
-    preserve committed values on conflict/failure.
+  semantics: Require at least one settings change and expected revision; resolve all choices in retained vocabularies and preserve committed values
+    on conflict/failure. Required top-level expectedRevision is the original observed control token; trusted mapping sets context.expectedRevision
+    to the identical value and rejects disagreement. Current authorization then exact normalized-intent receipt replay precede fresh CAS. Missing,
+    empty or null existing-state tokens reject; conflict uses an authorized fresh named read, never latestRevision in Error.details. settings.read
+    supplies the shared SettingsSnapshot control revision; each change advances it. Reset also advances a distinct inputBoundary; current consent
+    is independent.
   surface: browser
 - name: settings.updateOnboarding
   input: SettingsOnboardingInput
@@ -2914,8 +2971,12 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Persist selection/progress/complete/skip explicitly and idempotently; skip does not overwrite established preferences,
-    and resume does not create redirect loops.
+  semantics: Persist selection/progress/complete/skip explicitly and idempotently; skip does not overwrite established preferences, and resume
+    does not create redirect loops. Required top-level expectedRevision is the original observed control token; trusted mapping sets context.expectedRevision
+    to the identical value and rejects disagreement. Current authorization then exact normalized-intent receipt replay precede fresh CAS. Missing,
+    empty or null existing-state tokens reject; conflict uses an authorized fresh named read, never latestRevision in Error.details. settings.read
+    supplies the shared SettingsSnapshot control revision; each change advances it. Reset also advances a distinct inputBoundary; current consent
+    is independent.
   surface: browser
 - name: settings.listSuggestions
   input: SettingsSuggestionInput
@@ -2929,8 +2990,8 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Use only permitted linked ORCID data and declare source/coverage. Provider absence permits retained manual selection/skip,
-    not an account gate.
+  semantics: Use only permitted linked ORCID data and declare source/coverage. Provider absence permits retained manual selection/skip, not an
+    account gate.
   surface: browser
 - name: settings.listRecentPapers
   input: SettingsRecentInput
@@ -2944,14 +3005,13 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Use permitted activity and current corpus eligibility with truthful ordering/dispositions; no activity or enrichment
-    is a disclosed empty/cold-start outcome.
+  semantics: Use permitted activity and current corpus eligibility with truthful ordering/dispositions; no activity or enrichment is a disclosed
+    empty/cold-start outcome.
   surface: browser
 - name: settings.recordBehavior
   input: SettingsBehaviorInput
   output: SettingsBehaviorResult
-  auth: Registered trusted component; verify producer identity separately from context and recheck the affected owner's current
-    authority.
+  auth: Registered trusted component; verify producer identity separately from context and recheck the affected owner's current authority.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2960,14 +3020,13 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Recheck consent and authority, require matching current input/reset boundary and deduplicate eventId. Stale events
-    cannot recreate deleted/opted-out behavior or profiles.
+  semantics: Recheck consent and authority, require matching current input/reset boundary and deduplicate eventId. Stale events cannot recreate
+    deleted/opted-out behavior or profiles.
   surface: internal
 - name: settings.readProjection
   input: SettingsProjectionInput
   output: SettingsProfileProjection
-  auth: Registered trusted component; verify producer identity separately from context and recheck the affected owner's current
-    authority.
+  auth: Registered trusted component; verify producer identity separately from context and recheck the affected owner's current authority.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2976,14 +3035,14 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Return only the authorized purpose-specific projection and input boundary. Disabled/unavailable/cold-start is
-    explicit; consumers must use their documented safe behavior.
+  semantics: Return only the authorized purpose-specific projection and input boundary. Disabled/unavailable/cold-start is explicit; consumers
+    must use their documented safe behavior.
   surface: internal
 - name: settings.reset
   input: SettingsResetInput
   output: SettingsResetResult
-  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
-    Explicit scope confirmation and resolved deletion policy.
+  auth: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect. Explicit scope
+    confirmation and resolved deletion policy.
   errors:
   - INVALID_INPUT
   - UNAUTHENTICATED
@@ -2992,8 +3051,12 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - UNKNOWN_OUTCOME
-  semantics: Advance the input boundary before accepting later events and reconcile policy-defined event/profile removal.
-    Never delete Library work. Pending derived/restore disposition is not complete reset.
+  semantics: Advance the input boundary before accepting later events and reconcile policy-defined event/profile removal. Never delete Library
+    work. Pending derived/restore disposition is not complete reset. Required top-level expectedRevision is the original observed control token;
+    trusted mapping sets context.expectedRevision to the identical value and rejects disagreement. Current authorization then exact normalized-intent
+    receipt replay precede fresh CAS. Missing, empty or null existing-state tokens reject; conflict uses an authorized fresh named read, never
+    latestRevision in Error.details. settings.read supplies the shared SettingsSnapshot control revision; each change advances it. Reset also
+    advances a distinct inputBoundary; current consent is independent.
   surface: browser
 - name: settings.applyConsentBoundary
   input: SettingsConsentBoundaryInput
@@ -3007,8 +3070,8 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Apply the confirmed consent revision to Personalization's own processing boundary. This operation cannot write
-    authoritative consent; user opt-out is access.updateConsent, and failed projection cleanup never re-enables revoked processing.
+  semantics: Apply the confirmed consent revision to Personalization's own processing boundary. This operation cannot write authoritative consent;
+    user opt-out is access.updateConsent, and failed projection cleanup never re-enables revoked processing.
   surface: internal
 - name: usage.inspect
   input: UsageInspectInput
@@ -3022,8 +3085,8 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Return known balances with explicit period/policy or unknown measures. Unknown never becomes zero and a display
-    cache cannot authorize resource use.
+  semantics: Return known balances with explicit period/policy or unknown measures. Unknown never becomes zero and a display cache cannot authorize
+    resource use.
   surface: browser
 - name: usage.readPlan
   input: UsagePlanInput
@@ -3037,8 +3100,7 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Present retained mock/administrative assignment truthfully; never claim payment or an automatically purchased
-    resource.
+  semantics: Present retained mock/administrative assignment truthfully; never claim payment or an automatically purchased resource.
   surface: browser
 - name: usage.grantEntitlement
   input: UsageGrantInput
@@ -3052,8 +3114,11 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Assign only configured retained tiers under $0 policy, record actor/target/reason and expected revision, and
-    reconcile duplicate grant. Browser role/tier claims cannot self-authorize.
+  semantics: Assign only configured retained tiers under $0 policy, record actor/target/reason and expected revision, and reconcile duplicate
+    grant. Browser role/tier claims cannot self-authorize. Required top-level expectedRevision is the original observed control token; trusted
+    mapping sets context.expectedRevision to the identical value and rejects disagreement. Current authorization then exact normalized-intent
+    receipt replay precede fresh CAS. Missing, empty or null existing-state tokens reject; conflict uses an authorized fresh named read, never
+    latestRevision in Error.details.
   surface: admin
 - name: usage.revokeEntitlement
   input: UsageRevokeInput
@@ -3067,8 +3132,10 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Revoke the intended assignment with audit and policy-defined effects on accepted work. Do not silently cancel
-    acknowledged operations or activate a different paid tier.
+  semantics: Revoke the intended assignment with audit and policy-defined effects on accepted work. Do not silently cancel acknowledged operations
+    or activate a different paid tier. Required top-level expectedRevision is the original observed control token; trusted mapping sets context.expectedRevision
+    to the identical value and rejects disagreement. Current authorization then exact normalized-intent receipt replay precede fresh CAS. Missing,
+    empty or null existing-state tokens reject; conflict uses an authorized fresh named read, never latestRevision in Error.details.
   surface: admin
 - name: usage.reserve
   input: UsageReserveInput
@@ -3083,9 +3150,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - UNKNOWN_OUTCOME
-  semantics: Atomically admit/reserve against current entitlement and server-derived period. Same owner/operation/input identity
-    returns the same record; different fingerprint with reused idempotency key is CONFLICT. Unknown balance/policy fails closed
-    before new work is accepted.
+  semantics: Atomically admit/reserve against current entitlement and server-derived period. Same owner/operation/input identity returns the same
+    record; different fingerprint with reused idempotency key is CONFLICT. Unknown balance/policy fails closed before new work is accepted.
   surface: internal
 - name: usage.settle
   input: UsageSettleInput
@@ -3099,9 +3165,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - UNKNOWN_OUTCOME
-  semantics: Reconcile one commit/release/refund with expected revision, operation identity and policy. Concurrent retries
-    cannot double-debit/refund. Actual quantities and release of uncertain work require resolved policy; no automatic refund/reset/release
-    semantics are invented.
+  semantics: Reconcile one commit/release/refund with expected revision, operation identity and policy. Concurrent retries cannot double-debit/refund.
+    Actual quantities and release of uncertain work require resolved policy; no automatic refund/reset/release semantics are invented.
   surface: internal
 - name: usage.reconcile
   input: UsageReconcileInput
@@ -3115,8 +3180,7 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Read recorded accounting for the original operation, including unknown disposition; never reserve or debit anew
-    as a read side effect.
+  semantics: Read recorded accounting for the original operation, including unknown disposition; never reserve or debit anew as a read side effect.
   surface: internal
 - name: usage.listRecords
   input: UsageRecordsInput
@@ -3130,8 +3194,7 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Read only the current owner's bounded accounting evidence; operator-wide inspection requires a separate explicit
-    administrative projection.
+  semantics: Read only the current owner's bounded accounting evidence; operator-wide inspection requires a separate explicit administrative projection.
   surface: browser
 - name: personalControls.applyLifecycle
   input: LifecycleApplyInput
@@ -3145,47 +3208,57 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Apply only current policy/manifest/request work to the component's own data and derived/restore scopes; reject
-    stale tickets, prevent late resurrection and return scoped evidence for lifecycle.acknowledge. One component cannot acknowledge
-    another's records.
+  semantics: Apply only current policy/manifest/request work to the component's own data and derived/restore scopes; reject stale tickets, prevent
+    late resurrection and return scoped evidence for lifecycle.acknowledge. One component cannot acknowledge another's records.
   surface: internal
+- name: usage.readAssignment
+  input: UsageAssignmentRead
+  output: UsageAssignmentSnapshot
+  auth: Current administrator and required MFA; target account scope independently validated.
+  errors:
+  - INVALID_INPUT
+  - UNAUTHENTICATED
+  - FORBIDDEN
+  - NOT_FOUND
+  - CONFLICT
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  - INCOMPATIBLE
+  semantics: Administrator with current MFA reads the target assignment control revision. Absent assignment returns a non-null owner-defined initial
+    token and null entitlement without allocating state. Grant CAS compares this token; revoke compares the current entitlement revision; both
+    advance the same assignment control boundary. No ordinary self-plan lookup substitutes for this read.
+  surface: admin
 invariants:
-- Library owns saved references/history, Personalization owns explicit settings/permitted projections, and UsageEntitlements
-  owns balances. A single C03 bundle does not permit cross-owner data writes.
-- Commands require current owner and expectedRevision where modifying an existing revision. Durable acknowledgement is the
-  only successful write signal; same intended effect is reconciled after lost response.
-- LibraryQueryContext is shared with Discovery; its vocabulary revision defines permitted retained modes/orders/filter operators/value
-  kinds. Unsupported values fail rather than reaching provider query syntax unchecked.
-- Search-history clear linearizes at the server-captured admission checkpoint. The durable clear boundary suppresses facts
-  admitted at/before it, including queries finishing later; facts genuinely admitted after it may appear. A failed checkpoint
-  cannot be treated as an empty history.
-- Behavior reset/erasure advances an authoritative input boundary; producer events from prior generations cannot rebuild erased
-  projections. Consent authority remains AccountAccess and is checked at processing, not merely when an event was emitted.
-- Array sizes and user text bounds resolve through an approved policy or PageRequest.limit and are checked before work allocation.
-  Pagination is owner/snapshot bound. Schema annotations alone do not enforce these dynamic bounds; unresolved admission policy
-  returns POLICY_UNRESOLVED.
-- Quota allocation, period/reset, refund/release rules and protected-action membership must be explicitly configured from
-  approved evidence before enforcement. Times are server-derived; a period transition does not lose reconciliation for an
-  earlier accepted operation.
-- Reservation and operation acceptance coordinate by stable operation/input references, not an assumed cross-store atomic
-  transaction. Capacity/accounting uncertainty blocks new acceptance until reconciled; accepted work keeps recoverable ownership.
-- No tier or reset may activate paid resources. Public inputs never choose administrator authority, reserved quantities, history
-  cutoffs or consent snapshots as facts.
+- Library owns saved references/history, Personalization owns explicit settings/permitted projections, and UsageEntitlements owns balances. A
+  single C03 bundle does not permit cross-owner data writes.
+- Commands require current owner and expectedRevision where modifying an existing revision. Durable acknowledgement is the only successful write
+  signal; same intended effect is reconciled after lost response.
+- LibraryQueryContext is shared with Discovery; its vocabulary revision defines permitted retained modes/orders/filter operators/value kinds.
+  Unsupported values fail rather than reaching provider query syntax unchecked.
+- Search-history clear linearizes at the server-captured admission checkpoint. The durable clear boundary suppresses facts admitted at/before
+  it, including queries finishing later; facts genuinely admitted after it may appear. A failed checkpoint cannot be treated as an empty history.
+- Behavior reset/erasure advances an authoritative input boundary; producer events from prior generations cannot rebuild erased projections. Consent
+  authority remains AccountAccess and is checked at processing, not merely when an event was emitted.
+- Array sizes and user text bounds resolve through an approved policy or PageRequest.limit and are checked before work allocation. Pagination
+  is owner/snapshot bound. Schema annotations alone do not enforce these dynamic bounds; unresolved admission policy returns POLICY_UNRESOLVED.
+- Quota allocation, period/reset, refund/release rules and protected-action membership must be explicitly configured from approved evidence before
+  enforcement. Times are server-derived; a period transition does not lose reconciliation for an earlier accepted operation.
+- Reservation and operation acceptance coordinate by stable operation/input references, not an assumed cross-store atomic transaction. Capacity/accounting
+  uncertainty blocks new acceptance until reconciled; accepted work keeps recoverable ownership.
+- No tier or reset may activate paid resources. Public inputs never choose administrator authority, reserved quantities, history cutoffs or consent
+  snapshots as facts.
 - U2's bounded contribution can be verified against the initial contracts before U3's full corpus writer exists. Full saved-reference/corpus/lifecycle
   acceptance still requires real combined U3/U8 evidence; this contract adds no reverse construction dependency.
 checks:
-- Save/list/remove/revisit papers and queries across restart, failed writes, duplicate submission, two tabs and cross-owner
-  attempts.
-- Search admitted before history clear but completed/delivered after it never recreates a history row; newer admitted work
-  is not erased by retrying the old clear.
+- Save/list/remove/revisit papers and queries across restart, failed writes, duplicate submission, two tabs and cross-owner attempts.
+- Search admitted before history clear but completed/delivered after it never recreates a history row; newer admitted work is not erased by retrying
+  the old clear.
 - Canonical/withdrawn source produces explicit saved-reference disposition without unrelated redirection or deletion.
 - Profile reset/opt-out followed by delayed events cannot recreate forbidden projections, while explicit library records remain.
 - Onboarding select/skip/resume and ORCID failure remain usable; explicit defaults affect the real next action.
-- Concurrent reserve, duplicate settle, unknown usage, grant/revoke and period rollover reconcile one intended effect without
-  free/zero assumptions.
-- Library, Personalization and UsageEntitlements each acknowledge only their own lifecycle scopes; unresolved backup/restore
-  scope remains incomplete.
-version: 1.0.0
+- Concurrent reserve, duplicate settle, unknown usage, grant/revoke and period rollover reconcile one intended effect without free/zero assumptions.
+- Library, Personalization and UsageEntitlements each acknowledge only their own lifecycle scopes; unresolved backup/restore scope remains incomplete.
+version: 2.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -3233,8 +3306,8 @@ operations:
   - NOT_FOUND
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Resolve exact canonical identity/version for metadata/headers; never substitute an unrelated paper for an obsolete
-    identifier. Guest search receives metadata only through its separately authorized search response.
+  semantics: Resolve exact canonical identity/version for metadata/headers; never substitute an unrelated paper for an obsolete identifier. Guest
+    search receives metadata only through its separately authorized search response.
   surface: browser
 - name: readContent
   input: CorpusRead
@@ -3248,8 +3321,7 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - SOURCE_INELIGIBLE
-  semantics: Current eligibility and purpose permission dominate cached/indexed representations. Reading cannot start ingestion
-    or model work.
+  semantics: Current eligibility and purpose permission dominate cached/indexed representations. Reading cannot start ingestion or model work.
   surface: browser
 - name: readAsset
   input: CorpusAssetRead
@@ -3263,8 +3335,7 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - SOURCE_INELIGIBLE
-  semantics: Opaque readHandle is resolved only by an authorized delivery adapter; never accept arbitrary paths, URLs or private-attachment
-    identifiers.
+  semantics: Opaque readHandle is resolved only by an authorized delivery adapter; never accept arbitrary paths, URLs or private-attachment identifiers.
   surface: browser
 - name: acceptCorpusRun
   input: CorpusRunRequest
@@ -3279,8 +3350,8 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - IDEMPOTENCY_CONFLICT
   - CAPACITY_EXHAUSTED
-  semantics: Durably record input snapshot and recoverable dispatch responsibility before acknowledgement; same idempotency
-    key+input returns same run.
+  semantics: Durably record input snapshot and recoverable dispatch responsibility before acknowledgement; same idempotency key+input returns
+    same run.
   surface: admin
 - name: readCorpusRun
   input: CorpusRunRead
@@ -3308,8 +3379,7 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
   - OUTCOME_UNKNOWN
-  semantics: Retry only reconciled retryable stages of the original intended run; retain committed stages and original authoritative
-    inputs.
+  semantics: Retry only reconciled retryable stages of the original intended run; retain committed stages and original authoritative inputs.
   surface: admin
 - name: writeProjectionBatch
   input: CorpusProjectionBatch
@@ -3325,8 +3395,7 @@ operations:
   - IDEMPOTENCY_CONFLICT
   - SOURCE_INELIGIBLE
   - INCOMPATIBLE_VERSION
-  semantics: Only CorpusContent writes derived projection batches; duplicate batchId+hash acknowledges once, changed hash
-    conflicts.
+  semantics: Only CorpusContent writes derived projection batches; duplicate batchId+hash acknowledges once, changed hash conflicts.
   surface: internal
 - name: publishProjectionGeneration
   input: CorpusPublicationRequest
@@ -3342,8 +3411,8 @@ operations:
   - CONFLICT
   - INCOMPATIBLE_VERSION
   - SOURCE_INELIGIBLE
-  semantics: CAS published generation only after manifest completeness, all batch receipts, current source eligibility and
-    compatibility verification. Failure preserves old publication and does not advance watermark.
+  semantics: CAS published generation only after manifest completeness, all batch receipts, current source eligibility and compatibility verification.
+    Failure preserves old publication and does not advance watermark.
   surface: internal
 - name: readPublishedProjection
   input: CorpusProjectionRead
@@ -3357,8 +3426,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - INCOMPATIBLE_VERSION
-  semantics: Return only a complete compatible publication; Discovery cannot write/rebuild/publish or treat its stale generation
-    as eligibility authority.
+  semantics: Return only a complete compatible publication; Discovery cannot write/rebuild/publish or treat its stale generation as eligibility
+    authority.
   surface: internal
 - name: changeSourceEligibility
   input: CorpusEligibilityChange
@@ -3372,8 +3441,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
-  semantics: Persist authoritative eligibility revision and recoverable source-change fact; reads enforce it immediately even
-    before projection/cache repair.
+  semantics: Persist authoritative eligibility revision and recoverable source-change fact; reads enforce it immediately even before projection/cache
+    repair.
   surface: admin
 - name: readSourceChanges
   input: CorpusChangeRead
@@ -3386,20 +3455,20 @@ operations:
   - NOT_FOUND
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Ordered replayable facts; duplicate delivery is harmless. Facts inform saved-reference dispositions and reconciliation
-    without granting direct cross-owner writes.
+  semantics: Ordered replayable facts; duplicate delivery is harmless. Facts inform saved-reference dispositions and reconciliation without granting
+    direct cross-owner writes.
   surface: internal
 invariants:
-- 'R-01: CorpusContent is the sole logical projection writer and publication/rebuild completion authority; storage adapters
-  act only under that owner. Discovery holds no writer capability.'
-- U1 implements a permitted fixture generation; U3 completes every retained source/rebuild behavior with the same owner and
-  contracts. No future U3 import is needed by U1.
-- A publication is not a source-of-truth backup. Rebuild identifies authoritative inputs and verifies durable control/content/index
-  receipts; no successful watermark for a partial run.
-- Policy resolution is compulsory before source copying, storage, parsing, embedding or use. Unresolved permissions/capacity/continuity
-  return POLICY_UNRESOLVED for affected effects.
-- Withdrawal and permission changes are checked at every content/asset/model boundary. Delayed projection generations cannot
-  restore prohibited content. Restore must replay current withdrawal boundaries before serving.
+- 'R-01: CorpusContent is the sole logical projection writer and publication/rebuild completion authority; storage adapters act only under that
+  owner. Discovery holds no writer capability.'
+- U1 implements a permitted fixture generation; U3 completes every retained source/rebuild behavior with the same owner and contracts. No future
+  U3 import is needed by U1.
+- A publication is not a source-of-truth backup. Rebuild identifies authoritative inputs and verifies durable control/content/index receipts;
+  no successful watermark for a partial run.
+- Policy resolution is compulsory before source copying, storage, parsing, embedding or use. Unresolved permissions/capacity/continuity return
+  POLICY_UNRESOLVED for affected effects.
+- Withdrawal and permission changes are checked at every content/asset/model boundary. Delayed projection generations cannot restore prohibited
+  content. Restore must replay current withdrawal boundaries before serving.
 checks:
 - Inject interruption at control/object/projection/publication writes; verify no false completion/watermark.
 - 'Property: duplicate/reordered batches preserve canonical identity and one published generation; CAS rejects competing publication.'
@@ -3417,9 +3486,9 @@ state_machines:
     published: []
     failed: []
   authority: CorpusContent
-  rule: A new generation is distinct from the currently published generation; only complete verified manifests publish under
-    CAS. Eligibility revocation remains independently authoritative.
-version: 1.0.0
+  rule: A new generation is distinct from the currently published generation; only complete verified manifests publish under CAS. Eligibility
+    revocation remains independently authoritative.
+version: 2.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -3459,8 +3528,7 @@ operations:
 - name: search
   input: SearchRequest
   output: SearchResponse
-  auth: Existing guest-search authority or current authenticated account; no private material, AI-job authority or personal
-    history for guests.
+  auth: Existing guest-search authority or current authenticated account; no private material, AI-job authority or personal history for guests.
   errors:
   - INVALID_ARGUMENT
   - UNAUTHENTICATED
@@ -3471,8 +3539,8 @@ operations:
   - SNAPSHOT_EXPIRED
   - CAPACITY_EXHAUSTED
   - INCOMPATIBLE_VERSION
-  semantics: Validate canonical query vocabulary and policy bounds; use compatible published generation plus current eligibility.
-    Snapshot-bound pagination or explicit SNAPSHOT_EXPIRED; empty matches only after successful retrieval.
+  semantics: Validate canonical query vocabulary and policy bounds; use compatible published generation plus current eligibility. Snapshot-bound
+    pagination or explicit SNAPSHOT_EXPIRED; empty matches only after successful retrieval.
   surface: browser
 - name: readCitations
   input: CitationRequest
@@ -3488,8 +3556,8 @@ operations:
   - SNAPSHOT_EXPIRED
   - SOURCE_INELIGIBLE
   - CAPACITY_EXHAUSTED
-  semantics: Bound distinct nodes/depth/requests by resolved traversal policy; identify unknown/stale/partial sources without
-    fabricated edges. Saving calls Library separately.
+  semantics: Bound distinct nodes/depth/requests by resolved traversal policy; identify unknown/stale/partial sources without fabricated edges.
+    Saving calls Library separately.
   surface: browser
 - name: readHistoryCheckpoint
   input: SearchHistoryCheckpointRead
@@ -3502,8 +3570,8 @@ operations:
   - NOT_FOUND
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Linearizable producer admission fence for the owner's searches; Library records this boundary when clearing history
-    to suppress already admitted delayed searches.
+  semantics: Linearizable producer admission fence for the owner's searches; Library records this boundary when clearing history to suppress already
+    admitted delayed searches.
   surface: internal
 - name: readCompletedSearchFacts
   input: SearchFactsRead
@@ -3516,8 +3584,8 @@ operations:
   - NOT_FOUND
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Only qualifying authenticated completed searches yield durable facts. Admission/completion sequence is producer-assigned;
-    read/replay neither executes search nor writes Library.
+  semantics: Only qualifying authenticated completed searches yield durable facts. Admission/completion sequence is producer-assigned; read/replay
+    neither executes search nor writes Library.
   surface: internal
 - name: ackCompletedSearchFact
   input: SearchFactAck
@@ -3531,26 +3599,25 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
-  semantics: Record only after durable Library handling; lost acknowledgement permits duplicate replay, not duplicate history.
-    Never treat delivery itself as saved-history success.
+  semantics: Record only after durable Library handling; lost acknowledgement permits duplicate replay, not duplicate history. Never treat delivery
+    itself as saved-history success.
   surface: internal
 invariants:
-- LibraryQueryContext is the sole query shape shared by current search, saved query and history; mode/filter/order vocabularies
-  are versioned and reconciled against retained behavior before readiness.
-- Guest search never accepts an ownerId and produces no personal history/behavior. Authenticated personalization uses current
-  consent and defaults; failed search is not a successful empty response.
-- Discovery reads CorpusContent publication and eligibility contracts; it cannot publish generations, override withdrawal
-  or interpret a private attachment ID as public content.
-- History facts are at-least-once, owner-scoped and immutable. Library suppresses facts admitted at/before its acknowledged
-  clear fence and facts prohibited by account lifecycle; consumption does not create a reverse Discovery-to-Library import.
-- Configured input/page/traversal limits and compatibility rules must be resolved; unknown policy blocks the affected request
-  instead of silently selecting numerical defaults.
+- LibraryQueryContext is the sole query shape shared by current search, saved query and history; mode/filter/order vocabularies are versioned
+  and reconciled against retained behavior before readiness.
+- Guest search never accepts an ownerId and produces no personal history/behavior. Authenticated personalization uses current consent and defaults;
+  failed search is not a successful empty response.
+- Discovery reads CorpusContent publication and eligibility contracts; it cannot publish generations, override withdrawal or interpret a private
+  attachment ID as public content.
+- History facts are at-least-once, owner-scoped and immutable. Library suppresses facts admitted at/before its acknowledged clear fence and facts
+  prohibited by account lifecycle; consumption does not create a reverse Discovery-to-Library import.
+- Configured input/page/traversal limits and compatibility rules must be resolved; unknown policy blocks the affected request instead of silently
+  selecting numerical defaults.
 checks:
 - 'Property: same snapshot/cursor yields stable nonduplicated page identities; changed/expired snapshot is explicit.'
 - 'Property: no guest/private history leak; duplicate facts and clear-before-delivery cannot recreate cleared history.'
-- Verify lexical/semantic fixture relevance, disclosed fallback, source withdrawal and bounded cyclic citation graphs through
-  mounted UI.
-version: 1.0.0
+- Verify lexical/semantic fixture relevance, disclosed fallback, source withdrawal and bounded cyclic citation graphs through mounted UI.
+version: 2.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -3594,8 +3661,8 @@ operations:
   - NOT_FOUND
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Expose reconciled supported actions/languages/presentation choices with vocabulary revision; readiness cannot
-    imply parity from an empty options list.
+  semantics: Expose reconciled supported actions/languages/presentation choices with vocabulary revision; readiness cannot imply parity from an
+    empty options list.
   surface: browser
 - name: acceptAssistance
   input: AssistanceRequest
@@ -3613,8 +3680,9 @@ operations:
   - SOURCE_INELIGIBLE
   - CAPACITY_EXHAUSTED
   - OUTCOME_UNKNOWN
-  semantics: Bind owner/paper/version/content/options/glossary snapshot, quota reservation and recoverable dispatch. Acknowledge
-    only durable acceptance. Same key+input returns original job, changed input conflicts.
+  semantics: Bind owner/paper/version/content/options/glossary snapshot, quota reservation and recoverable dispatch. Acknowledge only durable
+    acceptance. Same key+input returns original job, changed input conflicts. Commit original acceptedAt once with immutable input/glossary, receipt
+    and dispatch obligation. Replays/replacements never reset it; history createdAt maps to it.
   surface: browser
 - name: readAssistanceJob
   input: AssistanceJobRead
@@ -3627,8 +3695,7 @@ operations:
   - NOT_FOUND
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Read authoritative revision/sequence; snapshot recovery and C14 ordered progress refer to this same job. No execution
-    from polling/reconnect.
+  semantics: Read authoritative revision/sequence; snapshot recovery and C14 ordered progress refer to this same job. No execution from polling/reconnect.
   surface: browser
 - name: readPreparedAssistance
   input: AssistanceResultRequest
@@ -3642,8 +3709,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - SOURCE_INELIGIBLE
-  semantics: Read retained prepared content bound to the job and exact source. Expired results remain expired; requesting
-    another result requires explicit acceptAssistance.
+  semantics: Read retained prepared content bound to the job and exact source. Expired results remain expired; requesting another result requires
+    explicit acceptAssistance.
   surface: browser
 - name: readGlossary
   input: AssistanceGlossaryRead
@@ -3656,7 +3723,9 @@ operations:
   - NOT_FOUND
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Return acknowledged normalized terms and policy/revision.
+  semantics: Return acknowledged normalized terms and policy/revision. PaperAssistance returns a side-effect-free virtual empty snapshot with
+    non-null owner/normalization-policy-bound initial revision when absent. Acceptance stores exact terms/revision; first U3 edit atomically compares
+    absent plus initial token.
   surface: browser
 - name: replaceGlossary
   input: AssistanceGlossaryWrite
@@ -3671,8 +3740,7 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
   - IDEMPOTENCY_CONFLICT
-  semantics: CAS replace after normalization, uniqueness and policy-bound checks; failed/conflicting writes preserve prior
-    committed terms.
+  semantics: CAS replace after normalization, uniqueness and policy-bound checks; failed/conflicting writes preserve prior committed terms.
   surface: browser
 - name: completeAssistance
   input: AssistanceComplete
@@ -3688,23 +3756,111 @@ operations:
   - CONFLICT
   - SOURCE_INELIGIBLE
   - OUTCOME_UNKNOWN
-  semantics: Verify current lease/input/result binding and schema; atomically or recoverably publish prepared result and terminal
-    outcome. Reconcile the same usage record; never duplicate debit.
+  semantics: Authenticate current authority before exact factId/content receipt replay. New facts require current trusted worker, unexpired lease/fence,
+    immutable binding/input and expectedJobRevision. Validate prepared bytes and accepted source/options/glossary. In one PaperAssistance transaction
+    commit result binding, terminal revision/sequence, fact receipt and durable settlement obligation. UsageEntitlements settles separately and
+    idempotently; unknown stays reconcilable. C14 routes to this identical validator. Late replaced-worker progress, failure and success are rejected.
+  surface: internal
+- name: readAssistanceHistory
+  input: AssistanceHistoryRead
+  output: AssistanceHistoryPage
+  auth: Current authenticated owner; current account/session/consent and exact source read authority.
+  errors: &id002
+  - INVALID_INPUT
+  - UNAUTHENTICATED
+  - FORBIDDEN
+  - NOT_FOUND
+  - CONFLICT
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  - INCOMPATIBLE
+  semantics: Read current owner exact-paper/version retained jobs in descending immutable acceptedAt then jobId order. createdAt equals original
+    acceptedAt. Cursor binds owner, exact paper/version, query/schema, stable membership and finite expiry. Every page rechecks current authority
+    and present result availability. Expired/invalid cursor conflicts. Empty is distinct from dependency failure. Reads create no job, claim,
+    glossary row, history fact or debit.
+  surface: browser
+- name: acquireExecutionClaim
+  input: ExecutionAcquire
+  output: ExecutionClaimResult
+  auth: Trusted authenticated executor for the exact owner operation; current account/session/source authority is rechecked on the same protected
+    transaction.
+  errors: &id001
+  - INVALID_INPUT
+  - UNAUTHENTICATED
+  - FORBIDDEN
+  - NOT_FOUND
+  - CONFLICT
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  - INCOMPATIBLE
+  semantics: Compare immutable accepted binding and eligible nonterminal state, issue one worker-bound lease/fence atomically using owner time.
+    Duplicate delivery to the same worker recovers the same still-current claim; another active claimant conflicts. Delivery attempt grants no
+    authority.
+  surface: internal
+- name: renewExecutionClaim
+  input: ExecutionRenew
+  output: ExecutionClaimResult
+  auth: Trusted authenticated executor for the exact owner operation; current account/session/source authority is rechecked on the same protected
+    transaction.
+  errors: *id001
+  semantics: Compare trusted worker, current lease/fence, immutable binding, unexpired owner time and expectedLeaseRevision matching claim.leaseRevision.
+    Advance lease revision only. Expired/replaced claims cannot renew; business revision/seq and original acceptedAt do not change.
+  surface: internal
+- name: reclaimExecution
+  input: ExecutionReclaim
+  output: ExecutionClaimResult
+  auth: Trusted authenticated executor for the exact owner operation; current account/session/source authority is rechecked on the same protected
+    transaction.
+  errors: *id001
+  semantics: Owner validates previousFence and expired/revoked prior claim atomically, grants replacement a strictly larger fence and preserves
+    original input, acceptedAt and reservation. No timeout on the caller clock grants replacement authority.
+  surface: internal
+- name: readExecutionPayload
+  input: ExecutionClaimRead
+  output: AssistanceExecutionPayload
+  auth: Trusted authenticated executor for the exact owner operation; current account/session/source authority is rechecked on the same protected
+    transaction.
+  errors: *id001
+  semantics: U1 supports only PaperAssistance; other owner payload codecs remain INCOMPATIBLE until coordinated by their unit. Authenticate current
+    worker/claim, verify exact accepted binding/hash and current source/account permission before releasing immutable input and permitted sections.
+    Locator, owner ID and expired/replaced claim grant no access.
+  surface: internal
+- name: recordAssistanceProgress
+  input: AssistanceProgress
+  output: JobSnapshot
+  auth: Trusted authenticated executor for the exact owner operation; current account/session/source authority is rechecked on the same protected
+    transaction.
+  errors: *id002
+  semantics: Authenticate current authority, reconcile exact factId and normalized content before fresh CAS; otherwise validate current unexpired
+    claim, expected job revision and input binding. Owner allocates seq/revision; terminal state never regresses.
+  surface: internal
+- name: failAssistance
+  input: AssistanceFailure
+  output: JobSnapshot
+  auth: Trusted authenticated executor for the exact owner operation; current account/session/source authority is rechecked on the same protected
+    transaction.
+  errors: *id002
+  semantics: Use the same fact authentication/replay/fence/CAS path as completion. Current claim may fail eligible work with a safe error and
+    durable policy-bound settlement obligation; an old replaced worker cannot fail a newer attempt.
   surface: internal
 invariants:
-- PaperAssistance owns its job and result; shared dispatch/progress is a mechanism, not another outcome owner. JobReceipt
-  is not produced by a no-op dispatch path.
-- Assistance transitions accepted→running→succeeded|failed; generic cancellation states are not exposed as a new product capability.
-  Owner lifecycle revocation may suppress execution/results under resolved policy.
-- Terminal state/revision/sequence never regress. Progress is not proof of completion; succeeded requires a verified prepared
-  result. Loss of a stream uses authoritative snapshot and ordered replay.
-- Resolve permitted model/content use, supported option parity, workload bounds and accounting policy before affected execution.
-  Missing model or invalid output yields explicit failure/abstention, not invented success.
+- PaperAssistance owns its job and result; shared dispatch/progress is a mechanism, not another outcome owner. JobReceipt is not produced by a
+  no-op dispatch path.
+- Assistance transitions accepted→running→succeeded|failed; generic cancellation states are not exposed as a new product capability. Owner lifecycle
+  revocation may suppress execution/results under resolved policy.
+- Terminal state/revision/sequence never regress. Progress is not proof of completion; succeeded requires a verified prepared result. Loss of
+  a stream uses authoritative snapshot and ordered replay.
+- Resolve permitted model/content use, supported option parity, workload bounds and accounting policy before affected execution. Missing model
+  or invalid output yields explicit failure/abstention, not invented success.
+- Current account/session/consent and source guard locks remain held on the target owner transaction connection through protected commit. Only
+  AccountAccess/CorpusContent mutate their barriers; narrow owner-controlled guard functions expose no general foreign DML. Long inference holds
+  no guard transaction.
+- Exact committed fact replay can recover its safe receipt after lease expiry only under current permission; it never creates a new effect. New
+  facts use owner time, current fence and a separate expected business revision.
 checks:
 - Crash after acceptance before dispatch; verify recoverable execution responsibility and no abandoned acknowledgement.
 - 'Property: duplicate command/delivery/completion preserves one job/result/debit; stale events cannot regress terminal state.'
-- Mounted stream framing/reconnect/poll/result tests exercise all four recorded legacy job defects; read-result must not invoke
-  execution.
+- Mounted stream framing/reconnect/poll/result tests exercise all four recorded legacy job defects; read-result must not invoke execution.
 state_machines:
 - name: AssistanceJob
   initial: accepted
@@ -3717,16 +3873,16 @@ state_machines:
     - failed
     succeeded: []
     failed: []
-  rule: Recovering delivery of accepted/running work keeps original job identity; success requires durable prepared result.
-    Retrying failed work is explicit and uses a new intended command only when policy allows.
+  rule: Recovering delivery of accepted/running work keeps original job identity; success requires durable prepared result. Retrying failed work
+    is explicit and uses a new intended command only when policy allows.
 bindings:
 - prepared.ownerId == job.ownerId == trusted accountId
 - prepared.jobId == accepted jobId
 - prepared.paper == accepted paper/version/eligibility binding
 - prepared.sourceContentHash == accepted source content hash
 - prepared.operation/optionId/glossaryRevision == accepted immutable request
-- completion.inputHash and leaseId == active dispatch claim
-version: 1.0.0
+- completion.claim.binding and inputHash equal immutable accepted input; trusted worker and lease/fence equal current unexpired owner claim
+version: 2.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -3775,8 +3931,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - IDEMPOTENCY_CONFLICT
-  semantics: Allocate server-owned private context before draft/upload/session/novelty steps; this protocol resource is not
-    a separate product feature or job. Owner and context identity are server-assigned.
+  semantics: Allocate server-owned private context before draft/upload/session/novelty steps; this protocol resource is not a separate product
+    feature or job. Owner and context identity are server-assigned.
   surface: browser
 - name: createResearchSession
   input: ResearchSessionCreate
@@ -3832,8 +3988,8 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
   - OUTCOME_UNKNOWN
-  semantics: CAS session/account-session-set boundary with explicit confirmation; durable tombstone precedes cleanup. Completion
-    requires policy-defined pending-work, drafts/assets/derived-data dispositions.
+  semantics: CAS session/account-session-set boundary with explicit confirmation; durable tombstone precedes cleanup. Completion requires policy-defined
+    pending-work, drafts/assets/derived-data dispositions.
   surface: browser
 - name: beginPrivateAttachment
   input: ResearchAttachmentStart
@@ -3847,8 +4003,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - CAPACITY_EXHAUSTED
-  semantics: Issue protected context-specific bounded upload handle only after resolved file/storage/privacy/capacity policy;
-    this is not accepted research work.
+  semantics: Issue protected context-specific bounded upload handle only after resolved file/storage/privacy/capacity policy; this is not accepted
+    research work.
   surface: browser
 - name: finishPrivateAttachment
   input: ResearchAttachmentFinish
@@ -3863,8 +4019,8 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
   - INVALID_CONTENT
-  semantics: Verify bytes/hash/media before recoverable extraction; classify malformed/protected/truncated content truthfully;
-    no public corpus publication.
+  semantics: Verify bytes/hash/media before recoverable extraction; classify malformed/protected/truncated content truthfully; no public corpus
+    publication.
   surface: browser
 - name: readPrivateAttachment
   input: ResearchAttachmentRead
@@ -3905,8 +4061,8 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
   - IDEMPOTENCY_CONFLICT
-  semantics: CAS baseRevision (null only for new draft). Durable acknowledgement includes exact revision/hash; conflict returns
-    authorized current revision and proposed text without silently overwriting either.
+  semantics: CAS baseRevision (null only for new draft). Durable acknowledgement includes exact revision/hash; conflict returns authorized current
+    revision and proposed text without silently overwriting either.
   surface: browser
 - name: restoreDraft
   input: DraftRead
@@ -3919,8 +4075,7 @@ operations:
   - NOT_FOUND
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Return only retained acknowledged unconsumed revision after same-owner authentication; restore has no submission/external
-    effect.
+  semantics: Return only retained acknowledged unconsumed revision after same-owner authentication; restore has no submission/external effect.
   surface: browser
 - name: discardDraft
   input: DraftDiscard
@@ -3934,8 +4089,7 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
-  semantics: Discard exact acknowledged revision under CAS and durable deletion boundary; a stale discard cannot erase newer
-    edits.
+  semantics: Discard exact acknowledged revision under CAS and durable deletion boundary; a stale discard cannot erase newer edits.
   surface: browser
 - name: acceptResearchTurn
   input: ResearchTurnRequest
@@ -3983,8 +4137,7 @@ operations:
   - IDEMPOTENCY_CONFLICT
   - CAPACITY_EXHAUSTED
   - OUTCOME_UNKNOWN
-  semantics: Distinct topic/manuscript novelty job; immutable input and scope snapshot with exact optional draft consumption
-    and recoverable dispatch.
+  semantics: Distinct topic/manuscript novelty job; immutable input and scope snapshot with exact optional draft consumption and recoverable dispatch.
   surface: browser
 - name: acceptNoveltyDiscussion
   input: ResearchNoveltyDiscussion
@@ -4001,8 +4154,8 @@ operations:
   - IDEMPOTENCY_CONFLICT
   - SOURCE_INELIGIBLE
   - CAPACITY_EXHAUSTED
-  semantics: Accept a separate discussion job bound to the same owner's eligible immutable novelty result; neither reruns
-    analysis nor approves export.
+  semantics: Accept a separate discussion job bound to the same owner's eligible immutable novelty result; neither reruns analysis nor approves
+    export.
   surface: browser
 - name: readResearchJob
   input: ResearchJobRead
@@ -4029,8 +4182,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
-  semantics: Only kind novelty-analysis; cancellation request may return cancel_requested. Return cancelled only after authoritative
-    cancellation wins; completed result stays succeeded if completion won. Never imply remote export cancellation.
+  semantics: Only kind novelty-analysis; cancellation request may return cancel_requested. Return cancelled only after authoritative cancellation
+    wins; completed result stays succeeded if completion won. Never imply remote export cancellation.
   surface: browser
 - name: readResearchArtifact
   input: ResearchArtifactRead
@@ -4044,8 +4197,7 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - SOURCE_INELIGIBLE
-  semantics: Fetch exact immutable revision/hash, with current eligibility; unavailable/expired/deleted result reads never
-    regenerate work.
+  semantics: Fetch exact immutable revision/hash, with current eligibility; unavailable/expired/deleted result reads never regenerate work.
   surface: browser
 - name: readNoveltyArtifactForExport
   input: ResearchArtifactRead
@@ -4060,8 +4212,8 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - SOURCE_INELIGIBLE
   - CONFLICT
-  semantics: 'R-02: only ready novelty-result, exact artifactId/revision/contentHash and current eligibility; changed bytes
-    require new revision. Return typed immutable content plus eligibility revision.'
+  semantics: 'R-02: only ready novelty-result, exact artifactId/revision/contentHash and current eligibility; changed bytes require new revision.
+    Return typed immutable content plus eligibility revision.'
   surface: internal
 - name: completeResearchWork
   input: ResearchCompletion
@@ -4077,33 +4229,33 @@ operations:
   - CONFLICT
   - SOURCE_INELIGIBLE
   - OUTCOME_UNKNOWN
-  semantics: Match operation kind/context/lease/input; validate grounding and artifact hash; tombstone/cancellation dominates
-    late publication. Persist artifact+terminal outcome recoverably and reconcile one usage record.
+  semantics: Match operation kind/context/lease/input; validate grounding and artifact hash; tombstone/cancellation dominates late publication.
+    Persist artifact+terminal outcome recoverably and reconcile one usage record.
   surface: internal
 invariants:
-- 'R-02: artifactId/revision/contentHash identifies immutable canonical serialized prepared output. New content never overwrites
-  that tuple; eligibility can change independently and is rechecked before export.'
-- Private attachment identity never resolves through CorpusContent/public routes. Context scope is enforced within an owner,
-  not merely between accounts. Source instructions are untrusted data.
-- Research-turn and novelty-analysis/discussion retain distinct identities, allowed inputs and result kinds. Novelty cancellation
-  cannot resurrect through late completion or authorize publication.
-- Durable draft persistence/restore/discard/consumption is blocked with POLICY_UNRESOLVED until retention, erasure, storage
-  and shared-device policy is resolved. Browser account tagging is not secure isolation.
-- Only acknowledged draft revisions are recoverable. Saving/failed UI states cannot promise recovery; an accepted submission
-  consumes its exact draft revision and preserves a concurrent newer one. Session tombstones reject late draft saves.
-- Literal quotes require source text/hash/location actually read; unread web references cannot support claims. Partial extraction/model
-  context and abstention are explicit, not false successful grounding. Optional assessments use the recorded method scale
-  with minimum<=score<=maximum and existing evidence IDs; a score is not proof of scientific novelty.
-- Deletion acknowledgement is not blanket erasure proof. Deleted/session-scoped results, drafts and attachments cannot reappear
-  on replay/restore; backup and externally exported-copy treatment require resolved policy.
+- 'R-02: artifactId/revision/contentHash identifies immutable canonical serialized prepared output. New content never overwrites that tuple; eligibility
+  can change independently and is rechecked before export.'
+- Private attachment identity never resolves through CorpusContent/public routes. Context scope is enforced within an owner, not merely between
+  accounts. Source instructions are untrusted data.
+- Research-turn and novelty-analysis/discussion retain distinct identities, allowed inputs and result kinds. Novelty cancellation cannot resurrect
+  through late completion or authorize publication.
+- Durable draft persistence/restore/discard/consumption is blocked with POLICY_UNRESOLVED until retention, erasure, storage and shared-device
+  policy is resolved. Browser account tagging is not secure isolation.
+- Only acknowledged draft revisions are recoverable. Saving/failed UI states cannot promise recovery; an accepted submission consumes its exact
+  draft revision and preserves a concurrent newer one. Session tombstones reject late draft saves.
+- Literal quotes require source text/hash/location actually read; unread web references cannot support claims. Partial extraction/model context
+  and abstention are explicit, not false successful grounding. Optional assessments use the recorded method scale with minimum<=score<=maximum
+  and existing evidence IDs; a score is not proof of scientific novelty.
+- Deletion acknowledgement is not blanket erasure proof. Deleted/session-scoped results, drafts and attachments cannot reappear on replay/restore;
+  backup and externally exported-copy treatment require resolved policy.
 checks:
 - 'Property: owner/context swaps fail on lists, direct IDs, assets, drafts, progress and results.'
-- Interleave draft save/submit/new edit/conflict/discard/session-delete/restart; exact accepted revision is consumed and newer
-  acknowledged edit survives.
+- Interleave draft save/submit/new edit/conflict/discard/session-delete/restart; exact accepted revision is consumed and newer acknowledged edit
+  survives.
 - 'Property: immutable artifact tuple never returns different bytes; eligibility revocation prevents pending export.'
 - Race novelty cancellation/completion and duplicate turn delivery; one authoritative outcome and no duplicate accounting.
-- Controlled evidence fixtures include support, contradiction, insufficient evidence, unread references, corrupt extraction
-  and malformed model output.
+- Controlled evidence fixtures include support, contradiction, insufficient evidence, unread references, corrupt extraction and malformed model
+  output.
 state_machines:
 - name: ResearchTurnOrDiscussion
   initial: accepted
@@ -4148,15 +4300,15 @@ state_machines:
     discarded: []
     expired: []
     deleted: []
-  rule: Editing creates another immutable acknowledged revision; consumption/discard targets exact revision and cannot consume
-    newer edits. Conflict does not commit an overwrite.
+  rule: Editing creates another immutable acknowledged revision; consumption/discard targets exact revision and cannot consume newer edits. Conflict
+    does not commit an overwrite.
 bindings:
 - artifact.ownerId/contextId/operationId == accepted owner/context/job
 - artifact.kind matches research-turn, novelty-analysis or novelty-discussion job kind
 - artifact.artifact.contentHash == hash of versioned canonical artifact.output
 - submitted draft owner/context/kind/contentHash == accepted input
 - completion lease/input/revision matches active claim and live context tombstone boundary
-version: 1.0.0
+version: 2.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -4196,8 +4348,8 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
   - IDEMPOTENCY_CONFLICT
-  semantics: CAS normalized owner/topic identity and settings; preserve one subscription for repeated follow. Resolve IANA
-    time-zone, cadence and topic validation vocabulary before enabling.
+  semantics: CAS normalized owner/topic identity and settings; preserve one subscription for repeated follow. Resolve IANA time-zone, cadence
+    and topic validation vocabulary before enabling.
   surface: browser
 - name: listTopicSubscriptions
   input: DigestSubscriptionsRead
@@ -4238,8 +4390,8 @@ operations:
   - NOT_FOUND
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Deduplicate owner/subscription/window/policy intention; resolve eligible Discovery inputs. startInclusive<endExclusive
-    and schedule/time-zone policy govern boundaries. No-content is a recorded outcome, not a retrieval failure.
+  semantics: Deduplicate owner/subscription/window/policy intention; resolve eligible Discovery inputs. startInclusive<endExclusive and schedule/time-zone
+    policy govern boundaries. No-content is a recorded outcome, not a retrieval failure.
   surface: internal
 - name: dispatchDigest
   input: DigestSend
@@ -4255,8 +4407,8 @@ operations:
   - CONFLICT
   - OUTCOME_UNKNOWN
   - CAPACITY_EXHAUSTED
-  semantics: Before external send recheck current owner, verified destination, consent, enabled subscription, unsubscribe
-    fence, paper eligibility and free-delivery policy. Persist intent before adapter call; timeout may yield unknown.
+  semantics: Before external send recheck current owner, verified destination, consent, enabled subscription, unsubscribe fence, paper eligibility
+    and free-delivery policy. Persist intent before adapter call; timeout may yield unknown.
   surface: internal
 - name: readDigestDelivery
   input: DigestDeliveryRead
@@ -4283,8 +4435,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - OUTCOME_UNKNOWN
-  semantics: Resolve original effectKey/remote receipt. Unknown outcomes never blindly resend; a retry requires affirmative
-    proof that original effect did not occur.
+  semantics: Resolve original effectKey/remote receipt. Unknown outcomes never blindly resend; a retry requires affirmative proof that original
+    effect did not occur.
   surface: internal
 - name: unsubscribeDigestToken
   input: DigestUnsubscribe
@@ -4298,21 +4450,20 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - INVALID_TOKEN
-  semantics: POST/explicit confirmation only; verify target/purpose and persist unsubscribe boundary. Repeated already-applied
-    token is harmless; response discloses no account enumeration.
+  semantics: POST/explicit confirmation only; verify target/purpose and persist unsubscribe boundary. Repeated already-applied token is harmless;
+    response discloses no account enumeration.
   surface: browser
 invariants:
-- Delivery is distinct from preparation and transport acknowledgement. States sent, failed, unknown, no-content and suppressed
-  are not interchangeable.
-- Unsubscribe/current consent wins over queued retries. One immutable effectKey binds subscription/window/content; stale scheduled
-  work cannot create an additional send.
-- The configured free delivery path, retention, consent and schedule policy must be resolved before public delivery. A local
-  sink proves only synthetic delivery, not public parity.
-- Provider acknowledgements and reconciliation facts are replayable without changing the intended effect. Unknown remote success
-  remains unknown if the provider cannot resolve it.
+- Delivery is distinct from preparation and transport acknowledgement. States sent, failed, unknown, no-content and suppressed are not interchangeable.
+- Unsubscribe/current consent wins over queued retries. One immutable effectKey binds subscription/window/content; stale scheduled work cannot
+  create an additional send.
+- The configured free delivery path, retention, consent and schedule policy must be resolved before public delivery. A local sink proves only
+  synthetic delivery, not public parity.
+- Provider acknowledgements and reconciliation facts are replayable without changing the intended effect. Unknown remote success remains unknown
+  if the provider cannot resolve it.
 checks:
-- 'Property: clock/time-zone/DST windows are deliberate, nonoverlapping under the approved cadence policy, and duplicate scheduling
-  retains one effect.'
+- 'Property: clock/time-zone/DST windows are deliberate, nonoverlapping under the approved cadence policy, and duplicate scheduling retains one
+  effect.'
 - Race unsubscribe/revocation against queued dispatch; no ineligible send.
 - Inject timeout after remote send; reconciliation cannot duplicate delivery or report false success.
 state_machines:
@@ -4342,9 +4493,9 @@ state_machines:
     sent: []
     no-content: []
     suppressed: []
-  rule: failed→queued requires proven non-occurrence, resolved retry policy and current consent/subscription; unknown must
-    reconcile first. Initial no-content outcome creates no send.
-version: 1.0.0
+  rule: failed→queued requires proven non-occurrence, resolved retry policy and current consent/subscription; unknown must reconcile first. Initial
+    no-content outcome creates no send.
+version: 2.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -4387,9 +4538,9 @@ operations:
   - INVALID_TOKEN
   - CONFLICT
   - IDEMPOTENCY_CONFLICT
-  semantics: 'Preserve retained owner-token configuration: protected same-origin write-only token input, current-owner binding
-    and CAS credential replacement. Validate with provider then store through resolved credential protection; never echo token
-    to response, browser persistence or normal logs. Token replacement invalidates approvals using prior connection revision.'
+  semantics: 'Preserve retained owner-token configuration: protected same-origin write-only token input, current-owner binding and CAS credential
+    replacement. Validate with provider then store through resolved credential protection; never echo token to response, browser persistence or
+    normal logs. Token replacement invalidates approvals using prior connection revision.'
   surface: browser
 - name: readNotionConnection
   input: ExportConnectionRead
@@ -4417,8 +4568,8 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
   - OUTCOME_UNKNOWN
-  semantics: Persist revoked/disconnected authority boundary; pending previews/approvals/effects cannot reuse it. Remote published
-    content is not claimed deleted.
+  semantics: Persist revoked/disconnected authority boundary; pending previews/approvals/effects cannot reuse it. Remote published content is
+    not claimed deleted.
   surface: browser
 - name: listExportDestinations
   input: ExportConnectionRead
@@ -4446,8 +4597,8 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - SOURCE_INELIGIBLE
   - CONFLICT
-  semantics: Read C07 exact eligible novelty artifact; freeze source tuple, owner, destination, connection revision and rendered
-    content in canonical bindingHash. Preparing preview performs no Notion write.
+  semantics: Read C07 exact eligible novelty artifact; freeze source tuple, owner, destination, connection revision and rendered content in canonical
+    bindingHash. Preparing preview performs no Notion write.
   surface: browser
 - name: approveExportPreview
   input: ExportApprovalRequest
@@ -4463,8 +4614,8 @@ operations:
   - CONFLICT
   - SOURCE_INELIGIBLE
   - IDEMPOTENCY_CONFLICT
-  semantics: Require deliberate explicit approval of exact previewRevision/bindingHash. Revalidate source/destination/connection/current
-    owner; a changed binding requires a new preview and approval.
+  semantics: Require deliberate explicit approval of exact previewRevision/bindingHash. Revalidate source/destination/connection/current owner;
+    a changed binding requires a new preview and approval.
   surface: browser
 - name: executeApprovedExport
   input: ExportExecute
@@ -4482,8 +4633,8 @@ operations:
   - APPROVAL_REQUIRED
   - OUTCOME_UNKNOWN
   - CAPACITY_EXHAUSTED
-  semantics: Before any external effect recheck exact immutable source revision/hash, current eligibility, destination, connection,
-    owner and approval policy. Durably bind one effect to approval then dispatch; identical retry returns original effect.
+  semantics: Before any external effect recheck exact immutable source revision/hash, current eligibility, destination, connection, owner and
+    approval policy. Durably bind one effect to approval then dispatch; identical retry returns original effect.
   surface: browser
 - name: readExportEffect
   input: ExportEffectRead
@@ -4511,8 +4662,8 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
   - OUTCOME_UNKNOWN
-  semantics: CAS invalidate unconsumed approval before dispatch; in-flight/existing external effect cannot be promised undone
-    and returns conflict/unknown for explicit reconciliation.
+  semantics: CAS invalidate unconsumed approval before dispatch; in-flight/existing external effect cannot be promised undone and returns conflict/unknown
+    for explicit reconciliation.
   surface: browser
 - name: reconcileExportEffect
   input: ExportEffectRead
@@ -4526,30 +4677,27 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - OUTCOME_UNKNOWN
-  semantics: Query evidence for original effect identity/remote reference; do not blindly repeat write. Another write is permitted
-    only after proven non-occurrence and still-valid approval/current authority.
+  semantics: Query evidence for original effect identity/remote reference; do not blindly repeat write. Another write is permitted only after
+    proven non-occurrence and still-valid approval/current authority.
   surface: internal
 invariants:
-- 'R-02: the same ResearchArtifactRef tuple appears in C07 source read and C09 preview; bindingHash additionally fixes rendered
-  content, destination, owner, connection revision and render policy. Canonical serialization/hashing is versioned and shared
-  by preview/approval/execution.'
-- Analysis completion, prepared-result read, draft restore, preview, approval cancellation and status polling never authorize
-  an export. Only explicit current approval permits the bound effect.
-- Unresolved credential protection, allowed external-copy handling, provider terms/free capacity, approval-validity or source
-  policy blocks the affected connection/storage/export operation with POLICY_UNRESOLVED. No default duration or paid fallback
-  is chosen.
-- Approval and effect are distinct records. Duplicate idempotency key with changed payload conflicts. Lost remote response
-  remains unknown until reconciled; provider inability to reconcile cannot be disguised as retry safety.
-- 'Retained connection uses owner token configuration/read/disconnect, not a new OAuth feature. writeOnly is documentation/validation
-  metadata, not sufficient secret handling: transport, redaction, storage and browser clearing require executable verification.'
-- Revocation/deletion after a remote write does not prove deletion of external copies; report recorded local/remote dispositions
-  separately under the resolved policy.
+- 'R-02: the same ResearchArtifactRef tuple appears in C07 source read and C09 preview; bindingHash additionally fixes rendered content, destination,
+  owner, connection revision and render policy. Canonical serialization/hashing is versioned and shared by preview/approval/execution.'
+- Analysis completion, prepared-result read, draft restore, preview, approval cancellation and status polling never authorize an export. Only
+  explicit current approval permits the bound effect.
+- Unresolved credential protection, allowed external-copy handling, provider terms/free capacity, approval-validity or source policy blocks the
+  affected connection/storage/export operation with POLICY_UNRESOLVED. No default duration or paid fallback is chosen.
+- Approval and effect are distinct records. Duplicate idempotency key with changed payload conflicts. Lost remote response remains unknown until
+  reconciled; provider inability to reconcile cannot be disguised as retry safety.
+- 'Retained connection uses owner token configuration/read/disconnect, not a new OAuth feature. writeOnly is documentation/validation metadata,
+  not sufficient secret handling: transport, redaction, storage and browser clearing require executable verification.'
+- Revocation/deletion after a remote write does not prove deletion of external copies; report recorded local/remote dispositions separately under
+  the resolved policy.
 checks:
-- 'Property: change any source bytes/revision/hash, owner, connection revision or destination after preview; stale approval
-  cannot authorize effect.'
+- 'Property: change any source bytes/revision/hash, owner, connection revision or destination after preview; stale approval cannot authorize effect.'
 - 'Property: preview/read/cancel has zero external writes; duplicate execution has one intended effect.'
-- Inject timeout immediately after remote success and restart before receipt; reconciliation identifies the original publication
-  without blind duplicate send.
+- Inject timeout immediately after remote success and restart before receipt; reconciliation identifies the original publication without blind
+  duplicate send.
 - Verify cross-owner credentials/results/approval/effect isolation and current-source eligibility immediately before write.
 state_machines:
 - name: ExportApproval
@@ -4586,15 +4734,15 @@ state_machines:
     succeeded: []
     cancelled: []
     invalidated: []
-  rule: failed retry preserves same effect identity, needs proof remote effect did not occur and still-valid bound authorization;
-    unknown never directly transitions to execution. Approval consumption does not manufacture a new approval for retry.
+  rule: failed retry preserves same effect identity, needs proof remote effect did not occur and still-valid bound authorization; unknown never
+    directly transitions to execution. Approval consumption does not manufacture a new approval for retry.
 bindings:
 - approval.ownerId == effect.ownerId == current accountId
 - preview.source == C07 immutable artifactId/revision/contentHash
 - approval.bindingHash == effect.bindingHash == current verified preview binding
 - current connection/source eligibility/destination authority is checked at dispatch authorization point
 - revocation concurrent with an already-dispatched remote effect is reported/reconciled rather than falsely claimed undone
-version: 1.0.0
+version: 2.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -4645,8 +4793,8 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - UNKNOWN_OUTCOME
-  semantics: Bind actor, operation, target, input hash, evidence generation and policy atomically to receipt before effects;
-    recheck preconditions before each effect.
+  semantics: Bind actor, operation, target, input hash, evidence generation and policy atomically to receipt before effects; recheck preconditions
+    before each effect.
 - name: readReceipt
   input: OperatorReceiptRequest
   output: OperatorReceipt
@@ -4663,17 +4811,17 @@ operations:
   - UNKNOWN_OUTCOME
   semantics: Read/reconcile without repeating effects; unknown remains unknown until evidence establishes disposition.
 invariants:
-- The executable transport is local stdin/stdout JSON; dedicated authenticated evidence HTTP bindings remain compatibility-dependent
-  rather than a public admin bypass.
-- Operation vocabulary comes from the retained protocol inventory; unsupported or unverified native semantics fail closed.
-  No generic arbitrary command, path or shell execution is admitted.
-- Receipts preserve actor/target/effect binding across restart. A replay with changed input under the same key conflicts.
-  Readiness is not inferred from a receipt alone.
+- The executable transport is local stdin/stdout JSON; dedicated authenticated evidence HTTP bindings remain compatibility-dependent rather than
+  a public admin bypass.
+- Operation vocabulary comes from the retained protocol inventory; unsupported or unverified native semantics fail closed. No generic arbitrary
+  command, path or shell execution is admitted.
+- Receipts preserve actor/target/effect binding across restart. A replay with changed input under the same key conflicts. Readiness is not inferred
+  from a receipt alone.
 checks:
 - Wrong actor/target and changed inputs cannot cause effects.
 - Interrupted effect with unknown outcome is reconciled without duplicate execution.
 - Native filesystem/keyring behavior and every retained command still require actual fixture execution.
-version: 1.0.0
+version: 2.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -4756,19 +4904,17 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - UNKNOWN_OUTCOME
-  semantics: Observation transport failure never changes a domain outcome; bounded buffering/dropping policy reports missing
-    evidence.
+  semantics: Observation transport failure never changes a domain outcome; bounded buffering/dropping policy reports missing evidence.
 invariants:
-- Liveness, component readiness and complete-journey readiness are distinct. Unknown or stale observations cannot be upgraded
-  to available.
-- Recovery preserves current ownership, deletion, consent, source restrictions and idempotency; ServiceOperations never writes
-  domain records directly.
+- Liveness, component readiness and complete-journey readiness are distinct. Unknown or stale observations cannot be upgraded to available.
+- Recovery preserves current ownership, deletion, consent, source restrictions and idempotency; ServiceOperations never writes domain records
+  directly.
 - Logging excludes credentials and unnecessary private input; access and retention policy must be approved before storage.
 checks:
 - Inject a job failure, correlate to an incident and verify actual domain recovery.
 - Restore cannot resurrect erased data or bypass current authority.
 - Fail observation sink and assert bounded behavior plus truthful unknown indicators.
-version: 1.0.0
+version: 2.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -4811,29 +4957,27 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - UNKNOWN_OUTCOME
-  semantics: Validate payload against the registered requestSchemaId and adapterRevision; only the registered operation allowlist
-    is callable. Unknown adapter/profile/schema is POLICY_UNRESOLVED or INCOMPATIBLE, never permissive passthrough.
+  semantics: Validate payload against the registered requestSchemaId and adapterRevision; only the registered operation allowlist is callable.
+    Unknown adapter/profile/schema is POLICY_UNRESOLVED or INCOMPATIBLE, never permissive passthrough.
 invariants:
-- This is a dispatch envelope, not a claim that arbitrary JSON is a complete provider API. Each enabled adapter MUST register
-  concrete request/response schemas, provider API version, allowed hosts, callback/credential rules and free-limit evidence
-  before admission; unresolved profiles are blocked below.
-- Owner component retains state authority. Credentials are references resolved server-side; adapter credentials never enter
-  browser responses, observations or untrusted document prompts. Explicit owner token-configuration input and one-time MFA
-  material have the separately documented protected treatment.
-- Retry reads only within the selected deadline/attempt budget. Reconcile any possibly committed write before retry. Obey
-  provider rate-limit responses and Retry-After; free-plan exhaustion cannot trigger paid fallback.
-- Validate outbound URL/redirect/address targets before fetch, including private-address restrictions and per-source permission.
-  Provider output and document content are untrusted data.
-- 'The invokeProvider operation selects one of eleven typed profiles: identity.exchange, identity.profile, source.search,
-  source.read, citation.read, model.generate, attachment.extract, email.send, notion.inspect, notion.write, effect.reconcile.
-  responseSchemaId and non-null validatedPayload MUST match the selected profile; succeeded requires a non-null conforming
-  payload. A nullable unknown outcome never proves a write was absent.'
+- This is a dispatch envelope, not a claim that arbitrary JSON is a complete provider API. Each enabled adapter MUST register concrete request/response
+  schemas, provider API version, allowed hosts, callback/credential rules and free-limit evidence before admission; unresolved profiles are blocked
+  below.
+- Owner component retains state authority. Credentials are references resolved server-side; adapter credentials never enter browser responses,
+  observations or untrusted document prompts. Explicit owner token-configuration input and one-time MFA material have the separately documented
+  protected treatment.
+- Retry reads only within the selected deadline/attempt budget. Reconcile any possibly committed write before retry. Obey provider rate-limit
+  responses and Retry-After; free-plan exhaustion cannot trigger paid fallback.
+- Validate outbound URL/redirect/address targets before fetch, including private-address restrictions and per-source permission. Provider output
+  and document content are untrusted data.
+- 'The invokeProvider operation selects one of eleven typed profiles: identity.exchange, identity.profile, source.search, source.read, citation.read,
+  model.generate, attachment.extract, email.send, notion.inspect, notion.write, effect.reconcile. responseSchemaId and non-null validatedPayload
+  MUST match the selected profile; succeeded requires a non-null conforming payload. A nullable unknown outcome never proves a write was absent.'
 checks:
 - Reject unknown operation/schema/profile and outbound SSRF attempts.
 - Verify Google/ORCID state, nonce/issuer/audience where applicable and link binding without account takeover.
-- Exercise actual allowed email/model/Notion operation under verified free limits; mocks and a local mail sink do not establish
-  public feasibility.
-version: 1.0.0
+- Exercise actual allowed email/model/Notion operation under verified free limits; mocks and a local mail sink do not establish public feasibility.
+version: 2.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -4879,9 +5023,10 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - UNKNOWN_OUTCOME
-  semantics: The domain commits operation and recoverable dispatch obligation in one atomic unit, or an equivalent proven
-    recovery protocol, before acknowledging acceptance. Delivery is at least once; a consumer durably deduplicates messageId/operationId
-    and validates input hash/revision.
+  semantics: The domain commits operation and recoverable dispatch obligation in one atomic unit, or an equivalent proven recovery protocol, before
+    acknowledging acceptance. Delivery is at least once; a consumer durably deduplicates messageId/operationId and validates input hash/revision.
+    Delivery invokes acquireExecutionClaim then readExecutionPayload through the owner. DispatchAck only records transport disposition and owner
+    recordedRevision, never a lease or completed result.
 - name: recordCompletion
   input: DispatchFact
   output: DispatchAck
@@ -4896,22 +5041,71 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - UNKNOWN_OUTCOME
-  semantics: Only the operation owner commits state/seq/result visibility; stale worker generations, revoked authority and
-    terminal/deleted-operation facts cannot overwrite or resurrect work.
+  semantics: 'Only the operation owner commits state/seq/result visibility; stale worker generations, revoked authority and terminal/deleted-operation
+    facts cannot overwrite or resurrect work. DispatchFact is a proposal, not an owner event: no worker seq/revision authority. messageId is the
+    factId for the same normalized-intent replay. PaperAssistance progress/failure/success map to recordAssistanceProgress/failAssistance/completeAssistance
+    using identical claim, CAS and settlement rules. prepared.result must equal resultRef; claim binding must match operationId, ownerComponent
+    and inputHash. Other owners retain their own terminal/external-effect semantics and require a compatible payload codec before enablement.'
+- name: acquireExecutionClaim
+  input: ExecutionAcquire
+  output: ExecutionClaimResult
+  auth: Trusted authenticated executor for the exact owner operation; current account/session/source authority is rechecked on the same protected
+    transaction.
+  errors: &id001
+  - INVALID_INPUT
+  - UNAUTHENTICATED
+  - FORBIDDEN
+  - NOT_FOUND
+  - CONFLICT
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  - INCOMPATIBLE
+  semantics: Compare immutable accepted binding and eligible nonterminal state, issue one worker-bound lease/fence atomically using owner time.
+    Duplicate delivery to the same worker recovers the same still-current claim; another active claimant conflicts. Delivery attempt grants no
+    authority.
+  surface: internal
+- name: renewExecutionClaim
+  input: ExecutionRenew
+  output: ExecutionClaimResult
+  auth: Trusted authenticated executor for the exact owner operation; current account/session/source authority is rechecked on the same protected
+    transaction.
+  errors: *id001
+  semantics: Compare trusted worker, current lease/fence, immutable binding, unexpired owner time and expectedLeaseRevision matching claim.leaseRevision.
+    Advance lease revision only. Expired/replaced claims cannot renew; business revision/seq and original acceptedAt do not change.
+  surface: internal
+- name: reclaimExecution
+  input: ExecutionReclaim
+  output: ExecutionClaimResult
+  auth: Trusted authenticated executor for the exact owner operation; current account/session/source authority is rechecked on the same protected
+    transaction.
+  errors: *id001
+  semantics: Owner validates previousFence and expired/revoked prior claim atomically, grants replacement a strictly larger fence and preserves
+    original input, acceptedAt and reservation. No timeout on the caller clock grants replacement authority.
+  surface: internal
+- name: readExecutionPayload
+  input: ExecutionClaimRead
+  output: AssistanceExecutionPayload
+  auth: Trusted authenticated executor for the exact owner operation; current account/session/source authority is rechecked on the same protected
+    transaction.
+  errors: *id001
+  semantics: U1 supports only PaperAssistance; other owner payload codecs remain INCOMPATIBLE until coordinated by their unit. Authenticate current
+    worker/claim, verify exact accepted binding/hash and current source/account permission before releasing immutable input and permitted sections.
+    Locator, owner ID and expired/replaced claim grant no access.
+  surface: internal
 invariants:
-- A transport acknowledgement is not business completion. Retry_later leaves a durable redelivery obligation; committed/duplicate
-  means the owning transaction recorded the disposition.
-- Retry budgets/deadlines/capacity settings require an approved policy. No unbounded queue, retries, shared at-most-once claim
-  or detached fire-and-forget acceptance.
-- An outbox or alternative durable acceptance protocol is required behavior, not a selected database/broker. Reconcile usage
-  reservations by operation identity, never count deliveries as separate work.
-- Cancellation request is distinct from acknowledged cancellation; cancellation and completion compete at a single owner-controlled
-  revision. Successful cancellation bars later effects.
+- A transport acknowledgement is not business completion. Retry_later leaves a durable redelivery obligation; committed/duplicate means the owning
+  transaction recorded the disposition.
+- Retry budgets/deadlines/capacity settings require an approved policy. No unbounded queue, retries, shared at-most-once claim or detached fire-and-forget
+  acceptance.
+- An outbox or alternative durable acceptance protocol is required behavior, not a selected database/broker. Reconcile usage reservations by operation
+  identity, never count deliveries as separate work.
+- Cancellation request is distinct from acknowledged cancellation; cancellation and completion compete at a single owner-controlled revision.
+  Successful cancellation bars later effects.
 checks:
 - Crash before/after acceptance, delivery, effect and completion acknowledgement; recover exactly one logical operation.
 - Duplicate/out-of-order events, lost stream and polling recovery preserve monotone seq/current snapshot.
 - Revocation/deletion/cancellation races reject late work and prevent private-data resurrection.
-version: 1.0.0
+version: 2.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -4923,7 +5117,7 @@ Only the operations explicitly listed here are externally mounted. A surface tag
 openapi: 3.1.1
 info:
   title: DocSuri application v2 boundary
-  version: 1.0.0
+  version: 2.0.0
   description: Proposed browser/application contracts; legacy removal requires consumer evidence and approved transition.
 servers:
 - url: /
@@ -4936,8 +5130,7 @@ paths:
       summary: 'Trusted host composition and coherent web context: host.resolveNavigation'
       x-contract-operation: C01.host.resolveNavigation
       x-authorization: Validated session or anonymous context according to each registered route's verified access rule.
-      description: Apply C01.host.resolveNavigation semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      description: Apply C01.host.resolveNavigation semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - {}
       - sessionCookie: []
@@ -4996,8 +5189,7 @@ paths:
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.inspectSession'
       x-contract-operation: C02.access.inspectSession
       x-authorization: Anonymous or validated current session; no caller-selected account.
-      description: Apply C02.access.inspectSession semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      description: Apply C02.access.inspectSession semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - {}
       - sessionCookie: []
@@ -5056,8 +5248,7 @@ paths:
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.register'
       x-contract-operation: C02.access.register
       x-authorization: Public registration with abuse admission and configured input/data policy.
-      description: Apply C02.access.register semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      description: Apply C02.access.register semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - {}
       - sessionCookie: []
@@ -5116,8 +5307,7 @@ paths:
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.requestVerification'
       x-contract-operation: C02.access.requestVerification
       x-authorization: Public, abuse-limited request; existence-neutral outcome.
-      description: Apply C02.access.requestVerification semantic rules. Derive internal context server-side; never accept
-        it in this body.
+      description: Apply C02.access.requestVerification semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - {}
       - sessionCookie: []
@@ -5176,8 +5366,7 @@ paths:
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.verifyEmail'
       x-contract-operation: C02.access.verifyEmail
       x-authorization: Holder of valid unexpired single-use proof bound to the intended verification flow.
-      description: Apply C02.access.verifyEmail semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      description: Apply C02.access.verifyEmail semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - {}
       - sessionCookie: []
@@ -5294,8 +5483,7 @@ paths:
       operationId: C02_access.logout
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.logout'
       x-contract-operation: C02.access.logout
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
       description: Apply C02.access.logout semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -5354,8 +5542,7 @@ paths:
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.requestPasswordReset'
       x-contract-operation: C02.access.requestPasswordReset
       x-authorization: Public, abuse-limited; existence-neutral response.
-      description: Apply C02.access.requestPasswordReset semantic rules. Derive internal context server-side; never accept
-        it in this body.
+      description: Apply C02.access.requestPasswordReset semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - {}
       - sessionCookie: []
@@ -5414,8 +5601,7 @@ paths:
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.completePasswordReset'
       x-contract-operation: C02.access.completePasswordReset
       x-authorization: Valid unused purpose-bound recovery proof.
-      description: Apply C02.access.completePasswordReset semantic rules. Derive internal context server-side; never accept
-        it in this body.
+      description: Apply C02.access.completePasswordReset semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - {}
       - sessionCookie: []
@@ -5473,10 +5659,9 @@ paths:
       operationId: C02_access.changePassword
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.changePassword'
       x-contract-operation: C02.access.changePassword
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect. Required current credential/reauthentication proof.
-      description: Apply C02.access.changePassword semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+        Required current credential/reauthentication proof.
+      description: Apply C02.access.changePassword semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -5533,10 +5718,9 @@ paths:
       operationId: C02_access.requestEmailChange
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.requestEmailChange'
       x-contract-operation: C02.access.requestEmailChange
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect. Required reauthentication proof.
-      description: Apply C02.access.requestEmailChange semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+        Required reauthentication proof.
+      description: Apply C02.access.requestEmailChange semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -5594,8 +5778,7 @@ paths:
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.completeEmailChange'
       x-contract-operation: C02.access.completeEmailChange
       x-authorization: Valid purpose-bound email-change proof and the required current authority.
-      description: Apply C02.access.completeEmailChange semantic rules. Derive internal context server-side; never accept
-        it in this body.
+      description: Apply C02.access.completeEmailChange semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -5653,8 +5836,7 @@ paths:
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.beginIdentityFlow'
       x-contract-operation: C02.access.beginIdentityFlow
       x-authorization: Public for sign-in; current authenticated owner for linking.
-      description: Apply C02.access.beginIdentityFlow semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      description: Apply C02.access.beginIdentityFlow semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - {}
       - sessionCookie: []
@@ -5712,10 +5894,8 @@ paths:
       operationId: C02_access.listIdentityLinks
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.listIdentityLinks'
       x-contract-operation: C02.access.listIdentityLinks
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C02.access.listIdentityLinks semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C02.access.listIdentityLinks semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -5772,10 +5952,9 @@ paths:
       operationId: C02_access.unlinkIdentity
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.unlinkIdentity'
       x-contract-operation: C02.access.unlinkIdentity
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect. Required reauthentication.
-      description: Apply C02.access.unlinkIdentity semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+        Required reauthentication.
+      description: Apply C02.access.unlinkIdentity semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -5832,10 +6011,8 @@ paths:
       operationId: C02_access.readOrcidProfile
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.readOrcidProfile'
       x-contract-operation: C02.access.readOrcidProfile
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C02.access.readOrcidProfile semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C02.access.readOrcidProfile semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -5892,10 +6069,9 @@ paths:
       operationId: C02_access.beginMfaEnrollment
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.beginMfaEnrollment'
       x-contract-operation: C02.access.beginMfaEnrollment
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect. Currently verified administrator enrollment authority and reauthentication.
-      description: Apply C02.access.beginMfaEnrollment semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+        Currently verified administrator enrollment authority and reauthentication.
+      description: Apply C02.access.beginMfaEnrollment semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -5952,11 +6128,10 @@ paths:
       operationId: C02_access.retrieveMfaEnrollmentMaterial
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.retrieveMfaEnrollmentMaterial'
       x-contract-operation: C02.access.retrieveMfaEnrollmentMaterial
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect. Bound enrollment owner, current administrator enrollment authority, valid current reauthentication
-        proof and unused delivery reference.
-      description: Apply C02.access.retrieveMfaEnrollmentMaterial semantic rules. Derive internal context server-side; never
-        accept it in this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+        Bound enrollment owner, current administrator enrollment authority, valid current reauthentication proof and unused delivery reference.
+      description: Apply C02.access.retrieveMfaEnrollmentMaterial semantic rules. Derive internal context server-side; never accept it in this
+        body.
       security:
       - sessionCookie: []
       parameters:
@@ -6018,8 +6193,7 @@ paths:
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.confirmMfaEnrollment'
       x-contract-operation: C02.access.confirmMfaEnrollment
       x-authorization: Bound enrollment owner with verified primary authentication and valid new factor proof.
-      description: Apply C02.access.confirmMfaEnrollment semantic rules. Derive internal context server-side; never accept
-        it in this body.
+      description: Apply C02.access.confirmMfaEnrollment semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -6076,11 +6250,10 @@ paths:
       operationId: C02_access.verifyMfa
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.verifyMfa'
       x-contract-operation: C02.access.verifyMfa
-      x-authorization: Valid protected primary-authentication continuation and second-factor proof; an active full session
-        is not required and anonymous context is permitted.
-      description: Apply C02.access.verifyMfa semantic rules. Derive internal context server-side; never accept it in this
-        body. Validate the purpose-bound continuation or recovery proof/cookie independently of a full session; anonymous
-        context alone has no recovery/MFA authority.
+      x-authorization: Valid protected primary-authentication continuation and second-factor proof; an active full session is not required and
+        anonymous context is permitted.
+      description: Apply C02.access.verifyMfa semantic rules. Derive internal context server-side; never accept it in this body. Validate the
+        purpose-bound continuation or recovery proof/cookie independently of a full session; anonymous context alone has no recovery/MFA authority.
       security:
       - {}
       - sessionCookie: []
@@ -6139,8 +6312,7 @@ paths:
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.recoverMfa'
       x-contract-operation: C02.access.recoverMfa
       x-authorization: Configured controlled administrator recovery authority/proof; no production bypass.
-      description: Apply C02.access.recoverMfa semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      description: Apply C02.access.recoverMfa semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -6197,10 +6369,8 @@ paths:
       operationId: C02_access.readProfile
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.readProfile'
       x-contract-operation: C02.access.readProfile
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C02.access.readProfile semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C02.access.readProfile semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -6257,10 +6427,8 @@ paths:
       operationId: C02_access.updateProfile
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.updateProfile'
       x-contract-operation: C02.access.updateProfile
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C02.access.updateProfile semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C02.access.updateProfile semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -6317,10 +6485,8 @@ paths:
       operationId: C02_access.listConsents
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.listConsents'
       x-contract-operation: C02.access.listConsents
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C02.access.listConsents semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C02.access.listConsents semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -6377,10 +6543,8 @@ paths:
       operationId: C02_access.updateConsent
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.updateConsent'
       x-contract-operation: C02.access.updateConsent
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C02.access.updateConsent semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C02.access.updateConsent semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -6437,10 +6601,9 @@ paths:
       operationId: C02_lifecycle.request
       summary: 'Account access, consent and owner-acknowledged lifecycle: lifecycle.request'
       x-contract-operation: C02.lifecycle.request
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect. Required recent reauthentication and explicit action/scope confirmation.
-      description: Apply C02.lifecycle.request semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+        Required recent reauthentication and explicit action/scope confirmation.
+      description: Apply C02.lifecycle.request semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -6497,10 +6660,9 @@ paths:
       operationId: C02_access.requestReactivation
       summary: 'Account access, consent and owner-acknowledged lifecycle: access.requestReactivation'
       x-contract-operation: C02.access.requestReactivation
-      x-authorization: Public pre-authentication request under current abuse and reactivation-delivery policy; no active session
-        or caller account authority.
-      description: Apply C02.access.requestReactivation semantic rules. Derive internal context server-side; never accept
-        it in this body.
+      x-authorization: Public pre-authentication request under current abuse and reactivation-delivery policy; no active session or caller account
+        authority.
+      description: Apply C02.access.requestReactivation semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - {}
       - sessionCookie: []
@@ -6558,11 +6720,10 @@ paths:
       operationId: C02_lifecycle.reactivate
       summary: 'Account access, consent and owner-acknowledged lifecycle: lifecycle.reactivate'
       x-contract-operation: C02.lifecycle.reactivate
-      x-authorization: Valid unused purpose-bound reactivation proof and bound scope confirmation; no active full session
-        is required. Resolve the account from the proof, never from caller principal or account identifiers.
-      description: Apply C02.lifecycle.reactivate semantic rules. Derive internal context server-side; never accept it in
-        this body. Validate the purpose-bound continuation or recovery proof/cookie independently of a full session; anonymous
-        context alone has no recovery/MFA authority.
+      x-authorization: Valid unused purpose-bound reactivation proof and bound scope confirmation; no active full session is required. Resolve
+        the account from the proof, never from caller principal or account identifiers.
+      description: Apply C02.lifecycle.reactivate semantic rules. Derive internal context server-side; never accept it in this body. Validate
+        the purpose-bound continuation or recovery proof/cookie independently of a full session; anonymous context alone has no recovery/MFA authority.
       security:
       - {}
       - sessionCookie: []
@@ -6620,10 +6781,9 @@ paths:
       operationId: C02_lifecycle.inspect
       summary: 'Account access, consent and owner-acknowledged lifecycle: lifecycle.inspect'
       x-contract-operation: C02.lifecycle.inspect
-      x-authorization: Current owner or separately authorized lifecycle auditor; withdrawn-account recovery uses only the
-        configured bound recovery authority.
-      description: Apply C02.lifecycle.inspect semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current owner or separately authorized lifecycle auditor; withdrawn-account recovery uses only the configured bound recovery
+        authority.
+      description: Apply C02.lifecycle.inspect semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -6680,10 +6840,8 @@ paths:
       operationId: C03_library.savePaper
       summary: 'Personal library, controlled personalization and consistent entitlements: library.savePaper'
       x-contract-operation: C03.library.savePaper
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.library.savePaper semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.library.savePaper semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -6740,10 +6898,8 @@ paths:
       operationId: C03_library.readSavedPaper
       summary: 'Personal library, controlled personalization and consistent entitlements: library.readSavedPaper'
       x-contract-operation: C03.library.readSavedPaper
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.library.readSavedPaper semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.library.readSavedPaper semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -6800,10 +6956,8 @@ paths:
       operationId: C03_library.listSavedPapers
       summary: 'Personal library, controlled personalization and consistent entitlements: library.listSavedPapers'
       x-contract-operation: C03.library.listSavedPapers
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.library.listSavedPapers semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.library.listSavedPapers semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -6860,10 +7014,8 @@ paths:
       operationId: C03_library.removeSavedPaper
       summary: 'Personal library, controlled personalization and consistent entitlements: library.removeSavedPaper'
       x-contract-operation: C03.library.removeSavedPaper
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.library.removeSavedPaper semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.library.removeSavedPaper semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -6885,7 +7037,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LibrarySavedPaperInputHttp'
+              $ref: '#/components/schemas/LibraryRemoveSavedPaperInputHttp'
       responses:
         '200':
           description: Committed outcome or explicitly discriminated pending/conflict/unavailable result
@@ -6920,10 +7072,8 @@ paths:
       operationId: C03_library.saveSearch
       summary: 'Personal library, controlled personalization and consistent entitlements: library.saveSearch'
       x-contract-operation: C03.library.saveSearch
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.library.saveSearch semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.library.saveSearch semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -6980,10 +7130,8 @@ paths:
       operationId: C03_library.readSavedSearch
       summary: 'Personal library, controlled personalization and consistent entitlements: library.readSavedSearch'
       x-contract-operation: C03.library.readSavedSearch
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.library.readSavedSearch semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.library.readSavedSearch semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -7040,10 +7188,8 @@ paths:
       operationId: C03_library.listSavedSearches
       summary: 'Personal library, controlled personalization and consistent entitlements: library.listSavedSearches'
       x-contract-operation: C03.library.listSavedSearches
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.library.listSavedSearches semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.library.listSavedSearches semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -7100,10 +7246,8 @@ paths:
       operationId: C03_library.removeSavedSearch
       summary: 'Personal library, controlled personalization and consistent entitlements: library.removeSavedSearch'
       x-contract-operation: C03.library.removeSavedSearch
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.library.removeSavedSearch semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.library.removeSavedSearch semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -7125,7 +7269,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LibrarySavedSearchInputHttp'
+              $ref: '#/components/schemas/LibraryRemoveSavedSearchInputHttp'
       responses:
         '200':
           description: Committed outcome or explicitly discriminated pending/conflict/unavailable result
@@ -7160,10 +7304,8 @@ paths:
       operationId: C03_library.listHistory
       summary: 'Personal library, controlled personalization and consistent entitlements: library.listHistory'
       x-contract-operation: C03.library.listHistory
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.library.listHistory semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.library.listHistory semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -7220,10 +7362,8 @@ paths:
       operationId: C03_library.readHistory
       summary: 'Personal library, controlled personalization and consistent entitlements: library.readHistory'
       x-contract-operation: C03.library.readHistory
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.library.readHistory semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.library.readHistory semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -7280,10 +7420,8 @@ paths:
       operationId: C03_library.clearHistory
       summary: 'Personal library, controlled personalization and consistent entitlements: library.clearHistory'
       x-contract-operation: C03.library.clearHistory
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.library.clearHistory semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.library.clearHistory semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -7340,8 +7478,7 @@ paths:
       operationId: C03_settings.read
       summary: 'Personal library, controlled personalization and consistent entitlements: settings.read'
       x-contract-operation: C03.settings.read
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
       description: Apply C03.settings.read semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -7399,10 +7536,8 @@ paths:
       operationId: C03_settings.update
       summary: 'Personal library, controlled personalization and consistent entitlements: settings.update'
       x-contract-operation: C03.settings.update
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.settings.update semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.settings.update semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -7459,10 +7594,8 @@ paths:
       operationId: C03_settings.updateOnboarding
       summary: 'Personal library, controlled personalization and consistent entitlements: settings.updateOnboarding'
       x-contract-operation: C03.settings.updateOnboarding
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.settings.updateOnboarding semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.settings.updateOnboarding semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -7519,10 +7652,8 @@ paths:
       operationId: C03_settings.listSuggestions
       summary: 'Personal library, controlled personalization and consistent entitlements: settings.listSuggestions'
       x-contract-operation: C03.settings.listSuggestions
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.settings.listSuggestions semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.settings.listSuggestions semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -7579,10 +7710,8 @@ paths:
       operationId: C03_settings.listRecentPapers
       summary: 'Personal library, controlled personalization and consistent entitlements: settings.listRecentPapers'
       x-contract-operation: C03.settings.listRecentPapers
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.settings.listRecentPapers semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.settings.listRecentPapers semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -7639,8 +7768,8 @@ paths:
       operationId: C03_settings.reset
       summary: 'Personal library, controlled personalization and consistent entitlements: settings.reset'
       x-contract-operation: C03.settings.reset
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect. Explicit scope confirmation and resolved deletion policy.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+        Explicit scope confirmation and resolved deletion policy.
       description: Apply C03.settings.reset semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -7698,8 +7827,7 @@ paths:
       operationId: C03_usage.inspect
       summary: 'Personal library, controlled personalization and consistent entitlements: usage.inspect'
       x-contract-operation: C03.usage.inspect
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
       description: Apply C03.usage.inspect semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -7757,8 +7885,7 @@ paths:
       operationId: C03_usage.readPlan
       summary: 'Personal library, controlled personalization and consistent entitlements: usage.readPlan'
       x-contract-operation: C03.usage.readPlan
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
       description: Apply C03.usage.readPlan semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -7817,8 +7944,7 @@ paths:
       summary: 'Personal library, controlled personalization and consistent entitlements: usage.grantEntitlement'
       x-contract-operation: C03.usage.grantEntitlement
       x-authorization: Current authorized application administrator with required MFA; target account is independently checked.
-      description: Apply C03.usage.grantEntitlement semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      description: Apply C03.usage.grantEntitlement semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -7876,8 +8002,7 @@ paths:
       summary: 'Personal library, controlled personalization and consistent entitlements: usage.revokeEntitlement'
       x-contract-operation: C03.usage.revokeEntitlement
       x-authorization: Current authorized application administrator with required MFA.
-      description: Apply C03.usage.revokeEntitlement semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      description: Apply C03.usage.revokeEntitlement semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -7934,10 +8059,8 @@ paths:
       operationId: C03_usage.listRecords
       summary: 'Personal library, controlled personalization and consistent entitlements: usage.listRecords'
       x-contract-operation: C03.usage.listRecords
-      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation
-        again at the effect.
-      description: Apply C03.usage.listRecords semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated owner from trusted context; enforce resource ownership and current revocation again at the effect.
+      description: Apply C03.usage.listRecords semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -7994,8 +8117,7 @@ paths:
       operationId: C04_resolvePaper
       summary: 'Canonical corpus, eligible content and projection publication: resolvePaper'
       x-contract-operation: C04.resolvePaper
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
       description: Apply C04.resolvePaper semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -8053,8 +8175,7 @@ paths:
       operationId: C04_readContent
       summary: 'Canonical corpus, eligible content and projection publication: readContent'
       x-contract-operation: C04.readContent
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
       description: Apply C04.readContent semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -8112,8 +8233,7 @@ paths:
       operationId: C04_readAsset
       summary: 'Canonical corpus, eligible content and projection publication: readAsset'
       x-contract-operation: C04.readAsset
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
       description: Apply C04.readAsset semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -8171,10 +8291,8 @@ paths:
       operationId: C04_acceptCorpusRun
       summary: 'Canonical corpus, eligible content and projection publication: acceptCorpusRun'
       x-contract-operation: C04.acceptCorpusRun
-      x-authorization: Current authorized corpus-maintenance actor and explicit operation scope; account membership alone
-        is insufficient.
-      description: Apply C04.acceptCorpusRun semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authorized corpus-maintenance actor and explicit operation scope; account membership alone is insufficient.
+      description: Apply C04.acceptCorpusRun semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -8237,8 +8355,7 @@ paths:
       operationId: C04_readCorpusRun
       summary: 'Canonical corpus, eligible content and projection publication: readCorpusRun'
       x-contract-operation: C04.readCorpusRun
-      x-authorization: Current authorized corpus-maintenance actor and explicit operation scope; account membership alone
-        is insufficient.
+      x-authorization: Current authorized corpus-maintenance actor and explicit operation scope; account membership alone is insufficient.
       description: Apply C04.readCorpusRun semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -8296,8 +8413,7 @@ paths:
       operationId: C04_retryCorpusRun
       summary: 'Canonical corpus, eligible content and projection publication: retryCorpusRun'
       x-contract-operation: C04.retryCorpusRun
-      x-authorization: Current authorized corpus-maintenance actor and explicit operation scope; account membership alone
-        is insufficient.
+      x-authorization: Current authorized corpus-maintenance actor and explicit operation scope; account membership alone is insufficient.
       description: Apply C04.retryCorpusRun semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -8361,10 +8477,8 @@ paths:
       operationId: C04_changeSourceEligibility
       summary: 'Canonical corpus, eligible content and projection publication: changeSourceEligibility'
       x-contract-operation: C04.changeSourceEligibility
-      x-authorization: Current authorized corpus-maintenance actor and explicit operation scope; account membership alone
-        is insufficient.
-      description: Apply C04.changeSourceEligibility semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authorized corpus-maintenance actor and explicit operation scope; account membership alone is insufficient.
+      description: Apply C04.changeSourceEligibility semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -8421,8 +8535,8 @@ paths:
       operationId: C05_search
       summary: 'Discovery, citations and completed-search facts: search'
       x-contract-operation: C05.search
-      x-authorization: Existing guest-search authority or current authenticated account; no private material, AI-job authority
-        or personal history for guests.
+      x-authorization: Existing guest-search authority or current authenticated account; no private material, AI-job authority or personal history
+        for guests.
       description: Apply C05.search semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - {}
@@ -8481,8 +8595,7 @@ paths:
       operationId: C05_readCitations
       summary: 'Discovery, citations and completed-search facts: readCitations'
       x-contract-operation: C05.readCitations
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
       description: Apply C05.readCitations semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -8540,10 +8653,8 @@ paths:
       operationId: C06_readAssistanceOptions
       summary: 'Paper assistance, glossary and prepared-result boundary: readAssistanceOptions'
       x-contract-operation: C06.readAssistanceOptions
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C06.readAssistanceOptions semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C06.readAssistanceOptions semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -8600,10 +8711,8 @@ paths:
       operationId: C06_acceptAssistance
       summary: 'Paper assistance, glossary and prepared-result boundary: acceptAssistance'
       x-contract-operation: C06.acceptAssistance
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C06.acceptAssistance semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C06.acceptAssistance semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -8666,10 +8775,8 @@ paths:
       operationId: C06_readAssistanceJob
       summary: 'Paper assistance, glossary and prepared-result boundary: readAssistanceJob'
       x-contract-operation: C06.readAssistanceJob
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C06.readAssistanceJob semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C06.readAssistanceJob semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -8726,10 +8833,8 @@ paths:
       operationId: C06_readPreparedAssistance
       summary: 'Paper assistance, glossary and prepared-result boundary: readPreparedAssistance'
       x-contract-operation: C06.readPreparedAssistance
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C06.readPreparedAssistance semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C06.readPreparedAssistance semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -8786,8 +8891,7 @@ paths:
       operationId: C06_readGlossary
       summary: 'Paper assistance, glossary and prepared-result boundary: readGlossary'
       x-contract-operation: C06.readGlossary
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
       description: Apply C06.readGlossary semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -8845,10 +8949,8 @@ paths:
       operationId: C06_replaceGlossary
       summary: 'Paper assistance, glossary and prepared-result boundary: replaceGlossary'
       x-contract-operation: C06.replaceGlossary
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C06.replaceGlossary semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C06.replaceGlossary semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -8905,10 +9007,8 @@ paths:
       operationId: C07_createResearchContext
       summary: 'Private research, durable drafts and immutable novelty artifacts: createResearchContext'
       x-contract-operation: C07.createResearchContext
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.createResearchContext semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.createResearchContext semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -8965,10 +9065,8 @@ paths:
       operationId: C07_createResearchSession
       summary: 'Private research, durable drafts and immutable novelty artifacts: createResearchSession'
       x-contract-operation: C07.createResearchSession
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.createResearchSession semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.createResearchSession semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -9025,10 +9123,8 @@ paths:
       operationId: C07_readResearchSession
       summary: 'Private research, durable drafts and immutable novelty artifacts: readResearchSession'
       x-contract-operation: C07.readResearchSession
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.readResearchSession semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.readResearchSession semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -9085,10 +9181,8 @@ paths:
       operationId: C07_listResearchSessions
       summary: 'Private research, durable drafts and immutable novelty artifacts: listResearchSessions'
       x-contract-operation: C07.listResearchSessions
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.listResearchSessions semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.listResearchSessions semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -9145,10 +9239,8 @@ paths:
       operationId: C07_deleteResearchSessions
       summary: 'Private research, durable drafts and immutable novelty artifacts: deleteResearchSessions'
       x-contract-operation: C07.deleteResearchSessions
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.deleteResearchSessions semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.deleteResearchSessions semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -9205,10 +9297,8 @@ paths:
       operationId: C07_beginPrivateAttachment
       summary: 'Private research, durable drafts and immutable novelty artifacts: beginPrivateAttachment'
       x-contract-operation: C07.beginPrivateAttachment
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.beginPrivateAttachment semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.beginPrivateAttachment semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -9265,10 +9355,8 @@ paths:
       operationId: C07_finishPrivateAttachment
       summary: 'Private research, durable drafts and immutable novelty artifacts: finishPrivateAttachment'
       x-contract-operation: C07.finishPrivateAttachment
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.finishPrivateAttachment semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.finishPrivateAttachment semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -9325,10 +9413,8 @@ paths:
       operationId: C07_readPrivateAttachment
       summary: 'Private research, durable drafts and immutable novelty artifacts: readPrivateAttachment'
       x-contract-operation: C07.readPrivateAttachment
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.readPrivateAttachment semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.readPrivateAttachment semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -9385,10 +9471,8 @@ paths:
       operationId: C07_readPrivateAsset
       summary: 'Private research, durable drafts and immutable novelty artifacts: readPrivateAsset'
       x-contract-operation: C07.readPrivateAsset
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.readPrivateAsset semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.readPrivateAsset semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -9445,8 +9529,7 @@ paths:
       operationId: C07_saveDraft
       summary: 'Private research, durable drafts and immutable novelty artifacts: saveDraft'
       x-contract-operation: C07.saveDraft
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
       description: Apply C07.saveDraft semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -9504,8 +9587,7 @@ paths:
       operationId: C07_restoreDraft
       summary: 'Private research, durable drafts and immutable novelty artifacts: restoreDraft'
       x-contract-operation: C07.restoreDraft
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
       description: Apply C07.restoreDraft semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -9563,8 +9645,7 @@ paths:
       operationId: C07_discardDraft
       summary: 'Private research, durable drafts and immutable novelty artifacts: discardDraft'
       x-contract-operation: C07.discardDraft
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
       description: Apply C07.discardDraft semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -9622,10 +9703,8 @@ paths:
       operationId: C07_acceptResearchTurn
       summary: 'Private research, durable drafts and immutable novelty artifacts: acceptResearchTurn'
       x-contract-operation: C07.acceptResearchTurn
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.acceptResearchTurn semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.acceptResearchTurn semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -9688,10 +9767,8 @@ paths:
       operationId: C07_readResearchTurn
       summary: 'Private research, durable drafts and immutable novelty artifacts: readResearchTurn'
       x-contract-operation: C07.readResearchTurn
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.readResearchTurn semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.readResearchTurn semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -9748,10 +9825,8 @@ paths:
       operationId: C07_acceptNoveltyAnalysis
       summary: 'Private research, durable drafts and immutable novelty artifacts: acceptNoveltyAnalysis'
       x-contract-operation: C07.acceptNoveltyAnalysis
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.acceptNoveltyAnalysis semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.acceptNoveltyAnalysis semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -9814,10 +9889,8 @@ paths:
       operationId: C07_acceptNoveltyDiscussion
       summary: 'Private research, durable drafts and immutable novelty artifacts: acceptNoveltyDiscussion'
       x-contract-operation: C07.acceptNoveltyDiscussion
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.acceptNoveltyDiscussion semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.acceptNoveltyDiscussion semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -9880,10 +9953,8 @@ paths:
       operationId: C07_readResearchJob
       summary: 'Private research, durable drafts and immutable novelty artifacts: readResearchJob'
       x-contract-operation: C07.readResearchJob
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.readResearchJob semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.readResearchJob semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -9940,10 +10011,8 @@ paths:
       operationId: C07_cancelNoveltyAnalysis
       summary: 'Private research, durable drafts and immutable novelty artifacts: cancelNoveltyAnalysis'
       x-contract-operation: C07.cancelNoveltyAnalysis
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.cancelNoveltyAnalysis semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.cancelNoveltyAnalysis semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -10000,10 +10069,8 @@ paths:
       operationId: C07_readResearchArtifact
       summary: 'Private research, durable drafts and immutable novelty artifacts: readResearchArtifact'
       x-contract-operation: C07.readResearchArtifact
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C07.readResearchArtifact semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.readResearchArtifact semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -10060,10 +10127,8 @@ paths:
       operationId: C08_upsertTopicSubscription
       summary: 'Topics, content windows and recoverable digest delivery: upsertTopicSubscription'
       x-contract-operation: C08.upsertTopicSubscription
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C08.upsertTopicSubscription semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C08.upsertTopicSubscription semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -10120,10 +10185,8 @@ paths:
       operationId: C08_listTopicSubscriptions
       summary: 'Topics, content windows and recoverable digest delivery: listTopicSubscriptions'
       x-contract-operation: C08.listTopicSubscriptions
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C08.listTopicSubscriptions semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C08.listTopicSubscriptions semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -10180,8 +10243,7 @@ paths:
       operationId: C08_unfollowTopic
       summary: 'Topics, content windows and recoverable digest delivery: unfollowTopic'
       x-contract-operation: C08.unfollowTopic
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
       description: Apply C08.unfollowTopic semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
@@ -10239,10 +10301,8 @@ paths:
       operationId: C08_readDigestDelivery
       summary: 'Topics, content windows and recoverable digest delivery: readDigestDelivery'
       x-contract-operation: C08.readDigestDelivery
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C08.readDigestDelivery semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C08.readDigestDelivery semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -10300,8 +10360,7 @@ paths:
       summary: 'Topics, content windows and recoverable digest delivery: unsubscribeDigestToken'
       x-contract-operation: C08.unsubscribeDigestToken
       x-authorization: Valid purpose-scoped signed unsubscribe token; no broader account authority.
-      description: Apply C08.unsubscribeDigestToken semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      description: Apply C08.unsubscribeDigestToken semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - {}
       - sessionCookie: []
@@ -10359,10 +10418,8 @@ paths:
       operationId: C09_configureNotionConnection
       summary: 'Owner-approved Notion export and uncertain-effect reconciliation: configureNotionConnection'
       x-contract-operation: C09.configureNotionConnection
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C09.configureNotionConnection semantic rules. Derive internal context server-side; never accept it
-        in this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C09.configureNotionConnection semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -10419,10 +10476,8 @@ paths:
       operationId: C09_readNotionConnection
       summary: 'Owner-approved Notion export and uncertain-effect reconciliation: readNotionConnection'
       x-contract-operation: C09.readNotionConnection
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C09.readNotionConnection semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C09.readNotionConnection semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -10479,10 +10534,8 @@ paths:
       operationId: C09_disconnectNotion
       summary: 'Owner-approved Notion export and uncertain-effect reconciliation: disconnectNotion'
       x-contract-operation: C09.disconnectNotion
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C09.disconnectNotion semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C09.disconnectNotion semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -10539,10 +10592,8 @@ paths:
       operationId: C09_listExportDestinations
       summary: 'Owner-approved Notion export and uncertain-effect reconciliation: listExportDestinations'
       x-contract-operation: C09.listExportDestinations
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C09.listExportDestinations semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C09.listExportDestinations semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -10599,10 +10650,8 @@ paths:
       operationId: C09_prepareExportPreview
       summary: 'Owner-approved Notion export and uncertain-effect reconciliation: prepareExportPreview'
       x-contract-operation: C09.prepareExportPreview
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C09.prepareExportPreview semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C09.prepareExportPreview semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -10659,10 +10708,8 @@ paths:
       operationId: C09_approveExportPreview
       summary: 'Owner-approved Notion export and uncertain-effect reconciliation: approveExportPreview'
       x-contract-operation: C09.approveExportPreview
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C09.approveExportPreview semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C09.approveExportPreview semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -10719,10 +10766,8 @@ paths:
       operationId: C09_executeApprovedExport
       summary: 'Owner-approved Notion export and uncertain-effect reconciliation: executeApprovedExport'
       x-contract-operation: C09.executeApprovedExport
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C09.executeApprovedExport semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C09.executeApprovedExport semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -10779,10 +10824,8 @@ paths:
       operationId: C09_readExportEffect
       summary: 'Owner-approved Notion export and uncertain-effect reconciliation: readExportEffect'
       x-contract-operation: C09.readExportEffect
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C09.readExportEffect semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C09.readExportEffect semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -10839,10 +10882,8 @@ paths:
       operationId: C09_cancelExportApproval
       summary: 'Owner-approved Notion export and uncertain-effect reconciliation: cancelExportApproval'
       x-contract-operation: C09.cancelExportApproval
-      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced
-        resource/context.
-      description: Apply C09.cancelExportApproval semantic rules. Derive internal context server-side; never accept it in
-        this body.
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C09.cancelExportApproval semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -11016,8 +11057,7 @@ paths:
       summary: 'Privacy-aware operations and domain recovery: requestRecovery'
       x-contract-operation: C11.requestRecovery
       x-authorization: administrator with current MFA plus operation-specific grant
-      description: Apply C11.requestRecovery semantic rules. Derive internal context server-side; never accept it in this
-        body.
+      description: Apply C11.requestRecovery semantic rules. Derive internal context server-side; never accept it in this body.
       security:
       - sessionCookie: []
       parameters:
@@ -11150,8 +11190,7 @@ paths:
   /api/v2/jobs/{jobId}:
     get:
       operationId: jobSnapshot
-      description: Current owner-authorized operation snapshot; registry resolves the actual operation owner; never starts
-        work.
+      description: Current owner-authorized operation snapshot; registry resolves the actual operation owner; never starts work.
       parameters:
       - name: jobId
         in: path
@@ -11160,8 +11199,7 @@ paths:
           $ref: '#/components/schemas/Id'
       responses:
         '200':
-          description: Current owner-authorized operation snapshot; registry resolves the actual operation owner; never starts
-            work.
+          description: Current owner-authorized operation snapshot; registry resolves the actual operation owner; never starts work.
           content:
             application/json:
               schema:
@@ -11191,8 +11229,8 @@ paths:
   /api/v2/jobs/{jobId}/result:
     get:
       operationId: preparedJobRead
-      description: Dispatch to the recorded operation owner; full prepared result read. Pending/failed/expired dispositions
-        are typed; no new work.
+      description: Dispatch to the recorded operation owner; full prepared result read. Pending/failed/expired dispositions are typed; no new
+        work.
       parameters:
       - name: jobId
         in: path
@@ -11201,8 +11239,8 @@ paths:
           $ref: '#/components/schemas/Id'
       responses:
         '200':
-          description: Dispatch to the recorded operation owner; full prepared result read. Pending/failed/expired dispositions
-            are typed; no new work.
+          description: Dispatch to the recorded operation owner; full prepared result read. Pending/failed/expired dispositions are typed; no
+            new work.
           content:
             application/json:
               schema:
@@ -11232,8 +11270,7 @@ paths:
   /api/v2/jobs/{jobId}/events:
     get:
       operationId: jobEvents
-      description: SSE snapshot/reset events. Current owner authorization at admission and during delivery. Replay semantics
-        above.
+      description: SSE snapshot/reset events. Current owner authorization at admission and during delivery. Replay semantics above.
       parameters:
       - name: jobId
         in: path
@@ -11288,8 +11325,8 @@ paths:
   /api/v2/papers/{paperId}/versions/{versionId}/assets/{assetId}:
     get:
       operationId: deliverPaperidAsset
-      description: Authorized byte delivery; public corpus and private attachment namespaces never interchange. Validate source/owner
-        on every delivery.
+      description: Authorized byte delivery; public corpus and private attachment namespaces never interchange. Validate source/owner on every
+        delivery.
       parameters:
       - name: paperId
         in: path
@@ -11308,8 +11345,8 @@ paths:
           $ref: '#/components/schemas/Id'
       responses:
         '200':
-          description: Validated media bytes; MIME is derived from approved metadata; unsafe types forced attachment, nosniff;
-            bounded/range behavior follows approved profile.
+          description: Validated media bytes; MIME is derived from approved metadata; unsafe types forced attachment, nosniff; bounded/range behavior
+            follows approved profile.
           headers:
             Cache-Control:
               schema:
@@ -11347,8 +11384,8 @@ paths:
   /api/v2/attachments/{attachmentId}/assets/{assetId}:
     get:
       operationId: deliverAttachmentidAsset
-      description: Authorized byte delivery; public corpus and private attachment namespaces never interchange. Validate source/owner
-        on every delivery.
+      description: Authorized byte delivery; public corpus and private attachment namespaces never interchange. Validate source/owner on every
+        delivery.
       parameters:
       - name: attachmentId
         in: path
@@ -11362,8 +11399,8 @@ paths:
           $ref: '#/components/schemas/Id'
       responses:
         '200':
-          description: Validated media bytes; MIME is derived from approved metadata; unsafe types forced attachment, nosniff;
-            bounded/range behavior follows approved profile.
+          description: Validated media bytes; MIME is derived from approved metadata; unsafe types forced attachment, nosniff; bounded/range behavior
+            follows approved profile.
           headers:
             Cache-Control:
               schema:
@@ -11401,9 +11438,8 @@ paths:
   /api/v2/private-uploads/{uploadId}/content:
     put:
       operationId: uploadPrivateBytes
-      description: Use the current owner-bound upload permit, expected digest and expiry. Stream into quarantined private
-        storage under finite policy limits; never public. Repeat same bytes/digest recovers same upload; changed bytes conflict.
-        Finalization validates before extraction.
+      description: Use the current owner-bound upload permit, expected digest and expiry. Stream into quarantined private storage under finite
+        policy limits; never public. Repeat same bytes/digest recovers same upload; changed bytes conflict. Finalization validates before extraction.
       parameters:
       - name: uploadId
         in: path
@@ -11465,10 +11501,9 @@ paths:
   /api/v2/identity/{provider}/callback:
     get:
       operationId: identityCallback
-      description: Google/ORCID one-use callback. Verify pre-established state, redirect binding, issuer/audience/nonce and
-        PKCE as the approved provider profile requires; never trust callback email as an account link. Redirect only to stored
-        allowed return target; do not log codes. Exactly one of code/error is required. An error callback is never authenticated
-        success.
+      description: Google/ORCID one-use callback. Verify pre-established state, redirect binding, issuer/audience/nonce and PKCE as the approved
+        provider profile requires; never trust callback email as an account link. Redirect only to stored allowed return target; do not log codes.
+        Exactly one of code/error is required. An error callback is never authenticated success.
       parameters:
       - name: provider
         in: path
@@ -11501,9 +11536,9 @@ paths:
           x-limit-policy: AdmissionPolicy bounds bytes and characters before persistence/processing.
       responses:
         '200':
-          description: Google/ORCID one-use callback. Verify pre-established state, redirect binding, issuer/audience/nonce
-            and PKCE as the approved provider profile requires; never trust callback email as an account link. Redirect only
-            to stored allowed return target; do not log codes.
+          description: Google/ORCID one-use callback. Verify pre-established state, redirect binding, issuer/audience/nonce and PKCE as the approved
+            provider profile requires; never trust callback email as an account link. Redirect only to stored allowed return target; do not log
+            codes.
           content:
             application/json:
               schema:
@@ -11531,13 +11566,128 @@ paths:
         default:
           $ref: '#/components/responses/Edefault'
         '303':
-          description: Verified callback outcome and rotated session cookie or safe unresolved-link challenge; allowed local
-            return target only.
+          description: Verified callback outcome and rotated session cookie or safe unresolved-link challenge; allowed local return target only.
           headers:
             Location:
               schema:
                 type: string
       security: []
+  /api/v2/c06/read-assistance-history:
+    post:
+      operationId: C06_readAssistanceHistory
+      summary: C06.readAssistanceHistory
+      x-contract-operation: C06.readAssistanceHistory
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C06.readAssistanceJob semantic rules. Derive internal context server-side; never accept it in this body.
+      security:
+      - sessionCookie: []
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+        description: Bound to current session or anonymous bootstrap; verify Origin too.
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          $ref: '#/components/schemas/Id'
+        description: Required for mutations; on pure queries it does not create a persistent mutation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssistanceHistoryReadHttp'
+      responses:
+        '200':
+          description: Committed outcome or explicitly discriminated pending/conflict/unavailable result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssistanceHistoryPage'
+        '400':
+          $ref: '#/components/responses/E400'
+        '401':
+          $ref: '#/components/responses/E401'
+        '403':
+          $ref: '#/components/responses/E403'
+        '404':
+          $ref: '#/components/responses/E404'
+        '409':
+          $ref: '#/components/responses/E409'
+        '410':
+          $ref: '#/components/responses/E410'
+        '422':
+          $ref: '#/components/responses/E422'
+        '429':
+          $ref: '#/components/responses/E429'
+        '503':
+          $ref: '#/components/responses/E503'
+        '504':
+          $ref: '#/components/responses/E504'
+        default:
+          $ref: '#/components/responses/Edefault'
+  /api/v2/c03/usage-read-assignment:
+    post:
+      operationId: C03_usage_readAssignment
+      summary: C03.usage.readAssignment
+      x-contract-operation: C03.usage.readAssignment
+      x-authorization: Current authorized application administrator with required MFA; target account is independently checked.
+      description: Current administrator with required MFA; accountId is target, never caller authority. Ordinary self-plan read grants no access.
+      security:
+      - sessionCookie: []
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+        description: Bound to current session or anonymous bootstrap; verify Origin too.
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          $ref: '#/components/schemas/Id'
+        description: Required for mutations; on pure queries it does not create a persistent mutation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsageAssignmentReadHttp'
+      responses:
+        '200':
+          description: Committed outcome or explicitly discriminated pending/conflict/unavailable result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageAssignmentSnapshot'
+        '400':
+          $ref: '#/components/responses/E400'
+        '401':
+          $ref: '#/components/responses/E401'
+        '403':
+          $ref: '#/components/responses/E403'
+        '404':
+          $ref: '#/components/responses/E404'
+        '409':
+          $ref: '#/components/responses/E409'
+        '410':
+          $ref: '#/components/responses/E410'
+        '422':
+          $ref: '#/components/responses/E422'
+        '429':
+          $ref: '#/components/responses/E429'
+        '503':
+          $ref: '#/components/responses/E503'
+        '504':
+          $ref: '#/components/responses/E504'
+        default:
+          $ref: '#/components/responses/Edefault'
 components:
   securitySchemes:
     sessionCookie:
@@ -11754,12 +11904,15 @@ components:
           - cancelled
         requestId:
           $ref: '#/components/schemas/Id'
+        acceptedAt:
+          $ref: '#/components/schemas/Time'
       required:
       - jobId
       - revision
       - seq
       - state
       - requestId
+      - acceptedAt
       additionalProperties: false
     JobSnapshot:
       type: object
@@ -11794,6 +11947,8 @@ components:
           anyOf:
           - $ref: '#/components/schemas/Error'
           - type: 'null'
+        acceptedAt:
+          $ref: '#/components/schemas/Time'
       required:
       - jobId
       - kind
@@ -11804,6 +11959,7 @@ components:
       - progress
       - result
       - error
+      - acceptedAt
       additionalProperties: false
       allOf:
       - if:
@@ -11990,8 +12146,8 @@ components:
       - vocabularyRevision
       - policyRef
       additionalProperties: false
-      description: Canonical submitted query/refinement context shared by search, saved queries and history. Unknown or unsupported
-        vocabulary IDs are rejected; no arbitrary query-engine syntax is accepted through filters.
+      description: Canonical submitted query/refinement context shared by search, saved queries and history. Unknown or unsupported vocabulary
+        IDs are rejected; no arbitrary query-engine syntax is accepted through filters.
     HostPaperReturnContext:
       type: object
       properties:
@@ -12164,8 +12320,8 @@ components:
       - acknowledgement
       - messageKey
       additionalProperties: false
-      description: Existence-neutral public acknowledgement. It does not expose account existence, challenge secrets or recipient-specific
-        delivery facts.
+      description: Existence-neutral public acknowledgement. It does not expose account existence, challenge secrets or recipient-specific delivery
+        facts.
     AccessChallengeProof:
       type: object
       properties:
@@ -12223,8 +12379,7 @@ components:
       - authorizationUrl
       - expiresAt
       additionalProperties: false
-      description: URL generated from configured provider and registered callback binding; never copied from a caller-controlled
-        destination.
+      description: URL generated from configured provider and registered callback binding; never copied from a caller-controlled destination.
     AccessIdentityLink:
       type: object
       properties:
@@ -12357,14 +12512,14 @@ components:
       - expiresAt
       - nextAction
       additionalProperties: false
-      description: Protected one-time enrollment delivery is separate from ordinary JSON/log output; no factor seed or recovery
-        code is returned here.
+      description: Protected one-time enrollment delivery is separate from ordinary JSON/log output; no factor seed or recovery code is returned
+        here.
     AccessEnrollmentSecret:
       type: string
       minLength: 1
       x-policy-bound: protected MFA enrollment-material policy
-      description: Secret output permitted only by the protected single-use enrollment-material response; redact entirely
-        from diagnostics and do not cache or persist in the client.
+      description: Secret output permitted only by the protected single-use enrollment-material response; redact entirely from diagnostics and
+        do not cache or persist in the client.
       readOnly: true
       x-sensitive: true
       x-protected-one-time: true
@@ -12392,10 +12547,10 @@ components:
       - recoveryCodes
       - expiresAt
       additionalProperties: false
-      description: 'Dedicated protected response only. provisioningUri encodes this enrollment''s seed and account/issuer
-        binding and may be rendered as a QR locally, without an external QR service. Recovery codes remain unusable before
-        successful enrollment confirmation. The trusted HTTP adapter applies Cache-Control: no-store and excludes the response
-        from logging, tracing, generic result caches and persisted client storage.'
+      description: 'Dedicated protected response only. provisioningUri encodes this enrollment''s seed and account/issuer binding and may be rendered
+        as a QR locally, without an external QR service. Recovery codes remain unusable before successful enrollment confirmation. The trusted
+        HTTP adapter applies Cache-Control: no-store and excludes the response from logging, tracing, generic result caches and persisted client
+        storage.'
     AccessProfileValue:
       oneOf:
       - type: string
@@ -12586,9 +12741,9 @@ components:
       - requestId
       - reasonKey
       additionalProperties: false
-      description: Safe status after valid reactivation proof; never a full session or a promise that erased data was restored.
-        A protected limited recovery binding, issued through trusted cookie transport, permits lifecycle.inspect for this
-        request alone while normal account authority remains unavailable.
+      description: Safe status after valid reactivation proof; never a full session or a promise that erased data was restored. A protected limited
+        recovery binding, issued through trusted cookie transport, permits lifecycle.inspect for this request alone while normal account authority
+        remains unavailable.
       allOf:
       - if:
           properties:
@@ -12887,11 +13042,14 @@ components:
           minimum: 1
         policyRef:
           $ref: '#/components/schemas/PolicyRef'
+        clearBoundary:
+          $ref: '#/components/schemas/Revision'
       required:
       - items
       - page
       - appliedLimit
       - policyRef
+      - clearBoundary
       additionalProperties: false
     LibraryClearHistoryResult:
       type: object
@@ -12907,8 +13065,8 @@ components:
       - checkpoint
       - clearBoundary
       additionalProperties: false
-      description: Server-captured Discovery admission checkpoint, not a caller-selected cutoff. Facts admitted at/before
-        the cutoff remain suppressed even if they finish after clear.
+      description: Server-captured Discovery admission checkpoint, not a caller-selected cutoff. Facts admitted at/before the cutoff remain suppressed
+        even if they finish after clear.
     SettingsSearchDefaults:
       type: object
       properties:
@@ -15217,8 +15375,11 @@ components:
       properties:
         identityLinkId:
           $ref: '#/components/schemas/Id'
+        expectedRevision:
+          $ref: '#/components/schemas/Revision'
       required:
       - identityLinkId
+      - expectedRevision
       additionalProperties: false
       description: Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
     AccessOrcidProfileInputHttp:
@@ -15283,10 +15444,10 @@ components:
       - verification
       - factorKind
       additionalProperties: false
-      description: 'Pre-authentication request: context may contain an anonymous principal. The trusted transport separately
-        validates the protected primary-authentication continuation cookie, binds it to verification.challengeId/flowBinding
-        and the server-owned primary-authentication record, and passes only a verified invocation. The factor proof is untrusted
-        until checked; neither a full session nor a caller-claimed account is required.'
+      description: 'Pre-authentication request: context may contain an anonymous principal. The trusted transport separately validates the protected
+        primary-authentication continuation cookie, binds it to verification.challengeId/flowBinding and the server-owned primary-authentication
+        record, and passes only a verified invocation. The factor proof is untrusted until checked; neither a full session nor a caller-claimed
+        account is required.'
     AccessMfaRecoveryInputHttp:
       type: object
       properties:
@@ -15317,10 +15478,13 @@ components:
           x-policy-bound: retained mutable-profile field vocabulary
         policyRef:
           $ref: '#/components/schemas/PolicyRef'
+        expectedRevision:
+          $ref: '#/components/schemas/Revision'
       required:
       - fieldVocabularyRevision
       - changes
       - policyRef
+      - expectedRevision
       additionalProperties: false
       description: Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
     AccessConsentListInputHttp:
@@ -15382,9 +15546,9 @@ components:
       - policyRef
       - confirmationRef
       additionalProperties: false
-      description: Public pre-authentication envelope; no caller account ID or active session is required. Account and withdrawn
-        lifecycle identity are resolved exclusively from the verified purpose-bound reactivation proof. Trusted transport
-        context may remain anonymous until this limited recovery authority is verified.
+      description: Public pre-authentication envelope; no caller account ID or active session is required. Account and withdrawn lifecycle identity
+        are resolved exclusively from the verified purpose-bound reactivation proof. Trusted transport context may remain anonymous until this
+        limited recovery authority is verified.
     LifecycleStatusInputHttp:
       type: object
       properties:
@@ -15479,8 +15643,11 @@ components:
       properties:
         policyRef:
           $ref: '#/components/schemas/PolicyRef'
+        expectedRevision:
+          $ref: '#/components/schemas/Revision'
       required:
       - policyRef
+      - expectedRevision
       additionalProperties: false
       description: Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
     SettingsReadInputHttp:
@@ -15504,8 +15671,11 @@ components:
           - system
         policyRef:
           $ref: '#/components/schemas/PolicyRef'
+        expectedRevision:
+          $ref: '#/components/schemas/Revision'
       required:
       - policyRef
+      - expectedRevision
       additionalProperties: false
       description: Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
       anyOf:
@@ -15532,10 +15702,13 @@ components:
           uniqueItems: true
         policyRef:
           $ref: '#/components/schemas/PolicyRef'
+        expectedRevision:
+          $ref: '#/components/schemas/Revision'
       required:
       - action
       - interestIds
       - policyRef
+      - expectedRevision
       additionalProperties: false
       description: Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
     SettingsSuggestionInputHttp:
@@ -15570,10 +15743,13 @@ components:
           $ref: '#/components/schemas/PolicyRef'
         confirmationRef:
           $ref: '#/components/schemas/Id'
+        expectedRevision:
+          $ref: '#/components/schemas/Revision'
       required:
       - action
       - policyRef
       - confirmationRef
+      - expectedRevision
       additionalProperties: false
       description: Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
     UsageInspectInputHttp:
@@ -15602,11 +15778,14 @@ components:
           $ref: '#/components/schemas/PolicyRef'
         reasonKey:
           $ref: '#/components/schemas/Id'
+        expectedRevision:
+          $ref: '#/components/schemas/Revision'
       required:
       - accountId
       - tierId
       - policyRef
       - reasonKey
+      - expectedRevision
       additionalProperties: false
       description: Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
     UsageRevokeInputHttp:
@@ -15620,11 +15799,14 @@ components:
           $ref: '#/components/schemas/PolicyRef'
         reasonKey:
           $ref: '#/components/schemas/Id'
+        expectedRevision:
+          $ref: '#/components/schemas/Revision'
       required:
       - accountId
       - entitlementId
       - policyRef
       - reasonKey
+      - expectedRevision
       additionalProperties: false
       description: Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
     UsageRecordsInputHttp:
@@ -16365,6 +16547,156 @@ components:
       oneOf:
       - $ref: '#/components/schemas/AssistanceResultRead'
       - $ref: '#/components/schemas/ResearchArtifactResponse'
+    LibraryRemoveSavedPaperInputHttp:
+      type: object
+      properties:
+        savedPaperId:
+          $ref: '#/components/schemas/Id'
+        expectedRevision:
+          $ref: '#/components/schemas/Revision'
+      required:
+      - savedPaperId
+      - expectedRevision
+      additionalProperties: false
+      description: Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+    LibraryRemoveSavedSearchInputHttp:
+      type: object
+      properties:
+        savedSearchId:
+          $ref: '#/components/schemas/Id'
+        expectedRevision:
+          $ref: '#/components/schemas/Revision'
+      required:
+      - savedSearchId
+      - expectedRevision
+      additionalProperties: false
+      description: Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+    UsageAssignmentReadHttp:
+      type: object
+      properties:
+        accountId:
+          $ref: '#/components/schemas/Id'
+      required:
+      - accountId
+      additionalProperties: false
+    UsageAssignmentSnapshot:
+      type: object
+      properties:
+        accountId:
+          $ref: '#/components/schemas/Id'
+        revision:
+          $ref: '#/components/schemas/Revision'
+        entitlement:
+          anyOf:
+          - $ref: '#/components/schemas/UsageEntitlement'
+          - type: 'null'
+      required:
+      - accountId
+      - revision
+      - entitlement
+      additionalProperties: false
+    AssistanceHistoryReadHttp:
+      type: object
+      properties:
+        paper:
+          $ref: '#/components/schemas/PaperRef'
+        page:
+          $ref: '#/components/schemas/PageRequest'
+      required:
+      - paper
+      - page
+      additionalProperties: false
+    AssistanceHistoryRow:
+      type: object
+      properties:
+        jobId:
+          $ref: '#/components/schemas/Id'
+        paper:
+          $ref: '#/components/schemas/PaperRef'
+        contentRevision:
+          $ref: '#/components/schemas/Revision'
+        contentHash:
+          $ref: '#/components/schemas/Hash'
+        operation:
+          enum:
+          - summary
+          - translation
+        optionId:
+          $ref: '#/components/schemas/Id'
+        optionsRevision:
+          $ref: '#/components/schemas/Revision'
+        glossaryRevision:
+          $ref: '#/components/schemas/Revision'
+        state:
+          enum:
+          - accepted
+          - running
+          - succeeded
+          - failed
+        revision:
+          $ref: '#/components/schemas/Revision'
+        seq:
+          type: integer
+          minimum: 0
+        createdAt:
+          $ref: '#/components/schemas/Time'
+        availability:
+          enum:
+          - ready
+          - pending
+          - failed
+          - expired
+          - withdrawn
+          - restricted
+        result:
+          anyOf:
+          - $ref: '#/components/schemas/ResultRef'
+          - type: 'null'
+      required:
+      - jobId
+      - paper
+      - contentRevision
+      - contentHash
+      - operation
+      - optionId
+      - optionsRevision
+      - glossaryRevision
+      - state
+      - revision
+      - seq
+      - createdAt
+      - availability
+      - result
+      additionalProperties: false
+      allOf:
+      - if:
+          properties:
+            availability:
+              const: ready
+        then:
+          properties:
+            state:
+              const: succeeded
+            result:
+              $ref: '#/components/schemas/ResultRef'
+        else:
+          properties:
+            result:
+              type: 'null'
+    AssistanceHistoryPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssistanceHistoryRow'
+          x-policy-bound: accepted PageRequest.limit
+        page:
+          $ref: '#/components/schemas/PageInfo'
+      required:
+      - items
+      - page
+      additionalProperties: false
   responses:
     E400:
       description: Malformed input
@@ -16442,17 +16774,17 @@ This binding remains isolated from public application access. Its v2 wire revisi
 openapi: 3.1.1
 info:
   title: DocSuri controlled evidence v2 binding
-  version: 1.0.0
-  description: Proposed separately controlled read-only evidence API; native membership and compatibility inventory remain
-    prerequisites. Never reachable as an application admin mount.
+  version: 2.0.0
+  description: Proposed separately controlled read-only evidence API; native membership and compatibility inventory remain prerequisites. Never
+    reachable as an application admin mount.
 security:
 - verifiedPeer: []
 paths:
   /healthz:
     get:
       operationId: controlledLiveness
-      description: No request body; bounded verified-peer read. Reject non-loopback peers, wrong target scope and unverified
-        peer identity. Current evidence is not mutation authority.
+      description: No request body; bounded verified-peer read. Reject non-loopback peers, wrong target scope and unverified peer identity. Current
+        evidence is not mutation authority.
       parameters: []
       responses:
         '200':
@@ -16486,8 +16818,8 @@ paths:
   /readyz:
     get:
       operationId: controlledReadiness
-      description: No request body; bounded verified-peer read. Reject non-loopback peers, wrong target scope and unverified
-        peer identity. Current evidence is not mutation authority.
+      description: No request body; bounded verified-peer read. Reject non-loopback peers, wrong target scope and unverified peer identity. Current
+        evidence is not mutation authority.
       parameters: []
       responses:
         '200':
@@ -16521,8 +16853,8 @@ paths:
   /internal/v2/evidence/{targetId}:
     get:
       operationId: readControlledEvidence
-      description: No request body; bounded verified-peer read. Reject non-loopback peers, wrong target scope and unverified
-        peer identity. Current evidence is not mutation authority.
+      description: No request body; bounded verified-peer read. Reject non-loopback peers, wrong target scope and unverified peer identity. Current
+        evidence is not mutation authority.
       parameters:
       - name: targetId
         in: path
@@ -16561,8 +16893,8 @@ paths:
   /internal/v2/compatibility/{targetId}:
     get:
       operationId: readControlledCompatibility
-      description: No request body; bounded verified-peer read. Reject non-loopback peers, wrong target scope and unverified
-        peer identity. Current evidence is not mutation authority.
+      description: No request body; bounded verified-peer read. Reject non-loopback peers, wrong target scope and unverified peer identity. Current
+        evidence is not mutation authority.
       parameters:
       - name: targetId
         in: path
@@ -17037,6 +17369,7 @@ cases:
       mode: indeterminate
     result: null
     error: null
+    acceptedAt: '2026-10-11T00:00:00Z'
   valid: true
 - name: negative sequence
   schema: JobSnapshot
@@ -17051,6 +17384,7 @@ cases:
       mode: indeterminate
     result: null
     error: null
+    acceptedAt: '2026-10-11T00:00:00Z'
   valid: false
 - name: success needs result
   schema: JobSnapshot
@@ -17065,6 +17399,7 @@ cases:
       mode: indeterminate
     result: null
     error: null
+    acceptedAt: '2026-10-11T00:00:00Z'
   valid: false
 - name: prepared success
   schema: JobSnapshot
@@ -17083,6 +17418,7 @@ cases:
       contentHash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
       mediaType: application/json
     error: null
+    acceptedAt: '2026-10-11T00:00:00Z'
   valid: true
 - name: invalid result digest
   schema: JobSnapshot
@@ -17101,6 +17437,7 @@ cases:
       contentHash: oops
       mediaType: application/json
     error: null
+    acceptedAt: '2026-10-11T00:00:00Z'
   valid: false
 - name: unknown error code
   schema: Error
@@ -17139,5 +17476,289 @@ cases:
   schema: DispatchFact
   instance:
     kind: succeeded
+  valid: false
+- name: AccessUnlinkIdentityInputHttp-valid-precondition
+  schema: AccessUnlinkIdentityInputHttp
+  instance:
+    identityLinkId: link1
+    expectedRevision: r1
+  valid: true
+- name: AccessUnlinkIdentityInputHttp-missing-precondition
+  schema: AccessUnlinkIdentityInputHttp
+  instance:
+    identityLinkId: link1
+  valid: false
+- name: AccessUnlinkIdentityInputHttp-null-precondition
+  schema: AccessUnlinkIdentityInputHttp
+  instance:
+    identityLinkId: link1
+    expectedRevision: null
+  valid: false
+- name: AccessUnlinkIdentityInputHttp-empty-precondition
+  schema: AccessUnlinkIdentityInputHttp
+  instance:
+    identityLinkId: link1
+    expectedRevision: ''
+  valid: false
+- name: AccessProfileUpdateInputHttp-valid-precondition
+  schema: AccessProfileUpdateInputHttp
+  instance:
+    fieldVocabularyRevision: r1
+    changes: &id001 []
+    policyRef: &id002
+      policyId: synthetic
+      revision: r1
+    expectedRevision: r1
+  valid: true
+- name: AccessProfileUpdateInputHttp-missing-precondition
+  schema: AccessProfileUpdateInputHttp
+  instance:
+    fieldVocabularyRevision: r1
+    changes: *id001
+    policyRef: *id002
+  valid: false
+- name: AccessProfileUpdateInputHttp-null-precondition
+  schema: AccessProfileUpdateInputHttp
+  instance:
+    fieldVocabularyRevision: r1
+    changes: *id001
+    policyRef: *id002
+    expectedRevision: null
+  valid: false
+- name: AccessProfileUpdateInputHttp-empty-precondition
+  schema: AccessProfileUpdateInputHttp
+  instance:
+    fieldVocabularyRevision: r1
+    changes: *id001
+    policyRef: *id002
+    expectedRevision: ''
+  valid: false
+- name: LibraryClearHistoryInputHttp-valid-precondition
+  schema: LibraryClearHistoryInputHttp
+  instance:
+    policyRef: *id002
+    expectedRevision: r1
+  valid: true
+- name: LibraryClearHistoryInputHttp-missing-precondition
+  schema: LibraryClearHistoryInputHttp
+  instance:
+    policyRef: *id002
+  valid: false
+- name: LibraryClearHistoryInputHttp-null-precondition
+  schema: LibraryClearHistoryInputHttp
+  instance:
+    policyRef: *id002
+    expectedRevision: null
+  valid: false
+- name: LibraryClearHistoryInputHttp-empty-precondition
+  schema: LibraryClearHistoryInputHttp
+  instance:
+    policyRef: *id002
+    expectedRevision: ''
+  valid: false
+- name: SettingsUpdateInputHttp-valid-precondition
+  schema: SettingsUpdateInputHttp
+  instance:
+    appearance: system
+    policyRef: *id002
+    expectedRevision: r1
+  valid: true
+- name: SettingsUpdateInputHttp-missing-precondition
+  schema: SettingsUpdateInputHttp
+  instance:
+    appearance: system
+    policyRef: *id002
+  valid: false
+- name: SettingsUpdateInputHttp-null-precondition
+  schema: SettingsUpdateInputHttp
+  instance:
+    appearance: system
+    policyRef: *id002
+    expectedRevision: null
+  valid: false
+- name: SettingsUpdateInputHttp-empty-precondition
+  schema: SettingsUpdateInputHttp
+  instance:
+    appearance: system
+    policyRef: *id002
+    expectedRevision: ''
+  valid: false
+- name: SettingsOnboardingInputHttp-valid-precondition
+  schema: SettingsOnboardingInputHttp
+  instance:
+    action: skip
+    interestIds: &id003 []
+    policyRef: *id002
+    expectedRevision: r1
+  valid: true
+- name: SettingsOnboardingInputHttp-missing-precondition
+  schema: SettingsOnboardingInputHttp
+  instance:
+    action: skip
+    interestIds: *id003
+    policyRef: *id002
+  valid: false
+- name: SettingsOnboardingInputHttp-null-precondition
+  schema: SettingsOnboardingInputHttp
+  instance:
+    action: skip
+    interestIds: *id003
+    policyRef: *id002
+    expectedRevision: null
+  valid: false
+- name: SettingsOnboardingInputHttp-empty-precondition
+  schema: SettingsOnboardingInputHttp
+  instance:
+    action: skip
+    interestIds: *id003
+    policyRef: *id002
+    expectedRevision: ''
+  valid: false
+- name: SettingsResetInputHttp-valid-precondition
+  schema: SettingsResetInputHttp
+  instance:
+    action: delete_behavior
+    confirmationRef: confirmation1
+    policyRef: *id002
+    expectedRevision: r1
+  valid: true
+- name: SettingsResetInputHttp-missing-precondition
+  schema: SettingsResetInputHttp
+  instance:
+    action: delete_behavior
+    confirmationRef: confirmation1
+    policyRef: *id002
+  valid: false
+- name: SettingsResetInputHttp-null-precondition
+  schema: SettingsResetInputHttp
+  instance:
+    action: delete_behavior
+    confirmationRef: confirmation1
+    policyRef: *id002
+    expectedRevision: null
+  valid: false
+- name: SettingsResetInputHttp-empty-precondition
+  schema: SettingsResetInputHttp
+  instance:
+    action: delete_behavior
+    confirmationRef: confirmation1
+    policyRef: *id002
+    expectedRevision: ''
+  valid: false
+- name: UsageGrantInputHttp-valid-precondition
+  schema: UsageGrantInputHttp
+  instance:
+    accountId: a1
+    tierId: free
+    reasonKey: test
+    policyRef: *id002
+    expectedRevision: r1
+  valid: true
+- name: UsageGrantInputHttp-missing-precondition
+  schema: UsageGrantInputHttp
+  instance:
+    accountId: a1
+    tierId: free
+    reasonKey: test
+    policyRef: *id002
+  valid: false
+- name: UsageGrantInputHttp-null-precondition
+  schema: UsageGrantInputHttp
+  instance:
+    accountId: a1
+    tierId: free
+    reasonKey: test
+    policyRef: *id002
+    expectedRevision: null
+  valid: false
+- name: UsageGrantInputHttp-empty-precondition
+  schema: UsageGrantInputHttp
+  instance:
+    accountId: a1
+    tierId: free
+    reasonKey: test
+    policyRef: *id002
+    expectedRevision: ''
+  valid: false
+- name: UsageRevokeInputHttp-valid-precondition
+  schema: UsageRevokeInputHttp
+  instance:
+    accountId: a1
+    entitlementId: e1
+    reasonKey: test
+    policyRef: *id002
+    expectedRevision: r1
+  valid: true
+- name: UsageRevokeInputHttp-missing-precondition
+  schema: UsageRevokeInputHttp
+  instance:
+    accountId: a1
+    entitlementId: e1
+    reasonKey: test
+    policyRef: *id002
+  valid: false
+- name: UsageRevokeInputHttp-null-precondition
+  schema: UsageRevokeInputHttp
+  instance:
+    accountId: a1
+    entitlementId: e1
+    reasonKey: test
+    policyRef: *id002
+    expectedRevision: null
+  valid: false
+- name: UsageRevokeInputHttp-empty-precondition
+  schema: UsageRevokeInputHttp
+  instance:
+    accountId: a1
+    entitlementId: e1
+    reasonKey: test
+    policyRef: *id002
+    expectedRevision: ''
+  valid: false
+- name: LibraryRemoveSavedPaperInputHttp-valid-precondition
+  schema: LibraryRemoveSavedPaperInputHttp
+  instance:
+    savedPaperId: saved1
+    expectedRevision: r1
+  valid: true
+- name: LibraryRemoveSavedPaperInputHttp-missing-precondition
+  schema: LibraryRemoveSavedPaperInputHttp
+  instance:
+    savedPaperId: saved1
+  valid: false
+- name: LibraryRemoveSavedPaperInputHttp-null-precondition
+  schema: LibraryRemoveSavedPaperInputHttp
+  instance:
+    savedPaperId: saved1
+    expectedRevision: null
+  valid: false
+- name: LibraryRemoveSavedPaperInputHttp-empty-precondition
+  schema: LibraryRemoveSavedPaperInputHttp
+  instance:
+    savedPaperId: saved1
+    expectedRevision: ''
+  valid: false
+- name: LibraryRemoveSavedSearchInputHttp-valid-precondition
+  schema: LibraryRemoveSavedSearchInputHttp
+  instance:
+    savedSearchId: saved1
+    expectedRevision: r1
+  valid: true
+- name: LibraryRemoveSavedSearchInputHttp-missing-precondition
+  schema: LibraryRemoveSavedSearchInputHttp
+  instance:
+    savedSearchId: saved1
+  valid: false
+- name: LibraryRemoveSavedSearchInputHttp-null-precondition
+  schema: LibraryRemoveSavedSearchInputHttp
+  instance:
+    savedSearchId: saved1
+    expectedRevision: null
+  valid: false
+- name: LibraryRemoveSavedSearchInputHttp-empty-precondition
+  schema: LibraryRemoveSavedSearchInputHttp
+  instance:
+    savedSearchId: saved1
+    expectedRevision: ''
   valid: false
 ```

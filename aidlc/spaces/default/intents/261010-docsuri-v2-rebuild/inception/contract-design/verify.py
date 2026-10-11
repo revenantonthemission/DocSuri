@@ -109,6 +109,42 @@ for api in apis:
 
 assert bound_ops=={k for k,v in ops.items() if v.get('surface') in ('browser','admin')},'missing browser/admin binding'
 
+# U1 amendment: keep the executable binding policy aligned with the normative
+# owner contracts. These are specification checks, not runtime authority tests.
+assert all(c['version']=='2.0.0' for c in contracts)
+assert all(api['info']['version']=='2.0.0' for api in apis)
+revision_inputs = (
+ 'AccessUnlinkIdentityInput','AccessProfileUpdateInput',
+ 'LibraryRemoveSavedPaperInput','LibraryRemoveSavedSearchInput',
+ 'LibraryClearHistoryInput','SettingsUpdateInput','SettingsOnboardingInput',
+ 'SettingsResetInput','UsageGrantInput','UsageRevokeInput',
+)
+for name in revision_inputs:
+ for suffix in ('','Http'):
+  shape=defs[name+suffix]
+  assert 'expectedRevision' in shape['required'],name+suffix
+  assert shape['properties']['expectedRevision']=={'$ref':'#/$defs/Revision'}
+for noun in ('Paper','Search'):
+ assert ops['C03.library.removeSaved'+noun]['input']=='LibraryRemoveSaved'+noun+'Input'
+ assert 'expectedRevision' not in defs['LibrarySaved'+noun+'InputHttp']['properties']
+for key in ('C06','C14'):
+ for name in ('acquireExecutionClaim','renewExecutionClaim','reclaimExecution','readExecutionPayload'):
+  assert ops[key+'.'+name]['surface']=='internal'
+  assert key+'.'+name not in bound_ops
+assert 'clearBoundary' in defs['LibraryHistoryPage']['required']
+assert 'leaseRevision' in defs['ExecutionClaim']['required']
+assert 'expectedLeaseRevision' in defs['ExecutionRenew']['required']
+for name in ('AssistanceProgress','AssistanceFailure','AssistanceComplete','DispatchFact'):
+ assert {'claim','expectedJobRevision','inputHash'}<=set(defs[name]['required']),name
+assert not {'revision','seq'} & set(defs['DispatchFact']['properties'])
+for name in ('JobReceipt','JobSnapshot','ExecutionClaimResult','AssistanceExecutionPayload'):
+ assert 'acceptedAt' in defs[name]['required'],name
+assert 'C06.readAssistanceHistory' in bound_ops
+assert 'C03.usage.readAssignment' in bound_ops
+browser=next(api for api in apis if api['info']['title'].startswith('DocSuri application'))
+assignment=browser['paths']['/api/v2/c03/usage-read-assignment']['post']
+assert 'administrator' in assignment['x-authorization'] and 'MFA' in assignment['x-authorization']
+
 cases=[b for kind,b in blocks if kind=='schema-cases']
 assert len(cases)==1
 valid=invalid=0
