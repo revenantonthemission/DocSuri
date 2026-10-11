@@ -120,3 +120,45 @@ Integration followed CONVENTIONS.md and the user's interim policy. Local
 `develop` was synchronized to the merge, the completed local and remote branch
 was deleted, and Contract Design continues on
 `docs/docsuri-v2-contract-design` from that merge. Main was not promoted.
+
+## Approved Contract Design branch integration
+
+On 2026-10-11, the user approved Contract Design with three Major architecture
+findings accepted. [PR #38](https://github.com/revenantonthemission/DocSuri/pull/38)
+merged `docs/docsuri-v2-contract-design` into `develop` at
+`d1bf16e1ae46e769cffc5b824705135e938687fb` on 2026-10-11T06:18:13Z.
+The verified head was `f638b8698b905ae08a896f4c375909d8ef0ef01d`; its exact
+base was `1033307515e3ebcf52bca2134a734885ae04a13a`.
+
+The local contract verifier passed 14 contract families, 415 schema definitions,
+1,421 references, 141 typed operations, 115 HTTP operations in two OpenAPI
+documents, 19 dependency edges, all 70 functional IDs, six positive and nine
+negative cases. The independent architecture review remains NOT-READY with
+three accepted findings: browser revision preconditions, acknowledged-draft
+rediscovery after restart, and worker execution claims/payload retrieval.
+Acceptance permits the planning handoff; it does not resolve these findings or
+establish implementation readiness. Delivery Planning carries their closure
+obligations into the affected work.
+
+[PR #38 CI](https://github.com/revenantonthemission/DocSuri/actions/runs/38117352817)
+finished with 11 failed jobs, three passed and one skipped. All 11 diagnostic
+signatures matched the
+[exact-base CI](https://github.com/revenantonthemission/DocSuri/actions/runs/38114507506).
+The failures concern existing consumer inventories, lint, imports/dependencies,
+native platform fixtures, Postgres setup and audit inputs. No new CI regression
+was identified. Ingestion, discovery and dependency review passed, as did both
+[CodeQL analyses](https://github.com/revenantonthemission/DocSuri/actions/runs/38117352833)
+and the [branch-name check](https://github.com/revenantonthemission/DocSuri/actions/runs/38117352822).
+
+Shared lint/tests, accounts/library and summarization tests, frontend dependency
+audit/lint/tests/E2E/build, remaining security audits and secret scanning,
+declared-image digest verification, isolated Postgres verification and Ops tests
+on APFS were not reached. Full PBT was skipped. Matching failure signatures do
+not establish full-suite success, security clearance or runtime readiness.
+Application source, dependencies and CI workflows were unchanged.
+
+Integration followed CONVENTIONS.md and the user's interim policy. Local
+`develop` and `origin/develop` were synchronized to the merge; the completed
+local and remote contract branches were deleted. Delivery Planning continues
+on `docs/docsuri-v2-delivery-planning`, created from that merge. Main was not
+promoted.
