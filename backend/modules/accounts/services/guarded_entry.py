@@ -59,11 +59,19 @@ class GuardedEntryService:
                 not stat.S_ISREG(info.st_mode)
                 or info.st_uid != os.getuid()
                 or stat.S_IMODE(info.st_mode) != 0o600
+                or info.st_nlink != 1
             ):
                 raise ValueError("account verifier key custody invalid")
             self._key = stream.read(33)
         if len(self._key) != 32:
             raise ValueError("account verifier key incomplete")
+        # Repeat on reuse too: a prior crash may follow file fsync but precede
+        # persistence of the directory entry. Never acknowledge with a lost key.
+        directory = os.open(key_path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
         self.hasher = get_password_hasher()
         self._dummy = self._hash_password(secrets.token_urlsafe(32))
 
@@ -256,7 +264,7 @@ class GuardedEntryService:
 
     def verify_email(
         self, challenge: UUID, proof: str, flow_binding: str, *, operation: UUID
-    ) -> None:
+    ) -> dict:
         self._admit()
         proof_hash, flow_hash = self.verifier("proof", proof), self.verifier("flow", flow_binding)
 
@@ -285,7 +293,11 @@ class GuardedEntryService:
                     and account["verified"]
                     and row["authority_revision"] == account["authority_revision"]
                 ):
-                    return
+                    return {
+                        "resourceId": str(challenge),
+                        "revision": self.verifier("verified-challenge-revision", str(challenge)),
+                        "requestId": str(operation),
+                    }
                 raise PermissionError("verification unavailable")
             if (
                 not account["active"]
@@ -304,10 +316,22 @@ class GuardedEntryService:
                 "INSERT INTO accounts.entry_receipt VALUES(%s,'verification',%s,%s)",
                 (operation, intent, Jsonb({"verified": True})),
             )
+            return {
+                "resourceId": str(challenge),
+                "revision": self.verifier("verified-challenge-revision", str(challenge)),
+                "requestId": str(operation),
+            }
 
-        self.transactions.run("accounts", write)
+        return self.transactions.run("accounts", write)
 
-    def login(self, email: str, password: str) -> SessionTransport:
+    def login(
+        self,
+        email: str,
+        password: str,
+        *,
+        operation: UUID | None = None,
+        flow_binding: str = "diagnostic",
+    ) -> SessionTransport:
         self._admit()
         email = EmailAddress(normalize_email(email)).value
         self.verifier("password-bound", password)
@@ -322,7 +346,11 @@ class GuardedEntryService:
         )
         if not valid or not observed:
             raise PermissionError("credentials unavailable")
-        token, csrf, session = secrets.token_urlsafe(32), secrets.token_urlsafe(32), uuid4()
+        operation = operation or uuid4()
+        intent = self.verifier("login-intent", json.dumps([email, password, flow_binding]))
+        token = self.verifier("login-cookie", str(operation) + ":" + intent)
+        session = uuid4()
+        csrf = self.verifier("session-csrf", token)
 
         def write(conn):
             row = conn.execute(
@@ -335,6 +363,25 @@ class GuardedEntryService:
                 or row["password_hash"] != observed["password_hash"]
             ):
                 raise PermissionError("credentials unavailable")
+            prior = conn.execute(
+                "SELECT * FROM accounts.entry_receipt WHERE operation_id=%s", (operation,)
+            ).fetchone()
+            if prior:
+                if prior["kind"] != "login" or prior["intent_hash"] != intent:
+                    raise ValueError("login operation conflict")
+                recorded = prior["outcome"]["session"]
+                if recorded["accountId"] != str(row["id"]):
+                    raise PermissionError("credentials unavailable")
+                guard(conn, Authority(row["id"], UUID(recorded["sessionId"])))
+                active = conn.execute(
+                    "SELECT token_hash,csrf_hash FROM accounts.session WHERE id=%s",
+                    (UUID(recorded["sessionId"]),),
+                ).fetchone()
+                if active["token_hash"] != self.verifier("session", token) or active[
+                    "csrf_hash"
+                ] != self.verifier("csrf", csrf):
+                    raise PermissionError("session unavailable")
+                return prior["outcome"]
             conn.execute(
                 "UPDATE accounts.session SET revoked=true WHERE account_id=%s", (row["id"],)
             )
@@ -350,7 +397,7 @@ class GuardedEntryService:
                     row["authority_revision"],
                 ),
             )
-            return {
+            outcome = {
                 "state": "authenticated",
                 "session": {
                     "sessionId": str(session),
@@ -360,10 +407,15 @@ class GuardedEntryService:
                     "authenticationLevel": "primary",
                 },
             }
+            conn.execute(
+                "INSERT INTO accounts.entry_receipt VALUES(%s,'login',%s,%s)",
+                (operation, intent, Jsonb(outcome)),
+            )
+            return outcome
 
         return SessionTransport(token, csrf, self.transactions.run("accounts", write))
 
-    def authenticate(self, token: str, *, csrf: str | None = None) -> Authority:
+    def _current_session(self, token: str, *, csrf: str | None = None) -> dict:
         hashed = self.verifier("session", token)
 
         def read(conn):
@@ -378,16 +430,52 @@ class GuardedEntryService:
                 row["csrf_hash"], self.verifier("csrf", csrf)
             ):
                 raise PermissionError("session unavailable")
-            return authority
+            return row
 
         return self.transactions.run("accounts", read)
 
-    def logout(self, authority: Authority) -> None:
+    def authenticate(self, token: str, *, csrf: str | None = None) -> Authority:
+        row = self._current_session(token, csrf=csrf)
+        return Authority(row["account_id"], row["id"])
+
+    def inspect_session(self, token: str) -> SessionTransport:
+        """Recover the current session's CSRF without rotating it across tabs.
+
+        Only possession of the opaque cookie and the protected verifier key
+        derives this token. The persisted verifier and current authority still
+        gate every bootstrap; an old or revoked session cannot be resurrected.
+        """
+        csrf = self.verifier("session-csrf", token)
+        row = self._current_session(token, csrf=csrf)
+        return SessionTransport(
+            token,
+            csrf,
+            {
+                "state": "authenticated",
+                "session": {
+                    "sessionId": str(row["id"]),
+                    "accountId": str(row["account_id"]),
+                    "authorityRevision": str(row["authority_revision"]),
+                    "verified": True,
+                    "authenticationLevel": "primary",
+                    "expiresAt": row["expires_at"].isoformat(),
+                },
+            },
+        )
+
+    def logout(self, authority: Authority, *, operation: UUID | None = None) -> dict:
+        operation = operation or uuid4()
+
         def write(conn):
             guard(conn, authority)
             conn.execute(
                 "UPDATE accounts.session SET revoked=true WHERE id=%s AND account_id=%s",
                 (authority.session_id, authority.account_id),
             )
+            return {
+                "resourceId": str(authority.session_id),
+                "revision": self.verifier("revoked-session-revision", str(authority.session_id)),
+                "requestId": str(operation),
+            }
 
-        self.transactions.run("accounts", write)
+        return self.transactions.run("accounts", write)

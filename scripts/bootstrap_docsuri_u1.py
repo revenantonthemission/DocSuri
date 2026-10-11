@@ -55,6 +55,7 @@ AMENDMENTS = (
     ("accounts", "backend/modules/accounts/local_execution_status.sql"),
     ("corpus", "backend/modules/corpus/local_execution_status.sql"),
     ("assistance", "backend/modules/summarization/local_execution_deadline.sql"),
+    ("accounts", "backend/modules/accounts/local_login_receipts.sql"),
 )
 
 

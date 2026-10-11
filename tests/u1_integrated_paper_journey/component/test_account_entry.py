@@ -191,3 +191,102 @@ def test_full_account_allocation_has_same_existing_and_new_disposition(entry, co
         with pytest.raises(Busy, match="local account allocation exhausted"):
             entry.register(uuid4(), candidate, PASSWORD, "연구자", "fixture-flow")
     assert entry.register(operation, email, PASSWORD, "연구자", "fixture-flow") == original
+
+
+def test_fresh_service_bootstrap_recovers_csrf_without_rotating_or_exposing_cookie(entry, connect):
+    email = verified(entry, connect)
+    issued = entry.login(email, PASSWORD)
+    fresh = GuardedEntryService(entry.transactions)
+    restored = fresh.inspect_session(issued.token)
+    assert restored.csrf == issued.csrf
+    assert restored.public["session"]["sessionId"] == issued.public["session"]["sessionId"]
+    assert issued.token not in json.dumps(restored.public)
+    assert fresh.authenticate(issued.token, csrf=issued.csrf)
+    assert fresh.inspect_session(issued.token).csrf == restored.csrf
+    fresh.logout(fresh.authenticate(issued.token))
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        fresh.inspect_session(issued.token)
+
+
+def test_bootstrap_rejects_changed_persisted_csrf_and_cross_session_token(entry, connect):
+    email = verified(entry, connect)
+    first = entry.login(email, PASSWORD)
+    second = entry.login(email, PASSWORD)
+    with pytest.raises(PermissionError):
+        entry.authenticate(second.token, csrf=first.csrf)
+    with connect("accounts") as conn:
+        conn.execute(
+            "UPDATE accounts.session SET csrf_hash=%s WHERE id=%s",
+            (
+                entry.verifier("csrf", "old-random-policy"),
+                UUID(second.public["session"]["sessionId"]),
+            ),
+        )
+    with pytest.raises(PermissionError, match="session unavailable"):
+        entry.inspect_session(second.token)
+
+
+def test_login_replay_binds_flow_and_recovers_one_session_after_lost_reply(
+    entry, connect, monkeypatch
+):
+    email = verified(entry, connect)
+    operation = uuid4()
+    original, commits = psycopg.Connection.commit, [0]
+
+    def lost(conn):
+        active = conn.info.transaction_status != psycopg.pq.TransactionStatus.IDLE
+        original(conn)
+        commits[0] += int(active)
+        # Admission, observed credential read, then durable session/receipt.
+        if active and commits[0] == 3:
+            raise psycopg.OperationalError("injected lost login reply")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(psycopg.Connection, "commit", lost)
+        with pytest.raises(UnknownCommit):
+            entry.login(email, PASSWORD, operation=operation, flow_binding="browser-a")
+    recovered = entry.login(email, PASSWORD, operation=operation, flow_binding="browser-a")
+    repeated = entry.login(email, PASSWORD, operation=operation, flow_binding="browser-a")
+    assert repeated == recovered
+    assert entry.authenticate(recovered.token, csrf=recovered.csrf)
+    with connect("accounts") as conn:
+        assert (
+            conn.execute(
+                "SELECT count(*) FROM accounts.session WHERE account_id=%s",
+                (UUID(recovered.public["session"]["accountId"]),),
+            ).fetchone()[0]
+            == 1
+        )
+        receipt = conn.execute(
+            "SELECT outcome::text FROM accounts.entry_receipt WHERE operation_id=%s", (operation,)
+        ).fetchone()[0]
+    assert PASSWORD not in receipt and recovered.token not in receipt
+    with pytest.raises(ValueError, match="conflict"):
+        entry.login(email, PASSWORD, operation=operation, flow_binding="browser-b")
+    entry.logout(entry.authenticate(recovered.token))
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        entry.login(email, PASSWORD, operation=operation, flow_binding="browser-a")
+
+
+def test_verified_and_logout_acknowledgements_are_owner_bound(entry, connect):
+    from docsuri_shared.workspace import wire
+
+    _, _, _, mail = registered(entry, connect)
+    operation = uuid4()
+    acknowledgement = entry.verify_email(
+        UUID(mail["challengeId"]), mail["proof"], mail["flowBinding"], operation=operation
+    )
+    wire.Ack.model_validate(acknowledgement)
+    assert (
+        entry.verify_email(
+            UUID(mail["challengeId"]), mail["proof"], mail["flowBinding"], operation=operation
+        )
+        == acknowledgement
+    )
+    login = entry.login(mail["email"], PASSWORD)
+    authority = entry.authenticate(login.token)
+    result = entry.logout(authority, operation=uuid4())
+    wire.Ack.model_validate(result)
+    assert result["resourceId"] == login.public["session"]["sessionId"]
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        entry.logout(authority)
