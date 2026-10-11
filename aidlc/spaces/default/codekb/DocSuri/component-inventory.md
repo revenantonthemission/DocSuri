@@ -1,324 +1,75 @@
-# Component Inventory — DocSuri Frontend
-
-**Project:** DocSuri
-**Date:** 2026-10-02
-
----
-
-## Component Catalog
-
-| Component | Path | Type | Status | Phase 7 Impact |
-|-----------|------|------|--------|----------------|
-| **PaperDetailIsland** | `components/PaperDetailIsland.tsx` | Client Island | ✅ Active | Mount point for JobStatus |
-| **JobStatus** | `components/JobStatus.tsx` | Client Component | ⚠️ Exists, Unmounted | **PRIMARY TARGET** — Mount, add polling, retry, a11y |
-| **AssetViewer** | `components/AssetViewer.tsx` | Client Component | ✅ Active | **MIGRATION TARGET** — Presigned → Same-origin |
-| **SummaryModal** | `components/SummaryModal.tsx` | Client Component | ✅ Active | Trigger for JobStatus mount |
-| **DocModelViewer** | `components/DocModelViewer.tsx` | Client Component | ✅ Active | Uses AssetViewer for figures |
-| **CitationTreePanel** | `components/CitationTreePanel.tsx` | Client Component | ✅ Active | No change |
-| **AppHeader** | `components/AppHeader.tsx` | Client Component | ✅ Active | No change |
-| **BottomNav** | `components/BottomNav.tsx` | Client Component | ✅ Active | No change |
-| **RouteGuard** | `components/RouteGuard.tsx` | Client Component | ✅ Active | No change |
-| **SaveToLibraryButton** | `components/SaveToLibraryButton.tsx` | Client Component | ✅ Active | No change |
-| **PaperDetailIsland.module.css** | `components/PaperDetailIsland.module.css` | Styles | ✅ Active | May need JobStatus styles |
-
----
-
-## Detailed Component Analysis
-
-### 1. PaperDetailIsland (`PaperDetailIsland.tsx`)
-
-**Purpose:** Main client island in paper detail page. Owns action bar (요약/초록 번역/각주 트리/전문/전문 번역), metadata display, modal management, and desktop inline body.
-
-**Props:**
-```typescript
-interface PaperDetailIslandProps {
-  paperId: string;
-  version: number;
-  arxivUrl?: string;
-}
-```
-
-**State:**
-- `modalView` — DetailView | null (summary/abstractTrans)
-- `citationOpen` — boolean
-- `isDesktop` — boolean (media query)
-- `inlineAnchor` — AnchorVM | null (desktop scroll target)
-
-**Key Imports:**
-- `usePaperMeta` — Paper metadata hook
-- `SummaryModal` — 요약/번역 modal
-- `CitationTreePanel` — Citation tree
-- `DocModelViewer` — Full text viewer
-- `SummaryModal` — Modal with job submission
-
-**Phase 7 Changes Required:**
-- Add `activeJobId` state (from submitJob response)
-- Import and mount `<JobStatus jobId={activeJobId} />` below action bar
-- Pass `onComplete` handler to navigate to result or handle retry
-
----
-
-### 2. JobStatus (`JobStatus.tsx`) — **PRIMARY TARGET**
-
-**Purpose:** Real-time job progress display via SSE with Last-Event-ID resume.
-
-**Props:**
-```typescript
-interface JobStatusProps {
-  jobId: string;
-  onComplete?: (state: 'COMPLETED' | 'FAILED' | 'ABSTAINED', assetId?: string, error?: unknown) => void;
-}
-```
-
-**Current Implementation:**
-- ✅ SSE via `subscribeJobEvents()` with `lastEventId` parameter
-- ✅ State display: SUBMITTED → ACCEPTED → QUEUED → RUNNING → COMPLETED/FAILED/ABSTAINED
-- ✅ Korean labels, color coding
-- ✅ Event history (details/summary)
-- ✅ `onComplete` callback on terminal state
-- ❌ **Not mounted** in PaperDetailIsland
-- ❌ No polling fallback
-- ❌ No error boundary
-- ❌ No inline retry on FAILED
-- ❌ No ARIA live region / progressbar
-- ❌ No loading skeleton
-
-**Phase 7 Changes Required:**
-| Change | Priority | Effort |
-|--------|----------|--------|
-| Add polling fallback (SWR 2s to `/state`) | High | Medium |
-| Add React Error Boundary wrapper | High | Low |
-| Add inline Retry button on FAILED state | High | Low |
-| Add ARIA live region (`aria-live="polite"`) | Medium | Low |
-| Add progressbar role with `aria-valuenow` | Medium | Low |
-| Add loading skeleton state | Low | Low |
-| Add keyboard-accessible Retry button | Medium | Low |
-
-**SSE Implementation (Already Complete):**
-```typescript
-subscribeJobEvents(jobId, onEvent, lastEventId?) {
-  const url = new URL(`/api/content-jobs/${jobId}/events`, origin);
-  if (lastEventId) url.searchParams.set('lastEventId', lastEventId);
-  const es = new EventSource(url.toString());
-  // onmessage parses JSON, updates state
-  // onerror closes connection
-}
-```
-**Note:** Must change URL to `/bff/api/content-jobs/${jobId}/events` via contentJobApi fix.
-
----
-
-### 3. AssetViewer (`AssetViewer.tsx`) — **MIGRATION TARGET**
-
-**Purpose:** Display figures/tables from paper assets.
-
-**Current Props:**
-```typescript
-interface AssetViewerProps {
-  assetId: string;
-  token: string;           // For presigned URL
-  className?: string;
-  onError?: (error: Error) => void;
-  onLoad?: () => void;
-}
-```
-
-**Current Flow:**
-1. `getAssetUrl(assetId, token)` → calls `/api/content-jobs/assets/${assetId}?token=...`
-2. Expects 307 redirect with `Location` header pointing to S3 presigned URL
-3. Sets `<img src={presignedUrl} />`
-
-**Security Issue:** Presigned URL exposes object storage directly (SECURITY-08 violation). No auth re-check at delivery.
-
-**Required Migration:**
-```typescript
-// NEW Props
-interface AssetViewerProps {
-  paperId: string;        // Paper ID for BFF path
-  assetId: string;        // Asset ID
-  className?: string;
-  onError?: (error: Error) => void;
-  onLoad?: () => void;
-}
-
-// NEW Implementation
-<img 
-  src={`/bff/api/papers/${paperId}/assets/${assetId}`}
-  alt="Asset"
-  className="w-full h-full object-contain"
-/>
-
-// BFF proxyAssetImage() handles:
-// - Cookie forwarding for auth
-// - Auth re-check at gateway (SEC-9)
-// - Streams image bytes (no 307)
-// - Validates content-type starts with "image/"
-// - Sets cache-control: private, max-age=60
-// - Adds X-Content-Type-Options: nosniff
-```
+# DocSuri Component Inventory
 
-**Files Using AssetViewer (Need Prop Updates):**
-- `DocModelViewer.tsx` — Renders figures/tables in doc-model
-- Any other component rendering paper assets
+Each heading is a stable component name for this scan. “Deep anchors” refers to inspected boundaries; a component can have deep anchors and shallow internals. Only the 13 components with specific fully read boundaries appear in analyzed.components; Accounts, Evidence/Research, Novelty, Ingestion and Reliability/Ops remain breadth-only coverage. Their selected snippets, declarations, manifests or external composition are not deep component evidence. Dependencies are source relationships, not deployment claims. Capability IDs map to [business overview](business-overview.md).
 
----
+## Application Shell and Middleware
 
-### 4. SummaryModal (`SummaryModal.tsx`)
-
-**Purpose:** Modal for 요약 (summarize) and 초록 번역 (translate abstract) actions.
-
-**Key Responsibilities:**
-- Opens when user clicks "요약" or "초록 번역" in action bar
-- Calls `contentJobApi.submitJob()` with taskType
-- Should trigger JobStatus mount on submission
-
-**Phase 7 Changes:**
-- On `submitJob` success: capture `jobId`, set `activeJobId` in parent (PaperDetailIsland)
-- Generate/store idempotency key (hash of userId+paperId+task+params)
-- Pass idempotency key to `submitJob()`
-
----
-
-### 5. DocModelViewer (`DocModelViewer.tsx`)
-
-**Purpose:** Full-text paper viewer (rich text, figures, tables, citations).
-
-**Asset Rendering:**
-- Uses `AssetViewer` for figures/tables
-- Must update to pass `paperId` + `assetId` instead of `assetId` + `token`
-
-**Other Features:**
-- Anchor-based scrolling (desktop inline)
-- Citation linking
-- Math rendering (`renderInlineMath`)
-
----
-
-### 5. Content Job API (`lib/api/contentJobApi.ts`) — **PRIMARY TARGET**
-
-**Current Exports:**
-```typescript
-// Types
-JobState, JobEvent, SubmitJobRequest, SubmitJobResponse, TranslateResponse, AssetTokenResponse
-
-// Functions
-submitJob(request)           // POST /api/content-jobs/submit
-getJobState(jobId)           // GET /api/content-jobs/{jobId}/state
-subscribeJobEvents(jobId, onEvent, lastEventId?)  // SSE
-translate(input)             // POST /api/content-jjobs/translate
-getAssetUrl(assetId, token)  // GET /api/content-jobs/assets/{assetId}?token= (307) ❌
-issueAssetToken(assetId)     // POST /api/content-jobs/assets/{assetId}/token
-```
-
-**Required Changes:**
-```typescript
-// 1. Change base URL
-const API_BASE = '/bff/api/content-jobs';  // Was '/api/content-jobs'
-
-// 2. Add idempotency key generation
-async function generateIdempotencyKey(userId, paperId, taskType, params): string
-
-// 3. Update submitJob to require idempotencyKey
-async function submitJob(request: SubmitJobRequest & { idempotencyKey: string })
-
-// 4. Update subscribeJobEvents URL
-const url = new URL(`/bff/api/content-jobs/${jobId}/events`, origin);
-
-// 5. REMOVE getAssetUrl() — use same-origin pattern instead
-// 6. Keep issueAssetToken() but update path
-const res = await fetch(`/bff/api/content-jobs/assets/${assetId}/token`, ...)
-```
-
----
-
-### 6. BFF Transport (`lib/api/routeHandlerTransport.ts`)
-
-**Purpose:** Client-side transport for `/bff/*` routes (used by `apiClient.ts`, NOT `contentJobApi.ts`).
-
-**Already Implemented:** Cookie forwarding, error handling, response parsing.
-
-**No Changes Needed** — Already compatible with contentJobApi once API_BASE is updated.
-
----
-
-### 7. BFF Proxy (`app/bff/[...path]/route.ts`) — **READY ✅**
-
-**Already Implemented:**
-- `proxyAssetImage()` — Same-origin asset relay with auth re-check
-- SSE proxy with `Last-Event-ID` support
-- Cookie forwarding (session auth)
-- Set-Cookie relay (session refresh)
-- Per-path timeout config
-- SQ3 Aurora resume retry (GET once)
-
-**No Changes Needed** — Fully supports Phase 7 requirements.
-
----
-
-## Component Dependency Graph (Phase 7 Focus)
-
-```
-PaperDetailIsland
-    │
-    ├─▶ JobStatus (NEW MOUNT)
-    │       └─▶ contentJobApi.subscribeJobEvents()
-    │               └─▶ EventSource → /bff/api/content-jobs/{jobId}/events
-    │
-    ├─▶ SummaryModal
-    │       └─▶ contentJobApi.submitJob()
-    │               └─▶ Returns jobId → PaperDetailIsland mounts JobStatus
-    │
-    ├─▶ DocModelViewer
-    │       └─▶ AssetViewer (NEW PROPS: paperId + assetId)
-    │               └─▶ <img src="/bff/api/papers/{paperId}/assets/{assetId}" />
-    │
-    └─▶ CitationTreePanel (unchanged)
-```
-
----
-
-## New Components Needed
-
-### 1. JobStatusErrorBoundary (New)
-```tsx
-// components/JobStatusErrorBoundary.tsx
-class JobStatusErrorBoundary extends React.Component<{children: ReactNode}, {hasError: boolean}> {
-  state = { hasError: false };
-  static getDerivedStateFromError() { return { hasError: true }; }
-  render() {
-    if (this.state.hasError) return <JobStatusFallback onRetry={() => this.setState({hasError: false})} />;
-    return this.props.children;
-  }
-}
-
-// components/JobStatusFallback.tsx
-function JobStatusFallback({onRetry}) {
-  return (
-    <div role="alert" className="p-4 border rounded-lg bg-red-50">
-      <p>작업 상태를 불러올 수 없습니다.</p>
-      <button onClick={onRetry} className="mt-2 text-blue-600 hover:underline">
-        연결 다시 시도
-      </button>
-    </div>
-  );
-}
-```
-
-**Usage:**
-```tsx
-<JobStatusErrorBoundary>
-  <JobStatus jobId={activeJobId} onComplete={handleComplete} />
-</JobStatusErrorBoundary>
-```
-
----
-
-## Testing Components
-
-| Component | Test File | Key Tests |
-|-----------|-----------|-----------|
-| JobStatus | `test/unit/components/JobStatus.test.tsx` | SSE connect, state transitions, reconnect, polling fallback, retry click, a11y |
-| AssetViewer | `test/unit/components/AssetViewer.test.tsx` | Same-origin load, auth error (403), not found (404), error boundary |
-| PaperDetailIsland | `test/unit/components/PaperDetailIsland.test.tsx` | JobStatus mount on submit, action buttons, modal flow |
-| contentJobApi | `test/unit/lib/api/contentJobApi.test.ts` | BFF routing, idempotency key gen/storage, SSE URL |
-| E2E | `e2e/content-jobs.spec.ts` | Full flow: submit → SSE → COMPLETED → result; FAILED → retry |
+`backend/app.py`, `wiring.py`, `health.py`, `middleware/`. Composes fourteen module groups, session/auth, observability/cost/rate authorities and repository overrides. Deep shell/auth anchors; remaining middleware shallow. Depends on backend modules, shared authz, ops and configured Redis/PostgreSQL. CAP-06/19. Readiness and optional mounts: Q-05.
+
+## Frontend and BFF
+
+`frontend/app/`, `components/`, `lib/`. Next.js pages/client islands, browser state, same-origin upstream transport, SSE and image proxy. Deep BFF and job contracts/state/tests; other UI shallow. Depends on backend HTTP contracts and generated/shared schemas. CAP-01–17.
+
+## Accounts and Identity
+
+`backend/modules/accounts/`. Credential lifecycle, verification/reset, social login/linking, session/MFA/admin authorization and account withdrawal/reactivation. Controller declarations and persistence model inventory shallow; app auth wiring deep. Depends on PostgreSQL, Redis, email, Google/ORCID and shared authz. CAP-06/07. No existing user population inferred.
+
+## Discovery
+
+`backend/modules/discovery/`. Query validation/expansion, lexical/semantic retrieval, ranking/reranking, grounding, paper metadata and search events. The complete `src/discovery/api/router.py` HTTP/identity/error boundary was deeply read; the central search method was traced and read as a selected range, while remaining orchestration/provider internals are shallow. The analyzed component entry is limited to that router boundary. Depends on shared vector/DTO contracts, OpenSearch, embedding and ops authorities; optional personalization. CAP-01.
+
+## Library and History
+
+`backend/modules/library/`. Owner-scoped saved searches/items/history, quota/validation, pagination and rerun. Controller deep; SQL/service internals shallow. Depends on accounts principal, discovery gateway, SQL or memory, history event seam. CAP-05.
+
+## Summarization and Content Jobs
+
+`backend/modules/summarization/`. Summary/translation, glossary, document-model/assets reads, async job acceptance/state/events/result, queue/store/model adapters. Deep mounted router, service, job model, real wiring, queue and focused tests; preparation protocol/store SQL/worker internals partly read or shallow. Depends on shared contracts, cost guard, object storage, Redis, DB, LLM, queues and ingestion builders. CAP-02–04. Q-01–Q-04 are release-relevant boundary defects.
+
+## Citation Graph
+
+`backend/modules/citation_graph/controller.py`. Bounded reference tree, cache, degraded provider results and library save. Deep controller/provider/cache file. Depends on Semantic Scholar, optional Redis, discovery metadata and library. CAP-09. Feature gated.
+
+## Personalization
+
+`backend/modules/personalization/`. Behavior recording, profile/decision computation, settings/opt-out/deletion/reset and recent papers. Deep controller and integration wiring; profile computation/repository internals shallow. Depends on owner principal, DB and paper category lookup. CAP-10. Search enrichment is bounded; feature/shadow settings affect use.
+
+## Onboarding
+
+`backend/modules/onboarding/`. Pending/completed/skipped state, interest selection and optional ORCID suggestions. Deep controller/wiring, shallow repository/service. Depends on account identity, personalization recorder and ORCID. CAP-11.
+
+## Trends and Digests
+
+`backend/modules/trends/`. Topic following, digest settings, opt-in/watermark/send log and unsubscribe; digest execution outside HTTP mount. The complete `controller.py` was deeply read, including principal/token access, request/response and error mappings; schemas/repository/service/scheduling remain shallow. The analyzed component entry is limited to the controller boundary, not digest operation. Depends on DB, discovery/embeddings and email. CAP-12. Scheduler operation unverified.
+
+## My Page and Plans
+
+`backend/modules/mypage/`, `plans/`. Profile/consents/ORCID and mock subscription presentation; separate tier/quota/grant/revoke service. Both complete `controller.py` files and composition wiring were deeply read; repository/service internals remain shallow. The analyzed component entry is limited to those HTTP/access boundaries. Depends on account repository, plan DB/daily spend, shared admin authorization/MFA. CAP-08/17. No real billing inference.
+
+## Evidence and Research Sessions
+
+`backend/modules/evidence/`, including `sessions/`. Search/document tools, grounded extraction/comparison, literal quote path, optional web references, attachments, conversations, streaming/pending jobs. Controller declarations and central orchestration flow inspected; remaining extractors/workers/repositories shallow. Depends on discovery, document models/private coordinator, LLM, SQL/object/queue and quota/cost authorities. CAP-13/14.
+
+## Novelty and Notion Export
+
+`backend/modules/novelty/`. Topic/manuscript analysis jobs, state/progress/cancel, artifacts, messages and approved external export. Service lifecycle/export path and controller declarations inspected; large adapters/worker shallow. Depends on discovery/evidence, private documents, DB/object/queue/model, encrypted token and Notion. CAP-15/16.
+
+## Private Document Coordinator
+
+`backend/modules/user_docmodel/coordinator.py`. Deep file: owner/scope/attachment identity derivation, validated 10 MiB PDF upload, build enqueue and bounded owner-scoped document readiness. Depends on object store, doc-model reader and optional build queue. Shared by evidence/novelty; public document routes reject private IDs. CAP-02/13/15.
+
+## Ingestion and Corpus Control
+
+`ingestion/`. arXiv and external-source intake, OA parsing, document models/assets, canonical dedup, embedding/index writes, watermarks, rebuild/refresh and DLQ. Central ingest/index flow traced/read; source adapters, SQL semantics and rebuild internals shallow. Depends on sources, shared vector spec, PostgreSQL control state, S3-compatible objects, queue, embedding and OpenSearch. CAP-18.
+
+## Reliability and Operations
+
+`ops/src/docsuri_ops/`, `backend/modules/ops/`, deployment/server tooling. Telemetry, cost/grounding guards, detectors/incidents, reliability evaluations, admin dashboard and operational scripts. CLI/config/interface inventory shallow; application authority wiring deep. Depends on shared ports, platform integrity and configured local/cloud integrations. CAP-19.
+
+## Platform Integrity
+
+`platform_integrity/`, `ops/platform-integrity/`. Operational authority/run/evidence/receipt protocols, compatibility, backup/retention and local deployment controls. Deep readonly API, evidence observation service and compatibility evaluator; remaining protocols/adapters/migrations/tooling shallow. Depends on PostgreSQL, filesystem, keychain/TLS/clock/credential mechanisms and exact release artifacts. CAP-20. Its eligibility is not application journey success.
+
+## Shared Contracts and Build Governance
+
+`shared/`, application manifests and user-authored `.github/`. JSON schema/catalog, generated Python/TS consumers, vector spec, ports, IDs/authz, schema drift checks, CI/security/release definitions. Deep manifests/CI and contract overview; schemas/tool internals shallow; generated bodies excluded. All components consume some of these boundaries. Current declared versions: [technology stack](technology-stack.md); process/quality caveats: [quality assessment](code-quality-assessment.md).

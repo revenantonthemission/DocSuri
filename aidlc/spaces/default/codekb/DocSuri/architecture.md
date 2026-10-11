@@ -1,245 +1,141 @@
-# Architecture — DocSuri Frontend
+# DocSuri Architecture
 
-**Project:** DocSuri
-**Type:** Brownfield (Next.js 15 App Router)
-**Date:** 2026-10-02
+## Architecture Analysis
 
----
+### System Overview
 
-## High-Level Architecture
+The application is a Python modular backend plus a Next.js frontend/BFF, asynchronous ingestion and analysis workers, shared contracts, reliability operations and a separate local platform-integrity subsystem. Source contains both AWS-oriented adapters/infrastructure and local deployment material. It does not establish which environment is authoritative today.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            BROWSER                                          │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  Next.js App (React 18)                                             │   │
-│  │  ├─ SSR Shell: /paper/[id] (RouteGuard, AppHeader, BottomNav)      │   │
-│  │  ├─ Client Islands: PaperDetailIsland, SummaryModal, JobStatus     │   │
-│  │  ├─ Data Layer: contentJobApi, RouteHandlerTransport, MockTransport│   │
-│  │  └─ State: React useState/useEffect, SWR (planned for polling)     │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                    │                                        │
-│         HTTPS (Same-origin)        │                                        │
-│         /bff/* ───────────────────▶│                                        │
-└────────────────────────────────────┼────────────────────────────────────────┘
-                                     ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         NEXT.JS SERVER (BFF)                                │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  /bff/[...path] Catch-all Route (route.ts)                          │   │
-│  │  ├─ Cookie Forwarding: session cookie → Gateway                    │   │
-│  │  ├─ Transport Selection: HttpTransport (prod) / MockTransport (dev)│   │
-│  │  ├─ Asset Image Relay: /api/papers/{id}/assets/{assetId}           │   │
-│  │  │   └─ No 307 redirect, streams image bytes, validates content-type│   │
-│  │  ├─ SSE Proxy: /api/content-jobs/{jobId}/events, /api/novelty/jobs │   │
-│  │  │   └─ Last-Event-ID support, timeout handling                    │   │
-│  │  ├─ Set-Cookie Relay: Gateway Set-Cookie → Browser                 │   │
-│  │  ├─ Timeout Config: per-path (evidence 90s, search 30s, SSE 15s)  │   │
-│  │  └─ SQ3 Mitigation: Aurora resume retry (GET, once)               │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-└────────────────────────────────────┼────────────────────────────────────────┘
-                                     │ HTTPS (DOCSURI_GATEWAY_URL)
-                                     ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         GATEWAY / BACKEND                                   │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  API Gateway (Lambda/ALB)                                           │   │
-│  │  ├─ Auth Injection: x-principal-user-id header                     │   │
-│  │  ├─ ContentJobService (PostgreSQL)                                 │   │
-│  │  │   └─ State Machine, Event Stream, Effect Ledger, Recovery      │   │
-│  │  ├─ Asset Delivery: /api/papers/{id}/assets/{assetId}              │   │
-│  │  │   └─ Auth re-check, owner-scoped, cache-control: private, 60s   │   │
-│  │  ├─ SSE Endpoints: /events with Last-Event-ID support             │   │
-│  │  └─ Other Services: Search, Evidence, Novelty, etc.              │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────┘
+### Architectural Style
+
+The serving backend is a **modular monolith with ports/adapters**, not fourteen independently deployed microservices: `backend/app.py:85` builds one FastAPI app; `backend/wiring.py:108` mounts fourteen module groups. Discovery and summarization also have independently packaged domain/service/adapter trees. Ingestion and long-running analysis use workers and queues. The platform evidence API is a separate restricted read surface, not a public product API.
+
+### Component Relationships
+
+```mermaid
+flowchart LR
+  U[Browser] --> F[Next.js pages and BFF]
+  F --> A[FastAPI shell]
+  A --> D[Discovery]
+  A --> L[Accounts and library]
+  A --> S[Summary and content jobs]
+  A --> R[Evidence research and novelty]
+  D --> I[OpenSearch]
+  L --> P[PostgreSQL]
+  A --> C[Redis sessions and caches]
+  S --> P
+  S --> O[Object storage]
+  R --> P
+  R --> O
+  R --> Q[Queue adapters]
+  S -. separate enqueue seam .-> Q
+  Q --> W[Workers]
+  W --> O
+  W --> I
+  W --> M[Embedding and language models]
+  G[Ingestion] --> P
+  G --> O
+  G --> I
+  G --> M
+  A --> H[Ops authorities]
+  X[Platform integrity] --> P
+  X --> E[Local evidence and authority artifacts]
 ```
 
----
+Text fallback: browser calls same-origin BFF; BFF forwards to the backend. Backend modules share configured stores and ops authorities. Ingestion writes corpus objects/index and control state. Analysis workers use queues, objects and model adapters. Platform integrity separately observes operational evidence. The dotted content-job edge is an integration gap, not a verified dispatch path. Diagram syntax was manually checked using flowchart conventions; no renderer was installed.
 
-## Frontend Component Architecture
+### Data Flow
 
-### Route Structure (App Router)
+**Discovery and history.** `discovery/service/orchestrator.py:154` (under the module's `src/discovery/`) validates/expands, retrieves, ranks, optionally reranks, applies boosts and grounding, then finalizes/publishes. Embedding failure can fall back to lexical retrieval; index failure differs from empty/no-match results. Backend wiring can publish authenticated history directly to SQL when EventBridge is absent. This is an in-process event seam, not proof of distributed delivery guarantees.
 
-```
-/app
-├── /paper/[id]/page.tsx          # SSR shell + PaperDetailIsland
-├── /paper/[id]/doc-model/        # Full text view (mobile full-screen)
-├── /paper/[id]/translate/        # Full translation view
-├── /bff/[...path]/route.ts       # BFF proxy (catch-all)
-├── /search/page.tsx              # Search page
-├── /library/                     # Personal library
-└── /mypage/                      # User profile
-```
+**Ingestion.** `ingestion/src/docsuri_ingestion/application.py:287–550` handles arXiv or source-record jobs. Metadata/full text is parsed, open-access eligibility checked on source records, document models built, canonical/dedup state checked, full text stored, chunks embedded and bulk indexed. Stale chunks are deleted; successful indexing advances dedup/watermark state. Optional second-index writes and assets degrade separately. Withdrawal invokes a tombstone path. Dependency failures are classified; permanent ingestion errors can enter the DLQ. Remaining provider implementations and complete rebuild/transaction semantics are shallow coverage.
 
-### Component Hierarchy (Paper Detail)
+**Paper understanding.** The mounted summary router exposes synchronous summary, glossary, public/private document models and assets alongside newer durable job routes. The durable job route is mounted with a job service, but its enqueue and response contracts do not yet form a complete browser-to-worker-to-result path (Q-01–Q-04). Domain preparation helpers do not prove they are connected to those routes.
 
-```
-PaperPage (SSR)
-├── RouteGuard
-├── AppHeader
-├── PaperDetailIsland (Client Island)
-│   ├── Action Bar: 요약 / 초록 번역 / 각주 트리 / 전문 번역
-│   ├── CitationTreePanel (conditional)
-│   ├── SummaryModal (conditional)
-│   │   ├── SummaryTab
-│   │   └── TranslateTab
-│   ├── DocModelViewer (desktop inline)
-│   └── BottomNav (phone body actions)
-└── BottomNav
-```
+**Research/evidence.** `backend/modules/evidence/orchestrator.py:65` resolves explicit/automatic scope, searches, loads document models, extracts grounded claims and assembles results; no corpus/model/claims can yield abstention. Literal-quote search is a separate path. Research sessions persist owner-scoped jobs and messages around this orchestrator; SSE or pending JSON depends on request negotiation and queue eligibility. Private PDFs are uploaded and queued through the shared coordinator.
 
-### Data Flow (Content Jobs)
+**Novelty/export.** `backend/modules/novelty/service.py:89` creates jobs/events/messages; later state/artifacts, cancellation and export records are owner scoped. Preview → approve → execute is explicit. The full worker/provider algorithm was inventoried, not exhaustively verified.
 
-```
-User Action (Summarize/Translate)
-    │
-    ▼
-PaperDetailIsland / SummaryModal
-    │
-    ▼
-contentJobApi.submitJob({ taskType, input, idempotencyKey })
-    │
-    ▼ (POST /bff/api/content-jobs/submit)
-BFF Proxy (/bff/api/content-jobs/submit)
-    │ (forwards cookie, adds no auth — gateway injects principal)
-    ▼
-Gateway / ContentJobService
-    │ (atomic idempotent acceptance)
-    ▼
-Response: { jobId, state }
-    │
-    ▼
-Mount JobStatus with jobId
-    │
-    ▼
-JobStatus: subscribeJobEvents(jobId, onEvent, lastEventId?)
-    │
-    ▼ (EventSource /api/content-jobs/{jobId}/events?lastEventId=...)
-BFF SSE Proxy (/bff/api/content-jobs/{jobId}/events)
-    │ (forwards cookie, streams events)
-    ▼
-Gateway SSE Endpoint
-    │ (monotonic seq, Last-Event-ID replay)
-    ▼
-Event Stream: { eventId, jobId, state, timestampUs, payload }
-    │
-    ▼
-JobStatus UI Updates: SUBMITTED → ACCEPTED → QUEUED → RUNNING → COMPLETED/FAILED
+### Persistence and authority candidates
+
+| Data boundary | Source-owned data | Continuity implications |
+|---|---|---|
+| Accounts / Redis | accounts, verification/reset/email-change/social identities, withdrawal backup references; sessions/MFA-related state | determine active users, account lifecycle/retention and secret handling before migration |
+| Library | saved_searches, library_items, search_history | preserve owner and paper/query identity, pagination and rerun behavior |
+| Preferences / plans | consents/subscription presentation, behavior events/profiles/settings, onboarding state, followed topics/digest state, plan assignments/daily usage | distinguish user preferences from reconstructible projections and quota counters |
+| Research / novelty | evidence_sessions/turns, research_jobs/messages, novelty jobs/events/messages/artifacts/exports/connections | preserve private attachment links and export approval state; encrypted tokens need key continuity |
+| Summarization | content job state/events/effect records, glossary, cached/prepared content | durable acceptance, progress, ownership, result identity/expiry and worker recovery must agree |
+| Ingestion | dedup/canonical/version state, watermarks, jobs/generations, paper assets | replay/index rebuild requires authoritative source/object/control state, not only search index |
+| Object storage | full text, document models, figures, uploaded PDFs, novelty artifacts | do not treat all objects as disposable cache; classify before retention/deletion |
+| Platform integrity | control/audit/run/evidence/head/outbox/authority/target-effect schemas plus local receipts/artifacts | operational evidence and credentials have separate lifecycle from paper corpus |
+
+Table names were checked from repository models and SQL declarations; SQL procedures, privileges, deployed migrations and existing rows were not exhaustively validated. `backend/app.py:127` performs read-only startup schema inspection; DDL reconciliation is a separate operational responsibility.
+
+### Key Design Decisions
+
+- BFF confines upstream configuration and forwards cookies/Set-Cookie, streams selected routes, and proxies assets. It has explicit mock mode and production configuration failure. Source: `frontend/app/bff/[...path]/route.ts:66`.
+- Owner checks and private namespace refusal are implemented at service/controller boundaries. `user_docmodel/coordinator.py` binds private IDs to owner/scope/attachment and caps PDF payloads at 10 MiB.
+- Shared JSON schemas, generated bindings, authz and vector specifications reduce duplicated contracts, but handwritten browser/job contracts still drift.
+- Mock/in-memory implementations aid isolation; broad mount exception handling and omitted readiness requirements can mask partial functionality.
+- Separate platform integrity gates use verified peer identity, bounded reads and exact release observations; they are not evidence that the serving application is healthy.
+- Local Docker/Colima and old AWS/CDK surfaces coexist. `backend/docker-compose.yml` and `ops/local-stack/colima-stack.compose.yaml` explicitly serve different purposes. Do not run them interchangeably or infer authority from a runbook.
+
+### Improvement Opportunities
+
+First close the proven paper-job boundary defects and establish one executable mounted contract. Then reconcile capability-aware readiness, configuration authority and data/restore evidence. Preserve adapter seams, owner isolation and explicit degraded states while simplifying responsibility boundaries. These are assessment directions, not selected v2 architecture or permission to change providers.
+
+## Interaction Diagrams
+
+### Find, save and revisit
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant F as Frontend and BFF
+  participant A as FastAPI
+  participant D as Discovery
+  participant L as Library
+  participant P as Persistent stores
+  U->>F: Search query
+  F->>A: POST api search
+  A->>D: Validate and retrieve
+  D->>P: Read corpus
+  D-->>F: Ranked grounded result or degraded outcome
+  U->>F: Save paper
+  F->>A: POST library items
+  A->>L: Add for authenticated owner
+  L->>P: Persist library item
+  L-->>F: Item receipt
+  U->>F: Reopen library
+  F->>A: GET library items
+  A->>L: List owner items
+  L->>P: Read saved items
+  L-->>F: Page of items
 ```
 
----
+Text fallback: search returns corpus results; saving writes an authenticated library item; revisiting reads that owner's saved items. Authentication, storage and adapters are prerequisites; this diagram is source flow, not an executed journey.
 
-## Key Integration Points
+### Current durable paper-job boundary
 
-### 1. BFF Proxy (`/bff/[...path]`)
-- **Purpose**: Server-side seam between browser and gateway
-- **Security**: Forwards httpOnly session cookie, never exposes token to client JS
-- **Gateway URL**: `DOCSURI_GATEWAY_URL` env var (prod), MockTransport (dev)
-- **Paths Handled**:
-  - `/api/content-jobs/*` → ContentJobService
-  - `/api/papers/{id}/assets/{assetId}` → Asset relay (no 307)
-  - `/api/content-jobs/{jobId}/events` → SSE proxy with Last-Event-ID
-  - `/api/novelty/jobs/{jobId}/events` → Novelty SSE
-  - `/api/evidence/turns` → Evidence turns SSE
-  - `/api/search`, `/api/library/*`, `/api/research/jobs` → Other services
-
-### 2. Content Job API (`contentJobApi.ts`)
-**Current State (Bypasses BFF):**
-```typescript
-const API_BASE = '/api/content-jobs';  // ❌ Direct to gateway, no principal injection
-
-submitJob()     → POST /api/content-jobs/submit
-getJobState()   → GET  /api/content-jobs/{jobId}/state
-subscribeJobEvents() → EventSource /api/content-jobs/{jobId}/events
-getAssetUrl()   → GET  /api/content-jobs/assets/{assetId}?token=... (expects 307)
-issueAssetToken() → POST /api/content-jobs/assets/{assetId}/token
+```mermaid
+sequenceDiagram
+  participant F as Browser job client
+  participant B as BFF
+  participant R as Mounted job router
+  participant J as ContentJobService
+  participant S as Job store
+  F->>B: Submit task and idempotency key
+  B->>R: Forward submit
+  R->>J: submit
+  J->>S: accept
+  J->>J: Invoke configured no-op enqueue
+  J->>S: Mark accepted
+  R-->>F: jobId and state
+  F->>R: State or event read through BFF
+  R-->>F: State lacks seq; event delimiters escaped
+  F->>R: Result read through BFF
+  R-->>F: resultRef only when completed
+  Note over F,R: Client requires seq and preparedResult
 ```
 
-**Required Change:**
-```typescript
-const API_BASE = '/bff/api/content-jobs';  // ✅ Through BFF
-```
-
-### 3. JobStatus Component
-- **Exists**: `frontend/components/JobStatus.tsx` ✅
-- **Mounted**: No (used in SummaryModal but not in PaperDetailIsland)
-- **SSE**: Uses `subscribeJobEvents()` with `lastEventId` parameter ✅
-- **Missing**: Mount in PaperDetailIsland, polling fallback, error boundary, retry UX
-
-### 4. AssetViewer Component
-- **Exists**: `frontend/components/AssetViewer.tsx` ✅
-- **Current**: Uses `getAssetUrl()` → presigned 307 redirect ❌ (SECURITY-08)
-- **Required**: Direct `<img src="/bff/api/papers/{paperId}/assets/{assetId}" />` ✅
-- **BFF Support**: Already implemented in `route.ts` (`proxyAssetImage`)
-
-### 5. PaperDetailIsland (Mount Point)
-- **Actions**: 요약, 초록 번역, 각주 트리, 전문, 전문 번역
-- **Missing**: JobStatus mount near action buttons
-- **Modal**: SummaryModal opens for 요약/초록 번역 → should trigger JobStatus
-
----
-
-## Security Boundaries
-
-| Boundary | Mechanism | Status |
-|----------|-----------|--------|
-| Browser → BFF | Same-origin HTTPS, CSP, CSP nonce | ✅ |
-| BFF → Gateway | Cookie forwarding, `DOCSURI_GATEWAY_URL` | ✅ |
-| Gateway → Services | Internal network, auth injection | ✅ |
-| Asset Delivery | Same-origin relay, auth re-check, no 307 | ✅ Backend / ❌ Frontend |
-| Job Events | SSE with Last-Event-ID, cookie auth | ✅ Backend / ⚠️ Frontend (no BFF) |
-
----
-
-## Data Models (from contentJobApi.ts)
-
-```typescript
-// Job States
-type JobState = 
-  | 'SUBMITTED' | 'ACCEPTED' | 'QUEUED' | 'RUNNING' 
-  | 'COMPLETED' | 'FAILED' | 'ABSTAINED';
-
-// Task Types
-type TaskType = 'translate' | 'summarize' | 'novelty' | 'evidence' | 'ingest_userdoc';
-
-// SSE Event
-interface JobEvent {
-  eventId: string;
-  jobId: string;
-  state: string;
-  timestampUs: number;
-  payload?: { assetId?, error?, abstainReason? };
-}
-
-// Idempotency
-interface SubmitJobRequest {
-  taskType: TaskType;
-  input: Record<string, unknown>;
-  idempotencyKey?: string;  // Optional currently, should be required
-}
-```
-
----
-
-## Environment Configuration
-
-| Variable | Purpose | Required |
-|----------|---------|----------|
-| `DOCSURI_GATEWAY_URL` | Backend gateway base URL | Prod: Yes, Dev: No (MockTransport) |
-| `DOCSURI_BFF_ALLOW_MOCK` | Allow mock in prod | Optional |
-| `NEXT_PUBLIC_*` | Client-exposed config | As needed |
-
----
-
-## Known Technical Debt (Phase 7 Target)
-
-| Debt | Location | Fix |
-|------|----------|-----|
-| BFF bypass in contentJobApi | `contentJobApi.ts:46` | Change `API_BASE` to `/bff/api/content-jobs` |
-| JobStatus unmounted | `PaperDetailIsland.tsx` | Mount near action buttons |
-| AssetViewer presigned URL | `AssetViewer.tsx:27` | Use same-origin `/bff/api/papers/{id}/assets/{assetId}` |
-| No polling fallback | `JobStatus.tsx` | Add SWR polling to `/state` on SSE error |
-| No idempotency key gen | `contentJobApi.ts` | Generate SHA-256 hash, store in localStorage |
-| No inline retry UX | `JobStatus.tsx` | Add retry button on FAILED state |
-| No error boundary | `JobStatus.tsx` | Wrap in React Error Boundary |
+Text fallback: the job is accepted durably or in memory depending on configuration, but the mounted callback dispatches no work; state/events/results disagree with browser expectations. A separate orchestrator queue adapter and domain serializers exist, but are not repairs to this mounted flow. Exact evidence and the isolated failed SSE regression are in Q-01–Q-04. Sequence syntax manually checked.
