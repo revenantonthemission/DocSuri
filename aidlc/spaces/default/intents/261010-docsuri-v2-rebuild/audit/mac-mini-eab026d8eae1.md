@@ -6822,3 +6822,105 @@
 **Review Record Digest**: sha256:bd082b765f290b97e29f0d2d0be4211d7ed4ef25e34ee5f20fa95dcedc233b3c
 
 ---
+
+## Decision Recorded
+**Timestamp**: 2026-10-11T06:06:39Z
+**Event**: DECISION_RECORDED
+**Stage**: contract-design
+**Decision**: Anything to add for next time?
+**Options**: Nothing to add,Add a note
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T06:07:01Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a1298a-4067-77d0-92a9-c0e7004c3bec last seen 2026-10-11T05:58:11.053Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T06:07:01Z
+**Event**: HUMAN_TURN
+**Session**: 01a12992-5787-7d12-9d08-10386e0c6d4b
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T06:07:13Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a12992-5787-7d12-9d08-10386e0c6d4b last seen 2026-10-11T06:07:01.270Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T06:07:14Z
+**Event**: HUMAN_TURN
+**Session**: 01a12992-8947-7803-9ea9-cf01ff0daf3f
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T06:09:11Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Question Answered
+**Timestamp**: 2026-10-11T06:09:29Z
+**Event**: QUESTION_ANSWERED
+**Stage**: contract-design
+**Details**: Nothing to add
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_86339b5ae5364c31bbb89b36a21328a1\",0]","question":"Anything to add for next time? The Contract Design documents and independent review are committed as 7a39b19b. Three Major findings remain: browser revision preconditions, rediscovery of saved drafts after restart, and worker execution claims/payload retrieval. Your $0 constraint and CONVENTIONS.md Git flow are already recorded. You can save a reusable note before the separate contract approval decision.","answer":"Nothing to add"}]\n</send_user_message_question_reply>
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T06:09:30Z
+**Event**: SENSOR_FIRED
+**Fire id**: 548269bc
+**Sensor ID**: required-sections
+**Stage slug**: contract-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T06:09:30Z
+**Event**: SENSOR_PASSED
+**Fire id**: 548269bc
+**Sensor ID**: required-sections
+**Stage slug**: contract-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+**Duration ms**: 28
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T06:09:30Z
+**Event**: SENSOR_FIRED
+**Fire id**: e9c1f886
+**Sensor ID**: upstream-coverage
+**Stage slug**: contract-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T06:09:30Z
+**Event**: SENSOR_PASSED
+**Fire id**: e9c1f886
+**Sensor ID**: upstream-coverage
+**Stage slug**: contract-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+**Duration ms**: 26
+
+---
+
+## Stage Awaiting Approval
+**Timestamp**: 2026-10-11T06:09:30Z
+**Event**: STAGE_AWAITING_APPROVAL
+**Stage**: contract-design
+
+---
