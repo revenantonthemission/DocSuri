@@ -10,6 +10,7 @@ import pytest
 from backend.artifacts import PrivateArtifacts
 from backend.modules.corpus.repository import CorpusRepository
 from backend.modules.discovery.guarded_repository import GuardedDiscoveryRepository
+from backend.modules.discovery.local_search import POLICY, VOCABULARY, SearchPageBuilder
 from backend.modules.summarization.guarded_repository import intent_digest
 
 pytestmark = pytest.mark.u1_repository
@@ -88,6 +89,25 @@ def test_corpus_publication_and_readonly_projection_boundary(repositories, realm
         corpus.publish(**{**args, "content": {"changed": True}})
     assert discovery.snapshot(None)["publication"]["revision"] == before["revision"]
     assert any(item["version_id"] == args["version"] for item in discovery.candidates(None))
+    ranked_snapshot = discovery.snapshot(None, query="storage")
+    scored = next(
+        row for row in ranked_snapshot["candidates"] if row["version_id"] == args["version"]
+    )
+    assert scored["lexical_score"] > 0
+    page = SearchPageBuilder(b"diagnostic-cursor-key" * 2).build(
+        snapshot=ranked_snapshot,
+        query={
+            "query": "storage",
+            "modeId": "lexical",
+            "orderId": "relevance",
+            "filters": [],
+            "vocabularyRevision": VOCABULARY,
+            "policyRef": POLICY,
+        },
+        execution=str(uuid4()),
+        owner="anonymous",
+    )
+    assert page["hits"][0]["paper"]["versionId"] == args["version"]
     with connect("discovery") as conn:
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             conn.execute("DELETE FROM corpus.projection")

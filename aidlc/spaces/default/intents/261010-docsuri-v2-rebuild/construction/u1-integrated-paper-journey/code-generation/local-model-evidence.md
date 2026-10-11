@@ -62,7 +62,7 @@ Complete fetched text and raw responses are intentionally not committed.
 | 1791723461336045000 | 5 passed, 29.92s | Position and selected Korean translation passed parent review; scaling guarantee and missing parametric-memory definition remained. |
 | 1791723633821659000 | 5 setup errors, 6.06s | No model execution. Read-only clone reuse wrongly attributed unrelated filesystem growth; accounting corrected. |
 | 1791723777403737000 | 3 passed / 2 failed, 32.08s | Range/missing references rejected; semantic completeness remained inconsistent. |
-| 1791724195142174000 | 5 passed, 30.31s | Constrained JSON fixed reference shape; scaling/position certainty and P2 top-K coverage regressed. |
+| 1791724195142174000 | 5 passed, 30.31s | Constrained JSON fixed reference shape. Parent review accepts P2's memory/document distinctions; P1 scaling overstates performance/guarantee and position omits added embeddings. |
 | 1791724265527430000 | 5 passed, 29.76s | Latest generic mechanism prompt still does not establish full source rubric. |
 
 Each started owned server exited with code 0 at cleanup; the setup-only failed
@@ -80,6 +80,16 @@ document distinction and does not explicitly define the learned BART parameters.
 P1 position still asserts relative-position learning beyond the source's
 hypothesis. P1 scaling shifts the uncertainty to necessity rather than faithfully
 preserving the causal hypothesis. These remain quality failures for readiness.
+
+Subsequent parent review narrows this provisional interpretation: absence of
+"hypothesize" is not itself an additional failure when the position explanation
+states mathematical expressibility without a measured guarantee. Attempt
+1791724195142174000 P2 passes the bounded rubric: BART parameters versus Wikipedia
+index and same-document/all-tokens versus different-document/per-token are
+explicit. Omitting top-K or equations is not a failure absent a false one-candidate
+claim; its DPR training detail is supported by the supplied source. The run as
+a whole still fails the stated P1 findings. These corrections preserve the
+original raw outputs and do not select mixed-attempt results as readiness.
 
 ## Allocation correction and open work
 

@@ -15,19 +15,23 @@ class GuardedDiscoveryRepository:
     def candidates(self, authority: Authority | None) -> list[dict]:
         return self.snapshot(authority)["candidates"]
 
-    def snapshot(self, authority: Authority | None) -> dict:
+    def snapshot(self, authority: Authority | None, *, query: str = "") -> dict:
+        if len(query.encode()) > 2048:
+            raise ValueError("search query exceeds finite allocation")
+
         def read(conn):
             if authority:
                 guard(conn, authority)
-            publication = conn.execute(
-                "SELECT * FROM corpus.guard_publication()"
-            ).fetchone()
+            publication = conn.execute("SELECT * FROM corpus.guard_publication()").fetchone()
             rows = conn.execute(
                 "SELECT c.*,v.paper_id,v.source_hash,v.version_label,p.title,p.authors,"
-                "p.published_on,v.source_url,v.eligibility_revision "
+                "p.published_on,v.source_url,v.eligibility_revision,"
+                "ts_rank_cd(setweight(to_tsvector('simple',p.title),'A') || c.lexical,"
+                "plainto_tsquery('simple',%s)) AS lexical_score "
                 "FROM corpus.projection c JOIN corpus.version v ON "
                 "v.id=c.version_id JOIN corpus.paper p ON p.id=v.paper_id WHERE v.eligible AND "
-                "NOT p.withdrawn ORDER BY v.id,c.ordinal LIMIT 257"
+                "NOT p.withdrawn ORDER BY v.id,c.ordinal LIMIT 257",
+                (query,),
             ).fetchall()
             if len(rows) > 256:
                 raise ValueError("corpus projection exceeds declared allocation")
