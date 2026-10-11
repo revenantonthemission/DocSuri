@@ -52,15 +52,10 @@
 
 
 
-- **Active Unit**: u1-integrated-paper-journey
 
-- **Unit Stage**: nfr-requirements
 
-- **Unit State**: paused
 
-- **Unit Pause Reason**: Awaiting the human consolidated-summary confirmation before generating U1 NFR Requirements artifacts.
 
-- **Unit Next Action**: Record the summary answer, resume this unit, then generate and review the NFR Requirements artifacts.
 
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
@@ -123,7 +118,7 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-10-11T08:00:13Z
+- **Last Updated**: 2026-10-11T08:16:16Z
 
 - **Construction Autonomy Mode**: autonomous
 
