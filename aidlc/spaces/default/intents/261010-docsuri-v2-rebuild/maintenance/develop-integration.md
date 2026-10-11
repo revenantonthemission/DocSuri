@@ -350,3 +350,51 @@ removed. The fresh `docs/docsuri-v2-u1-infrastructure-design` branch starts at
 that merge. A generated audit append was preserved on the new branch. Main
 was not promoted. Infrastructure Design is active; its enabled summary
 confirmation is the next human checkpoint.
+
+## 2026-10-11 — U1 Infrastructure Design integrated
+
+[PR #43](https://github.com/revenantonthemission/DocSuri/pull/43) merged into
+develop as `2a9a08f66dfb0bc484e270fe2fb26d0ed3503b71`. Exact reviewed head:
+`2068a59a69fa6606dd80a49d844d1fc99cd3cd16`; exact base:
+`7ba887abe8965d6b7ccb4fa4ab6e583baa2496a1`.
+
+Infrastructure Design completed under the confirmed summary and automatic
+ordinary Construction policy. The document checker passed three required
+deliverables, 37 NFR mappings, 22 required sections, 22 table structures and 82
+local links. Bounded experiments support the local PostgreSQL choice and expose
+remaining model-grounding limitations; they do not establish operating capacity
+or public hosting readiness. The independent review's Major finding about
+runtime PostgreSQL roles and cross-owner authority locks is carried into approved
+code-plan Step 4 with executable closure required. Main was not promoted.
+
+[Head CI 38132628921](https://github.com/revenantonthemission/DocSuri/actions/runs/38132628921)
+finished with 11 failed, three passed and one skipped job. All 248 normalized
+diagnostic lines and all failed-step names match
+[exact-base CI 38125988370](https://github.com/revenantonthemission/DocSuri/actions/runs/38125988370)
+(11 failed, two passed, two skipped). Full failed-step bodies were also compared;
+remaining differences were timestamps and dependency download/build ordering.
+The only job-conclusion change is PR-only dependency review passing instead of
+being skipped. This bounded comparison identified no new CI failure. Ingestion,
+discovery and dependency review passed, as did both languages in
+[CodeQL](https://github.com/revenantonthemission/DocSuri/actions/runs/38132628849)
+and [branch naming](https://github.com/revenantonthemission/DocSuri/actions/runs/38132628913).
+
+Matching failures remain in accounts/library and summarization lint, backend
+integration import, shared/frontend consumer inventories, Ops dependency
+collection, native platform assumptions, editable dependency audit handling and
+Postgres service lookup. Checks downstream of those failing steps remain
+unverified, including affected tests, frontend build/E2E, Postgres acceptance and
+later security checks. CI remains failed. Application source, dependencies and
+CI workflows were unchanged by this PR. Exact evidence is preserved in the
+linked Actions runs; local raw comparisons are in
+`/tmp/docsuri-infra-ci-base-7ba887ab/` and
+`/tmp/docsuri-infra-ci-head-2068a59a/`.
+
+The human approved the U1 code plan. A local branch transition briefly exposed
+the older develop checkout without its approved files; the supported plan
+restore recovered them, and the append-only audit conflict was union-merged
+without changing existing event bodies. Plan, fingerprint, receipt and execution
+authorization all verify. Implementation continues on
+`feature/docsuri-v2-u1-paper-journey`, based on the PR #43 merge. The exact
+cumulative Construction Verification Command still requires the separate
+approval already recorded in Delivery Planning.
