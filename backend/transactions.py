@@ -22,9 +22,11 @@ import psycopg
 from psycopg.rows import dict_row
 from psycopg_pool import NullConnectionPool
 
-from .local_profile import LocalProfile
+from .local_profile import LocalProfile, private_bytes
 
 T = TypeVar("T")
+_GATES_LOCK = threading.Lock()
+_PROCESS_GATES = {}
 OWNERS = frozenset(
     (
         "accounts",
@@ -86,11 +88,21 @@ class OwnerTransactions:
         info = path.lstat()
         if path.is_symlink() or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o600:
             raise ValueError("owner credentials are not private")
-        value = json.loads(path.read_text())
+        value = json.loads(private_bytes(path))
         if value.get("runId") != profile.run_id or set(value.get("roles", {})) != OWNERS:
             raise ValueError("owner credential identity mismatch")
         self.profile = profile
-        self._gate = threading.BoundedSemaphore(limits[process])
+        if (profile.database_name, profile.realm) not in {
+            ("docsuri_u1", "diagnostic"),
+            ("docsuri_u1_journey", "journey"),
+        }:
+            raise ValueError("unknown explicit database realm")
+        # Separate databases do not receive separate process connection budgets.
+        with _GATES_LOCK:
+            self._gate = _PROCESS_GATES.setdefault(
+                (str(profile.root), profile.run_id, process),
+                threading.BoundedSemaphore(limits[process]),
+            )
         self._pools = {}
         self._closed = False
         for owner in OWNERS:
@@ -98,12 +110,12 @@ class OwnerTransactions:
                 kwargs={
                     "host": "127.0.0.1",
                     "port": profile.database_port,
-                    "dbname": "docsuri_u1",
+                    "dbname": profile.database_name,
                     "user": f"docsuri_{owner}",
                     "password": value["roles"][owner],
                     "connect_timeout": 3,
                     "row_factory": dict_row,
-                    "application_name": f"docsuri-{process}-{owner}",
+                    "application_name": f"docsuri-{profile.realm}-{process}-{owner}",
                 },
                 min_size=0,
                 max_size=min(2, limits[process]),
@@ -135,9 +147,14 @@ class OwnerTransactions:
                         conn.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
                         bounded = DeadlineConnection(conn, deadline)
                         identity = bounded.execute(
-                            "SELECT run_id FROM public.docsuri_local_identity"
+                            "SELECT run_id,current_database() AS database_name "
+                            "FROM public.docsuri_local_identity"
                         ).fetchone()
-                        if identity is None or identity["run_id"] != self.profile.run_id:
+                        if (
+                            identity is None
+                            or identity["run_id"] != self.profile.run_id
+                            or identity["database_name"] != self.profile.database_name
+                        ):
                             raise ValueError("database realm mismatch")
                         result = action(bounded)
                         bounded.execute(

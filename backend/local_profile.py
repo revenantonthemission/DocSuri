@@ -12,6 +12,26 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+def private_bytes(path: Path, *, maximum: int = 16384) -> bytes:
+    """Read an owned regular file without blocking on a substituted FIFO/device."""
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    try:
+        info = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.getuid()
+            or stat.S_IMODE(info.st_mode) != 0o600
+            or info.st_size > maximum
+        ):
+            raise ValueError("private record must be a bounded owned regular file")
+        raw = os.read(descriptor, maximum + 1)
+        if len(raw) > maximum:
+            raise ValueError("private record exceeds allocation")
+        return raw
+    finally:
+        os.close(descriptor)
+
+
 @dataclass(frozen=True)
 class LocalProfile:
     root: Path
@@ -19,6 +39,29 @@ class LocalProfile:
     origin: str
     database_port: int
     expires_at: float
+    database_name: str = "docsuri_u1"
+    realm: str = "diagnostic"
+
+    def journey(self) -> LocalProfile:
+        """Select only the explicitly provisioned second owned database."""
+        path = self.root / "journey-database.json"
+        value = json.loads(private_bytes(path))
+        if (
+            value.get("runId") != self.run_id
+            or value.get("database") != "docsuri_u1_journey"
+            or value.get("realm") != "journey"
+            or value.get("state") != "ready"
+        ):
+            raise ValueError("journey database is not an established owned realm")
+        return LocalProfile(
+            self.root,
+            self.run_id,
+            self.origin,
+            self.database_port,
+            self.expires_at,
+            "docsuri_u1_journey",
+            "journey",
+        )
 
     @classmethod
     def load(cls, manifest: Path) -> LocalProfile:
@@ -33,11 +76,11 @@ class LocalProfile:
                 or stat.S_IMODE(info.st_mode) & 0o077
             ):
                 raise ValueError("private synthetic environment ownership mismatch")
-        raw = expected.read_bytes()
+        raw = private_bytes(expected)
         if len(raw) > 16384:
             raise ValueError("manifest too large")
         value = json.loads(raw)
-        marker = json.loads((expected.parent / "ownership.json").read_text())
+        marker = json.loads(private_bytes(expected.parent / "ownership.json"))
         if marker != {
             "runId": value.get("runId"),
             "manifestSha256": hashlib.sha256(raw).hexdigest(),
