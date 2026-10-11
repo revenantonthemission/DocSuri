@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+from copy import deepcopy
 from uuid import UUID, uuid4
 
 from backend.artifacts import Artifact, PrivateArtifacts
 from backend.transactions import Authority, OwnerTransactions, guard
+from docsuri_shared.workspace import execution as wire
+from docsuri_shared.workspace import wire as browser_wire
 from psycopg.types.json import Jsonb
 
 
@@ -23,6 +26,41 @@ class GuardedAssistanceRepository:
         self.files = files
 
     def prepare(self, authority: Authority, operation: UUID, payload: dict) -> dict:
+        return self._prepare(authority, operation, payload)
+
+    def replay_request(self, authority: Authority, operation: UUID, request: dict) -> dict | None:
+        """Current authority precedes replay; catalog changes cannot mutate it."""
+
+        def read(conn):
+            guard(conn, authority, version=request["paper"]["versionId"])
+            row = conn.execute(
+                "SELECT * FROM assistance.admission WHERE operation_id=%s", (operation,)
+            ).fetchone()
+            if row and (
+                row["account_id"] != authority.account_id or row["intent"].get("request") != request
+            ):
+                raise ValueError("operation identity conflict")
+            return row
+
+        return self.transactions.run("assistance", read)
+
+    def prepare_request(self, authority: Authority, operation: UUID, proposal: dict) -> dict:
+        proposal = deepcopy(proposal)
+        proposal["request"] = browser_wire.AssistanceRequestHttp.model_validate(
+            proposal["request"]
+        ).model_dump(mode="json")
+        if (
+            proposal["versionId"] != proposal["request"]["paper"]["versionId"]
+            or proposal["sourceHash"] != proposal["request"]["contentHash"]
+            or proposal["action"] != proposal["request"]["operation"]
+        ):
+            raise ValueError("request and prepared source binding conflict")
+        return self._prepare(authority, operation, proposal, canonical=True)
+
+    def _prepare(
+        self, authority: Authority, operation: UUID, payload: dict, *, canonical=False
+    ) -> dict:
+        payload = deepcopy(payload)
         hashed = intent_digest(payload)
 
         def write(conn):
@@ -33,12 +71,40 @@ class GuardedAssistanceRepository:
                 "SELECT * FROM assistance.admission WHERE operation_id=%s FOR UPDATE", (operation,)
             ).fetchone()
             if existing:
-                if (
-                    existing["account_id"] != authority.account_id
-                    or existing["intent_hash"] != hashed
-                ):
+                same_input = (
+                    existing["intent"].get("request") == payload.get("request")
+                    if canonical
+                    else existing["intent_hash"] == hashed
+                )
+                if existing["account_id"] != authority.account_id or not same_input:
                     raise ValueError("operation identity conflict")
                 return existing
+            if canonical:
+                request = payload["request"]
+                current_source = conn.execute(
+                    "SELECT corpus.guard_version(%s,%s) AS revision",
+                    (payload["versionId"], "local-research"),
+                ).fetchone()["revision"]
+                if str(current_source) != request["paper"]["eligibilityRevision"]:
+                    raise ValueError("source eligibility revision conflict")
+                glossary = conn.execute(
+                    "SELECT * FROM assistance.read_glossary(%s)", (authority.account_id,)
+                ).fetchone()
+                if glossary["revision"] != request["glossaryRevision"]:
+                    raise ValueError("glossary revision conflict")
+                accepted = dict(
+                    request,
+                    glossary={
+                        "ownerId": str(authority.account_id),
+                        "revision": glossary["revision"],
+                        "normalizationPolicy": {"policyId": "local-glossary", "revision": "1"},
+                        "terms": glossary["snapshot"],
+                    },
+                )
+                payload["acceptedInput"] = wire.AssistanceAcceptedInput.model_validate(
+                    accepted
+                ).model_dump(mode="json")
+            frozen_hash = intent_digest(payload)
             counts = conn.execute(
                 "SELECT count(*) AS total,count(*) FILTER(WHERE account_id=%s) AS own FROM "
                 "assistance.admission WHERE disposition='open' OR operation_id IN (SELECT id "
@@ -50,7 +116,7 @@ class GuardedAssistanceRepository:
             return conn.execute(
                 "INSERT INTO assistance.admission(operation_id,account_id,intent_hash,intent,"
                 "disposition) VALUES(%s,%s,%s,%s,'open') RETURNING *",
-                (operation, authority.account_id, hashed, Jsonb(payload)),
+                (operation, authority.account_id, frozen_hash, Jsonb(payload)),
             ).fetchone()
 
         return self.transactions.run("assistance", write)
@@ -75,9 +141,16 @@ class GuardedAssistanceRepository:
                 ).fetchone()
             if intent["disposition"] != "open":
                 raise ValueError("admission closed before acceptance")
-            glossary = conn.execute(
-                "SELECT * FROM assistance.read_glossary(%s)", (authority.account_id,)
-            ).fetchone()
+            frozen = intent["intent"].get("acceptedInput")
+            if frozen:
+                glossary = {
+                    "revision": frozen["glossary"]["revision"],
+                    "snapshot": frozen["glossary"]["terms"],
+                }
+            else:
+                glossary = conn.execute(
+                    "SELECT * FROM assistance.read_glossary(%s)", (authority.account_id,)
+                ).fetchone()
             row = conn.execute(
                 "INSERT INTO assistance.job(id,account_id,authority_revision,version_id,"
                 "source_hash,input_hash,payload,glossary_revision,glossary_snapshot,"
