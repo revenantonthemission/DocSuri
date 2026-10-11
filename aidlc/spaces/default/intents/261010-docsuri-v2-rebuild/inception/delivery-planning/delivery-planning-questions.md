@@ -40,7 +40,7 @@ recorded execution remains one unit at a time and serial.
   reconciliation with the approved unit boundaries and runtime order.
 - X. Other: describe the grouping you prefer.
 
-[Answer]:
+[Answer]: One approved unit per Bolt (Recommended): eight build passes, each with a runnable demonstration and clear completion boundary.
 
 ## Q2 — Construction staffing
 
@@ -55,7 +55,7 @@ maintainer with coding agents.
   their work independently; define ownership and check-in rhythm before starting.
 - X. Other: describe how you want responsibility assigned.
 
-[Answer]:
+[Answer]: Run from this session (Recommended): coding agents perform the work here; you remain the sole approver at the recorded review points.
 
 ## Q3 — Selecting the construction verification command
 
@@ -71,7 +71,7 @@ completed unit and the cumulative working application?
   to evaluate; selection still needs a separate exact-command approval.
 - X. Other: describe a verification approach or constraint.
 
-[Answer]:
+[Answer]: Defer until a runnable v2 check exists (Recommended): leave the command unset now and approve the exact command before the first unit completion checkpoint runs verification.
 
 ## Accepted contract findings to carry into the plan
 
@@ -112,3 +112,89 @@ before generating the delivery plan, responsibility allocation, sequencing
 rationale and external dependency map. Traceability at the Inception boundary
 will be checked separately; a coverage pass cannot close a contract defect or
 an operating-feasibility evidence gap.
+
+## Answer analysis and proposed sequence
+
+The three human answers are consistent with the existing eight-unit grouping,
+one-maintainer model and recorded unit-major/serial settings. Single-session
+staffing preserves the default solo unit ownership and existing review points;
+it does not authorize automatic approval. The verification command remains
+unset. Deferral is explicit, not approval of a placeholder or a waiver of checks.
+
+The proposed order is U1 → U7 → U2 → U3 → U4 → U5 → U6 → U8. It respects all
+19 dependency edges and the current runtime's fresh serial walk. U1 provides the
+first complete paper demonstration; early U7 exposes controlled-operator and
+native-platform constraints before completing the remaining application breadth.
+The two roots remain independent. Account/personal controls then supply the
+authority needed for full corpus, research, digest and export contributions;
+U8 consolidates full integration. This economic rationale uses the approved
+risk-first priority without invented numeric scores or a calendar commitment.
+
+| Build pass | Approved unit | Expected working outcome to detail in the plan |
+|---|---|---|
+| B01 | U1 — integrated paper journey | Real find → understand → save → revisit with persistence, current owner checks and recoverable accepted work |
+| B02 | U7 — controlled platform protocols | Independently executable operator protocols with separate authority and truthful, recoverable receipts |
+| B03 | U2 — account and personal controls | Complete retained account, library, preferences and usage controls through the shared application |
+| B04 | U3 — paper/corpus capabilities | Complete retained corpus, retrieval, citation and paper-assistance behavior through the real application |
+| B05 | U4 — research and novelty | Private research, manuscripts, acknowledged drafts and novelty with owner-bound recovery |
+| B06 | U5 — topics and digests | Topic subscriptions and digest delivery with current consent and interrupted-send reconciliation |
+| B07 | U6 — approved export | Explicitly approved Notion export bound to the exact artifact revision and destination |
+| B08 | U8 — service operations and integration | Complete application, capability parity and cumulative recovery, resource and maintainer evidence |
+
+Read-only runtime verification on 2026-10-11 called the actual `parseBoltDag`
+against the approved dependency document. It returned dependency groups
+`[[U1,U7],[U2],[U3],[U4,U5],[U6],[U8]]`.
+`.codex/tools/aidlc-orchestrate.ts` flattens those groups in
+`emitUnitMajorRunStage` (lines 11615–11664) and `unitMajorWalkStep`
+(lines 10959–10981) walks each unit's active stages and checkpoint.
+This establishes fresh order, not a promise about resuming explicitly set-aside
+or already-running work. A planning-file reorder alone cannot change the runtime
+walk, and no false dependency has been added to force the proposal.
+
+## Consolidated Summary Confirmation
+
+- Plan eight Bolts, each one build pass over an approved unit ending in a
+  working demonstration. Use the proposed serial order: integrated paper
+  journey → controlled platform protocols → account/personal controls → full
+  paper/corpus capabilities → research/novelty → topics/digests → approved
+  export → complete operations/integration. Preserve the approved dependency
+  graph and one shared application plus the separately controlled operator tool.
+- Run Construction from this session with coding agents and one human
+  maintainer. You remain the sole approver. Keep one unit's applicable designs,
+  implementation and completion checkpoint together before the next unit;
+  retain the existing review points and add no separate walking-skeleton ceremony.
+- Follow the approved risk-first priorities. Resolve evidence prerequisites
+  before affected decisions, prove the real paper journey first, then finish
+  every retained capability. Define each pass's completion conditions, expected
+  demonstration, what it will prove and responsibility; use qualitative
+  rationale rather than invented numeric scores or dates.
+- Carry the three accepted contract findings into their earliest affected work:
+  browser revision conventions and worker claims/payload/fencing in U1,
+  completed affected browser bindings in U2 and later consumers, and draft
+  allocation/rediscovery before U4 persistence. Require executable closure
+  evidence and cumulative checks in U8; approval did not fix these findings.
+- Leave the construction verification command unset until a runnable v2 check
+  exists. Present its exact invocation for your separate approval before the
+  first completion checkpoint runs verification. Document validation and legacy
+  CI cannot substitute for the cumulative working-application check.
+- Keep all current capabilities, the $0 free/local budget, one-maintainer model
+  and no fixed deadline. Preserve public registration, account isolation, the
+  approved Korean interface, inherited colors, Apple HIG web adaptations,
+  responsive layouts, appearance modes and accessibility target.
+- Map integrations, authoritative users/data, backups, permitted processing,
+  retention/shared-device rules and free/local capacity to affected work,
+  responsible owners and closure evidence. Verify unknown lead times rather
+  than inventing them. Stack, hosting, migration and numeric quality targets
+  remain evidence-dependent; no paid fallback or silent feature removal.
+- Produce the delivery plan, responsibility allocation, sequencing rationale,
+  external dependency map and Inception traceability check. Coverage checks
+  establish planning consistency, not implementation readiness. Follow
+  CONVENTIONS.md: merge completed branches through PRs into develop under the
+  interim CI policy; release promotion to main remains separate.
+
+Does this all look correct before I generate the artifact?
+
+- Looks correct
+- Request changes
+
+[Answer]:

@@ -7022,3 +7022,92 @@
 **Context**: inception > delivery-planning > delivery-planning-questions.md
 
 ---
+
+## Decision Recorded
+**Timestamp**: 2026-10-11T06:22:19Z
+**Event**: DECISION_RECORDED
+**Stage**: delivery-planning
+**Decision**: Q1: How large should each Bolt be? A Bolt is one build pass over a piece of work, ending in something that runs. Q2: How do you want to staff Construction? Q3: When should we select the command that verifies each completed v2 unit and the cumulative working application?
+**Options**: Q1: One approved unit per Bolt (Recommended),Q1: Bundle related units into fewer Bolts,Q1: Plan thin slices across units,Q2: Run from this session (Recommended),Q2: Independently owned team units,Q3: Defer until a runnable v2 check exists (Recommended),Q3: Propose a candidate now,Other
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T06:22:20Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: worker
+**Agent ID**: 01a12908-f558-7fc1-82fb-b3a11604ed5d
+**Message**: Wrote [architecture input](/tmp/docsuri-delivery-architecture-input.md).\n\n- Eight serial unit passes fit all 19 dependency edges; U7 stays independent.\n- R-01: establish revision mapping in U1; comple
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T06:22:55Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-11T06:17:07.093Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T06:22:55Z
+**Event**: HUMAN_TURN
+**Session**: 01a129a0-e804-7512-a575-309f303a6163
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T06:23:14Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a129a0-e804-7512-a575-309f303a6163 last seen 2026-10-11T06:22:55.363Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T06:23:15Z
+**Event**: HUMAN_TURN
+**Session**: 01a129a1-31d7-7e90-96d8-5c6e8d3e4c02
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T06:27:34Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Question Answered
+**Timestamp**: 2026-10-11T06:28:06Z
+**Event**: QUESTION_ANSWERED
+**Stage**: delivery-planning
+**Details**: Q1: One approved unit per Bolt (Recommended): eight build passes, each with a runnable demonstration and clear completion boundary.; Q2: Run from this session (Recommended): coding agents perform the work here; you remain the sole approver at the recorded review points.; Q3: Defer until a runnable v2 check exists (Recommended): leave the command unset now and approve the exact command before the first unit completion checkpoint runs verification.
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_EyUKmvfd2t4syaSMszyHIote\",0]","question":"Q1. A Bolt is one build pass over a piece of work, ending in something that runs. How large should each Bolt be? The eight approved units and their dependencies stay intact, and execution remains serial.","answer":"One approved unit per Bolt (Recommended): eight build passes, each with a runnable demonstration and clear completion boundary."},{"questionItemId":"[\"request_user_input_async\",\"call_EyUKmvfd2t4syaSMszyHIote\",1]","question":"Q2. How do you want to staff Construction? I can run the work from this session using the execution settings you chose, or each of your teams can own a Unit and approve its work independently. You previously planned for one human maintainer with coding agents.","answer":"Run from this session (Recommended): coding agents perform the work here; you remain the sole approver at the recorded review points."},{"questionItemId":"[\"request_user_input_async\",\"call_EyUKmvfd2t4syaSMszyHIote\",2]","question":"Q3. The v2 implementation and its integrated verification command are not defined yet; the contract validator and legacy CI do not prove a working v2 unit. When should we select the command that verifies completed units and the cumulative application?","answer":"Defer until a runnable v2 check exists (Recommended): leave the command unset now and approve the exact command before the first unit completion checkpoint runs verification."}]\n</send_user_message_question_reply>
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T06:28:06Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/delivery-planning/delivery-planning-questions.md
+**Context**: inception > delivery-planning > delivery-planning-questions.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T06:29:44Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a129a5-f4c0-7f41-85f7-b7780263ccfa
+**Message**: Verified order: **U1 → U7 → U2 → U3 → U4 → U5 → U6 → U8**.\n\n- Actual `parseBoltDag` read-only execution returned batches `[[U1,U7],[U2],[U3],[U4,U5],[U6],[U8]]`.\n- Consumer: `.codex/tools/aidlc-orches
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T06:30:46Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/delivery-planning/delivery-planning-questions.md
+**Context**: inception > delivery-planning > delivery-planning-questions.md
+
+---
