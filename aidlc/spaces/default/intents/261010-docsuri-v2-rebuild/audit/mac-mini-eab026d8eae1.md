@@ -8257,3 +8257,400 @@
 **Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
 
 ---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T07:56:46Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a129da-fb45-70a2-b02b-8f1cce56aa60
+**Message**: No new human judgment is necessary before the U1 NFR summary. Missing numeric values are an **explicitly approved deferral**, not unanswered “fast enough” requirements. Record that ambiguity analysis 
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T07:57:30Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a129cd-c515-7320-a2a7-65b91fc90adf
+**Message**: [PR40 CI comparison](/tmp/docsuri-pr40-ci-comparison.md) is complete.\n\n- Head `ae88e6bff698c969291254dd65ffe08ea6f9facd`; base `93b43f86639c51df1c82bcf919809f9a8d9c5002`.\n- CI **38122906293**: 11 fail
+
+---
+
+## Unit Started
+**Timestamp**: 2026-10-11T07:57:51Z
+**Event**: UNIT_STARTED
+**Stage**: nfr-requirements
+**Unit**: u1-integrated-paper-journey
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T07:59:30Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/nfr-requirements-questions.md
+**Context**: construction > u1-integrated-paper-journey > nfr-requirements > nfr-requirements-questions.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T07:59:30Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/develop-integration.md
+**Context**: maintenance > develop-integration.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-11T07:59:55Z
+**Event**: DECISION_RECORDED
+**Stage**: nfr-requirements
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/nfr-requirements-questions.md
+**Unit**: u1-integrated-paper-journey
+
+---
+
+## Unit Paused
+**Timestamp**: 2026-10-11T08:00:13Z
+**Event**: UNIT_PAUSED
+**Stage**: nfr-requirements
+**Unit**: u1-integrated-paper-journey
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+**Reason**: Awaiting the human consolidated-summary confirmation before generating U1 NFR Requirements artifacts.
+**Next Action**: Record the summary answer, resume this unit, then generate and review the NFR Requirements artifacts.
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T08:00:42Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-11T07:35:45.721Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T08:00:42Z
+**Event**: HUMAN_TURN
+**Session**: 01a129fa-6ead-7c92-9c50-b96fbe348109
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T08:01:15Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a129fa-6ead-7c92-9c50-b96fbe348109 last seen 2026-10-11T08:00:42.513Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T08:01:15Z
+**Event**: HUMAN_TURN
+**Session**: 01a129fa-ed39-7a31-b20a-268b226d1b2f
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T08:01:38Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a129fa-ed39-7a31-b20a-268b226d1b2f last seen 2026-10-11T08:01:15.027Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T08:01:38Z
+**Event**: HUMAN_TURN
+**Session**: 01a129fb-4708-75b0-8377-5680521c0e10
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-11T08:02:07Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:02:22Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/nfr-requirements-questions.md
+**Context**: construction > u1-integrated-paper-journey > nfr-requirements > nfr-requirements-questions.md
+
+---
+
+## Summary Confirmation Recorded
+**Timestamp**: 2026-10-11T08:02:22Z
+**Event**: SUMMARY_CONFIRMATION_RECORDED
+**Stage**: nfr-requirements
+**Details**: Looks correct
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/nfr-requirements-questions.md
+**Questions SHA-256**: ed44a8cc681b02598990f8da0170806c36e317e6412de16c046c23a6ab58f3eb
+**Hash Scope**: confirmed-content-v2
+**Unit**: u1-integrated-paper-journey
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_75a048c57e9b4a689cc7dcb30e2a2e32\",0]","question":"DocSuri v2 — U1 NFR Requirements summary:\n\n- Define performance, security/privacy, capacity, reliability and observability requirements, preserving all ten inception NFRs with derived NFRx.y IDs and traceability to the real paper journey.\n- Specify repeatable measurements for complete-task success, useful output, responsiveness, interruption recovery and defect reproduction/repair. Numeric service targets follow the measured baseline and your agreement.\n- Require current owner/session/source authority, safe public registration, acknowledged persistence, replacement-worker fencing, one intended result/accounting effect, read-only recovery and accessible, truthful feedback.\n- Define finite policy requirements and evidence for input sizes, queues, concurrency, model work, storage, deadlines/retries/leases and quota/reset behavior. Unknown limits cannot mean unlimited operation. Preserve the $0 budget with free/local choices and no silent capability cuts.\n- Evaluate technology alternatives against reproducibility, repairability, permitted use and measured resource fit. Mark candidate and evidence-blocked decisions honestly. Observed local hardware and cached models do not select the stack or hosting, or prove operating feasibility.\n- Carry canonical contract coordination and retained-result rediscovery into affected implementation, including the two Minor design details: empty-glossary revision and immutable acceptance time. Durable research drafts remain U4 work.\n- Preserve the Korean responsive interface, inherited colors, Apple HIG web adaptations, appearance modes and WCAG 2.2 AA target. Authority/backups, continuity, obligations, retention, public integrations and numeric targets remain evidence-dependent.\n- Produce six requirement/technology documents and traceability, validate consistency and obtain an independent review. Continue serially with automatic ordinary completion, while preserving enabled summaries/plans, exact verification-command approval and failure stops. Completed branches merge through PRs into develop under CONVENTIONS.md.\n\nThe [proposal and local observations](<project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/nfr-requirements-questions.md) are committed as 48894175. Does this all look correct before I generate the artifact?","answer":"Looks correct"}]\n</send_user_message_question_reply>
+**Summary Authorization Id**: e36f2936251f28405bb9073ae1452d3804569372a10c7a3125f21b55164bf1d2
+
+---
+
+## Unit Resumed
+**Timestamp**: 2026-10-11T08:02:23Z
+**Event**: UNIT_RESUMED
+**Stage**: nfr-requirements
+**Unit**: u1-integrated-paper-journey
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-11T08:04:31Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Session End
+**Timestamp**: 2026-10-11T08:07:36Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a129fb-4708-75b0-8377-5680521c0e10 last seen 2026-10-11T08:01:38.034Z.
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:08:00Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/performance-requirements.md
+**Context**: construction > u1-integrated-paper-journey > nfr-requirements > performance-requirements.md
+**Summary Authorization Id**: e36f2936251f28405bb9073ae1452d3804569372a10c7a3125f21b55164bf1d2
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:08:00Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/scalability-requirements.md
+**Context**: construction > u1-integrated-paper-journey > nfr-requirements > scalability-requirements.md
+**Summary Authorization Id**: e36f2936251f28405bb9073ae1452d3804569372a10c7a3125f21b55164bf1d2
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:08:35Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/reliability-requirements.md
+**Context**: construction > u1-integrated-paper-journey > nfr-requirements > reliability-requirements.md
+**Summary Authorization Id**: e36f2936251f28405bb9073ae1452d3804569372a10c7a3125f21b55164bf1d2
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:08:35Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/observability-requirements.md
+**Context**: construction > u1-integrated-paper-journey > nfr-requirements > observability-requirements.md
+**Summary Authorization Id**: e36f2936251f28405bb9073ae1452d3804569372a10c7a3125f21b55164bf1d2
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T08:08:36Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: worker
+**Agent ID**: 01a129fc-c91b-7221-b102-5bc1183a63c3
+**Message**: Created only the assigned files:\n\n- `performance-requirements.md`: NFR1.1–1.2, NFR2.1–2.2, NFR6.1–6.2.\n- `scalability-requirements.md`: NFR8.1–8.4.\n\nDefined real P1/P2 and translation evidence, comple
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:08:45Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/security-requirements.md
+**Context**: construction > u1-integrated-paper-journey > nfr-requirements > security-requirements.md
+**Summary Authorization Id**: e36f2936251f28405bb9073ae1452d3804569372a10c7a3125f21b55164bf1d2
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T08:09:18Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: worker
+**Agent ID**: 01a129fd-1a19-7aa2-b5c0-efb95ce78a77
+**Message**: Created both assigned files:\n\n- `reliability-requirements.md`: NFR3.1–NFR3.5.\n- `observability-requirements.md`: NFR9.1–NFR9.4 and NFR7.1–NFR7.2.\n\nValidated unique primary IDs, local links and encodin
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:09:42Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/security-requirements.md
+**Context**: construction > u1-integrated-paper-journey > nfr-requirements > security-requirements.md
+**Summary Authorization Id**: e36f2936251f28405bb9073ae1452d3804569372a10c7a3125f21b55164bf1d2
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T08:10:05Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: worker
+**Agent ID**: 01a129fd-6393-7982-b9a8-26369f314ffd
+**Message**: Created `security-requirements.md` with 10 requirements: NFR4.1–4.6, NFR5.1–5.3 and NFR6.3.\n\nIncludes authorization coverage, data handling, threat checks and explicit evidence prerequisites. Validati
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:10:18Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/tech-stack-decisions.md
+**Context**: construction > u1-integrated-paper-journey > nfr-requirements > tech-stack-decisions.md
+**Summary Authorization Id**: e36f2936251f28405bb9073ae1452d3804569372a10c7a3125f21b55164bf1d2
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:11:11Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/traceability.json
+**Context**: construction > u1-integrated-paper-journey > nfr-requirements > traceability.json
+**Summary Authorization Id**: e36f2936251f28405bb9073ae1452d3804569372a10c7a3125f21b55164bf1d2
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-11T08:11:11Z
+**Event**: SENSOR_FIRED
+**Fire id**: b8c7cfb8
+**Sensor ID**: traceability
+**Stage slug**: nfr-requirements
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/traceability.json
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-11T08:11:11Z
+**Event**: SENSOR_PASSED
+**Fire id**: b8c7cfb8
+**Sensor ID**: traceability
+**Stage slug**: nfr-requirements
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/traceability.json
+**Duration ms**: 99
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:11:12Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/validate_nfr.py
+**Context**: construction > u1-integrated-paper-journey > nfr-requirements > validate_nfr.py
+**Summary Authorization Id**: e36f2936251f28405bb9073ae1452d3804569372a10c7a3125f21b55164bf1d2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-11T08:11:32Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/validate_nfr.py
+**Context**: construction > u1-integrated-paper-journey > nfr-requirements > validate_nfr.py
+**Summary Authorization Id**: e36f2936251f28405bb9073ae1452d3804569372a10c7a3125f21b55164bf1d2
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:11:54Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/nfr-requirements/validation.md
+**Context**: construction > u1-integrated-paper-journey > nfr-requirements > validation.md
+**Summary Authorization Id**: e36f2936251f28405bb9073ae1452d3804569372a10c7a3125f21b55164bf1d2
+
+---
+
+## Review Requested
+**Timestamp**: 2026-10-11T08:11:54Z
+**Event**: REVIEW_REQUESTED
+**Stage**: nfr-requirements
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: u1-integrated-paper-journey
+**Iteration**: 1
+**Artifact Fingerprint**: sha256:48cab9920fb83e9acc0960f25c5bf5ec45d60abb228f3f0ed9b689f99edf38db
+**Request Id**: review:81aa633d3ff5c7ca5105ff2462df13ce
+**Review File**: .aidlc-engine/reviews/nfr-requirements/units/u1-integrated-paper-journey/24fa3166af3ad245/1.81aa633d3ff5c7ca5105ff2462df13ce.review.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:12:04Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/reviewer-dispatch.json
+**Context**: .aidlc-engine > reviewer-dispatch.json
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T08:15:34Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a12a05-7ec1-7e50-95c9-3a88519127f0
+**Message**: Exact base `ee2957bac885549d4b5865e8bb939967f0dfbfb3` verified:\n\n- [CI 38123120691](https://github.com/revenantonthemission/DocSuri/actions/runs/38123120691): **11 failed, 2 passed, 2 skipped**.\n- [Co
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-11T08:15:49Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/reviews/nfr-requirements/units/u1-integrated-paper-journey/24fa3166af3ad245/1.81aa633d3ff5c7ca5105ff2462df13ce.review.md
+**Context**: .aidlc-engine > reviews > nfr-requirements > units > u1-integrated-paper-journey > 24fa3166af3ad245 > 1.81aa633d3ff5c7ca5105ff2462df13ce.review.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-11T08:16:01Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: aidlc-architecture-reviewer-agent
+**Agent ID**: 01a12a05-3dcc-7571-920e-9e726f55d858
+**Message**: **Reviewer:** aidlc-architecture-reviewer-agent\n\n**Verdict: READY**\n\nOne Major finding: NFR10.2 incorrectly assigns glossary ownership to Personalization; shared domain design and C06 assign it to Pap
+
+---
+
+## Review Completed
+**Timestamp**: 2026-10-11T08:16:11Z
+**Event**: REVIEW_COMPLETED
+**Stage**: nfr-requirements
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: u1-integrated-paper-journey
+**Iteration**: 1
+**Verdict**: READY
+**Request Fingerprint**: sha256:48cab9920fb83e9acc0960f25c5bf5ec45d60abb228f3f0ed9b689f99edf38db
+**Artifact Fingerprint**: sha256:48cab9920fb83e9acc0960f25c5bf5ec45d60abb228f3f0ed9b689f99edf38db
+**Request Id**: review:81aa633d3ff5c7ca5105ff2462df13ce
+**Review Record**: .aidlc-engine/reviews/nfr-requirements/units/u1-integrated-paper-journey/24fa3166af3ad245/1.json
+**Review Record Digest**: sha256:77886a5d160ea644f5df281906edf82725f06a2803b8773d10c68427369cddd1
+
+---
+
+## Unit Completed
+**Timestamp**: 2026-10-11T08:16:16Z
+**Event**: UNIT_COMPLETED
+**Stage**: nfr-requirements
+**Unit**: u1-integrated-paper-journey
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
