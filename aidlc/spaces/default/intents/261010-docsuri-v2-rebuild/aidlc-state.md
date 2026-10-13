@@ -105,15 +105,10 @@
 
 
 
-- **Active Unit**: u2-account-personal-controls
 
-- **Unit Stage**: infrastructure-design
 
-- **Unit State**: paused
 
-- **Unit Pause Reason**: Waiting for confirmation of the U2 Infrastructure Design summary
 
-- **Unit Next Action**: Record the human summary reply, resume this unit and generate the confirmed pipeline and integration design
 
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
@@ -176,7 +171,7 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-10-13T14:58:43Z
+- **Last Updated**: 2026-10-13T16:24:44Z
 
 - **Construction Autonomy Mode**: autonomous
 
