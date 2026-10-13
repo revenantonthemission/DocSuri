@@ -86,7 +86,7 @@ def paper_reference(row: dict) -> dict:
     }
 
 
-def corpus_router(transactions, *, entry) -> APIRouter:
+def corpus_router(transactions, *, entry, activity=None) -> APIRouter:
     origin = transactions.profile.origin
     repository = CorpusRepository(transactions, files=None)
     router = APIRouter(route_class=boundary_route(origin))
@@ -123,13 +123,20 @@ def corpus_router(transactions, *, entry) -> APIRouter:
 
     @router.post("/api/v2/c04/read-content")
     async def read_content(request: Request):
-        _, _ = await authenticated(request)
+        operation, authority = await authenticated(request)
         value = await read_payload(request, wire.CorpusReadHttp)
         # The declared caller purpose must be one the local policy admits; the
         # storage purpose stays Corpus-owned 'local-research'.
         if value["purpose"] not in ("read", "assistance"):
             raise BrowserDenied(503, "POLICY_UNRESOLVED")
         version = value["paper"]["versionId"]
+        observed = (
+            await run_in_threadpool(
+                activity.capture, authority, operation, value["paper"], "paper-view"
+            )
+            if activity
+            else None
+        )
         view = await run_in_threadpool(repository.reader_view, version)
         rows = view["row"]
         if value["paper"]["paperId"] != rows["paper_id"]:
@@ -144,6 +151,8 @@ def corpus_router(transactions, *, entry) -> APIRouter:
                 }
             ).model_dump(mode="json", exclude_none=True)
         sections, figures, _ = _flatten(rows["content"]["document"]["sections"])
+        if activity and value["purpose"] == "read":
+            await run_in_threadpool(activity.deliver, authority, observed)
         limitations = []
         if figures:
             limitations.append("그림 캡션만 제공되며 원본 이미지는 로컬 환경에 보관되지 않습니다.")

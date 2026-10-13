@@ -9,7 +9,14 @@ from psycopg.types.json import Jsonb
 
 
 def apply_owner_effect(transactions, owner, scopes, ticket, effect):
-    participant = {"library": "Library", "personalization": "Personalization"}[owner]
+    participant = {
+        "library": "Library",
+        "personalization": "Personalization",
+        "accounts": "AccountAccess",
+        "usage": "UsageEntitlements",
+        "discovery": "DiscoveryCitations",
+        "assistance": "PaperAssistance",
+    }[owner]
     if ticket["participant"] != participant or ticket["scope"] not in scopes:
         raise PermissionError("unregistered lifecycle participant scope")
 

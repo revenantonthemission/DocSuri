@@ -1,7 +1,9 @@
 # DocSuri v2 — Contract summary
 
 Date: 2026-10-14 (Asia/Seoul). Contract release 3.0.0: coordinated U2 C03/C13 amendment;
-other contracts retain their explicit 2.0.0 version. Required reset result identity
+C02 adds its reauthenticated lifecycle preparation and strict profile lifecycle
+revision projection at coordinated 3.0.0; other
+contracts retain their explicit 2.0.0 version. Required reset result identity
 is a breaking shape change, not automatically additive compatibility. No mounted
 U1 reset consumer was found in the bounded implementation inventory. Public
 activation still requires external-consumer evidence. U1 amendment
@@ -847,7 +849,7 @@ $defs:
   AccessAnonymousSession: {type: object, properties: {state: {const: anonymous}, requestId: {$ref: '#/$defs/Id'}}, required: [state, requestId], additionalProperties: false}
   AccessKnownSession: {type: object, properties: {state: {const: authenticated}, session: {$ref: '#/$defs/AccessPublicSession'}}, required: [state, session],
       additionalProperties: false}
-  AccessSessionStatus: {oneOf: [{$ref: '#/$defs/AccessAnonymousSession'}, {$ref: '#/$defs/AccessKnownSession'}]}
+  AccessSessionStatus: {oneOf: [{$ref: '#/$defs/AccessAnonymousSession'}, {$ref: '#/$defs/AccessKnownSession'}, {$ref: '#/$defs/AccessMfaContinuation'}]}
   AccessSessionInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}}, required: [context], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   AccessRegisterInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, email: {$ref: '#/$defs/AccessEmail'}, password: {$ref: '#/$defs/AccessSecret'},
@@ -976,11 +978,11 @@ $defs:
       additionalProperties: false}
   AccessProfileInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}}, required: [context], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
-  AccessProfile: {type: object, properties: {accountId: {$ref: '#/$defs/Id'}, revision: {$ref: '#/$defs/Revision'}, email: {$ref: '#/$defs/AccessEmail'},
+  AccessProfile: {type: object, properties: {accountId: {$ref: '#/$defs/Id'}, revision: {$ref: '#/$defs/Revision'}, lifecycleRevision: {$ref: '#/$defs/Revision'}, email: {$ref: '#/$defs/AccessEmail'},
         emailVerified: {type: boolean}, fieldVocabularyRevision: {$ref: '#/$defs/Revision'}, definitions: {type: array, items: {$ref: '#/$defs/AccessProfileFieldDefinition'},
           x-policy-bound: retained editable-profile field vocabulary}, fields: {type: array, items: {$ref: '#/$defs/AccessProfileField'},
           x-policy-bound: retained editable-profile field vocabulary}}, required: [accountId, revision, email, emailVerified, fieldVocabularyRevision,
-        definitions, fields], additionalProperties: false}
+        definitions, fields, lifecycleRevision], additionalProperties: false}
   AccessProfileUpdateInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, fieldVocabularyRevision: {$ref: '#/$defs/Revision'}, changes: {type: array,
           items: {$ref: '#/$defs/AccessProfileField'}, x-policy-bound: retained mutable-profile field vocabulary}, policyRef: {$ref: '#/$defs/PolicyRef'},
         expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, fieldVocabularyRevision, changes, policyRef, expectedRevision], additionalProperties: false,
@@ -996,7 +998,7 @@ $defs:
             and approved list policy}, page: {$ref: '#/$defs/PageInfo'}, appliedLimit: {type: integer, minimum: 1}, policyRef: {$ref: '#/$defs/PolicyRef'}},
       required: [items, page, appliedLimit, policyRef], additionalProperties: false}
   AccessConsentUpdateInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, purposeId: {$ref: '#/$defs/Id'}, decision: {type: string,
-          enum: [granted, revoked]}, policyRef: {$ref: '#/$defs/PolicyRef'}}, required: [context, purposeId, decision, policyRef],
+          enum: [granted, revoked]}, policyRef: {$ref: '#/$defs/PolicyRef'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, purposeId, decision, policyRef, expectedRevision],
       additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted from
         a public body.'}
   AccessAuthorityInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, accountId: {$ref: '#/$defs/Id'}, operationId: {$ref: '#/$defs/Id'},
@@ -1019,6 +1021,34 @@ $defs:
           $ref: '#/$defs/PolicyRef'}, participants: {type: array, items: {$ref: '#/$defs/LifecycleParticipant'}, maxItems: 13}}, required: [
         context, manifestRevision, policyRef, participants], additionalProperties: false, description: 'Internal envelope; context
         is derived by the trusted boundary, never accepted from a public body.'}
+  AccessLifecyclePrepareInput:
+    type: object
+    properties:
+      context: {$ref: '#/$defs/CommandContext'}
+      currentProof: {$ref: '#/$defs/AccessSecret'}
+      action: {type: string, enum: [withdraw, erase]}
+      expectedRevision: {$ref: '#/$defs/Revision'}
+      policyRef: {$ref: '#/$defs/PolicyRef'}
+    required: [context, currentProof, action, expectedRevision, policyRef]
+    additionalProperties: false
+  AccessLifecyclePrepareInputHttp:
+    type: object
+    properties:
+      currentProof: {$ref: '#/$defs/AccessSecret'}
+      action: {type: string, enum: [withdraw, erase]}
+      expectedRevision: {$ref: '#/$defs/Revision'}
+      policyRef: {$ref: '#/$defs/PolicyRef'}
+    required: [currentProof, action, expectedRevision, policyRef]
+    additionalProperties: false
+  AccessLifecycleConfirmation:
+    type: object
+    properties:
+      confirmationRef: {$ref: '#/$defs/Id'}
+      action: {type: string, enum: [withdraw, erase]}
+      revision: {$ref: '#/$defs/Revision'}
+      expiresAt: {$ref: '#/$defs/Time'}
+    required: [confirmationRef, action, revision, expiresAt]
+    additionalProperties: false
   LifecycleRequestInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, action: {type: string, enum: [withdraw, erase]}, policyRef: {
           $ref: '#/$defs/PolicyRef'}, confirmationRef: {$ref: '#/$defs/Id'}}, required: [context, action, policyRef, confirmationRef],
       additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never accepted from
@@ -1199,6 +1229,8 @@ $defs:
   SettingsProjectionInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, accountId: {$ref: '#/$defs/Id'}, purposeId: {$ref: '#/$defs/Id'}},
       required: [context, accountId, purposeId], additionalProperties: false, description: 'Internal envelope; context is derived by
         the trusted boundary, never accepted from a public body.'}
+  SettingsResetPrepareInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, action: {type: string, enum: [delete_behavior, reset_profile]}, currentProof: {$ref: '#/$defs/AccessSecret'}, policyRef: {$ref: '#/$defs/PolicyRef'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, action, currentProof, policyRef, expectedRevision], additionalProperties: false}
+  SettingsResetConfirmation: {type: object, properties: {confirmationRef: {$ref: '#/$defs/Id'}, action: {type: string, enum: [delete_behavior, reset_profile]}, revision: {$ref: '#/$defs/Revision'}, expiresAt: {$ref: '#/$defs/Time'}}, required: [confirmationRef, action, revision, expiresAt], additionalProperties: false}
   SettingsResetInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, action: {type: string, enum: [delete_behavior, reset_profile]}, policyRef: {
           $ref: '#/$defs/PolicyRef'}, confirmationRef: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, action,
         policyRef, confirmationRef, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted
@@ -1818,8 +1850,8 @@ $defs:
         is derived by the trusted boundary, never accepted from a public body.'}
   AccessConsentListInputHttp: {type: object, properties: {page: {$ref: '#/$defs/PageRequest'}}, required: [page], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
-  AccessConsentUpdateInputHttp: {type: object, properties: {purposeId: {$ref: '#/$defs/Id'}, decision: {type: string, enum: [granted, revoked]}, policyRef: {$ref: '#/$defs/PolicyRef'}},
-      required: [purposeId, decision, policyRef], additionalProperties: false, description: 'Internal envelope; context is derived
+  AccessConsentUpdateInputHttp: {type: object, properties: {purposeId: {$ref: '#/$defs/Id'}, decision: {type: string, enum: [granted, revoked]}, policyRef: {$ref: '#/$defs/PolicyRef'}, expectedRevision: {$ref: '#/$defs/Revision'}},
+      required: [purposeId, decision, policyRef, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived
         by the trusted boundary, never accepted from a public body.'}
   LifecycleRequestInputHttp: {type: object, properties: {action: {type: string, enum: [withdraw, erase]}, policyRef: {$ref: '#/$defs/PolicyRef'}, confirmationRef: {
           $ref: '#/$defs/Id'}}, required: [action, policyRef, confirmationRef], additionalProperties: false, description: 'Internal
@@ -1865,6 +1897,7 @@ $defs:
       description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   SettingsRecentInputHttp: {type: object, properties: {page: {$ref: '#/$defs/PageRequest'}}, required: [page], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
+  SettingsResetPrepareInputHttp: {type: object, properties: {action: {type: string, enum: [delete_behavior, reset_profile]}, currentProof: {$ref: '#/$defs/AccessSecret'}, policyRef: {$ref: '#/$defs/PolicyRef'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [action, currentProof, policyRef, expectedRevision], additionalProperties: false}
   SettingsResetInputHttp: {type: object, properties: {action: {type: string, enum: [delete_behavior, reset_profile]}, policyRef: {$ref: '#/$defs/PolicyRef'}, confirmationRef: {
           $ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [action, policyRef, confirmationRef, expectedRevision], additionalProperties: false,
       description: 'Internal envelope; context is derived by the trusted boundary, never accepted from a public body.'}
@@ -2651,6 +2684,13 @@ operations:
   semantics: Accept only an action permitted by the current approved retention/reactivation/erasure policy. If policy, participant or restore/derived-data
     obligations are unresolved, fail closed; revocation and cleanup completion remain distinct.
   surface: browser
+- name: access.prepareLifecycle
+  input: AccessLifecyclePrepareInput
+  output: AccessLifecycleConfirmation
+  auth: Current authenticated owner with recent reauthentication; derive owner from the protected full session.
+  errors: [INVALID_INPUT, UNAUTHENTICATED, FORBIDDEN, CONFLICT, POLICY_UNRESOLVED, DEPENDENCY_UNAVAILABLE]
+  semantics: Verify current proof and exact lifecycle revision, then persist a finite one-use confirmation bound to owner, session authority, action, revision and policy. Ordinary output contains no credential or factor secret. Matching command replay returns the original reference without extending expiry. lifecycle.request consumes only this authoritative reference; a caller-invented reference never authorizes withdrawal or erasure.
+  surface: browser
 - name: access.requestReactivation
   input: AccessEmailRequestInput
   output: AccessChallengeDelivery
@@ -2790,7 +2830,7 @@ checks:
 - Reject profile role/email mutation through unknown fields and contradictory/duplicate field patches.
 - Lifecycle request with missing participant/policy fails closed; lost/duplicate/stale ack never fabricates completion.
 - Queued effect after consent revocation and restore after deletion cannot resurrect prohibited owner work.
-version: 2.0.0
+version: 3.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -3128,6 +3168,13 @@ operations:
   semantics: Return only the authorized purpose-specific projection and input boundary. Disabled/unavailable/cold-start is explicit; consumers
     must use their documented safe behavior.
   surface: internal
+- name: settings.prepareReset
+  input: SettingsResetPrepareInput
+  output: SettingsResetConfirmation
+  auth: Current full-session owner with reauthentication; no administrator shortcut.
+  errors: [INVALID_INPUT, UNAUTHENTICATED, FORBIDDEN, CONFLICT, POLICY_UNRESOLVED, DEPENDENCY_UNAVAILABLE]
+  semantics: Verify current proof and persist a finite confirmation bound to owner, session authority, exact reset action, observed settings revision and policy. Matching command replay returns the original reference without extending expiry. Reset acceptance consumes this reference atomically with the settings boundary and receipt; a forged reference cannot authorize cleanup.
+  surface: browser
 - name: settings.reset
   input: SettingsResetInput
   output: SettingsResetResult
@@ -6554,6 +6601,27 @@ paths:
           $ref: '#/components/responses/E504'
         default:
           $ref: '#/components/responses/Edefault'
+  /api/v2/c02/access-prepare-lifecycle:
+    post:
+      operationId: C02_access.prepareLifecycle
+      x-contract-operation: C02.access.prepareLifecycle
+      summary: Prepare a current-owner reauthenticated lifecycle confirmation
+      security: [{sessionCookie: []}]
+      parameters:
+      - {name: X-CSRF-Token, in: header, required: true, schema: {type: string, minLength: 1}}
+      - {name: Idempotency-Key, in: header, required: true, schema: {$ref: '#/components/schemas/Id'}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AccessLifecyclePrepareInputHttp'}
+      responses:
+        '200':
+          description: Bound one-use confirmation without private proof material
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AccessLifecycleConfirmation'}
+        default: {$ref: '#/components/responses/Edefault'}
   /api/v2/c02/access-update-profile:
     post:
       operationId: C02_access.updateProfile
@@ -7928,6 +7996,27 @@ paths:
         '404': {$ref: '#/components/responses/E404'}
         '422': {$ref: '#/components/responses/E422'}
         '503': {$ref: '#/components/responses/E503'}
+        default: {$ref: '#/components/responses/Edefault'}
+  /api/v2/c03/settings-prepare-reset:
+    post:
+      operationId: C03_settings.prepareReset
+      x-contract-operation: C03.settings.prepareReset
+      summary: Prepare a reauthenticated owner reset confirmation
+      security: [{sessionCookie: []}]
+      parameters:
+      - {name: X-CSRF-Token, in: header, required: true, schema: {type: string, minLength: 1}}
+      - {name: Idempotency-Key, in: header, required: true, schema: {$ref: '#/components/schemas/Id'}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SettingsResetPrepareInputHttp'}
+      responses:
+        '200':
+          description: Finite owner-bound confirmation without credential material
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SettingsResetConfirmation'}
         default: {$ref: '#/components/responses/Edefault'}
   /api/v2/c03/settings-reset:
     post:
@@ -12472,6 +12561,7 @@ components:
       oneOf:
       - $ref: '#/components/schemas/AccessAnonymousSession'
       - $ref: '#/components/schemas/AccessKnownSession'
+      - $ref: '#/components/schemas/AccessMfaContinuation'
     AccessChallengeDelivery:
       type: object
       properties:
@@ -12774,9 +12864,29 @@ components:
       - fieldId
       - value
       additionalProperties: false
+    AccessLifecyclePrepareInputHttp:
+      type: object
+      properties:
+        currentProof: {$ref: '#/components/schemas/AccessSecret'}
+        action: {type: string, enum: [withdraw, erase]}
+        expectedRevision: {$ref: '#/components/schemas/Revision'}
+        policyRef: {$ref: '#/components/schemas/PolicyRef'}
+      required: [currentProof, action, expectedRevision, policyRef]
+      additionalProperties: false
+    AccessLifecycleConfirmation:
+      type: object
+      properties:
+        confirmationRef: {$ref: '#/components/schemas/Id'}
+        action: {type: string, enum: [withdraw, erase]}
+        revision: {$ref: '#/components/schemas/Revision'}
+        expiresAt: {$ref: '#/components/schemas/Time'}
+      required: [confirmationRef, action, revision, expiresAt]
+      additionalProperties: false
     AccessProfile:
       type: object
       properties:
+        lifecycleRevision:
+          $ref: '#/components/schemas/Revision'
         accountId:
           $ref: '#/components/schemas/Id'
         revision:
@@ -12805,6 +12915,7 @@ components:
       - fieldVocabularyRevision
       - definitions
       - fields
+      - lifecycleRevision
       additionalProperties: false
     AccessConsentRecord:
       type: object
@@ -15713,6 +15824,8 @@ components:
     AccessConsentUpdateInputHttp:
       type: object
       properties:
+        expectedRevision:
+          $ref: '#/components/schemas/Revision'
         purposeId:
           $ref: '#/components/schemas/Id'
         decision:
@@ -15726,6 +15839,7 @@ components:
       - purposeId
       - decision
       - policyRef
+      - expectedRevision
       additionalProperties: false
       description: Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
     LifecycleRequestInputHttp:
@@ -15945,6 +16059,8 @@ components:
       - page
       additionalProperties: false
       description: Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+    SettingsResetPrepareInputHttp: {type: object, properties: {action: {type: string, enum: [delete_behavior, reset_profile]}, currentProof: {$ref: '#/components/schemas/AccessSecret'}, policyRef: {$ref: '#/components/schemas/PolicyRef'}, expectedRevision: {$ref: '#/components/schemas/Revision'}}, required: [action, currentProof, policyRef, expectedRevision], additionalProperties: false}
+    SettingsResetConfirmation: {type: object, properties: {confirmationRef: {$ref: '#/components/schemas/Id'}, action: {type: string, enum: [delete_behavior, reset_profile]}, revision: {$ref: '#/components/schemas/Revision'}, expiresAt: {$ref: '#/components/schemas/Time'}}, required: [confirmationRef, action, revision, expiresAt], additionalProperties: false}
     SettingsResetInputHttp:
       type: object
       properties:

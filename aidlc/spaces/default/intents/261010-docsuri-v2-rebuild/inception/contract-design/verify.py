@@ -118,7 +118,7 @@ assert bound_ops=={k for k,v in ops.items() if v.get('surface') in ('browser','a
 
 # U1 amendment: keep the executable binding policy aligned with the normative
 # owner contracts. These are specification checks, not runtime authority tests.
-assert all(c['version']==('3.0.0' if c['id']=='C03' else '2.0.0') for c in contracts)
+assert all(c['version']==('3.0.0' if c['id'] in ('C02','C03') else '2.0.0') for c in contracts)
 assert all(api['info']['version']==('3.0.0' if api['info']['title'].startswith('DocSuri application') else '2.0.0') for api in apis)
 assert 'resetId' in defs['SettingsResetResult']['required']
 assert {'C03.settings.listResets','C03.settings.inspectReset'} <= bound_ops

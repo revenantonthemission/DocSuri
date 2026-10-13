@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from uuid import UUID
+import hmac
 
 import psycopg
 from backend.local_browser import (
     ENTRY_COOKIE,
+    CONTROLS_ORIGIN,
     JOURNEY_ORIGIN,
     SESSION_COOKIE,
     BrowserDenied,
@@ -16,6 +18,7 @@ from backend.local_browser import (
     post_context,
     private_cookie,
     read_payload,
+    require_post_headers,
 )
 from docsuri_shared.workspace import wire
 from fastapi import APIRouter, Request
@@ -40,7 +43,7 @@ __all__ = [
 
 def account_router(entry: GuardedEntryService) -> APIRouter:
     origin = entry.transactions.profile.origin
-    if origin != JOURNEY_ORIGIN:
+    if origin not in (JOURNEY_ORIGIN, CONTROLS_ORIGIN):
         raise ValueError("account browser transport requires the owned HTTPS origin")
     anonymous = Preauthentication(entry)
     # Account errors keep their established 403 disposition for denied identities.
@@ -72,11 +75,11 @@ def account_router(entry: GuardedEntryService) -> APIRouter:
                 session = await run_in_threadpool(entry.inspect_session, token)
             except (PermissionError, psycopg.errors.InsufficientPrivilege):
                 pass
-        public = session.public["session"] if session else None
+        public = session.public.get("session") if session else None
         response = JSONResponse(
             wire.SessionBootstrap.model_validate(
                 {
-                    "signedIn": bool(session),
+                    "signedIn": bool(public),
                     "accountId": public["accountId"] if public else None,
                     "authorityRevision": public["authorityRevision"] if public else None,
                     "csrfToken": session.csrf if session else context_value.csrf,
@@ -92,7 +95,14 @@ def account_router(entry: GuardedEntryService) -> APIRouter:
 
     @router.post("/api/v2/c02/access-inspect-session")
     async def inspect(request: Request):
-        operation, session, _ = await context(request)
+        operation = require_post_headers(request, origin)
+        token = request.cookies.get(SESSION_COOKIE)
+        session = await run_in_threadpool(entry.inspect_session, token) if token else None
+        if session:
+            if not hmac.compare_digest(session.csrf, request.headers['x-csrf-token']):
+                raise BrowserDenied(403, 'FORBIDDEN')
+        else:
+            anonymous.read(request.cookies.get(ENTRY_COOKIE, ''), csrf=request.headers['x-csrf-token'])
         await payload(request, wire.AccessSessionInputHttp)
         return wire.AccessSessionStatus.model_validate(
             session.public if session else {"state": "anonymous", "requestId": str(operation)}

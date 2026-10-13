@@ -66,6 +66,11 @@ MIGRATIONS = (
     ("accounts", "backend/modules/accounts/u2_lifecycle_owner_grants.sql"),
     ("library", "backend/modules/library/u2_erasure.sql"),
     ("personalization", "backend/modules/personalization/u2_erasure.sql"),
+    ("accounts", "backend/modules/accounts/u2_consent_time.sql"),
+    ("accounts", "backend/modules/accounts/u2_reset_confirmation.sql"),
+    ("accounts", "backend/modules/accounts/u2_owner_cleanup.sql"),
+    ("discovery", "backend/modules/discovery/u2_owner_cleanup.sql"),
+    ("assistance", "backend/modules/summarization/u2_owner_cleanup.sql"),
 )
 PHASES = (
     "setup",

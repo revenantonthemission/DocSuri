@@ -107,3 +107,18 @@ def test_quota_cannot_be_unlimited(connect, identities):
     with connect("usage") as conn:
         with pytest.raises(psycopg.errors.CheckViolation):
             conn.execute("INSERT INTO usage.entitlement(account_id,allocation,policy) VALUES(%s,100000,'u2-synthetic-v1')", (uuid4(),))
+
+
+def test_owner_effect_lock_serializes_session_revocation(connect, identities):
+    effect, revoker = connect('library'), connect('accounts')
+    effect.execute("SELECT accounts.guard_session(%s,%s,'account-control')", (identities['a'], identities['session']))
+    revoker.execute("SET LOCAL lock_timeout='100ms'")
+    with pytest.raises(psycopg.errors.LockNotAvailable):
+        revoker.execute("UPDATE accounts.session SET revoked=true WHERE id=%s", (identities['session'],))
+    revoker.rollback()
+    effect.commit()
+    revoker.execute("UPDATE accounts.session SET revoked=true WHERE id=%s", (identities['session'],))
+    revoker.commit()
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        effect.execute("SELECT accounts.guard_session(%s,%s,'account-control')", (identities['a'], identities['session']))
+    effect.rollback()

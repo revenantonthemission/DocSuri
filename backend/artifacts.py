@@ -24,8 +24,8 @@ class ArtifactUnavailable(RuntimeError):
 
 class PrivateArtifacts:
     def __init__(self, root: Path, *, maximum_bytes: int = 131072):
-        expected = Path("/tmp/docsuri-u1-run").resolve()
-        if root.parent != expected or root.name not in (
+        expected = {Path("/tmp/docsuri-u1-run").resolve(), Path("/tmp/docsuri-u2-run").resolve()}
+        if root.parent not in expected or root.name not in (
             "corpus-files",
             "assistance-files",
             "verification-mail",
@@ -92,3 +92,25 @@ class PrivateArtifacts:
             return content
         except OSError as exc:
             raise ArtifactUnavailable("artifact unavailable") from exc
+
+    def erase(self, name: str) -> None:
+        """Trusted owner erasure: one exact immutable name, idempotent after a crash."""
+        if not re.fullmatch(r"[0-9a-f]{32}\.blob", name):
+            raise ArtifactUnavailable("invalid artifact identity")
+        path = self.root / name
+        try:
+            info = path.lstat()
+        except FileNotFoundError:
+            return
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.getuid()
+            or stat.S_IMODE(info.st_mode) != 0o600
+        ):
+            raise ArtifactUnavailable("artifact custody mismatch")
+        path.unlink()
+        directory = os.open(self.root, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)

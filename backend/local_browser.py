@@ -12,6 +12,7 @@ import asyncio
 import hmac
 import json
 import time
+from urllib.parse import urlsplit
 from uuid import UUID, uuid4
 
 import psycopg
@@ -21,12 +22,14 @@ from fastapi.routing import APIRoute
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
+from .modules.accounts.control_policy import PolicyUnavailable
 from .transactions import Authority, Busy, UnknownCommit
 
 SESSION_COOKIE = "session_id"
 ENTRY_COOKIE = "docsuri_entry"
 JOURNEY_ORIGIN = "https://127.0.0.1:18039"
 JOURNEY_AUTHORITY = "127.0.0.1:18039"
+CONTROLS_ORIGIN = "https://127.0.0.1:18049"
 
 
 class BrowserDenied(Exception):
@@ -71,10 +74,16 @@ def private_cookie(response, name, value, lifetime) -> None:
 def boundary_route(
     origin: str,
     *,
-    authority: str = JOURNEY_AUTHORITY,
+    authority: str | None = None,
     missing: tuple[int, str] = (404, "FORBIDDEN"),
 ):
     """One route class for every canonical browser adapter; identical dispositions."""
+    if origin not in (JOURNEY_ORIGIN, CONTROLS_ORIGIN):
+        raise ValueError("unowned browser origin")
+    expected_authority = urlsplit(origin).netloc
+    if authority is not None and authority != expected_authority:
+        raise ValueError("browser authority does not match owned origin")
+    authority = expected_authority
 
     class BoundaryRoute(APIRoute):
         def get_route_handler(self):
@@ -96,6 +105,8 @@ def boundary_route(
                     return result
                 except BrowserDenied as exc:
                     return error_response(exc.status, exc.code, retry_after=exc.retry_after)
+                except PolicyUnavailable:
+                    return error_response(503, "POLICY_UNRESOLVED")
                 except (PermissionError, LookupError, psycopg.errors.InsufficientPrivilege):
                     # Foreign and nonexistent private identifiers share this disposition.
                     return error_response(*missing)
@@ -133,12 +144,23 @@ async def read_payload(request: Request, schema):
     if request.headers.get("content-type", "").split(";", 1)[0] != "application/json":
         raise BrowserDenied(422, "INVALID_ARGUMENT")
     raw = bytearray()
+    maximum = 65536 if request.headers.get("host") == "127.0.0.1:18049" else 8192
     async with asyncio.timeout(5):
         async for chunk in request.stream():
-            if len(raw) + len(chunk) > 8192:
+            if len(raw) + len(chunk) > maximum:
                 raise BrowserDenied(422, "INVALID_ARGUMENT")
             raw.extend(chunk)
-    return schema.model_validate_json(bytes(raw)).model_dump(mode="json", exclude_none=True)
+
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise BrowserDenied(422, "INVALID_ARGUMENT")
+            result[key] = value
+        return result
+
+    value = json.loads(bytes(raw), object_pairs_hook=unique_object)
+    return schema.model_validate(value).model_dump(mode="json", exclude_none=True)
 
 
 def require_post_headers(request: Request, origin: str) -> UUID:
@@ -168,6 +190,8 @@ async def post_context(request: Request, *, origin: str, entry, anonymous):
         session = await run_in_threadpool(entry.inspect_session, token)
         if not hmac.compare_digest(session.csrf, csrf):
             raise BrowserDenied(403, "FORBIDDEN")
+        if "session" not in session.public:
+            raise BrowserDenied(401, "UNAUTHENTICATED")
         authority = Authority(
             UUID(session.public["session"]["accountId"]),
             UUID(session.public["session"]["sessionId"]),
@@ -187,6 +211,8 @@ async def optional_authority(request: Request, *, entry):
     try:
         session = await run_in_threadpool(entry.inspect_session, token)
     except (PermissionError, psycopg.errors.InsufficientPrivilege):
+        return None
+    if "session" not in session.public:
         return None
     return Authority(
         UUID(session.public["session"]["accountId"]),

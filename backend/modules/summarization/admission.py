@@ -24,7 +24,15 @@ class AssistanceAdmission:
         if admission["disposition"] == "rejected":
             raise ValueError("original admission was rejected; no automatic restart")
         try:
-            reservation = self.usage.reserve(authority, operation, admission["intent_hash"])
+            if self.usage.transactions.profile.realm == "account-controls":
+                from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
+                from backend.modules.plans.control_service import ControlUsageService
+
+                reservation = ControlUsageService(self.usage.transactions, SYNTHETIC_POLICY).reserve(
+                    authority, admission
+                )
+            else:
+                reservation = self.usage.reserve(authority, operation, admission["intent_hash"])
         except UsageQuotaExceeded:
             # Definite refusal may close an open preparation. If revocation or a
             # crash prevents this write, the owner sweep retains the obligation.

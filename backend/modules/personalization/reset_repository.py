@@ -84,11 +84,10 @@ class ResetRepository:
             or not 1 <= limit <= self.policy.max_page_size
         ):
             raise ValueError("invalid reset page")
-        scope = "reset:" + view + ":" + self.policy.policy_id + ":" + str(limit)
-        position = self.cursor.decode(authority.account_id, scope, cursor) if cursor else None
-
         def read(conn):
-            guard(conn, authority, purpose="account-control")
+            revision = guard(conn, authority, purpose="account-control")
+            scope = ":".join(("reset", view, self.policy.policy_id, str(limit), str(revision)))
+            position = self.cursor.decode(authority.account_id, scope, cursor) if cursor else None
             now = conn.execute("SELECT clock_timestamp() AS now").fetchone()["now"]
             cutoff = datetime.fromisoformat(position["cutoff"]) if position else now
             # A cutoff freezes membership against subsequently accepted resets.
@@ -141,6 +140,7 @@ class ResetRepository:
         *,
         manifest: tuple[tuple[str, str], ...],
         manifest_revision: str,
+        confirmation: UUID | None = None,
     ) -> dict:
         if (
             action not in ("delete_behavior", "reset_profile")
@@ -156,6 +156,7 @@ class ResetRepository:
                 "manifest": manifest,
                 "manifestRevision": manifest_revision,
                 "policy": self.policy.reference,
+                "confirmation": str(confirmation) if confirmation else None,
             }
         )
 
@@ -185,6 +186,12 @@ class ResetRepository:
             previous = GuardedSettingsService._snapshot(authority.account_id, row)
             if previous["revision"] != str(expected):
                 raise ValueError("stale settings revision")
+            if confirmation is not None:
+                conn.execute(
+                    "SELECT accounts.consume_reset_confirmation(%s,%s,%s,%s,%s,%s,%s)",
+                    (confirmation, authority.account_id, authority.session_id, action, expected,
+                     Jsonb(self.policy.reference), operation),
+                )
             count = conn.execute(
                 "SELECT count(*) AS n FROM personalization.reset_responsibility WHERE account_id=%s AND disposition<>'complete'",
                 (authority.account_id,),

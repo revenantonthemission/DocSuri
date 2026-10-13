@@ -36,7 +36,9 @@ class SessionTransport:
 
 
 class GuardedEntryService:
+    verification_seconds = 900
     policy = "synthetic-local-entry-1"
+    account_limit = 2
     _credential_work = threading.BoundedSemaphore(1)
 
     def __init__(self, transactions: OwnerTransactions):
@@ -165,7 +167,7 @@ class GuardedEntryService:
             count = conn.execute(
                 "SELECT count(*) AS count FROM accounts.account WHERE active"
             ).fetchone()["count"]
-            if count >= 2:
+            if count >= self.account_limit:
                 raise Busy("local account allocation exhausted")
             existing = conn.execute(
                 "SELECT id FROM accounts.account WHERE email=%s", (email,)
@@ -179,12 +181,13 @@ class GuardedEntryService:
                 conn.execute(
                     "INSERT INTO accounts.challenge(id,account_id,proof_hash,authority_revision,"
                     "expires_at,purpose,delivery,flow_hash) VALUES(%s,%s,%s,%s,"
-                    "clock_timestamp()+interval '15 minutes','verify-email','acknowledged',%s)",
+                    "clock_timestamp()+(%s*interval '1 second'),'verify-email','acknowledged',%s)",
                     (
                         challenge,
                         account,
                         self.verifier("proof", proof),
                         row["authority_revision"],
+                        self.verification_seconds,
                         self.verifier("flow", flow_binding),
                     ),
                 )
@@ -240,12 +243,13 @@ class GuardedEntryService:
                 conn.execute(
                     "INSERT INTO accounts.challenge(id,account_id,proof_hash,"
                     "authority_revision,expires_at,purpose,delivery,flow_hash) VALUES(%s,%s,%s,%s,"
-                    "clock_timestamp()+interval '15 minutes','verify-email','acknowledged',%s)",
+                    "clock_timestamp()+(%s*interval '1 second'),'verify-email','acknowledged',%s)",
                     (
                         challenge,
                         row["id"],
                         self.verifier("proof", proof),
                         row["authority_revision"],
+                        self.verification_seconds,
                         self.verifier("flow", flow_binding),
                     ),
                 )
