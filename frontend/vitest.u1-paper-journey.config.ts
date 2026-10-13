@@ -17,8 +17,11 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary'],
       thresholds: { perFile: true, lines: 80 },
-      // The runner supplies the explicit changed-module inventory before coverage.
-      include: [],
+      // The runner supplies the explicit changed-module inventory before
+      // coverage (JSON array); without it, coverage is not collected.
+      include: process.env.DOCSURI_U1_COVERAGE_INCLUDE
+        ? (JSON.parse(process.env.DOCSURI_U1_COVERAGE_INCLUDE) as string[])
+        : [],
     },
   },
 });

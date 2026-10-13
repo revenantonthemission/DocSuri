@@ -69,11 +69,27 @@ class GuardedLibraryRepository:
 
         return self.transactions.run("library", read)
 
+    def ensure_boundary(self, authority: Authority) -> None:
+        """Owner-side participant initialization; runs before the first history effect."""
+
+        def write(conn):
+            guard(conn, authority)
+            conn.execute(
+                "INSERT INTO library.history_boundary(account_id) VALUES(%s) "
+                "ON CONFLICT (account_id) DO NOTHING",
+                (authority.account_id,),
+            )
+
+        self.transactions.run("library", write)
+
     def history_boundary(self, authority: Authority) -> dict:
         def read(conn):
             guard(conn, authority)
+            # The fresh boundary defaults to '-infinity', which is not a Python
+            # datetime; callers need only the generation and revision tokens.
             row = conn.execute(
-                "SELECT * FROM library.history_boundary WHERE account_id=%s",
+                "SELECT account_id, generation, revision FROM library.history_boundary "
+                "WHERE account_id=%s",
                 (authority.account_id,),
             ).fetchone()
             if row is None:

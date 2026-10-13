@@ -22,7 +22,9 @@ def entry(realm, connect):
     with connect("accounts") as conn:
         rows = conn.execute("SELECT id,email FROM accounts.account WHERE active").fetchall()
         assert all(
-            row[0] in diagnostic or row[1].endswith("@entry.fixture.invalid") for row in rows
+            row[0] in diagnostic
+            or row[1].endswith(("@entry.fixture.invalid", "@entry.fixture.example.com"))
+            for row in rows
         ), "unknown ordinary account; refuse diagnostic phase transition"
         for row in rows:
             conn.execute("UPDATE accounts.account SET active=false WHERE id=%s", (row[0],))

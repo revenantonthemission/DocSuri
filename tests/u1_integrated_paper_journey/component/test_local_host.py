@@ -78,7 +78,9 @@ def test_liveness_does_not_claim_readiness(mounted):
     response = mounted.get("/health/ready")
     assert response.status_code == 503
     assert response.json()["ready"] is False
-    assert len(response.json()["missing"]) == 8
+    # The diagnostic realm host holds no owner composition or observations, so
+    # readiness names the missing assembly rather than inventing per-owner state.
+    assert response.json()["missing"] == ["assembly"]
 
 
 def test_static_build_supports_deep_link(mounted):

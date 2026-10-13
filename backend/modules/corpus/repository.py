@@ -137,6 +137,50 @@ class CorpusRepository:
 
         return self.transactions.run("corpus", read)
 
+    def identify(self, identifier: str, version_label: str | None = None) -> dict | None:
+        """Exact paper/version lookup by public identity; no content bytes returned."""
+        if not isinstance(identifier, str) or not 1 <= len(identifier) <= 160:
+            raise ValueError("identifier outside finite policy")
+        if version_label is not None and (
+            not isinstance(version_label, str) or not 1 <= len(version_label) <= 64
+        ):
+            raise ValueError("version label outside finite policy")
+
+        def read(conn):
+            return conn.execute(
+                "SELECT v.*,p.title,p.authors,p.published_on,p.withdrawn,p.revision AS "
+                "paper_revision,p.metadata FROM corpus.version v JOIN corpus.paper p ON "
+                "p.id=v.paper_id WHERE (v.id=%s OR v.paper_id=%s) AND (%s::text IS NULL OR "
+                "v.version_label=%s) ORDER BY v.id LIMIT 1",
+                (identifier, identifier, version_label, version_label),
+            ).fetchone()
+
+        return self.transactions.run("corpus", read)
+
+    def reader_view(self, version: str) -> dict:
+        """Current disposition plus the authorized row; withdrawn stays readable as metadata."""
+        if not isinstance(version, str) or not 1 <= len(version) <= 160:
+            raise ValueError("version identity outside finite policy")
+
+        def read(conn):
+            row = conn.execute(
+                "SELECT v.*,p.title,p.authors,p.published_on,p.withdrawn,p.metadata "
+                "FROM corpus.version v JOIN corpus.paper p ON p.id=v.paper_id WHERE v.id=%s",
+                (version,),
+            ).fetchone()
+            if not row:
+                raise PermissionError("source unavailable")
+            # Corpus-owned row state decides the disposition; the runtime role
+            # does not receive the library/assistance-only availability function.
+            if row["withdrawn"] or not row["eligible"]:
+                return {"disposition": "withdrawn", "row": row}
+            if row["purpose"] != "local-research":
+                return {"disposition": "restricted", "row": row}
+            conn.execute("SELECT corpus.guard_version(%s,%s)", (version, "local-research"))
+            return {"disposition": "ready", "row": row}
+
+        return self.transactions.run("corpus", read)
+
     def withdraw(self, version: str) -> None:
         def write(conn):
             conn.execute("SELECT singleton FROM corpus.publication FOR UPDATE")

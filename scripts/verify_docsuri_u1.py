@@ -23,6 +23,110 @@ IMAGE = (
 )
 GIB = 1024**3
 PYTHON = ROOT / "backend/.venv/bin/python"
+
+# Bounded fixture transition for the browser phase: the synthetic realm admits
+# two active accounts, so every active account is deactivated for the run (the
+# browser scenarios register their own two owners) and the established demo
+# account is reactivated afterwards. Nothing is deleted; no other data is
+# touched, and the demo account keeps every row and its evidence.
+BROWSER_RESET = """
+import json, sys
+from pathlib import Path
+import psycopg
+from backend.local_profile import LocalProfile
+
+profile = LocalProfile.load(Path(sys.argv[1])).journey()
+credentials = json.loads((profile.root / "owner-credentials.json").read_text())
+with psycopg.connect(
+    host="127.0.0.1",
+    port=profile.database_port,
+    dbname=profile.database_name,
+    user="docsuri_accounts",
+    password=credentials["roles"]["accounts"],
+    connect_timeout=3,
+) as conn:
+    rows = conn.execute(
+        "UPDATE accounts.account SET active=false WHERE active RETURNING email"
+    ).fetchall()
+    # The finite attempt ledger is test-owned diagnostic state, reset between
+    # runs like the pytest fixture does; the 20/minute policy stays untouched.
+    conn.execute("DELETE FROM accounts.entry_budget")
+    conn.commit()
+print(json.dumps({"deactivated": sorted(row[0] for row in rows)}))
+"""
+
+BROWSER_RESTORE = """
+import json, sys
+from pathlib import Path
+import psycopg
+from backend.local_profile import LocalProfile
+
+profile = LocalProfile.load(Path(sys.argv[1])).journey()
+credentials = json.loads((profile.root / "owner-credentials.json").read_text())
+demo = json.loads((profile.root / "journey-account-a.json").read_text())["email"]
+pattern = "browser-%@journey.fixture.example.com"
+
+def connect(owner):
+    return psycopg.connect(
+        host="127.0.0.1",
+        port=profile.database_port,
+        dbname=profile.database_name,
+        user="docsuri_" + owner,
+        password=credentials["roles"][owner],
+        connect_timeout=3,
+    )
+
+with connect("accounts") as conn:
+    accounts = [
+        row[0]
+        for row in conn.execute(
+            "SELECT id FROM accounts.account WHERE email LIKE %s", (pattern,)
+        ).fetchall()
+    ]
+    if accounts:
+        for owner, statements in {
+            "assistance": (
+                "DELETE FROM assistance.event WHERE job_id IN (SELECT id FROM assistance.job WHERE account_id = ANY(%s))",
+                "DELETE FROM assistance.result WHERE account_id = ANY(%s)",
+                "DELETE FROM assistance.job WHERE account_id = ANY(%s)",
+                "DELETE FROM assistance.admission WHERE account_id = ANY(%s)",
+                "DELETE FROM assistance.glossary WHERE account_id = ANY(%s)",
+            ),
+            "usage": (
+                "DELETE FROM usage.reservation WHERE account_id = ANY(%s)",
+                "DELETE FROM usage.entitlement WHERE account_id = ANY(%s)",
+            ),
+            "library": (
+                "DELETE FROM library.saved_paper WHERE account_id = ANY(%s)",
+                "DELETE FROM library.saved_query WHERE account_id = ANY(%s)",
+                "DELETE FROM library.history WHERE account_id = ANY(%s)",
+                "DELETE FROM library.history_boundary WHERE account_id = ANY(%s)",
+            ),
+            "personalization": (
+                "DELETE FROM personalization.settings WHERE account_id = ANY(%s)",
+                "DELETE FROM personalization.behavior WHERE account_id = ANY(%s)",
+            ),
+            "discovery": ("DELETE FROM discovery.execution WHERE account_id = ANY(%s)",),
+        }.items():
+            with connect(owner) as owner_conn:
+                for statement in statements:
+                    owner_conn.execute(statement, (accounts,))
+                owner_conn.commit()
+        conn.execute(
+            "DELETE FROM accounts.delivery WHERE challenge_id IN (SELECT id FROM "
+            "accounts.challenge WHERE account_id = ANY(%s))",
+            (accounts,),
+        )
+        conn.execute("DELETE FROM accounts.challenge WHERE account_id = ANY(%s)", (accounts,))
+        conn.execute("DELETE FROM accounts.session WHERE account_id = ANY(%s)", (accounts,))
+        conn.execute("DELETE FROM accounts.consent WHERE account_id = ANY(%s)", (accounts,))
+        conn.execute("DELETE FROM accounts.account WHERE id = ANY(%s)", (accounts,))
+    conn.execute(
+        "UPDATE accounts.account SET active=true WHERE email=%s AND NOT active", (demo,)
+    )
+    conn.commit()
+print(json.dumps({"reactivated": demo}))
+"""
 SCOPES = (
     "database",
     "repository",
@@ -328,6 +432,7 @@ def setup(path: Path) -> dict:
                 RUN / "ownership.json",
                 {"runId": value["runId"], "manifestSha256": digest(path)},
             )
+        rewritten = False
         current_locks = {name: digest(ROOT / name) for name in LOCKS}
         if value["locks"] != current_locks:
             # An explicit setup invocation adopts an authored dependency change,
@@ -336,6 +441,17 @@ def setup(path: Path) -> dict:
                 {"locks": value["locks"], "replacedAt": time.time()}
             )
             value["locks"] = current_locks
+            rewritten = True
+        # An explicit setup invocation renews finite retention of the owned
+        # environment when the current window is nearly or already over,
+        # recording the superseded window in the configuration history.
+        if value["expiresAt"] <= time.time() + 3600:
+            value.setdefault("configurationHistory", []).append(
+                {"expiresAt": value["expiresAt"], "renewedAt": time.time()}
+            )
+            value["expiresAt"] = time.time() + 86400
+            rewritten = True
+        if rewritten:
             private_json(path, value)
             private_json(
                 RUN / "ownership.json",
@@ -444,6 +560,54 @@ def phase_commands(phase: str) -> tuple[list[str], list[str], Path]:
     )
 
 
+def reset_browser_owners(path: Path) -> None:
+    """Free the finite two-account allocation for the browser scenarios.
+
+    Every active account is deactivated for the run and the established demo
+    account is reactivated afterwards; nothing is deleted and the demo account
+    keeps every row and its evidence.
+    """
+    result = command([str(PYTHON), "-c", BROWSER_RESET, str(path)], cwd=ROOT)
+    if result.returncode:
+        raise Refused("browser fixture transition refused")
+
+
+def restore_browser_demo(path: Path) -> None:
+    result = command([str(PYTHON), "-c", BROWSER_RESTORE, str(path)], cwd=ROOT)
+    if result.returncode:
+        raise Refused("browser demo restore refused")
+
+
+def ensure_journey_transport(path: Path) -> None:
+    """Mint or renew the owned journey HTTPS material for the current retention.
+
+    The certificate is bound to the manifest retention window, so an explicitly
+    renewed window re-mints only the three owned transport files; no trust
+    store or unrelated material is touched.
+    """
+    manifest = json.loads(path.read_text())
+    record = RUN / "journey-tls.json"
+    stale = True
+    if record.is_file() and not record.is_symlink():
+        try:
+            stale = int(json.loads(record.read_text())["expiresAt"]) != int(
+                manifest["expiresAt"]
+            )
+        except (KeyError, TypeError, ValueError):
+            stale = True
+    if stale:
+        for name in ("journey-tls.key", "journey-tls.crt", "journey-tls.json"):
+            (RUN / name).unlink(missing_ok=True)
+    require(
+        [
+            str(PYTHON),
+            str(ROOT / "scripts/prepare_docsuri_u1_transport.py"),
+            "--environment-file",
+            str(path),
+        ]
+    )
+
+
 def run_phase(phase: str, value: dict, path: Path) -> None:
     collect, execute, cwd = phase_commands(phase)
     extra = {
@@ -462,6 +626,9 @@ def run_phase(phase: str, value: dict, path: Path) -> None:
     else:
         match = re.search(r"Total: (\d+) tests?", result.stdout)
         count = int(match[1]) if match else 0
+    if phase == "browser":
+        ensure_journey_transport(path)
+        reset_browser_owners(path)
     identity = source_identity()
     report = {
         "phase": phase,
@@ -483,6 +650,8 @@ def run_phase(phase: str, value: dict, path: Path) -> None:
         raise Refused("unsafe prior outcome report")
     outcome_path.unlink(missing_ok=True)
     result = command(execute, cwd=cwd, extra=extra, timeout=1800)
+    if phase == "browser":
+        restore_browser_demo(path)
     report["executedExit"] = result.returncode
     if phase in SCOPES:
         xml_path = RUN / f"{phase}-junit.xml"

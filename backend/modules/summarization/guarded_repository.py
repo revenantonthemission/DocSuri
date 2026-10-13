@@ -333,8 +333,8 @@ class GuardedAssistanceRepository:
         def read(conn):
             guard(conn, authority)
             rows = conn.execute(
-                "SELECT id,version_id,accepted_at,state,revision,sequence FROM assistance.job "
-                "WHERE account_id=%s ORDER BY accepted_at DESC,id DESC LIMIT %s",
+                "SELECT id,version_id,accepted_at,state,revision,sequence,payload FROM "
+                "assistance.job WHERE account_id=%s ORDER BY accepted_at DESC,id DESC LIMIT %s",
                 (authority.account_id, limit),
             ).fetchall()
             for row in rows:
@@ -342,7 +342,49 @@ class GuardedAssistanceRepository:
                     "SELECT corpus.reference_availability(%s) AS disposition",
                     (row["version_id"],),
                 ).fetchone()["disposition"]
+                row["result"] = conn.execute(
+                    "SELECT id,revision,output_hash,availability FROM assistance.result WHERE "
+                    "job_id=%s AND account_id=%s",
+                    (row["id"], authority.account_id),
+                ).fetchone()
             return rows
+
+        return self.transactions.run("assistance", read)
+
+    def current_glossary(self, authority: Authority) -> dict:
+        """The owner's current glossary: stored terms or the virtual empty token.
+
+        Read-only under current authority; the virtual empty glossary is bound
+        to this owner and captured at acceptance, never created here.
+        """
+
+        def read(conn):
+            guard(conn, authority)
+            return conn.execute(
+                "SELECT revision,snapshot FROM assistance.read_glossary(%s)",
+                (authority.account_id,),
+            ).fetchone()
+
+        return self.transactions.run("assistance", read)
+
+    def result_reference(self, authority: Authority, job: UUID) -> dict | None:
+        """Current owner-bound result identity for a job snapshot; expiry stays visible."""
+
+        def read(conn):
+            guard(conn, authority)
+            row = conn.execute(
+                "SELECT id,revision,output_hash,availability FROM assistance.result WHERE "
+                "job_id=%s AND account_id=%s",
+                (job, authority.account_id),
+            ).fetchone()
+            if not row or row["availability"] != "retained":
+                return None
+            return {
+                "resultId": str(row["id"]),
+                "revision": str(row["revision"]),
+                "contentHash": row["output_hash"],
+                "mediaType": "application/json",
+            }
 
         return self.transactions.run("assistance", read)
 
@@ -454,6 +496,29 @@ class GuardedAssistanceRepository:
             return self.files.read(
                 Artifact(row["private_path"], row["output_hash"], row["byte_length"])
             )
+
+        return self.transactions.run("assistance", read)
+
+    def result_metadata(self, authority: Authority, job: UUID) -> dict | None:
+        """Owner-bound result row for read disposition; bytes stay behind result()."""
+
+        def read(conn):
+            guard(conn, authority)
+            return conn.execute(
+                "SELECT * FROM assistance.result WHERE job_id=%s AND account_id=%s",
+                (job, authority.account_id),
+            ).fetchone()
+
+        return self.transactions.run("assistance", read)
+
+    def source_metadata(self, authority: Authority, version: str) -> dict | None:
+        """Narrow corpus metadata for owner-bound result/history presentation."""
+
+        def read(conn):
+            guard(conn, authority)
+            return conn.execute(
+                "SELECT corpus.reference_metadata(%s) AS value", (version,)
+            ).fetchone()["value"]
 
         return self.transactions.run("assistance", read)
 

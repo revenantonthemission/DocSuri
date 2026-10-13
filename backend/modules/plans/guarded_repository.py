@@ -15,6 +15,19 @@ class GuardedUsageRepository:
     def __init__(self, transactions: OwnerTransactions):
         self.transactions = transactions
 
+    def ensure_entitlement(self, authority: Authority) -> None:
+        """Owner-side participant initialization with the finite synthetic policy."""
+
+        def write(conn):
+            guard(conn, authority)
+            conn.execute(
+                "INSERT INTO usage.entitlement(account_id,allocation,policy) VALUES"
+                "(%s,4,'synthetic-four-no-reset') ON CONFLICT (account_id) DO NOTHING",
+                (authority.account_id,),
+            )
+
+        self.transactions.run("usage", write)
+
     def reserve(self, authority: Authority, operation: UUID, intent_hash: str) -> dict:
         def write(conn):
             guard(conn, authority)
@@ -139,7 +152,8 @@ class GuardedUsageRepository:
         def read(conn):
             guard(conn, authority)
             policy = conn.execute(
-                "SELECT allocation,policy,revision FROM usage.entitlement WHERE account_id=%s",
+                "SELECT allocation,policy,revision,created_at FROM usage.entitlement "
+                "WHERE account_id=%s",
                 (authority.account_id,),
             ).fetchone()
             if not policy:
