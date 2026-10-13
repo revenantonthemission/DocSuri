@@ -14095,3 +14095,137 @@
 **Unit**: u2-account-personal-controls
 
 ---
+
+## Human Turn
+**Timestamp**: 2026-10-13T10:43:21Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-13T10:43:31Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/functional-design/functional-design-questions.md
+**Context**: construction > u2-account-personal-controls > functional-design > functional-design-questions.md
+
+---
+
+## Summary Confirmation Recorded
+**Timestamp**: 2026-10-13T10:43:32Z
+**Event**: SUMMARY_CONFIRMATION_RECORDED
+**Stage**: functional-design
+**Details**: Looks correct
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/functional-design/functional-design-questions.md
+**Questions SHA-256**: 27827bd4458b520a3fd8e9e163489d51d6cd6f780372cec7c2bf317f75e8207a
+**Hash Scope**: confirmed-content-v2
+**Unit**: u2-account-personal-controls
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_8138b25127b64b239035d18180a9b7a3\",0]","question":"DocSuri v2 — U2 Functional Design summary:\n\n- Define account and personal controls within the existing application: accounts, Google/ORCID identities, administrator MFA, profile/consent, library/history, personalization/onboarding and usage/plan administration. Retain every current capability and the $0 free/local constraint.\n- Specify credential and recovery flows, current owner/session checks, protected challenges, callback/replay handling and administrator boundaries. Application administration does not confer operator authority.\n- Model withdrawal, reactivation and erasure as distinct outcomes. Track every required participant and backup/restore obligation; restore only demonstrably retained permissible data and never call partial cleanup complete.\n- Keep explicit saves, history, preferences and derived behavior separate. Clear/reset/consent boundaries must resist delayed events; conflicts and lost acknowledgements must preserve committed work and show the actual outcome.\n- Define quota inspection, grants/revocation and one intended accounting effect, including unknown outcomes and period transitions. Preserve mock plan presentation without introducing billing or paid resources.\n- Extend the approved Korean responsive workspace, inherited colors, Apple HIG adaptations, appearance modes and accessibility target across account, settings, library and administration flows. Preserve context safely across sign-in, interruption and account changes.\n- Keep retention/reactivation periods, existing-data continuity, provider delivery, MFA recovery, public capacity and quota policy as explicit evidence prerequisites. Do not adopt the legacy 30-day default without a separate supported decision. U1's recorded assistance/search limitations remain open; full parity still requires later integration evidence.\n- Produce entity/rule models, behavioral and frontend specifications and requirement traceability, then obtain independent architecture review. Continue serially with automatic ordinary completion and existing human decision points. Merge completed branches through PRs into develop under CONVENTIONS.md.\n\nThe proposal is committed as db940ded in construction/u2-account-personal-controls/functional-design/functional-design-questions.md. Does this all look correct before I generate the artifact?","answer":"Looks correct"}]\n</send_user_message_question_reply>
+**Summary Authorization Id**: 21f9a950dd0a6f7bf356df8a7c94a002bfd28e4cea59f706bcd2dd449de565ae
+
+---
+
+## Unit Resumed
+**Timestamp**: 2026-10-13T10:43:36Z
+**Event**: UNIT_RESUMED
+**Stage**: functional-design
+**Unit**: u2-account-personal-controls
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-13T10:43:55Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T10:59:28Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/functional-design/functional-spec.md
+**Context**: construction > u2-account-personal-controls > functional-design > functional-spec.md
+**Summary Authorization Id**: 21f9a950dd0a6f7bf356df8a7c94a002bfd28e4cea59f706bcd2dd449de565ae
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T10:59:28Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/functional-design/frontend-components.md
+**Context**: construction > u2-account-personal-controls > functional-design > frontend-components.md
+**Summary Authorization Id**: 21f9a950dd0a6f7bf356df8a7c94a002bfd28e4cea59f706bcd2dd449de565ae
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-13T11:00:26Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/functional-design/functional-spec.md
+**Context**: construction > u2-account-personal-controls > functional-design > functional-spec.md
+**Summary Authorization Id**: 21f9a950dd0a6f7bf356df8a7c94a002bfd28e4cea59f706bcd2dd449de565ae
+
+---
+
+## Review Requested
+**Timestamp**: 2026-10-13T11:00:38Z
+**Event**: REVIEW_REQUESTED
+**Stage**: functional-design
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: u2-account-personal-controls
+**Iteration**: 1
+**Artifact Fingerprint**: sha256:394d93347a3fe69c06d5a3aad679e5d9647aa74191f1b2af66234ba8ba4f5edd
+**Request Id**: review:47e39950db952fba6e65f47573d93fb9
+**Review File**: .aidlc-engine/reviews/functional-design/units/u2-account-personal-controls/24fa3166af3ad245/1.47e39950db952fba6e65f47573d93fb9.review.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T11:04:52Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/reviews/functional-design/units/u2-account-personal-controls/24fa3166af3ad245/1.47e39950db952fba6e65f47573d93fb9.review.md
+**Context**: .aidlc-engine > reviews > functional-design > units > u2-account-personal-controls > 24fa3166af3ad245 > 1.47e39950db952fba6e65f47573d93fb9.review.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-13T11:05:01Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: aidlc-architecture-reviewer-agent
+**Agent ID**: 01a134ec-a2a6-77a3-bbb9-d998f188b866
+**Message**: **Reviewer:** aidlc-architecture-reviewer-agent\n\nREADY — one Major finding: reset cleanup lacks a concrete read-only progress and restart-rediscovery path. Resolve the C03/C13 binding before affected 
+
+---
+
+## Review Completed
+**Timestamp**: 2026-10-13T11:05:30Z
+**Event**: REVIEW_COMPLETED
+**Stage**: functional-design
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: u2-account-personal-controls
+**Iteration**: 1
+**Verdict**: READY
+**Request Fingerprint**: sha256:394d93347a3fe69c06d5a3aad679e5d9647aa74191f1b2af66234ba8ba4f5edd
+**Artifact Fingerprint**: sha256:394d93347a3fe69c06d5a3aad679e5d9647aa74191f1b2af66234ba8ba4f5edd
+**Request Id**: review:47e39950db952fba6e65f47573d93fb9
+**Review Record**: .aidlc-engine/reviews/functional-design/units/u2-account-personal-controls/24fa3166af3ad245/1.json
+**Review Record Digest**: sha256:75b9e2d47b85a839a31fa68c54b7fe204a8373fcfc49f57fadc4ac0732ddbc05
+
+---
+
+## Unit Completed
+**Timestamp**: 2026-10-13T11:05:30Z
+**Event**: UNIT_COMPLETED
+**Stage**: functional-design
+**Unit**: u2-account-personal-controls
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---

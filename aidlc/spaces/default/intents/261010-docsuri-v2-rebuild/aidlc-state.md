@@ -90,15 +90,10 @@
 
 
 
-- **Active Unit**: u2-account-personal-controls
 
-- **Unit Stage**: functional-design
 
-- **Unit State**: paused
 
-- **Unit Pause Reason**: Awaiting the required U2 Functional Design summary confirmation
 
-- **Unit Next Action**: Record the human summary response for construction/u2-account-personal-controls/functional-design/functional-design-questions.md; resume this unit and generate the design only after confirmation
 
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
@@ -161,7 +156,7 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-10-13T10:42:38Z
+- **Last Updated**: 2026-10-13T11:05:30Z
 
 - **Construction Autonomy Mode**: autonomous
 
