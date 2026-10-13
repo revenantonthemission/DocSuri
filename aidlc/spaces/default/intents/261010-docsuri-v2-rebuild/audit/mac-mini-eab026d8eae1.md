@@ -14447,3 +14447,286 @@
 **Context**: construction > u2-account-personal-controls > nfr-design > nfr-design-questions.md
 
 ---
+
+## Decision Recorded
+**Timestamp**: 2026-10-13T12:32:31Z
+**Event**: DECISION_RECORDED
+**Stage**: nfr-design
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/nfr-design/nfr-design-questions.md
+**Unit**: u2-account-personal-controls
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-13T12:34:34Z
+**Event**: DECISION_RECORDED
+**Stage**: nfr-design
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/nfr-design/nfr-design-questions.md
+**Unit**: u2-account-personal-controls
+
+---
+
+## Unit Started
+**Timestamp**: 2026-10-13T12:35:16Z
+**Event**: UNIT_STARTED
+**Stage**: nfr-design
+**Unit**: u2-account-personal-controls
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-13T12:35:17Z
+**Event**: DECISION_RECORDED
+**Stage**: nfr-design
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/nfr-design/nfr-design-questions.md
+**Unit**: u2-account-personal-controls
+
+---
+
+## Unit Paused
+**Timestamp**: 2026-10-13T12:35:18Z
+**Event**: UNIT_PAUSED
+**Stage**: nfr-design
+**Unit**: u2-account-personal-controls
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+**Reason**: Awaiting the human response to the already presented NFR Design summary confirmation.
+**Next Action**: Record the human summary-confirmation answer, then generate the U2 NFR Design artifacts if confirmed.
+
+---
+
+## Session End
+**Timestamp**: 2026-10-13T12:36:05Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-13T12:14:33.560Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-13T12:36:05Z
+**Event**: HUMAN_TURN
+**Session**: 01a13543-45bd-7091-a44b-d21469833222
+**Reply**: command
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-13T14:29:57Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+**Reply**: command
+
+---
+
+## Unit Resumed
+**Timestamp**: 2026-10-13T14:30:16Z
+**Event**: UNIT_RESUMED
+**Stage**: nfr-design
+**Unit**: u2-account-personal-controls
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-13T14:30:16Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/nfr-design/nfr-design-questions.md
+**Context**: construction > u2-account-personal-controls > nfr-design > nfr-design-questions.md
+
+---
+
+## Error Logged
+**Timestamp**: 2026-10-13T14:30:17Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-log
+**Command**: aidlc-log answer --stage nfr-design --unit u2-account-personal-controls --checkpoint summary-confirmation --questions-file aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/nfr-design/nfr-design-questions.md --details Looks correct
+**Error**: Cannot record the summary choice because no human reply has arrived since their last answer. End the turn, wait for the human's choice, then try again.
+
+---
+
+## Guardrail Loaded
+**Timestamp**: 2026-10-13T14:30:54Z
+**Event**: GUARDRAIL_LOADED
+**Scope**: all
+**Path**: .codex/aidlc-rules/
+**Rule count**: 7
+
+---
+
+## Health Check
+**Timestamp**: 2026-10-13T14:30:54Z
+**Event**: HEALTH_CHECKED
+**Request**: /aidlc --doctor
+**Details**: 62 passed, 0 failed
+
+---
+
+## Session End
+**Timestamp**: 2026-10-13T14:31:25Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a13543-45bd-7091-a44b-d21469833222 last seen 2026-10-13T12:36:05.520Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-13T14:31:26Z
+**Event**: HUMAN_TURN
+**Session**: 01a135ac-dc83-7ac1-9c06-acacc3580e61
+
+---
+
+## Summary Confirmation Recorded
+**Timestamp**: 2026-10-13T14:33:23Z
+**Event**: SUMMARY_CONFIRMATION_RECORDED
+**Stage**: nfr-design
+**Details**: Looks correct
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/nfr-design/nfr-design-questions.md
+**Questions SHA-256**: 36ce6ca12f69acf9745989061f95ec7280745e941cd7437463f324084d63987e
+**Hash Scope**: confirmed-content-v2
+**Unit**: u2-account-personal-controls
+**Person Reply**: This is an app-generated request for a suggested next user message. The user did not write this message.\n\nYour suggestion will appear in the user's empty message composer. They can accept it, edit it, or ignore it; it will not be sent automatically.\n\nPredict the single message this user is most likely to type next from the visible conversation. Use the whole conversation to understand their current intent and the latest exchange. Choose the action and specific object that best continue that intent, rather than a generally useful follow-up. Express its core naturally in the user's voice, keeping the requirements needed to retain its meaning. Choose the strongest grounded move even if several continuations are possible; uncertainty about exact wording or incidental details is not a reason to return null. Use null only when the conversation offers no grounded next move at all.\n\nSet suggestion to exactly one natural user message, one line, at most 240 characters, or null. No alternatives or explanation.\n\nReturn only JSON matching this schema: {"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","properties":{"suggestion":{"anyOf":[{"type":"string"},{"type":"null"}]}},"required":["suggestion"],"additionalProperties":false}.
+**Summary Authorization Id**: 4ae82537afbfffdb6cd37db4bf75e2092b17a4667a4cac69af4921199d06bd77
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-13T14:33:59Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Session End
+**Timestamp**: 2026-10-13T14:37:40Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a135ac-dc83-7ac1-9c06-acacc3580e61 last seen 2026-10-13T14:31:25.790Z.
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T14:45:16Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/nfr-design/security-design.md
+**Context**: construction > u2-account-personal-controls > nfr-design > security-design.md
+**Summary Authorization Id**: 4ae82537afbfffdb6cd37db4bf75e2092b17a4667a4cac69af4921199d06bd77
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T14:45:16Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/nfr-design/logical-components.md
+**Context**: construction > u2-account-personal-controls > nfr-design > logical-components.md
+**Summary Authorization Id**: 4ae82537afbfffdb6cd37db4bf75e2092b17a4667a4cac69af4921199d06bd77
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T14:45:52Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/nfr-design/traceability.json
+**Context**: construction > u2-account-personal-controls > nfr-design > traceability.json
+**Summary Authorization Id**: 4ae82537afbfffdb6cd37db4bf75e2092b17a4667a4cac69af4921199d06bd77
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-13T14:45:52Z
+**Event**: SENSOR_FIRED
+**Fire id**: 106a7984
+**Sensor ID**: traceability
+**Stage slug**: nfr-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/nfr-design/traceability.json
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-13T14:45:52Z
+**Event**: SENSOR_PASSED
+**Fire id**: 106a7984
+**Sensor ID**: traceability
+**Stage slug**: nfr-design
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/nfr-design/traceability.json
+**Duration ms**: 90
+
+---
+
+## Review Requested
+**Timestamp**: 2026-10-13T14:46:33Z
+**Event**: REVIEW_REQUESTED
+**Stage**: nfr-design
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: u2-account-personal-controls
+**Iteration**: 1
+**Artifact Fingerprint**: sha256:ec836ce91aed0bdfd0a123172141a9ef2ab874f1e69d00a596bb7bc82e5a4260
+**Request Id**: review:8b639ac2524b9ce86605c67340a970ce
+**Review File**: .aidlc-engine/reviews/nfr-design/units/u2-account-personal-controls/24fa3166af3ad245/1.8b639ac2524b9ce86605c67340a970ce.review.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T14:46:41Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/reviewer-dispatch.json
+**Context**: .aidlc-engine > reviewer-dispatch.json
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T14:51:15Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/reviews/nfr-design/units/u2-account-personal-controls/24fa3166af3ad245/1.8b639ac2524b9ce86605c67340a970ce.review.md
+**Context**: .aidlc-engine > reviews > nfr-design > units > u2-account-personal-controls > 24fa3166af3ad245 > 1.8b639ac2524b9ce86605c67340a970ce.review.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-13T14:51:32Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: aidlc-architecture-reviewer-agent
+**Agent ID**: 01a135bb-59da-7a20-9663-6e5a1889eea0
+**Message**: **Reviewer:** aidlc-architecture-reviewer-agent\n\n**Verdict:** READY\n\nOne Major finding: SD2-07 needs an atomic accept-versus-close mechanism before releasing reservations, preventing delayed acceptanc
+
+---
+
+## Review Completed
+**Timestamp**: 2026-10-13T14:51:46Z
+**Event**: REVIEW_COMPLETED
+**Stage**: nfr-design
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: u2-account-personal-controls
+**Iteration**: 1
+**Verdict**: READY
+**Request Fingerprint**: sha256:ec836ce91aed0bdfd0a123172141a9ef2ab874f1e69d00a596bb7bc82e5a4260
+**Artifact Fingerprint**: sha256:ec836ce91aed0bdfd0a123172141a9ef2ab874f1e69d00a596bb7bc82e5a4260
+**Request Id**: review:8b639ac2524b9ce86605c67340a970ce
+**Review Record**: .aidlc-engine/reviews/nfr-design/units/u2-account-personal-controls/24fa3166af3ad245/1.json
+**Review Record Digest**: sha256:01b037ebc6f2975d4e6920bdb0e04f8f86ec6890d89ee31da8712126afae3862
+
+---
+
+## Unit Completed
+**Timestamp**: 2026-10-13T14:51:46Z
+**Event**: UNIT_COMPLETED
+**Stage**: nfr-design
+**Unit**: u2-account-personal-controls
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---

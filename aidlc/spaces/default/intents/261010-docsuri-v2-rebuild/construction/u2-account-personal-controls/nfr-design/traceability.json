@@ -1,0 +1,242 @@
+{
+  "stage": "nfr-design",
+  "unit": "u2-account-personal-controls",
+  "upstream_ids": [
+    "NFR1.1",
+    "NFR1.2",
+    "NFR1.3",
+    "NFR2.1",
+    "NFR2.2",
+    "NFR2.3",
+    "NFR3.1",
+    "NFR3.2",
+    "NFR3.3",
+    "NFR3.4",
+    "NFR3.5",
+    "NFR3.6",
+    "NFR4.1",
+    "NFR4.2",
+    "NFR4.3",
+    "NFR4.4",
+    "NFR4.5",
+    "NFR4.6",
+    "NFR4.7",
+    "NFR4.8",
+    "NFR5.1",
+    "NFR5.2",
+    "NFR5.3",
+    "NFR5.4",
+    "NFR6.1",
+    "NFR6.2",
+    "NFR6.3",
+    "NFR7.1",
+    "NFR7.2",
+    "NFR7.3",
+    "NFR8.1",
+    "NFR8.2",
+    "NFR8.3",
+    "NFR9.1",
+    "NFR9.2",
+    "NFR9.3",
+    "NFR10.1",
+    "NFR10.2",
+    "NFR10.3"
+  ],
+  "coverage": [
+    {
+      "id": "NFR1.1",
+      "status": "OK",
+      "target": "security-design.md SD2-01, SD2-02, SD2-03; logical-components.md LC2-08 V1"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "OK",
+      "target": "security-design.md SD2-04, SD2-05, SD2-06; logical-components.md LC2-08 V3/V4"
+    },
+    {
+      "id": "NFR1.3",
+      "status": "OK",
+      "target": "security-design.md SD2-07; logical-components.md LC2-08 V6"
+    },
+    {
+      "id": "NFR2.1",
+      "status": "OK",
+      "target": "security-design.md SD2-09; logical-components.md LC2-07"
+    },
+    {
+      "id": "NFR2.2",
+      "status": "OK",
+      "target": "logical-components.md LC2-03 baseline and LC2-08 V7"
+    },
+    {
+      "id": "NFR2.3",
+      "status": "OK",
+      "target": "security-design.md SD2-05 bounded discovery/polling; logical-components.md LC2-03"
+    },
+    {
+      "id": "NFR3.1",
+      "status": "OK",
+      "target": "security-design.md SD2-04; logical-components.md LC2-02 owner transaction"
+    },
+    {
+      "id": "NFR3.2",
+      "status": "OK",
+      "target": "security-design.md SD2-06 cutoff and input boundaries"
+    },
+    {
+      "id": "NFR3.3",
+      "status": "OK",
+      "target": "security-design.md SD2-05 reset responsibility, listResets and inspectReset"
+    },
+    {
+      "id": "NFR3.4",
+      "status": "OK",
+      "target": "security-design.md SD2-06 lifecycle manifest and evidence; logical-components.md LC2-05"
+    },
+    {
+      "id": "NFR3.5",
+      "status": "OK",
+      "target": "security-design.md SD2-06 restore and reactivation; logical-components.md LC2-05"
+    },
+    {
+      "id": "NFR3.6",
+      "status": "OK",
+      "target": "security-design.md SD2-07 durable cross-owner reconciliation"
+    },
+    {
+      "id": "NFR4.1",
+      "status": "OK",
+      "target": "security-design.md SD2-01 current authority at read/effect"
+    },
+    {
+      "id": "NFR4.2",
+      "status": "OK",
+      "target": "security-design.md SD2-01 scoped sessions and continuations"
+    },
+    {
+      "id": "NFR4.3",
+      "status": "OK",
+      "target": "security-design.md SD2-02 credential/proof atomicity"
+    },
+    {
+      "id": "NFR4.4",
+      "status": "OK",
+      "target": "security-design.md SD2-03 provider-specific flow and identity binding"
+    },
+    {
+      "id": "NFR4.5",
+      "status": "OK",
+      "target": "security-design.md SD2-02 single-delivery MFA material"
+    },
+    {
+      "id": "NFR4.6",
+      "status": "OK",
+      "target": "security-design.md SD2-03 browser transport/cookies/CSRF/encoding/cache"
+    },
+    {
+      "id": "NFR4.7",
+      "status": "OK",
+      "target": "security-design.md SD2-01 and SD2-07 current admin MFA and separate operator"
+    },
+    {
+      "id": "NFR4.8",
+      "status": "OK",
+      "target": "security-design.md SD2-01/03/05 non-revealing admission and errors; logical-components.md LC2-04"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "security-design.md SD2-08 classification; logical-components.md LC2-05"
+    },
+    {
+      "id": "NFR5.2",
+      "status": "OK",
+      "target": "security-design.md SD2-06 current consent and prospective regrant"
+    },
+    {
+      "id": "NFR5.3",
+      "status": "OK",
+      "target": "security-design.md SD2-04/05/06 mandatory evidence and approved retention; logical-components.md LC2-05"
+    },
+    {
+      "id": "NFR5.4",
+      "status": "OK",
+      "target": "security-design.md SD2-09 authority generation and browser clearing"
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": "security-design.md SD2-09; logical-components.md LC2-07 and LC2-08 V8"
+    },
+    {
+      "id": "NFR6.2",
+      "status": "OK",
+      "target": "security-design.md SD2-05/09 truthful reset/destructive status"
+    },
+    {
+      "id": "NFR6.3",
+      "status": "OK",
+      "target": "security-design.md SD2-03/09 manual fallback and unsupported modes"
+    },
+    {
+      "id": "NFR7.1",
+      "status": "OK",
+      "target": "logical-components.md LC2-01 owner boundaries and LC2-08 coordination"
+    },
+    {
+      "id": "NFR7.2",
+      "status": "OK",
+      "target": "security-design.md SD2-08 defect packet; logical-components.md LC2-06"
+    },
+    {
+      "id": "NFR7.3",
+      "status": "OK",
+      "target": "security-design.md SD2-08 dependency/policy evidence; logical-components.md LC2-06"
+    },
+    {
+      "id": "NFR8.1",
+      "status": "OK",
+      "target": "security-design.md scope, SD2-03 and evidence gates; logical-components.md LC2-04"
+    },
+    {
+      "id": "NFR8.2",
+      "status": "OK",
+      "target": "logical-components.md LC2-02/03/04 finite pools, limits and recovery reserve"
+    },
+    {
+      "id": "NFR8.3",
+      "status": "OK",
+      "target": "security-design.md SD2-07; logical-components.md LC2-04 usage policy"
+    },
+    {
+      "id": "NFR9.1",
+      "status": "OK",
+      "target": "security-design.md SD2-08 safe correlation; logical-components.md LC2-06"
+    },
+    {
+      "id": "NFR9.2",
+      "status": "OK",
+      "target": "security-design.md SD2-08 business evidence vs optional telemetry; logical-components.md LC2-04/05/06"
+    },
+    {
+      "id": "NFR9.3",
+      "status": "OK",
+      "target": "security-design.md SD2-08 readiness; logical-components.md LC2-06"
+    },
+    {
+      "id": "NFR10.1",
+      "status": "OK",
+      "target": "security-design.md SD2-01/04/05; logical-components.md LC2-08 canonical/consumer coordination"
+    },
+    {
+      "id": "NFR10.2",
+      "status": "OK",
+      "target": "security-design.md SD2-05 exact reset delta and closure"
+    },
+    {
+      "id": "NFR10.3",
+      "status": "OK",
+      "target": "security-design.md SD2-06; logical-components.md LC2-08 installed and cumulative participants"
+    }
+  ]
+}
