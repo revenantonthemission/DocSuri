@@ -95,15 +95,10 @@
 
 
 
-- **Active Unit**: u2-account-personal-controls
 
-- **Unit Stage**: nfr-requirements
 
-- **Unit State**: paused
 
-- **Unit Pause Reason**: Awaiting confirmed U2 NFR Requirements summary
 
-- **Unit Next Action**: Record the human summary answer, resume U2 NFR Requirements and generate its applicable artifacts if confirmed
 
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
@@ -166,7 +161,7 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-10-13T11:12:22Z
+- **Last Updated**: 2026-10-13T12:26:42Z
 
 - **Construction Autonomy Mode**: autonomous
 
