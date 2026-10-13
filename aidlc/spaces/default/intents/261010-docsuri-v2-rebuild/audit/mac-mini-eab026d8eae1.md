@@ -14229,3 +14229,53 @@
 **Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
 
 ---
+
+## Unit Started
+**Timestamp**: 2026-10-13T11:11:45Z
+**Event**: UNIT_STARTED
+**Stage**: nfr-requirements
+**Unit**: u2-account-personal-controls
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T11:11:46Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/nfr-requirements/nfr-requirements-questions.md
+**Context**: construction > u2-account-personal-controls > nfr-requirements > nfr-requirements-questions.md
+
+---
+
+## Error Logged
+**Timestamp**: 2026-10-13T11:12:08Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-state
+**Command**: aidlc-state unit pause --stage nfr-requirements --unit u2-account-personal-controls --reason Awaiting confirmed U2 NFR Requirements summary
+**Error**: unit pause requires --next-action <text> (the exact next step on resume).
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-13T11:12:08Z
+**Event**: DECISION_RECORDED
+**Stage**: nfr-requirements
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/nfr-requirements/nfr-requirements-questions.md
+**Unit**: u2-account-personal-controls
+
+---
+
+## Unit Paused
+**Timestamp**: 2026-10-13T11:12:22Z
+**Event**: UNIT_PAUSED
+**Stage**: nfr-requirements
+**Unit**: u2-account-personal-controls
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+**Reason**: Awaiting confirmed U2 NFR Requirements summary
+**Next Action**: Record the human summary answer, resume U2 NFR Requirements and generate its applicable artifacts if confirmed
+
+---
