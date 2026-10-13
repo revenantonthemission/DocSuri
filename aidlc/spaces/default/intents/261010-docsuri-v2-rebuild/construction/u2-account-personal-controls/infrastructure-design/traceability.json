@@ -1,0 +1,242 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "u2-account-personal-controls",
+  "upstream_ids": [
+    "NFR1.1",
+    "NFR1.2",
+    "NFR1.3",
+    "NFR2.1",
+    "NFR2.2",
+    "NFR2.3",
+    "NFR3.1",
+    "NFR3.2",
+    "NFR3.3",
+    "NFR3.4",
+    "NFR3.5",
+    "NFR3.6",
+    "NFR4.1",
+    "NFR4.2",
+    "NFR4.3",
+    "NFR4.4",
+    "NFR4.5",
+    "NFR4.6",
+    "NFR4.7",
+    "NFR4.8",
+    "NFR5.1",
+    "NFR5.2",
+    "NFR5.3",
+    "NFR5.4",
+    "NFR6.1",
+    "NFR6.2",
+    "NFR6.3",
+    "NFR7.1",
+    "NFR7.2",
+    "NFR7.3",
+    "NFR8.1",
+    "NFR8.2",
+    "NFR8.3",
+    "NFR9.1",
+    "NFR9.2",
+    "NFR9.3",
+    "NFR10.1",
+    "NFR10.2",
+    "NFR10.3"
+  ],
+  "coverage": [
+    {
+      "id": "NFR1.1",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-03 credential/proof storage and V1 mounted account journeys"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-06 owner persistence and V3/V4 personal controls"
+    },
+    {
+      "id": "NFR1.3",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-05 atomic admission and V6 ledger"
+    },
+    {
+      "id": "NFR2.1",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-06 browser host and V8 truthful feedback"
+    },
+    {
+      "id": "NFR2.2",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-04 bounded measured baseline"
+    },
+    {
+      "id": "NFR2.3",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-04 page/cursor/poll budgets and PIPE2-06 reset bindings"
+    },
+    {
+      "id": "NFR3.1",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-03 owner transaction/receipt and PIPE2-06 lost acknowledgement checks"
+    },
+    {
+      "id": "NFR3.2",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-06 V3/V4 persisted clear/reset boundaries"
+    },
+    {
+      "id": "NFR3.3",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-06 C03/C13 reset discovery and V4"
+    },
+    {
+      "id": "NFR3.4",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-06 complete versioned participant manifests and V5"
+    },
+    {
+      "id": "NFR3.5",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-08 isolated restore with current restriction journal"
+    },
+    {
+      "id": "NFR3.6",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-05 accept/close serialization and durable reconciliation"
+    },
+    {
+      "id": "NFR4.1",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-03 C02 authority guard and V2 revocation race"
+    },
+    {
+      "id": "NFR4.2",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-03 scoped cookies and PIPE2-06 C02 matrix"
+    },
+    {
+      "id": "NFR4.3",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-03 token protection and PIPE2-04 finite hash/proof profile"
+    },
+    {
+      "id": "NFR4.4",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-03 provider binding and G2 activation gate"
+    },
+    {
+      "id": "NFR4.5",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-03 separate versioned MFA key custody and V2 single delivery"
+    },
+    {
+      "id": "NFR4.6",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-03 HTTPS/CSRF/CSP/no-store checks"
+    },
+    {
+      "id": "NFR4.7",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-06 V2 current admin/MFA and U7 separation"
+    },
+    {
+      "id": "NFR4.8",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-04 layered finite admission and V1/V2 neutral errors"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-03 isolated synthetic realm and PIPE2-09 G3 classification gate"
+    },
+    {
+      "id": "NFR5.2",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-03 current authority transaction and V3/V5 consent suppression"
+    },
+    {
+      "id": "NFR5.3",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-04 protected mandatory evidence and PIPE2-08 restore/retention gate"
+    },
+    {
+      "id": "NFR5.4",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-06 browser authority generation and V8 shared-device isolation"
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-06 browser host and V8 Korean responsive accessibility verification"
+    },
+    {
+      "id": "NFR6.2",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-06 V4 complete-scope status and V8 destructive truth"
+    },
+    {
+      "id": "NFR6.3",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-06 manual onboarding/skip and explicit degraded modes"
+    },
+    {
+      "id": "NFR7.1",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-01 owner placement and PIPE2-06 contract coordination"
+    },
+    {
+      "id": "NFR7.2",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-07 bounded defect packet and V9 repair exercise"
+    },
+    {
+      "id": "NFR7.3",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-02 pinned artifact/lock/license/security evidence"
+    },
+    {
+      "id": "NFR8.1",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-01 local selection and PIPE2-02 verified free-only execution"
+    },
+    {
+      "id": "NFR8.2",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-04 finite pools, storage, global ceilings and measured reserve"
+    },
+    {
+      "id": "NFR8.3",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-05 serialized reservation/settlement and PIPE2-09 G6"
+    },
+    {
+      "id": "NFR9.1",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-07 safe bounded correlated observations"
+    },
+    {
+      "id": "NFR9.2",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-04 optional telemetry limits and protected owner business state"
+    },
+    {
+      "id": "NFR9.3",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-07 distinct liveness/synthetic/provider readiness"
+    },
+    {
+      "id": "NFR10.1",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-06 canonical owner/revision/consumer coordination"
+    },
+    {
+      "id": "NFR10.2",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-06 exact reset delta and V4 fresh-owner rediscovery"
+    },
+    {
+      "id": "NFR10.3",
+      "status": "OK",
+      "target": "cicd-pipeline.md PIPE2-02 artifact participant manifest and PIPE2-06 cumulative V9"
+    }
+  ]
+}
