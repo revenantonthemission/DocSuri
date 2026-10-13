@@ -14017,3 +14017,81 @@
 **Stage**: functional-design
 
 ---
+
+## Session End
+**Timestamp**: 2026-10-13T10:35:38Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a12f9a-b0cf-76e0-b65c-a603475d85b2 last seen 2026-10-12T10:13:51.888Z.
+
+---
+
+## Session Resume
+**Timestamp**: 2026-10-13T10:35:38Z
+**Event**: SESSION_RESUMED
+**Source**: resume
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-13T10:35:40Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Workflow Unparked
+**Timestamp**: 2026-10-13T10:35:51Z
+**Event**: WORKFLOW_UNPARKED
+
+---
+
+## Unit Started
+**Timestamp**: 2026-10-13T10:39:34Z
+**Event**: UNIT_STARTED
+**Stage**: functional-design
+**Unit**: u2-account-personal-controls
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T10:42:03Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/functional-design/functional-design-questions.md
+**Context**: construction > u2-account-personal-controls > functional-design > functional-design-questions.md
+
+---
+
+## Unit Paused
+**Timestamp**: 2026-10-13T10:42:38Z
+**Event**: UNIT_PAUSED
+**Stage**: functional-design
+**Unit**: u2-account-personal-controls
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+**Reason**: Awaiting the required U2 Functional Design summary confirmation
+**Next Action**: Record the human summary response for construction/u2-account-personal-controls/functional-design/functional-design-questions.md; resume this unit and generate the design only after confirmation
+
+---
+
+## Error Logged
+**Timestamp**: 2026-10-13T10:42:43Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-log
+**Command**: aidlc-log decision --stage functional-design --unit u2-account-personal-controls --checkpoint summary-confirmation --questions-file construction/u2-account-personal-controls/functional-design/functional-design-questions.md --decision Does this all look correct before I generate the artifact? --options Looks correct,Request changes
+**Error**: Summary confirmation questions file must be inside the active intent record: construction/u2-account-personal-controls/functional-design/functional-design-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-13T10:42:52Z
+**Event**: DECISION_RECORDED
+**Stage**: functional-design
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/functional-design/functional-design-questions.md
+**Unit**: u2-account-personal-controls
+
+---
