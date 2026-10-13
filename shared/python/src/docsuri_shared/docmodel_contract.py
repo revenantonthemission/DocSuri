@@ -28,7 +28,10 @@ from __future__ import annotations
 # as literal source. Formula alttext: the ``\Colorbox``/``\lstinline``/``\lst@…`` listings machinery
 # and residual ``{ltx_lst_*}`` class tags are stripped so the boxed identifiers render rather than
 # collapsing the whole formula. Both change stored output, so affected caches must rebuild.
-DOCMODEL_PARSER_VERSION = "docmodel-parser@7"
+# @8: preserve caption-bearing figures without an img element (including SVG
+# objects removed by sanitization). This changes figure ordinals and full text;
+# builder and reader caches must rebuild together before resolving asset refs.
+DOCMODEL_PARSER_VERSION = "docmodel-parser@8"
 # 1.1.0: additive optional meta.macros (consumers ignore if unset).
 DOCMODEL_SCHEMA_VERSION = "1.1.0"
 

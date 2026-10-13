@@ -7,7 +7,7 @@ requires-python = ">=3.11"
 license = "MIT"
 dependencies = [
     # pydantic v2 models are GENERATED from shared/**/*.schema.json (see tools/generate.py).
-    "pydantic>=2.7,<3",
+    "pydantic[email]>=2.7,<3",
 ]
 
 [project.urls]

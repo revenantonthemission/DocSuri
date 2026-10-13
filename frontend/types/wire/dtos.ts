@@ -1,4 +1,4 @@
-/* DO NOT EDIT. Declared public schema closure, offline. SHA256:20ef1e9e96010afd4c23735c341814725e10be3785d4b7f72ce97ad23079dcf6 */
+/* DO NOT EDIT. Declared public schema closure, offline. SHA256:4180916daf2429df3fbbd6ced5571300bf46782c27c143e6d5548f477f8cf31f */
 
 /**
  * Which rung of the fallback ladder produced this doc-model: native arXiv HTML -> ar5iv -> e-print LaTeX -> (last resort) PDF parse. User-uploaded PDFs also use the "pdf" tier — the user-vs-arXiv origin is carried by the paperId "userdoc:" namespace, not a separate tier. Trace: Q6, BR-29, TD-11.
@@ -177,6 +177,233 @@ export type SummarizationResponse =
   | SummarizationAbstainDTO
   | SummarizationCostDegradedDTO
   | SummarizationSourceUnavailableDTO;
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceId".
+ */
+export type WorkspaceId = string;
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceRevision".
+ */
+export type WorkspaceRevision = string;
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceTime".
+ */
+export type WorkspaceTime = string;
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceHash".
+ */
+export type WorkspaceHash = string;
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceProgress".
+ */
+export type WorkspaceProgress =
+  | {
+      mode: "indeterminate";
+    }
+  | {
+      mode: "determinate";
+      current: number;
+      total: number;
+    };
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceJobSnapshot".
+ */
+export type WorkspaceJobSnapshot = {
+  [k: string]: unknown;
+};
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceHostReturnContext".
+ */
+export type WorkspaceHostReturnContext =
+  | WorkspaceHostPaperReturnContext
+  | WorkspaceHostSearchReturnContext
+  | WorkspaceHostRouteReturnContext;
+/**
+ * Sensitive proof/credential; never logged, reflected or placed in a URL.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessSecret".
+ */
+export type WorkspaceAccessSecret = string;
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessEmail".
+ */
+export type WorkspaceAccessEmail = string;
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessSessionStatus".
+ */
+export type WorkspaceAccessSessionStatus = WorkspaceAccessAnonymousSession | WorkspaceAccessKnownSession;
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessLoginResult".
+ */
+export type WorkspaceAccessLoginResult = WorkspaceAccessKnownSession | WorkspaceAccessMfaContinuation;
+/**
+ * Secret output permitted only by the protected single-use enrollment-material response; redact entirely from diagnostics and do not cache or persist in the client.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessEnrollmentSecret".
+ */
+export type WorkspaceAccessEnrollmentSecret = string;
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessProfileValue".
+ */
+export type WorkspaceAccessProfileValue = string | boolean | WorkspaceId[] | null;
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLifecycleAction".
+ */
+export type WorkspaceLifecycleAction = "withdraw" | "reactivate" | "erase";
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLifecycleScope".
+ */
+export type WorkspaceLifecycleScope =
+  | "live_records"
+  | "derived_artifacts"
+  | "pending_work"
+  | "caches"
+  | "backups"
+  | "restore_enforcement"
+  | "external_copies";
+/**
+ * Safe status after valid reactivation proof; never a full session or a promise that erased data was restored. A protected limited recovery binding, issued through trusted cookie transport, permits lifecycle.inspect for this request alone while normal account authority remains unavailable.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLifecycleReactivationResult".
+ */
+export type WorkspaceLifecycleReactivationResult = {
+  [k: string]: unknown;
+};
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLifecycleScopeDisposition".
+ */
+export type WorkspaceLifecycleScopeDisposition = {
+  [k: string]: unknown;
+};
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLifecycleRequest".
+ */
+export type WorkspaceLifecycleRequest = {
+  [k: string]: unknown;
+};
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageMeasure".
+ */
+export type WorkspaceUsageMeasure = WorkspaceUsageKnownMeasure | WorkspaceUsageUnknownMeasure;
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusContentRead".
+ */
+export type WorkspaceCorpusContentRead =
+  | {
+      availability: "ready";
+      content: WorkspaceCorpusContent;
+    }
+  | {
+      availability: "absent" | "building" | "unsupported" | "failed" | "withdrawn" | "restricted";
+      paper: WorkspacePaperRef;
+      reasonKey: string;
+      retryable: boolean;
+    };
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceResultRead".
+ */
+export type WorkspaceAssistanceResultRead =
+  | {
+      availability: "ready";
+      prepared: WorkspaceAssistanceResult;
+    }
+  | {
+      availability: "pending" | "failed" | "expired" | "withdrawn" | "restricted";
+      jobId: WorkspaceId;
+      reasonKey: string;
+    };
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDraftWriteResult".
+ */
+export type WorkspaceDraftWriteResult =
+  | {
+      outcome: "saved";
+      acknowledged: WorkspaceDraftRevision;
+    }
+  | {
+      outcome: "conflict";
+      current: WorkspaceDraftRevision;
+      proposedText: string;
+      proposedBaseRevision: WorkspaceRevision | null;
+    };
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDraftRecovery".
+ */
+export type WorkspaceDraftRecovery =
+  | {
+      state: "recoverable";
+      acknowledged: WorkspaceDraftRevision;
+    }
+  | {
+      state: "missing" | "consumed" | "discarded" | "expired" | "deleted";
+      draftId: WorkspaceId;
+      reasonKey: string;
+    };
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchArtifactResponse".
+ */
+export type WorkspaceResearchArtifactResponse =
+  | {
+      availability: "ready";
+      prepared: WorkspaceResearchArtifact;
+    }
+  | {
+      availability: "pending" | "failed" | "expired" | "deleted" | "restricted";
+      artifactId: WorkspaceId;
+      reasonKey: string;
+    };
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsUpdateInputHttp".
+ */
+export type WorkspaceSettingsUpdateInputHttp = {
+  [k: string]: unknown;
+};
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchDeleteHttp".
+ */
+export type WorkspaceResearchDeleteHttp = {
+  [k: string]: unknown;
+};
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspacePreparedJobRead".
+ */
+export type WorkspacePreparedJobRead = WorkspaceAssistanceResultRead | WorkspaceResearchArtifactResponse;
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceHistoryRow".
+ */
+export type WorkspaceAssistanceHistoryRow = {
+  [k: string]: unknown;
+};
 
 export interface PublicWire {}
 /**
@@ -2018,4 +2245,2307 @@ export interface SummarizationAssetsLicenseUnavailableDTO {
  */
 export interface SummarizationAssetsUnauthorizedDTO {
   status: "unauthorized";
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspacePolicyRef".
+ */
+export interface WorkspacePolicyRef {
+  policyId: WorkspaceId;
+  revision: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceError".
+ */
+export interface WorkspaceError {
+  code:
+    | "APPROVAL_REQUIRED"
+    | "CANCELLED"
+    | "CAPACITY_EXHAUSTED"
+    | "CONFLICT"
+    | "CONSENT_REVOKED"
+    | "DEADLINE_EXCEEDED"
+    | "DEPENDENCY_UNAVAILABLE"
+    | "EXPIRED"
+    | "FORBIDDEN"
+    | "IDEMPOTENCY_CONFLICT"
+    | "INCOMPATIBLE"
+    | "INCOMPATIBLE_VERSION"
+    | "INTERNAL_ERROR"
+    | "INVALID_ARGUMENT"
+    | "INVALID_CONTENT"
+    | "INVALID_INPUT"
+    | "INVALID_TOKEN"
+    | "MFA_REQUIRED"
+    | "NOT_FOUND"
+    | "NOT_READY"
+    | "OUTCOME_UNKNOWN"
+    | "POLICY_DENIED"
+    | "POLICY_UNRESOLVED"
+    | "QUOTA_EXCEEDED"
+    | "RATE_LIMITED"
+    | "SNAPSHOT_EXPIRED"
+    | "SOURCE_INELIGIBLE"
+    | "STALE_REVISION"
+    | "UNAUTHENTICATED"
+    | "UNKNOWN_OUTCOME";
+  requestId: WorkspaceId;
+  retryable: boolean;
+  messageKey: WorkspaceId;
+  retryAfterSeconds?: number;
+  details?: {
+    fieldNames: WorkspaceId[];
+  };
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspacePaperRef".
+ */
+export interface WorkspacePaperRef {
+  paperId: WorkspaceId;
+  versionId: WorkspaceId;
+  eligibilityRevision: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResultRef".
+ */
+export interface WorkspaceResultRef {
+  resultId: WorkspaceId;
+  revision: WorkspaceRevision;
+  contentHash: WorkspaceHash;
+  mediaType: string;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspacePageRequest".
+ */
+export interface WorkspacePageRequest {
+  cursor?: string | null;
+  limit?: number;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspacePageInfo".
+ */
+export interface WorkspacePageInfo {
+  nextCursor: string | null;
+  snapshotRevision: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAck".
+ */
+export interface WorkspaceAck {
+  resourceId: WorkspaceId;
+  revision: WorkspaceRevision;
+  requestId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceJobReceipt".
+ */
+export interface WorkspaceJobReceipt {
+  jobId: WorkspaceId;
+  revision: WorkspaceRevision;
+  seq: number;
+  state: "accepted" | "running" | "cancel_requested" | "succeeded" | "failed" | "cancelled";
+  requestId: WorkspaceId;
+  acceptedAt: WorkspaceTime;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsObservation".
+ */
+export interface WorkspaceOpsObservation {
+  observationId: WorkspaceId;
+  capability: WorkspaceId;
+  component: WorkspaceId;
+  observedAt: WorkspaceTime;
+  revision: WorkspaceRevision;
+  status: "available" | "degraded" | "unavailable" | "unknown";
+  evidenceRef: WorkspaceId;
+  limitations: WorkspaceId[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsObservationPage".
+ */
+export interface WorkspaceOpsObservationPage {
+  items: WorkspaceOpsObservation[];
+  page: WorkspacePageInfo;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsIncident".
+ */
+export interface WorkspaceOpsIncident {
+  incidentId: WorkspaceId;
+  revision: WorkspaceRevision;
+  capabilities: WorkspaceId[];
+  correlationIds: WorkspaceId[];
+  state: "open" | "investigating" | "recovering" | "resolved";
+  evidenceRefs: WorkspaceId[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsIncidentPage".
+ */
+export interface WorkspaceOpsIncidentPage {
+  items: WorkspaceOpsIncident[];
+  page: WorkspacePageInfo;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibraryFilter".
+ */
+export interface WorkspaceLibraryFilter {
+  filterId: WorkspaceId;
+  operatorId: WorkspaceId;
+  values: (string | number | boolean)[];
+}
+/**
+ * Canonical submitted query/refinement context shared by search, saved queries and history. Unknown or unsupported vocabulary IDs are rejected; no arbitrary query-engine syntax is accepted through filters.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibraryQueryContext".
+ */
+export interface WorkspaceLibraryQueryContext {
+  /**
+   * Bound by the named approved policy before processing.
+   */
+  query: string;
+  modeId: WorkspaceId;
+  orderId: WorkspaceId;
+  filters: WorkspaceLibraryFilter[];
+  vocabularyRevision: WorkspaceRevision;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceHostPaperReturnContext".
+ */
+export interface WorkspaceHostPaperReturnContext {
+  kind: "paper";
+  paper: WorkspacePaperRef;
+  anchorId?: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceHostSearchReturnContext".
+ */
+export interface WorkspaceHostSearchReturnContext {
+  kind: "search";
+  queryContext: WorkspaceLibraryQueryContext;
+  resultWindowId: WorkspaceId;
+  resultPosition?: number;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceHostRouteReturnContext".
+ */
+export interface WorkspaceHostRouteReturnContext {
+  kind: "route";
+  routeId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceHostNavigationItem".
+ */
+export interface WorkspaceHostNavigationItem {
+  routeId: WorkspaceId;
+  titleKey: WorkspaceId;
+  /**
+   * Bound by the named approved policy before processing.
+   */
+  path: string;
+  capabilityId: WorkspaceId;
+  available: boolean;
+  reasonKey?: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceHostNavigationResult".
+ */
+export interface WorkspaceHostNavigationResult {
+  manifestRevision: WorkspaceRevision;
+  authorityRevision: WorkspaceRevision;
+  items: WorkspaceHostNavigationItem[];
+  resolvedRouteId: WorkspaceId;
+  returnContext?: WorkspaceHostReturnContext;
+  clearPriorOwnerState: boolean;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessPublicSession".
+ */
+export interface WorkspaceAccessPublicSession {
+  sessionId: WorkspaceId;
+  accountId: WorkspaceId;
+  authorityRevision: WorkspaceRevision;
+  verified: boolean;
+  authenticationLevel: "primary" | "mfa";
+  expiresAt?: WorkspaceTime;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessAnonymousSession".
+ */
+export interface WorkspaceAccessAnonymousSession {
+  state: "anonymous";
+  requestId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessKnownSession".
+ */
+export interface WorkspaceAccessKnownSession {
+  state: "authenticated";
+  session: WorkspaceAccessPublicSession;
+}
+/**
+ * Existence-neutral public acknowledgement. It does not expose account existence, challenge secrets or recipient-specific delivery facts.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessChallengeDelivery".
+ */
+export interface WorkspaceAccessChallengeDelivery {
+  requestId: WorkspaceId;
+  acknowledgement: "accepted";
+  messageKey: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessChallengeProof".
+ */
+export interface WorkspaceAccessChallengeProof {
+  challengeId: WorkspaceId;
+  proof: WorkspaceAccessSecret;
+  flowBinding: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessMfaContinuation".
+ */
+export interface WorkspaceAccessMfaContinuation {
+  state: "mfa_required";
+  challengeId: WorkspaceId;
+  flowBinding: WorkspaceId;
+  expiresAt: WorkspaceTime;
+}
+/**
+ * URL generated from configured provider and registered callback binding; never copied from a caller-controlled destination.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessProviderRedirect".
+ */
+export interface WorkspaceAccessProviderRedirect {
+  flowId: WorkspaceId;
+  provider: "google" | "orcid";
+  authorizationUrl: string;
+  expiresAt: WorkspaceTime;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessIdentityLink".
+ */
+export interface WorkspaceAccessIdentityLink {
+  identityLinkId: WorkspaceId;
+  provider: "google" | "orcid";
+  /**
+   * Bound by the named approved policy before processing.
+   */
+  providerSubject: string;
+  revision: WorkspaceRevision;
+  profileAvailable: boolean;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessIdentityPage".
+ */
+export interface WorkspaceAccessIdentityPage {
+  items: WorkspaceAccessIdentityLink[];
+  page: WorkspacePageInfo;
+  appliedLimit: number;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessOrcidWork".
+ */
+export interface WorkspaceAccessOrcidWork {
+  sourceId: WorkspaceId;
+  /**
+   * Bound by the named approved policy before processing.
+   */
+  title: string;
+  externalIdentifiers: string[];
+  sourceUrl?: string;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessOrcidProfile".
+ */
+export interface WorkspaceAccessOrcidProfile {
+  identityLinkId: WorkspaceId;
+  /**
+   * Bound by the named approved policy before processing.
+   */
+  subject: string;
+  revision: WorkspaceRevision;
+  /**
+   * Bound by the named approved policy before processing.
+   */
+  provenance: string;
+  /**
+   * Bound by the named approved policy before processing.
+   */
+  displayName?: string;
+  works: WorkspaceAccessOrcidWork[];
+  coverage: "complete" | "partial" | "unavailable";
+}
+/**
+ * Protected one-time enrollment delivery is separate from ordinary JSON/log output; no factor seed or recovery code is returned here.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessMfaEnrollment".
+ */
+export interface WorkspaceAccessMfaEnrollment {
+  enrollmentId: WorkspaceId;
+  deliveryReference: WorkspaceId;
+  expiresAt: WorkspaceTime;
+  nextAction: "confirm_factor";
+}
+/**
+ * Dedicated protected response only. provisioningUri encodes this enrollment's seed and account/issuer binding and may be rendered as a QR locally, without an external QR service. Recovery codes remain unusable before successful enrollment confirmation. The trusted HTTP adapter applies Cache-Control: no-store and excludes the response from logging, tracing, generic result caches and persisted client storage.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessMfaMaterial".
+ */
+export interface WorkspaceAccessMfaMaterial {
+  enrollmentId: WorkspaceId;
+  seed: WorkspaceAccessEnrollmentSecret;
+  provisioningUri: WorkspaceAccessEnrollmentSecret;
+  recoveryCodes: WorkspaceAccessEnrollmentSecret[];
+  expiresAt: WorkspaceTime;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessProfileFieldDefinition".
+ */
+export interface WorkspaceAccessProfileFieldDefinition {
+  fieldId: WorkspaceId;
+  labelKey: WorkspaceId;
+  valueKind: "text" | "boolean" | "single_choice" | "multi_choice";
+  mutable: boolean;
+  nullable: boolean;
+  choiceIds: WorkspaceId[];
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessProfileField".
+ */
+export interface WorkspaceAccessProfileField {
+  fieldId: WorkspaceId;
+  value: WorkspaceAccessProfileValue;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessProfile".
+ */
+export interface WorkspaceAccessProfile {
+  accountId: WorkspaceId;
+  revision: WorkspaceRevision;
+  email: WorkspaceAccessEmail;
+  emailVerified: boolean;
+  fieldVocabularyRevision: WorkspaceRevision;
+  definitions: WorkspaceAccessProfileFieldDefinition[];
+  fields: WorkspaceAccessProfileField[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessConsentRecord".
+ */
+export interface WorkspaceAccessConsentRecord {
+  consentId: WorkspaceId;
+  accountId: WorkspaceId;
+  purposeId: WorkspaceId;
+  decision: "granted" | "revoked";
+  revision: WorkspaceRevision;
+  effectiveAt: WorkspaceTime;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessConsentPage".
+ */
+export interface WorkspaceAccessConsentPage {
+  items: WorkspaceAccessConsentRecord[];
+  page: WorkspacePageInfo;
+  appliedLimit: number;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLifecycleParticipantDisposition".
+ */
+export interface WorkspaceLifecycleParticipantDisposition {
+  participantId: WorkspaceId;
+  revision: WorkspaceRevision;
+  state: "pending" | "running" | "acknowledged" | "failed" | "blocked";
+  /**
+   * @maxItems 7
+   */
+  scopes:
+    | []
+    | [WorkspaceLifecycleScopeDisposition]
+    | [WorkspaceLifecycleScopeDisposition, WorkspaceLifecycleScopeDisposition]
+    | [WorkspaceLifecycleScopeDisposition, WorkspaceLifecycleScopeDisposition, WorkspaceLifecycleScopeDisposition]
+    | [
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition
+      ]
+    | [
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition
+      ]
+    | [
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition
+      ]
+    | [
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition,
+        WorkspaceLifecycleScopeDisposition
+      ];
+  observedAt: WorkspaceTime;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibrarySavedPaper".
+ */
+export interface WorkspaceLibrarySavedPaper {
+  savedPaperId: WorkspaceId;
+  accountId: WorkspaceId;
+  revision: WorkspaceRevision;
+  savedPaper: WorkspacePaperRef;
+  resolvedPaper?: WorkspacePaperRef;
+  /**
+   * Bound by the named approved policy before processing.
+   */
+  savedTitle?: string;
+  sourceDisposition: "available" | "source_only" | "canonicalized" | "withdrawn" | "unavailable" | "restricted";
+  reasonKey: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibraryPaperPage".
+ */
+export interface WorkspaceLibraryPaperPage {
+  items: WorkspaceLibrarySavedPaper[];
+  page: WorkspacePageInfo;
+  appliedLimit: number;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibrarySavedSearch".
+ */
+export interface WorkspaceLibrarySavedSearch {
+  savedSearchId: WorkspaceId;
+  accountId: WorkspaceId;
+  revision: WorkspaceRevision;
+  queryContext: WorkspaceLibraryQueryContext;
+  /**
+   * Bound by the named approved policy before processing.
+   */
+  label?: string;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibrarySearchPage".
+ */
+export interface WorkspaceLibrarySearchPage {
+  items: WorkspaceLibrarySavedSearch[];
+  page: WorkspacePageInfo;
+  appliedLimit: number;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibraryHistoryRecord".
+ */
+export interface WorkspaceLibraryHistoryRecord {
+  historyId: WorkspaceId;
+  accountId: WorkspaceId;
+  searchExecutionId: WorkspaceId;
+  queryContext: WorkspaceLibraryQueryContext;
+  recordedAt: WorkspaceTime;
+  admissionSequence: number;
+  completionSequence: number;
+  clearBoundary: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibraryHistoryPage".
+ */
+export interface WorkspaceLibraryHistoryPage {
+  items: WorkspaceLibraryHistoryRecord[];
+  page: WorkspacePageInfo;
+  appliedLimit: number;
+  policyRef: WorkspacePolicyRef;
+  clearBoundary: WorkspaceRevision;
+}
+/**
+ * Server-captured Discovery admission checkpoint, not a caller-selected cutoff. Facts admitted at/before the cutoff remain suppressed even if they finish after clear.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibraryClearHistoryResult".
+ */
+export interface WorkspaceLibraryClearHistoryResult {
+  ack: WorkspaceAck;
+  checkpoint: WorkspaceSearchHistoryCheckpoint;
+  clearBoundary: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSearchHistoryCheckpoint".
+ */
+export interface WorkspaceSearchHistoryCheckpoint {
+  ownerId: WorkspaceId;
+  admissionSequence: number;
+  revision: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsSearchDefaults".
+ */
+export interface WorkspaceSettingsSearchDefaults {
+  modeId: WorkspaceId;
+  orderId: WorkspaceId;
+  filters: WorkspaceLibraryFilter[];
+  vocabularyRevision: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsAssistanceDefaults".
+ */
+export interface WorkspaceSettingsAssistanceDefaults {
+  actionId: WorkspaceId;
+  languageId: WorkspaceId;
+  presentationLevelId: WorkspaceId;
+  vocabularyRevision: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsSnapshot".
+ */
+export interface WorkspaceSettingsSnapshot {
+  accountId: WorkspaceId;
+  settingsId: WorkspaceId;
+  revision: WorkspaceRevision;
+  searchDefaults: WorkspaceSettingsSearchDefaults;
+  assistanceDefaults: WorkspaceSettingsAssistanceDefaults;
+  appearance: "light" | "dark" | "system";
+  onboarding: "not_started" | "in_progress" | "completed" | "skipped";
+  interestIds: WorkspaceId[];
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsSuggestion".
+ */
+export interface WorkspaceSettingsSuggestion {
+  interestId: WorkspaceId;
+  labelKey: WorkspaceId;
+  source: "orcid" | "retained_manual_vocabulary";
+  sourceRevision: WorkspaceRevision;
+  reasonKey: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsSuggestionPage".
+ */
+export interface WorkspaceSettingsSuggestionPage {
+  items: WorkspaceSettingsSuggestion[];
+  page: WorkspacePageInfo;
+  appliedLimit: number;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsRecentPaper".
+ */
+export interface WorkspaceSettingsRecentPaper {
+  paper: WorkspacePaperRef;
+  lastActivityAt: WorkspaceTime;
+  activityReference: WorkspaceId;
+  sourceDisposition: "available" | "source_only" | "withdrawn" | "unavailable" | "restricted";
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsRecentPage".
+ */
+export interface WorkspaceSettingsRecentPage {
+  items: WorkspaceSettingsRecentPaper[];
+  page: WorkspacePageInfo;
+  appliedLimit: number;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsResetResult".
+ */
+export interface WorkspaceSettingsResetResult {
+  ack: WorkspaceAck;
+  inputBoundary: WorkspaceRevision;
+  consentRevision: WorkspaceRevision;
+  disposition: "complete" | "pending" | "blocked";
+  remainingScopeReasonKey?: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageOperation".
+ */
+export interface WorkspaceUsageOperation {
+  operationOwner:
+    | "AccountAccess"
+    | "CorpusContent"
+    | "Discovery"
+    | "Library"
+    | "PaperAssistance"
+    | "ResearchWorkspace"
+    | "Personalization"
+    | "TopicsDigests"
+    | "ApprovedExport"
+    | "UsageEntitlements"
+    | "ServiceOperations"
+    | "PlatformControl"
+    | "WebWorkspace";
+  operationId: WorkspaceId;
+  inputRevision: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageQuantity".
+ */
+export interface WorkspaceUsageQuantity {
+  metricId: WorkspaceId;
+  quantity: number;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageKnownMeasure".
+ */
+export interface WorkspaceUsageKnownMeasure {
+  state: "known";
+  metricId: WorkspaceId;
+  allocated: number;
+  used: number;
+  reserved: number;
+  remaining: number;
+  periodId: WorkspaceId;
+  periodStart: WorkspaceTime;
+  periodEnd: WorkspaceTime;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageUnknownMeasure".
+ */
+export interface WorkspaceUsageUnknownMeasure {
+  state: "unknown";
+  metricId: WorkspaceId;
+  reasonKey: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageMeasurePage".
+ */
+export interface WorkspaceUsageMeasurePage {
+  items: WorkspaceUsageMeasure[];
+  page: WorkspacePageInfo;
+  appliedLimit: number;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsagePlanPresentation".
+ */
+export interface WorkspaceUsagePlanPresentation {
+  accountId: WorkspaceId;
+  tierId: WorkspaceId;
+  labelKey: WorkspaceId;
+  source: "mock" | "administrative_assignment";
+  revision: WorkspaceRevision;
+  policyRef: WorkspacePolicyRef;
+  paymentOccurred: false;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageEntitlement".
+ */
+export interface WorkspaceUsageEntitlement {
+  entitlementId: WorkspaceId;
+  accountId: WorkspaceId;
+  tierId: WorkspaceId;
+  revision: WorkspaceRevision;
+  assignmentSource: "mock" | "administrative_assignment";
+  policyRef: WorkspacePolicyRef;
+  effectiveAt: WorkspaceTime;
+  disposition: "active" | "revoked";
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageRecord".
+ */
+export interface WorkspaceUsageRecord {
+  usageRecordId: WorkspaceId;
+  accountId: WorkspaceId;
+  operation: WorkspaceUsageOperation;
+  revision: WorkspaceRevision;
+  periodId: WorkspaceId;
+  policyRef: WorkspacePolicyRef;
+  disposition: "reserved" | "committed" | "released" | "refunded" | "unknown";
+  quantities: WorkspaceUsageQuantity[];
+  effectReference?: WorkspaceId;
+  reasonKey: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageRecordsPage".
+ */
+export interface WorkspaceUsageRecordsPage {
+  items: WorkspaceUsageRecord[];
+  page: WorkspacePageInfo;
+  appliedLimit: number;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusIdentity".
+ */
+export interface WorkspaceCorpusIdentity {
+  paper: WorkspacePaperRef;
+  requestedIdentifier: string;
+  canonicalDisposition: "same" | "alias" | "withdrawn" | "unavailable" | "restricted";
+  metadataRevision: WorkspaceRevision;
+  title: string;
+  sourceUrls: string[];
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusSection".
+ */
+export interface WorkspaceCorpusSection {
+  sectionId: WorkspaceId;
+  heading: string;
+  text: string;
+  anchor: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusAssetRef".
+ */
+export interface WorkspaceCorpusAssetRef {
+  assetId: WorkspaceId;
+  mediaType: string;
+  contentHash: WorkspaceHash;
+  altText: string;
+  sectionId?: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusContent".
+ */
+export interface WorkspaceCorpusContent {
+  paper: WorkspacePaperRef;
+  contentRevision: WorkspaceRevision;
+  contentHash: WorkspaceHash;
+  sections: WorkspaceCorpusSection[];
+  assets: WorkspaceCorpusAssetRef[];
+  sourceUrls: string[];
+  coverage: "complete" | "partial";
+  limitations: string[];
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusAsset".
+ */
+export interface WorkspaceCorpusAsset {
+  paper: WorkspacePaperRef;
+  asset: WorkspaceCorpusAssetRef;
+  readHandle: WorkspaceId;
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusEffectDisposition".
+ */
+export interface WorkspaceCorpusEffectDisposition {
+  effectId: WorkspaceId;
+  stage: "source" | "control" | "content" | "projection" | "publication";
+  state: "pending" | "committed" | "failed" | "unknown";
+  evidenceHash: WorkspaceHash | null;
+  error: WorkspaceError | null;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusRun".
+ */
+export interface WorkspaceCorpusRun {
+  runId: WorkspaceId;
+  revision: WorkspaceRevision;
+  job: WorkspaceJobSnapshot;
+  inputManifestHash: WorkspaceHash;
+  effects: WorkspaceCorpusEffectDisposition[];
+  committedWatermark: string | null;
+  publicationGeneration: WorkspaceId | null;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusPublication".
+ */
+export interface WorkspaceCorpusPublication {
+  generationId: WorkspaceId;
+  publicationRevision: WorkspaceRevision;
+  manifestHash: WorkspaceHash;
+  compatibilityRevision: WorkspaceRevision;
+  eligibilityRevision: WorkspaceRevision;
+  publishedAt: WorkspaceTime;
+  complete: true;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSearchHit".
+ */
+export interface WorkspaceSearchHit {
+  paper: WorkspacePaperRef;
+  title: string;
+  authors: string[];
+  publishedAt: WorkspaceTime | null;
+  snippet: string;
+  sourceUrl: string;
+  availability: "readable" | "source-only" | "building" | "unavailable" | "restricted";
+  matchExplanation: string;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSearchResponse".
+ */
+export interface WorkspaceSearchResponse {
+  executionId: WorkspaceId;
+  query: WorkspaceLibraryQueryContext;
+  hits: WorkspaceSearchHit[];
+  page: WorkspacePageInfo;
+  publication: WorkspaceCorpusPublication;
+  outcome: "complete" | "partial" | "degraded";
+  effectiveModeId: WorkspaceId;
+  limitations: string[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCitationNode".
+ */
+export interface WorkspaceCitationNode {
+  nodeId: WorkspaceId;
+  paper: WorkspacePaperRef | null;
+  title: string | null;
+  sourceUrl: string | null;
+  disposition: "eligible" | "unknown" | "incomplete" | "restricted" | "withdrawn";
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCitationEdge".
+ */
+export interface WorkspaceCitationEdge {
+  fromNodeId: WorkspaceId;
+  toNodeId: WorkspaceId;
+  sourceUrl: string;
+  observedAt: WorkspaceTime;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCitationResponse".
+ */
+export interface WorkspaceCitationResponse {
+  snapshotId: WorkspaceId;
+  revision: WorkspaceRevision;
+  root: WorkspacePaperRef;
+  nodes: WorkspaceCitationNode[];
+  edges: WorkspaceCitationEdge[];
+  freshness: "current" | "stale" | "unknown";
+  coverage: "complete" | "partial";
+  limitations: string[];
+  page: WorkspacePageInfo;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceOption".
+ */
+export interface WorkspaceAssistanceOption {
+  optionId: WorkspaceId;
+  operation: "summary" | "translation";
+  sourceLanguageId: WorkspaceId;
+  targetLanguageId: WorkspaceId;
+  presentationLevelId: WorkspaceId;
+  labelKey: string;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceOptions".
+ */
+export interface WorkspaceAssistanceOptions {
+  revision: WorkspaceRevision;
+  options: WorkspaceAssistanceOption[];
+  policy: WorkspacePolicyRef;
+  limitations: string[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceResult".
+ */
+export interface WorkspaceAssistanceResult {
+  result: WorkspaceResultRef;
+  ownerId: WorkspaceId;
+  jobId: WorkspaceId;
+  paper: WorkspacePaperRef;
+  sourceContentHash: WorkspaceHash;
+  operation: "summary" | "translation";
+  optionId: WorkspaceId;
+  glossaryRevision: WorkspaceRevision;
+  sections: WorkspaceCorpusSection[];
+  coverage: "complete" | "partial" | "abstained";
+  limitations: string[];
+  methodRevision: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceGlossaryTerm".
+ */
+export interface WorkspaceAssistanceGlossaryTerm {
+  termId: WorkspaceId;
+  source: string;
+  preferred: string;
+  languageId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceGlossary".
+ */
+export interface WorkspaceAssistanceGlossary {
+  ownerId: WorkspaceId;
+  revision: WorkspaceRevision;
+  normalizationPolicy: WorkspacePolicyRef;
+  terms: WorkspaceAssistanceGlossaryTerm[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchScope".
+ */
+export interface WorkspaceResearchScope {
+  contextId: WorkspaceId;
+  publicPapers: WorkspacePaperRef[];
+  attachmentIds: WorkspaceId[];
+  webReferences: string[];
+  scopePolicy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchContext".
+ */
+export interface WorkspaceResearchContext {
+  contextId: WorkspaceId;
+  ownerId: WorkspaceId;
+  revision: WorkspaceRevision;
+  purpose: "research" | "novelty";
+  lifecycle: "active" | "deleting" | "deleted";
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchSession".
+ */
+export interface WorkspaceResearchSession {
+  sessionId: WorkspaceId;
+  ownerId: WorkspaceId;
+  revision: WorkspaceRevision;
+  scope: WorkspaceResearchScope;
+  lifecycle: "active" | "deleting" | "deleted";
+  turnIds: WorkspaceId[];
+  pendingJobIds: WorkspaceId[];
+  deletionBoundary: WorkspaceRevision | null;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchSessions".
+ */
+export interface WorkspaceResearchSessions {
+  sessions: WorkspaceResearchSession[];
+  page: WorkspacePageInfo;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchDeletion".
+ */
+export interface WorkspaceResearchDeletion {
+  requestId: WorkspaceId;
+  revision: WorkspaceRevision;
+  state: "accepted" | "in-progress" | "complete" | "limited" | "failed";
+  tombstoneBoundary: WorkspaceRevision;
+  policy: WorkspacePolicyRef;
+  remainingJobIds: WorkspaceId[];
+  limitations: string[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchUploadPermit".
+ */
+export interface WorkspaceResearchUploadPermit {
+  uploadId: WorkspaceId;
+  ownerId: WorkspaceId;
+  contextId: WorkspaceId;
+  contentHash: WorkspaceHash;
+  writeHandle: WorkspaceId;
+  expiresAt: WorkspaceTime;
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchAttachment".
+ */
+export interface WorkspaceResearchAttachment {
+  attachmentId: WorkspaceId;
+  ownerId: WorkspaceId;
+  contextId: WorkspaceId;
+  revision: WorkspaceRevision;
+  contentHash: WorkspaceHash;
+  state: "processing" | "ready" | "partial" | "unsupported" | "failed" | "deleted";
+  assetIds: WorkspaceId[];
+  limitations: string[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchPrivateAsset".
+ */
+export interface WorkspaceResearchPrivateAsset {
+  attachmentId: WorkspaceId;
+  contextId: WorkspaceId;
+  assetId: WorkspaceId;
+  mediaType: string;
+  contentHash: WorkspaceHash;
+  readHandle: WorkspaceId;
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDraftRef".
+ */
+export interface WorkspaceDraftRef {
+  draftId: WorkspaceId;
+  revision: WorkspaceRevision;
+  contentHash: WorkspaceHash;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDraftRevision".
+ */
+export interface WorkspaceDraftRevision {
+  draft: WorkspaceDraftRef;
+  ownerId: WorkspaceId;
+  contextId: WorkspaceId;
+  kind: "research-question" | "novelty-topic" | "novelty-manuscript" | "novelty-discussion";
+  parentRevision: WorkspaceRevision | null;
+  text: string;
+  acknowledgedAt: WorkspaceTime;
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchTurn".
+ */
+export interface WorkspaceResearchTurn {
+  turnId: WorkspaceId;
+  sessionId: WorkspaceId;
+  ownerId: WorkspaceId;
+  revision: WorkspaceRevision;
+  inputMode: "question" | "compare" | "quote";
+  committedText: string;
+  submittedDraft: WorkspaceDraftRef | null;
+  job: WorkspaceJobSnapshot;
+  artifact: WorkspaceResearchArtifactRef | null;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchArtifactRef".
+ */
+export interface WorkspaceResearchArtifactRef {
+  artifactId: WorkspaceId;
+  revision: WorkspaceRevision;
+  contentHash: WorkspaceHash;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchEvidence".
+ */
+export interface WorkspaceResearchEvidence {
+  evidenceId: WorkspaceId;
+  sourceKind: "public-paper" | "private-attachment" | "retrieved-web" | "unread-reference";
+  sourceId: WorkspaceId;
+  sourceVersion: WorkspaceRevision;
+  sourceContentHash: WorkspaceHash | null;
+  location: string;
+  readCoverage: "read" | "partial" | "not-read";
+  quote: string | null;
+  claim: string;
+  stance: "supports" | "contradicts" | "uncertain";
+  sourceUrl: string | null;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchOutput".
+ */
+export interface WorkspaceResearchOutput {
+  summary: string;
+  evidence: WorkspaceResearchEvidence[];
+  coverage: "complete" | "partial" | "abstained";
+  limitations: string[];
+  methodRevision: WorkspaceRevision;
+  assessments?: WorkspaceResearchAssessment[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchAssessment".
+ */
+export interface WorkspaceResearchAssessment {
+  criterionId: WorkspaceId;
+  label: string;
+  score?: number;
+  scaleMinimum?: number;
+  scaleMaximum?: number;
+  evidenceIds: WorkspaceId[];
+  limitations: string[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchArtifact".
+ */
+export interface WorkspaceResearchArtifact {
+  artifact: WorkspaceResearchArtifactRef;
+  ownerId: WorkspaceId;
+  contextId: WorkspaceId;
+  operationId: WorkspaceId;
+  kind: "research-answer" | "novelty-result" | "novelty-discussion";
+  output: WorkspaceResearchOutput;
+  currentEligibilityRevision: WorkspaceRevision;
+  mediaType: "application/json";
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDigestSchedule".
+ */
+export interface WorkspaceDigestSchedule {
+  cadenceId: WorkspaceId;
+  timeZone: string;
+  windowPolicy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDigestSubscription".
+ */
+export interface WorkspaceDigestSubscription {
+  subscriptionId: WorkspaceId;
+  ownerId: WorkspaceId;
+  topic: string;
+  revision: WorkspaceRevision;
+  enabled: boolean;
+  schedule: WorkspaceDigestSchedule;
+  unsubscribeBoundary: WorkspaceRevision | null;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDigestSubscriptions".
+ */
+export interface WorkspaceDigestSubscriptions {
+  subscriptions: WorkspaceDigestSubscription[];
+  page: WorkspacePageInfo;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDigestWindow".
+ */
+export interface WorkspaceDigestWindow {
+  startInclusive: WorkspaceTime;
+  endExclusive: WorkspaceTime;
+  timeZone: string;
+  windowPolicy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDigestDelivery".
+ */
+export interface WorkspaceDigestDelivery {
+  deliveryId: WorkspaceId;
+  ownerId: WorkspaceId;
+  subscriptionId: WorkspaceId;
+  revision: WorkspaceRevision;
+  window: WorkspaceDigestWindow;
+  papers: WorkspacePaperRef[];
+  state: "prepared" | "no-content" | "queued" | "sending" | "sent" | "failed" | "unknown" | "suppressed";
+  effectKey: WorkspaceId;
+  remoteReference: WorkspaceId | null;
+  limitations: string[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDigestUnsubscribeResult".
+ */
+export interface WorkspaceDigestUnsubscribeResult {
+  outcome: "acknowledged";
+  requestId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportConnection".
+ */
+export interface WorkspaceExportConnection {
+  connectionId: WorkspaceId;
+  ownerId: WorkspaceId;
+  revision: WorkspaceRevision;
+  provider: "notion";
+  state: "connected" | "disconnected" | "revoked" | "unavailable";
+  destinationScopeIds: WorkspaceId[];
+  limitations: string[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportDestination".
+ */
+export interface WorkspaceExportDestination {
+  connectionId: WorkspaceId;
+  workspaceId: WorkspaceId;
+  parentPageId: WorkspaceId;
+  formatRevision: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportDestinations".
+ */
+export interface WorkspaceExportDestinations {
+  connectionId: WorkspaceId;
+  connectionRevision: WorkspaceRevision;
+  destinations: WorkspaceExportDestination[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportPreview".
+ */
+export interface WorkspaceExportPreview {
+  previewId: WorkspaceId;
+  ownerId: WorkspaceId;
+  revision: WorkspaceRevision;
+  source: WorkspaceResearchArtifactRef;
+  sourceEligibilityRevision: WorkspaceRevision;
+  connectionRevision: WorkspaceRevision;
+  destination: WorkspaceExportDestination;
+  renderedText: string;
+  renderedContentHash: WorkspaceHash;
+  bindingHash: WorkspaceHash;
+  renderPolicy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportApproval".
+ */
+export interface WorkspaceExportApproval {
+  approvalId: WorkspaceId;
+  ownerId: WorkspaceId;
+  previewId: WorkspaceId;
+  previewRevision: WorkspaceRevision;
+  bindingHash: WorkspaceHash;
+  approvedAt: WorkspaceTime;
+  expiresAt: WorkspaceTime | null;
+  state: "approved" | "invalidated" | "consumed" | "cancelled" | "expired";
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportEffect".
+ */
+export interface WorkspaceExportEffect {
+  effectId: WorkspaceId;
+  approvalId: WorkspaceId;
+  ownerId: WorkspaceId;
+  revision: WorkspaceRevision;
+  bindingHash: WorkspaceHash;
+  state: "accepted" | "executing" | "succeeded" | "failed" | "unknown" | "cancelled" | "invalidated";
+  remoteReference: WorkspaceId | null;
+  remoteUrl: string | null;
+  reconciliationEvidenceHash: WorkspaceHash | null;
+  limitations: string[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSessionBootstrap".
+ */
+export interface WorkspaceSessionBootstrap {
+  signedIn: boolean;
+  accountId: WorkspaceId | null;
+  authorityRevision: WorkspaceRevision | null;
+  csrfToken: string;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCapabilityCatalog".
+ */
+export interface WorkspaceCapabilityCatalog {
+  revision: WorkspaceRevision;
+  capabilities: {
+    id: WorkspaceId;
+    state: "available" | "degraded" | "unavailable" | "policy_pending";
+    modeIds: WorkspaceId[];
+    languageIds: WorkspaceId[];
+    levelIds: WorkspaceId[];
+    formatIds: WorkspaceId[];
+    policy: WorkspacePolicyRef;
+  }[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUploadAck".
+ */
+export interface WorkspaceUploadAck {
+  uploadId: WorkspaceId;
+  contentHash: WorkspaceHash;
+  receivedBytes: number;
+  revision: WorkspaceRevision;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceHostNavigationInputHttp".
+ */
+export interface WorkspaceHostNavigationInputHttp {
+  routeId: WorkspaceId;
+  returnContext?: WorkspaceHostReturnContext;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessSessionInputHttp".
+ */
+export interface WorkspaceAccessSessionInputHttp {}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessRegisterInputHttp".
+ */
+export interface WorkspaceAccessRegisterInputHttp {
+  email: WorkspaceAccessEmail;
+  password: WorkspaceAccessSecret;
+  /**
+   * Bound by the named approved policy before processing.
+   */
+  displayName?: string;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessEmailRequestInputHttp".
+ */
+export interface WorkspaceAccessEmailRequestInputHttp {
+  email: WorkspaceAccessEmail;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessVerifyEmailInputHttp".
+ */
+export interface WorkspaceAccessVerifyEmailInputHttp {
+  verification: WorkspaceAccessChallengeProof;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessLoginInputHttp".
+ */
+export interface WorkspaceAccessLoginInputHttp {
+  email: WorkspaceAccessEmail;
+  password: WorkspaceAccessSecret;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessLogoutInputHttp".
+ */
+export interface WorkspaceAccessLogoutInputHttp {}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessPasswordResetInputHttp".
+ */
+export interface WorkspaceAccessPasswordResetInputHttp {
+  verification: WorkspaceAccessChallengeProof;
+  newPassword: WorkspaceAccessSecret;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessPasswordChangeInputHttp".
+ */
+export interface WorkspaceAccessPasswordChangeInputHttp {
+  currentPassword: WorkspaceAccessSecret;
+  newPassword: WorkspaceAccessSecret;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessEmailChangeInputHttp".
+ */
+export interface WorkspaceAccessEmailChangeInputHttp {
+  currentProof: WorkspaceAccessSecret;
+  newEmail: WorkspaceAccessEmail;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessEmailChangeCompleteInputHttp".
+ */
+export interface WorkspaceAccessEmailChangeCompleteInputHttp {
+  verification: WorkspaceAccessChallengeProof;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessBeginIdentityInputHttp".
+ */
+export interface WorkspaceAccessBeginIdentityInputHttp {
+  provider: "google" | "orcid";
+  intent: "sign_in" | "link";
+  returnRouteId: WorkspaceId;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessIdentityListInputHttp".
+ */
+export interface WorkspaceAccessIdentityListInputHttp {
+  page: WorkspacePageRequest;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessUnlinkIdentityInputHttp".
+ */
+export interface WorkspaceAccessUnlinkIdentityInputHttp {
+  identityLinkId: WorkspaceId;
+  expectedRevision: WorkspaceRevision;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessOrcidProfileInputHttp".
+ */
+export interface WorkspaceAccessOrcidProfileInputHttp {
+  identityLinkId: WorkspaceId;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessMfaEnrollmentInputHttp".
+ */
+export interface WorkspaceAccessMfaEnrollmentInputHttp {
+  currentProof: WorkspaceAccessSecret;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessMfaMaterialInputHttp".
+ */
+export interface WorkspaceAccessMfaMaterialInputHttp {
+  enrollmentId: WorkspaceId;
+  deliveryReference: WorkspaceId;
+  currentProof: WorkspaceAccessSecret;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessMfaConfirmInputHttp".
+ */
+export interface WorkspaceAccessMfaConfirmInputHttp {
+  enrollmentId: WorkspaceId;
+  verification: WorkspaceAccessChallengeProof;
+}
+/**
+ * Pre-authentication request: context may contain an anonymous principal. The trusted transport separately validates the protected primary-authentication continuation cookie, binds it to verification.challengeId/flowBinding and the server-owned primary-authentication record, and passes only a verified invocation. The factor proof is untrusted until checked; neither a full session nor a caller-claimed account is required.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessMfaVerifyInputHttp".
+ */
+export interface WorkspaceAccessMfaVerifyInputHttp {
+  verification: WorkspaceAccessChallengeProof;
+  factorKind: "totp" | "recovery_proof";
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessMfaRecoveryInputHttp".
+ */
+export interface WorkspaceAccessMfaRecoveryInputHttp {
+  verification: WorkspaceAccessChallengeProof;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessProfileInputHttp".
+ */
+export interface WorkspaceAccessProfileInputHttp {}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessProfileUpdateInputHttp".
+ */
+export interface WorkspaceAccessProfileUpdateInputHttp {
+  fieldVocabularyRevision: WorkspaceRevision;
+  changes: WorkspaceAccessProfileField[];
+  policyRef: WorkspacePolicyRef;
+  expectedRevision: WorkspaceRevision;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessConsentListInputHttp".
+ */
+export interface WorkspaceAccessConsentListInputHttp {
+  page: WorkspacePageRequest;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessConsentUpdateInputHttp".
+ */
+export interface WorkspaceAccessConsentUpdateInputHttp {
+  purposeId: WorkspaceId;
+  decision: "granted" | "revoked";
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLifecycleRequestInputHttp".
+ */
+export interface WorkspaceLifecycleRequestInputHttp {
+  action: "withdraw" | "erase";
+  policyRef: WorkspacePolicyRef;
+  confirmationRef: WorkspaceId;
+}
+/**
+ * Public pre-authentication envelope; no caller account ID or active session is required. Account and withdrawn lifecycle identity are resolved exclusively from the verified purpose-bound reactivation proof. Trusted transport context may remain anonymous until this limited recovery authority is verified.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLifecycleReactivationInputHttp".
+ */
+export interface WorkspaceLifecycleReactivationInputHttp {
+  verification: WorkspaceAccessChallengeProof;
+  policyRef: WorkspacePolicyRef;
+  confirmationRef: WorkspaceId;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLifecycleStatusInputHttp".
+ */
+export interface WorkspaceLifecycleStatusInputHttp {
+  lifecycleRequestId: WorkspaceId;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibrarySavePaperInputHttp".
+ */
+export interface WorkspaceLibrarySavePaperInputHttp {
+  paper: WorkspacePaperRef;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibrarySavedPaperInputHttp".
+ */
+export interface WorkspaceLibrarySavedPaperInputHttp {
+  savedPaperId: WorkspaceId;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibraryPaperListInputHttp".
+ */
+export interface WorkspaceLibraryPaperListInputHttp {
+  page: WorkspacePageRequest;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibrarySaveSearchInputHttp".
+ */
+export interface WorkspaceLibrarySaveSearchInputHttp {
+  queryContext: WorkspaceLibraryQueryContext;
+  /**
+   * Bound by the named approved policy before processing.
+   */
+  label?: string;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibrarySavedSearchInputHttp".
+ */
+export interface WorkspaceLibrarySavedSearchInputHttp {
+  savedSearchId: WorkspaceId;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibrarySearchListInputHttp".
+ */
+export interface WorkspaceLibrarySearchListInputHttp {
+  page: WorkspacePageRequest;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibraryHistoryListInputHttp".
+ */
+export interface WorkspaceLibraryHistoryListInputHttp {
+  page: WorkspacePageRequest;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibraryHistoryInputHttp".
+ */
+export interface WorkspaceLibraryHistoryInputHttp {
+  historyId: WorkspaceId;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibraryClearHistoryInputHttp".
+ */
+export interface WorkspaceLibraryClearHistoryInputHttp {
+  policyRef: WorkspacePolicyRef;
+  expectedRevision: WorkspaceRevision;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsReadInputHttp".
+ */
+export interface WorkspaceSettingsReadInputHttp {}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsOnboardingInputHttp".
+ */
+export interface WorkspaceSettingsOnboardingInputHttp {
+  action: "save_interests" | "complete" | "skip";
+  interestIds: WorkspaceId[];
+  policyRef: WorkspacePolicyRef;
+  expectedRevision: WorkspaceRevision;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsSuggestionInputHttp".
+ */
+export interface WorkspaceSettingsSuggestionInputHttp {
+  page: WorkspacePageRequest;
+  identityLinkId?: WorkspaceId;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsRecentInputHttp".
+ */
+export interface WorkspaceSettingsRecentInputHttp {
+  page: WorkspacePageRequest;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsResetInputHttp".
+ */
+export interface WorkspaceSettingsResetInputHttp {
+  action: "delete_behavior" | "reset_profile";
+  policyRef: WorkspacePolicyRef;
+  confirmationRef: WorkspaceId;
+  expectedRevision: WorkspaceRevision;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageInspectInputHttp".
+ */
+export interface WorkspaceUsageInspectInputHttp {
+  page: WorkspacePageRequest;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsagePlanInputHttp".
+ */
+export interface WorkspaceUsagePlanInputHttp {}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageGrantInputHttp".
+ */
+export interface WorkspaceUsageGrantInputHttp {
+  accountId: WorkspaceId;
+  tierId: WorkspaceId;
+  policyRef: WorkspacePolicyRef;
+  reasonKey: WorkspaceId;
+  expectedRevision: WorkspaceRevision;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageRevokeInputHttp".
+ */
+export interface WorkspaceUsageRevokeInputHttp {
+  accountId: WorkspaceId;
+  entitlementId: WorkspaceId;
+  policyRef: WorkspacePolicyRef;
+  reasonKey: WorkspaceId;
+  expectedRevision: WorkspaceRevision;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageRecordsInputHttp".
+ */
+export interface WorkspaceUsageRecordsInputHttp {
+  page: WorkspacePageRequest;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusResolveHttp".
+ */
+export interface WorkspaceCorpusResolveHttp {
+  identifier: string;
+  versionLabel?: string;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusReadHttp".
+ */
+export interface WorkspaceCorpusReadHttp {
+  paper: WorkspacePaperRef;
+  purpose: "metadata" | "read" | "assistance" | "research" | "citation" | "saved-reference";
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusAssetReadHttp".
+ */
+export interface WorkspaceCorpusAssetReadHttp {
+  paper: WorkspacePaperRef;
+  contentRevision: WorkspaceRevision;
+  assetId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusRunRequestHttp".
+ */
+export interface WorkspaceCorpusRunRequestHttp {
+  operation: "ingest" | "incremental-refresh" | "rebuild" | "reprocess";
+  /**
+   * @minItems 1
+   */
+  sourceScopeIds: [WorkspaceId, ...WorkspaceId[]];
+  authoritativeInputRevision: WorkspaceRevision;
+  inputManifestHash: WorkspaceHash;
+  sourcePolicy: WorkspacePolicyRef;
+  compatibilityRevision: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusRunReadHttp".
+ */
+export interface WorkspaceCorpusRunReadHttp {
+  runId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCorpusEligibilityChangeHttp".
+ */
+export interface WorkspaceCorpusEligibilityChangeHttp {
+  paper: WorkspacePaperRef;
+  disposition: "eligible" | "withdrawn" | "restricted" | "unavailable";
+  reasonKey: string;
+  sourceEvidenceHash: WorkspaceHash;
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSearchRequestHttp".
+ */
+export interface WorkspaceSearchRequestHttp {
+  query: WorkspaceLibraryQueryContext;
+  page: WorkspacePageRequest;
+  snapshotRevision?: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceCitationRequestHttp".
+ */
+export interface WorkspaceCitationRequestHttp {
+  paper: WorkspacePaperRef;
+  direction: "cited" | "citing" | "both";
+  page: WorkspacePageRequest;
+  traversalPolicy: WorkspacePolicyRef;
+  snapshotRevision?: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceOptionsReadHttp".
+ */
+export interface WorkspaceAssistanceOptionsReadHttp {
+  paper: WorkspacePaperRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceRequestHttp".
+ */
+export interface WorkspaceAssistanceRequestHttp {
+  paper: WorkspacePaperRef;
+  contentRevision: WorkspaceRevision;
+  contentHash: WorkspaceHash;
+  operation: "summary" | "translation";
+  optionId: WorkspaceId;
+  optionsRevision: WorkspaceRevision;
+  glossaryRevision: WorkspaceRevision;
+  processingPolicy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceJobReadHttp".
+ */
+export interface WorkspaceAssistanceJobReadHttp {
+  jobId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceResultRequestHttp".
+ */
+export interface WorkspaceAssistanceResultRequestHttp {
+  jobId: WorkspaceId;
+  result?: WorkspaceResultRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceGlossaryReadHttp".
+ */
+export interface WorkspaceAssistanceGlossaryReadHttp {}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceGlossaryWriteHttp".
+ */
+export interface WorkspaceAssistanceGlossaryWriteHttp {
+  expectedRevision: WorkspaceRevision;
+  normalizationPolicy: WorkspacePolicyRef;
+  terms: WorkspaceAssistanceGlossaryTerm[];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchContextCreateHttp".
+ */
+export interface WorkspaceResearchContextCreateHttp {
+  purpose: "research" | "novelty";
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchSessionCreateHttp".
+ */
+export interface WorkspaceResearchSessionCreateHttp {
+  title: string;
+  scope: WorkspaceResearchScope;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchSessionReadHttp".
+ */
+export interface WorkspaceResearchSessionReadHttp {
+  sessionId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchSessionListHttp".
+ */
+export interface WorkspaceResearchSessionListHttp {
+  page: WorkspacePageRequest;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchAttachmentStartHttp".
+ */
+export interface WorkspaceResearchAttachmentStartHttp {
+  contextId: WorkspaceId;
+  fileName: string;
+  mediaType: "application/pdf" | "text/plain";
+  byteLength: number;
+  contentHash: WorkspaceHash;
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchAttachmentFinishHttp".
+ */
+export interface WorkspaceResearchAttachmentFinishHttp {
+  uploadId: WorkspaceId;
+  contextId: WorkspaceId;
+  contentHash: WorkspaceHash;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchAttachmentReadHttp".
+ */
+export interface WorkspaceResearchAttachmentReadHttp {
+  contextId: WorkspaceId;
+  attachmentId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchPrivateAssetReadHttp".
+ */
+export interface WorkspaceResearchPrivateAssetReadHttp {
+  contextId: WorkspaceId;
+  attachmentId: WorkspaceId;
+  assetId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDraftWriteHttp".
+ */
+export interface WorkspaceDraftWriteHttp {
+  contextId: WorkspaceId;
+  draftId: WorkspaceId;
+  kind: "research-question" | "novelty-topic" | "novelty-manuscript" | "novelty-discussion";
+  baseRevision: WorkspaceRevision | null;
+  text: string;
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDraftReadHttp".
+ */
+export interface WorkspaceDraftReadHttp {
+  contextId: WorkspaceId;
+  draftId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDraftDiscardHttp".
+ */
+export interface WorkspaceDraftDiscardHttp {
+  contextId: WorkspaceId;
+  draft: WorkspaceDraftRef;
+  confirmed: true;
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchTurnRequestHttp".
+ */
+export interface WorkspaceResearchTurnRequestHttp {
+  sessionId: WorkspaceId;
+  scope: WorkspaceResearchScope;
+  mode: "question" | "compare" | "quote";
+  text: string;
+  submittedDraft?: WorkspaceDraftRef;
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchTurnReadHttp".
+ */
+export interface WorkspaceResearchTurnReadHttp {
+  sessionId: WorkspaceId;
+  turnId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchNoveltyRequestHttp".
+ */
+export interface WorkspaceResearchNoveltyRequestHttp {
+  scope: WorkspaceResearchScope;
+  inputMode: "topic" | "manuscript";
+  text: string;
+  submittedDraft?: WorkspaceDraftRef;
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchNoveltyDiscussionHttp".
+ */
+export interface WorkspaceResearchNoveltyDiscussionHttp {
+  source: WorkspaceResearchArtifactRef;
+  text: string;
+  submittedDraft?: WorkspaceDraftRef;
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchJobReadHttp".
+ */
+export interface WorkspaceResearchJobReadHttp {
+  kind: "research-turn" | "novelty-analysis" | "novelty-discussion";
+  jobId: WorkspaceId;
+  contextId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchArtifactReadHttp".
+ */
+export interface WorkspaceResearchArtifactReadHttp {
+  artifact: WorkspaceResearchArtifactRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDigestSubscriptionWriteHttp".
+ */
+export interface WorkspaceDigestSubscriptionWriteHttp {
+  topic: string;
+  enabled: boolean;
+  schedule: WorkspaceDigestSchedule;
+  expectedRevision: WorkspaceRevision | null;
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDigestSubscriptionsReadHttp".
+ */
+export interface WorkspaceDigestSubscriptionsReadHttp {
+  page: WorkspacePageRequest;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDigestSubscriptionReadHttp".
+ */
+export interface WorkspaceDigestSubscriptionReadHttp {
+  subscriptionId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDigestDeliveryReadHttp".
+ */
+export interface WorkspaceDigestDeliveryReadHttp {
+  deliveryId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceDigestUnsubscribeHttp".
+ */
+export interface WorkspaceDigestUnsubscribeHttp {
+  signedToken: string;
+  confirmed: true;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportConnectionConfigureHttp".
+ */
+export interface WorkspaceExportConnectionConfigureHttp {
+  token: string;
+  expectedRevision: WorkspaceRevision | null;
+  credentialPolicy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportConnectionReadHttp".
+ */
+export interface WorkspaceExportConnectionReadHttp {
+  connectionId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportPreviewRequestHttp".
+ */
+export interface WorkspaceExportPreviewRequestHttp {
+  source: WorkspaceResearchArtifactRef;
+  destination: WorkspaceExportDestination;
+  renderPolicy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportApprovalRequestHttp".
+ */
+export interface WorkspaceExportApprovalRequestHttp {
+  previewId: WorkspaceId;
+  previewRevision: WorkspaceRevision;
+  bindingHash: WorkspaceHash;
+  explicitApproval: true;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportExecuteHttp".
+ */
+export interface WorkspaceExportExecuteHttp {
+  approvalId: WorkspaceId;
+  bindingHash: WorkspaceHash;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportEffectReadHttp".
+ */
+export interface WorkspaceExportEffectReadHttp {
+  effectId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportCancelHttp".
+ */
+export interface WorkspaceExportCancelHttp {
+  approvalId: WorkspaceId;
+  expectedRevision: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsQueryHttp".
+ */
+export interface WorkspaceOpsQueryHttp {
+  page: WorkspacePageRequest;
+  capability?: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsRecoveryRequestHttp".
+ */
+export interface WorkspaceOpsRecoveryRequestHttp {
+  incidentId: WorkspaceId;
+  ownerComponent: WorkspaceId;
+  operation: WorkspaceId;
+  targetId: WorkspaceId;
+  expectedRevision: WorkspaceRevision;
+  evidenceRefs: WorkspaceId[];
+  policy: WorkspacePolicyRef;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibraryRemoveSavedPaperInputHttp".
+ */
+export interface WorkspaceLibraryRemoveSavedPaperInputHttp {
+  savedPaperId: WorkspaceId;
+  expectedRevision: WorkspaceRevision;
+}
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceLibraryRemoveSavedSearchInputHttp".
+ */
+export interface WorkspaceLibraryRemoveSavedSearchInputHttp {
+  savedSearchId: WorkspaceId;
+  expectedRevision: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageAssignmentReadHttp".
+ */
+export interface WorkspaceUsageAssignmentReadHttp {
+  accountId: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsageAssignmentSnapshot".
+ */
+export interface WorkspaceUsageAssignmentSnapshot {
+  accountId: WorkspaceId;
+  revision: WorkspaceRevision;
+  entitlement: WorkspaceUsageEntitlement | null;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceHistoryReadHttp".
+ */
+export interface WorkspaceAssistanceHistoryReadHttp {
+  paper: WorkspacePaperRef;
+  page: WorkspacePageRequest;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceHistoryPage".
+ */
+export interface WorkspaceAssistanceHistoryPage {
+  items: WorkspaceAssistanceHistoryRow[];
+  page: WorkspacePageInfo;
 }

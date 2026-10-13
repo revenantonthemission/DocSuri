@@ -1,0 +1,29 @@
+## Review
+
+**Verdict:** READY
+**Reviewer:** aidlc-architecture-reviewer-agent
+**Date:** 2026-10-12T19:53:07Z
+**Iteration:** 1
+
+### Findings
+
+| ID | Severity | Location | Finding | Required action | Status |
+|---|---|---|---|---|---|
+| R-01 | Major | aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/code-generation/traceability.json > top-level structure | The file carries `semantics` and `entries` keys but not the `upstream_ids` and `coverage` arrays the project's traceability check reads. That check stops at its first validation step ("upstream_ids must be an array of non-empty strings"), so none of the 105 rows or their OK targets are actually verified, and the stage's element-level coverage evidence does not resolve for downstream verification. | Rewrite the file in the documented shape — `stage`, `unit`, `upstream_ids`, and a `coverage` array of `{id, status, target}` rows — carrying over every current row unchanged, so the traceability check can read and verify them. | New |
+| R-02 | Major | aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/code-generation/code-summary.md > Measured coverage (real numbers, no threshold change) | The coverage evidence does not demonstrate the plan's per-module 80% floor for every new/changed module. Nine claimed changed modules appear in no coverage report at all: `backend/modules/accounts/services/guarded_entry.py` (481 new lines), `ops/src/docsuri_ops/local_models.py` (572), `ops/src/docsuri_ops/local_transport.py` (177), `backend/local_profile.py` (103), `backend/modules/accounts/preauthentication.py` (73), plus `backend/app.py`, the ingestion parser, `shared/python/src/docsuri_shared/workspace.py` and `frontend/src/main.tsx` — yet the summary states "28 U1-owned runtime modules measured; every one at or above the 80% line floor" without naming the measured set or the omissions. The run also measures three scripts below the floor (`load_docsuri_u1_papers.py` 42.3%, `verify_docsuri_u1.py` 53.3%, `publish_docsuri_u1_papers.py` 77.6%) without acknowledging them; the subprocess rationale covers only the four 0% scripts. | Extend the instrumented inventories to every new/changed module (add the accounts service/entry modules, the ops local model/transport modules, the ingestion parser and shared bindings; include `src/main.tsx` in the frontend inventory), re-run, then either raise the below-floor modules to 80% or record each exemption with its reason. Correct the summary so it names the measured set instead of implying completeness. | New |
+| R-03 | Minor | aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/code-generation/code-summary.md > Limitations carried | The summary says "Step 15 record files `source-manifest.json` and `traceability.json` are not produced yet"; both files exist and are this stage's delivered outputs, so the summary contradicts the delivered set a gate reader sees beside it. | Update the sentence so it reflects that both record files now exist, keeping only the genuinely remaining limitations. | New |
+| R-04 | Minor | aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u1-integrated-paper-journey/code-generation/traceability.json > entry NFR10.4 | NFR10.4 is marked OK against `shared/schema-catalog.json`, but its design row (LOG06) requires the real P1/P2, translation/save/revisit and fault/owner cases to pass through the separately approved runnable completion command — which the unit itself records as unset — and a schema catalogue evidences none of that. | Point NFR10.4 at evidence that can support its required mounted completion checks, or mark it Deferred until the approved command runs; leave the schema catalogue to a contract-agreement row it actually evidences. | New |
+
+### Validation Tool Results
+
+| Tool | Result | Interpretation |
+|---|---|---|
+| traceability check semantics (reproduced from `.aidlc/tools/aidlc-sensor-traceability.ts`, `validateTraceability`) against `traceability.json` | FAIL: "upstream_ids must be an array of non-empty strings" | Confirms the Major finding: the file cannot pass the stage's traceability check as written. |
+| source-manifest vs git changes vs reviewed-source listing (168 claimed paths) | PASS: all paths exist, all are changed against baseline `2a9a08f6`, no unclaimed application changes or deletions, all 168 sha256 bytes match the reviewed-source listing | The manifest is accurate and complete for application paths and the review binds current bytes. |
+| Upstream ID cross-check (functional-design OK FR set, nfr-design NFR set, rules.md BR set against the code-generation traceability rows) | PASS: 29/29 FR, 37/37 NFR, 39/39 BR match; all 105 targets exist on disk | Cross-references resolve; nothing assigned to U1 is missing and targets are real files. |
+| Phase result artifacts vs code-summary counts (database, component, repository, integration, operations, frontend, browser) | PASS: 47/200/84/24/5/18/6 passed, zero failures/skips, `sourceUnchangedDuringRun: true` in every result file | The summary's headline test numbers are corroborated by the actual JUnit/JSON run artifacts. |
+| Generated binding head vs `_binding_generations/7565295f…` | PASS: every file hash matches `_binding_head.json` | The regenerated shared bindings are internally consistent; no stale-generation drift. |
+
+### Summary
+
+Manifest accuracy, run-result artifacts, contract cross-references and generated bindings all verify at the byte level, and the implementation claims are backed by real executed evidence rather than fabrication; the two Majors are evidence defects — an unreadable traceability file and a coverage inventory that skips large new modules — not code defects. READY under the ≤2-Major rule, with all four findings to be addressed or carried at the gate.

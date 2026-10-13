@@ -67,6 +67,20 @@
 
 
 
+
+
+
+- **Construction Verification Command**: python3 scripts/verify_docsuri_u1.py --phase browser --profile synthetic-local --environment-file /tmp/docsuri-u1-run/environment.json
+
+
+
+
+- **Active Unit**: u7-controlled-platform-protocols
+
+- **Unit Stage**: nfr-requirements
+
+- **Unit State**: in-progress
+
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
 
@@ -128,7 +142,7 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-10-11T09:53:15Z
+- **Last Updated**: 2026-10-13T00:18:43Z
 
 - **Construction Autonomy Mode**: autonomous
 

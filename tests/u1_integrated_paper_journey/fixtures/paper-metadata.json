@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-11",
+  "dateMeaning": "first arXiv submission, not the selected revision date",
+  "papers": [
+    {
+      "paper": "1706.03762",
+      "version": 7,
+      "title": "Attention Is All You Need",
+      "publishedOn": "2017-06-12",
+      "authors": ["Ashish Vaswani", "Noam Shazeer", "Niki Parmar", "Jakob Uszkoreit", "Llion Jones", "Aidan N. Gomez", "Lukasz Kaiser", "Illia Polosukhin"],
+      "metadataSource": "https://arxiv.org/abs/1706.03762"
+    },
+    {
+      "paper": "2005.11401",
+      "version": 4,
+      "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+      "publishedOn": "2020-05-22",
+      "authors": ["Patrick Lewis", "Ethan Perez", "Aleksandra Piktus", "Fabio Petroni", "Vladimir Karpukhin", "Naman Goyal", "Heinrich Küttler", "Mike Lewis", "Wen-tau Yih", "Tim Rocktäschel", "Sebastian Riedel", "Douwe Kiela"],
+      "metadataSource": "https://arxiv.org/abs/2005.11401"
+    }
+  ]
+}

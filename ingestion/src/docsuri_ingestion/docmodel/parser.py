@@ -405,11 +405,15 @@ def _table_block(figure_el: Tag, sec_ctx: _SectionCtx) -> dict | None:
 
 def _figure_block(figure_el: Tag, sec_ctx: _SectionCtx, doc_ctx: _DocCtx) -> dict | None:
     imgs = figure_el.find_all("img")
-    if not imgs:
-        return None  # no graphic to reference
+    label, caption = _caption(figure_el)
+    if not imgs and not caption:
+        return None
+    # LaTeXML also embeds SVG figures as objects. A sanitizer may remove that
+    # active element; its caption is still source evidence. Keep a stable asset
+    # reference with no source hint so resolution can use the existing fallback
+    # or report unavailable pixels instead of silently discarding the caption.
     ordinal = doc_ctx.figure_ordinal
     doc_ctx.figure_ordinal += 1
-    label, caption = _caption(figure_el)
     # Record this figure's resolution hints at its ordinal so the asset extractor can align its
     # image to this block (the append order matches the ordinal increment, keeping
     # figure_specs[ordinal] == this block).
@@ -420,7 +424,7 @@ def _figure_block(figure_el: Tag, sec_ctx: _SectionCtx, doc_ctx: _DocCtx) -> dic
         # Blank the src so the asset extractor falls back to a whole-figure PDF page-crop (matched
         # by caption number), which captures every panel as laid out. A single-image figure keeps
         # its src for the original-quality e-print graphic.
-        first = imgs[0]
+        first = imgs[0] if imgs else None
         src = first.get("src") if len(imgs) == 1 and isinstance(first, Tag) else None
         doc_ctx.figure_specs.append(
             FigureSpec(src=src if isinstance(src, str) else "", label=label)

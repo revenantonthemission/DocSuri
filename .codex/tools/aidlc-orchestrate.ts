@@ -221,7 +221,6 @@ import {
   splitSlugList,
   hasAnyUnitClaimRefs,
   harnessDirectiveLimit,
-  hookChildEnv,
   installedKiroLayout,
   intentRepos,
   codekbStoreIsCurrent,
@@ -342,7 +341,6 @@ import {
   unitMajorConstructionStageSlugs,
   validateLiveUnitScope,
   validScopes,
-  validSessionId,
   shellArg,
   scopeArg,
   isScopeName,
@@ -442,7 +440,6 @@ import {
   isCompiledExecutable,
   resolveHarnessPath,
   resolveHarnessRoot,
-  runtimeHarnessDir,
 } from "./aidlc-runtime-paths.ts";
 import { terminalDispatcherArgv } from "./aidlc.ts";
 import { appendAuditEntries, appendAuditEntry } from "./aidlc-audit.ts";
@@ -660,19 +657,6 @@ function engineRelativeRecordDir(projectDir: string): string | null {
 function engineChildEnv(
   extra: Record<string, string> = {},
 ): Record<string, string | undefined> {
-  // The selection resolver already accepted native Codex identity. Pinning it
-  // as a bare override would hide that authority from the child's resolver.
-  // Preserve its provenance, but never promote an inherited bare override:
-  // the parent may have accepted one only because its ancestry lookup missed.
-  if (
-    engineProjectDir &&
-    engineSessionId &&
-    validSessionId(process.env.AIDLC_SESSION_OVERRIDE) === null &&
-    runtimeHarnessDir(engineProjectDir) === ".codex" &&
-    validSessionId(process.env.CODEX_THREAD_ID) === engineSessionId
-  ) {
-    return hookChildEnv(engineProjectDir, engineSessionId, extra);
-  }
   return {
     ...process.env,
     ...extra,

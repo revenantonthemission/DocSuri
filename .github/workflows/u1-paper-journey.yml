@@ -1,0 +1,81 @@
+name: U1 paper journey
+
+# Targeted checks for the U1 integrated paper journey only. The repository-wide
+# legacy pipeline keeps its own interim comparison; this workflow neither
+# replaces it nor deploys anything. The DB/browser/operations phases require the
+# owned disposable fixture environment (Docker PostgreSQL, local mail sink, TLS
+# material) and are recorded as unexecuted required evidence in CI; their exact
+# commands are in the code-generation record.
+
+on:
+  pull_request:
+    paths:
+      - "backend/modules/accounts/**"
+      - "backend/modules/corpus/**"
+      - "backend/modules/discovery/**"
+      - "backend/modules/library/**"
+      - "backend/modules/personalization/**"
+      - "backend/modules/plans/**"
+      - "backend/modules/summarization/**"
+      - "backend/local_*.py"
+      - "backend/transactions.py"
+      - "backend/artifacts.py"
+      - "frontend/src/**"
+      - "frontend/test/u1-integrated-paper-journey/**"
+      - "frontend/e2e/u1-integrated-paper-journey/**"
+      - "scripts/*docsuri_u1*.py"
+      - "tests/u1_integrated_paper_journey/**"
+      - ".github/workflows/u1-paper-journey.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: corepack enable
+      - run: corepack pnpm@9.15.9 install --frozen-lockfile
+      - name: Scoped lint (U1 workspace and tests)
+        run: corepack pnpm@9.15.9 exec eslint src test/u1-integrated-paper-journey
+      - name: Scoped typecheck
+        run: >-
+          corepack pnpm@9.15.9 exec tsc --noEmit --strict --jsx react-jsx
+          --module esnext --moduleResolution bundler --target ES2022
+          --lib dom,dom.iterable,ES2022 --skipLibCheck
+          src/api.ts src/ui.tsx src/paper.tsx src/App.tsx src/main.tsx
+      - name: U1 workspace tests
+        run: corepack pnpm@9.15.9 exec vitest run --config vitest.u1-paper-journey.config.ts
+      - name: U1 static build
+        run: corepack pnpm@9.15.9 exec vite build
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Locked backend environment
+        run: uv sync --project backend --frozen
+      - name: Scoped lint (U1 python paths)
+        run: >-
+          backend/.venv/bin/python -m ruff check
+          backend/local_browser.py backend/local_observation.py
+          backend/modules/accounts backend/modules/corpus backend/modules/discovery
+          backend/modules/library backend/modules/personalization backend/modules/plans
+          backend/modules/summarization scripts/bootstrap_docsuri_u1.py
+          scripts/prepare_docsuri_u1_transport.py scripts/publish_docsuri_u1_papers.py
+          scripts/serve_docsuri_u1.py scripts/supervise_docsuri_u1.py
+          scripts/verify_docsuri_u1.py tests/u1_integrated_paper_journey
+      - name: U1 test collection (no fixture environment in CI)
+        run: >-
+          backend/.venv/bin/python -m pytest
+          -c backend/pytest.u1-paper-journey.ini
+          tests/u1_integrated_paper_journey -m u1_component --collect-only -q
