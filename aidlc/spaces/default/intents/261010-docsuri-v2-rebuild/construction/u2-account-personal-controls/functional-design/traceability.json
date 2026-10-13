@@ -1,0 +1,754 @@
+{
+  "stage": "functional-design",
+  "unit": "u2-account-personal-controls",
+  "upstream_ids": [
+    "FR1",
+    "FR1.1",
+    "FR1.2",
+    "FR1.3",
+    "FR2.3",
+    "FR3",
+    "FR3.1",
+    "FR3.2",
+    "FR4",
+    "FR4.1",
+    "FR4.2",
+    "FR5",
+    "FR5.1",
+    "FR5.2",
+    "FR5.3",
+    "FR6",
+    "FR6.1",
+    "FR6.2",
+    "FR6.3",
+    "FR6.4",
+    "FR7",
+    "FR7.1",
+    "FR7.2",
+    "FR8",
+    "FR8.1",
+    "FR8.2",
+    "FR9",
+    "FR9.1",
+    "FR9.2",
+    "FR10",
+    "FR10.1",
+    "FR10.2",
+    "FR11",
+    "FR11.1",
+    "FR11.2",
+    "FR12",
+    "FR12.1",
+    "FR12.2",
+    "FR13",
+    "FR13.1",
+    "FR13.2",
+    "FR13.3",
+    "FR14",
+    "FR14.1",
+    "FR14.2",
+    "FR15",
+    "FR15.1",
+    "FR15.2",
+    "FR16",
+    "FR16.1",
+    "FR16.2",
+    "FR17",
+    "FR17.1",
+    "FR17.2",
+    "FR18",
+    "FR18.1",
+    "FR18.2",
+    "FR18.3",
+    "FR19",
+    "FR19.1",
+    "FR19.2",
+    "FR19.3",
+    "NFR1",
+    "NFR2",
+    "NFR3",
+    "NFR4",
+    "NFR5",
+    "NFR6",
+    "NFR7",
+    "NFR8",
+    "NFR9",
+    "NFR10"
+  ],
+  "coverage": [
+    {
+      "id": "FR1",
+      "status": "OK",
+      "target": "BR4.1"
+    },
+    {
+      "id": "FR1.1",
+      "status": "OK",
+      "target": "BR4.1"
+    },
+    {
+      "id": "FR1.2",
+      "status": "OK",
+      "target": "BR5.1, BR5.4"
+    },
+    {
+      "id": "FR1.3",
+      "status": "OK",
+      "target": "BR1.4, BR5.1, BR7.2"
+    },
+    {
+      "id": "FR2.3",
+      "status": "OK",
+      "target": "BR1.1"
+    },
+    {
+      "id": "FR3",
+      "status": "OK",
+      "target": "BR5.1"
+    },
+    {
+      "id": "FR3.1",
+      "status": "OK",
+      "target": "BR5.1"
+    },
+    {
+      "id": "FR3.2",
+      "status": "OK",
+      "target": "BR1.2, BR6.3, BR6.4"
+    },
+    {
+      "id": "FR4",
+      "status": "OK",
+      "target": "BR5.1"
+    },
+    {
+      "id": "FR4.1",
+      "status": "OK",
+      "target": "BR1.1, BR5.1"
+    },
+    {
+      "id": "FR4.2",
+      "status": "OK",
+      "target": "BR1.3, BR1.4, BR5.1"
+    },
+    {
+      "id": "FR5",
+      "status": "OK",
+      "target": "BR4.1, BR7.2"
+    },
+    {
+      "id": "FR5.1",
+      "status": "OK",
+      "target": "BR1.2, BR1.5, BR4.1"
+    },
+    {
+      "id": "FR5.2",
+      "status": "OK",
+      "target": "BR1.4, BR4.1, BR4.3"
+    },
+    {
+      "id": "FR5.3",
+      "status": "OK",
+      "target": "BR1.3, BR4.2, BR4.3"
+    },
+    {
+      "id": "FR6",
+      "status": "OK",
+      "target": "BR7.2"
+    },
+    {
+      "id": "FR6.1",
+      "status": "OK",
+      "target": "BR1.5, BR2.1, BR2.2, BR2.3"
+    },
+    {
+      "id": "FR6.2",
+      "status": "OK",
+      "target": "BR1.2, BR2.2, BR2.3"
+    },
+    {
+      "id": "FR6.3",
+      "status": "OK",
+      "target": "BR2.1, BR3.3, BR3.4, BR3.5, BR3.6"
+    },
+    {
+      "id": "FR6.4",
+      "status": "OK",
+      "target": "BR1.1, BR1.4, BR2.1, BR2.2, BR2.3, BR7.1"
+    },
+    {
+      "id": "FR7",
+      "status": "OK",
+      "target": "BR7.2"
+    },
+    {
+      "id": "FR7.1",
+      "status": "OK",
+      "target": "BR2.4"
+    },
+    {
+      "id": "FR7.2",
+      "status": "OK",
+      "target": "BR1.1, BR2.3, BR2.5, BR2.6, BR3.5, BR6.2"
+    },
+    {
+      "id": "FR8",
+      "status": "OK",
+      "target": "BR3.1, BR7.2"
+    },
+    {
+      "id": "FR8.1",
+      "status": "OK",
+      "target": "BR1.1, BR1.2, BR1.3, BR1.5, BR3.1, BR3.2, BR3.6, BR5.3, BR7.1"
+    },
+    {
+      "id": "FR8.2",
+      "status": "OK",
+      "target": "BR6.1"
+    },
+    {
+      "id": "FR9",
+      "status": "OK",
+      "target": "BR4.1"
+    },
+    {
+      "id": "FR9.1",
+      "status": "OK",
+      "target": "BR4.1"
+    },
+    {
+      "id": "FR9.2",
+      "status": "OK",
+      "target": "BR4.2"
+    },
+    {
+      "id": "FR10",
+      "status": "OK",
+      "target": "BR5.1, BR7.2"
+    },
+    {
+      "id": "FR10.1",
+      "status": "OK",
+      "target": "BR1.3, BR1.4, BR5.1, BR5.4"
+    },
+    {
+      "id": "FR10.2",
+      "status": "OK",
+      "target": "BR3.2, BR5.3, BR5.4"
+    },
+    {
+      "id": "FR11",
+      "status": "OK",
+      "target": "BR5.2, BR7.2"
+    },
+    {
+      "id": "FR11.1",
+      "status": "OK",
+      "target": "BR1.3, BR1.4, BR5.2"
+    },
+    {
+      "id": "FR11.2",
+      "status": "OK",
+      "target": "BR2.4, BR5.2, BR5.4"
+    },
+    {
+      "id": "FR12",
+      "status": "OK",
+      "target": "BR3.2"
+    },
+    {
+      "id": "FR12.1",
+      "status": "OK",
+      "target": "BR1.1"
+    },
+    {
+      "id": "FR12.2",
+      "status": "OK",
+      "target": "BR3.2"
+    },
+    {
+      "id": "FR13",
+      "status": "OK",
+      "target": "BR3.2"
+    },
+    {
+      "id": "FR13.1",
+      "status": "OK",
+      "target": "BR3.2"
+    },
+    {
+      "id": "FR13.2",
+      "status": "OK",
+      "target": "BR1.1, BR7.1"
+    },
+    {
+      "id": "FR13.3",
+      "status": "OK",
+      "target": "BR6.3, BR6.4"
+    },
+    {
+      "id": "FR14",
+      "status": "OK",
+      "target": "BR6.3"
+    },
+    {
+      "id": "FR14.1",
+      "status": "OK",
+      "target": "BR1.2, BR6.3, BR6.4, BR7.1"
+    },
+    {
+      "id": "FR14.2",
+      "status": "OK",
+      "target": "BR1.1, BR3.3, BR3.4, BR3.6"
+    },
+    {
+      "id": "FR15",
+      "status": "OK",
+      "target": "BR6.3"
+    },
+    {
+      "id": "FR15.1",
+      "status": "OK",
+      "target": "BR6.3, BR7.1"
+    },
+    {
+      "id": "FR15.2",
+      "status": "OK",
+      "target": "BR1.1, BR1.2, BR6.4"
+    },
+    {
+      "id": "FR16",
+      "status": "OK",
+      "target": "BR3.2"
+    },
+    {
+      "id": "FR16.1",
+      "status": "OK",
+      "target": "BR1.1, BR7.1"
+    },
+    {
+      "id": "FR16.2",
+      "status": "OK",
+      "target": "BR1.2, BR3.2"
+    },
+    {
+      "id": "FR17",
+      "status": "OK",
+      "target": "BR6.1, BR7.2"
+    },
+    {
+      "id": "FR17.1",
+      "status": "OK",
+      "target": "BR1.3, BR2.6, BR6.1, BR6.2"
+    },
+    {
+      "id": "FR17.2",
+      "status": "OK",
+      "target": "BR1.2, BR1.5, BR6.1, BR6.3, BR6.4"
+    },
+    {
+      "id": "FR18",
+      "status": "OK",
+      "target": "BR4.2"
+    },
+    {
+      "id": "FR18.1",
+      "status": "OK",
+      "target": "BR4.2"
+    },
+    {
+      "id": "FR18.2",
+      "status": "OK",
+      "target": "BR3.3, BR3.4, BR3.6, BR4.2"
+    },
+    {
+      "id": "FR18.3",
+      "status": "OK",
+      "target": "BR4.2"
+    },
+    {
+      "id": "FR19",
+      "status": "OK",
+      "target": "BR7.3"
+    },
+    {
+      "id": "FR19.1",
+      "status": "OK",
+      "target": "BR1.5, BR2.6, BR7.3"
+    },
+    {
+      "id": "FR19.2",
+      "status": "OK",
+      "target": "BR1.5, BR7.3"
+    },
+    {
+      "id": "FR19.3",
+      "status": "OK",
+      "target": "BR1.5, BR3.4, BR3.6, BR7.3"
+    },
+    {
+      "id": "NFR1",
+      "status": "OK",
+      "target": "BR1.2, BR1.5, BR3.1, BR4.1, BR4.2, BR5.4, BR6.3"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "BR1.3, BR1.5, BR5.1, BR5.2, BR7.1, BR7.2"
+    },
+    {
+      "id": "NFR3",
+      "status": "OK",
+      "target": "BR1.2, BR1.3, BR1.5, BR2.2, BR3.3, BR3.4, BR3.5, BR3.6, BR4.3, BR5.3, BR6.4, BR7.1"
+    },
+    {
+      "id": "NFR4",
+      "status": "OK",
+      "target": "BR1.1, BR2.1, BR2.2, BR2.3, BR2.4, BR2.5, BR2.6, BR3.2, BR3.5, BR4.2, BR6.2, BR7.1"
+    },
+    {
+      "id": "NFR5",
+      "status": "OK",
+      "target": "BR2.5, BR3.2, BR3.3, BR3.4, BR3.5, BR3.6, BR5.3, BR5.4"
+    },
+    {
+      "id": "NFR6",
+      "status": "OK",
+      "target": "BR7.2"
+    },
+    {
+      "id": "NFR7",
+      "status": "OK",
+      "target": "BR7.3"
+    },
+    {
+      "id": "NFR8",
+      "status": "OK",
+      "target": "BR1.4, BR6.1, BR6.3, BR6.4"
+    },
+    {
+      "id": "NFR9",
+      "status": "OK",
+      "target": "BR1.5, BR6.2, BR7.3"
+    },
+    {
+      "id": "NFR10",
+      "status": "OK",
+      "target": "BR2.4, BR3.3, BR5.2, BR7.3"
+    }
+  ],
+  "reverse": [],
+  "scope_note": "OK means logical U2 contribution designed, not implemented or verified. All 62 assigned functional rows and ten NFRs are checked against current source assignments. Lead requirements need full U2 implementation plus named consumer integration; contributor rows retain their other unit lead.",
+  "contributions": [
+    {
+      "id": "FR1",
+      "role": "supporting contribution",
+      "acceptance": "Find/refine parity: complete query, lexical/semantic, filtering, ordering, pagination and recovery outcomes; U1 proves its selected real journey path."
+    },
+    {
+      "id": "FR1.1",
+      "role": "supporting contribution",
+      "acceptance": "Preserve every retained query/refinement/order/rerun behavior and stable paper/version identity; U1 implements the demonstrated query/open path."
+    },
+    {
+      "id": "FR1.2",
+      "role": "supporting contribution",
+      "acceptance": "Verify lexical and semantic relevance plus explicit supported degradation; U1's actual demonstration mode and fallback cannot stand for all modes."
+    },
+    {
+      "id": "FR1.3",
+      "role": "supporting contribution",
+      "acceptance": "Distinguish invalid/loading/empty/partial/error and stable-window changes; verify input boundaries, retry context and pagination across the full search surface."
+    },
+    {
+      "id": "FR2.3",
+      "role": "supporting contribution",
+      "acceptance": "Authorize private documents, figures and downloads by owner/context; reject cross-user, anonymous, revoked, traversal and public-route resolution attempts."
+    },
+    {
+      "id": "FR3",
+      "role": "supporting contribution",
+      "acceptance": "Complete every retained assistance operation/level/language with recoverable acceptance, progress and prepared-result reads; U1 implements a real bounded understanding path."
+    },
+    {
+      "id": "FR3.1",
+      "role": "supporting contribution",
+      "acceptance": "Verify the complete summary/translation/presentation-choice set and usable source-bound output, including ineligible input and unavailable-model outcomes."
+    },
+    {
+      "id": "FR3.2",
+      "role": "supporting contribution",
+      "acceptance": "Verify recoverable durable acceptance/dispatch, duplicate and lost-response reconciliation, worker restart and single accounting effects through real execution."
+    },
+    {
+      "id": "FR4",
+      "role": "supporting contribution",
+      "acceptance": "Complete owner glossary inspection/update/use with normalization, failures and concurrent edits; retain one glossary owner in PaperAssistance."
+    },
+    {
+      "id": "FR4.1",
+      "role": "supporting contribution",
+      "acceptance": "Persist and reopen owner terminology; prove relevant eligible output uses the acknowledged preference and deny another user's reads/writes."
+    },
+    {
+      "id": "FR4.2",
+      "role": "supporting contribution",
+      "acceptance": "Verify empty/duplicate/Unicode/conflicting/oversized inputs, failed writes, repeated submissions and visible concurrent-update resolution."
+    },
+    {
+      "id": "FR5",
+      "role": "full-scope lead",
+      "acceptance": "Complete saved papers/searches and history; U1 proves selected durable save/revisit paths, while U3 supplies changed-source/canonical dispositions."
+    },
+    {
+      "id": "FR5.1",
+      "role": "full-scope lead",
+      "acceptance": "Verify add/list/remove for all retained saved paper/query behavior, stable identity, duplicate requests, failed persistence and later authenticated return."
+    },
+    {
+      "id": "FR5.2",
+      "role": "full-scope lead",
+      "acceptance": "Verify recorded query/refinement history, pagination, rerun and owner-only clear; delayed completion facts must not defeat a clear boundary."
+    },
+    {
+      "id": "FR5.3",
+      "role": "full-scope lead",
+      "acceptance": "Verify unavailable/withdrawn/canonicalized sources preserve truthful saved references; check cross-owner denial and convergence between tabs."
+    },
+    {
+      "id": "FR6",
+      "role": "full-scope lead",
+      "acceptance": "Complete public account lifecycle and abuse/session protection; U1 supplies the necessary real account boundary for its journey, not all lifecycle parity."
+    },
+    {
+      "id": "FR6.1",
+      "role": "full-scope lead",
+      "acceptance": "Verify registration, email verification, login/logout, duplicates, expired/replayed links and failed delivery; distinguish local test delivery from the public normal path."
+    },
+    {
+      "id": "FR6.2",
+      "role": "full-scope lead",
+      "acceptance": "Verify password reset/change and email change, identity checks, interruption, token replay and documented credential/session revocation without losing committed work."
+    },
+    {
+      "id": "FR6.3",
+      "role": "full-scope lead",
+      "acceptance": "Complete withdrawal/reactivation only under approved data policy; AccountAccess tracks required domain acknowledgements, pending-work and backup/restore dispositions."
+    },
+    {
+      "id": "FR6.4",
+      "role": "full-scope lead",
+      "acceptance": "Verify server validation, abuse bounds, forged/replayed identity/session requests and logout/revocation across protected entrypoints."
+    },
+    {
+      "id": "FR7",
+      "role": "full-scope lead",
+      "acceptance": "Complete retained external identity/profile behavior and administrator MFA boundaries; do not infer PlatformControl authority from an application role."
+    },
+    {
+      "id": "FR7.1",
+      "role": "full-scope lead",
+      "acceptance": "Verify Google/ORCID sign-in/link/profile and retained unlink behavior, collisions, denied consent, callback replay and provider failure."
+    },
+    {
+      "id": "FR7.2",
+      "role": "full-scope lead",
+      "acceptance": "Verify ordinary-user denial, current administrator MFA, replay/expiry and the controlled recovery procedure; no production bypass."
+    },
+    {
+      "id": "FR8",
+      "role": "full-scope lead",
+      "acceptance": "Complete durable profile/consent controls and truthful existing mock/administrative plan presentation; verify processing consequences in consuming domains."
+    },
+    {
+      "id": "FR8.1",
+      "role": "full-scope lead",
+      "acceptance": "Verify owner-isolated profile/consent updates, failed writes and governed future processing, including queued effects rechecking current permission."
+    },
+    {
+      "id": "FR8.2",
+      "role": "full-scope lead",
+      "acceptance": "Present configured mock/administrative subscription state truthfully; never claim real charges, purchased entitlement or billing parity."
+    },
+    {
+      "id": "FR9",
+      "role": "supporting contribution",
+      "acceptance": "Complete bounded cited/citing exploration and eligible saves; Discovery owns relationships and Library owns the saved reference."
+    },
+    {
+      "id": "FR9.1",
+      "role": "supporting contribution",
+      "acceptance": "Verify cited/citing identity, traversal/duplicate bounds and eligible reference saves through the real library operation."
+    },
+    {
+      "id": "FR9.2",
+      "role": "supporting contribution",
+      "acceptance": "Verify provider limits, incomplete/unknown/stale/unavailable citation data, freshness and recovery without fabricating edges or losing saved references."
+    },
+    {
+      "id": "FR10",
+      "role": "full-scope lead",
+      "acceptance": "Complete explicit defaults, recent-paper views and controlled behavior/profile processing; U1 implements only defaults needed by its journey."
+    },
+    {
+      "id": "FR10.1",
+      "role": "full-scope lead",
+      "acceptance": "Verify persistence and subsequent use of supported search/summary defaults, recent identity/order and usable cold-start/missing-enrichment behavior."
+    },
+    {
+      "id": "FR10.2",
+      "role": "full-scope lead",
+      "acceptance": "Verify opt-out, event deletion and profile reset, including delayed events/projections, without deleting the library or recreating prohibited behavior."
+    },
+    {
+      "id": "FR11",
+      "role": "full-scope lead",
+      "acceptance": "Complete resumable interest onboarding/skip and optional attributable ORCID suggestions without blocking normal service use."
+    },
+    {
+      "id": "FR11.1",
+      "role": "full-scope lead",
+      "acceptance": "Verify select/skip/stored state, interruption/revisit and prevention of redirect loops or unintended preference replacement."
+    },
+    {
+      "id": "FR11.2",
+      "role": "full-scope lead",
+      "acceptance": "Verify eligible ORCID suggestions and manual/skip alternatives for missing data, denied authorization and provider failure."
+    },
+    {
+      "id": "FR12",
+      "role": "supporting contribution",
+      "acceptance": "Complete topic following/configuration and recoverable consent-governed digest preparation/delivery/unsubscribe."
+    },
+    {
+      "id": "FR12.1",
+      "role": "supporting contribution",
+      "acceptance": "Verify owner-isolated follow/unfollow/configuration, duplicate prevention, durable changes and retained input boundary behavior."
+    },
+    {
+      "id": "FR12.2",
+      "role": "supporting contribution",
+      "acceptance": "Verify intended time/content windows, no-new-content, retry/crash/uncertain-send reconciliation and consent/unsubscribe recheck before delivery; prove sustainable public delivery."
+    },
+    {
+      "id": "FR13",
+      "role": "supporting contribution",
+      "acceptance": "Complete grounded questions/comparison/quotes across retained source scopes, including private/web distinctions, partial coverage and meaningful abstention."
+    },
+    {
+      "id": "FR13.1",
+      "role": "supporting contribution",
+      "acceptance": "Verify claims and literal quotations against accessible source/version/section, contradictions and insufficient-evidence behavior."
+    },
+    {
+      "id": "FR13.2",
+      "role": "supporting contribution",
+      "acceptance": "Verify authorized text/PDF attachments and supported web references, malformed/oversized/truncated/unsupported cases and untrusted-source isolation."
+    },
+    {
+      "id": "FR13.3",
+      "role": "supporting contribution",
+      "acceptance": "Verify structured output through extraction/model/context failures, explicit truncation and interrupted/duplicate requests with committed-input preservation."
+    },
+    {
+      "id": "FR14",
+      "role": "supporting contribution",
+      "acceptance": "Complete persisted sessions/messages and authoritative pending work; include the approved distinct durable-draft lifecycle without equating draft acknowledgement to submission."
+    },
+    {
+      "id": "FR14.1",
+      "role": "supporting contribution",
+      "acceptance": "Verify create/save/reopen, committed messages, pending/terminal progress, duplicate-turn prevention and late completion bound to the intended session/input."
+    },
+    {
+      "id": "FR14.2",
+      "role": "supporting contribution",
+      "acceptance": "Verify one/all-session deletion, cross-owner isolation, failed deletion and stale-link/late-event behavior under the approved pending-work/retention policy."
+    },
+    {
+      "id": "FR15",
+      "role": "supporting contribution",
+      "acceptance": "Complete topic/manuscript novelty, evidence/artifacts/discussion and recoverable jobs/cancellation; acknowledged manuscript drafts remain distinct from accepted analysis."
+    },
+    {
+      "id": "FR15.1",
+      "role": "supporting contribution",
+      "acceptance": "Verify both input modes, supported formats, source-associated artifacts/discussion and limitations; generated scores do not prove scientific novelty."
+    },
+    {
+      "id": "FR15.2",
+      "role": "supporting contribution",
+      "acceptance": "Verify duplicate submission, restart/reconnect, cancellation/completion races, final cancellation and owner-scoped artifact expiry without automatic export."
+    },
+    {
+      "id": "FR16",
+      "role": "supporting contribution",
+      "acceptance": "Complete per-owner Notion connection, current preview, explicit approval and reconciled external effect under verified free terms."
+    },
+    {
+      "id": "FR16.1",
+      "role": "supporting contribution",
+      "acceptance": "Verify owner connection/credential isolation, preview content/destination and revoked/invalid/disconnected recovery; read authorized novelty artifacts."
+    },
+    {
+      "id": "FR16.2",
+      "role": "supporting contribution",
+      "acceptance": "Bind approval to immutable artifact revision/content and destination; verify change/revocation, duplicate/timeout reconciliation and no effect from preview/cancel/expiry."
+    },
+    {
+      "id": "FR17",
+      "role": "full-scope lead",
+      "acceptance": "Complete truthful quota/plan inspection and authorized allocation/accounting; U1 supplies necessary initial enforcement and U3/U4 consume complete accounting contracts."
+    },
+    {
+      "id": "FR17.1",
+      "role": "full-scope lead",
+      "acceptance": "Verify owner allocation/usage visibility and auditable administrator grant/revoke with current MFA/authority; request tampering cannot assign entitlement."
+    },
+    {
+      "id": "FR17.2",
+      "role": "full-scope lead",
+      "acceptance": "Verify applicable protected actions at concurrent/retry/exhausted/reset boundaries, unknown usage, single effect and agreed refund/accounting rules; never activate spending."
+    },
+    {
+      "id": "FR18",
+      "role": "supporting contribution",
+      "acceptance": "Complete corpus ingestion/refresh/rebuild, canonical/version/dedup behavior, withdrawal and recoverable processing across authoritative inputs and derived representations."
+    },
+    {
+      "id": "FR18.1",
+      "role": "supporting contribution",
+      "acceptance": "Verify source eligibility, duplicate/reordered records, versions, dedup and stage/watermark completion under failure; fixture loading alone is not ingestion parity."
+    },
+    {
+      "id": "FR18.2",
+      "role": "supporting contribution",
+      "acceptance": "Verify withdrawal/license/access changes defeat stale projections/caches and give saved references explicit dispositions; resolve projection-writer responsibility."
+    },
+    {
+      "id": "FR18.3",
+      "role": "supporting contribution",
+      "acceptance": "Verify retry/dead-letter/reprocessing, partial batches, object/control/index interruption, rate limits and compatibility failure with repeatable non-corrupting recovery."
+    },
+    {
+      "id": "FR19",
+      "role": "supporting contribution",
+      "acceptance": "Complete capability-aware operations and cumulative application/platform integration; U1 provides essential journey feedback while each domain remains responsible for its own recovery."
+    },
+    {
+      "id": "FR19.1",
+      "role": "supporting contribution",
+      "acceptance": "Verify privacy-safe health/incident/resource/cost/grounding/reliability signals and authorized actions; distinguish observed, unknown and stale evidence."
+    },
+    {
+      "id": "FR19.2",
+      "role": "supporting contribution",
+      "acceptance": "Verify actual mounted capability readiness, missing stores/execution and disclosed degradation; process liveness and platform receipts are insufficient."
+    },
+    {
+      "id": "FR19.3",
+      "role": "supporting contribution",
+      "acceptance": "Reproduce controlled incidents, identify affected work, invoke authorized owner recovery and verify user/service state; telemetry failure cannot erase required evidence."
+    }
+  ]
+}
