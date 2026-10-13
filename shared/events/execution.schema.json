@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://docsuri.dev/shared/events/execution.schema.json",
-  "$comment": "Generated canonical contract release 2.0.0; source SHA256:557733c5ff54bddee179e5a7ed83bfa12c1c15f63d56b0ceb2cd92304ddc9bc8",
+  "$comment": "Generated canonical contract release 3.0.0; source SHA256:2636ffb61d3ba92983c6d88e47099c3dc8a2d91c651840626fecfbd61b569e84",
   "$defs": {
     "Principal": {
       "oneOf": [
@@ -4264,6 +4264,254 @@
       ],
       "additionalProperties": false,
       "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "SettingsResetListInput": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "view": {
+          "type": "string",
+          "enum": [
+            "outstanding",
+            "history"
+          ]
+        },
+        "page": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/PageRequest"
+        }
+      },
+      "required": [
+        "context",
+        "view",
+        "page"
+      ],
+      "additionalProperties": false
+    },
+    "SettingsResetInspectInput": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "resetId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        }
+      },
+      "required": [
+        "context",
+        "resetId"
+      ],
+      "additionalProperties": false
+    },
+    "AdmissionIdentity": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/UsageOperation"
+        },
+        "generation": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Revision"
+        },
+        "accountId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "intentDigest": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Hash"
+        },
+        "periodId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "quantities": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/UsageQuantity"
+          }
+        },
+        "policyRef": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "operation",
+        "generation",
+        "accountId",
+        "intentDigest",
+        "periodId",
+        "quantities",
+        "policyRef"
+      ],
+      "additionalProperties": false
+    },
+    "AdmissionIntent": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/AdmissionIdentity"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "open",
+            "accepted",
+            "closed"
+          ]
+        },
+        "revision": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Revision"
+        },
+        "acceptedAt": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Time"
+        },
+        "reservationId": {
+          "oneOf": [
+            {
+              "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "effectRef": {
+          "oneOf": [
+            {
+              "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "identity",
+        "state",
+        "revision",
+        "acceptedAt",
+        "reservationId",
+        "effectRef"
+      ],
+      "additionalProperties": false
+    },
+    "AdmissionClosedEvidence": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/AdmissionIdentity"
+        },
+        "state": {
+          "const": "closed"
+        },
+        "closureRevision": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Revision"
+        },
+        "reasonKey": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "closedAt": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Time"
+        },
+        "evidenceRef": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        }
+      },
+      "required": [
+        "identity",
+        "state",
+        "closureRevision",
+        "reasonKey",
+        "closedAt",
+        "evidenceRef"
+      ],
+      "additionalProperties": false
+    },
+    "AdmissionAllocateInput": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "identity": {
+          "$ref": "#/$defs/AdmissionIdentity"
+        }
+      },
+      "required": [
+        "context",
+        "identity"
+      ],
+      "additionalProperties": false
+    },
+    "AdmissionInspectInput": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "identity": {
+          "$ref": "#/$defs/AdmissionIdentity"
+        }
+      },
+      "required": [
+        "context",
+        "identity"
+      ],
+      "additionalProperties": false
+    },
+    "AdmissionAcceptInput": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "identity": {
+          "$ref": "#/$defs/AdmissionIdentity"
+        },
+        "reservationId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "effectRef": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Revision"
+        }
+      },
+      "required": [
+        "context",
+        "identity",
+        "reservationId",
+        "effectRef",
+        "expectedRevision"
+      ],
+      "additionalProperties": false
+    },
+    "AdmissionCloseInput": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "identity": {
+          "$ref": "#/$defs/AdmissionIdentity"
+        },
+        "reasonKey": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Revision"
+        }
+      },
+      "required": [
+        "context",
+        "identity",
+        "reasonKey",
+        "expectedRevision"
+      ],
+      "additionalProperties": false
     },
     "SettingsConsentBoundaryInput": {
       "type": "object",

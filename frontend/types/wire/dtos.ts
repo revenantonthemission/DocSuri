@@ -1,4 +1,4 @@
-/* DO NOT EDIT. Declared public schema closure, offline. SHA256:4180916daf2429df3fbbd6ced5571300bf46782c27c143e6d5548f477f8cf31f */
+/* DO NOT EDIT. Declared public schema closure, offline. SHA256:d29323ceb4a02ad7b3dbdbe5f5e8dfc1dfe070c2286364f5d48142bbf59a37a0 */
 
 /**
  * Which rung of the fallback ladder produced this doc-model: native arXiv HTML -> ar5iv -> e-print LaTeX -> (last resort) PDF parse. User-uploaded PDFs also use the "pdf" tier — the user-vs-arXiv origin is carried by the paperId "userdoc:" namespace, not a separate tier. Trace: Q6, BR-29, TD-11.
@@ -2912,11 +2912,68 @@ export interface WorkspaceSettingsRecentPage {
  * via the `definition` "WorkspaceSettingsResetResult".
  */
 export interface WorkspaceSettingsResetResult {
+  resetId: WorkspaceId;
   ack: WorkspaceAck;
   inputBoundary: WorkspaceRevision;
   consentRevision: WorkspaceRevision;
   disposition: "complete" | "pending" | "blocked";
   remainingScopeReasonKey?: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsResetSummary".
+ */
+export interface WorkspaceSettingsResetSummary {
+  resetId: WorkspaceId;
+  action: "delete_behavior" | "reset_profile";
+  acceptedAt: WorkspaceTime;
+  acceptedSettingsRevision: WorkspaceRevision;
+  inputBoundary: WorkspaceRevision;
+  policyRef: WorkspacePolicyRef;
+  manifestRevision: WorkspaceRevision;
+  statusRevision: WorkspaceRevision;
+  observedAt: WorkspaceTime;
+  disposition: "pending" | "blocked" | "complete";
+  reasonKey: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsResetScopeStatus".
+ */
+export interface WorkspaceSettingsResetScopeStatus {
+  participantId: WorkspaceId;
+  scopeId: WorkspaceId;
+  manifestRevision: WorkspaceRevision;
+  workGeneration: WorkspaceRevision;
+  disposition: "pending" | "blocked" | "complete";
+  reasonKey: WorkspaceId;
+  evidenceRef: WorkspaceId | null;
+  updatedAt: WorkspaceTime;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsResetStatus".
+ */
+export interface WorkspaceSettingsResetStatus {
+  reset: WorkspaceSettingsResetSummary;
+  /**
+   * @minItems 1
+   * @maxItems 32
+   */
+  scopes: [WorkspaceSettingsResetScopeStatus, ...WorkspaceSettingsResetScopeStatus[]];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsResetPage".
+ */
+export interface WorkspaceSettingsResetPage {
+  /**
+   * @maxItems 50
+   */
+  items: WorkspaceSettingsResetSummary[];
+  page: WorkspacePageInfo;
+  appliedLimit: number;
+  policyRef: WorkspacePolicyRef;
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema

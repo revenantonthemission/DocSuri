@@ -60,9 +60,12 @@ class UnknownCommit(RuntimeError):
 class DeadlineConnection:
     """Repository SQL seam with one absolute request deadline."""
 
-    def __init__(self, connection: psycopg.Connection, deadline: float):
+    def __init__(
+        self, connection: psycopg.Connection, deadline: float, *, statement_ms: int = 5000
+    ):
         self.connection = connection
         self.deadline = deadline
+        self.statement_ms = statement_ms
 
     def remaining(self) -> float:
         value = self.deadline - time.monotonic()
@@ -71,7 +74,7 @@ class DeadlineConnection:
         return value
 
     def execute(self, query, params=None, **kwargs):
-        milliseconds = max(1, min(5000, int(self.remaining() * 1000)))
+        milliseconds = max(1, min(self.statement_ms, int(self.remaining() * 1000)))
         self.connection.execute(
             "SELECT set_config('statement_timeout',%s,true)", (str(milliseconds),)
         )
@@ -82,6 +85,11 @@ class DeadlineConnection:
 class OwnerTransactions:
     def __init__(self, profile: LocalProfile, *, process: str = "api"):
         limits = {"api": 4, "worker": 2, "observation": 1, "maintenance": 1}
+        controls = profile.realm == "account-controls"
+        if controls:
+            # The U2 API and embedded workers share five normal slots; two
+            # observation/recovery slots and one runner slot remain reserved.
+            limits = {"api": 5, "worker": 5, "observation": 2, "maintenance": 1}
         if process not in limits:
             raise ValueError("unknown bounded process role")
         path = profile.root / "owner-credentials.json"
@@ -92,15 +100,23 @@ class OwnerTransactions:
         if value.get("runId") != profile.run_id or set(value.get("roles", {})) != OWNERS:
             raise ValueError("owner credential identity mismatch")
         self.profile = profile
+        self._transaction_seconds = 5 if controls else 10
+        self._queue_seconds = 1 if controls else 2
+        self._statement_ms = 3000 if controls else 5000
         if (profile.database_name, profile.realm) not in {
             ("docsuri_u1", "diagnostic"),
             ("docsuri_u1_journey", "journey"),
+            ("docsuri_u2", "account-controls"),
         }:
             raise ValueError("unknown explicit database realm")
         # Separate databases do not receive separate process connection budgets.
         with _GATES_LOCK:
             self._gate = _PROCESS_GATES.setdefault(
-                (str(profile.root), profile.run_id, process),
+                (
+                    str(profile.root),
+                    profile.run_id,
+                    "api" if controls and process == "worker" else process,
+                ),
                 threading.BoundedSemaphore(limits[process]),
             )
         self._pools = {}
@@ -120,7 +136,7 @@ class OwnerTransactions:
                 min_size=0,
                 max_size=min(2, limits[process]),
                 max_waiting=4,
-                timeout=2,
+                timeout=self._queue_seconds,
                 reconnect_timeout=2,
                 open=True,
             )
@@ -131,21 +147,25 @@ class OwnerTransactions:
             pool.close()
 
     def run(self, owner: str, action: Callable[[psycopg.Connection], T]) -> T:
-        deadline = time.monotonic() + 10
+        deadline = time.monotonic() + self._transaction_seconds
         if self._closed or owner not in self._pools:
             raise ValueError("closed or unknown owner pool")
         if time.time() >= self.profile.expires_at:
             raise ValueError("synthetic retention expired")
-        if not self._gate.acquire(timeout=min(2, max(0.01, deadline - time.monotonic()))):
+        if not self._gate.acquire(
+            timeout=min(self._queue_seconds, max(0.01, deadline - time.monotonic()))
+        ):
             raise Busy("process connection allocation exhausted")
         try:
             for attempt in range(3):
                 try:
                     with self._pools[owner].connection(
-                        timeout=min(2, max(0.01, deadline - time.monotonic()))
+                        timeout=min(self._queue_seconds, max(0.01, deadline - time.monotonic()))
                     ) as conn:
                         conn.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
-                        bounded = DeadlineConnection(conn, deadline)
+                        bounded = DeadlineConnection(
+                            conn, deadline, statement_ms=self._statement_ms
+                        )
                         identity = bounded.execute(
                             "SELECT run_id,current_database() AS database_name "
                             "FROM public.docsuri_local_identity"

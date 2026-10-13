@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://docsuri.dev/shared/dtos/workspace.schema.json",
-  "$comment": "Generated canonical contract release 2.0.0; source SHA256:557733c5ff54bddee179e5a7ed83bfa12c1c15f63d56b0ceb2cd92304ddc9bc8",
+  "$comment": "Generated canonical contract release 3.0.0; source SHA256:2636ffb61d3ba92983c6d88e47099c3dc8a2d91c651840626fecfbd61b569e84",
   "$defs": {
     "Id": {
       "type": "string",
@@ -2170,6 +2170,9 @@
     "SettingsResetResult": {
       "type": "object",
       "properties": {
+        "resetId": {
+          "$ref": "#/$defs/Id"
+        },
         "ack": {
           "$ref": "#/$defs/Ack"
         },
@@ -2192,10 +2195,175 @@
         }
       },
       "required": [
+        "resetId",
         "ack",
         "inputBoundary",
         "consentRevision",
         "disposition"
+      ],
+      "additionalProperties": false
+    },
+    "SettingsResetSummary": {
+      "type": "object",
+      "properties": {
+        "resetId": {
+          "$ref": "#/$defs/Id"
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "delete_behavior",
+            "reset_profile"
+          ]
+        },
+        "acceptedAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "acceptedSettingsRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "inputBoundary": {
+          "$ref": "#/$defs/Revision"
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "manifestRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "statusRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "observedAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "blocked",
+            "complete"
+          ]
+        },
+        "reasonKey": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "resetId",
+        "action",
+        "acceptedAt",
+        "acceptedSettingsRevision",
+        "inputBoundary",
+        "policyRef",
+        "manifestRevision",
+        "statusRevision",
+        "observedAt",
+        "disposition",
+        "reasonKey"
+      ],
+      "additionalProperties": false
+    },
+    "SettingsResetScopeStatus": {
+      "type": "object",
+      "properties": {
+        "participantId": {
+          "$ref": "#/$defs/Id"
+        },
+        "scopeId": {
+          "$ref": "#/$defs/Id"
+        },
+        "manifestRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "workGeneration": {
+          "$ref": "#/$defs/Revision"
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "blocked",
+            "complete"
+          ]
+        },
+        "reasonKey": {
+          "$ref": "#/$defs/Id"
+        },
+        "evidenceRef": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/Time"
+        }
+      },
+      "required": [
+        "participantId",
+        "scopeId",
+        "manifestRevision",
+        "workGeneration",
+        "disposition",
+        "reasonKey",
+        "evidenceRef",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "SettingsResetStatus": {
+      "type": "object",
+      "properties": {
+        "reset": {
+          "$ref": "#/$defs/SettingsResetSummary"
+        },
+        "scopes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/SettingsResetScopeStatus"
+          }
+        }
+      },
+      "required": [
+        "reset",
+        "scopes"
+      ],
+      "additionalProperties": false
+    },
+    "SettingsResetPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/$defs/SettingsResetSummary"
+          }
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        },
+        "appliedLimit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "appliedLimit",
+        "policyRef"
       ],
       "additionalProperties": false
     },

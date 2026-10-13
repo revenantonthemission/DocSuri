@@ -44,6 +44,8 @@ class LocalProfile:
 
     def journey(self) -> LocalProfile:
         """Select only the explicitly provisioned second owned database."""
+        if self.realm == "account-controls" and self.database_name == "docsuri_u2":
+            return self
         path = self.root / "journey-database.json"
         value = json.loads(private_bytes(path))
         if (
@@ -65,9 +67,16 @@ class LocalProfile:
 
     @classmethod
     def load(cls, manifest: Path) -> LocalProfile:
-        expected = Path("/tmp/docsuri-u1-run").resolve() / "environment.json"
-        if manifest.is_symlink() or manifest.resolve() != expected:
+        profiles = {
+            Path("/tmp/docsuri-u1-run").resolve() / "environment.json": "u1",
+            Path("/tmp/docsuri-u2-run").resolve() / "environment.json": "u2",
+        }
+        expected = manifest.resolve()
+        unit = profiles.get(expected)
+        if manifest.is_symlink() or manifest.parent.is_symlink() or unit is None:
             raise ValueError("explicit owned synthetic manifest required")
+        if Path(f"/tmp/docsuri-{unit}-run").is_symlink():
+            raise ValueError("owned run root cannot be a symbolic link")
         for path in (expected.parent, expected, expected.parent / "ownership.json"):
             info = path.lstat()
             if (
@@ -91,13 +100,31 @@ class LocalProfile:
         ):
             raise ValueError("wrong synthetic profile/repository")
         if "databaseAdminPassword" in value or not re.fullmatch(
-            r"docsuri-u1-[0-9a-f]{16}", value.get("runId", "")
+            rf"docsuri-{unit}-[0-9a-f]{{16}}", value.get("runId", "")
         ):
             raise ValueError("runtime manifest must not carry migration credentials")
         if value["expiresAt"] <= time.time():
             raise ValueError("synthetic retention expired")
-        if value["applicationPort"] != 18039 or value["databasePort"] != 15439:
+        application_port, database_port = (18039, 15439) if unit == "u1" else (18049, 15449)
+        if value["applicationPort"] != application_port or value["databasePort"] != database_port:
             raise ValueError("unexpected owned listener")
+        if unit == "u2":
+            if (
+                value.get("unit") != "u2-account-personal-controls"
+                or value.get("database") != "docsuri_u2"
+                or value.get("realm") != "account-controls"
+                or not time.time() < value["expiresAt"] <= time.time() + 86400
+            ):
+                raise ValueError("wrong U2 owned realm or finite retention")
+            return cls(
+                expected.parent,
+                value["runId"],
+                "https://127.0.0.1:18049",
+                15449,
+                value["expiresAt"],
+                "docsuri_u2",
+                "account-controls",
+            )
         return cls(
             expected.parent, value["runId"], "http://127.0.0.1:18039", 15439, value["expiresAt"]
         )

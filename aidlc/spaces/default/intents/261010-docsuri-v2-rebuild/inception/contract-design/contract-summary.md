@@ -1,6 +1,10 @@
 # DocSuri v2 — Contract summary
 
-Date: 2026-10-11 (Asia/Seoul). Contract release 2.0.0: coordinated U1 amendment
+Date: 2026-10-14 (Asia/Seoul). Contract release 3.0.0: coordinated U2 C03/C13 amendment;
+other contracts retain their explicit 2.0.0 version. Required reset result identity
+is a breaking shape change, not automatically additive compatibility. No mounted
+U1 reset consumer was found in the bounded implementation inventory. Public
+activation still requires external-consumer evidence. U1 amendment
 under the approved Code Generation plan. The original review remains historical
 evidence for release 1.0.0; amended contracts require finished-work review and
 executable closure evidence. This document does not establish runtime readiness.
@@ -1199,9 +1203,94 @@ $defs:
           $ref: '#/$defs/PolicyRef'}, confirmationRef: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, action,
         policyRef, confirmationRef, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted
         boundary, never accepted from a public body.'}
-  SettingsResetResult: {type: object, properties: {ack: {$ref: '#/$defs/Ack'}, inputBoundary: {$ref: '#/$defs/Revision'}, consentRevision: {$ref: '#/$defs/Revision'},
+  SettingsResetResult: {type: object, properties: {resetId: {$ref: '#/$defs/Id'}, ack: {$ref: '#/$defs/Ack'}, inputBoundary: {$ref: '#/$defs/Revision'}, consentRevision: {$ref: '#/$defs/Revision'},
         disposition: {type: string, enum: [complete, pending, blocked]}, remainingScopeReasonKey: {$ref: '#/$defs/Id'}}, required: [
-        ack, inputBoundary, consentRevision, disposition], additionalProperties: false}
+        resetId, ack, inputBoundary, consentRevision, disposition], additionalProperties: false}
+  SettingsResetListInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, view: {type: string, enum: [outstanding, history]}, page: {$ref: '#/$defs/PageRequest'}}, required: [context, view, page], additionalProperties: false}
+  SettingsResetInspectInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, resetId: {$ref: '#/$defs/Id'}}, required: [context, resetId], additionalProperties: false}
+  SettingsResetSummary:
+    type: object
+    properties:
+      resetId: {$ref: '#/$defs/Id'}
+      action: {type: string, enum: [delete_behavior, reset_profile]}
+      acceptedAt: {$ref: '#/$defs/Time'}
+      acceptedSettingsRevision: {$ref: '#/$defs/Revision'}
+      inputBoundary: {$ref: '#/$defs/Revision'}
+      policyRef: {$ref: '#/$defs/PolicyRef'}
+      manifestRevision: {$ref: '#/$defs/Revision'}
+      statusRevision: {$ref: '#/$defs/Revision'}
+      observedAt: {$ref: '#/$defs/Time'}
+      disposition: {type: string, enum: [pending, blocked, complete]}
+      reasonKey: {$ref: '#/$defs/Id'}
+    required: [resetId, action, acceptedAt, acceptedSettingsRevision, inputBoundary, policyRef, manifestRevision, statusRevision, observedAt, disposition, reasonKey]
+    additionalProperties: false
+  SettingsResetScopeStatus:
+    type: object
+    properties:
+      participantId: {$ref: '#/$defs/Id'}
+      scopeId: {$ref: '#/$defs/Id'}
+      manifestRevision: {$ref: '#/$defs/Revision'}
+      workGeneration: {$ref: '#/$defs/Revision'}
+      disposition: {type: string, enum: [pending, blocked, complete]}
+      reasonKey: {$ref: '#/$defs/Id'}
+      evidenceRef: {oneOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}
+      updatedAt: {$ref: '#/$defs/Time'}
+    required: [participantId, scopeId, manifestRevision, workGeneration, disposition, reasonKey, evidenceRef, updatedAt]
+    additionalProperties: false
+  SettingsResetStatus:
+    type: object
+    properties:
+      reset: {$ref: '#/$defs/SettingsResetSummary'}
+      scopes: {type: array, minItems: 1, maxItems: 32, items: {$ref: '#/$defs/SettingsResetScopeStatus'}}
+    required: [reset, scopes]
+    additionalProperties: false
+  SettingsResetPage:
+    type: object
+    properties:
+      items: {type: array, maxItems: 50, items: {$ref: '#/$defs/SettingsResetSummary'}}
+      page: {$ref: '#/$defs/PageInfo'}
+      appliedLimit: {type: integer, minimum: 1, maximum: 50}
+      policyRef: {$ref: '#/$defs/PolicyRef'}
+    required: [items, page, appliedLimit, policyRef]
+    additionalProperties: false
+  AdmissionIdentity:
+    type: object
+    properties:
+      operation: {$ref: '#/$defs/UsageOperation'}
+      generation: {$ref: '#/$defs/Revision'}
+      accountId: {$ref: '#/$defs/Id'}
+      intentDigest: {$ref: '#/$defs/Hash'}
+      periodId: {$ref: '#/$defs/Id'}
+      quantities: {type: array, minItems: 1, maxItems: 16, items: {$ref: '#/$defs/UsageQuantity'}}
+      policyRef: {$ref: '#/$defs/PolicyRef'}
+    required: [operation, generation, accountId, intentDigest, periodId, quantities, policyRef]
+    additionalProperties: false
+  AdmissionIntent:
+    type: object
+    properties:
+      identity: {$ref: '#/$defs/AdmissionIdentity'}
+      state: {type: string, enum: [open, accepted, closed]}
+      revision: {$ref: '#/$defs/Revision'}
+      acceptedAt: {$ref: '#/$defs/Time'}
+      reservationId: {oneOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}
+      effectRef: {oneOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}
+    required: [identity, state, revision, acceptedAt, reservationId, effectRef]
+    additionalProperties: false
+  AdmissionClosedEvidence:
+    type: object
+    properties:
+      identity: {$ref: '#/$defs/AdmissionIdentity'}
+      state: {const: closed}
+      closureRevision: {$ref: '#/$defs/Revision'}
+      reasonKey: {$ref: '#/$defs/Id'}
+      closedAt: {$ref: '#/$defs/Time'}
+      evidenceRef: {$ref: '#/$defs/Id'}
+    required: [identity, state, closureRevision, reasonKey, closedAt, evidenceRef]
+    additionalProperties: false
+  AdmissionAllocateInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, identity: {$ref: '#/$defs/AdmissionIdentity'}}, required: [context, identity], additionalProperties: false}
+  AdmissionInspectInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, identity: {$ref: '#/$defs/AdmissionIdentity'}}, required: [context, identity], additionalProperties: false}
+  AdmissionAcceptInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, identity: {$ref: '#/$defs/AdmissionIdentity'}, reservationId: {$ref: '#/$defs/Id'}, effectRef: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, identity, reservationId, effectRef, expectedRevision], additionalProperties: false}
+  AdmissionCloseInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, identity: {$ref: '#/$defs/AdmissionIdentity'}, reasonKey: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, identity, reasonKey, expectedRevision], additionalProperties: false}
   SettingsConsentBoundaryInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, consent: {$ref: '#/$defs/AccessConsentRecord'}}, required: [
         context, consent], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary,
         never accepted from a public body.'}
@@ -2667,6 +2756,7 @@ invariants:
   writer is created.
 - Read and effect authorization uses current authority and owner context. UserId headers, submitted Principal objects and stale consent snapshots
   are not authority.
+- Local C02 authority guard participates in the caller's owner transaction through the trusted OwnerTransactions/guard seam. AccountAccess owns its SECURITY DEFINER guard functions and exposes no writer. Hold shared account/session/current consent locks until owner commit; revocation takes the competing exclusive lock. Lock order is authority, owner control, receipt/admission, sorted child keys. Full-session, primary-MFA and reactivation-status purposes are distinct. Administrator operations additionally require current role and nonexpired completed MFA. Separate-owner commits reauthorize independently; a prior guard is not transferable authority. Retry a serialization rollback only with unchanged command identity within finite deadline; commit transport loss remains UNKNOWN_OUTCOME.
 - Passwords, proof tokens, factor seeds, provider codes and session credentials are excluded from normal logs, errors and ordinary public output
   DTOs. The explicit single-use AccessMfaMaterial protected response is the only enrollment seed/recovery-code output; no-store, local-only QR
   rendering, client clearing and runtime redaction are mandatory. Secret schema annotations alone do not enforce any of these rules.
@@ -3058,6 +3148,48 @@ operations:
     latestRevision in Error.details. settings.read supplies the shared SettingsSnapshot control revision; each change advances it. Reset also
     advances a distinct inputBoundary; current consent is independent.
   surface: browser
+- name: settings.listResets
+  input: SettingsResetListInput
+  output: SettingsResetPage
+  auth: Current full-session owner only; no app-admin shortcut, browser owner field or mutation key.
+  errors: [INVALID_INPUT, UNAUTHENTICATED, FORBIDDEN, CONFLICT, POLICY_UNRESOLVED, DEPENDENCY_UNAVAILABLE]
+  semantics: Read only. Order acceptedAt/resetId descending. Cursor binds owner, current authority generation, view, last/high-water tuples, policy and expiry. Reapply current disposition filtering; outstanding includes all pending/blocked responsibilities irrespective of age and history includes retained complete responsibilities. A page is a traversal bound, not a frozen status snapshot. Expired cursor requires refresh; unavailable never means empty. No allocation, boundary change, worker claim or settlement is allowed. Outstanding obligations and suppression evidence cannot expire; completed history requires an explicit permitted retention policy.
+  surface: browser
+- name: settings.inspectReset
+  input: SettingsResetInspectInput
+  output: SettingsResetStatus
+  auth: Current full-session owner; foreign and absent IDs have the same safe NOT_FOUND result.
+  errors: [INVALID_INPUT, UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, POLICY_UNRESOLVED, DEPENDENCY_UNAVAILABLE]
+  semantics: Read only. Acceptance fields remain immutable; statusRevision is a per-reset monotonic decimal-string revision. Return every required scope from the accepted finite manifest, never a truncated subset. Complete requires current matching evidence for every scope. Missing/stale evidence is pending or blocked. Evidence invalidation reopens the same responsibility with increased statusRevision. UI rejects earlier revisions within the same reset and former owner generation; never compares unrelated settings revisions. Reads cannot create work, claim leases or advance the input boundary.
+  surface: browser
+- name: admission.allocate
+  input: AdmissionAllocateInput
+  output: AdmissionIntent
+  auth: Registered accepting owner only, current account authority and trusted operation identity/quantity/policy.
+  errors: [INVALID_INPUT, UNAUTHENTICATED, FORBIDDEN, CONFLICT, POLICY_UNRESOLVED, DEPENDENCY_UNAVAILABLE, UNKNOWN_OUTCOME]
+  semantics: Before reserve, durably allocate one open intent under accepting-owner storage. Same owner/operation/generation/digest replays original state; changed identity conflicts. Closed identity never reopens. This is a protocol implemented by each registered accepting owner, not Usage ownership of their work.
+  surface: internal
+- name: admission.inspect
+  input: AdmissionInspectInput
+  output: AdmissionIntent
+  auth: Registered accepting owner or specifically registered Usage reconciliation port; current purpose-limited authority.
+  errors: [INVALID_INPUT, UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, CONFLICT, DEPENDENCY_UNAVAILABLE]
+  semantics: Read original intent without mutation. Missing row, timeout or open observation is never proof authorizing reservation release.
+  surface: internal
+- name: admission.accept
+  input: AdmissionAcceptInput
+  output: AdmissionIntent
+  auth: Registered accepting owner only with current effect authority and matching authoritative reservation.
+  errors: [INVALID_INPUT, UNAUTHENTICATED, FORBIDDEN, CONFLICT, POLICY_UNRESOLVED, DEPENDENCY_UNAVAILABLE, UNKNOWN_OUTCOME]
+  semantics: Under authority then admission-row lock, atomically open-to-accepted with effect/responsibility, reservation reference and immutable receipt. Validate reservation account/operation/generation/digest/period/quantity/policy. No effect before this commit. Same accepted request replays; closed forbids delayed acceptance. No remote call inside the locked transaction.
+  surface: internal
+- name: admission.close
+  input: AdmissionCloseInput
+  output: AdmissionClosedEvidence
+  auth: Registered accepting owner only; independently authorized reconciliation purpose and exact original identity.
+  errors: [INVALID_INPUT, UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, CONFLICT, POLICY_UNRESOLVED, DEPENDENCY_UNAVAILABLE, UNKNOWN_OUTCOME]
+  semantics: Atomically compete with accept on the same owner admission row. Open-to-terminal-closed records immutable identity/revision/reason/time/evidence. Matching closed replay returns the original proof; accepted cannot close for nonacceptance. Usage obtains and verifies the proof through the trusted owner port before releasing exactly its original reservation. A client JSON proof, negative lookup, timeout, lease expiry or log is never sufficient. Retain terminal fences while delayed work or restore could occur. Refund after acceptance is a separate expressly permitted transition.
+  surface: internal
 - name: settings.applyConsentBoundary
   input: SettingsConsentBoundaryInput
   output: SettingsBehaviorResult
@@ -3258,7 +3390,7 @@ checks:
 - Onboarding select/skip/resume and ORCID failure remain usable; explicit defaults affect the real next action.
 - Concurrent reserve, duplicate settle, unknown usage, grant/revoke and period rollover reconcile one intended effect without free/zero assumptions.
 - Library, Personalization and UsageEntitlements each acknowledge only their own lifecycle scopes; unresolved backup/restore scope remains incomplete.
-version: 2.0.0
+version: 3.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -5117,7 +5249,7 @@ Only the operations explicitly listed here are externally mounted. A surface tag
 openapi: 3.1.1
 info:
   title: DocSuri application v2 boundary
-  version: 2.0.0
+  version: 3.0.0
   description: Proposed browser/application contracts; legacy removal requires consumer evidence and approved transition.
 servers:
 - url: /
@@ -7763,6 +7895,40 @@ paths:
           $ref: '#/components/responses/E504'
         default:
           $ref: '#/components/responses/Edefault'
+  /api/v2/c03/settings-resets:
+    get:
+      operationId: C03_settings.listResets
+      x-contract-operation: C03.settings.listResets
+      x-authorization: Current full-session owner only.
+      security: [{sessionCookie: []}]
+      parameters:
+      - {name: view, in: query, required: true, schema: {type: string, enum: [outstanding, history]}}
+      - {name: limit, in: query, required: true, schema: {type: integer, minimum: 1, maximum: 50}}
+      - {name: cursor, in: query, required: false, schema: {type: string, minLength: 1, maxLength: 4096}}
+      responses:
+        '200': {description: Authoritative bounded read, content: {application/json: {schema: {$ref: '#/components/schemas/SettingsResetPage'}}}}
+        '401': {$ref: '#/components/responses/E401'}
+        '403': {$ref: '#/components/responses/E403'}
+        '409': {$ref: '#/components/responses/E409'}
+        '422': {$ref: '#/components/responses/E422'}
+        '503': {$ref: '#/components/responses/E503'}
+        default: {$ref: '#/components/responses/Edefault'}
+  /api/v2/c03/settings-resets/{resetId}:
+    get:
+      operationId: C03_settings.inspectReset
+      x-contract-operation: C03.settings.inspectReset
+      x-authorization: Current full-session owner only; foreign and absent are indistinguishable.
+      security: [{sessionCookie: []}]
+      parameters:
+      - {name: resetId, in: path, required: true, schema: {$ref: '#/components/schemas/Id'}}
+      responses:
+        '200': {description: Authoritative status without new work, content: {application/json: {schema: {$ref: '#/components/schemas/SettingsResetStatus'}}}}
+        '401': {$ref: '#/components/responses/E401'}
+        '403': {$ref: '#/components/responses/E403'}
+        '404': {$ref: '#/components/responses/E404'}
+        '422': {$ref: '#/components/responses/E422'}
+        '503': {$ref: '#/components/responses/E503'}
+        default: {$ref: '#/components/responses/Edefault'}
   /api/v2/c03/settings-reset:
     post:
       operationId: C03_settings.reset
@@ -13240,6 +13406,8 @@ components:
     SettingsResetResult:
       type: object
       properties:
+        resetId:
+          $ref: '#/components/schemas/Id'
         ack:
           $ref: '#/components/schemas/Ack'
         inputBoundary:
@@ -13255,10 +13423,56 @@ components:
         remainingScopeReasonKey:
           $ref: '#/components/schemas/Id'
       required:
+      - resetId
       - ack
       - inputBoundary
       - consentRevision
       - disposition
+      additionalProperties: false
+    SettingsResetSummary:
+      type: object
+      properties:
+        resetId: {$ref: '#/components/schemas/Id'}
+        action: {type: string, enum: [delete_behavior, reset_profile]}
+        acceptedAt: {$ref: '#/components/schemas/Time'}
+        acceptedSettingsRevision: {$ref: '#/components/schemas/Revision'}
+        inputBoundary: {$ref: '#/components/schemas/Revision'}
+        policyRef: {$ref: '#/components/schemas/PolicyRef'}
+        manifestRevision: {$ref: '#/components/schemas/Revision'}
+        statusRevision: {$ref: '#/components/schemas/Revision'}
+        observedAt: {$ref: '#/components/schemas/Time'}
+        disposition: {type: string, enum: [pending, blocked, complete]}
+        reasonKey: {$ref: '#/components/schemas/Id'}
+      required: [resetId, action, acceptedAt, acceptedSettingsRevision, inputBoundary, policyRef, manifestRevision, statusRevision, observedAt, disposition, reasonKey]
+      additionalProperties: false
+    SettingsResetScopeStatus:
+      type: object
+      properties:
+        participantId: {$ref: '#/components/schemas/Id'}
+        scopeId: {$ref: '#/components/schemas/Id'}
+        manifestRevision: {$ref: '#/components/schemas/Revision'}
+        workGeneration: {$ref: '#/components/schemas/Revision'}
+        disposition: {type: string, enum: [pending, blocked, complete]}
+        reasonKey: {$ref: '#/components/schemas/Id'}
+        evidenceRef: {oneOf: [{$ref: '#/components/schemas/Id'}, {type: 'null'}]}
+        updatedAt: {$ref: '#/components/schemas/Time'}
+      required: [participantId, scopeId, manifestRevision, workGeneration, disposition, reasonKey, evidenceRef, updatedAt]
+      additionalProperties: false
+    SettingsResetStatus:
+      type: object
+      properties:
+        reset: {$ref: '#/components/schemas/SettingsResetSummary'}
+        scopes: {type: array, minItems: 1, maxItems: 32, items: {$ref: '#/components/schemas/SettingsResetScopeStatus'}}
+      required: [reset, scopes]
+      additionalProperties: false
+    SettingsResetPage:
+      type: object
+      properties:
+        items: {type: array, maxItems: 50, items: {$ref: '#/components/schemas/SettingsResetSummary'}}
+        page: {$ref: '#/components/schemas/PageInfo'}
+        appliedLimit: {type: integer, minimum: 1, maximum: 50}
+        policyRef: {$ref: '#/components/schemas/PolicyRef'}
+      required: [items, page, appliedLimit, policyRef]
       additionalProperties: false
     UsageOperation:
       type: object
