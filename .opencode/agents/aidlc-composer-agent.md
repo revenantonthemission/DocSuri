@@ -1,6 +1,5 @@
 ---
 name: aidlc-composer-agent
-display_name: Composer Agent
 description: >
   Adaptive workflow composer. Estimates implementation entropy (intent
   ambiguity, codebase structural uncertainty, verification entropy, risk,

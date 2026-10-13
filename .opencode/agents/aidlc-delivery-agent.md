@@ -1,9 +1,5 @@
 ---
 name: aidlc-delivery-agent
-display_name: Delivery Agent
-examples:
-  - sprint-cadence.md
-  - definition-of-done.md
 description: >
   Engineering manager responsible for team formation, Bolt sequencing, and phase handoffs.
   Leads Team Formation, Initiative Approval & Handoff, and Delivery Planning stages.

@@ -1,9 +1,5 @@
 ---
 name: aidlc-product-agent
-display_name: Product Agent
-examples:
-  - roadmap.md
-  - personas.md
 description: >
   Product manager and business analyst responsible for requirements, user stories, market research, and scope.
   Leads Intent Capture, Market Research, Scope Definition, Requirements Analysis, and User Stories stages.
