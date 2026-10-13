@@ -34,6 +34,13 @@ ASSISTANCE_DEFAULTS = {
 class GuardedSettingsService:
     def __init__(self, transactions: OwnerTransactions):
         self.transactions = transactions
+        # The old isolated U1 schema has only its research guard; U2 introduces
+        # an independent full-session account-control purpose.
+        self.purpose = (
+            "account-control"
+            if transactions.profile.realm == "account-controls"
+            else "local-research"
+        )
 
     @staticmethod
     def _snapshot(account: UUID, row: dict | None) -> dict:
@@ -56,7 +63,7 @@ class GuardedSettingsService:
     def read(self, authority: Authority) -> dict:
         def read(conn):
             # Manual defaults are usable without behavioral-personalization consent.
-            guard(conn, authority)
+            guard(conn, authority, purpose=self.purpose)
             row = conn.execute(
                 "SELECT * FROM personalization.settings WHERE account_id=%s",
                 (authority.account_id,),
@@ -78,7 +85,7 @@ class GuardedSettingsService:
         onboarding = {"save_interests": "in_progress", "complete": "completed", "skip": "skipped"}[
             action
         ]
-        selected = list(interests) if action != "skip" else []
+        selected = list(interests)
         expected_id = UUID(expected)
         fingerprint = hashlib.sha256(
             json.dumps(
@@ -88,7 +95,11 @@ class GuardedSettingsService:
         ).hexdigest()
 
         def write(conn):
-            guard(conn, authority)
+            guard(conn, authority, purpose=self.purpose)
+            conn.execute(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s,22))",
+                (str(authority.account_id),),
+            )
             prior = conn.execute(
                 "SELECT * FROM personalization.receipt WHERE account_id=%s "
                 "AND kind='onboarding' AND key=%s",
@@ -109,7 +120,7 @@ class GuardedSettingsService:
                 "searchDefaults": previous["searchDefaults"],
                 "assistanceDefaults": previous["assistanceDefaults"],
                 "onboarding": onboarding,
-                "interestIds": selected,
+                "interestIds": previous["interestIds"] if action == "skip" else selected,
             }
             row = conn.execute(
                 "INSERT INTO personalization.settings(account_id,revision,appearance,defaults) "
@@ -155,7 +166,11 @@ class GuardedSettingsService:
         fingerprint = hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
 
         def write(conn):
-            guard(conn, authority)
+            guard(conn, authority, purpose=self.purpose)
+            conn.execute(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s,22))",
+                (str(authority.account_id),),
+            )
             prior = conn.execute(
                 "SELECT * FROM personalization.receipt WHERE account_id=%s "
                 "AND kind='settings' AND key=%s",
@@ -173,7 +188,10 @@ class GuardedSettingsService:
             if previous["revision"] != str(expected_id):
                 raise ValueError("stale settings revision")
             merged = dict(previous, **changes)
-            defaults = {key: merged[key] for key in ("searchDefaults", "assistanceDefaults")}
+            defaults = {
+                key: merged[key]
+                for key in ("searchDefaults", "assistanceDefaults", "onboarding", "interestIds")
+            }
             row = conn.execute(
                 "INSERT INTO personalization.settings(account_id,revision,"
                 "appearance,defaults) VALUES(%s,%s,%s,%s) ON CONFLICT(account_id) DO UPDATE SET "

@@ -12,6 +12,47 @@ class GuardedDiscoveryRepository:
     def __init__(self, transactions: OwnerTransactions):
         self.transactions = transactions
 
+    def admit(self, authority: Authority, execution: UUID, query_hash: str) -> int:
+        """Persist U2 admission before search work, serialized with history clear."""
+        if self.transactions.profile.realm != "account-controls" or len(query_hash) != 64:
+            raise ValueError("U2 admission binding required")
+
+        def write(conn):
+            revision = guard(conn, authority)
+            conn.execute(
+                "INSERT INTO discovery.owner_admission(account_id) VALUES(%s) "
+                "ON CONFLICT DO NOTHING",
+                (authority.account_id,),
+            )
+            row = conn.execute(
+                "SELECT sequence FROM discovery.owner_admission WHERE account_id=%s FOR UPDATE",
+                (authority.account_id,),
+            ).fetchone()
+            prior = conn.execute(
+                "SELECT * FROM discovery.admission WHERE execution_id=%s", (execution,)
+            ).fetchone()
+            if prior:
+                if (
+                    prior["account_id"] != authority.account_id
+                    or prior["query_hash"] != query_hash
+                    or prior["authority_revision"] != revision
+                ):
+                    raise ValueError("search admission conflict")
+                return prior["sequence"]
+            sequence = row["sequence"] + 1
+            conn.execute(
+                "UPDATE discovery.owner_admission SET sequence=%s WHERE account_id=%s",
+                (sequence, authority.account_id),
+            )
+            conn.execute(
+                "INSERT INTO discovery.admission(execution_id,account_id,sequence,"
+                "authority_revision,query_hash) VALUES(%s,%s,%s,%s,%s)",
+                (execution, authority.account_id, sequence, revision, query_hash),
+            )
+            return sequence
+
+        return self.transactions.run("discovery", write)
+
     def candidates(self, authority: Authority | None) -> list[dict]:
         return self.snapshot(authority)["candidates"]
 
@@ -62,7 +103,20 @@ class GuardedDiscoveryRepository:
     ) -> dict:
         def write(conn):
             if authority:
-                guard(conn, authority)
+                revision = guard(conn, authority)
+                if self.transactions.profile.realm == "account-controls":
+                    admitted = conn.execute(
+                        "SELECT * FROM discovery.admission WHERE execution_id=%s",
+                        (execution,),
+                    ).fetchone()
+                    if (
+                        not admitted
+                        or admitted["account_id"] != authority.account_id
+                        or admitted["authority_revision"] != revision
+                        or admitted["query_hash"] != query_hash
+                        or admitted["sequence"] != generation
+                    ):
+                        raise PermissionError("missing or changed search admission")
             return conn.execute(
                 "INSERT INTO discovery.execution(id,account_id,query,query_hash,"
                 "captured_generation,results,relay_state) VALUES(%s,%s,%s,%s,%s,%s,%s) "

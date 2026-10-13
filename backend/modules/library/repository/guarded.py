@@ -35,6 +35,20 @@ def query_reference(query: dict, label: str | None = None) -> dict:
 class GuardedLibraryRepository:
     def __init__(self, transactions: OwnerTransactions):
         self.transactions = transactions
+        self.purpose = (
+            "account-control"
+            if transactions.profile.realm == "account-controls"
+            else "local-research"
+        )
+
+    def _guard(self, conn, authority, *, mutation=False):
+        revision = guard(conn, authority, purpose=self.purpose)
+        if mutation:
+            conn.execute(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s,23))",
+                (str(authority.account_id),),
+            )
+        return revision
 
     def save(
         self, authority: Authority, paper: str, version: str, key: UUID, expected: UUID | None
@@ -52,7 +66,7 @@ class GuardedLibraryRepository:
             raise ValueError("invalid page bound")
 
         def read(conn):
-            guard(conn, authority)
+            self._guard(conn, authority)
             rows = conn.execute(
                 "SELECT * FROM library.saved_paper WHERE account_id=%s ORDER BY saved_at DESC,"
                 "paper_id LIMIT %s",
@@ -73,7 +87,7 @@ class GuardedLibraryRepository:
         """Owner-side participant initialization; runs before the first history effect."""
 
         def write(conn):
-            guard(conn, authority)
+            self._guard(conn, authority, mutation=True)
             conn.execute(
                 "INSERT INTO library.history_boundary(account_id) VALUES(%s) "
                 "ON CONFLICT (account_id) DO NOTHING",
@@ -84,7 +98,7 @@ class GuardedLibraryRepository:
 
     def history_boundary(self, authority: Authority) -> dict:
         def read(conn):
-            guard(conn, authority)
+            self._guard(conn, authority)
             # The fresh boundary defaults to '-infinity', which is not a Python
             # datetime; callers need only the generation and revision tokens.
             row = conn.execute(
@@ -154,7 +168,7 @@ class GuardedLibraryRepository:
         value = query_reference(query, label)
 
         def write(conn):
-            guard(conn, authority)
+            self._guard(conn, authority, mutation=True)
             digest, previous = self._receipt(conn, authority, "save-query", key, value)
             if previous is not None:
                 return previous
@@ -189,7 +203,7 @@ class GuardedLibraryRepository:
         intent = {"resource": str(resource), "expectedRevision": str(expected)}
 
         def write(conn):
-            guard(conn, authority)
+            self._guard(conn, authority, mutation=True)
             digest, previous = self._receipt(conn, authority, operation, key, intent)
             if previous is not None:
                 return previous
@@ -217,7 +231,7 @@ class GuardedLibraryRepository:
 
     def read_query(self, authority: Authority, query: UUID) -> dict:
         def read(conn):
-            guard(conn, authority)
+            self._guard(conn, authority)
             row = conn.execute(
                 "SELECT * FROM library.saved_query WHERE account_id=%s AND id=%s",
                 (authority.account_id, query),
@@ -242,7 +256,7 @@ class GuardedLibraryRepository:
         }[kind]
 
         def read(conn):
-            guard(conn, authority)
+            self._guard(conn, authority)
             return conn.execute(query, (authority.account_id, limit)).fetchall()
 
         return self.transactions.run("library", read)

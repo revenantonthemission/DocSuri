@@ -51,6 +51,16 @@ MIGRATIONS = (
     ("library", "backend/modules/library/u2_controls.sql"),
     ("usage", "backend/modules/plans/u2_controls.sql"),
     ("assistance", "backend/modules/summarization/u2_controls.sql"),
+    ("accounts", "backend/modules/accounts/u2_consent_projection.sql"),
+    ("accounts", "backend/modules/accounts/u2_personalization_status.sql"),
+    ("corpus", "backend/modules/corpus/u2_personalization_read.sql"),
+    ("personalization", "backend/modules/personalization/u2_cleanup_permissions.sql"),
+    ("accounts", "backend/modules/accounts/u2_assignment_target.sql"),
+    ("accounts", "backend/modules/accounts/u2_consent_obligation.sql"),
+    ("accounts", "backend/modules/accounts/u2_personalization_effect.sql"),
+    ("discovery", "backend/modules/discovery/u2_history_admission.sql"),
+    ("library", "backend/modules/library/u2_history_binding.sql"),
+    ("accounts", "backend/modules/accounts/u2_history_authority_grant.sql"),
 )
 PHASES = (
     "setup",
