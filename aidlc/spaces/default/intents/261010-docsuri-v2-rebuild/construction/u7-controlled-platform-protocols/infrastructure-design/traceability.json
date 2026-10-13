@@ -1,0 +1,33 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "u7-controlled-platform-protocols",
+  "semantics": "Infrastructure-relevant U7 NFR design decisions mapped to the concrete resource or configuration. Numeric sizing values remain baseline-deferred; this is a design mapping, not a provisioned result.",
+  "upstream_source": "../nfr-design/traceability.json",
+  "upstream_ids": ["NFR1.1","NFR2.2","NFR3.1","NFR3.5","NFR3.7","NFR4.1","NFR4.6","NFR4.8","NFR5.1","NFR5.3","NFR7.1","NFR7.2","NFR8.1","NFR8.2","NFR8.3","NFR8.5","NFR8.6","NFR9.1","NFR9.3","NFR9.4","NFR9.5","NFR10.1","NFR10.2"],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "PlatformControl evidence table with binding + observedAt + generation" },
+    { "id": "NFR2.2", "status": "OK", "target": "bounded child executor with per-protocol deadline + resource cap" },
+    { "id": "NFR3.1", "status": "OK", "target": "append-only receipt table in the PlatformControl schema (durable across restart)" },
+    { "id": "NFR3.5", "status": "OK", "target": "guarded transaction acquiring the target lease + binding before effect" },
+    { "id": "NFR3.7", "status": "OK", "target": "receipt retention (no auto-delete) + operator-visible unresolved list" },
+    { "id": "NFR4.1", "status": "OK", "target": "owner-scoped SECURITY DEFINER guard functions + bounded consumer roles" },
+    { "id": "NFR4.6", "status": "OK", "target": "local OS-user-verified provisioning subcommand writing grants" },
+    { "id": "NFR4.8", "status": "OK", "target": "guard-function precondition re-check under the target lease" },
+    { "id": "NFR5.1", "status": "OK", "target": "field-validated schema columns; no secret/private-text columns" },
+    { "id": "NFR5.3", "status": "OK", "target": "structured local logs with safe correlation only" },
+    { "id": "NFR7.1", "status": "OK", "target": "U7-owned idempotent schema migration + documented local setup" },
+    { "id": "NFR7.2", "status": "OK", "target": "pinned shared Python environment; no unpinned runtime" },
+    { "id": "NFR8.1", "status": "OK", "target": "durable in-flight target lease row" },
+    { "id": "NFR8.2", "status": "OK", "target": "bounded record-size constraints; oversized input refused before effect" },
+    { "id": "NFR8.3", "status": "OK", "target": "finite queue bound (local table) with bounded refusal" },
+    { "id": "NFR8.5", "status": "OK", "target": "local process + local PostgreSQL only; no paid dependency" },
+    { "id": "NFR8.6", "status": "OK", "target": "per-effect child spawn; no background loop after completion" },
+    { "id": "NFR9.1", "status": "OK", "target": "receipt store as primary observable; local status view" },
+    { "id": "NFR9.3", "status": "OK", "target": "no hosted telemetry; C11 provider registration recorded coordination item" },
+    { "id": "NFR9.4", "status": "OK", "target": "correlation id on the operation/receipt as the trace key" },
+    { "id": "NFR9.5", "status": "OK", "target": "documented local log/receipt retention + file-permission access limits" },
+    { "id": "NFR10.1", "status": "OK", "target": "C10 wire types via the shared type registry; local JSON transport" },
+    { "id": "NFR10.2", "status": "OK", "target": "shared registry + explicit internal->wire projection; no parallel wire contract" }
+  ],
+  "reverse": []
+}

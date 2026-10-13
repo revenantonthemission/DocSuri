@@ -75,11 +75,23 @@
 
 
 
-- **Active Unit**: u7-controlled-platform-protocols
 
-- **Unit Stage**: nfr-requirements
 
-- **Unit State**: in-progress
+
+
+
+
+
+
+
+
+
+
+- **Parked**: 2026-10-13T10:27:24Z
+
+- **Parked At Stage**: functional-design
+
+- **Parked By**: person
 
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
@@ -142,7 +154,7 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-10-13T00:18:43Z
+- **Last Updated**: 2026-10-13T10:27:24Z
 
 - **Construction Autonomy Mode**: autonomous
 

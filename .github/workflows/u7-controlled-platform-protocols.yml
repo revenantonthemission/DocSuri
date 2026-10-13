@@ -1,0 +1,57 @@
+name: U7 controlled platform protocols
+
+# Targeted checks for the U7 controlled operator only. Mirrors U1's scoped
+# workflow: lint and collection run in CI; the database, executor and operations
+# phases require the owned disposable fixture environment (Docker PostgreSQL,
+# synthetic targets) and are recorded as unexecuted required evidence rather
+# than silently skipped. Nothing here deploys or exercises a real effect.
+
+on:
+  pull_request:
+    paths:
+      - "ops/src/docsuri_ops/platform_control/**"
+      - "scripts/*docsuri_u7*.py"
+      - "tests/u7_controlled_platform_protocols/**"
+      - "backend/pytest.u7-platform-control.ini"
+      - ".github/workflows/u7-controlled-platform-protocols.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Locked backend environment
+        run: uv sync --project backend --frozen
+      - name: Scoped lint (U7 paths)
+        run: >-
+          backend/.venv/bin/python -m ruff check
+          ops/src/docsuri_ops/platform_control
+          scripts/verify_docsuri_u7.py scripts/bootstrap_docsuri_u7.py
+          scripts/supervise_docsuri_u7.py
+          tests/u7_controlled_platform_protocols
+      - name: Scoped syntax/import gate
+        run: >-
+          backend/.venv/bin/python -c
+          "import docsuri_ops.platform_control.cli, docsuri_ops.platform_control.store,
+          docsuri_ops.platform_control.executor, docsuri_ops.platform_control.inventory"
+      - name: U7 component test (no fixture environment in CI)
+        run: >-
+          backend/.venv/bin/python -m pytest
+          -c backend/pytest.u7-platform-control.ini
+          tests/u7_controlled_platform_protocols/component -m u7_component -q
+      - name: U7 collection (all scopes)
+        run: >-
+          backend/.venv/bin/python -m pytest
+          -c backend/pytest.u7-platform-control.ini
+          tests/u7_controlled_platform_protocols --collect-only -q
+      - name: Required but unexecuted evidence
+        run: |
+          echo "::notice title=U7 phases not run in CI::Database, repository (guarded-store), integration (mounted executor) and operations phases require the owned disposable local PostgreSQL and synthetic targets; run scripts/verify_docsuri_u7.py --phase <phase> on a host with Docker. These phases are recorded as unexecuted required evidence, not a pass."
+      - name: Typecheck posture
+        run: |
+          echo "::notice title=U7 typecheck posture::No mypy/pyright checker is installed in this repository; U7 modules are fully annotated and strict decorators are absent. A dedicated type-check stage remains unexecuted required evidence."
