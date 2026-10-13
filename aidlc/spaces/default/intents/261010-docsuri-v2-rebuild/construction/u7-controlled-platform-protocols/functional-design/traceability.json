@@ -1,0 +1,30 @@
+{
+  "stage": "functional-design",
+  "unit": "u7-controlled-platform-protocols",
+  "semantics": "OK means the U7 design contribution is mapped (rules designed for every assigned acceptance row); it is not implementation, native-execution, parity or release readiness. FR20 is the parent rollup and FR20.1/FR20.2 are its acceptance rows; User Stories was skipped so inline FR acceptance text is authoritative. No rule is orphaned: every authored BRx.y appears in at least one coverage target.",
+  "upstream_source": "../../../inception/requirements-analysis/requirements.md",
+  "assignment_source": "../../../inception/units-generation/unit-of-work-story-map.md",
+  "upstream_ids": [
+    "FR20",
+    "FR20.1",
+    "FR20.2"
+  ],
+  "coverage": [
+    {
+      "id": "FR20",
+      "status": "OK",
+      "target": "BR1.1, BR1.2, BR1.3, BR1.4, BR1.5, BR2.1, BR2.2, BR2.3, BR2.4, BR2.5, BR2.6, BR2.7, BR3.1, BR3.2, BR3.3, BR3.4, BR3.5, BR3.6, BR3.7, BR4.1, BR4.2, BR4.3, BR4.4, BR4.5, BR4.6, BR4.7, BR5.1, BR5.2, BR5.3, BR5.4, BR5.5, BR6.1, BR6.2, BR6.3"
+    },
+    {
+      "id": "FR20.1",
+      "status": "OK",
+      "target": "BR1.1, BR1.2, BR1.3, BR1.4, BR1.5, BR5.4, BR5.5, BR6.1, BR6.2, BR6.3"
+    },
+    {
+      "id": "FR20.2",
+      "status": "OK",
+      "target": "BR2.1, BR2.2, BR2.3, BR2.4, BR2.5, BR2.6, BR2.7, BR3.1, BR3.2, BR3.3, BR3.4, BR3.5, BR3.6, BR3.7, BR4.1, BR4.2, BR4.3, BR4.4, BR4.5, BR4.6, BR4.7, BR5.1, BR5.2, BR5.3"
+    }
+  ],
+  "reverse": []
+}

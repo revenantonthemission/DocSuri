@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "reconciledFrom": [
+    "ops/server/docsurictl",
+    "ops/server/README.md",
+    "ops/server/run.sh",
+    "ops/server/heartbeat.sh",
+    "ops/runbooks/reembed-fast-rebuild.md",
+    "ops/cdk/stacks",
+    "ops/local-stack"
+  ],
+  "protocols": [
+    {
+      "name": "platform.file.write",
+      "displayName": "Bounded local target write",
+      "disposition": "retained-local",
+      "authorityClass": "routine",
+      "maxAgeSeconds": 300,
+      "deadlineSeconds": 30,
+      "effectKind": "file-write",
+      "nativeVerified": true,
+      "consumer": "ops-runbook",
+      "consumerImpact": "Local operator runbook keeps a bounded target write; no legacy command parity is promised (reference shows no external consumer).",
+      "notes": "Writes one bounded marker file inside an owned synthetic target directory; never an arbitrary path."
+    },
+    {
+      "name": "platform.file.probe",
+      "displayName": "Bounded local target probe",
+      "disposition": "retained-local",
+      "authorityClass": "routine",
+      "maxAgeSeconds": 60,
+      "deadlineSeconds": 10,
+      "effectKind": "file-probe",
+      "nativeVerified": true,
+      "consumer": "ops-runbook",
+      "consumerImpact": "Read-only local presence check retained; a read creates no effect.",
+      "notes": "Observes a bounded target fact through the real filesystem; refuses any caller-supplied path."
+    },
+    {
+      "name": "platform.credential.presence",
+      "displayName": "Local credential presence check",
+      "disposition": "retained-local",
+      "authorityClass": "routine",
+      "maxAgeSeconds": 120,
+      "deadlineSeconds": 10,
+      "effectKind": "credential-presence",
+      "nativeVerified": true,
+      "consumer": "ops-runbook",
+      "consumerImpact": "Credential presence is verified locally without exposing the credential value.",
+      "notes": "Real native check: the target credential file must exist as a non-empty regular file with owner-only (0600) permissions; only presence and mode are observed, never the secret content."
+    },
+    {
+      "name": "platform.target.release",
+      "displayName": "Synthetic target release",
+      "disposition": "retained-local",
+      "authorityClass": "destructive-release",
+      "maxAgeSeconds": 120,
+      "deadlineSeconds": 60,
+      "effectKind": "file-write",
+      "nativeVerified": true,
+      "consumer": "ops-runbook",
+      "consumerImpact": "Release-class effect kept behind its own destructive-release grant; synthetic targets only.",
+      "notes": "Exercised against synthetic targets only; a real release additionally needs the human operator at a real terminal."
+    },
+    {
+      "name": "evidence.http.read",
+      "displayName": "Authenticated evidence HTTP binding",
+      "disposition": "compatibility-dependent",
+      "authorityClass": "routine",
+      "maxAgeSeconds": 60,
+      "deadlineSeconds": 10,
+      "effectKind": "file-probe",
+      "nativeVerified": false,
+      "consumer": "ops-console",
+      "consumerImpact": "An authenticated evidence HTTP binding stays compatibility-dependent; it is never a public admin bypass and is not mounted here.",
+      "notes": "Recorded for parity; not implemented in this unit. The canonical interface is the local stdin/stdout JSON envelope."
+    },
+    {
+      "name": "platform.cdk.deploy",
+      "displayName": "Cloud (CDK) deployment",
+      "disposition": "not-implemented-under-0",
+      "authorityClass": "destructive-release",
+      "maxAgeSeconds": 300,
+      "deadlineSeconds": 60,
+      "effectKind": "file-write",
+      "nativeVerified": false,
+      "consumer": "legacy-deploy-cli",
+      "consumerImpact": "Cloud deployment is a recorded disposition, not a runtime dependency; no paid fallback is added under the $0 budget.",
+      "notes": "Recorded only; ops/cdk stacks are cloud-dependent and out of the $0/local budget."
+    },
+    {
+      "name": "platform.cloudwatch.publish",
+      "displayName": "CloudWatch metric publish",
+      "disposition": "not-implemented-under-0",
+      "authorityClass": "routine",
+      "maxAgeSeconds": 300,
+      "deadlineSeconds": 10,
+      "effectKind": "file-probe",
+      "nativeVerified": false,
+      "consumer": "ops-console",
+      "consumerImpact": "Hosted telemetry is not reproduced; monitoring is a local receipt-derived status view.",
+      "notes": "Recorded only; no paid telemetry vendor under the $0 budget."
+    },
+    {
+      "name": "platform.ses.notify",
+      "displayName": "SES notification send",
+      "disposition": "not-implemented-under-0",
+      "authorityClass": "routine",
+      "maxAgeSeconds": 300,
+      "deadlineSeconds": 10,
+      "effectKind": "file-probe",
+      "nativeVerified": false,
+      "consumer": "legacy-deploy-cli",
+      "consumerImpact": "Provider email notification is a recorded disposition; no paid fallback.",
+      "notes": "Recorded only; SES is a paid/cloud provider."
+    }
+  ],
+  "consumers": [
+    {
+      "consumer": "ops-runbook",
+      "legacySurface": "ops/server/docsurictl status",
+      "compatibility": "recorded-only",
+      "notes": "The local runbook has no external CLI contract; the canonical v2 envelope replaces it."
+    },
+    {
+      "consumer": "ops-console",
+      "legacySurface": "authenticated evidence HTTP binding",
+      "compatibility": "compatibility-dependent",
+      "notes": "Kept authenticated and bounded; never a public admin surface."
+    },
+    {
+      "consumer": "legacy-deploy-cli",
+      "legacySurface": "ops/cdk + CloudWatch + SES deploy/notify path",
+      "compatibility": "recorded-only",
+      "notes": "No real external consumer is evidenced; no legacy parity is invented."
+    }
+  ]
+}
