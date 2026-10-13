@@ -61,6 +61,11 @@ MIGRATIONS = (
     ("discovery", "backend/modules/discovery/u2_history_admission.sql"),
     ("library", "backend/modules/library/u2_history_binding.sql"),
     ("accounts", "backend/modules/accounts/u2_history_authority_grant.sql"),
+    ("accounts", "backend/modules/accounts/u2_lifecycle_effect.sql"),
+    ("accounts", "backend/modules/accounts/u2_lifecycle_action.sql"),
+    ("accounts", "backend/modules/accounts/u2_lifecycle_owner_grants.sql"),
+    ("library", "backend/modules/library/u2_erasure.sql"),
+    ("personalization", "backend/modules/personalization/u2_erasure.sql"),
 )
 PHASES = (
     "setup",

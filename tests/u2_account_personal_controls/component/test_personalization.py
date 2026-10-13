@@ -28,9 +28,16 @@ def personal(connect, authority, transactions):
         conn.execute(
             "DELETE FROM personalization.projection WHERE account_id=%s", (authority.account_id,)
         )
+        # Other isolated component cases exercise erasure of this fixture owner.
+        # When rebuilding the fixture, preserve the monotonic reset high-water.
         conn.execute(
-            "UPDATE personalization.settings SET defaults='{}',appearance='system',revision=%s WHERE account_id=%s",
-            (uuid4(), authority.account_id),
+            "INSERT INTO personalization.settings(account_id,revision,input_boundary) "
+            "SELECT %s,%s,COALESCE(max(input_boundary),0)+1 "
+            "FROM personalization.reset_responsibility WHERE account_id=%s "
+            "ON CONFLICT(account_id) DO UPDATE SET defaults='{}',appearance='system',"
+            "revision=excluded.revision,input_boundary=greatest(personalization.settings.input_boundary,"
+            "excluded.input_boundary)",
+            (authority.account_id, uuid4(), authority.account_id),
         )
     producer = ProducerBinding("CorpusContent")
     service = PersonalizationControlService(
