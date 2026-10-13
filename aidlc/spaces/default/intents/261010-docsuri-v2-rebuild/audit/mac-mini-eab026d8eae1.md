@@ -14981,3 +14981,67 @@
 **Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
 
 ---
+
+## Unit Started
+**Timestamp**: 2026-10-13T16:28:15Z
+**Event**: UNIT_STARTED
+**Stage**: code-generation
+**Unit**: u2-account-personal-controls
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T16:34:52Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/code-generation/code-generation-plan.md
+**Context**: construction > u2-account-personal-controls > code-generation > code-generation-plan.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T16:34:53Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/code-generation/unit-test-instructions.md
+**Context**: construction > u2-account-personal-controls > code-generation > unit-test-instructions.md
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-13T16:35:51Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Plan Approval Recorded
+**Timestamp**: 2026-10-13T16:36:00Z
+**Event**: PLAN_APPROVAL_RECORDED
+**Stage**: code-generation
+**Details**: Approve Plan
+**Checkpoint**: plan-approval
+**Plan Target**: unit:u2-account-personal-controls
+**Intent**: 01a125e9-2931-7fc6-8278-172e25327572
+**Directive Epoch**: sha256:65159b24697c563fffb1f344d468f0e8ea844947a45b73366f85a41a263cec1d
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+**Approval Fingerprint**: sha256:v3:b2fe7ab42bb876f5e84720c18a1082bf1c743bc479f4a53e42861b0a72f44d8d
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/code-generation/code-generation-questions.md
+**Questions SHA-256**: de76aedb60cf8c9cc9c0ddcfba528b61758276ed306cc33e8cc02a0d2a30035f
+**Prompt SHA-256**: 04a7f9b012b334729b68ff2ef3fd9a67654c5adedd1d605c3867005677d8627c
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+**Asked By**: engine
+**Person Reply**: <send_user_message_question_reply>\n[{"questionItemId":"[\"request_user_input_async\",\"call_07ce8acdc0dd44af9094e055f3447409\",0]","question":"Approve the code plan for u2-account-personal-controls?","answer":"Approve Plan"}]\n</send_user_message_question_reply>
+**Unit**: u2-account-personal-controls
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T16:40:39Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/code-generation/implementation-brief.txt
+**Context**: construction > u2-account-personal-controls > code-generation > implementation-brief.txt
+
+---
