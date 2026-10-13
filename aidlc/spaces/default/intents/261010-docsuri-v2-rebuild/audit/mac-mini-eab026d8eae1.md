@@ -14730,3 +14730,44 @@
 **Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
 
 ---
+
+## Unit Started
+**Timestamp**: 2026-10-13T14:55:54Z
+**Event**: UNIT_STARTED
+**Stage**: infrastructure-design
+**Unit**: u2-account-personal-controls
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-13T14:58:40Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/infrastructure-design/infrastructure-design-questions.md
+**Context**: construction > u2-account-personal-controls > infrastructure-design > infrastructure-design-questions.md
+
+---
+
+## Unit Paused
+**Timestamp**: 2026-10-13T14:58:43Z
+**Event**: UNIT_PAUSED
+**Stage**: infrastructure-design
+**Unit**: u2-account-personal-controls
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+**Reason**: Waiting for confirmation of the U2 Infrastructure Design summary
+**Next Action**: Record the human summary reply, resume this unit and generate the confirmed pipeline and integration design
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-13T14:58:43Z
+**Event**: DECISION_RECORDED
+**Stage**: infrastructure-design
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u2-account-personal-controls/infrastructure-design/infrastructure-design-questions.md
+**Unit**: u2-account-personal-controls
+
+---
