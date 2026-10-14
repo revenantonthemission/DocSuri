@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ApiError, Transport } from './api';
+import { ApiError, Transport, retryTransient } from './api';
 import { Notice, StatusLine, describeError, notice } from './ui';
 
 /** A lost acknowledgement retains one transient operation, never an automatic replay. */
@@ -115,13 +115,19 @@ export function useRead<T>(client: Transport, path: string, body: unknown = {}) 
     setLoading(true);
     setError(null);
     try {
-      const result = await client.read<T>(path, JSON.parse(bodyText));
+      // Reads are idempotent, so a bounded retry absorbs transient dependency
+      // or rate pressure; admission refusals (NOT_READY) surface for the
+      // explicit manual recovery, and a replaced generation still reports stale.
+      const result = await retryTransient(() => client.read<T>(path, JSON.parse(bodyText)));
       if (alive.current) setValue(result);
+      if (alive.current) setLoading(false);
       return result;
     } catch (failure) {
-      if (alive.current) setError(describeError(failure));
-    } finally {
-      if (alive.current) setLoading(false);
+      if (alive.current) {
+        setError(describeError(failure));
+        setLoading(false);
+      }
+      return undefined;
     }
   }, [client, path, bodyText]);
   useEffect(() => {

@@ -146,6 +146,8 @@ def fixture_discard(realm):
             "(SELECT id FROM personalization.reset_responsibility WHERE account_id = ANY(%s))",
             "DELETE FROM assistance.event WHERE job_id IN "
             "(SELECT id FROM assistance.job WHERE account_id = ANY(%s))",
+            "DELETE FROM accounts.mfa_recovery WHERE enrollment_id IN "
+            "(SELECT id FROM accounts.mfa_enrollment WHERE account_id = ANY(%s))",
             *(
                 f"DELETE FROM {schema}.lifecycle_evidence WHERE request_id IN "
                 "(SELECT id FROM accounts.lifecycle_request WHERE account_id = ANY(%s))"

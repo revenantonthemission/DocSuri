@@ -48,8 +48,9 @@ export default defineConfig({
   forbidOnly: true,
   workers: 1,
   retries: 0,
-  timeout: 60_000,
-  globalTimeout: 300_000,
+  // One bounded wait for the finite entry-admission minute window is allowed.
+  timeout: 200_000,
+  globalTimeout: 260_000,
   expect: { timeout: 10_000 },
   outputDir: join(directory, 'browser-evidence'),
   use: {
@@ -57,10 +58,28 @@ export default defineConfig({
     // Only this validated disposable loopback origin uses its self-signed cert.
     ignoreHTTPSErrors: true,
     trace: 'off',
+    // Failure evidence is the sanitized error context plus the helper's
+    // secret-free diagnostics; automatic media capture stays off.
     screenshot: 'off',
     video: 'off',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Keep the finite browser process tree inside its 1 GiB safety budget.
+        launchOptions: {
+          args: [
+            '--disable-dev-shm-usage',
+            '--disable-extensions',
+            '--renderer-process-limit=1',
+            '--js-flags=--max-old-space-size=256',
+          ],
+        },
+      },
+    },
+  ],
   // The owned Python runner supervises the actual host; never attach to an
   // arbitrary existing dev server or replace mounted routes with fixtures.
 });

@@ -41,6 +41,7 @@ test('consent revocation leaves manual settings usable and is separately reversi
   await openControls(page, 'account');
   await page.getByText('개인정보와 처리 동의', { exact: true }).click();
   const row = page.locator('.control-row').filter({ hasText: 'personalization' });
+  await expect(row).toBeVisible();
   if (await row.getByRole('button', { name: '처리 동의' }).isVisible()) {
     await row.getByRole('button', { name: '처리 동의' }).click();
     await expect(row).toContainText('동의함');

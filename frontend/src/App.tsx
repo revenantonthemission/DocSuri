@@ -17,6 +17,7 @@ import {
   SessionBootstrap,
   Transport,
   VOCABULARY,
+  retryTransient,
 } from './api';
 import { Notice, Panel, StatusLine, describeError, focusHeading, notice } from './ui';
 import { PaperWorkspace, SavedPaper } from './paper';
@@ -184,7 +185,11 @@ export default function App({ transport }: { transport?: Transport }) {
   const authorityChanged = useCallback(async () => {
     client.invalidateBoundary();
     announceAuthorityChange();
-    return refreshSession();
+    const value = await refreshSession();
+    // A completion or failure notice belongs to the entry that just ended;
+    // a signed-in session clears it rather than replaying stale text.
+    if (value.signedIn) setEntryNotice(null);
+    return value;
   }, [client, announceAuthorityChange, refreshSession]);
 
   useEffect(() => {
@@ -264,10 +269,11 @@ export default function App({ transport }: { transport?: Transport }) {
 
   useEffect(() => {
     let active = true;
-    client
-      .post<{ items: NavigationItem[] }>('/api/v2/c01/host-resolve-navigation', {
+    retryTransient(() =>
+      client.post<{ items: NavigationItem[] }>('/api/v2/c01/host-resolve-navigation', {
         routeId: 'search',
-      })
+      }),
+    )
       .then((value) => {
         if (active) setNavigation(value.items);
       })
@@ -435,8 +441,18 @@ export default function App({ transport }: { transport?: Transport }) {
                   onSignedIn={authorityChanged}
                   onLifecycle={setLifecycleId}
                   initialProof={initialProof}
-                  onProofConsumed={() => setInitialProof(null)}
-                  onProofComplete={() => setProofActive(false)}
+                  // A pending protected link survives the bootstrap boundary
+                  // remount; it clears only when its flow actually completes.
+                  onProofConsumed={() => setProofActive(true)}
+                  onProofComplete={() => {
+                    setInitialProof(null);
+                    setProofActive(false);
+                    // The authority refresh remounts this panel; the completion
+                    // notice survives at the shell so it is never lost.
+                    setEntryNotice(
+                      notice('polite', '인증 요청을 확인했어요. 필요한 경우 다시 로그인해 주세요'),
+                    );
+                  }}
                 />
               ) : (
                 <EntryPanel

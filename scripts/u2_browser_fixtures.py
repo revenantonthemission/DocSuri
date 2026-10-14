@@ -2,7 +2,9 @@
 
 This CLI is a local test harness, never an HTTP endpoint. Secrets are written to
 owner-only files; stdout contains only their fixed paths and the run identity.
-Existing accounts and their saved work are never reset by repeated setup.
+Existing accounts and their saved work are never reset by repeated setup; only
+this journey's explicitly disposable registration/lifecycle identities rotate
+(with admin-side discard) when they cannot be reused.
 """
 
 from __future__ import annotations
@@ -17,6 +19,9 @@ import sys
 import time
 from pathlib import Path
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
+
+import psycopg
+from psycopg.types.json import Jsonb
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -95,7 +100,81 @@ def proof_for(entry, email: str, purpose: str) -> dict:
     return entry.transactions.run("accounts", read)
 
 
-def setup(entry, path: Path, run_id: str) -> dict:
+DISCARD_TABLES = (
+    "accounts",
+    "assistance",
+    "corpus",
+    "discovery",
+    "library",
+    "operations",
+    "personalization",
+    "usage",
+)
+
+
+def discard_owner(profile, account_id: str) -> None:
+    """Admin-side removal of exactly one rotated disposable browser fixture."""
+    from psycopg.rows import dict_row
+
+    credentials = json.loads((profile.root / "migration-credentials.json").read_text())
+    conn = psycopg.connect(
+        host="127.0.0.1",
+        port=profile.database_port,
+        dbname=profile.database_name,
+        user="postgres",
+        password=credentials["databaseAdminPassword"],
+        connect_timeout=3,
+        row_factory=dict_row,
+    )
+    try:
+        conn.execute("SET session_replication_role = replica")
+        for statement in (
+            "DELETE FROM accounts.lifecycle_scope WHERE request_id IN "
+            "(SELECT id FROM accounts.lifecycle_request WHERE account_id = ANY(%s))",
+            "DELETE FROM accounts.lifecycle_evidence WHERE request_id IN "
+            "(SELECT id FROM accounts.lifecycle_request WHERE account_id = ANY(%s))",
+            "DELETE FROM accounts.delivery WHERE challenge_id IN "
+            "(SELECT id FROM accounts.challenge WHERE account_id = ANY(%s))",
+            "DELETE FROM personalization.reset_scope WHERE reset_id IN "
+            "(SELECT id FROM personalization.reset_responsibility WHERE account_id = ANY(%s))",
+            "DELETE FROM assistance.event WHERE job_id IN "
+            "(SELECT id FROM assistance.job WHERE account_id = ANY(%s))",
+            "DELETE FROM accounts.mfa_recovery WHERE enrollment_id IN "
+            "(SELECT id FROM accounts.mfa_enrollment WHERE account_id = ANY(%s))",
+            *(
+                f"DELETE FROM {schema}.lifecycle_evidence WHERE request_id IN "
+                "(SELECT id FROM accounts.lifecycle_request WHERE account_id = ANY(%s))"
+                for schema in ("library", "personalization", "discovery", "usage", "assistance")
+            ),
+        ):
+            conn.execute(statement, ([account_id],))
+        for row in conn.execute(
+            "SELECT table_schema,table_name FROM information_schema.columns "
+            "WHERE column_name='account_id' AND table_schema = ANY(%s)",
+            (list(DISCARD_TABLES),),
+        ).fetchall():
+            conn.execute(
+                f'DELETE FROM "{row["table_schema"]}"."{row["table_name"]}" '
+                "WHERE account_id = ANY(%s)",
+                ([account_id],),
+            )
+        conn.execute("DELETE FROM accounts.account WHERE id = ANY(%s)", ([account_id],))
+        conn.execute("SET session_replication_role = origin")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def rotate(record: dict, alias: str, run_id: str) -> None:
+    item = record["accounts"][alias]
+    item["email"] = f"{alias}-{run_id[-8:]}-{secrets.token_hex(4)}@browser.example.com"
+    item["password"] = "Synthetic!" + secrets.token_hex(16)
+    item["ready"] = False
+    item.pop("accountId", None)
+    item.pop("seed", None)
+
+
+def setup(entry, path: Path, run_id: str, profile) -> dict:
     if path.exists():
         record = private_json(path)
         if record["runId"] != run_id or set(record["accounts"]) != set(ALIASES):
@@ -113,11 +192,25 @@ def setup(entry, path: Path, run_id: str) -> dict:
             },
         }
         private_json(path, record)
+    # The lifecycle journey withdraws its account and reactivation stays pending
+    # by design, so that disposable identity rotates instead of poisoning login.
+    lifecycle = record["accounts"]["lifecycle"]
+    existing = entry.transactions.run(
+        "accounts",
+        lambda conn, lifecycle=lifecycle: conn.execute(
+            "SELECT id,lifecycle_state FROM accounts.account WHERE email=%s",
+            (lifecycle["email"],),
+        ).fetchone(),
+    )
+    if existing and existing["lifecycle_state"] != "active":
+        discard_owner(profile, str(existing["id"]))
+        rotate(record, "lifecycle", run_id)
+        private_json(path, record)
     for alias in ALIASES[:-1]:
         item = record["accounts"][alias]
         if item["ready"]:
             continue
-        flow = str(uuid5(NAMESPACE_URL, run_id + ":browser:" + alias))
+        flow = str(uuid5(NAMESPACE_URL, run_id + ":browser:" + alias + ":" + item["email"]))
         operation = uuid5(NAMESPACE_URL, flow + ":register")
         existing = entry.transactions.run(
             "accounts",
@@ -180,7 +273,99 @@ def setup(entry, path: Path, run_id: str) -> dict:
         entry.logout(Authority(UUID(state["accountId"]), UUID(state["sessionId"])))
         item["ready"] = True
         private_json(path, record)
+    # The registration journey must start from an unverified address. Existing
+    # registered accounts are never reset; when no fresh verification can be
+    # delivered, only this journey's disposable identity rotates.
+    registration = record["accounts"]["registration"]
+    existing = entry.transactions.run(
+        "accounts",
+        lambda conn, registration=registration: conn.execute(
+            "SELECT id,verified FROM accounts.account WHERE email=%s",
+            (registration["email"],),
+        ).fetchone(),
+    )
+    reusable = existing is None
+    if existing and not existing["verified"]:
+        try:
+            proof_for(entry, registration["email"], "verify")
+            reusable = True
+        except ValueError:
+            reusable = False
+    if not reusable:
+        if existing:
+            discard_owner(profile, str(existing["id"]))
+        rotate(record, "registration", run_id)
+        private_json(path, record)
     return record
+
+
+def seed_corpus(transactions) -> None:
+    """One deterministic readable/searchable fixture; idempotent by identity."""
+    document = {
+        "document": {
+            "sections": [
+                {
+                    "id": "abstract",
+                    "title": "Abstract",
+                    "blocks": [
+                        {
+                            "id": "abstract-1",
+                            "type": "paragraph",
+                            "text": "Attention mechanisms transform sequence modeling. "
+                            "Synthetic fixture content for browser verification.",
+                        }
+                    ],
+                },
+                {
+                    "id": "method",
+                    "title": "Method",
+                    "blocks": [
+                        {
+                            "id": "method-1",
+                            "type": "paragraph",
+                            "text": "The fixture method keeps deterministic searchable text.",
+                        }
+                    ],
+                },
+            ]
+        }
+    }
+    chunks = (
+        ("abstract-1", "Abstract"),
+        ("method-1", "Method"),
+    )
+    revision = uuid5(NAMESPACE_URL, transactions.profile.run_id + ":browser:corpus:revision")
+
+    def write(conn):
+        conn.execute(
+            "INSERT INTO corpus.paper(id,title,authors,published_on,metadata) "
+            "VALUES('u2-browser-paper','Attention Is All You Need (synthetic fixture)',%s,'2017-06-12',%s) "
+            "ON CONFLICT(id) DO NOTHING",
+            (Jsonb(["Synthetic Author"]), Jsonb({"localResearchOnly": True})),
+        )
+        conn.execute(
+            "INSERT INTO corpus.version(id,paper_id,source_url,source_hash,version_label,"
+            "private_path,eligible,purpose,eligibility_revision,provenance,content) "
+            "VALUES('u2-browser-version','u2-browser-paper','https://fixture.invalid/browser',%s,"
+            "'u2-browser','fixture',true,'local-research',%s,%s,%s) ON CONFLICT(id) DO UPDATE "
+            "SET eligible=true,purpose='local-research',eligibility_revision=excluded.eligibility_revision",
+            ("a" * 64, revision, Jsonb({"fixtureOnly": True}), Jsonb(document)),
+        )
+        conn.execute("DELETE FROM corpus.projection WHERE version_id='u2-browser-version'")
+        for ordinal, (anchor, section) in enumerate(chunks):
+            text = next(
+                block["text"]
+                for candidate in document["document"]["sections"]
+                for block in candidate["blocks"]
+                if block["id"] == anchor
+            )
+            conn.execute(
+                "INSERT INTO corpus.projection(version_id,ordinal,content_hash,anchor,section,text_content) "
+                "VALUES('u2-browser-version',%s,%s,%s,%s,%s)",
+                (ordinal, "a" * 64, anchor, section, text),
+            )
+
+    transactions.run("corpus", write)
 
 
 def main():
@@ -207,7 +392,8 @@ def main():
         path = profile.root / "browser-fixtures.json"
         entry = ControlEntryService(transactions, SYNTHETIC_POLICY)
         if args.action == "setup":
-            setup(entry, path, profile.run_id)
+            setup(entry, path, profile.run_id, profile)
+            seed_corpus(transactions)
             output = path
         else:
             record = private_json(path)

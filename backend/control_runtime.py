@@ -42,6 +42,18 @@ def recovery_route(method: str, path: str) -> bool:
     )
 
 
+def shell_route(method: str, path: str) -> bool:
+    """Static workspace bytes and the in-memory catalogue; no owner-store work.
+
+    Capacity admission governs owner work, never loading the application shell:
+    a not-yet-observed capacity must not make the workspace unloadable. Every
+    shell request still passes the origin/HTTPS boundary middleware.
+    """
+    return method == "GET" and (
+        path == "/api/v2/capabilities" or not path.startswith("/api/")
+    )
+
+
 @contextmanager
 def work_budget(seconds: float):
     token = WORK_DEADLINE.set(time.monotonic() + seconds)
@@ -126,6 +138,8 @@ class ControlAdmission:
 
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        if shell_route(scope["method"], scope["path"]):
             return await self.app(scope, receive, send)
         recovery = recovery_route(scope["method"], scope["path"])
         lane = int(recovery)

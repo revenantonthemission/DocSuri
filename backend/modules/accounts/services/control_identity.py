@@ -77,7 +77,7 @@ class ControlIdentityService:
         if (
             provider not in self.providers
             or intent not in ("sign_in", "link")
-            or route not in ("search", "library", "settings")
+            or route not in ("search", "paper", "library", "settings", "usage", "jobs", "account")
         ):
             raise ValueError("identity flow input unavailable")
         if intent == "link" and authority is None:

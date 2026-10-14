@@ -134,6 +134,22 @@ def test_wrong_password_never_changes_authority(browser):
     assert read_profile(browser) == before
 
 
+def test_error_envelopes_redact_submitted_secrets(browser):
+    marker = "SyntheticLeakCanary!2026"
+    response = post(
+        browser,
+        "access-change-password",
+        {"currentPassword": marker, "newPassword": marker},
+    )
+    assert response.status_code in (403, 409, 422)
+    assert marker not in response.text
+    assert response.headers.get("cache-control") == "no-store"
+    assert response.headers.get("x-content-type-options") == "nosniff"
+    assert set(response.json()) >= {"code", "messageKey", "requestId", "retryable"}
+    assert "set-cookie" not in {key.lower() for key in response.headers}
+    assert browser.get("/api/v2/session").json()["signedIn"]
+
+
 def test_password_reset_ack_hides_account_existence(browser):
     responses = [
         post(

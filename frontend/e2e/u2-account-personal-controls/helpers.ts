@@ -3,8 +3,10 @@ import { execFileSync } from 'node:child_process';
 import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createHmac, randomUUID } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { expect, Page } from '@playwright/test';
-const root = resolve(process.cwd(), '..');
+// Independent of the invoking working directory (runner runs from the root).
+const root = fileURLToPath(new URL('../../..', import.meta.url));
 const directory = realpathSync('/tmp/docsuri-u2-run');
 export const policy = { policyId: 'u2-synthetic-v1', revision: '1' };
 export type Account = { email: string; password: string; accountId: string; seed?: string };
@@ -44,17 +46,41 @@ export function helper(action: 'setup' | 'proof' | 'totp', alias?: string, purpo
 }
 export const fixtures = (): Fixture => privateJson('browser-fixtures.json');
 export async function login(page: Page, account: Account, admin = false) {
-  await page.goto('/');
-  await page.getByLabel('이메일', { exact: true }).fill(account.email);
-  await page.getByLabel('비밀번호', { exact: true }).fill(account.password);
-  await page.getByTestId('entry-submit').click();
-  if (admin) {
-    await page.getByLabel('인증 앱 코드').waitFor();
-    const value = helper('totp', 'admin');
-    await page.getByLabel('인증 앱 코드').fill(value.proof);
-    await page.getByTestId('entry-submit').click();
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      await page.goto('/');
+      await page.getByLabel('이메일', { exact: true }).waitFor({ state: 'attached', timeout: 20_000 });
+      await page.getByLabel('이메일', { exact: true }).fill(account.email);
+      await page.getByLabel('비밀번호', { exact: true }).fill(account.password);
+      await page.getByTestId('entry-submit').click();
+      if (admin) {
+        await page.getByLabel('인증 앱 코드').waitFor({ timeout: 10_000 });
+        const value = helper('totp', 'admin');
+        await page.getByLabel('인증 앱 코드').fill(value.proof);
+        await page.getByTestId('entry-submit').click();
+      }
+      // The finite entry-admission bucket refills on the minute boundary; a
+      // journey suite may legitimately consume it, so retry once within the
+      // same bounded window instead of weakening the product limit.
+      await page.getByTestId('logout').waitFor({ state: 'visible', timeout: 10_000 });
+      return;
+    } catch (failure) {
+      // Bounded, secret-free diagnostics: no body text, credentials or codes.
+      const diagnostics = await Promise.race([
+        page
+          .context()
+          .cookies()
+          .then((cookies) => ({ url: page.url(), cookies: cookies.map((cookie) => cookie.name) })),
+        new Promise((resolve) => setTimeout(() => resolve('diagnostics-timeout'), 3000)),
+      ]).catch(() => 'diagnostics-failed');
+      if (attempt === 1) throw failure;
+      // Retry after the next minute boundary, when the finite entry-admission
+      // bucket refills; the wait is bounded by one minute window.
+      const wait = Math.max(2_000, 61_000 - (Date.now() % 60_000));
+      console.log(`login-retry ${JSON.stringify(diagnostics)}`);
+      await page.waitForTimeout(wait);
+    }
   }
-  await expect(page.getByTestId('logout')).toBeVisible();
 }
 export async function post(page: Page, path: string, body: unknown, key = randomUUID()) {
   return page.evaluate(

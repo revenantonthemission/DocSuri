@@ -193,6 +193,50 @@ def test_absent_assignment_is_read_only(transactions, authority, connect):
         conn.execute("UPDATE accounts.account SET active=false WHERE id=%s", (account,))
 
 
+def test_usage_records_keep_original_period_without_writes(transactions, authority, connect):
+    from backend.modules.plans.control_service import ControlUsageService
+
+    reservation = uuid4()
+    with connect("usage") as conn:
+        conn.execute(
+            "INSERT INTO usage.entitlement(account_id,allocation,policy) "
+            "VALUES(%s,3,'u2-synthetic-v1') ON CONFLICT DO NOTHING",
+            (authority.account_id,),
+        )
+        conn.execute(
+            "INSERT INTO usage.reservation(id,account_id,operation_id,intent_hash,disposition,period_id) "
+            "VALUES(%s,%s,%s,%s,'reserved','original-acceptance-period')",
+            (reservation, authority.account_id, uuid4(), "f" * 64),
+        )
+
+    def snapshot():
+        with connect("usage") as conn:
+            return conn.execute(
+                "SELECT id,disposition,period_id,quantity,xmin::text FROM usage.reservation "
+                "WHERE account_id=%s ORDER BY id",
+                (authority.account_id,),
+            ).fetchall()
+
+    before = snapshot()
+    service = ControlUsageService(transactions, SYNTHETIC_POLICY)
+    page = service.records(authority, {"limit": 50}, ControlCursor(b"u" * 32))
+    items = [item for item in page["items"] if item["usageRecordId"] == str(reservation)]
+    assert items and items[0]["periodId"] == "original-acceptance-period"
+    assert snapshot() == before
+    with connect("usage") as conn:
+        conn.execute("DELETE FROM usage.reservation WHERE id=%s", (reservation,))
+
+
+def test_missing_store_fails_instead_of_substituting_success(realm, authority):
+    """A closed owner facility is never answered from an in-memory fallback."""
+    from backend.transactions import OwnerTransactions
+
+    closed = OwnerTransactions(realm[0])
+    closed.close()
+    with pytest.raises(ValueError, match="closed or unknown owner pool"):
+        GuardedUsageRepository(closed).inspect_assignment(authority)
+
+
 def test_profile_receipt_survives_new_revision(transactions, authority):
     from uuid import UUID
 

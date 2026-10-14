@@ -132,7 +132,9 @@ class ControlMfaService:
                 "SELECT floor(extract(epoch FROM clock_timestamp())/30)::bigint AS step"
             ).fetchone()["step"]
         )
-        for candidate in (step, step - 1):
+        # Standard +-1 time-step drift, with strictly monotonic replay
+        # prevention: an accepted step can never be presented again.
+        for candidate in (step, step - 1, step + 1):
             if (row["last_step"] is None or candidate > row["last_step"]) and hmac.compare_digest(
                 totp(seed, candidate), code
             ):

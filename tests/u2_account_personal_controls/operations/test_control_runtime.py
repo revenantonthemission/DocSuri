@@ -13,6 +13,7 @@ from backend.control_runtime import (
     ControlAdmission,
     ControlLoop,
     recovery_route,
+    shell_route,
     work_budget,
 )
 
@@ -130,7 +131,9 @@ def test_disconnect_and_exception_release_only_their_slot():
         async def send(message):
             pytest.fail("disconnected request emitted response")
 
-        await app({"type": "http", "path": "/", "method": "GET"}, disconnect, send)
+        await app(
+            {"type": "http", "path": "/api/v2/c02/access-login", "method": "POST"}, disconnect, send
+        )
         assert app.active == [0, 0] and not RECOVERY_REQUEST.get()
 
     asyncio.run(scenario())
@@ -300,6 +303,36 @@ def test_capacity_probe_stops_new_work_at_threshold_and_on_failure():
     with pytest.raises(ValueError, match="observation"):
         capacity.refresh()
     assert not capacity.admitting
+
+
+def test_shell_route_is_exempt_from_capacity_admission():
+    assert shell_route("GET", "/")
+    assert shell_route("GET", "/assets/index-abc123.js")
+    assert shell_route("GET", "/api/v2/capabilities")
+    for method, path in [
+        ("GET", "/api/v2/session"),
+        ("POST", "/"),
+        ("GET", "/api/v2/c02/access-read-profile"),
+    ]:
+        assert not shell_route(method, path)
+
+
+def test_capacity_stop_keeps_the_workspace_shell_loadable():
+    async def scenario():
+        seen = []
+        capacity = SimpleNamespace(admitting=False)
+
+        async def downstream(scope, receive, send):
+            seen.append(scope["path"])
+
+        app = ControlAdmission(downstream, capacity=capacity)
+        await request(app, "/", method="GET")
+        await request(app, "/assets/index-abc.js", method="GET")
+        await request(app, "/api/v2/capabilities", method="GET")
+        assert seen == ["/", "/assets/index-abc.js", "/api/v2/capabilities"]
+        assert (await request(app))[0]["status"] == 503
+
+    asyncio.run(scenario())
 
 
 def test_capacity_stop_keeps_authenticated_recovery_routes_available():

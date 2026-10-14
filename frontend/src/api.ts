@@ -79,6 +79,26 @@ export class ApiError extends Error {
   }
 }
 
+/** Bounded retry for idempotent reads under transient dependency pressure. */
+export async function retryTransient<T>(work: () => Promise<T>, attempts = 2): Promise<T> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await work();
+    } catch (failure) {
+      // Admission refusals are retryable only for the finite capacity message;
+      // any other NOT_READY state stays visible for explicit manual recovery.
+      const transient =
+        failure instanceof ApiError &&
+        (failure.envelope.code === 'DEPENDENCY_UNAVAILABLE' ||
+          failure.envelope.code === 'RATE_LIMITED' ||
+          (failure.envelope.code === 'NOT_READY' &&
+            failure.envelope.messageKey === 'capacity.exhausted'));
+      if (!transient || attempt >= attempts) throw failure;
+      await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+    }
+  }
+}
+
 const SAFE_CODES = new Set([
   'APPROVAL_REQUIRED',
   'CONFLICT',

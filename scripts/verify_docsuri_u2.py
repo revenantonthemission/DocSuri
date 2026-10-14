@@ -571,6 +571,12 @@ def migrate(path: Path, *, base_only: bool = False) -> dict:
     }
 
 
+def _stop_owned(process) -> None:
+    from scripts.prepare_docsuri_u2_browser import stop
+
+    stop(process)
+
+
 def run_phase(phase: str, path: Path) -> dict:
     _, value = manifest(path)
     require_resources(value)
@@ -595,16 +601,28 @@ def run_phase(phase: str, path: Path) -> dict:
             "test/u2-account-personal-controls",
         ]
     elif phase == "browser":
+        # Owned fixture preparation precedes the journey suite; it is idempotent
+        # and discards only its disposable identities. The finite entry-admission
+        # bucket then starts this phase from a known fresh minute window.
+        require(
+            [
+                str(PYTHON),
+                str(ROOT / "scripts/u2_browser_fixtures.py"),
+                "--environment-file",
+                str(path),
+                "--action",
+                "setup",
+            ]
+        )
+        with connect_admin(value) as conn:
+            conn.execute("DELETE FROM accounts.entry_budget")
         args = [
-            "corepack",
-            "pnpm@9.15.9",
-            "--dir",
-            "frontend",
-            "exec",
-            "playwright",
+            # The frozen local Playwright binary; the corepack/pnpm wrapper
+            # would add its own Node processes to the bounded browser tree.
+            str(ROOT / "frontend/node_modules/.bin/playwright"),
             "test",
             "--config",
-            "playwright.u2-account-controls.config.ts",
+            "frontend/playwright.u2-account-controls.config.ts",
             "--max-failures=1",
         ]
     else:
@@ -625,6 +643,51 @@ def run_phase(phase: str, path: Path) -> dict:
     report.unlink(missing_ok=True)  # A previous report can never certify this run.
     before = source_identity()
     start = time.monotonic()
+    server = None
+    if phase == "browser":
+        # The owned Python supervisor runs the actual host for this phase only;
+        # Playwright never attaches to an arbitrary existing listener.
+        from docsuri_ops.local_transport import inspect_transport
+
+        from backend.local_profile import LocalProfile
+
+        inspect_transport(LocalProfile.load(path))
+        with socket.socket() as probe:
+            if probe.connect_ex(("127.0.0.1", APPLICATION_PORT)) == 0:
+                raise Refused("owned U2 listener is already occupied")
+        server = subprocess.Popen(
+            [
+                str(PYTHON),
+                str(ROOT / "scripts/serve_docsuri_u2.py"),
+                "--environment-file",
+                str(path),
+            ],
+            cwd=ROOT,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
+            umask=0o077,
+            env={
+                **{key: os.environ[key] for key in ("PATH", "HOME", "TMPDIR", "LANG") if key in os.environ},
+                "PYTHONPATH": str(ROOT),
+            },
+        )
+        try:
+            ready_deadline = time.monotonic() + 30
+            while True:
+                if server.poll() is not None:
+                    raise Refused("owned U2 server exited before the browser phase")
+                with socket.socket() as probe:
+                    if probe.connect_ex(("127.0.0.1", APPLICATION_PORT)) == 0:
+                        break
+                if time.monotonic() >= ready_deadline:
+                    raise Refused("owned U2 server did not become ready")
+                time.sleep(0.25)
+        except BaseException:
+            _stop_owned(server)
+            server = None
+            raise
     process_evidence, failure = {}, None
     try:
         process_evidence = bounded_process(
@@ -636,6 +699,9 @@ def run_phase(phase: str, path: Path) -> dict:
         # Preserve only the failure category in transferable evidence. Private
         # bounded logs retain detailed diagnostics without exposing proof values.
         failure = type(error).__name__
+    finally:
+        if server is not None:
+            _stop_owned(server)
     evidence = {
         "phase": phase,
         "runId": value["runId"],
@@ -701,6 +767,11 @@ def main() -> int:
     ):
         raise Refused("only the U2 owned manifest is accepted")
     args.environment_file = args.environment_file.resolve()
+    if args.phase == "browser" and Path(sys.executable).resolve() != PYTHON.resolve():
+        # The browser phase owns fixture preparation and the finite admission
+        # window, which need the frozen backend runtime (psycopg). Re-exec with
+        # the identical arguments under that interpreter, exactly once.
+        os.execv(str(PYTHON), [str(PYTHON), str(Path(__file__).resolve()), *sys.argv[1:]])
     if args.phase == "setup":
         result = setup(args.environment_file)
     elif args.phase == "migrate":

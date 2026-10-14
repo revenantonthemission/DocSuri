@@ -66,5 +66,9 @@ def test_bad_confirmation_factor_keeps_inactive(entry, authority):
 
 
 def test_recovery_policy_never_bypasses_admin(entry):
+    service = ControlMfaService(entry)
+    for _ in range(3):
+        with pytest.raises(PolicyUnavailable):
+            service.recover()
     with pytest.raises(PolicyUnavailable):
-        ControlMfaService(entry).recover()
+        service.recover(entry, uuid4(), "administrator")
