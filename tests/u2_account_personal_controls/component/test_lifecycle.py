@@ -9,6 +9,12 @@ PASSWORD = 'Synthetic!Research2026'
 pytestmark = pytest.mark.u2_component
 
 
+@pytest.fixture
+def authority(isolated_authority):
+    """Lifecycle requests must not accumulate on the shared fixture owner."""
+    return isolated_authority
+
+
 def lifecycle(entry):
     return ControlLifecycleService(entry, (('Library','references'), ('ServiceOperations','restore')), revision='test-u2-manifest')
 
@@ -101,3 +107,42 @@ def test_confirmation_cannot_cross_session(entry, authority, connect, identities
     other = Authority(identities['b'], uuid4())
     with pytest.raises(PermissionError):
         service.request_confirmed(other, uuid4(), UUID(confirmation['confirmationRef']), 'withdraw')
+
+
+def test_withdrawn_owner_reactivates_with_one_time_proof(entry, authority, connect, mailbox):
+    """Reactivation needs the verified owner proof; scoped completion revives access."""
+    manifest = (('Library', 'references'),)
+    withdraw = ControlLifecycleService(entry, manifest, revision='reactivate-test')
+    first = request(withdraw, authority)
+    with connect('accounts') as conn:
+        row = conn.execute(
+            "SELECT email,lifecycle_state,active FROM accounts.account WHERE id=%s",
+            (authority.account_id,),
+        ).fetchone()
+    assert row['lifecycle_state'] == 'withdrawn' and not row['active']
+
+    flow = str(uuid4())
+    operation = uuid4()
+    entry.request_reactivation(operation, row['email'], flow)
+    values = [value for value in mailbox('reactivate') if value.get('flowBinding') == flow]
+    assert len(values) == 1
+    proof = values[0]
+    result = withdraw.reactivate(
+        uuid4(), UUID(proof['challengeId']), proof['proof'], proof['flowBinding']
+    )
+    assert result['disposition'] == 'reactivation_pending'
+    # The exact proof is single-use: the same verification cannot reactivate twice.
+    with pytest.raises(PermissionError):
+        withdraw.reactivate(
+            uuid4(), UUID(proof['challengeId']), proof['proof'], proof['flowBinding']
+        )
+
+    service = ControlLifecycleService(entry, manifest, revision='reactivate-test')
+    ticket = service.claim(UUID(result['requestId']), 'Library', 'references')
+    service.acknowledge(ticket, evidence=uuid4(), reason='reactivation-reference-check')
+    with connect('accounts') as conn:
+        revived = conn.execute(
+            "SELECT lifecycle_state,active FROM accounts.account WHERE id=%s",
+            (authority.account_id,),
+        ).fetchone()
+    assert revived == {'lifecycle_state': 'active', 'active': True}

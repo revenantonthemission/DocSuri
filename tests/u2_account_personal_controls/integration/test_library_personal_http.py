@@ -27,7 +27,7 @@ QUERY = {
 
 
 @pytest.fixture
-def browser(realm, transactions, identities, connect):
+def browser(realm, transactions, identities, connect, clear_resets):
     entry = ControlEntryService(transactions, SYNTHETIC_POLICY)
     encoded = entry._hash_password(PASSWORD)
     with connect("accounts") as conn:
@@ -69,6 +69,7 @@ def browser(realm, transactions, identities, connect):
         assert response.status_code == 200, response.text
         client.headers["X-CSRF-Token"] = client.get("/api/v2/session").json()["csrfToken"]
         yield client
+        clear_resets(identities["a"])
 
 
 def post(client, name, value, *, key=None):

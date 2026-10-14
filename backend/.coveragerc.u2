@@ -91,6 +91,7 @@ include =
     scripts/prepare_docsuri_u2_transport.py
     scripts/serve_docsuri_u2.py
     scripts/verify_docsuri_u2.py
+    scripts/verify_docsuri_cumulative.py
     scripts/u2_browser_fixtures.py
     shared/python/tools/export_workspace_contract.py
 

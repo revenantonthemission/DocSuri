@@ -172,6 +172,48 @@ def fixture_discard(realm):
         conn.close()
 
 
+@pytest.fixture
+def clear_resets(realm):
+    """Admin-side removal of reset responsibilities a case created.
+
+    Reset acceptance and discovery are the behavior under test; the finite
+    outstanding cap must never be consumed by fixtures that never complete,
+    so a case's own responsibilities are removed after it.
+    """
+    accounts: list = []
+
+    def register(*identifiers) -> None:
+        accounts.extend(identifiers)
+
+    yield register
+    if not accounts:
+        return
+    identifiers = [str(account) for account in accounts]
+    profile = realm[0]
+    credentials = json.loads((profile.root / "migration-credentials.json").read_text())
+    conn = psycopg.connect(
+        host="127.0.0.1",
+        port=profile.database_port,
+        dbname=profile.database_name,
+        user="postgres",
+        password=credentials["databaseAdminPassword"],
+        connect_timeout=3,
+        row_factory=dict_row,
+    )
+    try:
+        conn.execute("SET session_replication_role = replica")
+        for statement in (
+            "DELETE FROM personalization.reset_scope WHERE reset_id IN "
+            "(SELECT id FROM personalization.reset_responsibility WHERE account_id = ANY(%s))",
+            "DELETE FROM personalization.reset_responsibility WHERE account_id = ANY(%s)",
+        ):
+            conn.execute(statement, (identifiers,))
+        conn.execute("SET session_replication_role = origin")
+        conn.commit()
+    finally:
+        conn.close()
+
+
 @pytest.fixture(autouse=True)
 def bounded_case():
     """Hard per-case deadline includes fixture setup and teardown, not diagnostics."""

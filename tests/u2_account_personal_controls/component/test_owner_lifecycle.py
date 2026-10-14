@@ -10,6 +10,14 @@ from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
 from backend.modules.library.control_lifecycle import LibraryLifecycleParticipant
 from backend.modules.personalization.control_lifecycle import PersonalizationLifecycleParticipant
 
+pytestmark = pytest.mark.u2_component
+
+
+@pytest.fixture
+def authority(isolated_authority):
+    """Owner-effect tickets must not accumulate on the shared fixture owner."""
+    return isolated_authority
+
 
 @pytest.fixture
 def ticket_factory(connect, authority):

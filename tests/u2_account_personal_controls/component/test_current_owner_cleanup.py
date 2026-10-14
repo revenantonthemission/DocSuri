@@ -58,7 +58,8 @@ def withdraw(entry, authority, manifest, action="withdraw"):
     return service, UUID(outcome["requestId"])
 
 
-def test_account_erasure_removes_private_fields_after_mail_scope(entry, authority, connect):
+def test_account_erasure_removes_private_fields_after_mail_scope(entry, assistance_authority, connect):
+    authority = assistance_authority
     service, request = withdraw(
         entry,
         authority,
@@ -87,7 +88,8 @@ def test_account_erasure_removes_private_fields_after_mail_scope(entry, authorit
         ).fetchone()
 
 
-def test_account_database_erasure_waits_for_private_mail_evidence(entry, authority):
+def test_account_database_erasure_waits_for_private_mail_evidence(entry, assistance_authority):
+    authority = assistance_authority
     service, request = withdraw(
         entry,
         authority,
@@ -99,7 +101,8 @@ def test_account_database_erasure_waits_for_private_mail_evidence(entry, authori
         AccountLifecycleParticipant(entry).apply(ticket)
 
 
-def test_discovery_erasure_removes_private_query(entry, authority, connect):
+def test_discovery_erasure_removes_private_query(entry, assistance_authority, connect):
+    authority = assistance_authority
     with connect("discovery") as conn:
         conn.execute(
             "INSERT INTO discovery.execution(id,account_id,query,query_hash,results,relay_state) VALUES(%s,%s,'{\"query\":\"private topic\"}',%s,'[]','none')",
@@ -118,7 +121,8 @@ def test_discovery_erasure_removes_private_query(entry, authority, connect):
         ).fetchone()
 
 
-def test_usage_cleanup_does_not_release_accepted_responsibility(entry, authority, connect):
+def test_usage_cleanup_does_not_release_accepted_responsibility(entry, assistance_authority, connect):
+    authority = assistance_authority
     with connect("usage") as conn:
         conn.execute(
             "INSERT INTO usage.entitlement(account_id,allocation,policy) VALUES(%s,3,'u2-synthetic-v1') ON CONFLICT DO NOTHING",
@@ -143,7 +147,8 @@ def test_usage_cleanup_does_not_release_accepted_responsibility(entry, authority
         )
 
 
-def test_account_participant_rejects_foreign_scope(entry, authority):
+def test_account_participant_rejects_foreign_scope(entry, assistance_authority):
+    authority = assistance_authority
     service, request = withdraw(entry, authority, (("AccountAccess", "live_records"),))
     ticket = service.claim(request, "AccountAccess", "live_records")
     ticket["scope"] = "backups"

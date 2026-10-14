@@ -15,6 +15,37 @@ pytestmark = pytest.mark.u2_repository
 
 
 @pytest.fixture
+def authority(connect, realm, request, fixture_discard):
+    """Dedicated run-scoped owner; the finite outstanding-reset cap stays free."""
+    identity = realm[0].run_id + ":repository:" + request.node.name
+    account, session = uuid5(NAMESPACE_URL, identity), uuid5(NAMESPACE_URL, identity + ":session")
+    revision = uuid4()
+    with connect("accounts") as conn:
+        conn.execute(
+            "INSERT INTO accounts.account(id,email,password_hash,verified,active,authority_revision,display_name) "
+            "VALUES(%s,%s,'database-fixture-not-a-login-hash',true,true,%s,'Synthetic repository owner') "
+            "ON CONFLICT(id) DO UPDATE SET active=true,verified=true,lifecycle_state='active',"
+            "authority_revision=excluded.authority_revision",
+            (account, str(account) + "@fixture.invalid", revision),
+        )
+        conn.execute(
+            "INSERT INTO accounts.session(id,account_id,token_hash,csrf_hash,authority_revision,expires_at,purpose) "
+            "VALUES(%s,%s,%s,%s,%s,clock_timestamp()+interval '15 minutes','full_session') "
+            "ON CONFLICT(id) DO UPDATE SET revoked=false,expires_at=excluded.expires_at,"
+            "authority_revision=excluded.authority_revision",
+            (session, account, str(uuid4()), str(uuid4()), revision),
+        )
+        for purpose in ("local-research", "personalization"):
+            conn.execute(
+                "INSERT INTO accounts.consent(account_id,purpose,granted) VALUES(%s,%s,true) "
+                "ON CONFLICT(account_id,purpose) DO UPDATE SET granted=true",
+                (account, purpose),
+            )
+    yield Authority(account, session)
+    fixture_discard(account)
+
+
+@pytest.fixture
 def resets(transactions):
     return ResetRepository(transactions, SYNTHETIC_POLICY, ControlCursor(b"r" * 32))
 
@@ -97,6 +128,8 @@ def test_reset_pagination_has_no_duplicates(resets, authority):
 
 
 def test_reset_cursor_cannot_change_view_or_size(resets, authority):
+    accept(resets, authority)
+    accept(resets, authority)
     first = resets.list(authority, view="history", limit=1)
     assert first["page"]["nextCursor"]
     with pytest.raises(ValueError):
