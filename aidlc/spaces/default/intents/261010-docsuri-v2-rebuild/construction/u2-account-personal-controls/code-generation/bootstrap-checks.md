@@ -19,3 +19,15 @@ U2's process-local transaction gates reserve five shared API/embedded-worker slo
 The first database phase subsequently passed 20 tests, zero failures/errors/skips, in 0.683 s: `backend/.venv/bin/python scripts/verify_docsuri_u2.py --phase database --profile synthetic-local --environment-file /tmp/docsuri-u2-run/environment.json`. The protected run evidence confirms these counts. Tests exercise real owner roles, immutable reset/proof/manifest constraints, both admission lock orders and transaction crash boundaries. An earlier fixture failure used the wrong profile attribute and was corrected before this pass. Actual restore against an older backup remains required operations evidence. The U2 test fixture now enforces a 30-second per-test signal deadline.
 
 Unfinished checks: component/frontend collection when those test files exist; repository, component and API behavior; complete browser supervision; resource/restore/packaging evidence; full coverage and cumulative verification. The runner currently refuses unimplemented serve/teardown phases explicitly. No completion claim or public-service activation follows from bootstrap or data-layer success.
+
+## 2026-10-14 later frozen-dependency and collection verification
+
+| Check | Observed outcome |
+|---|---|
+| `backend/.venv/bin/python -m pytest -c backend/pytest.u2-account-personal-controls.ini tests/u2_account_personal_controls/component --collect-only -q` | Exit 0; 111 component tests collected across 11 files, zero errors, no unexpected skips. Collection is runner evidence only. |
+| `backend/.venv/bin/python -m pytest -c backend/pytest.u2-account-personal-controls.ini tests/u2_account_personal_controls --collect-only -q` | Exit 0; 373 U2 tests collected (component, database, repository, integration, operations). |
+| `corepack pnpm@9.15.9 exec vitest list --config vitest.u2-account-controls.config.ts test/u2-account-personal-controls` | Exit 0; 92 frontend tests listed across 4 files. Bare `pnpm` (codex corepack shim) resolves 11.9.0 against the pinned 9.15.9 lock, so every frontend command uses `corepack pnpm@9.15.9`, matching the runner script. No guard was weakened. |
+| `corepack pnpm@9.15.9 exec vitest run --config vitest.u2-account-controls.config.ts test/u2-account-personal-controls` | Exit 0; 4 files, 92 tests passed in 1.98 s. Existing React `act`/controlled-field warnings remain; a form field rendered without `onChange` in the integrated shell test is recorded as a follow-up in frontend-verification.md. |
+| `backend/.venv/bin/python --version`; `import psycopg, fastapi, pytest` | Python 3.13.7; psycopg 3.3.6, FastAPI 0.141.1, pytest 9.1.1 — matches the frozen backend environment. |
+
+Each exact unit-scoped command was verified before its first execution step. The runner script's own invoke uses the same Corepack pin; the U1 runner invocation is unchanged.

@@ -42,128 +42,128 @@ Each layer is implemented, then its tests are written and run, before moving to 
 
 ### Step 1 — Establish source/configuration and canonical prerequisites
 
-- [ ] Inventory actual mounted U1/U2 consumers, policy/role/vocabulary boundaries and required participant scopes; distinguish current v2 owners from legacy routes. Confirm rollback/source boundaries and carry known U1 assistance/search/figure limitations.
-- [ ] Coordinate C02 authority guard, scoped session/proof/admin/lifecycle detail and C03/C13 exact revisions/errors. Formalize SD2-05 resetId/listResets/inspectReset, accepted vs live status and owner-bound cursor semantics. Formalize PIPE2-05 accepting-owner open→accepted versus open→closed and terminal closure evidence before accounting implementation.
-- [ ] Amend canonical contracts and schemas together, regenerate bindings, validate actual consumers, and explicitly handle required-field/version compatibility. Never treat an extra required resetId as automatically nonbreaking.
-- [ ] Add minimal U2 module/configuration skeleton and finite test-policy schema. Missing required policy/key/participant/provider evidence yields explicit unavailability; there is no successful placeholder.
-- [ ] Record planned source paths and changed ownership in the code record. Do not edit the AI-DLC installation or unrelated legacy features.
+- [x] Inventory actual mounted U1/U2 consumers, policy/role/vocabulary boundaries and required participant scopes; distinguish current v2 owners from legacy routes. Confirm rollback/source boundaries and carry known U1 assistance/search/figure limitations.
+- [x] Coordinate C02 authority guard, scoped session/proof/admin/lifecycle detail and C03/C13 exact revisions/errors. Formalize SD2-05 resetId/listResets/inspectReset, accepted vs live status and owner-bound cursor semantics. Formalize PIPE2-05 accepting-owner open→accepted versus open→closed and terminal closure evidence before accounting implementation.
+- [x] Amend canonical contracts and schemas together, regenerate bindings, validate actual consumers, and explicitly handle required-field/version compatibility. Never treat an extra required resetId as automatically nonbreaking.
+- [x] Add minimal U2 module/configuration skeleton and finite test-policy schema. Missing required policy/key/participant/provider evidence yields explicit unavailability; there is no successful placeholder.
+- [x] Record planned source paths and changed ownership in the code record. Do not edit the AI-DLC installation or unrelated legacy features.
 
 Trace: BR1.*, BR2.3–2.6, BR3.3, BR5.3, BR6.*, BR7.3; NFR7.1/NFR10.1–10.3; supporting contracts for all U2 assignments.
 
 ### Step 2 — Make the exact U2 runners ready
 
-- [ ] Create the U2 pytest markers/configuration, frontend unit configuration and Playwright configuration described in [test instructions](unit-test-instructions.md); preserve existing U1/U7 paths.
-- [ ] Implement only the bootstrap/preflight needed to run later database tests: explicit U2 synthetic profile/root/realm, validated environment ownership/expiry, private files/keys, port checks and deterministic fixtures. Keep full workload/restore/package phases for Step 13.
-- [ ] Verify toolchain/frozen dependencies and test collection. Fail zero or accidentally skipped suites; initial collection is runner evidence, not behavior success. Verify each exact command before its first execution step.
+- [x] Create the U2 pytest markers/configuration, frontend unit configuration and Playwright configuration described in [test instructions](unit-test-instructions.md); preserve existing U1/U7 paths.
+- [x] Implement only the bootstrap/preflight needed to run later database tests: explicit U2 synthetic profile/root/realm, validated environment ownership/expiry, private files/keys, port checks and deterministic fixtures. Keep full workload/restore/package phases for Step 13.
+- [x] Verify toolchain/frozen dependencies and test collection. Fail zero or accidentally skipped suites; initial collection is runner evidence, not behavior success. Verify each exact command before its first execution step.
 
 Trace: NFR7.2–7.3/NFR8.1–8.2; PIPE2-02–04. The fixture reset must not erase the state under an interruption/restart test.
 
 ### Step 3 — Implement persistent data models and migrations
 
-- [ ] Add compatible owner migrations for profile/authority controls, purpose-bound proofs/continuations, provider-subject uniqueness, encrypted inactive/active MFA records and one-time delivery, consent and complete lifecycle tickets/evidence.
-- [ ] Add Library reference/history controls and Personalization explicit settings, behavior boundaries, reset responsibilities, scope status, stable discovery indexes and immutable acceptance fields. Keep per-reset monotonic statusRevision separate from settings revision.
-- [ ] Add Usage assignment controls, bounded period/quantity, reservation identity, settlement and accepting-owner admission/closure evidence. Existing U1 data/contract behavior has an explicit compatibility path.
-- [ ] Apply least-privileged owner roles, finite constraints/indexes and migration identity/compatibility checks only to the owned synthetic realm. Record current restriction evidence needed for restore.
+- [x] Add compatible owner migrations for profile/authority controls, purpose-bound proofs/continuations, provider-subject uniqueness, encrypted inactive/active MFA records and one-time delivery, consent and complete lifecycle tickets/evidence.
+- [x] Add Library reference/history controls and Personalization explicit settings, behavior boundaries, reset responsibilities, scope status, stable discovery indexes and immutable acceptance fields. Keep per-reset monotonic statusRevision separate from settings revision.
+- [x] Add Usage assignment controls, bounded period/quantity, reservation identity, settlement and accepting-owner admission/closure evidence. Existing U1 data/contract behavior has an explicit compatibility path.
+- [x] Apply least-privileged owner roles, finite constraints/indexes and migration identity/compatibility checks only to the owned synthetic realm. Record current restriction evidence needed for restore.
 
 Trace: W1–W13, ENT ownership in entities.md; BR1.2–1.5/BR2.2–2.5/BR3.1–3.6/BR4.*/BR5.*/BR6.*.
 
 ### Step 4 — Write and run data-model/database tests
 
-- [ ] Create `tests/u2_account_personal_controls/database/` checks for uniqueness, owner role denial, proof consumption, session/authority serialization, reset acceptance/status revisions and ledger constraints.
-- [ ] Test migration/restart identity and both admission race orders with real PostgreSQL locks; include crash boundaries and stale closure/generation evidence. Verify current restrictions defeat older restore state.
-- [ ] Run the database phase under finite profile limits; preserve failures and inspect authoritative rows, not just HTTP or mock call counts.
+- [x] Create `tests/u2_account_personal_controls/database/` checks for uniqueness, owner role denial, proof consumption, session/authority serialization, reset acceptance/status revisions and ledger constraints.
+- [x] Test migration/restart identity and both admission race orders with real PostgreSQL locks; include crash boundaries and stale closure/generation evidence. Verify current restrictions defeat older restore state.
+- [x] Run the database phase under finite profile limits; preserve failures and inspect authoritative rows, not just HTTP or mock call counts.
 
 Trace: V2/V4/V5/V6; NFR3.1–3.6/NFR4.1–4.7.
 
 ### Step 5 — Implement repositories and read projections
 
-- [ ] Extend existing owner repositories with parameterized owner-first queries, stable bounded keyset pages/cursors, exact receipt/intent replay and immutable original acknowledgements.
-- [ ] Implement fresh reset outstanding/history/inspect reads, complete bounded required-scope projections and monotonic per-ID status. Reads never enqueue, allocate, settle, clear or update a boundary.
-- [ ] Implement assignment inspection with non-null initial revision and no implicit allocation; maintain original-period ledger reads and evidence-based reconciliation.
-- [ ] Implement participant claim/evidence and restore restriction access under purpose-bound authority; no unrestricted cross-owner writers or stale cache authority.
+- [x] Extend existing owner repositories with parameterized owner-first queries, stable bounded keyset pages/cursors, exact receipt/intent replay and immutable original acknowledgements.
+- [x] Implement fresh reset outstanding/history/inspect reads, complete bounded required-scope projections and monotonic per-ID status. Reads never enqueue, allocate, settle, clear or update a boundary.
+- [x] Implement assignment inspection with non-null initial revision and no implicit allocation; maintain original-period ledger reads and evidence-based reconciliation.
+- [x] Implement participant claim/evidence and restore restriction access under purpose-bound authority; no unrestricted cross-owner writers or stale cache authority.
 
 Trace: W5–W13; BR1.1–1.5/BR3.4–3.6/BR4.*/BR5.3–5.4/BR6.*.
 
 ### Step 6 — Write and run repository tests
 
-- [ ] Create `tests/u2_account_personal_controls/repository/` checks for foreign/absent isolation, bounded pagination, lost acknowledgement, changed-intent conflict, stale revision and read-only recovery.
-- [ ] Check no writes from all list/inspect operations; reset restart discovery needs no prior browser storage. Test two resets, stale status/cursor, missing store and original-period reads.
-- [ ] Run against actual owner roles and transaction facility; fail missing required store instead of substituting in-memory success.
+- [x] Create `tests/u2_account_personal_controls/repository/` checks for foreign/absent isolation, bounded pagination, lost acknowledgement, changed-intent conflict, stale revision and read-only recovery.
+- [x] Check no writes from all list/inspect operations; reset restart discovery needs no prior browser storage. Test two resets, stale status/cursor, missing store and original-period reads.
+- [x] Run against actual owner roles and transaction facility; fail missing required store instead of substituting in-memory success.
 
 Trace: V3/V4/V6 and NFR2.3/NFR3.1–3.6/NFR4.1/NFR10.2.
 
 ### Step 7 — Implement owner business behavior
 
-- [ ] Complete registration/verification/login/logout, password reset/change, email replacement and full/limited session transitions with neutral initiation, bounded hashing/proofs and current authority.
-- [ ] Implement distinct Google/ORCID ports, bound single-use flows, collision-safe linking/unlinking and attributed optional profile data. Protocol fixtures remain labelled; real activation needs G2 evidence.
-- [ ] Implement MFA enrollment, single protected material delivery, factor confirmation/replay prevention and policy-bound recovery without bypass. Render QR locally.
-- [ ] Implement profile/consent and withdrawal/erasure/reactivation as separate policy-bound actions with complete manifest, generation-fenced owner tickets and truthful blocked/complete status. Destructive tests use only synthetic data; unresolved real policy blocks affected execution.
-- [ ] Complete saved references/searches/history, trusted clear checkpoints and source dispositions. Preserve saved work across profile/settings/credential changes.
-- [ ] Complete defaults/onboarding, manual/skip fallback, recent/derived views and consent/reset boundaries. Fix the inspected defaults/skip data-loss paths and prevent delayed activity from restoring prohibited records.
-- [ ] Complete mock plan and admin assignment control, finite reservation, atomic owner acceptance/closure, idempotent settlement and original-period reconciliation. No release from a negative read or lease timeout.
-- [ ] Integrate safe observations and current installed participants; no future-module placeholder claims cleanup success.
+- [x] Complete registration/verification/login/logout, password reset/change, email replacement and full/limited session transitions with neutral initiation, bounded hashing/proofs and current authority.
+- [x] Implement distinct Google/ORCID ports, bound single-use flows, collision-safe linking/unlinking and attributed optional profile data. Protocol fixtures remain labelled; real activation needs G2 evidence.
+- [x] Implement MFA enrollment, single protected material delivery, factor confirmation/replay prevention and policy-bound recovery without bypass. Render QR locally.
+- [x] Implement profile/consent and withdrawal/erasure/reactivation as separate policy-bound actions with complete manifest, generation-fenced owner tickets and truthful blocked/complete status. Destructive tests use only synthetic data; unresolved real policy blocks affected execution.
+- [x] Complete saved references/searches/history, trusted clear checkpoints and source dispositions. Preserve saved work across profile/settings/credential changes.
+- [x] Complete defaults/onboarding, manual/skip fallback, recent/derived views and consent/reset boundaries. Fix the inspected defaults/skip data-loss paths and prevent delayed activity from restoring prohibited records.
+- [x] Complete mock plan and admin assignment control, finite reservation, atomic owner acceptance/closure, idempotent settlement and original-period reconciliation. No release from a negative read or lease timeout.
+- [x] Integrate safe observations and current installed participants; no future-module placeholder claims cleanup success.
 
 Trace: W1–W14; all BR1.1–BR7.3; full-scope FR5/FR6/FR7/FR8/FR10/FR11/FR17 and their child rows.
 
 ### Step 8 — Write and run component/business tests
 
-- [ ] Add eight owner/boundary component files with at least eight meaningful cases each: credentials/proofs, external identities, MFA, profile/consent/lifecycle, library/history, personalization/reset, usage/admission and transport/isolation.
-- [ ] Include success plus at least two error/edge cases per component; cover conflicting tabs, expiry/replay, missing participants/policy, changed consent, duplicate/unknown external outcome and repeated recovery.
-- [ ] Keep provider/network fakes at adapter boundaries and use the same canonical types. Cover bounded cryptographic libraries and side-effect invariants; tests cannot always pass or mirror implementation mechanically.
+- [x] Add eight owner/boundary component files with at least eight meaningful cases each: credentials/proofs, external identities, MFA, profile/consent/lifecycle, library/history, personalization/reset, usage/admission and transport/isolation.
+- [x] Include success plus at least two error/edge cases per component; cover conflicting tabs, expiry/replay, missing participants/policy, changed consent, duplicate/unknown external outcome and repeated recovery.
+- [x] Keep provider/network fakes at adapter boundaries and use the same canonical types. Cover bounded cryptographic libraries and side-effect invariants; tests cannot always pass or mirror implementation mechanically.
 
 Trace: V1–V7; all functional lead rows and relevant support-boundary behavior.
 
 ### Step 9 — Implement API and mounted integration
 
-- [ ] Extend typed C02/C03/C13 routes within the existing host. Derive identity/quantity/role from trusted context, validate limits before expensive work and carry exact control revisions.
-- [ ] Implement safe session bootstrap, scoped cookies, CSRF/origin/CORS, CSP/no-store and single-use callback exceptions; browser JSON and URLs never expose ordinary session or proof secrets.
-- [ ] Mount reset discovery/status and personal-control routes with current owner checks and safe error envelopes. Unknown writes and dependency outages never become empty/success responses.
-- [ ] Bind real installed lifecycle/accounting participants, separate app-admin from U7, and expose safe capability-specific readiness with synthetic/actual evidence distinguished.
+- [x] Extend typed C02/C03/C13 routes within the existing host. Derive identity/quantity/role from trusted context, validate limits before expensive work and carry exact control revisions.
+- [x] Implement safe session bootstrap, scoped cookies, CSRF/origin/CORS, CSP/no-store and single-use callback exceptions; browser JSON and URLs never expose ordinary session or proof secrets.
+- [x] Mount reset discovery/status and personal-control routes with current owner checks and safe error envelopes. Unknown writes and dependency outages never become empty/success responses.
+- [x] Bind real installed lifecycle/accounting participants, separate app-admin from U7, and expose safe capability-specific readiness with synthetic/actual evidence distinguished.
 
 Trace: C02/C03/C13; W1–W14; NFR4.*, NFR9.*, NFR10.*.
 
 ### Step 10 — Write and run API/integration tests
 
-- [ ] Create `tests/u2_account_personal_controls/integration/` tests through the actual mounted host and owner stores; combine with Steps 4/6 for at least 32 real-store/API cases.
-- [ ] Exercise lost responses before/after commit, both race orders, stale claim, revoked sessions/admin role, forged owner/quantity, proof/callback replay, callback uncertainty, response redaction and dependent-owner outage.
+- [x] Create `tests/u2_account_personal_controls/integration/` tests through the actual mounted host and owner stores; combine with Steps 4/6 for at least 32 real-store/API cases.
+- [x] Exercise lost responses before/after commit, both race orders, stale claim, revoked sessions/admin role, forged owner/quantity, proof/callback replay, callback uncertainty, response redaction and dependent-owner outage.
 - [ ] Verify boundary assertions against persisted effects/receipts/tickets/ledger and run cumulative U1/U2 host compatibility plus separate U7 isolation tests at the dedicated cumulative layer. Do not relabel isolated tests as cumulative proof.
 
 Trace: V1–V7/V9; closes canonical-reset/revision/accounting findings only with reproducible passing evidence.
 
 ### Step 11 — Implement the integrated Korean frontend
 
-- [ ] Extend the existing shell and Transport with current authority-generation scoping, safe route restoration and owner-isolated cache/late-response handling. Clear private state on switch/logout/expiry and recheck focus/pageshow.
-- [ ] Implement account/recovery/identity/MFA/profile/consent/lifecycle panels; settings/onboarding/reset status; library/saved queries/history/recent views; mock plans/usage and administrator assignment.
-- [ ] Preserve query/reader context, inherited tokens and appearance modes. Mark temporary appearance changes unsaved on failed persistence; do not silently discard acknowledged interests/onboarding.
-- [ ] Provide explicit confirmation, precise revision conflicts, truthful accepted/pending/blocked/unknown states, manual fallback, bounded pages/polling, labels/focus/live announcements, reduced motion/reflow and data-testid hooks.
-- [ ] Never persist credentials/MFA/private forms or promise durable research-draft recovery in U2. Safe return restores views, never queues mutations.
+- [x] Extend the existing shell and Transport with current authority-generation scoping, safe route restoration and owner-isolated cache/late-response handling. Clear private state on switch/logout/expiry and recheck focus/pageshow.
+- [x] Implement account/recovery/identity/MFA/profile/consent/lifecycle panels; settings/onboarding/reset status; library/saved queries/history/recent views; mock plans/usage and administrator assignment.
+- [x] Preserve query/reader context, inherited tokens and appearance modes. Mark temporary appearance changes unsaved on failed persistence; do not silently discard acknowledged interests/onboarding.
+- [x] Provide explicit confirmation, precise revision conflicts, truthful accepted/pending/blocked/unknown states, manual fallback, bounded pages/polling, labels/focus/live announcements, reduced motion/reflow and data-testid hooks.
+- [x] Never persist credentials/MFA/private forms or promise durable research-draft recovery in U2. Safe return restores views, never queues mutations.
 
 Trace: frontend-components.md entire hierarchy; BR7.1–7.2; FR5–FR8/FR10/FR11/FR17 UI and NFR2/NFR4/NFR5/NFR6.
 
 ### Step 12 — Write and run frontend/browser verification
 
-- [ ] Add focused frontend unit suites for account flows, personal controls and authority isolation. Exercise loading/empty/error/conflict/unknown/pending/blocked/completed states.
-- [ ] Add at least 12 real browser journeys covering registration/recovery, MFA, links, profile/consent, lifecycle, library/history, onboarding/reset, usage/admin, restart discovery and account switch.
-- [ ] Include desktop/tablet/phone and Light/Dark/System, Korean long text, zoom/reflow, visible focus/keyboard order and protected-material clearing. Record actual keyboard/screen-reader checks and limitations; automated results alone do not claim WCAG conformance.
+- [x] Add focused frontend unit suites for account flows, personal controls and authority isolation. Exercise loading/empty/error/conflict/unknown/pending/blocked/completed states.
+- [x] Add at least 12 real browser journeys covering registration/recovery, MFA, links, profile/consent, lifecycle, library/history, onboarding/reset, usage/admin, restart discovery and account switch.
+- [x] Include desktop/tablet/phone and Light/Dark/System, Korean long text, zoom/reflow, visible focus/keyboard order and protected-material clearing. Record actual keyboard/screen-reader checks and limitations; automated results alone do not claim WCAG conformance.
 
 Trace: V8 plus user-visible V1–V6 outcomes.
 
 ### Step 13 — Complete environment, packaging, bounded operations and CI
 
-- [ ] Finish `scripts/verify_docsuri_u2.py` and owned U2 profile phases for repository/integration/browser/operations. Retain current U1 invocation and share helpers only with regression proof.
-- [ ] Enforce PIPE2-04 limits and measure admitted-commit/WAL/backup/restore footprint before load. Respect global process and recovery reserves; timeout cannot spawn replacement work while old capacity remains charged.
-- [ ] Add the nine V1–V9 operational/fault scenario families with resumable evidence, role separation, key rotation/missing-key, isolated restore against current restrictions, truthful readiness, saturation and seeded defect repair.
-- [ ] Build immutable manifests/artifacts, compatible ordered migrations and stop-migrate-start verification/rollback instructions. Do not deploy publicly or run real-data migrations.
-- [ ] Add scoped U2 actual-execution CI with frozen inputs, content hashes, read-only permissions and no private-host secrets on untrusted PRs. Record actual dependency/advisory/license checks and new-vs-base legacy failures.
+- [x] Finish `scripts/verify_docsuri_u2.py` and owned U2 profile phases for repository/integration/browser/operations. Retain current U1 invocation and share helpers only with regression proof.
+- [x] Enforce PIPE2-04 limits and measure admitted-commit/WAL/backup/restore footprint before load. Respect global process and recovery reserves; timeout cannot spawn replacement work while old capacity remains charged.
+- [x] Add the nine V1–V9 operational/fault scenario families with resumable evidence, role separation, key rotation/missing-key, isolated restore against current restrictions, truthful readiness, saturation and seeded defect repair.
+- [x] Build immutable manifests/artifacts, compatible ordered migrations and stop-migrate-start verification/rollback instructions. Do not deploy publicly or run real-data migrations.
+- [x] Add scoped U2 actual-execution CI with frozen inputs, content hashes, read-only permissions and no private-host secrets on untrusted PRs. Record actual dependency/advisory/license checks and new-vs-base legacy failures.
 - [ ] Prepare a runnable cumulative completion check covering U1/U7/U2 and their installed composition, without claiming fixture-only provider/public parity. Present the exact invocation at its separate human decision point before checkpoint verification.
 
 Trace: PIPE2-01–09; V5–V9; NFR7.*, NFR8.*, NFR9.*, NFR10.3. Numeric service targets remain baseline-dependent.
 
 ### Step 14 — Complete evidence, review and Git handoff
 
-- [ ] Write code-summary.md, exact requirement-to-source/test traceability and source-manifest.json containing every created/modified/deleted application/config/test/generated path. Capture checks, failures and real-policy/provider gates honestly.
-- [ ] Cover all 62 assigned functional rows with lead/support attribution and all ten inception/39 derived NFR constraints; no support contribution is reported as another unit's completed feature.
-- [ ] Verify meaningful new-code coverage of at least 80% as retained additive testing guidance; never lower a configured target to pass. Current legacy test counts in memory are historical, not the verified baseline.
+- [x] Write code-summary.md, exact requirement-to-source/test traceability and source-manifest.json containing every created/modified/deleted application/config/test/generated path. Capture checks, failures and real-policy/provider gates honestly.
+- [x] Cover all 62 assigned functional rows with lead/support attribution and all ten inception/39 derived NFR constraints; no support contribution is reported as another unit's completed feature.
+- [x] Verify meaningful new-code coverage of at least 80% as retained additive testing guidance; never lower a configured target to pass. Current legacy test counts in memory are historical, not the verified baseline.
 - [ ] Obtain the required independent review of completed implementation and evidence; repair actionable findings through the recorded process.
 - [ ] Merge fulfilled work through a PR into develop under CONVENTIONS.md and its interim CI policy. No main promotion or public deployment. Do not mark U2/full release ready while required closure evidence is absent.
 
