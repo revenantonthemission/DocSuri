@@ -71,6 +71,29 @@ MIGRATIONS = (
     ("accounts", "backend/modules/accounts/u2_owner_cleanup.sql"),
     ("discovery", "backend/modules/discovery/u2_owner_cleanup.sql"),
     ("assistance", "backend/modules/summarization/u2_owner_cleanup.sql"),
+    ("accounts", "backend/modules/accounts/u2_assistance_consent.sql"),
+    ("assistance", "backend/modules/summarization/u2_consent_evidence.sql"),
+    ("library", "backend/modules/library/u2_restore.sql"),
+    ("personalization", "backend/modules/personalization/u2_restore.sql"),
+    ("operations", "ops/src/docsuri_ops/u2_restore_checkpoint.sql"),
+    ("accounts", "backend/modules/accounts/u2_restore.sql"),
+    ("usage", "backend/modules/plans/u2_restore.sql"),
+    ("assistance", "backend/modules/summarization/u2_restore.sql"),
+    ("discovery", "backend/modules/discovery/u2_restore.sql"),
+    ("accounts", "backend/modules/accounts/u2_restore_binding.sql"),
+    ("usage", "backend/modules/plans/u2_restore_binding.sql"),
+    ("assistance", "backend/modules/summarization/u2_restore_binding.sql"),
+    ("discovery", "backend/modules/discovery/u2_restore_binding.sql"),
+    ("accounts", "backend/modules/accounts/u2_restore_baseline.sql"),
+    ("usage", "backend/modules/plans/u2_restore_baseline.sql"),
+    ("assistance", "backend/modules/summarization/u2_restore_baseline.sql"),
+    ("discovery", "backend/modules/discovery/u2_restore_baseline.sql"),
+    ("library", "backend/modules/library/u2_restore_baseline.sql"),
+    ("personalization", "backend/modules/personalization/u2_restore_baseline.sql"),
+    ("assistance", "backend/modules/summarization/u2_restore_erasure.sql"),
+    ("discovery", "backend/modules/discovery/u2_restore_erasure.sql"),
+    ("operations", "ops/src/docsuri_ops/u2_capacity.sql"),
+    ("operations", "ops/src/docsuri_ops/u2_capacity_database.sql"),
 )
 PHASES = (
     "setup",
@@ -507,6 +530,17 @@ def migrate(path: Path, *, base_only: bool = False) -> dict:
                             "applied U2 migration changed; add a new ordered migration"
                         )
                     continue
+                if file == "ops/src/docsuri_ops/u2_capacity_database.sql":
+                    conn.execute(
+                        "GRANT CONNECT ON DATABASE docsuri_u2 TO docsuri_operations_owner"
+                    )
+                if file == "ops/src/docsuri_ops/u2_capacity.sql":
+                    # Only the non-login schema owner receives aggregate WAL
+                    # observation authority, never an application login role.
+                    conn.execute(
+                        "GRANT EXECUTE ON FUNCTION pg_catalog.pg_ls_waldir() "
+                        "TO docsuri_operations_owner"
+                    )
                 conn.execute(
                     sql.SQL("SET LOCAL ROLE {}").format(
                         sql.Identifier(f"docsuri_{owner}_owner")
@@ -519,6 +553,18 @@ def migrate(path: Path, *, base_only: bool = False) -> dict:
                 "UPDATE public.docsuri_local_identity SET schema_hashes=%s WHERE singleton",
                 (psycopg.types.json.Jsonb(known),),
             )
+    if not base_only:
+        # Establish custody before test fixtures insert the first account.
+        # The service refuses missing verifier custody once account data exists.
+        from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
+        from backend.modules.accounts.services.control_entry import ControlEntryService
+        from backend.transactions import OwnerTransactions
+
+        transactions = OwnerTransactions(LocalProfile.load(path))
+        try:
+            ControlEntryService(transactions, SYNTHETIC_POLICY)
+        finally:
+            transactions.close()
     return {
         "state": "base-verified" if base_only else "u2-migrated",
         "schemaHashes": known,
@@ -533,7 +579,8 @@ def run_phase(phase: str, path: Path) -> dict:
         raise Refused(
             "frozen dependency identity changed; reconcile environment before testing"
         )
-    environment = {"DOCSURI_U2_ENVIRONMENT_FILE": str(path), "PYTHONPATH": str(ROOT)}
+    from scripts.prepare_docsuri_u2_browser import bounded_process
+
     if phase == "frontend":
         args = [
             "corepack",
@@ -558,6 +605,7 @@ def run_phase(phase: str, path: Path) -> dict:
             "test",
             "--config",
             "playwright.u2-account-controls.config.ts",
+            "--max-failures=1",
         ]
     else:
         args = [
@@ -568,6 +616,7 @@ def run_phase(phase: str, path: Path) -> dict:
             "backend/pytest.u2-account-personal-controls.ini",
             f"tests/u2_account_personal_controls/{phase}",
             "-q",
+            "--maxfail=1",
             f"--junitxml={RUN / (phase + '.xml')}",
         ]
     report = RUN / (phase + ".xml")
@@ -576,12 +625,24 @@ def run_phase(phase: str, path: Path) -> dict:
     report.unlink(missing_ok=True)  # A previous report can never certify this run.
     before = source_identity()
     start = time.monotonic()
-    result = command(args, extra=environment, timeout=300)
+    process_evidence, failure = {}, None
+    try:
+        process_evidence = bounded_process(
+            args,
+            RUN / f"browser-phase-{phase}-{time.time_ns()}.log",
+            seconds=300,
+        )
+    except (Refused, RuntimeError, OSError) as error:
+        # Preserve only the failure category in transferable evidence. Private
+        # bounded logs retain detailed diagnostics without exposing proof values.
+        failure = type(error).__name__
     evidence = {
         "phase": phase,
         "runId": value["runId"],
         "command": args,
-        "exitCode": result.returncode,
+        "exitCode": 1 if failure else process_evidence["exitCode"],
+        "supervision": process_evidence,
+        "failureCategory": failure,
         "durationSeconds": time.monotonic() - start,
         "source": before,
         "locks": value["locks"],
@@ -644,9 +705,14 @@ def main() -> int:
         result = setup(args.environment_file)
     elif args.phase == "migrate":
         result = migrate(args.environment_file, base_only=args.base_only)
-    elif args.phase in ("serve", "teardown"):
+    elif args.phase == "serve":
+        from scripts.prepare_docsuri_u2_browser import exclusive, serve
+
+        with exclusive():
+            result = serve(args.environment_file, 300)
+    elif args.phase == "teardown":
         raise Refused(
-            "phase implementation not yet available; preserve owned resources"
+            "automatic disposal is disabled; preserve evidence and archive the owned realm explicitly"
         )
     else:
         result = run_phase(args.phase, args.environment_file)

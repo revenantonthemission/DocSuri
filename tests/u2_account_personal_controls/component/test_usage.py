@@ -1,4 +1,4 @@
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 import pytest
 
@@ -11,13 +11,41 @@ pytestmark = pytest.mark.u2_component
 
 
 @pytest.fixture
-def usage(transactions, identities, connect):
+def authority(connect, realm, request, fixture_discard):
+    """Dedicated run-scoped administrator; U1 rejection proofs are append-only."""
+    identity = realm[0].run_id + ":usage:" + request.node.name
+    account, session = uuid5(NAMESPACE_URL, identity), uuid5(NAMESPACE_URL, identity + ":session")
+    revision = uuid4()
     with connect('accounts') as conn:
-        conn.execute("UPDATE accounts.account SET role='administrator' WHERE id=%s", (identities['a'],))
-        conn.execute("UPDATE accounts.session SET mfa_at=clock_timestamp() WHERE id=%s", (identities['session'],))
+        conn.execute(
+            "INSERT INTO accounts.account(id,email,password_hash,verified,active,role,authority_revision,display_name) "
+            "VALUES(%s,%s,'database-fixture-not-a-login-hash',true,true,'administrator',%s,'Synthetic usage administrator') "
+            "ON CONFLICT(id) DO UPDATE SET active=true,verified=true,lifecycle_state='active',"
+            "role='administrator',authority_revision=excluded.authority_revision",
+            (account, str(account) + "@fixture.invalid", revision),
+        )
+        conn.execute(
+            "INSERT INTO accounts.session(id,account_id,token_hash,csrf_hash,authority_revision,expires_at,purpose,mfa_at) "
+            "VALUES(%s,%s,%s,%s,%s,clock_timestamp()+interval '15 minutes','full_session',clock_timestamp()) "
+            "ON CONFLICT(id) DO UPDATE SET revoked=false,purpose='full_session',mfa_at=clock_timestamp(),"
+            "expires_at=excluded.expires_at,authority_revision=excluded.authority_revision",
+            (session, account, str(uuid4()), str(uuid4()), revision),
+        )
+        for purpose in ("local-research", "personalization"):
+            conn.execute(
+                "INSERT INTO accounts.consent(account_id,purpose,granted) VALUES(%s,%s,true) "
+                "ON CONFLICT(account_id,purpose) DO UPDATE SET granted=true",
+                (account, purpose),
+            )
+    yield Authority(account, session)
+    fixture_discard(account)
+
+
+@pytest.fixture
+def usage(transactions, authority, connect):
     with connect('usage') as conn:
-        conn.execute("DELETE FROM usage.reservation WHERE account_id=%s", (identities['a'],))
-        conn.execute("DELETE FROM usage.entitlement WHERE account_id=%s", (identities['a'],))
+        conn.execute("DELETE FROM usage.reservation WHERE account_id=%s", (authority.account_id,))
+        conn.execute("DELETE FROM usage.entitlement WHERE account_id=%s", (authority.account_id,))
     return ControlUsageService(transactions, SYNTHETIC_POLICY)
 
 

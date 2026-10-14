@@ -1,6 +1,6 @@
 """Actual owner-store recovery; no in-memory substitutes."""
 
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import pytest
 from backend.modules.accounts.control_cursor import ControlCursor
@@ -154,6 +154,26 @@ def test_reset_scope_fences_stale_worker_and_preserves_ack(resets, authority):
 
 def test_absent_assignment_is_read_only(transactions, authority, connect):
     repository = GuardedUsageRepository(transactions)
+    identity = transactions.profile.run_id + ":absent-assignment-fixture"
+    account, session, revision = (
+        uuid5(NAMESPACE_URL, identity),
+        uuid5(NAMESPACE_URL, identity + ":session"),
+        uuid4(),
+    )
+    with connect("accounts") as conn:
+        conn.execute(
+            "INSERT INTO accounts.account(id,email,password_hash,display_name,verified,active,authority_revision) "
+            "VALUES(%s,%s,'not-a-login-hash','read-only assignment fixture',true,true,%s) "
+            "ON CONFLICT(id) DO UPDATE SET active=true,authority_revision=excluded.authority_revision",
+            (account, str(account) + "@fixture.invalid", revision),
+        )
+        conn.execute(
+            "INSERT INTO accounts.session(id,account_id,token_hash,csrf_hash,authority_revision,expires_at) "
+            "VALUES(%s,%s,%s,%s,%s,clock_timestamp()+interval '15 minutes') ON CONFLICT(id) DO UPDATE "
+            "SET revoked=false,authority_revision=excluded.authority_revision,expires_at=excluded.expires_at",
+            (session, account, str(uuid4()), str(uuid4()), revision),
+        )
+    authority = Authority(account, session)
     with connect("usage") as conn:
         before = conn.execute(
             "SELECT count(*) AS n FROM usage.entitlement WHERE account_id=%s",
@@ -169,6 +189,8 @@ def test_absent_assignment_is_read_only(transactions, authority, connect):
             ).fetchone()["n"]
             == before
         )
+    with connect("accounts") as conn:
+        conn.execute("UPDATE accounts.account SET active=false WHERE id=%s", (account,))
 
 
 def test_profile_receipt_survives_new_revision(transactions, authority):

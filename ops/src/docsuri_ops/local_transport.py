@@ -34,17 +34,28 @@ def _public_bytes(key) -> bytes:
     )
 
 
+def _transport_prefix(profile: LocalProfile) -> str:
+    """Map only the two explicitly provisioned local HTTPS realms."""
+    bindings = {
+        ("journey", "https://127.0.0.1:18039", "docsuri_u1_journey"): "journey-tls",
+        ("account-controls", "https://127.0.0.1:18049", "docsuri_u2"): "account-controls-tls",
+    }
+    prefix = bindings.get((profile.realm, profile.origin, profile.database_name))
+    if prefix is None:
+        raise ValueError("HTTPS transport requires an explicit owned realm binding")
+    return prefix
+
+
 def inspect_transport(profile: LocalProfile) -> LocalTransport:
-    if profile.realm != "journey" or profile.origin != "https://127.0.0.1:18039":
-        raise ValueError("HTTPS transport requires the explicit journey realm")
-    certificate_path = profile.root / "journey-tls.crt"
-    key_path = profile.root / "journey-tls.key"
-    for path in (certificate_path, key_path, profile.root / "journey-tls.json"):
+    prefix = _transport_prefix(profile)
+    certificate_path = profile.root / f"{prefix}.crt"
+    key_path = profile.root / f"{prefix}.key"
+    for path in (certificate_path, key_path, profile.root / f"{prefix}.json"):
         if path.lstat().st_nlink != 1:
             raise ValueError("transport material has aliased custody")
     certificate_raw = private_bytes(certificate_path, maximum=8192)
     key_raw = private_bytes(key_path, maximum=8192)
-    record = json.loads(private_bytes(profile.root / "journey-tls.json", maximum=4096))
+    record = json.loads(private_bytes(profile.root / f"{prefix}.json", maximum=4096))
     certificate = x509.load_pem_x509_certificate(certificate_raw)
     key = serialization.load_pem_private_key(key_raw, password=None)
     public = _public_bytes(certificate.public_key())
@@ -105,10 +116,9 @@ def _acknowledge_transport(profile: LocalProfile) -> LocalTransport:
 
 
 def prepare_transport(profile: LocalProfile) -> LocalTransport:
-    if profile.realm != "journey" or profile.origin != "https://127.0.0.1:18039":
-        raise ValueError("HTTPS transport requires the explicit journey realm")
+    prefix = _transport_prefix(profile)
     descriptor = os.open(
-        profile.root / "journey-tls.lock",
+        profile.root / f"{prefix}.lock",
         os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK,
         0o600,
     )
@@ -123,8 +133,7 @@ def prepare_transport(profile: LocalProfile) -> LocalTransport:
             raise ValueError("transport lock custody differs")
         fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
         paths = [
-            profile.root / name
-            for name in ("journey-tls.key", "journey-tls.crt", "journey-tls.json")
+            profile.root / f"{prefix}.{suffix}" for suffix in ("key", "crt", "json")
         ]
         present = [path.exists() or path.is_symlink() for path in paths]
         if any(present):

@@ -16,7 +16,8 @@ from backend.modules.personalization.control_service import (
     ProducerBinding,
 )
 from backend.modules.personalization.guarded_service import GuardedSettingsService
-from backend.transactions import Authority
+from backend.modules.personalization.activity import ActivityRelay
+from backend.transactions import Authority, Busy
 
 
 @pytest.fixture
@@ -82,6 +83,70 @@ def event(personal, authority, connect, paper):
         "authorityRevision": str(revision),
         "inputBoundary": str(boundary),
     }
+
+
+def test_optional_activity_declined_consent_has_no_record(personal, authority, connect, paper):
+    with connect("accounts") as conn:
+        conn.execute("UPDATE accounts.consent SET granted=false WHERE account_id=%s "
+                     "AND purpose='personalization'", (authority.account_id,))
+    relay = ActivityRelay(personal[0], personal[2])
+    captured = relay.capture(authority, uuid4(), paper, "paper-view")
+    assert captured is None and relay.deliver(authority, captured) == {"disposition": "not-captured"}
+    with connect("personalization") as conn:
+        assert conn.execute("SELECT count(*) AS n FROM personalization.behavior WHERE account_id=%s",
+                            (authority.account_id,)).fetchone()["n"] == 0
+
+
+def test_optional_activity_capacity_outage_does_not_claim_acceptance(personal, authority, paper, monkeypatch):
+    relay = ActivityRelay(personal[0], personal[2])
+    captured = relay.capture(authority, uuid4(), paper, "paper-view")
+    def busy(*args, **kwargs):
+        raise Busy("synthetic capacity fault")
+    monkeypatch.setattr(personal[0].transactions, "run", busy)
+    assert relay.capture(authority, uuid4(), paper, "paper-view") is None
+    assert relay.deliver(authority, captured) == {"disposition": "unavailable"}
+
+
+def test_optional_activity_late_source_withdrawal_suppresses_tracking(personal, authority, connect, paper):
+    relay = ActivityRelay(personal[0], personal[2])
+    captured = relay.capture(authority, uuid4(), paper, "paper-view")
+    with connect("corpus") as conn:
+        conn.execute("UPDATE corpus.version SET eligible=false WHERE id=%s", (paper["versionId"],))
+    assert relay.deliver(authority, captured) == {"disposition": "source-unavailable"}
+    with connect("personalization") as conn:
+        assert conn.execute("SELECT count(*) AS n FROM personalization.behavior WHERE account_id=%s",
+                            (authority.account_id,)).fetchone()["n"] == 0
+
+
+def test_optional_activity_replay_keeps_first_fact(personal, authority, connect, paper):
+    relay = ActivityRelay(personal[0], personal[2])
+    operation = uuid4()
+    first = relay.capture(authority, operation, paper, "paper-view")
+    assert relay.deliver(authority, first)["disposition"] == "recorded"
+    with connect("personalization") as conn:
+        original = conn.execute("SELECT fact FROM personalization.behavior WHERE account_id=%s",
+                                (authority.account_id,)).fetchall()
+    assert relay.deliver(authority, first)["disposition"] == "duplicate"
+    later = relay.capture(authority, operation, paper, "paper-view")
+    assert later["eventId"] == first["eventId"] and later["occurredAt"] != first["occurredAt"]
+    assert relay.deliver(authority, later) == {"disposition": "conflict"}
+    with connect("personalization") as conn:
+        rows = conn.execute("SELECT fact FROM personalization.behavior WHERE account_id=%s",
+                            (authority.account_id,)).fetchall()
+    assert rows == original and len(rows) == 1
+
+
+def test_optional_activity_revoked_session_cannot_publish(personal, authority, connect, paper):
+    relay = ActivityRelay(personal[0], personal[2])
+    captured = relay.capture(authority, uuid4(), paper, "paper-view")
+    with connect("accounts") as conn:
+        conn.execute("UPDATE accounts.session SET revoked=true WHERE id=%s", (authority.session_id,))
+    assert relay.deliver(authority, captured)["disposition"] == "suppressed_by_lifecycle"
+
+
+def test_optional_activity_rejects_unregistered_producer(personal):
+    with pytest.raises(PermissionError):
+        ActivityRelay(personal[0], ProducerBinding("uninstalled-component"))
 
 
 def test_defaults_do_not_erase_acknowledged_onboarding(personal, authority):

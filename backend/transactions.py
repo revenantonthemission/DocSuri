@@ -100,6 +100,8 @@ class OwnerTransactions:
         if value.get("runId") != profile.run_id or set(value.get("roles", {})) != OWNERS:
             raise ValueError("owner credential identity mismatch")
         self.profile = profile
+        self._controls = controls
+        self._process = process
         self._transaction_seconds = 5 if controls else 10
         self._queue_seconds = 1 if controls else 2
         self._statement_ms = 3000 if controls else 5000
@@ -119,7 +121,15 @@ class OwnerTransactions:
                 ),
                 threading.BoundedSemaphore(limits[process]),
             )
+        self._recovery_gate = None
+        if controls and process in {"api", "worker"}:
+            with _GATES_LOCK:
+                self._recovery_gate = _PROCESS_GATES.setdefault(
+                    (str(profile.root), profile.run_id, "observation"),
+                    threading.BoundedSemaphore(2),
+                )
         self._pools = {}
+        self._recovery_pools = {}
         self._closed = False
         for owner in OWNERS:
             self._pools[owner] = NullConnectionPool(
@@ -141,25 +151,50 @@ class OwnerTransactions:
                 open=True,
             )
 
+        if self._recovery_gate is not None:
+            for owner, pool in self._pools.items():
+                self._recovery_pools[owner] = NullConnectionPool(
+                    kwargs=dict(
+                        pool.kwargs, application_name=f"docsuri-{profile.realm}-recovery-{owner}"
+                    ),
+                    min_size=0,
+                    max_size=2,
+                    max_waiting=2,
+                    timeout=1,
+                    reconnect_timeout=2,
+                    open=True,
+                )
+
     def close(self) -> None:
         self._closed = True
-        for pool in self._pools.values():
+        for pool in (*self._pools.values(), *self._recovery_pools.values()):
             pool.close()
 
     def run(self, owner: str, action: Callable[[psycopg.Connection], T]) -> T:
         deadline = time.monotonic() + self._transaction_seconds
+        gate, pools = self._gate, self._pools
+        if self._controls:
+            from .control_runtime import RECOVERY_REQUEST, WORK_DEADLINE
+
+            work_deadline = WORK_DEADLINE.get()
+            if work_deadline is not None:
+                deadline = min(deadline, work_deadline)
+            if deadline <= time.monotonic():
+                raise Busy("control work deadline reached")
+            if RECOVERY_REQUEST.get() and self._recovery_gate is not None:
+                gate, pools = self._recovery_gate, self._recovery_pools
         if self._closed or owner not in self._pools:
             raise ValueError("closed or unknown owner pool")
         if time.time() >= self.profile.expires_at:
             raise ValueError("synthetic retention expired")
-        if not self._gate.acquire(
+        if not gate.acquire(
             timeout=min(self._queue_seconds, max(0.01, deadline - time.monotonic()))
         ):
             raise Busy("process connection allocation exhausted")
         try:
             for attempt in range(3):
                 try:
-                    with self._pools[owner].connection(
+                    with pools[owner].connection(
                         timeout=min(self._queue_seconds, max(0.01, deadline - time.monotonic()))
                     ) as conn:
                         conn.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
@@ -202,7 +237,7 @@ class OwnerTransactions:
                         raise
             raise Busy("transaction retry budget exhausted")
         finally:
-            self._gate.release()
+            gate.release()
 
 
 def guard(

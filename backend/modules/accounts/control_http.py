@@ -226,15 +226,27 @@ def control_router(entry, lifecycle) -> APIRouter:
 
     @router.post("/api/v2/c02/access-change-password")
     async def change_password(request: Request):
-        operation, _, authority = await context(request)
+        operation = require_post_headers(request, origin)
         value = await read_payload(request, wire.AccessPasswordChangeInputHttp)
-        result = await run_in_threadpool(
-            entry.change_password,
-            authority,
-            operation,
-            value["currentPassword"],
-            value["newPassword"],
-        )
+        try:
+            _, _, authority = await context(request)
+        except (BrowserDenied, PermissionError):
+            result = await run_in_threadpool(
+                entry.reconcile_credential_change,
+                request.cookies.get(SESSION_COOKIE, ""),
+                request.headers.get("X-CSRF-Token", ""),
+                operation,
+                "password-change",
+                [value["currentPassword"], value["newPassword"]],
+            )
+        else:
+            result = await run_in_threadpool(
+                entry.change_password,
+                authority,
+                operation,
+                value["currentPassword"],
+                value["newPassword"],
+            )
         response = JSONResponse(output(wire.Ack, result))
         private_cookie(response, SESSION_COOKIE, "", 0)
         return response
@@ -258,20 +270,32 @@ def control_router(entry, lifecycle) -> APIRouter:
 
     @router.post("/api/v2/c02/access-complete-email-change")
     async def complete_email_change(request: Request):
-        operation, _, authority = await context(request)
+        operation = require_post_headers(request, origin)
         value = (await read_payload(request, wire.AccessEmailChangeCompleteInputHttp))[
             "verification"
         ]
         if value["flowBinding"] != flow(request):
             raise BrowserDenied(403, "FORBIDDEN")
-        result = await run_in_threadpool(
-            entry.complete_email_change,
-            authority,
-            operation,
-            UUID(value["challengeId"]),
-            value["proof"],
-            value["flowBinding"],
-        )
+        try:
+            _, _, authority = await context(request)
+        except (BrowserDenied, PermissionError):
+            result = await run_in_threadpool(
+                entry.reconcile_credential_change,
+                request.cookies.get(SESSION_COOKIE, ""),
+                request.headers.get("X-CSRF-Token", ""),
+                operation,
+                "email-complete",
+                [value["challengeId"], value["proof"], value["flowBinding"]],
+            )
+        else:
+            result = await run_in_threadpool(
+                entry.complete_email_change,
+                authority,
+                operation,
+                UUID(value["challengeId"]),
+                value["proof"],
+                value["flowBinding"],
+            )
         response = JSONResponse(output(wire.Ack, result))
         private_cookie(response, SESSION_COOKIE, "", 0)
         return response

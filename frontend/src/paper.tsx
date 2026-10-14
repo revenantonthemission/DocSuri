@@ -1,7 +1,7 @@
 /** Paper workspace: exact identity, source reading, save and assistance. */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ApiError, LIBRARY_POLICY, PROCESSING_POLICY, PaperRef, Transport } from './api';
+import { ApiError, LIBRARY_POLICY, PROCESSING_POLICY, PaperRef, PolicyRef, Transport } from './api';
 import { Notice, StatusLine, describeError, focusHeading, notice } from './ui';
 
 export type Section = { sectionId: string; heading: string; text: string; anchor: string };
@@ -82,12 +82,14 @@ const JOB_COPY: Record<string, string> = {
 };
 
 export function PaperWorkspace({
+  libraryPolicy = LIBRARY_POLICY,
   transport,
   paper,
   signedIn,
   onBack,
 }: {
   transport: Transport;
+  libraryPolicy?: PolicyRef;
   paper: PaperRef;
   signedIn: boolean;
   onBack: () => void;
@@ -216,9 +218,7 @@ export function PaperWorkspace({
         attempts += 1;
         try {
           const current = await transport.get<JobSnapshot>(`/api/v2/jobs/${activeJobId}`);
-          setJob((previous) =>
-            previous && current.seq <= previous.seq ? previous : current,
-          );
+          setJob((previous) => (previous && current.seq <= previous.seq ? previous : current));
           setTransportState('live');
           if (current.state === 'succeeded' || current.state === 'failed') {
             window.clearInterval(timer);
@@ -241,7 +241,7 @@ export function PaperWorkspace({
     try {
       const record = await transport.post<SavedPaper>('/api/v2/c03/library-save-paper', {
         paper,
-        policyRef: LIBRARY_POLICY,
+        policyRef: libraryPolicy,
       });
       setSaved(record);
       setSaveState('saved');
@@ -251,7 +251,11 @@ export function PaperWorkspace({
         await loadSaved();
         return;
       }
-      setSaveState(error instanceof ApiError && error.envelope.code === 'UNKNOWN_OUTCOME' ? 'unknown' : 'failed');
+      setSaveState(
+        error instanceof ApiError && error.envelope.code === 'UNKNOWN_OUTCOME'
+          ? 'unknown'
+          : 'failed',
+      );
     }
   };
 
@@ -266,7 +270,9 @@ export function PaperWorkspace({
       setSaved(null);
       setSaveState('idle');
     } catch (error) {
-      setSaveState(error instanceof ApiError && error.envelope.code === 'CONFLICT' ? 'conflict' : 'failed');
+      setSaveState(
+        error instanceof ApiError && error.envelope.code === 'CONFLICT' ? 'conflict' : 'failed',
+      );
       await loadSaved();
     }
   };
@@ -316,7 +322,11 @@ export function PaperWorkspace({
 
   const title = read?.content?.paper ?? read?.paper ?? paper;
   return (
-    <PanelSection title={read?.content ? '논문 읽기' : '논문'} titleRef={heading} testId="paper-workspace">
+    <PanelSection
+      title={read?.content ? '논문 읽기' : '논문'}
+      titleRef={heading}
+      testId="paper-workspace"
+    >
       <button type="button" className="link" onClick={onBack} data-testid="back-to-search">
         ← 검색으로 돌아가기
       </button>
@@ -453,7 +463,11 @@ function AssistancePanel({
     [options],
   );
   return (
-    <section className="panel assistance" aria-labelledby="assistance-heading" data-testid="assistance-panel">
+    <section
+      className="panel assistance"
+      aria-labelledby="assistance-heading"
+      data-testid="assistance-panel"
+    >
       <h3 id="assistance-heading">요약과 번역</h3>
       {!signedIn ? <p className="muted">로그인하면 요약과 번역을 요청할 수 있어요</p> : null}
       <StatusLine value={noticeValue} />
@@ -469,7 +483,12 @@ function AssistancePanel({
       ) : null}
       {signedIn && options && options.options.length > 0 ? (
         <div className="row">
-          <button type="button" disabled={!summary} onClick={() => summary && onStart(summary)} data-testid="start-summary">
+          <button
+            type="button"
+            disabled={!summary}
+            onClick={() => summary && onStart(summary)}
+            data-testid="start-summary"
+          >
             요약 시작
           </button>
           <button

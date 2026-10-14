@@ -186,14 +186,17 @@ class ControlRepository:
 
         return self.transactions.run("accounts", write)
 
-    def pending_consents(self, *, limit: int = 20) -> list[dict]:
+    def pending_consents(self, *, limit: int = 20, purpose: str | None = None) -> list[dict]:
         if type(limit) is not int or not 1 <= limit <= self.policy.max_page_size:
             raise ValueError("finite consent obligation page required")
+        if purpose not in (None, "personalization", "local-research"):
+            raise ValueError("unknown consent obligation purpose")
         return self.transactions.run(
             "accounts",
             lambda conn: conn.execute(
-                "SELECT * FROM accounts.consent_obligation WHERE disposition='pending' ORDER BY accepted_at,id LIMIT %s",
-                (limit,),
+                "SELECT * FROM accounts.consent_obligation WHERE disposition='pending' "
+                "AND (%s::text IS NULL OR purpose=%s) ORDER BY accepted_at,id LIMIT %s",
+                (purpose, purpose, limit),
             ).fetchall(),
         )
 

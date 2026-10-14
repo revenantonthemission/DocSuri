@@ -90,6 +90,86 @@ def transactions(realm):
     transactions.close()
 
 
+DISCARDED_OWNER_TABLES = (
+    "accounts",
+    "assistance",
+    "corpus",
+    "discovery",
+    "library",
+    "operations",
+    "personalization",
+    "usage",
+)
+
+
+@pytest.fixture
+def fixture_discard(realm):
+    """Admin-side discard of exactly this case's run-scoped fixture owners.
+
+    Behavior verification always runs through the runtime owner roles; this
+    teardown only removes the synthetic owner rows a case created so repeated
+    runs cannot exceed the finite experiment footprint or leave an inconsistent
+    erased owner behind for other layers.
+    """
+    accounts: list = []
+
+    def register(*identifiers) -> None:
+        accounts.extend(identifiers)
+
+    yield register
+    if not accounts:
+        return
+    identifiers = [str(account) for account in accounts]
+    profile = realm[0]
+    credentials = json.loads((profile.root / "migration-credentials.json").read_text())
+    conn = psycopg.connect(
+        host="127.0.0.1",
+        port=profile.database_port,
+        dbname=profile.database_name,
+        user="postgres",
+        password=credentials["databaseAdminPassword"],
+        connect_timeout=3,
+        row_factory=dict_row,
+    )
+    try:
+        conn.execute("SET session_replication_role = replica")
+        # Indirect rows (whose link column is not account_id) precede the direct
+        # sweep because their parent rows disappear in that sweep.
+        for statement in (
+            "DELETE FROM accounts.lifecycle_scope WHERE request_id IN "
+            "(SELECT id FROM accounts.lifecycle_request WHERE account_id = ANY(%s))",
+            "DELETE FROM accounts.lifecycle_evidence WHERE request_id IN "
+            "(SELECT id FROM accounts.lifecycle_request WHERE account_id = ANY(%s))",
+            "DELETE FROM accounts.delivery WHERE challenge_id IN "
+            "(SELECT id FROM accounts.challenge WHERE account_id = ANY(%s))",
+            "DELETE FROM personalization.reset_scope WHERE reset_id IN "
+            "(SELECT id FROM personalization.reset_responsibility WHERE account_id = ANY(%s))",
+            "DELETE FROM assistance.event WHERE job_id IN "
+            "(SELECT id FROM assistance.job WHERE account_id = ANY(%s))",
+            *(
+                f"DELETE FROM {schema}.lifecycle_evidence WHERE request_id IN "
+                "(SELECT id FROM accounts.lifecycle_request WHERE account_id = ANY(%s))"
+                for schema in ("library", "personalization", "discovery", "usage", "assistance")
+            ),
+        ):
+            conn.execute(statement, (identifiers,))
+        for row in conn.execute(
+            "SELECT table_schema,table_name FROM information_schema.columns "
+            "WHERE column_name='account_id' AND table_schema = ANY(%s)",
+            (list(DISCARDED_OWNER_TABLES),),
+        ).fetchall():
+            conn.execute(
+                f'DELETE FROM "{row["table_schema"]}"."{row["table_name"]}" '
+                "WHERE account_id = ANY(%s)",
+                (identifiers,),
+            )
+        conn.execute("DELETE FROM accounts.account WHERE id = ANY(%s)", (identifiers,))
+        conn.execute("SET session_replication_role = origin")
+        conn.commit()
+    finally:
+        conn.close()
+
+
 @pytest.fixture(autouse=True)
 def bounded_case():
     """Hard per-case deadline includes fixture setup and teardown, not diagnostics."""

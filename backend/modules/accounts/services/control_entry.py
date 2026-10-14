@@ -7,7 +7,8 @@ import json
 import secrets
 from uuid import UUID, uuid4
 
-from backend.modules.accounts.control_policy import ControlPolicy
+from backend.modules.accounts.control_keys import ControlKeyring
+from backend.modules.accounts.control_policy import ControlPolicy, PolicyUnavailable
 from backend.modules.accounts.control_repository import ControlRepository
 from backend.modules.accounts.models import EmailAddress, normalize_email
 from backend.modules.accounts.password import PasswordPolicy
@@ -25,17 +26,64 @@ class ControlEntryService(GuardedEntryService):
         self.control_policy = policy
         self.account_limit = policy.max_accounts
         self.verification_seconds = policy.proof_seconds
+        if not (transactions.profile.root / "account-verifier.key").exists():
+            occupied = transactions.run(
+                "accounts",
+                lambda conn: conn.execute(
+                    "SELECT EXISTS(SELECT 1 FROM accounts.account) AS occupied"
+                ).fetchone()["occupied"],
+            )
+            if occupied:
+                raise PolicyUnavailable("existing accounts require retained verifier custody")
         super().__init__(transactions)
-        self._cipher = AESGCM(bytes.fromhex(self.verifier("encryption", "u2-controls-v1")))
+        self.keyring = ControlKeyring(
+            transactions.profile.root,
+            transactions.profile.run_id,
+            bytes.fromhex(self.verifier("encryption", "u2-controls-v1")),
+        )
+        versions = self.transactions.run(
+            "accounts",
+            lambda conn: conn.execute(
+                "SELECT key_version FROM accounts.control_proof WHERE key_version IS NOT NULL UNION "
+                "SELECT key_version FROM accounts.mfa_enrollment UNION "
+                "SELECT key_version FROM accounts.identity_flow LIMIT 4"
+            ).fetchall(),
+        )
+        for row in versions:
+            self.keyring.key(row["key_version"])
 
     def protect(self, purpose: str, value: dict) -> bytes:
+        version = self.keyring.active_version.encode("ascii")
         nonce = secrets.token_bytes(12)
-        return nonce + self._cipher.encrypt(nonce, json.dumps(value).encode(), purpose.encode())
+        return (
+            b"DSC2"
+            + bytes([len(version)])
+            + version
+            + nonce
+            + AESGCM(self.keyring.key(version.decode("ascii"))).encrypt(
+                nonce, json.dumps(value).encode(), purpose.encode() + b":" + version
+            )
+        )
 
     def reveal(self, purpose: str, value: bytes) -> dict:
+        value = bytes(value)
+        if value.startswith(b"DSC2"):
+            if len(value) < 5 or not 1 <= value[4] <= 40:
+                raise ValueError("invalid protected material envelope")
+            version = value[5 : 5 + value[4]]
+            body = value[5 + value[4] :]
+            return json.loads(
+                AESGCM(self.keyring.key(version.decode("ascii"))).decrypt(
+                    body[:12], body[12:], purpose.encode() + b":" + version
+                )
+            )
         return json.loads(
-            self._cipher.decrypt(bytes(value[:12]), bytes(value[12:]), purpose.encode())
+            AESGCM(self.keyring.key("u2-v1")).decrypt(value[:12], value[12:], purpose.encode())
         )
+
+    @staticmethod
+    def protection_version(value: bytes) -> str:
+        return value[5 : 5 + value[4]].decode("ascii") if value.startswith(b"DSC2") else "u2-v1"
 
     def _current_session(
         self, token: str, *, csrf: str | None = None, limited: bool = False
@@ -244,7 +292,7 @@ class ControlEntryService(GuardedEntryService):
             if row and row["active"] and row["verified"] and row["lifecycle_state"] == "active":
                 conn.execute(
                     "INSERT INTO accounts.control_proof(id,account_id,purpose,proof_hash,flow_hash,authority_revision,lifecycle_revision,"
-                    "protected_payload,key_version,expires_at) VALUES(%s,%s,'password-reset',%s,%s,%s,%s,%s,'u2-v1',clock_timestamp()+(%s*interval '1 second'))",
+                    "protected_payload,key_version,expires_at) VALUES(%s,%s,'password-reset',%s,%s,%s,%s,%s,%s,clock_timestamp()+(%s*interval '1 second'))",
                     (
                         identifier,
                         row["id"],
@@ -252,7 +300,12 @@ class ControlEntryService(GuardedEntryService):
                         self.verifier("flow", flow_binding),
                         row["authority_revision"],
                         row["lifecycle_revision"],
-                        self.protect("proof:" + str(identifier), {"delivery": artifact.name}),
+                        (
+                            protected := self.protect(
+                                "proof:" + str(identifier), {"delivery": artifact.name}
+                            )
+                        ),
+                        self.protection_version(protected),
                         self.control_policy.proof_seconds,
                     ),
                 )
@@ -387,6 +440,57 @@ class ControlEntryService(GuardedEntryService):
 
         return self.transactions.run("accounts", write)
 
+    def reconcile_credential_change(
+        self, token: str, csrf: str, operation: UUID, kind: str, values: list[str]
+    ) -> dict:
+        """Read only an exact acknowledged effect through its still-fresh former session.
+
+        Credential mutation revokes the submitting cookie atomically. Its lost response
+        must remain discoverable without turning that revoked cookie into authority.
+        A later authority change, expiry, different body or missing receipt denies this
+        narrow recovery path; it never performs or repeats a credential mutation.
+        """
+        purposes = {"password-change": "password-change", "email-complete": "email-completion"}
+        if kind not in purposes:
+            raise PermissionError("credential receipt unavailable")
+        intent = self.verifier(purposes[kind], json.dumps(values))
+
+        def read(conn):
+            observed = conn.execute(
+                "SELECT account_id FROM accounts.session WHERE token_hash=%s",
+                (self.verifier("session", token),),
+            ).fetchone()
+            if not observed:
+                raise PermissionError("credential receipt unavailable")
+            account = conn.execute(
+                "SELECT * FROM accounts.account WHERE id=%s FOR SHARE",
+                (observed["account_id"],),
+            ).fetchone()
+            session = conn.execute(
+                "SELECT *,expires_at>clock_timestamp() AS fresh FROM accounts.session "
+                "WHERE token_hash=%s FOR SHARE",
+                (self.verifier("session", token),),
+            ).fetchone()
+            receipt = conn.execute(
+                "SELECT * FROM accounts.control_receipt WHERE account_id=%s AND kind=%s AND key=%s",
+                (account["id"], kind, operation),
+            ).fetchone()
+            if (
+                not session["fresh"]
+                or session["purpose"] != "full_session"
+                or not hmac.compare_digest(session["csrf_hash"], self.verifier("csrf", csrf))
+                or not account["active"]
+                or not account["verified"]
+                or account["lifecycle_state"] != "active"
+                or not receipt
+                or not hmac.compare_digest(receipt["intent_hash"], intent)
+                or receipt["outcome"]["revision"] != str(account["authority_revision"])
+            ):
+                raise PermissionError("credential receipt unavailable")
+            return receipt["outcome"]
+
+        return self.transactions.run("accounts", read)
+
     def request_email_change(
         self,
         authority: Authority,
@@ -426,7 +530,7 @@ class ControlEntryService(GuardedEntryService):
                 return prior["outcome"]
             conn.execute(
                 "INSERT INTO accounts.control_proof(id,account_id,purpose,proof_hash,flow_hash,authority_revision,lifecycle_revision,"
-                "protected_payload,key_version,expires_at) VALUES(%s,%s,'email-change',%s,%s,%s,%s,%s,'u2-v1',clock_timestamp()+(%s*interval '1 second'))",
+                "protected_payload,key_version,expires_at) VALUES(%s,%s,'email-change',%s,%s,%s,%s,%s,%s,clock_timestamp()+(%s*interval '1 second'))",
                 (
                     identifier,
                     authority.account_id,
@@ -434,9 +538,13 @@ class ControlEntryService(GuardedEntryService):
                     self.verifier("flow", flow_binding),
                     account["authority_revision"],
                     account["lifecycle_revision"],
-                    self.protect(
-                        "proof:" + str(identifier), {"email": new_email, "delivery": artifact.name}
+                    (
+                        protected := self.protect(
+                            "proof:" + str(identifier),
+                            {"email": new_email, "delivery": artifact.name},
+                        )
                     ),
+                    self.protection_version(protected),
                     self.control_policy.proof_seconds,
                 ),
             )
@@ -551,7 +659,7 @@ class ControlEntryService(GuardedEntryService):
             if row and row["verified"] and row["lifecycle_state"] == "withdrawn":
                 conn.execute(
                     "INSERT INTO accounts.control_proof(id,account_id,purpose,proof_hash,flow_hash,authority_revision,lifecycle_revision,"
-                    "protected_payload,key_version,expires_at) VALUES(%s,%s,'reactivate',%s,%s,%s,%s,%s,'u2-v1',clock_timestamp()+(%s*interval '1 second'))",
+                    "protected_payload,key_version,expires_at) VALUES(%s,%s,'reactivate',%s,%s,%s,%s,%s,%s,clock_timestamp()+(%s*interval '1 second'))",
                     (
                         identifier,
                         row["id"],
@@ -559,7 +667,12 @@ class ControlEntryService(GuardedEntryService):
                         self.verifier("flow", flow_binding),
                         row["authority_revision"],
                         row["lifecycle_revision"],
-                        self.protect("proof:" + str(identifier), {"delivery": artifact.name}),
+                        (
+                            protected := self.protect(
+                                "proof:" + str(identifier), {"delivery": artifact.name}
+                            )
+                        ),
+                        self.protection_version(protected),
                         self.control_policy.proof_seconds,
                     ),
                 )

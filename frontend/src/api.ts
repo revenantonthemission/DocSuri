@@ -114,56 +114,147 @@ function envelope(value: unknown): ErrorEnvelope {
         : {}),
     };
   }
-  return { code: 'INTERNAL_ERROR', requestId: 'unknown', retryable: false, messageKey: 'request.error' };
+  return {
+    code: 'INTERNAL_ERROR',
+    requestId: 'unknown',
+    retryable: false,
+    messageKey: 'request.error',
+  };
 }
 
+/** Every response is scoped to the authority generation that requested it. */
 export class Transport {
   private csrf = '';
-
-  async bootstrap(): Promise<SessionBootstrap> {
-    const response = await fetch(`${API}/session`, { credentials: 'same-origin' });
+  private identity = '';
+  private epoch = 0;
+  private bootstrapFlight?: Promise<SessionBootstrap>;
+  private listeners = new Set<() => void>();
+  get generation(): number {
+    return this.epoch;
+  }
+  subscribe(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+  invalidateBoundary(): void {
+    this.csrf = '';
+    this.identity = '';
+    this.bootstrapFlight = undefined;
+    this.epoch += 1;
+    this.listeners.forEach((listener) => listener());
+  }
+  bootstrap(): Promise<SessionBootstrap> {
+    // A second anonymous bootstrap rotates the cookie behind the first CSRF token.
+    // Share exactly one in-flight read until an authority boundary invalidates it.
+    if (this.bootstrapFlight) return this.bootstrapFlight;
+    const flight = this.readBootstrap();
+    this.bootstrapFlight = flight;
+    void flight
+      .finally(() => {
+        if (this.bootstrapFlight === flight) this.bootstrapFlight = undefined;
+      })
+      .catch(() => undefined);
+    return flight;
+  }
+  private async readBootstrap(): Promise<SessionBootstrap> {
+    const generation = this.epoch;
+    const response = await fetch(`${API}/session`, {
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
     if (!response.ok) throw new ApiError(response.status, envelope(await safeJson(response)));
     const value = (await response.json()) as SessionBootstrap;
+    if (generation !== this.epoch) throw staleResponse();
+    const identity = value.signedIn ? `${value.accountId}:${value.authorityRevision}` : 'guest';
     this.csrf = value.csrfToken;
+    if (identity !== this.identity) {
+      this.identity = identity;
+      this.epoch += 1;
+      this.listeners.forEach((listener) => listener());
+    }
     return value;
   }
-
-  /** Explicit read; navigation never submits work. */
   async read<T>(path: string, body: unknown): Promise<T> {
     return this.call<T>('POST', path, body);
   }
-
-  async post<T>(path: string, body: unknown): Promise<T> {
-    return this.call<T>('POST', path, body);
+  async post<T>(path: string, body: unknown, operationKey?: string): Promise<T> {
+    return this.call<T>('POST', path, body, operationKey);
   }
-
   async get<T>(path: string): Promise<T> {
     return this.call<T>('GET', path, undefined);
   }
-
-  private async call<T>(method: string, path: string, body: unknown): Promise<T> {
+  private async call<T>(
+    method: string,
+    path: string,
+    body: unknown,
+    operationKey?: string,
+  ): Promise<T> {
+    if (!safeApiPath(path))
+      throw new ApiError(422, {
+        code: 'INVALID_ARGUMENT',
+        requestId: 'local',
+        retryable: false,
+        messageKey: 'local.path',
+      });
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (body !== undefined) {
       headers['X-CSRF-Token'] = await this.ensureCsrf();
-      headers['Idempotency-Key'] = crypto.randomUUID();
+      headers['Idempotency-Key'] = operationKey ?? crypto.randomUUID();
     }
-    const response = await fetch(path.startsWith('http') ? path : path, {
-      method,
-      credentials: 'same-origin',
-      headers,
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    });
-    if (!response.ok) throw new ApiError(response.status, envelope(await safeJson(response)));
-    if (response.status === 204) return undefined as T;
-    return (await response.json()) as T;
+    const generation = this.epoch;
+    const scoped = path !== `${API}/capabilities`;
+    let response: Response;
+    try {
+      response = await fetch(path, {
+        method,
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers,
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      });
+    } catch {
+      if (scoped && generation !== this.epoch) throw staleResponse();
+      throw new ApiError(0, {
+        code: 'UNKNOWN_OUTCOME',
+        requestId: operationKey ?? 'unobserved',
+        retryable: false,
+        messageKey: 'request.unknown',
+      });
+    }
+    const value = response.status === 204 ? undefined : await safeJson(response);
+    if (scoped && generation !== this.epoch) throw staleResponse();
+    if (!response.ok) {
+      const error = new ApiError(response.status, envelope(value));
+      if (error.envelope.code === 'UNAUTHENTICATED') this.invalidateBoundary();
+      throw error;
+    }
+    return value as T;
   }
-
-  /** A reloaded page may act before its first bootstrap resolved; the caller's
-   * own session/anonymous flow still supplies the current CSRF. */
   private async ensureCsrf(): Promise<string> {
     if (!this.csrf) await this.bootstrap();
     return this.csrf;
   }
+}
+
+function staleResponse(): ApiError {
+  return new ApiError(401, {
+    code: 'UNAUTHENTICATED',
+    requestId: 'stale-response',
+    retryable: false,
+    messageKey: 'session.changed',
+  });
+}
+export function safeApiPath(path: string): boolean {
+  // Only registered versioned local routes; never provider URLs or dot segments.
+  return (
+    /^\/api\/v2\/(?:session|capabilities|jobs\/[a-zA-Z0-9-]+(?:\/(?:events|result))?|identity\/callback\/(?:google|orcid)|c(?:0[1-9]|1[0-3])\/[a-z][a-z0-9-]*(?:\/[a-zA-Z0-9-]+)?)(?:\?[^#\\]*)?$/.test(
+      path,
+    ) &&
+    !/%(?:2e|2f|5c)/i.test(path) &&
+    !path.includes('..')
+  );
 }
 
 async function safeJson(response: Response): Promise<unknown> {

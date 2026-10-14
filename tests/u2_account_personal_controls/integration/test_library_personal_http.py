@@ -1,5 +1,6 @@
 """Mounted U2 owner controls with real PostgreSQL and cookie/CSRF transport."""
 
+import time
 from uuid import UUID, uuid4
 
 import pytest
@@ -52,6 +53,7 @@ def browser(realm, transactions, identities, connect):
         )
     app = assemble_journey(realm[0])
     with TestClient(app, base_url=ORIGIN) as client:
+        await_admission(client)
         bootstrap = client.get("/api/v2/session")
         assert bootstrap.status_code == 200
         client.headers.update({"Origin": ORIGIN, "X-CSRF-Token": bootstrap.json()["csrfToken"]})
@@ -73,6 +75,18 @@ def post(client, name, value, *, key=None):
     return client.post(
         "/api/v2/c03/" + name, json=value, headers={"Idempotency-Key": str(key or uuid4())}
     )
+
+
+def await_admission(client, *, seconds: float = 15.0):
+    """Bounded wait for the first capacity observation; normal routes fail closed."""
+    deadline = time.monotonic() + seconds
+    while True:
+        probe = client.get("/health/ready")
+        if probe.status_code == 200:
+            return
+        if time.monotonic() >= deadline:
+            raise AssertionError(f"control host never admitted requests: {probe.text}")
+        time.sleep(0.05)
 
 
 def read_settings(client):

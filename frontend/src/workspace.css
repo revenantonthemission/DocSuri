@@ -291,3 +291,91 @@ button.nav[aria-current='page'] {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Account controls share the reading surface and inherited semantic colors. */
+.workspace-content {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.topbar {
+  grid-column: 1 / -1;
+}
+.control-group {
+  border-top: 1px solid var(--color-border);
+  padding: 1rem 0;
+  margin-top: 1rem;
+}
+.control-group summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 44px;
+}
+.control-body {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+.control-field {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+.control-field input {
+  width: 100%;
+  box-sizing: border-box;
+}
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+.control-list {
+  padding-inline-start: 1.5rem;
+}
+.control-list li {
+  margin-block: 0.75rem;
+}
+.control-confirmation {
+  border: 1px solid var(--color-border);
+  padding: 1rem;
+  border-radius: 0.75rem;
+}
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.check-row input {
+  width: 1.2rem;
+  min-height: 1.2rem;
+}
+.protected-material {
+  border: 1px solid var(--color-border);
+  padding: 1rem;
+}
+.protected-material code {
+  overflow-wrap: anywhere;
+}
+.protected-material canvas {
+  max-width: 100%;
+  height: auto;
+}
+@media (max-width: 767px) {
+  .session {
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+  .control-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

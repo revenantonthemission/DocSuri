@@ -55,10 +55,11 @@ class ControlMfaService:
                 raise ValueError("active enrollment requires controlled replacement")
             row = conn.execute(
                 "INSERT INTO accounts.mfa_enrollment(id,account_id,key_version,ciphertext,delivery_hash,delivery_expires_at,state) "
-                "VALUES(%s,%s,'u2-v1',%s,%s,clock_timestamp()+(%s*interval '1 second'),'inactive') RETURNING delivery_expires_at",
+                "VALUES(%s,%s,%s,%s,%s,clock_timestamp()+(%s*interval '1 second'),'inactive') RETURNING delivery_expires_at",
                 (
                     identifier,
                     authority.account_id,
+                    self.entry.protection_version(encrypted),
                     encrypted,
                     self.entry.verifier("mfa-delivery", str(delivery)),
                     self.policy.material_seconds,

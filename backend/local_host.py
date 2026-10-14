@@ -304,6 +304,14 @@ def assemble(profile: LocalProfile, *, routers=(), lifespan=None) -> FastAPI:
         if required is None or transactions is None:
             return JSONResponse({"ready": False, "missing": ["assembly"]}, status_code=503)
         report = await run_in_threadpool(local_observation.readiness, transactions, required)
+        loop = getattr(app.state, "control_loop", None)
+        if profile.realm == "account-controls":
+            report["backgroundWork"] = dict(loop.status) if loop is not None else {"state": "stopped"}
+            capacity = getattr(app.state, "control_capacity", None)
+            report["admitting"] = bool(capacity and capacity.admitting)
+            if (not report["admitting"] or loop is None or
+                    loop.status["state"] in {"stopped", "degraded", "deadline"}):
+                report["ready"] = False
         return JSONResponse(report, status_code=200 if report["ready"] else 503)
 
     @app.get("/api/v2/capabilities")
@@ -474,12 +482,24 @@ def assemble_journey(profile: LocalProfile) -> FastAPI:
 
         @asynccontextmanager
         async def lifetime(app):
+            loop = None
+            if controls:
+                from .control_runtime import ControlLoop
+                loop = ControlLoop(app.state.control_worker, capacity=app.state.control_capacity)
+                app.state.control_loop = loop
+                loop.start()
             try:
                 yield
             finally:
+                if loop is not None:
+                    await loop.close()
                 transactions.close()
 
         app = assemble(profile, routers=routers, lifespan=lifetime)
+        if controls:
+            from .control_runtime import ControlAdmission, ControlCapacity
+            app.state.control_capacity = ControlCapacity(transactions)
+            app.add_middleware(ControlAdmission, capacity=app.state.control_capacity)
         app.state.personalization = personalization
         app.state.entry = entry
         app.state.lifecycle = lifecycle

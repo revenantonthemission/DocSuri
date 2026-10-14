@@ -99,7 +99,7 @@ class ControlIdentityService:
                 raise ValueError("finite identity flow capacity")
             row = conn.execute(
                 "INSERT INTO accounts.identity_flow(id,account_id,provider,intent,state_hash,binding_hash,authority_revision,"
-                "callback_id,return_route,secret_ciphertext,key_version,expires_at) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'u2-v1',"
+                "callback_id,return_route,secret_ciphertext,key_version,expires_at) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,"
                 "clock_timestamp()+interval '5 minutes') RETURNING expires_at",
                 (
                     identifier,
@@ -111,9 +111,12 @@ class ControlIdentityService:
                     revision,
                     adapter.callback,
                     route,
-                    self.entry.protect(
-                        "identity:" + str(identifier), {"nonce": nonce, "verifier": verifier}
+                    (
+                        protected := self.entry.protect(
+                            "identity:" + str(identifier), {"nonce": nonce, "verifier": verifier}
+                        )
                     ),
+                    self.entry.protection_version(protected),
                 ),
             ).fetchone()
             return {

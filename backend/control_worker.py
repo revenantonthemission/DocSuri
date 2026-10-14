@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from psycopg.types.json import Jsonb
 
+from backend.artifacts import ARTIFACT_IDENTITY
 from backend.lifecycle_effects import apply_owner_effect
 from backend.modules.library.control_lifecycle import LibraryLifecycleParticipant
 from backend.modules.personalization.control_lifecycle import PersonalizationLifecycleParticipant
@@ -65,7 +66,11 @@ class AccountLifecycleParticipant:
                 if payload.get("delivery"):
                     names.add(payload["delivery"])
             for name in sorted(names):
-                self.entry.mail.erase(name)
+                # The artifact store can only create, read or erase its own finite
+                # identity form, so a stored name it cannot own references no private
+                # bytes; an uninterpretable marker must not crash the bounded pass.
+                if ARTIFACT_IDENTITY.fullmatch(str(name)):
+                    self.entry.mail.erase(name)
 
         return apply_owner_effect(self.transactions, "accounts", self.scopes, ticket, effect)
 
@@ -180,6 +185,59 @@ class ControlWorker:
             GuardedUsageRepository(self.transactions),
         )
 
+    def apply_research_consent(self, fact):
+        def write(conn):
+            current = conn.execute(
+                "SELECT * FROM accounts.assistance_effect_authority(%s)",
+                (fact["account_id"],),
+            ).fetchone()
+            prior = conn.execute(
+                "SELECT * FROM assistance.consent_evidence WHERE obligation_id=%s",
+                (fact["id"],),
+            ).fetchone()
+            if prior:
+                if (
+                    prior["account_id"],
+                    prior["consent_revision"],
+                    prior["authority_revision"],
+                ) != (fact["account_id"], fact["consent_revision"], fact["authority_revision"]):
+                    raise ValueError("consent evidence binding conflict")
+                return prior["evidence_ref"]
+            disposition = "superseded"
+            if (current["authority_revision"], current["consent_revision"], current["granted"]) == (
+                fact["authority_revision"],
+                fact["consent_revision"],
+                fact["granted"],
+            ):
+                disposition = "applied"
+                if not fact["granted"]:
+                    if conn.execute(
+                        "SELECT 1 FROM assistance.job WHERE account_id=%s "
+                        "AND (state IN ('accepted','running') OR settlement_pending) LIMIT 1",
+                        (fact["account_id"],),
+                    ).fetchone():
+                        raise PendingLifecycleEvidence("consent-work-reconciliation-pending")
+                    conn.execute(
+                        "UPDATE assistance.result SET availability='restricted' "
+                        "WHERE account_id=%s",
+                        (fact["account_id"],),
+                    )
+            evidence = uuid4()
+            conn.execute(
+                "INSERT INTO assistance.consent_evidence VALUES(%s,%s,%s,%s,%s,%s)",
+                (
+                    fact["id"],
+                    fact["account_id"],
+                    fact["consent_revision"],
+                    fact["authority_revision"],
+                    evidence,
+                    disposition,
+                ),
+            )
+            return evidence
+
+        return self.transactions.run("assistance", write)
+
     def run_once(self, limit=4):
         if type(limit) is not int or not 1 <= limit <= 4:
             raise ValueError("finite control-worker bound required")
@@ -188,12 +246,17 @@ class ControlWorker:
         from backend.modules.accounts.control_repository import ControlRepository
 
         repository = ControlRepository(self.transactions, self.entry.control_policy)
-        for fact in repository.pending_consents(limit=limit):
-            if fact["purpose"] == "personalization":
-                evidence = self.personalization.apply_consent_boundary(fact)
-                repository.acknowledge_consent(
-                    fact["id"], fact["consent_revision"], UUID(evidence["evidenceRef"])
-                )
+        for purpose in ("personalization", "local-research"):
+            for fact in repository.pending_consents(limit=limit, purpose=purpose):
+                try:
+                    evidence = (
+                        UUID(self.personalization.apply_consent_boundary(fact)["evidenceRef"])
+                        if purpose == "personalization"
+                        else self.apply_research_consent(fact)
+                    )
+                except PendingLifecycleEvidence:
+                    continue
+                repository.acknowledge_consent(fact["id"], fact["consent_revision"], evidence)
         resets = self.transactions.run(
             "personalization",
             lambda conn: conn.execute(
@@ -214,8 +277,11 @@ class ControlWorker:
                 "SELECT r.id FROM accounts.lifecycle_request r "
                 "JOIN accounts.account a ON a.id=r.account_id "
                 "WHERE r.revision=a.lifecycle_revision AND r.disposition<>'complete' "
+                "AND r.manifest_revision=%s AND EXISTS (SELECT 1 FROM accounts.lifecycle_scope s "
+                "WHERE s.request_id=r.id AND s.disposition<>'complete' AND s.attempts<3 "
+                "AND (s.lease_until IS NULL OR s.lease_until<=clock_timestamp())) "
                 "ORDER BY r.accepted_at,r.id LIMIT %s",
-                (limit,),
+                (self.lifecycle.revision, limit),
             ).fetchall(),
         )
         outcomes = []

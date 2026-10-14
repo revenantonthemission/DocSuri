@@ -1,0 +1,101 @@
+# Run from the repository root, as required by U2 unit-test-instructions.md.
+# Keep each layer's data under the same source/lock/policy identity and combine
+# those files before the final report. Never combine results from changed code.
+#
+# Source directories discover files that were never imported, so their statements
+# remain missing rather than disappearing from the coverage denominator. The
+# report inventory below includes entire changed production files, including
+# shared owners, the runner and the handwritten contract exporter.
+#
+# REFRESH BEFORE FINAL VERIFICATION: reconcile [report] include with the complete
+# new/modified production Python inventory against the recorded develop base,
+# including untracked additions. Add a source_dirs root for any new source root.
+# Fail the inventory gate if an expected path is absent on disk, absent from this
+# list, or absent from the combined JSON report. A report include pattern alone
+# does not make Coverage.py fail when its expected file never existed.
+# Only tests and generated-only binding data may be omitted by the approved U2
+# instructions. Do not remove low-coverage production paths to reach the floor.
+# Installed .venv dependencies are not workspace production source.
+
+[run]
+branch = False
+source_dirs =
+    backend
+    scripts
+    ops/src/docsuri_ops
+    shared/python/tools
+omit =
+    */tests/*
+    */.venv/*
+relative_files = True
+parallel = True
+data_file = .coverage.u2.data
+patch = subprocess
+
+[report]
+fail_under = 80
+precision = 2
+show_missing = True
+skip_covered = False
+skip_empty = False
+ignore_errors = False
+include_namespace_packages = True
+# Explicit production inventory; refresh it as API/operations files arrive.
+include =
+    backend/artifacts.py
+    backend/control_restore.py
+    backend/control_runtime.py
+    backend/control_worker.py
+    backend/lifecycle_effects.py
+    backend/local_browser.py
+    backend/local_host.py
+    backend/local_profile.py
+    backend/modules/accounts/control_confirmation.py
+    backend/modules/accounts/control_cursor.py
+    backend/modules/accounts/control_http.py
+    backend/modules/accounts/control_keys.py
+    backend/modules/accounts/control_key_recovery.py
+    backend/modules/accounts/control_policy.py
+    backend/modules/accounts/control_repository.py
+    backend/modules/accounts/local_http.py
+    backend/modules/accounts/services/control_entry.py
+    backend/modules/accounts/services/control_identity.py
+    backend/modules/accounts/services/control_lifecycle.py
+    backend/modules/accounts/services/control_mfa.py
+    backend/modules/accounts/services/guarded_entry.py
+    backend/modules/corpus/local_http.py
+    backend/modules/discovery/guarded_repository.py
+    backend/modules/discovery/local_http.py
+    backend/modules/library/control_lifecycle.py
+    backend/modules/library/control_service.py
+    backend/modules/library/local_http.py
+    backend/modules/library/repository/guarded.py
+    backend/modules/library/restore.py
+    backend/modules/personalization/activity.py
+    backend/modules/personalization/control_lifecycle.py
+    backend/modules/personalization/control_service.py
+    backend/modules/personalization/guarded_service.py
+    backend/modules/personalization/local_http.py
+    backend/modules/personalization/reset_repository.py
+    backend/modules/personalization/restore.py
+    backend/modules/plans/control_service.py
+    backend/modules/plans/guarded_repository.py
+    backend/modules/plans/local_http.py
+    backend/modules/summarization/admission.py
+    backend/modules/summarization/guarded_repository.py
+    backend/transactions.py
+    ops/src/docsuri_ops/local_transport.py
+    ops/src/docsuri_ops/u2_restore.py
+    ops/src/docsuri_ops/u2_restore_context.py
+    scripts/prepare_docsuri_u2_browser.py
+    scripts/prepare_docsuri_u2_transport.py
+    scripts/serve_docsuri_u2.py
+    scripts/verify_docsuri_u2.py
+    scripts/u2_browser_fixtures.py
+    shared/python/tools/export_workspace_contract.py
+
+[json]
+output = .coverage.u2.json
+
+[xml]
+output = .coverage.u2.xml

@@ -11,6 +11,9 @@ from pathlib import Path
 from uuid import uuid4
 
 
+ARTIFACT_IDENTITY = re.compile(r"[0-9a-f]{32}\.blob")
+
+
 @dataclass(frozen=True)
 class Artifact:
     name: str
@@ -69,7 +72,7 @@ class PrivateArtifacts:
             staging.unlink(missing_ok=True)
 
     def read(self, artifact: Artifact) -> bytes:
-        if not re.fullmatch(r"[0-9a-f]{32}\.blob", artifact.name):
+        if not ARTIFACT_IDENTITY.fullmatch(artifact.name):
             raise ArtifactUnavailable("invalid artifact identity")
         if not 0 < artifact.size <= self.maximum_bytes:
             raise ArtifactUnavailable("invalid artifact bound")
@@ -95,7 +98,7 @@ class PrivateArtifacts:
 
     def erase(self, name: str) -> None:
         """Trusted owner erasure: one exact immutable name, idempotent after a crash."""
-        if not re.fullmatch(r"[0-9a-f]{32}\.blob", name):
+        if not ARTIFACT_IDENTITY.fullmatch(name):
             raise ArtifactUnavailable("invalid artifact identity")
         path = self.root / name
         try:
