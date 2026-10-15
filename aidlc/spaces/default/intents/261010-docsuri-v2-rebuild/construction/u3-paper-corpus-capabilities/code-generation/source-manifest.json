@@ -59,6 +59,7 @@
     { "path": "frontend/test/u3-paper-corpus-capabilities/glossary.test.tsx" },
     { "path": "frontend/test/u3-paper-corpus-capabilities/helpers.ts" },
     { "path": "frontend/test/u3-paper-corpus-capabilities/reading.test.tsx" },
+    { "path": "frontend/test/u3-paper-corpus-capabilities/shell.test.tsx" },
     { "path": "frontend/vitest.u3-corpus.config.ts" },
     { "path": "ops/src/docsuri_ops/local_transport.py" },
     { "path": "ops/src/docsuri_ops/u3_capacity.sql" },

@@ -278,7 +278,6 @@ def assemble_u3(profile: LocalProfile) -> FastAPI:
             corpus_router(
                 transactions,
                 entry=entry,
-                anonymous=anonymous,
                 maintenance=maintenance,
                 reading=reading,
             ),

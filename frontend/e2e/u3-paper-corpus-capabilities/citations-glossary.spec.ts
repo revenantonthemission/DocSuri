@@ -83,10 +83,15 @@ test('glossary CAS conflict is visible and preserves the committed terms', async
   await expect(page.getByTestId('glossary-term').first()).toContainText('어텐션');
 });
 
-test('citation exploration refuses guests but leaves reading available', async ({ page }) => {
+test('guests keep anonymous search but reading and citations need a session', async ({ page }) => {
+  // Guest search stays anonymous (metadata only); the exact-version reads and
+  // the citation explorer are session-required per C13, so the guest sees the
+  // sign-in requirement instead of content.
   await page.goto('/');
   await search(page, 'paper-alpha');
+  await expect(page.getByTestId('result-row').first()).toBeVisible();
   await openFirstResult(page);
-  await expect(page.getByTestId('reading-surface')).toBeVisible();
+  await expect(page.getByTestId('content-state')).toContainText('로그인하면 본문을 볼 수 있어요');
+  await expect(page.getByTestId('reading-surface')).toHaveCount(0);
   await expect(page.getByTestId('citation-explorer')).toHaveCount(0);
 });

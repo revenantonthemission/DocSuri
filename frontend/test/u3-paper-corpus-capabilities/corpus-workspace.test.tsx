@@ -18,15 +18,18 @@ function build() {
     .on('/api/v2/c05/search', () => searchResponse())
     .on('/api/v2/c04/read-content', () => readyContent())
     .on('/api/v2/c06/read-glossary', () => glossary)
-    .on('/api/v2/c06/read-assistance-options', () => {
-      throw new Error('assistance options are not requested before content binds');
-    });
+    .on('/api/v2/c06/read-assistance-options', () => ({
+      revision: 'options-r1',
+      options: [],
+      policy: { policyId: 'u3-paper-assistance', revision: '1' },
+      limitations: [],
+    }));
 }
 
 describe('U3 corpus workspace', () => {
   it('composes search, reading and glossary, retaining the query on return', async () => {
     const client = build();
-    render(<CorpusWorkspace client={client.asTransport()} signedIn={false} />);
+    render(<CorpusWorkspace client={client.asTransport()} signedIn />);
     await userEvent.type(screen.getByTestId('search-query'), 'attention');
     await userEvent.click(screen.getByTestId('search-submit'));
     await waitFor(() => expect(screen.getByTestId('result-row')).toBeInTheDocument());
@@ -39,6 +42,22 @@ describe('U3 corpus workspace', () => {
     await userEvent.click(screen.getByTestId('reading-back'));
     await expect(screen.getByTestId('search-query')).toBeVisible();
     expect(screen.getByTestId('result-row')).toBeInTheDocument();
+  });
+
+  it('shows guests the session requirement instead of reading content', async () => {
+    const client = build();
+    render(<CorpusWorkspace client={client.asTransport()} signedIn={false} />);
+    await userEvent.type(screen.getByTestId('search-query'), 'attention');
+    await userEvent.click(screen.getByTestId('search-submit'));
+    await waitFor(() => expect(screen.getByTestId('result-row')).toBeInTheDocument());
+    await userEvent.click(
+      screen.getByTestId('result-row').querySelector('button') as HTMLButtonElement,
+    );
+    await waitFor(() => expect(screen.getByTestId('content-state')).toBeInTheDocument());
+    expect(screen.getByTestId('content-state')).toHaveTextContent('로그인하면 본문을 볼 수 있어요');
+    // The authenticated read is never attempted for a guest.
+    expect(client.calls.some((call) => call.path === '/api/v2/c04/read-content')).toBe(false);
+    expect(screen.queryByTestId('reading-surface')).toBeNull();
   });
 
   it('renders the unavailable panel with an announced state', () => {

@@ -1,8 +1,11 @@
 # U3 paper/corpus coverage configuration.
 #
 # The include set names every production Python path this unit authored or
-# extended for the U3 capability; legacy suites, generated data and other
-# units' modules are excluded, and nothing is narrowed to inflate a result.
+# extended for the U3 capability: the 15 U3-authored modules plus the shared
+# host/transaction/browser/profile/artifact modules and the guarded owner
+# repositories U3 extended (all listed in source-manifest.json). Legacy suites,
+# generated data and other units' modules are excluded, and nothing is narrowed
+# to inflate a result.
 [run]
 source = backend
 
@@ -23,6 +26,16 @@ include =
     backend/modules/summarization/u3_glossary.py
     backend/modules/summarization/u3_http.py
     backend/modules/summarization/u3_provider.py
+    backend/local_host.py
+    backend/transactions.py
+    backend/local_browser.py
+    backend/artifacts.py
+    backend/local_profile.py
+    backend/modules/discovery/local_search.py
+    backend/modules/discovery/guarded_repository.py
+    backend/modules/library/repository/guarded.py
+    backend/modules/summarization/guarded_repository.py
+    backend/modules/accounts/local_http.py
 omit =
     backend/modules/*/tests/*
     */__pycache__/*

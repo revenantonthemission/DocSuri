@@ -61,6 +61,9 @@ test('assistance stays unavailable to guests', async ({ page }) => {
   await page.goto('/');
   await search(page, 'paper-alpha');
   await openFirstResult(page);
-  await expect(page.getByTestId('assistance-unavailable')).toBeVisible({ timeout: 15_000 });
+  // Reading is session-required, so a guest never binds content and the
+  // assistance surface (options, progress, results) is not reachable at all.
+  await expect(page.getByTestId('content-state')).toContainText('로그인하면 본문을 볼 수 있어요');
+  await expect(page.getByTestId('assistance-panel')).toHaveCount(0);
   await expect(page.getByTestId('start-summary')).toHaveCount(0);
 });

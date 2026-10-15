@@ -1,9 +1,11 @@
 """Canonical U3 CorpusContent browser bindings.
 
-C04 operations: corpus-run acceptance/read (maintenance authority), eligibility
-change (maintenance authority), exact-version resolve/read (guest-allowed) and
-opaque asset reads (authenticated). Authority and eligibility are derived from
-trusted server context; limits are validated before expensive work.
+C04 operations: corpus-run acceptance/read/retry (maintenance authority),
+source-eligibility change (maintenance authority), exact-version resolve/read
+and opaque asset reads (current authenticated session; guests receive metadata
+only through their separately authorized search response). Authority and
+eligibility are derived from trusted server context; limits are validated
+before expensive work.
 """
 
 from __future__ import annotations
@@ -131,9 +133,7 @@ def _change_kind(disposition: str, reason_key: str) -> str:
     return "canonicalization"
 
 
-def corpus_router(
-    transactions, *, entry, anonymous, maintenance, reading
-) -> APIRouter:
+def corpus_router(transactions, *, entry, maintenance, reading) -> APIRouter:
     origin = transactions.profile.origin
     router = APIRouter(route_class=boundary_route(origin))
 
@@ -145,38 +145,11 @@ def corpus_router(
             raise BrowserDenied(401, "UNAUTHENTICATED")
         return operation, authority
 
-    async def optional(request: Request):
-        operation, _, authority = await post_context(
-            request, origin=origin, entry=entry, anonymous=anonymous
-        )
-        return operation, authority
-
     @router.post("/api/v2/c04/accept-corpus-run")
     async def accept_run(request: Request):
         operation, authority = await authenticated(request)
         value = await read_payload(request, wire.CorpusRunRequestHttp)
-        if value["operation"] == "reprocess":
-            digest_run = await run_in_threadpool(
-                _latest_reconcilable, maintenance, authority, value
-            )
-            if digest_run is None:
-                raise BrowserDenied(409, "CONFLICT")
-            result = await run_in_threadpool(
-                maintenance.retry,
-                authority,
-                operation,
-                {
-                    "operation": digest_run["operation"],
-                    "sourceScopeIds": value["sourceScopeIds"],
-                    "authoritativeInputRevision": value["authoritativeInputRevision"],
-                    "inputManifestHash": value["inputManifestHash"],
-                    "retryOf": digest_run["runId"],
-                },
-            )
-        else:
-            result = await run_in_threadpool(
-                maintenance.accept, authority, operation, value
-            )
+        result = await run_in_threadpool(maintenance.accept, authority, operation, value)
         run = await run_in_threadpool(maintenance.read_run, authority, UUID(result["runId"]))
         return run_dto(run)
 
@@ -191,8 +164,40 @@ def corpus_router(
         run = await run_in_threadpool(maintenance.read_run, authority, run_id)
         return run_dto(run)
 
-    @router.post("/api/v2/c04/record-eligibility-change")
-    async def record_change(request: Request):
+    @router.post("/api/v2/c04/retry-corpus-run")
+    async def retry_run(request: Request):
+        """C04 retryCorpusRun: reconciled retryable stages of the original run.
+
+        The original run's authoritative inputs are re-read server-side; the
+        request carries only the run identity, so retry can never change the
+        intended inputs. Committed stages are carried forward, not re-executed.
+        """
+        operation, authority = await authenticated(request)
+        value = await read_payload(request, wire.CorpusRunReadHttp)
+        try:
+            run_id = UUID(value["runId"])
+        except (ValueError, TypeError):
+            raise BrowserDenied(422, "INVALID_ARGUMENT") from None
+        original = await run_in_threadpool(_original_run, maintenance, run_id)
+        if original is None:
+            raise BrowserDenied(404, "NOT_FOUND")
+        result = await run_in_threadpool(
+            maintenance.retry,
+            authority,
+            operation,
+            {
+                "operation": original["operation"],
+                "sourceScopeIds": original["sourceScopeIds"],
+                "authoritativeInputRevision": original["authoritativeInputRevision"],
+                "inputManifestHash": original["inputManifestHash"],
+                "retryOf": original["runId"],
+            },
+        )
+        run = await run_in_threadpool(maintenance.read_run, authority, UUID(result["runId"]))
+        return run_dto(run)
+
+    @router.post("/api/v2/c04/change-source-eligibility")
+    async def change_source_eligibility(request: Request):
         _, authority = await authenticated(request)
         value = await read_payload(request, wire.CorpusEligibilityChangeHttp)
         result = await run_in_threadpool(
@@ -218,7 +223,7 @@ def corpus_router(
 
     @router.post("/api/v2/c04/resolve-paper")
     async def resolve(request: Request):
-        operation, authority = await optional(request)
+        _, authority = await authenticated(request)
         value = await read_payload(request, wire.CorpusResolveHttp)
         row = await run_in_threadpool(
             reading.resolve, authority, value["identifier"], value.get("versionLabel")
@@ -243,7 +248,7 @@ def corpus_router(
 
     @router.post("/api/v2/c04/read-content")
     async def read_content(request: Request):
-        _, authority = await optional(request)
+        _, authority = await authenticated(request)
         value = await read_payload(request, wire.CorpusReadHttp)
         result = await run_in_threadpool(
             reading.read_content, authority, value["paper"], value["purpose"]
@@ -316,20 +321,21 @@ def corpus_router(
     return router
 
 
-def _latest_reconcilable(maintenance, authority, value):
-    """The original intended run matched by its authoritative inputs, if any."""
-
-    from psycopg.types.json import Jsonb
+def _original_run(maintenance, run_id) -> dict | None:
+    """The original intended run's authoritative inputs, re-read server-side."""
 
     def read(conn):
         return conn.execute(
-            "SELECT * FROM corpus.run WHERE input_manifest_hash=%s AND "
-            "source_scope=%s::jsonb AND state IN ('failed','unknown','running') "
-            "ORDER BY accepted_at DESC LIMIT 1",
-            (value["inputManifestHash"], Jsonb(value["sourceScopeIds"])),
+            "SELECT * FROM corpus.run WHERE id=%s", (run_id,)
         ).fetchone()
 
     row = maintenance.transactions.run("corpus", read)
     if row is None:
         return None
-    return {"runId": str(row["id"]), "operation": row["operation"]}
+    return {
+        "runId": str(row["id"]),
+        "operation": row["operation"],
+        "sourceScopeIds": [str(item) for item in row["source_scope"]],
+        "authoritativeInputRevision": str(row["authoritative_input_revision"]),
+        "inputManifestHash": row["input_manifest_hash"],
+    }

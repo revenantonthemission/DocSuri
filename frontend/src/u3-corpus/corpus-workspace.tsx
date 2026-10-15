@@ -46,7 +46,12 @@ export function CorpusWorkspace({
             검색으로 돌아가기
           </button>
           <ReadingSection client={client} hit={hit} signedIn={signedIn} />
-          <ContentBinding client={client} hit={hit} onBound={setContent} />
+          <ContentBinding
+            client={client}
+            hit={hit}
+            signedIn={signedIn}
+            onBound={setContent}
+          />
           {content ? (
             <AssistanceSection
               client={client}
@@ -66,13 +71,16 @@ export function CorpusWorkspace({
 function ContentBinding({
   client,
   hit,
+  signedIn,
   onBound,
 }: {
   client: Transport;
   hit: SearchHit;
+  signedIn: boolean;
   onBound: (value: { revision: string; hash: string }) => void;
 }) {
   useEffect(() => {
+    if (!signedIn) return;
     let active = true;
     api
       .readContent(client, hit.paper, 'assistance')
@@ -88,7 +96,7 @@ function ContentBinding({
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, hit.paper]);
+  }, [client, hit.paper, signedIn]);
   return null;
 }
 

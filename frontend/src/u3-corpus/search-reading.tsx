@@ -212,6 +212,13 @@ export function ReadingSection({
   useEffect(() => {
     let active = true;
     setRead(null);
+    if (!signedIn) {
+      // C13 marks resolve/read session-required: a guest receives metadata
+      // through the search response and a sign-in prompt, never content.
+      return () => {
+        active = false;
+      };
+    }
     api
       .readContent(client, hit.paper)
       .then((value) => {
@@ -228,7 +235,7 @@ export function ReadingSection({
     return () => {
       active = false;
     };
-  }, [client, hit.paper]);
+  }, [client, hit.paper, signedIn]);
 
   const explore = async (next: 'cited' | 'citing') => {
     setDirection(next);
@@ -268,7 +275,11 @@ export function ReadingSection({
         {hit.authors.join(', ')} · 버전 {hit.paper.versionId}
       </p>
       <StatusLine value={status} />
-      {read === null ? (
+      {!signedIn ? (
+        <div data-testid="content-state" role="status">
+          <p>로그인하면 본문을 볼 수 있어요</p>
+        </div>
+      ) : read === null ? (
         <p role="status">불러오는 중…</p>
       ) : read.availability === 'ready' ? (
         <article data-testid="reading-surface">

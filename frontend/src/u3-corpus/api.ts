@@ -208,7 +208,7 @@ export const api = {
     direction: 'cited' | 'citing' | 'both',
     snapshotRevision?: string,
   ) {
-    return client.post<CitationResponse>('/api/v2/c05/explore-citations', {
+    return client.post<CitationResponse>('/api/v2/c05/read-citations', {
       paper,
       direction,
       page: { limit: 32 },

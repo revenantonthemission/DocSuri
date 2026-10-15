@@ -15,10 +15,10 @@ const hit = {
   matchExplanation: '검색어 일치',
 };
 
-function build(content: unknown) {
+function build(content: unknown, signedIn = true) {
   const client = new ContractDouble()
     .on('/api/v2/c04/read-content', () => content)
-    .on('/api/v2/c05/explore-citations', () => ({
+    .on('/api/v2/c05/read-citations', () => ({
       snapshotId: 'snap-1',
       revision: 'r1',
       root: paper,
@@ -29,7 +29,7 @@ function build(content: unknown) {
       limitations: [],
       page: { nextCursor: undefined, snapshotRevision: 'r1' },
     }));
-  render(<ReadingSection client={client.asTransport()} hit={hit} signedIn={false} />);
+  render(<ReadingSection client={client.asTransport()} hit={hit} signedIn={signedIn} />);
   return client;
 }
 
@@ -41,6 +41,17 @@ describe('U3 reading surface', () => {
     expect(screen.getByTestId('figure-view')).toHaveTextContent('합성 그림');
     expect(screen.getByTestId('paper-identity')).toHaveTextContent('합성 논문 paper-alpha');
     expect(client.calls[0].body).toMatchObject({ paper: { versionId: 'paper-alpha:v1' } });
+  });
+
+  it('shows the session requirement to guests without calling the read', async () => {
+    const client = build(readyContent(), false);
+    await waitFor(() => expect(screen.getByTestId('content-state')).toBeInTheDocument());
+    expect(screen.getByTestId('content-state')).toHaveTextContent('로그인하면 본문을 볼 수 있어요');
+    expect(screen.queryByTestId('reading-surface')).toBeNull();
+    expect(client.calls.some((call) => call.path === '/api/v2/c04/read-content')).toBe(false);
+    // Metadata from the search response still identifies the paper.
+    expect(screen.getByTestId('paper-identity')).toHaveTextContent('합성 논문 paper-alpha');
+    expect(screen.queryByTestId('citation-explorer')).toBeNull();
   });
 
   it.each([
@@ -68,7 +79,7 @@ describe('U3 reading surface', () => {
     const client = new ContractDouble().on('/api/v2/c04/read-content', () => {
       throw apiError('DEPENDENCY_UNAVAILABLE', 503);
     });
-    render(<ReadingSection client={client.asTransport()} hit={hit} signedIn={false} />);
+    render(<ReadingSection client={client.asTransport()} hit={hit} signedIn />);
     await waitFor(() =>
       expect(screen.getByTestId('status-line')).toHaveTextContent('일시적으로 사용할 수 없어요'),
     );
@@ -76,7 +87,7 @@ describe('U3 reading surface', () => {
     expect(screen.queryByTestId('content-state')).toBeNull();
   });
 
-  it('hides the citation explorer from guests and shows it when signed in', async () => {
+  it('shows the citation explorer once a signed-in read is ready', async () => {
     const client = new ContractDouble().on('/api/v2/c04/read-content', () => readyContent());
     render(<ReadingSection client={client.asTransport()} hit={hit} signedIn />);
     await waitFor(() => expect(screen.getByTestId('citation-explorer')).toBeInTheDocument());

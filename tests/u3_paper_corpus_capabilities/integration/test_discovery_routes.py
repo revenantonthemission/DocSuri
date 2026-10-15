@@ -100,7 +100,7 @@ def test_citation_exploration_is_bounded_labelled_and_saved_through_library(
 ):
     response = post(
         browser,
-        "/api/v2/c05/explore-citations",
+        "/api/v2/c05/read-citations",
         {
             "paper": {"paperId": "paper-alpha", "versionId": "paper-alpha:v1",
                       "eligibilityRevision": "x"},
@@ -140,7 +140,7 @@ def test_citation_exploration_is_bounded_labelled_and_saved_through_library(
 def test_citation_requests_require_authentication(anonymous, published):
     response = post(
         anonymous,
-        "/api/v2/c05/explore-citations",
+        "/api/v2/c05/read-citations",
         {
             "paper": {"paperId": "paper-alpha", "versionId": "paper-alpha:v1",
                       "eligibilityRevision": "x"},

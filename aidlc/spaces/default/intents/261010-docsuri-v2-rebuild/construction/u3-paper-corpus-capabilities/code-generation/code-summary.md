@@ -24,20 +24,37 @@ all execution below is the owned synthetic realm (`docsuri_u3`,
 
 ## Executed evidence (synthetic realm, run `docsuri-u3-204aa60225e512be`)
 
+All rows below were re-run after the review repair round (2026-10-15); the
+outcomes are the repaired state.
+
 | Phase | Command (as recorded) | Result |
 |---|---|---|
 | database | `backend/.venv/bin/python scripts/verify_docsuri_u3.py --phase database …` | 15 tests, 0 failures/errors/skips |
 | repository | `… --phase repository …` | 21 tests, 0 failures/errors/skips |
 | component | `… --phase component …` | 54 tests, 0 failures/errors/skips |
-| integration | `… --phase integration …` | 27 tests, 0 failures/errors/skips |
+| integration | `… --phase integration …` | 29 tests, 0 failures/errors/skips |
 | operations | `… --phase operations …` | 13 tests, 0 failures/errors/skips |
-| browser | `… --phase browser …` | 16 journeys, exit 0 (desktop/tablet/phone, Light/Dark/System, Korean reflow, keyboard order, account switch, citations, glossary conflict, assistance accept→progress→result, reload recovery, expired result, withdrawn content, degradation notices) |
-| frontend unit | `corepack pnpm@9.15.9 --dir frontend exec vitest run --config vitest.u3-corpus.config.ts test/u3-paper-corpus-capabilities` | 27 tests passed |
-| frontend coverage | same with `--coverage` | **86.4% lines** for `src/u3-corpus/**` (threshold 80 enforced in config) |
-| backend coverage | `pytest -c backend/pytest.u3-paper-corpus.ini tests/u3_paper_corpus_capabilities --cov --cov-config=backend/.coveragerc.u3` | **83% lines** across the 15 U3 production modules; component-only alone is 59%, so the combined layer evidence is the reported figure |
+| browser | `… --phase browser …` (after `corepack pnpm@9.15.9 --dir frontend exec vite build`) | 16 journeys, exit 0 (desktop/tablet/phone, Light/Dark/System, Korean reflow, keyboard order, account switch, citations, glossary conflict, assistance accept→progress→result, reload recovery, expired result, withdrawn content, degradation notices, guest session boundary) |
+| frontend unit | `corepack pnpm@9.15.9 --dir frontend exec vitest run --config vitest.u3-corpus.config.ts test/u3-paper-corpus-capabilities` | 31 tests passed (incl. the U3 shell composition suite) |
+| frontend coverage | same with `--coverage` | `src/u3-corpus/**` **86.89% lines** (80% floor enforced per glob); `src/App.tsx` 48.62% in-lane with a 48% no-regression floor (see Coverage below) |
+| backend coverage | `backend/.venv/bin/python -m pytest -c backend/pytest.u3-paper-corpus.ini tests/u3_paper_corpus_capabilities --cov --cov-config=backend/.coveragerc.u3` | **74% lines across every U3-touched path**; the 15 U3-authored modules alone are **84.2%** (≥80% new-code floor) and the 10 U3-extended shared modules are 63% whole-file (see Coverage below) |
 | collection readiness | `pytest … component --collect-only -q` | 54 collected, zero skips; executed before the first behavior run |
 
-Backend totals: **130 real-store component/database/repository/integration/operations cases** (≥32 required real-store/API cases satisfied by 63 database+repository+integration cases alone), plus 27 frontend unit and 16 browser journeys. Q-01–Q-04 close through the mounted transport: the job snapshot carries `seq` and revision, ready results are typed and usable, acceptance reaches the supervised worker without manual execution, and SSE frames parse as valid single-line JSON events with polling/reconnect recovery.
+Backend totals: **132 real-store component/database/repository/integration/operations cases** (≥32 required real-store/API cases satisfied by 65 database+repository+integration cases alone), plus 31 frontend unit tests and 16 browser journeys. Q-01–Q-04 close through the mounted transport: the job snapshot carries `seq` and revision, ready results are typed and usable, acceptance reaches the supervised worker without manual execution, and SSE frames parse as valid single-line JSON events with polling/reconnect recovery.
+
+### Review repair round (review-01, NOT-READY → repaired)
+
+The independent review's six findings were repaired without widening scope,
+and every previously passing suite re-ran green:
+
+| Finding | Repair | Re-verified by |
+|---|---|---|
+| R-01 citations path | `/api/v2/c05/read-citations` mounted (C13 `C05_readCitations`); frontend client, unit double, integration tests and journey coverage updated | integration 29, frontend unit 31, browser 16 |
+| R-02 admin surface | `/api/v2/c04/change-source-eligibility` renamed; `/api/v2/c04/retry-corpus-run` mounted as its own C04 operation (retry of reconciled retryable stages, original inputs re-read server-side, committed stages retained); the undocumented accept-corpus-run reprocess fold was removed | integration `test_retry_corpus_run_*` (replay, completed-refusal, unknown-refusal) |
+| R-03 reads boundary | `resolve-paper` and `read-content` require a current session again (C04/C13/U1); guest search stays anonymous; frontend shows the sign-in requirement instead of guessing content; guest journeys and unit cases updated | integration `test_reading_requires_an_authenticated_session`; browser guest journey |
+| R-04 traceability | every OK row names exactly one existing workspace-relative file; all 139 upstream-resolved IDs declared and covered; the sensor now reports 0 invalid targets / 0 undeclared ids / 0 invalid entries, with only the honest GAPs [`FR6.3`, `NFR2.2`, `NFR6.1`] | `aidlc engine sensor-traceability` (findings_count 3) |
+| R-05 coverage scope | `.coveragerc.u3` now includes all 10 U3-extended shared modules; the frontend lane includes `src/App.tsx` with per-glob thresholds; numbers re-measured and reported below | backend combined coverage run; frontend `--coverage` run |
+| R-06 instructions | the `migrate` phase is documented between setup and every store/test phase; runner rows now use the frozen `backend/.venv/bin/python` and the CI build/frontend commands verbatim (the approved plan's Step 13 wording is frozen — only tick marks may change there — so the runner phase list stays as approved while the instructions carry the full reproducible sequence) | `unit-test-instructions.md`
 
 ## Requirement contribution (lead rows)
 
@@ -50,7 +67,14 @@ Backend totals: **130 real-store component/database/repository/integration/opera
 | FR9, FR9.1–FR9.2 citations | implemented (bounded, labelled, saves through Library) | `component/test_citations.py`, `repository/test_discovery_repository.py`, browser `citations-glossary.spec.ts` |
 | FR18, FR18.1–FR18.3 corpus maintenance | implemented (identity/dedup, withdrawal, rebuild/retry, watermark) | `database/*`, `component/test_corpus_maintenance.py`, `operations/test_recovery_restore.py`, `integration/test_corpus_routes.py` |
 
-Support rows touched (not claimed complete): FR5.3/FR18.2 change facts feed the Library disposition consumer (`library/test`-visible via `repository/test_corpus_repository.py::test_change_facts_paging_and_restore_replay` and `component/test_citations.py`); FR6.3/FR8.x current-authority rechecks appear in every owner transaction; FR10.x eligible-source contracts in reading/assistance admission; FR13–FR15/FR17.2 accounting reconciliation is delegated to UsageEntitlements through the existing settlement path (`u3_dispatch` calls `admit`/`settle`; no U3-owned ledger); FR12.2/FR19 safe observations via `local_observation` and `operations/test_diagnostics.py`.
+Support rows touched (not claimed complete): FR5.3/FR18.2 change facts feed the Library disposition consumer (`library/test`-visible via `repository/test_corpus_repository.py::test_change_facts_paging_and_restore_replay` and `component/test_citations.py`); FR8.x current-authority and eligible-source rechecks appear in every owner transaction; FR10.x eligibility dominance at every read; FR13–FR15/FR17.2 accounting reconciliation is delegated to UsageEntitlements through the existing settlement path (`u3_dispatch` calls `admit`/`settle`; no U3-owned ledger); FR12.2/FR19 safe observations via `local_observation` and `operations/test_diagnostics.py`. **FR6.3 is not claimed:** the functional-design finding (U3 lifecycle participation — read/acknowledge outstanding lifecycle work and suppress queued work on withdrawal) is carried unfixed, so `traceability.json` labels it GAP rather than repeating the rejected BR1.1 basis.
+
+## Coverage evidence
+
+- Backend, all U3-touched paths (`backend/.coveragerc.u3`, 25 modules incl. the 10 shared modules U3 extended): **74% lines** (2 979 statements, 765 missed) measured across every U3 layer.
+- The 15 U3-authored modules alone: **84.2%** lines — above the 80% new-code floor.
+- The 10 U3-extended shared modules alone: 63% whole-file. Their U3 diffs are 159 added/30 changed lines; the missing lines are pre-existing paths owned by other units (e.g. `local_host.py` U1/U2/U7 routes, `library/repository/guarded.py` saved-paper paths, `summarization/guarded_repository.py` job paths). Their full-file coverage remains with their owning units' lanes; nothing is excluded to raise the reported number.
+- Frontend (`vitest.u3-corpus.config.ts`): `src/u3-corpus/**` **86.89% lines** with the 80% floor enforced per glob; `src/App.tsx` — the only U3-extended shared frontend file (11 added lines: the capability-gated corpus-workspace branch) — measures **48.62% whole-file in this lane** with a 48% no-regression floor, exercised by the new `shell.test.tsx` composition suite plus the 16 browser journeys. The shell lanes own the file's full floor (`vitest.u2-account-controls.config.ts` reports `src/**` at 80.2% aggregate with `App.tsx` at 54.5% whole-file).
 
 ## NFR obligations
 
@@ -65,6 +89,10 @@ Support rows touched (not claimed complete): FR5.3/FR18.2 change facts feed the 
 - Real source permissions, model readiness (P1/P2), citation-provider terms, finite accounting/capacity values and public fit remain unresolved; the affected capabilities are explicitly `policy_pending` or labelled synthetic. `assistance.model` never becomes available from the fixture provider.
 - Carried design-stage review findings (functional design FR6.3 row/traceability/sections/upstream references/restore path/vocabulary; NFR requirements glossary coverage/technology inventory; NFR design citations/dangling target/count; infrastructure design citations/seven NFR ids/overstated targets/quarantine definition) are **not fixed here** and remain tracked for their own gates; nothing in this summary masks them.
 - The cumulative U1/U2/U3 completion invocation (`backend/.venv/bin/python scripts/verify_docsuri_cumulative.py --confirm-recorded-decision`, now covering u1/u2/u7/u3) is prepared but **not run** — it remains the separate recorded decision point before checkpoint verification.
+- Review state: code-generation review-01 returned NOT-READY with six findings (R-01…R-06); all six were repaired in this round with re-run evidence above, and a fresh independent review pass remains required before acceptance (plan step 56, unticked).
+- Plan step 48 (finite-limit ingestion/projection/worker/model footprint measurement before load) remains unticked: no baseline measurement ran; the bounded-profile phase evidence holds only bounded durations, and the numeric service targets stay baseline-dependent. It remains a conductor/human-owned gate and is not claimed here.
+- Plan step 57 (PR into develop under CONVENTIONS.md) remains unticked by instruction: this repair is committed locally on the existing working branch only — no push, no PR, no merge, no main promotion.
+- Repair-round process deviations: none — every write used the file tools, and the executed commands were the documented runner phases, the CI build command and the scoped vitest invocations.
 - Process deviations during the build: three private-tree shell writes on the already-owned synthetic run (one `sed -i` column rename, two developer-time recreations/wipes of `/tmp/docsuri-u3-run` before any test evidence existed in its final form; every probe thereafter used the runner). These are recorded in the stage diary.
 - Frontend workspace build (`vite build`) was required before browser journeys; `frontend/dist` is an ignored build artifact, not committed.
 - Two legacy files (`scripts/verify_docsuri_cumulative.py`, `tests/u1_integrated_paper_journey/component/test_admission_faults.py`) and `frontend/src/api.ts` carried pre-existing working-branch edits from the U2 build; only the cumulative script received a U3-layer insertion from this unit.

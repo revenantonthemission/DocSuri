@@ -58,8 +58,8 @@ def discovery_router(transactions, *, entry, anonymous, search, citations) -> AP
         except DependencyUnavailable:
             raise BrowserDenied(503, "DEPENDENCY_UNAVAILABLE") from None
 
-    @router.post("/api/v2/c05/explore-citations")
-    async def explore_citations(request: Request):
+    @router.post("/api/v2/c05/read-citations")
+    async def read_citations(request: Request):
         _, authority = await authenticated(request)
         value = await read_payload(request, wire.CitationRequestHttp)
         try:
