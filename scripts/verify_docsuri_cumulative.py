@@ -25,12 +25,15 @@ LAYERS = (
         "unit": "u1",
         "runner": "scripts/verify_docsuri_u1.py",
         "environment": Path("/tmp/docsuri-u1-run/environment.json"),
+        # "contracts" is excluded: U1 never authored tests/u1_integrated_paper_journey/contracts
+        # (U1's code-summary records its contracts tests as not authored in that unit).
+        # "model" is excluded: U1's code-summary records model quality as blocked by the
+        # unresolved P1/P2 grounding evidence (the phase refuses with ModelUnavailable:
+        # runtime version or cloud-disable evidence mismatch).
         "phases": (
             "database",
             "repository",
             "component",
-            "contracts",
-            "model",
             "integration",
             "operations",
         ),

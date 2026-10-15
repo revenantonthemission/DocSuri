@@ -124,8 +124,9 @@ class U3Search:
     ) -> bool:
         """Durable fact plus current Library boundary; replay executes no search."""
         if admission is None:
-            self.library.ensure_boundary(authority)
-            admission = self.library.history_boundary(authority)["generation"]
+            # The producer-assigned admission sequence is authoritative; the
+            # Library boundary never supplies or trusts a caller cutoff.
+            admission = self.repository.checkpoint(authority)["admissionSequence"]
         fact = self.repository.record(
             authority,
             execution,

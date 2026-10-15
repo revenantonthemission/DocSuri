@@ -233,8 +233,9 @@ def assemble_u3(profile: LocalProfile) -> FastAPI:
     from .modules.discovery.guarded_repository import GuardedDiscoveryRepository
     from .modules.discovery.u3_http import discovery_router
     from .modules.discovery.u3_search import U3Search
-    from .modules.library.repository.guarded import GuardedLibraryRepository
+    from .modules.library.local_http import library_router
     from .modules.library.u3_dispositions import SavedReferenceDispositions
+    from .modules.library.u3_history import U3HistoryConsumer
     from .modules.summarization.u3_dispatch import AssistanceDispatch
     from .modules.summarization.u3_http import assistance_router
     from .modules.summarization.u3_provider import SyntheticAssistanceExecutor
@@ -252,7 +253,7 @@ def assemble_u3(profile: LocalProfile) -> FastAPI:
         reading = CorpusReading(transactions)
         cursor_key = _cursor_key(profile)
         discovery_repository = GuardedDiscoveryRepository(transactions)
-        library = GuardedLibraryRepository(transactions)
+        library = U3HistoryConsumer(transactions)
         search = U3Search(
             transactions, discovery_repository, library, cursor_key=cursor_key
         )
@@ -290,6 +291,7 @@ def assemble_u3(profile: LocalProfile) -> FastAPI:
                 dispatch=dispatch,
                 corpus_repository=corpus_repository,
             ),
+            library_router(transactions, entry=entry, activity=None),
         )
         worker = U3ControlWorker(
             maintenance, dispatch, dispositions, dispatch.admission

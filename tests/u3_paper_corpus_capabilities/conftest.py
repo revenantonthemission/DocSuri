@@ -19,8 +19,8 @@ from backend.modules.corpus.maintenance import CorpusMaintenance
 from backend.modules.discovery.citations import CitationExplorer, FixtureCitationProvider
 from backend.modules.discovery.guarded_repository import GuardedDiscoveryRepository
 from backend.modules.discovery.u3_search import U3Search
-from backend.modules.library.repository.guarded import GuardedLibraryRepository
 from backend.modules.library.u3_dispositions import SavedReferenceDispositions
+from backend.modules.library.u3_history import U3HistoryConsumer
 from backend.transactions import Authority, OwnerTransactions
 from fixtures import MemorySources, request_body, source_record
 
@@ -206,7 +206,7 @@ def search_service(transactions, realm, identities):
         json.loads((realm[0].root / "corpus-keys.json").read_text())["cursor"]
     )
     repository = GuardedDiscoveryRepository(transactions)
-    library = GuardedLibraryRepository(transactions)
+    library = U3HistoryConsumer(transactions)
     return U3Search(transactions, repository, library, cursor_key=cursor_key)
 
 
@@ -282,18 +282,27 @@ def fixture_discard(realm):
         conn.execute("INSERT INTO library.disposition_cursor VALUES (true, 0)")
         conn.execute("UPDATE library.saved_paper SET disposition='active',"
                      "disposition_revision=NULL,disposition_position=NULL")
+        conn.execute("DELETE FROM library.history")
+        conn.execute("DELETE FROM library.history_boundary")
+        conn.execute("DELETE FROM library.saved_paper")
+        conn.execute("DELETE FROM library.saved_query")
         for table in reversed(CORPUS_RUN_TABLES):
             conn.execute(f"DELETE FROM {table}")
         conn.execute("UPDATE corpus.change_sequence SET fact_position=0")
         conn.execute("DELETE FROM corpus.maintenance_actor")
         conn.execute("DELETE FROM discovery.citation_snapshot")
         conn.execute("DELETE FROM discovery.provider_budget")
+        conn.execute("DELETE FROM discovery.admission")
+        conn.execute("DELETE FROM discovery.owner_admission")
         conn.execute("DELETE FROM discovery.execution")
+        conn.execute("DELETE FROM assistance.receipt")
         conn.execute("DELETE FROM assistance.event")
         conn.execute("DELETE FROM assistance.result")
         conn.execute("DELETE FROM assistance.job")
         conn.execute("DELETE FROM assistance.admission")
         conn.execute("DELETE FROM assistance.glossary")
+        conn.execute("DELETE FROM usage.reservation")
+        conn.execute("DELETE FROM usage.entitlement")
         conn.execute("DELETE FROM corpus.projection")
         conn.execute("DELETE FROM corpus.version")
         conn.execute("DELETE FROM corpus.paper")

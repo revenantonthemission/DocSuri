@@ -58,9 +58,15 @@ MIGRATIONS = (
     ("corpus", "backend/modules/corpus/u3_guards.sql"),
     ("corpus", "backend/modules/corpus/u3_watermark_v2.sql"),
     ("discovery", "backend/modules/discovery/u3_schema.sql"),
+    ("discovery", "backend/modules/discovery/u2_history_admission.sql"),
+    ("discovery", "backend/modules/discovery/u3_grants.sql"),
     ("library", "backend/modules/library/u3_schema.sql"),
+    ("library", "backend/modules/library/u2_history_binding.sql"),
     ("assistance", "backend/modules/summarization/u3_schema.sql"),
+    ("assistance", "backend/modules/summarization/u3_glossary_v2.sql"),
     ("accounts", "backend/modules/accounts/u3_corpus_authority.sql"),
+    ("accounts", "backend/modules/accounts/u3_session_authority.sql"),
+    ("accounts", "backend/modules/accounts/u2_history_authority_grant.sql"),
     ("operations", "ops/src/docsuri_ops/u3_capacity.sql"),
 )
 PHASES = (

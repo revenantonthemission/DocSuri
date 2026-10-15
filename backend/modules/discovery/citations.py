@@ -357,12 +357,10 @@ class FixtureCitationProvider:
         while frontier:
             current, depth = frontier.pop(0)
             if depth >= max_depth:
-                if record.get(current, {}).get(direction) or (
-                    direction == "both" and record.get(current)
-                ):
+                if _links(self.records.get(current, {}), direction):
                     truncated = True
                 continue
-            for link in _links(record.get(current, {}), direction):
+            for link in _links(self.records.get(current, {}), direction):
                 requests += 1
                 if requests > max_requests:
                     truncated = True

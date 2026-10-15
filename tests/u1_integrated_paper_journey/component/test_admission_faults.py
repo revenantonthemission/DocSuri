@@ -34,6 +34,7 @@ def owners():
         reservation=Mock(return_value={"id": reservation, "intent_hash": "a" * 64}),
         settle=Mock(return_value={"diagnostic": True}),
         reject_operation=Mock(),
+        transactions=SimpleNamespace(profile=SimpleNamespace(realm="journey")),
     )
     return AssistanceAdmission(pa, usage), pa, usage, Authority(uuid4(), uuid4()), operation
 
