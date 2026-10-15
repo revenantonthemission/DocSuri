@@ -247,7 +247,10 @@ export class Transport {
     if (scoped && generation !== this.epoch) throw staleResponse();
     if (!response.ok) {
       const error = new ApiError(response.status, envelope(value));
-      if (error.envelope.code === 'UNAUTHENTICATED') this.invalidateBoundary();
+      // A guest's refusal is not an expiry: only a signed-in caller loses authority here.
+      if (error.envelope.code === 'UNAUTHENTICATED' && this.identity !== 'guest' && this.identity !== '') {
+        this.invalidateBoundary();
+      }
       throw error;
     }
     return value as T;
