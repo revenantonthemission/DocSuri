@@ -1,6 +1,6 @@
 # U2 cumulative completion check — prepared invocation
 
-Prepared 2026-10-14. This record defines the runnable cumulative check for U1, U2 and U7 and their installed composition. **It has not been executed**: its execution is a separate recorded human decision point, presented by the conductor before checkpoint verification.
+Prepared 2026-10-14. This record defines the runnable cumulative check for U1, U2 and U7 and their installed composition. It runs only at its recorded human decision point, presented by the conductor before checkpoint verification; each run and its result are recorded in the audit trail.
 
 ## Exact invocation
 
@@ -10,7 +10,7 @@ backend/.venv/bin/python scripts/verify_docsuri_cumulative.py --confirm-recorded
 
 The `--confirm-recorded-decision` flag exists so the check cannot run accidentally: without it the script refuses with `refused: the cumulative check runs only at its recorded human decision point`. The script runs, in order:
 
-1. U1 (`scripts/verify_docsuri_u1.py`) phases `database, repository, component, contracts, model, integration, operations` against `/tmp/docsuri-u1-run/environment.json`.
+1. U1 (`scripts/verify_docsuri_u1.py`) phases `database, repository, component, integration, operations` against `/tmp/docsuri-u1-run/environment.json`. Two of the runner's phases are excluded because U1 never claimed them: `contracts` (its test directory was never authored; U1's code-summary records its contracts tests as not authored in that unit) and `model` (U1's code-summary records model quality as blocked by the unresolved P1/P2 grounding evidence; the phase refuses with `ModelUnavailable: runtime version or cloud-disable evidence mismatch`).
 2. U2 (`scripts/verify_docsuri_u2.py`) phases `database, repository, component, integration, operations` against `/tmp/docsuri-u2-run/environment.json`.
 3. U7 (`scripts/verify_docsuri_u7.py`) phases `component, database, repository, integration, operations` against `/tmp/docsuri-u7-run/environment.json`.
 4. The cumulative frontend configuration `frontend/vitest.u2-cumulative.config.ts` (retained U1 + U2 frontend tests against the same complete workspace source inventory).

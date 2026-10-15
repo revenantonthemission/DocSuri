@@ -1,970 +1,727 @@
 {
+  "stage": "code-generation",
   "unit": "u2-account-personal-controls",
-  "base": "295a3d19",
-  "state": "source-frozen-for-final-verification",
-  "scope": "Every created/modified/deleted application, configuration, test, operational and generated path under backend/frontend/shared/scripts/ops/.github relative to approved source base 295a3d19, reconciled against the working branch diff including untracked additions. Workflow/audit/design records are tracked separately. No generations, tests or configuration paths were omitted; nothing was deleted.",
-  "paths": [
+  "version": 1,
+  "writes": [
     {
-      "path": "backend/.coveragerc.u2",
-      "status": "created"
+      "path": "backend/.coveragerc.u2"
     },
     {
-      "path": "backend/artifacts.py",
-      "status": "modified"
+      "path": "backend/artifacts.py"
     },
     {
-      "path": "backend/control_restore.py",
-      "status": "created"
+      "path": "backend/control_restore.py"
     },
     {
-      "path": "backend/control_worker.py",
-      "status": "created"
+      "path": "backend/control_worker.py"
     },
     {
-      "path": "backend/lifecycle_effects.py",
-      "status": "created"
+      "path": "backend/lifecycle_effects.py"
     },
     {
-      "path": "backend/local_browser.py",
-      "status": "modified"
+      "path": "backend/local_browser.py"
     },
     {
-      "path": "backend/local_host.py",
-      "status": "modified"
+      "path": "backend/local_host.py"
     },
     {
-      "path": "backend/local_profile.py",
-      "status": "modified"
+      "path": "backend/local_profile.py"
     },
     {
-      "path": "backend/modules/accounts/control_confirmation.py",
-      "status": "created"
+      "path": "backend/modules/accounts/control_confirmation.py"
     },
     {
-      "path": "backend/modules/accounts/control_cursor.py",
-      "status": "created"
+      "path": "backend/modules/accounts/control_cursor.py"
     },
     {
-      "path": "backend/modules/accounts/control_http.py",
-      "status": "created"
+      "path": "backend/modules/accounts/control_http.py"
     },
     {
-      "path": "backend/modules/accounts/control_policy.py",
-      "status": "created"
+      "path": "backend/modules/accounts/control_policy.py"
     },
     {
-      "path": "backend/modules/accounts/control_repository.py",
-      "status": "created"
+      "path": "backend/modules/accounts/control_repository.py"
     },
     {
-      "path": "backend/modules/accounts/local_http.py",
-      "status": "modified"
+      "path": "backend/modules/accounts/local_http.py"
     },
     {
-      "path": "backend/modules/accounts/services/control_entry.py",
-      "status": "created"
+      "path": "backend/modules/accounts/services/control_entry.py"
     },
     {
-      "path": "backend/modules/accounts/services/control_identity.py",
-      "status": "created"
+      "path": "backend/modules/accounts/services/control_identity.py"
     },
     {
-      "path": "backend/modules/accounts/services/control_lifecycle.py",
-      "status": "created"
+      "path": "backend/modules/accounts/services/control_lifecycle.py"
     },
     {
-      "path": "backend/modules/accounts/services/control_mfa.py",
-      "status": "created"
+      "path": "backend/modules/accounts/services/control_mfa.py"
     },
     {
-      "path": "backend/modules/accounts/services/guarded_entry.py",
-      "status": "modified"
+      "path": "backend/modules/accounts/services/guarded_entry.py"
     },
     {
-      "path": "backend/modules/accounts/u2_assignment_target.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_assignment_target.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_assistance_consent.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_assistance_consent.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_consent_obligation.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_consent_obligation.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_consent_projection.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_consent_projection.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_consent_time.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_consent_time.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_controls.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_controls.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_history_authority_grant.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_history_authority_grant.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_lifecycle_action.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_lifecycle_action.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_lifecycle_effect.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_lifecycle_effect.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_lifecycle_owner_grants.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_lifecycle_owner_grants.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_owner_cleanup.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_owner_cleanup.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_personalization_effect.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_personalization_effect.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_personalization_status.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_personalization_status.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_reset_confirmation.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_reset_confirmation.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_restore_binding.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_restore_binding.sql"
     },
     {
-      "path": "backend/modules/accounts/u2_restore.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_restore.sql"
     },
     {
-      "path": "backend/modules/corpus/local_http.py",
-      "status": "modified"
+      "path": "backend/modules/corpus/local_http.py"
     },
     {
-      "path": "backend/modules/corpus/u2_personalization_read.sql",
-      "status": "created"
+      "path": "backend/modules/corpus/u2_personalization_read.sql"
     },
     {
-      "path": "backend/modules/discovery/guarded_repository.py",
-      "status": "modified"
+      "path": "backend/modules/discovery/guarded_repository.py"
     },
     {
-      "path": "backend/modules/discovery/local_http.py",
-      "status": "modified"
+      "path": "backend/modules/discovery/local_http.py"
     },
     {
-      "path": "backend/modules/discovery/u2_history_admission.sql",
-      "status": "created"
+      "path": "backend/modules/discovery/u2_history_admission.sql"
     },
     {
-      "path": "backend/modules/discovery/u2_owner_cleanup.sql",
-      "status": "created"
+      "path": "backend/modules/discovery/u2_owner_cleanup.sql"
     },
     {
-      "path": "backend/modules/discovery/u2_restore_binding.sql",
-      "status": "created"
+      "path": "backend/modules/discovery/u2_restore_binding.sql"
     },
     {
-      "path": "backend/modules/discovery/u2_restore.sql",
-      "status": "created"
+      "path": "backend/modules/discovery/u2_restore.sql"
     },
     {
-      "path": "backend/modules/library/control_lifecycle.py",
-      "status": "created"
+      "path": "backend/modules/library/control_lifecycle.py"
     },
     {
-      "path": "backend/modules/library/control_service.py",
-      "status": "created"
+      "path": "backend/modules/library/control_service.py"
     },
     {
-      "path": "backend/modules/library/local_http.py",
-      "status": "modified"
+      "path": "backend/modules/library/local_http.py"
     },
     {
-      "path": "backend/modules/library/repository/guarded.py",
-      "status": "modified"
+      "path": "backend/modules/library/repository/guarded.py"
     },
     {
-      "path": "backend/modules/library/restore.py",
-      "status": "created"
+      "path": "backend/modules/library/restore.py"
     },
     {
-      "path": "backend/modules/library/u2_controls.sql",
-      "status": "created"
+      "path": "backend/modules/library/u2_controls.sql"
     },
     {
-      "path": "backend/modules/library/u2_erasure.sql",
-      "status": "created"
+      "path": "backend/modules/library/u2_erasure.sql"
     },
     {
-      "path": "backend/modules/library/u2_history_binding.sql",
-      "status": "created"
+      "path": "backend/modules/library/u2_history_binding.sql"
     },
     {
-      "path": "backend/modules/library/u2_restore.sql",
-      "status": "created"
+      "path": "backend/modules/library/u2_restore.sql"
     },
     {
-      "path": "backend/modules/personalization/activity.py",
-      "status": "created"
+      "path": "backend/modules/personalization/activity.py"
     },
     {
-      "path": "backend/modules/personalization/control_lifecycle.py",
-      "status": "created"
+      "path": "backend/modules/personalization/control_lifecycle.py"
     },
     {
-      "path": "backend/modules/personalization/control_service.py",
-      "status": "created"
+      "path": "backend/modules/personalization/control_service.py"
     },
     {
-      "path": "backend/modules/personalization/guarded_service.py",
-      "status": "modified"
+      "path": "backend/modules/personalization/guarded_service.py"
     },
     {
-      "path": "backend/modules/personalization/local_http.py",
-      "status": "modified"
+      "path": "backend/modules/personalization/local_http.py"
     },
     {
-      "path": "backend/modules/personalization/reset_repository.py",
-      "status": "created"
+      "path": "backend/modules/personalization/reset_repository.py"
     },
     {
-      "path": "backend/modules/personalization/restore.py",
-      "status": "created"
+      "path": "backend/modules/personalization/restore.py"
     },
     {
-      "path": "backend/modules/personalization/u2_cleanup_permissions.sql",
-      "status": "created"
+      "path": "backend/modules/personalization/u2_cleanup_permissions.sql"
     },
     {
-      "path": "backend/modules/personalization/u2_controls.sql",
-      "status": "created"
+      "path": "backend/modules/personalization/u2_controls.sql"
     },
     {
-      "path": "backend/modules/personalization/u2_erasure.sql",
-      "status": "created"
+      "path": "backend/modules/personalization/u2_erasure.sql"
     },
     {
-      "path": "backend/modules/personalization/u2_restore.sql",
-      "status": "created"
+      "path": "backend/modules/personalization/u2_restore.sql"
     },
     {
-      "path": "backend/modules/plans/control_service.py",
-      "status": "created"
+      "path": "backend/modules/plans/control_service.py"
     },
     {
-      "path": "backend/modules/plans/guarded_repository.py",
-      "status": "modified"
+      "path": "backend/modules/plans/guarded_repository.py"
     },
     {
-      "path": "backend/modules/plans/local_http.py",
-      "status": "modified"
+      "path": "backend/modules/plans/local_http.py"
     },
     {
-      "path": "backend/modules/plans/u2_controls.sql",
-      "status": "created"
+      "path": "backend/modules/plans/u2_controls.sql"
     },
     {
-      "path": "backend/modules/plans/u2_restore_binding.sql",
-      "status": "created"
+      "path": "backend/modules/plans/u2_restore_binding.sql"
     },
     {
-      "path": "backend/modules/plans/u2_restore.sql",
-      "status": "created"
+      "path": "backend/modules/plans/u2_restore.sql"
     },
     {
-      "path": "backend/modules/summarization/admission.py",
-      "status": "modified"
+      "path": "backend/modules/summarization/admission.py"
     },
     {
-      "path": "backend/modules/summarization/guarded_repository.py",
-      "status": "modified"
+      "path": "backend/modules/summarization/guarded_repository.py"
     },
     {
-      "path": "backend/modules/summarization/u2_consent_evidence.sql",
-      "status": "created"
+      "path": "backend/modules/summarization/u2_consent_evidence.sql"
     },
     {
-      "path": "backend/modules/summarization/u2_controls.sql",
-      "status": "created"
+      "path": "backend/modules/summarization/u2_controls.sql"
     },
     {
-      "path": "backend/modules/summarization/u2_owner_cleanup.sql",
-      "status": "created"
+      "path": "backend/modules/summarization/u2_owner_cleanup.sql"
     },
     {
-      "path": "backend/modules/summarization/u2_restore_binding.sql",
-      "status": "created"
+      "path": "backend/modules/summarization/u2_restore_binding.sql"
     },
     {
-      "path": "backend/modules/summarization/u2_restore.sql",
-      "status": "created"
+      "path": "backend/modules/summarization/u2_restore.sql"
     },
     {
-      "path": "backend/pytest.u2-account-personal-controls.ini",
-      "status": "created"
+      "path": "backend/pytest.u2-account-personal-controls.ini"
     },
     {
-      "path": "backend/transactions.py",
-      "status": "modified"
+      "path": "backend/transactions.py"
     },
     {
-      "path": "frontend/e2e/u2-account-personal-controls/accounts.spec.ts",
-      "status": "created"
+      "path": "frontend/e2e/u2-account-personal-controls/accounts.spec.ts"
     },
     {
-      "path": "frontend/e2e/u2-account-personal-controls/helpers.ts",
-      "status": "created"
+      "path": "frontend/e2e/u2-account-personal-controls/helpers.ts"
     },
     {
-      "path": "frontend/e2e/u2-account-personal-controls/personal-controls.spec.ts",
-      "status": "created"
+      "path": "frontend/e2e/u2-account-personal-controls/personal-controls.spec.ts"
     },
     {
-      "path": "frontend/e2e/u2-account-personal-controls/recovery-isolation.spec.ts",
-      "status": "created"
+      "path": "frontend/e2e/u2-account-personal-controls/recovery-isolation.spec.ts"
     },
     {
-      "path": "frontend/package.json",
-      "status": "modified"
+      "path": "frontend/package.json"
     },
     {
-      "path": "frontend/playwright.u2-account-controls.config.ts",
-      "status": "created"
+      "path": "frontend/playwright.u2-account-controls.config.ts"
     },
     {
-      "path": "frontend/pnpm-lock.yaml",
-      "status": "modified"
+      "path": "frontend/pnpm-lock.yaml"
     },
     {
-      "path": "frontend/src/account-controls.tsx",
-      "status": "created"
+      "path": "frontend/src/account-controls.tsx"
     },
     {
-      "path": "frontend/src/api.ts",
-      "status": "modified"
+      "path": "frontend/src/api.ts"
     },
     {
-      "path": "frontend/src/App.tsx",
-      "status": "modified"
+      "path": "frontend/src/App.tsx"
     },
     {
-      "path": "frontend/src/auth.tsx",
-      "status": "created"
+      "path": "frontend/src/auth.tsx"
     },
     {
-      "path": "frontend/src/control-ui.tsx",
-      "status": "created"
+      "path": "frontend/src/control-ui.tsx"
     },
     {
-      "path": "frontend/src/library-controls.tsx",
-      "status": "created"
+      "path": "frontend/src/library-controls.tsx"
     },
     {
-      "path": "frontend/src/paper.tsx",
-      "status": "modified"
+      "path": "frontend/src/paper.tsx"
     },
     {
-      "path": "frontend/src/personal-controls.tsx",
-      "status": "created"
+      "path": "frontend/src/personal-controls.tsx"
     },
     {
-      "path": "frontend/src/usage-controls.tsx",
-      "status": "created"
+      "path": "frontend/src/usage-controls.tsx"
     },
     {
-      "path": "frontend/src/workspace.css",
-      "status": "modified"
+      "path": "frontend/src/workspace.css"
     },
     {
-      "path": "frontend/test/u2-account-personal-controls/accountFlows.test.tsx",
-      "status": "created"
+      "path": "frontend/test/u2-account-personal-controls/accountFlows.test.tsx"
     },
     {
-      "path": "frontend/test/u2-account-personal-controls/authorityIsolation.test.tsx",
-      "status": "created"
+      "path": "frontend/test/u2-account-personal-controls/authorityIsolation.test.tsx"
     },
     {
-      "path": "frontend/test/u2-account-personal-controls/fixtures.ts",
-      "status": "created"
+      "path": "frontend/test/u2-account-personal-controls/fixtures.ts"
     },
     {
-      "path": "frontend/test/u2-account-personal-controls/libraryControls.test.tsx",
-      "status": "created"
+      "path": "frontend/test/u2-account-personal-controls/libraryControls.test.tsx"
     },
     {
-      "path": "frontend/test/u2-account-personal-controls/personalControls.test.tsx",
-      "status": "created"
+      "path": "frontend/test/u2-account-personal-controls/personalControls.test.tsx"
     },
     {
-      "path": "frontend/types/wire/dtos.ts",
-      "status": "modified"
+      "path": "frontend/types/wire/dtos.ts"
     },
     {
-      "path": "frontend/vitest.u2-account-controls.config.ts",
-      "status": "created"
+      "path": "frontend/vitest.u2-account-controls.config.ts"
     },
     {
-      "path": "frontend/vitest.u2-cumulative.config.ts",
-      "status": "created"
+      "path": "frontend/vitest.u2-cumulative.config.ts"
     },
     {
-      "path": "ops/src/docsuri_ops/local_transport.py",
-      "status": "modified"
+      "path": "ops/src/docsuri_ops/local_transport.py"
     },
     {
-      "path": "ops/src/docsuri_ops/u2_restore_checkpoint.sql",
-      "status": "created"
+      "path": "ops/src/docsuri_ops/u2_restore_checkpoint.sql"
     },
     {
-      "path": "ops/src/docsuri_ops/u2_restore_context.py",
-      "status": "created"
+      "path": "ops/src/docsuri_ops/u2_restore_context.py"
     },
     {
-      "path": "ops/src/docsuri_ops/u2_restore.py",
-      "status": "created"
+      "path": "ops/src/docsuri_ops/u2_restore.py"
     },
     {
-      "path": "scripts/prepare_docsuri_u2_browser.py",
-      "status": "created"
+      "path": "scripts/prepare_docsuri_u2_browser.py"
     },
     {
-      "path": "scripts/prepare_docsuri_u2_transport.py",
-      "status": "created"
+      "path": "scripts/prepare_docsuri_u2_transport.py"
     },
     {
-      "path": "scripts/serve_docsuri_u2.py",
-      "status": "created"
+      "path": "scripts/serve_docsuri_u2.py"
     },
     {
-      "path": "scripts/u2_browser_fixtures.py",
-      "status": "created"
+      "path": "scripts/u2_browser_fixtures.py"
     },
     {
-      "path": "scripts/verify_docsuri_u2.py",
-      "status": "created"
+      "path": "scripts/verify_docsuri_u2.py"
     },
     {
-      "path": "shared/dtos/workspace.schema.json",
-      "status": "modified"
+      "path": "shared/dtos/workspace.schema.json"
     },
     {
-      "path": "shared/events/execution.schema.json",
-      "status": "modified"
+      "path": "shared/events/execution.schema.json"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/accounts_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/accounts_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/docmodel_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/docmodel_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/evidence_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/evidence_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/extended_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/extended_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/library_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/library_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/mypage_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/mypage_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/search_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/search_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/summarization_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/summarization_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/workspace_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/dtos/workspace_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/account_signals_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/account_signals_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/execution_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/execution_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/incidents_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/incidents_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/ingestion_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/ingestion_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/paper_retracted_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/paper_retracted_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/search_executed_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/events/search_executed_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/vector_spec/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/vector_spec/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/vector_spec/index_record_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/4f59317c22cbcb95eeb6ac0b9656fa4a626daff3bca957ce822439fdc16ac33e/vector_spec/index_record_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/accounts_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/accounts_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/docmodel_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/docmodel_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/evidence_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/evidence_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/extended_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/extended_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/library_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/library_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/mypage_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/mypage_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/search_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/search_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/summarization_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/summarization_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/workspace_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/dtos/workspace_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/account_signals_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/account_signals_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/execution_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/execution_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/incidents_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/incidents_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/ingestion_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/ingestion_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/paper_retracted_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/paper_retracted_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/search_executed_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/events/search_executed_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/vector_spec/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/vector_spec/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/vector_spec/index_record_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/5c7e6ee4bb9a0ac527e8528f21c7d81fc4507ace65b6209be7ad41e0ce2dd4a6/vector_spec/index_record_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/accounts_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/accounts_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/docmodel_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/docmodel_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/evidence_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/evidence_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/extended_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/extended_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/library_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/library_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/mypage_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/mypage_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/search_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/search_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/summarization_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/summarization_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/workspace_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/dtos/workspace_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/account_signals_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/account_signals_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/execution_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/execution_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/incidents_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/incidents_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/ingestion_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/ingestion_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/paper_retracted_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/paper_retracted_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/search_executed_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/events/search_executed_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/vector_spec/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/vector_spec/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/vector_spec/index_record_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/6227181aba1b1126bce9a29fa071391b80fa8ce6cba5048d93117171a835994c/vector_spec/index_record_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/accounts_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/accounts_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/docmodel_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/docmodel_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/evidence_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/evidence_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/extended_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/extended_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/library_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/library_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/mypage_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/mypage_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/search_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/search_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/summarization_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/summarization_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/workspace_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/dtos/workspace_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/account_signals_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/account_signals_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/execution_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/execution_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/incidents_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/incidents_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/ingestion_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/ingestion_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/paper_retracted_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/paper_retracted_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/search_executed_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/events/search_executed_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/vector_spec/__init__.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/vector_spec/__init__.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/vector_spec/index_record_schema.py",
-      "status": "created"
+      "path": "shared/python/src/docsuri_shared/_binding_generations/722b2bdee485807db8c55401b8a37c44182e2e6d43a1829347a47718b25de723/vector_spec/index_record_schema.py"
     },
     {
-      "path": "shared/python/src/docsuri_shared/_binding_head.json",
-      "status": "modified"
+      "path": "shared/python/src/docsuri_shared/_binding_head.json"
     },
     {
-      "path": "shared/python/tools/export_workspace_contract.py",
-      "status": "modified"
+      "path": "shared/python/tools/export_workspace_contract.py"
     },
     {
-      "path": ".github/workflows/u2-account-controls.yml",
-      "status": "created"
+      "path": ".github/workflows/u2-account-controls.yml"
     },
     {
-      "path": "backend/control_runtime.py",
-      "status": "created"
+      "path": "backend/control_runtime.py"
     },
     {
-      "path": "backend/modules/accounts/control_key_recovery.py",
-      "status": "created"
+      "path": "backend/modules/accounts/control_key_recovery.py"
     },
     {
-      "path": "backend/modules/accounts/control_keys.py",
-      "status": "created"
+      "path": "backend/modules/accounts/control_keys.py"
     },
     {
-      "path": "backend/modules/accounts/u2_restore_baseline.sql",
-      "status": "created"
+      "path": "backend/modules/accounts/u2_restore_baseline.sql"
     },
     {
-      "path": "backend/modules/discovery/u2_restore_baseline.sql",
-      "status": "created"
+      "path": "backend/modules/discovery/u2_restore_baseline.sql"
     },
     {
-      "path": "backend/modules/discovery/u2_restore_erasure.sql",
-      "status": "created"
+      "path": "backend/modules/discovery/u2_restore_erasure.sql"
     },
     {
-      "path": "backend/modules/library/u2_restore_baseline.sql",
-      "status": "created"
+      "path": "backend/modules/library/u2_restore_baseline.sql"
     },
     {
-      "path": "backend/modules/personalization/u2_restore_baseline.sql",
-      "status": "created"
+      "path": "backend/modules/personalization/u2_restore_baseline.sql"
     },
     {
-      "path": "backend/modules/plans/u2_restore_baseline.sql",
-      "status": "created"
+      "path": "backend/modules/plans/u2_restore_baseline.sql"
     },
     {
-      "path": "backend/modules/summarization/u2_restore_baseline.sql",
-      "status": "created"
+      "path": "backend/modules/summarization/u2_restore_baseline.sql"
     },
     {
-      "path": "backend/modules/summarization/u2_restore_erasure.sql",
-      "status": "created"
+      "path": "backend/modules/summarization/u2_restore_erasure.sql"
     },
     {
-      "path": "ops/src/docsuri_ops/u2_capacity.sql",
-      "status": "created"
+      "path": "ops/src/docsuri_ops/u2_capacity.sql"
     },
     {
-      "path": "ops/src/docsuri_ops/u2_capacity_database.sql",
-      "status": "created"
+      "path": "ops/src/docsuri_ops/u2_capacity_database.sql"
     },
     {
-      "path": "scripts/verify_docsuri_cumulative.py",
-      "status": "created"
+      "path": "scripts/verify_docsuri_cumulative.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/conftest.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/conftest.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/component/conftest.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/component/conftest.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/component/test_credentials.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/component/test_credentials.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/component/test_current_owner_cleanup.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/component/test_current_owner_cleanup.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/component/test_identity.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/component/test_identity.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/component/test_library.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/component/test_library.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/component/test_lifecycle.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/component/test_lifecycle.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/component/test_mfa.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/component/test_mfa.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/component/test_owner_lifecycle.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/component/test_owner_lifecycle.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/component/test_personalization.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/component/test_personalization.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/component/test_transport_isolation.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/component/test_transport_isolation.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/component/test_usage.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/component/test_usage.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/database/test_admission_races.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/database/test_admission_races.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/database/test_constraints.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/database/test_constraints.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/database/test_migration_identity.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/database/test_migration_identity.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/integration/test_accounts_http.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/integration/test_accounts_http.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/integration/test_library_personal_http.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/integration/test_library_personal_http.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/operations/test_browser_bootstrap.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/operations/test_browser_bootstrap.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/operations/test_browser_fixture_lock.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/operations/test_browser_fixture_lock.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/operations/test_control_key_recovery.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/operations/test_control_key_recovery.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/operations/test_control_keys.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/operations/test_control_keys.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/operations/test_control_runtime.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/operations/test_control_runtime.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/operations/test_keyring_store.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/operations/test_keyring_store.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/operations/test_owner_restore.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/operations/test_owner_restore.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/operations/test_recovery_restore.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/operations/test_recovery_restore.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/operations/test_restore_context.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/operations/test_restore_context.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/operations/test_runtime_store.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/operations/test_runtime_store.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/operations/test_transport.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/operations/test_transport.py"
     },
     {
-      "path": "tests/u2_account_personal_controls/repository/test_controls.py",
-      "status": "created"
+      "path": "tests/u2_account_personal_controls/repository/test_controls.py"
     }
-  ],
-  "ownership": "U2 implementation with parent-owned runner, Library/Personalization and delegated frontend/Operations contributions; one shared source tree. No Git completion claim.",
-  "generated_policy": "Canonical schemas and Python/TypeScript outputs are generated using existing tools. Intermediate generations remain listed while running processes may still reference them."
+  ]
 }

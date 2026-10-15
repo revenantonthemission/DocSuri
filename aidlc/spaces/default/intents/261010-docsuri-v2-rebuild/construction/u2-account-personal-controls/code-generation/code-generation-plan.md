@@ -126,7 +126,7 @@ Trace: C02/C03/C13; W1–W14; NFR4.*, NFR9.*, NFR10.*.
 
 - [x] Create `tests/u2_account_personal_controls/integration/` tests through the actual mounted host and owner stores; combine with Steps 4/6 for at least 32 real-store/API cases.
 - [x] Exercise lost responses before/after commit, both race orders, stale claim, revoked sessions/admin role, forged owner/quantity, proof/callback replay, callback uncertainty, response redaction and dependent-owner outage.
-- [ ] Verify boundary assertions against persisted effects/receipts/tickets/ledger and run cumulative U1/U2 host compatibility plus separate U7 isolation tests at the dedicated cumulative layer. Do not relabel isolated tests as cumulative proof.
+- [x] Verify boundary assertions against persisted effects/receipts/tickets/ledger and run cumulative U1/U2 host compatibility plus separate U7 isolation tests at the dedicated cumulative layer. Do not relabel isolated tests as cumulative proof.
 
 Trace: V1–V7/V9; closes canonical-reset/revision/accounting findings only with reproducible passing evidence.
 
@@ -155,7 +155,7 @@ Trace: V8 plus user-visible V1–V6 outcomes.
 - [x] Add the nine V1–V9 operational/fault scenario families with resumable evidence, role separation, key rotation/missing-key, isolated restore against current restrictions, truthful readiness, saturation and seeded defect repair.
 - [x] Build immutable manifests/artifacts, compatible ordered migrations and stop-migrate-start verification/rollback instructions. Do not deploy publicly or run real-data migrations.
 - [x] Add scoped U2 actual-execution CI with frozen inputs, content hashes, read-only permissions and no private-host secrets on untrusted PRs. Record actual dependency/advisory/license checks and new-vs-base legacy failures.
-- [ ] Prepare a runnable cumulative completion check covering U1/U7/U2 and their installed composition, without claiming fixture-only provider/public parity. Present the exact invocation at its separate human decision point before checkpoint verification.
+- [x] Prepare a runnable cumulative completion check covering U1/U7/U2 and their installed composition, without claiming fixture-only provider/public parity. Present the exact invocation at its separate human decision point before checkpoint verification.
 
 Trace: PIPE2-01–09; V5–V9; NFR7.*, NFR8.*, NFR9.*, NFR10.3. Numeric service targets remain baseline-dependent.
 
