@@ -128,6 +128,12 @@ def assistance_router(
             return wire.AssistanceResultRead.model_validate(
                 {"availability": "failed", "jobId": str(job_id), "reasonKey": "result.invalid"}
             ).model_dump(mode="json", exclude_none=True)
+        provenance = result_row.get("provenance") or {}
+        limitations = [PARTIAL_NOTE]
+        if provenance.get("synthetic") is True:
+            limitations.append(
+                "합성(synthetic) 실행기 출력입니다. 실제 모델 결과가 아닙니다."
+            )
         return wire.AssistanceResultRead.model_validate(
             {
                 "availability": "ready",
@@ -146,7 +152,7 @@ def assistance_router(
                     "glossaryRevision": accepted["glossaryRevision"],
                     "sections": document["sections"],
                     "coverage": (result_row["coverage"] or {}).get("coverage", "partial"),
-                    "limitations": [PARTIAL_NOTE],
+                    "limitations": limitations,
                     "methodRevision": accepted["optionsRevision"],
                 },
             }

@@ -24,13 +24,17 @@
     "test:u1": "vitest run --config vitest.u1.config.ts",
     "test:u2": "vitest run --config vitest.u2.config.ts",
     "test:u3": "vitest run --config vitest.u3.config.ts",
+    "test:u3-corpus": "vitest run --config vitest.u3-corpus.config.ts",
     "test:coverage": "vitest run --coverage",
     "test:coverage:u1": "vitest run --config vitest.u1.config.ts --coverage",
     "test:coverage:u2": "vitest run --config vitest.u2.config.ts --coverage",
     "test:coverage:u3": "vitest run --config vitest.u3.config.ts --coverage",
+    "test:coverage:u3-corpus": "vitest run --config vitest.u3-corpus.config.ts --coverage",
+    "lint:u3-corpus": "eslint src/u3-corpus src/App.tsx",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "e2e:u1": "playwright test --config playwright.u1.config.ts"
+    "e2e:u1": "playwright test --config playwright.u1.config.ts",
+    "e2e:u3-corpus": "playwright test --config playwright.u3-corpus.config.ts"
   },
   "dependencies": {
     "@sentry/nextjs": "11.4.0",

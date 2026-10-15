@@ -28,6 +28,7 @@ import { AccountControls, LifecycleProgress } from './account-controls';
 import { PersonalControls } from './personal-controls';
 import { UsageControls } from './usage-controls';
 import { LibraryControls } from './library-controls';
+import { CorpusWorkspace } from './u3-corpus/corpus-workspace';
 
 type Appearance = 'light' | 'dark' | 'system';
 type NavigationItem = {
@@ -141,6 +142,12 @@ export default function App({ transport }: { transport?: Transport }) {
     (value) => value.id === 'account.controls' && value.state === 'available',
   )?.policy;
   const isControls = !!controlPolicy;
+  // The U3 corpus workspace replaces the live search/reading surfaces when the
+  // corpus owner capabilities are installed in this realm.
+  const isCorpusWorkspace =
+    catalog?.capabilities.some(
+      (value) => value.id === 'corpus.maintenance' && value.state === 'available',
+    ) ?? false;
 
   useEffect(() => {
     client
@@ -488,7 +495,10 @@ export default function App({ transport }: { transport?: Transport }) {
               {signedIn && isControls && view === 'usage' ? (
                 <UsageControls client={client} policy={controlPolicy!} />
               ) : null}
-              {view === 'search' ? (
+              {view === 'search' && isCorpusWorkspace ? (
+                <CorpusWorkspace client={client} signedIn={signedIn} />
+              ) : null}
+              {view === 'search' && !isCorpusWorkspace ? (
                 <SearchWorkspace
                   client={client}
                   signedIn={signedIn}

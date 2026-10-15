@@ -812,6 +812,21 @@ def run_phase(phase: str, path: Path) -> dict:
             "test/u3-paper-corpus-capabilities",
         ]
     elif phase == "browser":
+        # Owned fixture preparation precedes the journey suite; it is idempotent
+        # and touches only synthetic identities and corpus rows.
+        for action in ("setup", "reset-corpus", "reset-jobs", "publish"):
+            require(
+                [
+                    str(PYTHON),
+                    str(ROOT / "scripts/u3_browser_fixtures.py"),
+                    "--environment-file",
+                    str(path),
+                    "--action",
+                    action,
+                ]
+            )
+        with connect_admin(value) as conn:
+            conn.execute("DELETE FROM accounts.entry_budget")
         args = [
             str(ROOT / "frontend/node_modules/.bin/playwright"),
             "test",
