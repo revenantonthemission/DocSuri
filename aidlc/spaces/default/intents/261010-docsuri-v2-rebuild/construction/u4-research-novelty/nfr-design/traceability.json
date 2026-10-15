@@ -1,0 +1,237 @@
+{
+  "stage": "nfr-design",
+  "unit": "u4-research-novelty",
+  "upstream_ids": [
+    "NFR1.1",
+    "NFR1.2",
+    "NFR1.3",
+    "NFR1.4",
+    "NFR1.5",
+    "NFR2.1",
+    "NFR2.2",
+    "NFR2.3",
+    "NFR3.1",
+    "NFR3.2",
+    "NFR3.3",
+    "NFR3.4",
+    "NFR3.5",
+    "NFR4.1",
+    "NFR4.2",
+    "NFR4.3",
+    "NFR4.4",
+    "NFR4.5",
+    "NFR4.6",
+    "NFR5.1",
+    "NFR5.2",
+    "NFR5.3",
+    "NFR5.4",
+    "NFR5.5",
+    "NFR6.1",
+    "NFR6.2",
+    "NFR6.3",
+    "NFR7.1",
+    "NFR7.2",
+    "NFR7.3",
+    "NFR8.1",
+    "NFR8.2",
+    "NFR9.1",
+    "NFR9.2",
+    "NFR10.1",
+    "NFR10.2",
+    "NFR10.3",
+    "NFR10.4"
+  ],
+  "coverage": [
+    {
+      "id": "NFR1.1",
+      "status": "OK",
+      "target": "security-design: Grounded output and assessment integrity; Attachment, extraction and untrusted content"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "OK",
+      "target": "security-design: Durable accepted-work and completion integrity; logical-components: Failure domains and blast radius"
+    },
+    {
+      "id": "NFR1.3",
+      "status": "OK",
+      "target": "security-design: Authority and private-content enforcement"
+    },
+    {
+      "id": "NFR1.4",
+      "status": "OK",
+      "target": "security-design: Outbound retrieval safety (not-read reference)"
+    },
+    {
+      "id": "NFR1.5",
+      "status": "OK",
+      "target": "security-design: Grounded output and assessment integrity (method scale)"
+    },
+    {
+      "id": "NFR2.1",
+      "status": "OK",
+      "target": "security-design: Durable accepted-work and completion integrity; logical-components: Research views (WebWorkspace contribution)"
+    },
+    {
+      "id": "NFR2.2",
+      "status": "OK",
+      "target": "security-design: Durable accepted-work and completion integrity (owner-written ordered sequence)"
+    },
+    {
+      "id": "NFR2.3",
+      "status": "OK",
+      "target": "security-design: Durable accepted-work and completion integrity (normalized-intent identity)"
+    },
+    {
+      "id": "NFR3.1",
+      "status": "OK",
+      "target": "security-design: Durable accepted-work and completion integrity; Draft and revision lifecycle"
+    },
+    {
+      "id": "NFR3.2",
+      "status": "OK",
+      "target": "security-design: Durable accepted-work and completion integrity (immutable input, fenced claim)"
+    },
+    {
+      "id": "NFR3.3",
+      "status": "OK",
+      "target": "security-design: Draft and revision lifecycle under policy suspension"
+    },
+    {
+      "id": "NFR3.4",
+      "status": "OK",
+      "target": "security-design: Draft and revision lifecycle under policy suspension; Deletion, revocation and derived-data coverage"
+    },
+    {
+      "id": "NFR3.5",
+      "status": "OK",
+      "target": "security-design: Durable accepted-work and completion integrity (one terminal outcome)"
+    },
+    {
+      "id": "NFR4.1",
+      "status": "OK",
+      "target": "security-design: Authority and private-content enforcement"
+    },
+    {
+      "id": "NFR4.2",
+      "status": "OK",
+      "target": "security-design: Authority and private-content enforcement; logical-components: Isolation strategy and shared resources"
+    },
+    {
+      "id": "NFR4.3",
+      "status": "OK",
+      "target": "security-design: Attachment, extraction and untrusted content"
+    },
+    {
+      "id": "NFR4.4",
+      "status": "OK",
+      "target": "security-design: Authority and private-content enforcement (non-revealing refusal)"
+    },
+    {
+      "id": "NFR4.5",
+      "status": "OK",
+      "target": "security-design: Attachment, extraction and untrusted content (secret-free prompts and telemetry)"
+    },
+    {
+      "id": "NFR4.6",
+      "status": "OK",
+      "target": "security-design: Outbound retrieval safety"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "security-design: Attachment, extraction and untrusted content (permit after policy/capacity)"
+    },
+    {
+      "id": "NFR5.2",
+      "status": "OK",
+      "target": "security-design: Draft and revision lifecycle under policy suspension"
+    },
+    {
+      "id": "NFR5.3",
+      "status": "OK",
+      "target": "security-design: Deletion, revocation and derived-data coverage"
+    },
+    {
+      "id": "NFR5.4",
+      "status": "OK",
+      "target": "security-design: Attachment, extraction and untrusted content (no public publication)"
+    },
+    {
+      "id": "NFR5.5",
+      "status": "OK",
+      "target": "security-design: Draft and revision lifecycle under policy suspension; Deletion, revocation and derived-data coverage"
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": "security-design: Accessibility and destructive-action design; logical-components: Research views (WebWorkspace contribution)"
+    },
+    {
+      "id": "NFR6.2",
+      "status": "OK",
+      "target": "security-design: Accessibility and destructive-action design (destructive scope and confirmation)"
+    },
+    {
+      "id": "NFR6.3",
+      "status": "OK",
+      "target": "security-design: Accessibility and destructive-action design (contrast, zoom/reflow); logical-components: Research views (WebWorkspace contribution)"
+    },
+    {
+      "id": "NFR7.1",
+      "status": "OK",
+      "target": "security-design: Observability, readiness and repairability"
+    },
+    {
+      "id": "NFR7.2",
+      "status": "OK",
+      "target": "security-design: Observability, readiness and repairability (policy-suspended draft path)"
+    },
+    {
+      "id": "NFR7.3",
+      "status": "OK",
+      "target": "security-design: Observability, readiness and repairability (regression + integration checks)"
+    },
+    {
+      "id": "NFR8.1",
+      "status": "OK",
+      "target": "security-design: Degradation, capacity and $0 guardrails"
+    },
+    {
+      "id": "NFR8.2",
+      "status": "OK",
+      "target": "security-design: Degradation, capacity and $0 guardrails (no paid fallback)"
+    },
+    {
+      "id": "NFR9.1",
+      "status": "OK",
+      "target": "security-design: Observability, readiness and repairability (safe correlation identifier)"
+    },
+    {
+      "id": "NFR9.2",
+      "status": "OK",
+      "target": "security-design: Observability, readiness and repairability (observed/unknown/stale)"
+    },
+    {
+      "id": "NFR10.1",
+      "status": "OK",
+      "target": "security-design: Durable accepted-work and completion integrity (C07/C12/C14 conformance)"
+    },
+    {
+      "id": "NFR10.2",
+      "status": "OK",
+      "target": "security-design: Deletion, revocation and derived-data coverage (eligibility revocation); Draft and revision lifecycle"
+    },
+    {
+      "id": "NFR10.3",
+      "status": "OK",
+      "target": "security-design: Verification approach and test doubles"
+    },
+    {
+      "id": "NFR10.4",
+      "status": "OK",
+      "target": "security-design: Durable accepted-work and completion integrity (single usage reconciliation)"
+    }
+  ],
+  "reverse": []
+}
