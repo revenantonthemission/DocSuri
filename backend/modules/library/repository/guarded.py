@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from docsuri_shared.workspace import wire
 from psycopg import sql
@@ -107,7 +107,15 @@ class GuardedLibraryRepository:
                 (authority.account_id,),
             ).fetchone()
             if row is None:
-                raise ValueError("account library participant not initialized")
+                # An account with no recorded history reads a stable virtual
+                # boundary; the first history effect materializes the row.
+                return {
+                    "account_id": authority.account_id,
+                    "generation": 0,
+                    "revision": uuid5(
+                        NAMESPACE_URL, str(authority.account_id) + ":history-empty:1"
+                    ),
+                }
             return row
 
         return self.transactions.run("library", read)

@@ -31,7 +31,13 @@ _JOB_STATES = {
 _ERROR_CODES = {
     "source-unavailable": "NOT_FOUND",
     "permission-unresolved": "SOURCE_INELIGIBLE",
-    "invalid-source": "INVALID_CONTENT",
+    "source-permission-unresolved": "SOURCE_INELIGIBLE",
+    "parsed-document-model-missing": "INVALID_CONTENT",
+    "malformed-projection-chunk": "INVALID_CONTENT",
+    "parsed-source-exceeds-the-finite-workspace-allocation": "INVALID_CONTENT",
+    "immutable-source-identity-conflict": "CONFLICT",
+    "immutable-parsed-content-conflict": "CONFLICT",
+    "immutable-paper-metadata-conflict": "CONFLICT",
     "batch-receipts-missing": "NOT_READY",
     "publication-cas-conflict": "CONFLICT",
     "interrupted": "UNKNOWN_OUTCOME",
@@ -39,11 +45,21 @@ _ERROR_CODES = {
 
 
 def _effect_error(run_id: str, code: str | None) -> dict | None:
+    """A safe error envelope: unknown codes never echo raw evidence text."""
     if not code:
         return None
+    if code not in _ERROR_CODES:
+        return wire.Error.model_validate(
+            {
+                "code": "INTERNAL_ERROR",
+                "requestId": run_id,
+                "retryable": False,
+                "messageKey": "run.unexpected",
+            }
+        ).model_dump(mode="json", exclude_none=True)
     return wire.Error.model_validate(
         {
-            "code": _ERROR_CODES.get(code, "INTERNAL_ERROR"),
+            "code": _ERROR_CODES[code],
             "requestId": run_id,
             "retryable": code in ("interrupted",),
             "messageKey": "run." + code,

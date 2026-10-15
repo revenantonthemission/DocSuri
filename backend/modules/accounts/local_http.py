@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from uuid import UUID
 import hmac
+from uuid import UUID
 
 import psycopg
 from backend.local_browser import (
-    ENTRY_COOKIE,
     CONTROLS_ORIGIN,
+    CORPUS_ORIGIN,
+    ENTRY_COOKIE,
     JOURNEY_ORIGIN,
     SESSION_COOKIE,
     BrowserDenied,
@@ -43,7 +44,7 @@ __all__ = [
 
 def account_router(entry: GuardedEntryService) -> APIRouter:
     origin = entry.transactions.profile.origin
-    if origin not in (JOURNEY_ORIGIN, CONTROLS_ORIGIN):
+    if origin not in (JOURNEY_ORIGIN, CONTROLS_ORIGIN, CORPUS_ORIGIN):
         raise ValueError("account browser transport requires the owned HTTPS origin")
     anonymous = Preauthentication(entry)
     # Account errors keep their established 403 disposition for denied identities.

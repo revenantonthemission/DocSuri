@@ -48,7 +48,7 @@ def test_owner_search_records_durable_fact_and_checkpoint(
     fixture_discard()
     assert run_fixture(["fixture-alpha"])["state"] == "completed"
     first = search_service.search(authority, {"query": query(), "page": {"limit": 10}})
-    second = search_service.search(
+    search_service.search(
         authority, {"query": query("paper-alpha second"), "page": {"limit": 10}}
     )
     assert first["outcome"] == "complete"

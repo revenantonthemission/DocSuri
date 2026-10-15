@@ -15,7 +15,9 @@ from backend.local_browser import (
     read_payload,
 )
 from backend.modules.discovery.citations import BudgetExhausted
+from backend.modules.discovery.local_search import validate_query
 from backend.modules.discovery.u3_search import DependencyUnavailable, SnapshotExpired
+from backend.u3_policy import QUERY_VOCABULARY, SEARCH_POLICY
 from docsuri_shared.workspace import wire
 from fastapi import APIRouter, Request
 from starlette.concurrency import run_in_threadpool
@@ -44,13 +46,17 @@ def discovery_router(transactions, *, entry, anonymous, search, citations) -> AP
         _, authority = await context(request)
         value = await read_payload(request, wire.SearchRequestHttp)
         try:
+            validate_query(
+                value["query"], vocabulary=QUERY_VOCABULARY, policy=SEARCH_POLICY
+            )
+        except ValueError:
+            raise BrowserDenied(422, "INVALID_ARGUMENT") from None
+        try:
             return await run_in_threadpool(search.search, authority, value)
         except SnapshotExpired:
             raise BrowserDenied(410, "SNAPSHOT_EXPIRED") from None
         except DependencyUnavailable:
             raise BrowserDenied(503, "DEPENDENCY_UNAVAILABLE") from None
-        except ValueError:
-            raise BrowserDenied(422, "INVALID_ARGUMENT") from None
 
     @router.post("/api/v2/c05/explore-citations")
     async def explore_citations(request: Request):

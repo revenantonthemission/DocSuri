@@ -5,11 +5,6 @@ from uuid import uuid4
 import pytest
 
 from backend.modules.corpus.repository import CorpusRepository
-from backend.modules.plans.guarded_repository import GuardedUsageRepository
-from backend.modules.summarization.admission import AssistanceAdmission
-from backend.modules.summarization.execution import ExecutionClaims
-from backend.modules.summarization.guarded_repository import GuardedAssistanceRepository
-from backend.modules.summarization.u3_catalog import catalog_for
 from backend.modules.summarization.u3_glossary import (
     GlossaryConflict,
     GlossaryInvalid,
@@ -19,63 +14,6 @@ from backend.modules.summarization.u3_glossary import (
 from backend.modules.summarization.u3_provider import SyntheticAssistanceExecutor
 
 pytestmark = pytest.mark.u3_repository
-
-PROCESSING_POLICY = {"policyId": "local-research", "revision": "1"}
-
-
-@pytest.fixture
-def assistance(transactions, realm):
-    from backend.artifacts import PrivateArtifacts
-
-    files = PrivateArtifacts(realm[0].root / "assistance-files")
-    repository = GuardedAssistanceRepository(transactions, files)
-    usage = GuardedUsageRepository(transactions)
-    return {
-        "repository": repository,
-        "usage": usage,
-        "admission": AssistanceAdmission(repository, usage),
-        "claims": ExecutionClaims(repository),
-        "files": files,
-    }
-
-
-@pytest.fixture
-def accepted_job(
-    assistance, maintenance, run_fixture, authority, maintenance_authority,
-    fixture_discard,
-):
-    """One real accepted job through the canonical browser submission path."""
-    fixture_discard()
-    assert run_fixture(["fixture-alpha"])["state"] == "completed"
-    from backend.modules.summarization.requests import AssistanceRequests
-
-    admission = assistance["admission"]
-    corpus = CorpusRepository(maintenance.transactions, files=None)
-    service = AssistanceRequests(
-        admission,
-        corpus,
-        lambda source: catalog_for(source, provider_ready=True),
-    )
-
-    def create(*, key=None):
-        assistance["usage"].ensure_entitlement(authority)
-        source = corpus.read("paper-alpha:v1")
-        catalog = catalog_for(source, provider_ready=True)
-        option = catalog.options()["options"][0]
-        request = {
-            "paper": catalog.paper,
-            "contentRevision": catalog.content_revision,
-            "contentHash": source["source_hash"],
-            "operation": option["operation"],
-            "optionId": option["optionId"],
-            "optionsRevision": catalog.revision,
-            "glossaryRevision": virtual_revision(authority.account_id),
-            "processingPolicy": PROCESSING_POLICY,
-        }
-        job = service.submit(authority, key or uuid4(), request)
-        return job, catalog, source
-
-    return create
 
 
 def test_acceptance_replay_and_changed_input_conflict(
@@ -253,7 +191,7 @@ def test_progress_events_are_ordered_and_bounded(
     job, _, _ = accepted_job()
     repository = assistance["repository"]
     claims = assistance["claims"]
-    claim = claims.acquire(claims.binding(job), uuid4())["claim"]
+    claims.acquire(claims.binding(job), uuid4())
     events = repository.events(authority, job["id"], 0)
     assert [event["sequence"] for event in events] == sorted(
         event["sequence"] for event in events

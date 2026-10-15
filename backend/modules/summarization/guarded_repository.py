@@ -419,6 +419,27 @@ class GuardedAssistanceRepository:
 
         return self.transactions.run("assistance", read)
 
+    def disposition_snapshot(self, authority: Authority, job: UUID) -> dict:
+        """Owner-bound job row for disposition reads (U3 result/job surfaces).
+
+        Unlike ``snapshot`` this deliberately skips ``corpus.guard_version`` so
+        a withdrawn or restricted source yields its explicit disposition to the
+        owner instead of a generic denial. Content bytes are still never served
+        without the strict guard on the result read path.
+        """
+
+        def read(conn):
+            guard(conn, authority)
+            row = conn.execute(
+                "SELECT * FROM assistance.job WHERE id=%s AND account_id=%s",
+                (job, authority.account_id),
+            ).fetchone()
+            if not row:
+                raise PermissionError("job unavailable")
+            return row
+
+        return self.transactions.run("assistance", read)
+
     def events(self, authority: Authority, job: UUID, after: int) -> list[dict]:
         if after < 0:
             raise ValueError("invalid progress cursor")

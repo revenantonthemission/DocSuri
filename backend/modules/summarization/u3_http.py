@@ -74,7 +74,7 @@ def assistance_router(
         return authority
 
     async def read_job(authority, job_id: UUID) -> dict:
-        job = await run_in_threadpool(repository.snapshot, authority, job_id)
+        job = await run_in_threadpool(repository.disposition_snapshot, authority, job_id)
         result_ref = await run_in_threadpool(repository.result_reference, authority, job_id)
         return snapshot_dto(job, result_ref)
 
@@ -89,7 +89,7 @@ def assistance_router(
         }
 
     async def prepared_result(authority, job_id: UUID) -> dict:
-        job = await run_in_threadpool(repository.snapshot, authority, job_id)
+        job = await run_in_threadpool(repository.disposition_snapshot, authority, job_id)
         result_row = await run_in_threadpool(repository.result_metadata, authority, job_id)
         if result_row is None:
             availability = "failed" if job["state"] == "failed" else "pending"
@@ -321,7 +321,7 @@ def assistance_router(
         header = request.headers.get("last-event-id", "")
         cursor = int(header) if header.isdigit() else 0
         # Confirm access before the stream opens; later revocation ends it safely.
-        await run_in_threadpool(repository.snapshot, authority, identifier)
+        await run_in_threadpool(repository.disposition_snapshot, authority, identifier)
 
         async def frames():
             sequence = cursor

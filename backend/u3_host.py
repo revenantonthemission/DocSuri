@@ -170,7 +170,10 @@ class FixtureSourceProvider:
         raw = private_bytes(path, maximum=2097152)
         if hashlib.sha256(raw).hexdigest() != entry["sha256"]:
             raise ValueError("source fixture checksum changed")
-        return json.loads(raw)
+        value = json.loads(raw)
+        if "rawHex" in value:
+            value["raw"] = bytes.fromhex(value.pop("rawHex"))
+        return value
 
 
 def fixture_citation_provider(profile: LocalProfile):
@@ -223,6 +226,7 @@ def assemble_u3(profile: LocalProfile) -> FastAPI:
     from .control_runtime import ControlAdmission, ControlCapacity, ControlLoop
     from .local_browser import CORPUS_ORIGIN
     from .local_host import assemble, host_router
+    from .modules.accounts.local_http import account_router
     from .modules.accounts.preauthentication import Preauthentication
     from .modules.accounts.services.guarded_entry import GuardedEntryService
     from .modules.corpus.maintenance import CorpusMaintenance
@@ -269,6 +273,7 @@ def assemble_u3(profile: LocalProfile) -> FastAPI:
         corpus_repository = CorpusRepository(transactions, files=None)
         catalog = u3_capabilities(provider_installed=True)
         routers = (
+            account_router(entry),
             host_router(transactions, entry=entry, anonymous=anonymous, catalog=catalog),
             corpus_router(
                 transactions,

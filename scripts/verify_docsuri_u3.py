@@ -29,7 +29,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from verify_docsuri_u1 import (  # noqa: E402
+from verify_docsuri_u1 import (
     GIB,
     IMAGE,
     LOCKS,
@@ -39,7 +39,7 @@ from verify_docsuri_u1 import (  # noqa: E402
     digest,
     headroom,
 )
-from verify_docsuri_u1 import source_identity as u1_source_identity  # noqa: E402
+from verify_docsuri_u1 import source_identity as u1_source_identity
 
 RUN = Path("/tmp/docsuri-u3-run").resolve()
 PYTHON = ROOT / "backend/.venv/bin/python"
@@ -68,10 +68,12 @@ MIGRATIONS = (
     ("accounts", "backend/modules/accounts/u3_session_authority.sql"),
     ("accounts", "backend/modules/accounts/u2_history_authority_grant.sql"),
     ("operations", "ops/src/docsuri_ops/u3_capacity.sql"),
+    ("operations", "ops/src/docsuri_ops/u3_capacity_v2.sql"),
 )
 PHASES = (
     "setup",
     "migrate",
+    "fixtures",
     "database",
     "repository",
     "component",
@@ -86,7 +88,7 @@ PHASES = (
 
 sys.path.insert(0, str(ROOT))
 
-from backend.local_profile import LocalProfile, private_bytes  # noqa: E402
+from backend.local_profile import LocalProfile, private_bytes
 
 
 def require(args: list[str], **kwargs) -> subprocess.CompletedProcess:
@@ -332,7 +334,13 @@ def setup(path: Path) -> dict:
             str(path),
         ]
     )
-    return {"state": "base-installed", "runId": run_id, "u3MigrationsApplied": False}
+    fixtures = prepare_fixtures(path)
+    return {
+        "state": "base-installed",
+        "runId": run_id,
+        "u3MigrationsApplied": False,
+        "fixtures": fixtures["sources"],
+    }
 
 
 def connect_admin(value: dict):
@@ -679,6 +687,109 @@ def bounded_process(args: list[str], log: Path, *, seconds: float = 300,
     return result
 
 
+def _private_bytes(path: Path, payload: bytes) -> None:
+    """Write one bounded private file inside the owned run root."""
+    if not path.is_relative_to(RUN) or path.is_symlink() or len(payload) > 1048576:
+        raise Refused("invalid bounded private fixture output")
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(descriptor, "wb") as stream:
+        stream.write(payload)
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def prepare_fixtures(path: Path) -> dict:
+    """Write the deterministic, private fixtures consumed by later phases.
+
+    Source records carry recorded identity/version/checksums; the citation
+    adjacency and executor declarations are bounded and replaceable. Fixture
+    files are read-only in spirit (0600, owned) and never carry secrets.
+    """
+    import importlib.util
+
+    _, value = manifest(path)
+    spec = importlib.util.spec_from_file_location(
+        "u3_fixtures", ROOT / "tests/u3_paper_corpus_capabilities/fixtures.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    sources = {
+        "fixture-alpha": module.source_record("fixture-alpha", paper_id="paper-alpha"),
+        "fixture-beta": module.source_record(
+            "fixture-beta", paper_id="paper-beta", version_label="v2"
+        ),
+        "fixture-gamma": module.source_record(
+            "fixture-gamma",
+            paper_id="paper-gamma",
+            paragraphs=[
+                "감마 문서의 첫 문단입니다.",
+                "감마 문서의 두 번째 문단입니다.",
+                "감마 문서의 세 번째 문단입니다.",
+            ],
+        ),
+    }
+    directory = RUN / "corpus-sources"
+    directory.mkdir(mode=0o700, exist_ok=True)
+    manifest_value = {"revision": "u3-fixture-sources-1", "sources": {}}
+    for source_id, record in sorted(sources.items()):
+        record = dict(record)
+        raw = record.pop("raw", None)
+        if raw is not None:
+            record["rawHex"] = raw.hex()
+        payload = json.dumps(record, sort_keys=True, ensure_ascii=False).encode()
+        name = source_id + ".json"
+        target = directory / name
+        if target.exists() and target.read_bytes() != payload:
+            raise Refused("existing source fixture changed; explicit recovery required")
+        if not target.exists():
+            descriptor = os.open(
+                target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600
+            )
+            with os.fdopen(descriptor, "wb") as stream:
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
+        manifest_value["sources"][source_id] = {
+            "file": name,
+            "sha256": hashlib.sha256(payload).hexdigest(),
+        }
+    manifest_target = directory / "manifest.json"
+    payload = json.dumps(manifest_value, sort_keys=True, indent=2).encode()
+    if manifest_target.exists():
+        if manifest_target.read_bytes() != payload:
+            # The declared fixture set changed; reconcile the tool-owned manifest
+            # atomically (new source files were written with O_EXCL above).
+            temporary = manifest_target.with_name("manifest.json.pending")
+            _private_bytes(temporary, payload)
+            os.replace(temporary, manifest_target)
+    else:
+        _private_bytes(manifest_target, payload)
+    citations = {
+        "records": {
+            "paper-alpha:v1": {
+                "cited": [
+                    {
+                        "versionId": "paper-cited:v1",
+                        "paperId": "paper-cited",
+                        "title": "인용된 합성 논문",
+                        "sourceUrl": "https://fixture.invalid/paper-cited",
+                    }
+                ],
+                "citing": [],
+            },
+            "paper-cited:v1": {"cited": [], "citing": []},
+        },
+        "freshness": "fresh",
+        "fail": False,
+    }
+    if not (RUN / "citations.json").exists():
+        _private_bytes(
+            RUN / "citations.json",
+            json.dumps(citations, sort_keys=True, indent=2).encode(),
+        )
+    return {"state": "fixtures-ready", "sources": sorted(sources)}
+
+
 def run_phase(phase: str, path: Path) -> dict:
     _, value = manifest(path)
     require_resources(value)
@@ -864,6 +975,8 @@ def main() -> int:
     args.environment_file = args.environment_file.resolve()
     if args.phase == "setup":
         result = setup(args.environment_file)
+    elif args.phase == "fixtures":
+        result = prepare_fixtures(args.environment_file)
     elif args.phase == "migrate":
         result = migrate(args.environment_file, base_only=args.base_only)
     elif args.phase == "serve":

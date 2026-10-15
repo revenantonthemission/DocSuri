@@ -141,7 +141,20 @@ def identities(connect, realm):
 
 
 @pytest.fixture
-def authority(identities):
+def authority(identities, connect):
+    """Service-level authority for owner A; renewed after any mounted login.
+
+    A mounted browser login revokes earlier sessions; service-layer fixtures
+    revalidate their own session row so both transports can coexist in one
+    case without weakening the single-session rule for the browser.
+    """
+    with connect("accounts") as conn:
+        conn.execute(
+            "UPDATE accounts.session SET revoked=false,"
+            "expires_at=clock_timestamp()+interval '30 minutes',"
+            "authority_revision=%s WHERE id=%s",
+            (identities["revision"], identities["session"]),
+        )
     return Authority(identities["a"], identities["session"])
 
 
@@ -170,6 +183,15 @@ def sources():
             "fixture-alpha": source_record("fixture-alpha", paper_id="paper-alpha"),
             "fixture-beta": source_record(
                 "fixture-beta", paper_id="paper-beta", version_label="v2"
+            ),
+            "fixture-gamma": source_record(
+                "fixture-gamma",
+                paper_id="paper-gamma",
+                paragraphs=[
+                    "감마 문서의 첫 문단입니다.",
+                    "감마 문서의 두 번째 문단입니다.",
+                    "감마 문서의 세 번째 문단입니다.",
+                ],
             ),
         }
     )
@@ -223,6 +245,73 @@ def citations(transactions):
 @pytest.fixture
 def dispositions(transactions):
     return SavedReferenceDispositions(transactions)
+
+
+@pytest.fixture
+def assistance(transactions, realm):
+    """PaperAssistance owner services over the real store (shared by layers)."""
+    from backend.artifacts import PrivateArtifacts
+    from backend.modules.plans.guarded_repository import GuardedUsageRepository
+    from backend.modules.summarization.admission import AssistanceAdmission
+    from backend.modules.summarization.execution import ExecutionClaims
+    from backend.modules.summarization.guarded_repository import (
+        GuardedAssistanceRepository,
+    )
+
+    files = PrivateArtifacts(realm[0].root / "assistance-files")
+    repository = GuardedAssistanceRepository(transactions, files)
+    usage = GuardedUsageRepository(transactions)
+    return {
+        "repository": repository,
+        "usage": usage,
+        "admission": AssistanceAdmission(repository, usage),
+        "claims": ExecutionClaims(repository),
+        "files": files,
+    }
+
+
+@pytest.fixture
+def accepted_job(
+    assistance, maintenance, run_fixture, authority, maintenance_authority,
+    fixture_discard,
+):
+    """One real accepted job through the canonical browser submission path."""
+    fixture_discard()
+    assert run_fixture(["fixture-alpha"])["state"] == "completed"
+    from backend.modules.corpus.repository import CorpusRepository
+    from backend.modules.summarization.requests import AssistanceRequests
+    from backend.modules.summarization.u3_catalog import catalog_for
+    from backend.modules.summarization.u3_glossary import virtual_revision
+
+    admission = assistance["admission"]
+    corpus = CorpusRepository(maintenance.transactions, files=None)
+    service = AssistanceRequests(
+        admission,
+        corpus,
+        lambda source: catalog_for(source, provider_ready=True),
+    )
+
+    def create(*, key=None):
+        from uuid import uuid4
+
+        assistance["usage"].ensure_entitlement(authority)
+        source = corpus.read("paper-alpha:v1")
+        catalog = catalog_for(source, provider_ready=True)
+        option = catalog.options()["options"][0]
+        request = {
+            "paper": catalog.paper,
+            "contentRevision": catalog.content_revision,
+            "contentHash": source["source_hash"],
+            "operation": option["operation"],
+            "optionId": option["optionId"],
+            "optionsRevision": catalog.revision,
+            "glossaryRevision": virtual_revision(authority.account_id),
+            "processingPolicy": {"policyId": "local-research", "revision": "1"},
+        }
+        job = service.submit(authority, key or uuid4(), request)
+        return job, catalog, source
+
+    return create
 
 
 DISCARDED_OWNER_TABLES = (
@@ -329,3 +418,84 @@ def bounded_case():
     finally:
         signal.setitimer(signal.ITIMER_REAL, 0)
         signal.signal(signal.SIGALRM, previous)
+
+
+PASSWORD = "U3Fixture!28-A"
+ENTRY_POLICY = {"policyId": "synthetic-local-entry", "revision": "1"}
+
+
+def _await_admission(client, *, seconds: float = 20.0):
+    """Bounded wait for the first capacity observation; routes fail closed."""
+    import time as _time
+
+    deadline = _time.monotonic() + seconds
+    while True:
+        probe = client.get("/health/ready")
+        if probe.status_code == 200:
+            return
+        if _time.monotonic() >= deadline:
+            raise AssertionError(f"U3 host never admitted requests: {probe.text}")
+        _time.sleep(0.05)
+
+
+@pytest.fixture
+def mounted(realm):
+    """The real mounted U3 host over the actual owner stores (integration layer)."""
+    from fastapi.testclient import TestClient
+
+    from backend.u3_host import assemble_u3
+
+    app = assemble_u3(realm[0])
+    with TestClient(app, base_url="https://127.0.0.1:18059") as client:
+        _await_admission(client)
+        yield client
+
+
+@pytest.fixture
+def anonymous(mounted):
+    """Guest transport context bound to the anonymous entry flow CSRF."""
+    bootstrap = mounted.get("/api/v2/session")
+    mounted.headers.update(
+        {
+            "Origin": "https://127.0.0.1:18059",
+            "X-CSRF-Token": bootstrap.json()["csrfToken"],
+        }
+    )
+    return mounted
+
+
+@pytest.fixture
+def browser(mounted, identities, connect, maintenance_authority):
+    """Signed-in owner A over the real cookie/CSRF transport."""
+    from uuid import uuid4
+
+    entry = mounted.app.state.entry
+    encoded = entry._hash_password(PASSWORD)
+    with connect("accounts") as conn:
+        conn.execute("DELETE FROM accounts.entry_budget")
+        conn.execute(
+            "UPDATE accounts.account SET password_hash=%s,email=%s,verified=true,"
+            "active=true WHERE id=%s",
+            (encoded, "u3-a@fixture.example.com", identities["a"]),
+        )
+    origin = "https://127.0.0.1:18059"
+    bootstrap = mounted.get("/api/v2/session")
+    assert bootstrap.status_code == 200, bootstrap.text
+    mounted.headers.update(
+        {"Origin": origin, "X-CSRF-Token": bootstrap.json()["csrfToken"]}
+    )
+    response = mounted.post(
+        "/api/v2/c02/access-login",
+        headers={"Idempotency-Key": str(uuid4())},
+        json={
+            "email": "u3-a@fixture.example.com",
+            "password": PASSWORD,
+            "policyRef": ENTRY_POLICY,
+        },
+    )
+    assert response.status_code == 200, response.text
+    mounted.headers["X-CSRF-Token"] = mounted.get("/api/v2/session").json()["csrfToken"]
+    yield mounted
+    mounted.cookies.clear()
+
+

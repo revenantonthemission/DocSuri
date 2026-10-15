@@ -4,9 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from backend.modules.corpus.maintenance import CorpusMaintenance
 from backend.modules.corpus.reading import ContentUnavailable, CorpusReading
-from backend.transactions import Authority
 
 pytestmark = pytest.mark.u3_repository
 
@@ -57,10 +55,6 @@ def test_reading_states_are_truthful_and_ordered(
             "compatibilityRevision": "u3-projection-1",
         },
     )
-    with connect("corpus") as conn:
-        # The staged control write happens during execution; simulate its
-        # committed-first ordering by executing the run.
-        pass
     maintenance.execute(accepted["runId"])
     state = maintenance.read_run(authority, accepted["runId"])["state"]
     assert state == "completed"

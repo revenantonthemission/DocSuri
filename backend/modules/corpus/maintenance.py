@@ -579,9 +579,13 @@ class CorpusMaintenance:
                     "reasonKey": "publication-cas-conflict",
                 }
             # Only now do the covered versions become eligible for readers.
+            # Withdrawal is terminal: a later ingest can never resurrect a
+            # withdrawn paper (BR3.1/BR3.2).
             for version in versions:
                 conn.execute(
-                    "UPDATE corpus.version SET eligible=true WHERE id=%s AND NOT eligible",
+                    "UPDATE corpus.version SET eligible=true WHERE id=%s AND NOT eligible "
+                    "AND NOT EXISTS (SELECT 1 FROM corpus.paper p WHERE p.id="
+                    "corpus.version.paper_id AND p.withdrawn)",
                     (version,),
                 )
             conn.execute(
@@ -855,7 +859,14 @@ def _is_sha256(value: str) -> bool:
 
 
 def _safe_error_code(error: ValueError) -> str:
-    return str(error)[:64] or "invalid-source"
+    """Bounded machine code: lowercase slug, never raw private text in receipts."""
+    raw = str(error) or "invalid-source"
+    slug = "-".join(
+        part for part in "".join(
+            character if character.isalnum() else "-" for character in raw.lower()
+        ).split("-") if part
+    )
+    return (slug or "invalid-source")[:64]
 
 
 def _effect(conn, run_id, stage, subject, state, *, evidence=None, error=None) -> None:
