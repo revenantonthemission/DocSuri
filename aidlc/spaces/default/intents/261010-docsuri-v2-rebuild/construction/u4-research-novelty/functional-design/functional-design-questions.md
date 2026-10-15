@@ -139,4 +139,11 @@ Does this all look correct before I generate the artifact?
 - Looks correct
 - Request changes
 
-[Answer]:
+[Answer]: Looks correct (guide mode — recommended; change it and say so if you disagree before the approval gate)
+
+## Git workflow
+
+The completed U2 and U3 units were merged into `develop` through PR #50 before
+this unit's artifacts were generated, and this stage runs on the fresh working
+branch `feature/u4-research-novelty` created from that updated `develop`
+(`72aeba5d`), per CONVENTIONS.md and the human's 2026-10-16 instruction.
