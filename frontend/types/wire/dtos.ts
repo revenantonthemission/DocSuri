@@ -1,4 +1,4 @@
-/* DO NOT EDIT. Declared public schema closure, offline. SHA256:4180916daf2429df3fbbd6ced5571300bf46782c27c143e6d5548f477f8cf31f */
+/* DO NOT EDIT. Declared public schema closure, offline. SHA256:902c99058689d4f818b78cbca2e43e62b2e83b0a9d2bde9166a3aa8316e1f120 */
 
 /**
  * Which rung of the fallback ladder produced this doc-model: native arXiv HTML -> ar5iv -> e-print LaTeX -> (last resort) PDF parse. User-uploaded PDFs also use the "pdf" tier — the user-vs-arXiv origin is carried by the paperId "userdoc:" namespace, not a separate tier. Trace: Q6, BR-29, TD-11.
@@ -241,7 +241,10 @@ export type WorkspaceAccessEmail = string;
  * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "WorkspaceAccessSessionStatus".
  */
-export type WorkspaceAccessSessionStatus = WorkspaceAccessAnonymousSession | WorkspaceAccessKnownSession;
+export type WorkspaceAccessSessionStatus =
+  | WorkspaceAccessAnonymousSession
+  | WorkspaceAccessKnownSession
+  | WorkspaceAccessMfaContinuation;
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "WorkspaceAccessLoginResult".
@@ -2505,6 +2508,16 @@ export interface WorkspaceAccessKnownSession {
   session: WorkspaceAccessPublicSession;
 }
 /**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessMfaContinuation".
+ */
+export interface WorkspaceAccessMfaContinuation {
+  state: "mfa_required";
+  challengeId: WorkspaceId;
+  flowBinding: WorkspaceId;
+  expiresAt: WorkspaceTime;
+}
+/**
  * Existence-neutral public acknowledgement. It does not expose account existence, challenge secrets or recipient-specific delivery facts.
  *
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -2523,16 +2536,6 @@ export interface WorkspaceAccessChallengeProof {
   challengeId: WorkspaceId;
   proof: WorkspaceAccessSecret;
   flowBinding: WorkspaceId;
-}
-/**
- * This interface was referenced by `PublicWire`'s JSON-Schema
- * via the `definition` "WorkspaceAccessMfaContinuation".
- */
-export interface WorkspaceAccessMfaContinuation {
-  state: "mfa_required";
-  challengeId: WorkspaceId;
-  flowBinding: WorkspaceId;
-  expiresAt: WorkspaceTime;
 }
 /**
  * URL generated from configured provider and registered callback binding; never copied from a caller-controlled destination.
@@ -2658,6 +2661,7 @@ export interface WorkspaceAccessProfileField {
 export interface WorkspaceAccessProfile {
   accountId: WorkspaceId;
   revision: WorkspaceRevision;
+  lifecycleRevision: WorkspaceRevision;
   email: WorkspaceAccessEmail;
   emailVerified: boolean;
   fieldVocabularyRevision: WorkspaceRevision;
@@ -2686,6 +2690,26 @@ export interface WorkspaceAccessConsentPage {
   page: WorkspacePageInfo;
   appliedLimit: number;
   policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessLifecyclePrepareInputHttp".
+ */
+export interface WorkspaceAccessLifecyclePrepareInputHttp {
+  currentProof: WorkspaceAccessSecret;
+  action: "withdraw" | "erase";
+  expectedRevision: WorkspaceRevision;
+  policyRef: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessLifecycleConfirmation".
+ */
+export interface WorkspaceAccessLifecycleConfirmation {
+  confirmationRef: WorkspaceId;
+  action: "withdraw" | "erase";
+  revision: WorkspaceRevision;
+  expiresAt: WorkspaceTime;
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -2909,14 +2933,81 @@ export interface WorkspaceSettingsRecentPage {
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsResetConfirmation".
+ */
+export interface WorkspaceSettingsResetConfirmation {
+  confirmationRef: WorkspaceId;
+  action: "delete_behavior" | "reset_profile";
+  revision: WorkspaceRevision;
+  expiresAt: WorkspaceTime;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "WorkspaceSettingsResetResult".
  */
 export interface WorkspaceSettingsResetResult {
+  resetId: WorkspaceId;
   ack: WorkspaceAck;
   inputBoundary: WorkspaceRevision;
   consentRevision: WorkspaceRevision;
   disposition: "complete" | "pending" | "blocked";
   remainingScopeReasonKey?: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsResetSummary".
+ */
+export interface WorkspaceSettingsResetSummary {
+  resetId: WorkspaceId;
+  action: "delete_behavior" | "reset_profile";
+  acceptedAt: WorkspaceTime;
+  acceptedSettingsRevision: WorkspaceRevision;
+  inputBoundary: WorkspaceRevision;
+  policyRef: WorkspacePolicyRef;
+  manifestRevision: WorkspaceRevision;
+  statusRevision: WorkspaceRevision;
+  observedAt: WorkspaceTime;
+  disposition: "pending" | "blocked" | "complete";
+  reasonKey: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsResetScopeStatus".
+ */
+export interface WorkspaceSettingsResetScopeStatus {
+  participantId: WorkspaceId;
+  scopeId: WorkspaceId;
+  manifestRevision: WorkspaceRevision;
+  workGeneration: WorkspaceRevision;
+  disposition: "pending" | "blocked" | "complete";
+  reasonKey: WorkspaceId;
+  evidenceRef: WorkspaceId | null;
+  updatedAt: WorkspaceTime;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsResetStatus".
+ */
+export interface WorkspaceSettingsResetStatus {
+  reset: WorkspaceSettingsResetSummary;
+  /**
+   * @minItems 1
+   * @maxItems 32
+   */
+  scopes: [WorkspaceSettingsResetScopeStatus, ...WorkspaceSettingsResetScopeStatus[]];
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsResetPage".
+ */
+export interface WorkspaceSettingsResetPage {
+  /**
+   * @maxItems 50
+   */
+  items: WorkspaceSettingsResetSummary[];
+  page: WorkspacePageInfo;
+  appliedLimit: number;
+  policyRef: WorkspacePolicyRef;
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -3875,6 +3966,7 @@ export interface WorkspaceAccessConsentUpdateInputHttp {
   purposeId: WorkspaceId;
   decision: "granted" | "revoked";
   policyRef: WorkspacePolicyRef;
+  expectedRevision: WorkspaceRevision;
 }
 /**
  * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
@@ -4031,6 +4123,16 @@ export interface WorkspaceSettingsSuggestionInputHttp {
  */
 export interface WorkspaceSettingsRecentInputHttp {
   page: WorkspacePageRequest;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsResetPrepareInputHttp".
+ */
+export interface WorkspaceSettingsResetPrepareInputHttp {
+  action: "delete_behavior" | "reset_profile";
+  currentProof: WorkspaceAccessSecret;
+  policyRef: WorkspacePolicyRef;
+  expectedRevision: WorkspaceRevision;
 }
 /**
  * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.

@@ -22,7 +22,7 @@ POLICY = {"policyId": "synthetic-paper-search", "revision": "1"}
 COMPATIBILITY = "local-search-2-paper-lexical"
 
 
-def validate_query(value: dict) -> dict:
+def validate_query(value: dict, *, vocabulary: str = VOCABULARY, policy: dict = POLICY) -> dict:
     query = wire.LibraryQueryContext.model_validate(value).model_dump(mode="json")
     text = query["query"].strip()
     if not text or len(text.encode()) > 2048 or any(ord(c) < 32 for c in text):
@@ -30,8 +30,8 @@ def validate_query(value: dict) -> dict:
     if (
         query["modeId"] not in ("lexical", "semantic")
         or query["orderId"] not in ("relevance", "newest")
-        or query["vocabularyRevision"] != VOCABULARY
-        or query["policyRef"] != POLICY
+        or query["vocabularyRevision"] != vocabulary
+        or query["policyRef"] != policy
     ):
         raise ValueError("unknown search vocabulary or policy")
     filters = query["filters"]
@@ -55,11 +55,22 @@ def validate_query(value: dict) -> dict:
 
 
 class SearchPageBuilder:
-    def __init__(self, cursor_key: bytes, *, clock=time.time):
+    def __init__(
+        self,
+        cursor_key: bytes,
+        *,
+        clock=time.time,
+        vocabulary: str = VOCABULARY,
+        policy: dict = POLICY,
+        compatibility: str = COMPATIBILITY,
+    ):
         if len(cursor_key) < 32:
             raise ValueError("cursor signing key must contain at least 32 bytes")
         self.key = cursor_key
         self.clock = clock
+        self.vocabulary = vocabulary
+        self.policy = policy
+        self.compatibility = compatibility
 
     def build(
         self,
@@ -71,10 +82,14 @@ class SearchPageBuilder:
         limit: int = 20,
         cursor: str | None = None,
         query_vector: list[float] | None = None,
+        effective_mode: str | None = None,
     ) -> dict:
-        query = validate_query(query)
+        query = validate_query(query, vocabulary=self.vocabulary, policy=self.policy)
         if type(limit) is not int or not 1 <= limit <= 100:
             raise ValueError("page size outside finite allocation")
+        retrieval = effective_mode or query["modeId"]
+        if retrieval not in ("lexical", "semantic"):
+            raise ValueError("unknown effective retrieval mode")
         rows = snapshot["candidates"]
         if len(rows) > 256:
             raise ValueError("projection exceeds finite allocation")
@@ -85,14 +100,14 @@ class SearchPageBuilder:
             "query": hashlib.sha256(json.dumps(query, sort_keys=True).encode()).hexdigest(),
             "snapshot": revision,
             "limit": limit,
-            "contract": COMPATIBILITY,
+            "contract": self.compatibility,
         }
         offset = self._decode(cursor, context) if cursor else 0
         best = {}
         for row in rows:
             if not self._matches(row, query["filters"]):
                 continue
-            if query["modeId"] == "semantic":
+            if retrieval == "semantic":
                 if query_vector is None or row.get("embedding") is None:
                     raise ModelUnavailable("semantic projection is unavailable")
                 if row.get("vector_policy") != "bge-m3-1024-pinned-1":
@@ -117,7 +132,7 @@ class SearchPageBuilder:
         selected = ranked[offset : offset + limit]
         next_offset = offset + len(selected)
         next_cursor = self._encode(context, next_offset) if next_offset < len(ranked) else None
-        hits = [self._hit(item[2], query["modeId"]) for item in selected]
+        hits = [self._hit(item[2], retrieval) for item in selected]
         response = {
             "executionId": execution,
             "query": query,
@@ -127,13 +142,13 @@ class SearchPageBuilder:
                 "generationId": str(publication["generation_id"]),
                 "publicationRevision": revision,
                 "manifestHash": publication["manifest_hash"],
-                "compatibilityRevision": COMPATIBILITY,
+                "compatibilityRevision": self.compatibility,
                 "eligibilityRevision": revision,
                 "publishedAt": publication["published_at"].isoformat(),
                 "complete": True,
             },
             "outcome": "complete",
-            "effectiveModeId": query["modeId"],
+            "effectiveModeId": retrieval,
             "limitations": [],
         }
         return wire.SearchResponse.model_validate(response).model_dump(mode="json")

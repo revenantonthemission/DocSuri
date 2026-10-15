@@ -71,9 +71,23 @@ def _saved_paper(row: dict, metadata: dict | None) -> dict:
     }
 
 
-def library_router(transactions, *, entry) -> APIRouter:
+def library_router(transactions, *, entry, activity=None) -> APIRouter:
     origin = transactions.profile.origin
-    repository = GuardedLibraryRepository(transactions)
+    controls = transactions.profile.realm == "account-controls"
+    policy = POLICY
+    if controls:
+        from backend.modules.accounts.control_cursor import ControlCursor
+        from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
+        from backend.modules.library.control_service import ControlLibraryService
+
+        policy = SYNTHETIC_POLICY.reference
+        repository = ControlLibraryService(
+            transactions,
+            SYNTHETIC_POLICY,
+            ControlCursor(bytes.fromhex(entry.verifier("cursor", "u2-controls-v1"))),
+        )
+    else:
+        repository = GuardedLibraryRepository(transactions)
     reads = _LibraryReads(transactions)
     router = APIRouter(route_class=boundary_route(origin))
 
@@ -97,8 +111,27 @@ def library_router(transactions, *, entry) -> APIRouter:
     async def save_paper(request: Request):
         operation, authority = await authenticated(request)
         value = await read_payload(request, wire.LibrarySavePaperInputHttp)
-        require_policy(value, POLICY)
+        require_policy(value, policy)
         paper = value["paper"]
+        if controls:
+            observed = (
+                await run_in_threadpool(activity.capture, authority, operation, paper, "save")
+                if activity
+                else None
+            )
+            await run_in_threadpool(
+                repository.save,
+                authority,
+                paper["paperId"],
+                paper["versionId"],
+                operation,
+                eligibility=UUID(paper["eligibilityRevision"]),
+            )
+            if activity:
+                await run_in_threadpool(activity.deliver, authority, observed)
+            return await run_in_threadpool(
+                repository.read_record, authority, kind="papers", identifier=paper["paperId"]
+            )
         receipt = await run_in_threadpool(
             repository.save,
             authority,
@@ -124,6 +157,14 @@ def library_router(transactions, *, entry) -> APIRouter:
     async def list_saved_papers(request: Request):
         _, authority = await authenticated(request)
         value = await read_payload(request, wire.LibraryPaperListInputHttp)
+        if controls:
+            return await run_in_threadpool(
+                repository.page,
+                authority,
+                kind="papers",
+                limit=value["page"].get("limit", 20),
+                cursor=value["page"].get("cursor"),
+            )
         limit = page_limit(value)
         rows = await run_in_threadpool(repository.list_saved, authority, limit=limit)
         metadata = await run_in_threadpool(reads.metadata_for, [row["version_id"] for row in rows])
@@ -141,6 +182,10 @@ def library_router(transactions, *, entry) -> APIRouter:
     async def read_saved_paper(request: Request):
         _, authority = await authenticated(request)
         value = await read_payload(request, wire.LibrarySavedPaperInputHttp)
+        if controls:
+            return await run_in_threadpool(
+                repository.read_record, authority, kind="papers", identifier=value["savedPaperId"]
+            )
         rows = await run_in_threadpool(repository.list_saved, authority, limit=100)
         row = next((item for item in rows if item["paper_id"] == value["savedPaperId"]), None)
         if row is None:
@@ -194,6 +239,14 @@ def library_router(transactions, *, entry) -> APIRouter:
     async def list_saved_searches(request: Request):
         _, authority = await authenticated(request)
         value = await read_payload(request, wire.LibrarySearchListInputHttp)
+        if controls:
+            return await run_in_threadpool(
+                repository.page,
+                authority,
+                kind="queries",
+                limit=value["page"].get("limit", 20),
+                cursor=value["page"].get("cursor"),
+            )
         limit = page_limit(value)
         rows = await run_in_threadpool(repository.list_queries, authority, limit=limit)
         boundary = await run_in_threadpool(repository.history_boundary, authority)
@@ -250,6 +303,14 @@ def library_router(transactions, *, entry) -> APIRouter:
     async def list_history(request: Request):
         _, authority = await authenticated(request)
         value = await read_payload(request, wire.LibraryHistoryListInputHttp)
+        if controls:
+            return await run_in_threadpool(
+                repository.page,
+                authority,
+                kind="history",
+                limit=value["page"].get("limit", 20),
+                cursor=value["page"].get("cursor"),
+            )
         limit = page_limit(value)
         rows = await run_in_threadpool(repository.list_history, authority, limit=limit)
         boundary = await run_in_threadpool(repository.history_boundary, authority)
@@ -267,6 +328,10 @@ def library_router(transactions, *, entry) -> APIRouter:
     async def read_history(request: Request):
         _, authority = await authenticated(request)
         value = await read_payload(request, wire.LibraryHistoryInputHttp)
+        if controls:
+            return await run_in_threadpool(
+                repository.read_record, authority, kind="history", identifier=value["historyId"]
+            )
         rows = await run_in_threadpool(repository.list_history, authority, limit=100)
         row = next((item for item in rows if str(item["execution_id"]) == value["historyId"]), None)
         if row is None:
@@ -280,7 +345,7 @@ def library_router(transactions, *, entry) -> APIRouter:
     async def clear_history(request: Request):
         operation, authority = await authenticated(request)
         value = await read_payload(request, wire.LibraryClearHistoryInputHttp)
-        require_policy(value, POLICY)
+        require_policy(value, policy)
         try:
             expected = UUID(value["expectedRevision"])
         except ValueError:

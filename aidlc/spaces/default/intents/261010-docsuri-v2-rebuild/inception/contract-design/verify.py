@@ -101,18 +101,30 @@ for api in apis:
      assert key not in bound_ops,key
      bound_ops.add(key)
      assert ops[key].get('surface') in ('browser','admin'),key
-     body_ref=operation['requestBody']['content']['application/json']['schema']['$ref']
-     body=defs[body_ref.split('/')[-1]]
-     assert 'context' not in body.get('properties',{})
-     assert body.get('additionalProperties') is False, key
+     if method == 'get':
+      assert key in {'C03.settings.listResets', 'C03.settings.inspectReset'}, key
+      parameters=operation.get('parameters',[])
+      assert all(p['in'] in ('query','path') and p['name'] not in ('context','accountId','ownerId') for p in parameters), key
+      expected={'view','limit','cursor'} if key.endswith('listResets') else {'resetId'}
+      assert {p['name'] for p in parameters}==expected,key
+     else:
+      body_ref=operation['requestBody']['content']['application/json']['schema']['$ref']
+      body=defs[body_ref.split('/')[-1]]
+      assert 'context' not in body.get('properties',{})
+      assert body.get('additionalProperties') is False, key
     assert 'default' in operation['responses']
 
 assert bound_ops=={k for k,v in ops.items() if v.get('surface') in ('browser','admin')},'missing browser/admin binding'
 
 # U1 amendment: keep the executable binding policy aligned with the normative
 # owner contracts. These are specification checks, not runtime authority tests.
-assert all(c['version']=='2.0.0' for c in contracts)
-assert all(api['info']['version']=='2.0.0' for api in apis)
+assert all(c['version']==('3.0.0' if c['id'] in ('C02','C03') else '2.0.0') for c in contracts)
+assert all(api['info']['version']==('3.0.0' if api['info']['title'].startswith('DocSuri application') else '2.0.0') for api in apis)
+assert 'resetId' in defs['SettingsResetResult']['required']
+assert {'C03.settings.listResets','C03.settings.inspectReset'} <= bound_ops
+for name in ('allocate','inspect','accept','close'):
+ assert ops['C03.admission.'+name]['surface']=='internal'
+ assert 'C03.admission.'+name not in bound_ops
 revision_inputs = (
  'AccessUnlinkIdentityInput','AccessProfileUpdateInput',
  'LibraryRemoveSavedPaperInput','LibraryRemoveSavedSearchInput',

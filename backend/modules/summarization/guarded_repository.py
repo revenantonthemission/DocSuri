@@ -67,6 +67,10 @@ class GuardedAssistanceRepository:
             guard(conn, authority, version=payload["versionId"])
             # Serialize the finite global admission count, including absent rows.
             conn.execute("SELECT pg_advisory_xact_lock(741901)")
+            if self.transactions.profile.realm == 'account-controls' and conn.execute(
+                'SELECT 1 FROM assistance.erased_admission WHERE operation_id=%s',(operation,)
+            ).fetchone():
+                raise PermissionError('erased acceptance identity cannot reopen')
             existing = conn.execute(
                 "SELECT * FROM assistance.admission WHERE operation_id=%s FOR UPDATE", (operation,)
             ).fetchone()
@@ -113,6 +117,19 @@ class GuardedAssistanceRepository:
             ).fetchone()
             if counts["total"] >= 4 or counts["own"] >= 2:
                 raise ValueError("finite admission capacity reached")
+            if self.transactions.profile.realm == "account-controls":
+                from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
+
+                period = conn.execute(
+                    "SELECT floor(extract(epoch FROM clock_timestamp())/%s)::bigint AS value",
+                    (SYNTHETIC_POLICY.period_seconds,),
+                ).fetchone()["value"]
+                return conn.execute(
+                    "INSERT INTO assistance.admission(operation_id,account_id,intent_hash,intent,disposition,"
+                    "period_id,policy_ref) VALUES(%s,%s,%s,%s,'open',%s,%s) RETURNING *",
+                    (operation, authority.account_id, frozen_hash, Jsonb(payload),
+                     "u2-period:" + str(period), Jsonb(SYNTHETIC_POLICY.reference)),
+                ).fetchone()
             return conn.execute(
                 "INSERT INTO assistance.admission(operation_id,account_id,intent_hash,intent,"
                 "disposition) VALUES(%s,%s,%s,%s,'open') RETURNING *",
@@ -398,6 +415,27 @@ class GuardedAssistanceRepository:
             if not row:
                 raise PermissionError("job unavailable")
             guard(conn, authority, version=row["version_id"])
+            return row
+
+        return self.transactions.run("assistance", read)
+
+    def disposition_snapshot(self, authority: Authority, job: UUID) -> dict:
+        """Owner-bound job row for disposition reads (U3 result/job surfaces).
+
+        Unlike ``snapshot`` this deliberately skips ``corpus.guard_version`` so
+        a withdrawn or restricted source yields its explicit disposition to the
+        owner instead of a generic denial. Content bytes are still never served
+        without the strict guard on the result read path.
+        """
+
+        def read(conn):
+            guard(conn, authority)
+            row = conn.execute(
+                "SELECT * FROM assistance.job WHERE id=%s AND account_id=%s",
+                (job, authority.account_id),
+            ).fetchone()
+            if not row:
+                raise PermissionError("job unavailable")
             return row
 
         return self.transactions.run("assistance", read)

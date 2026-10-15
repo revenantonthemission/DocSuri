@@ -1,0 +1,47 @@
+# U3 paper/corpus coverage configuration.
+#
+# The include set names every production Python path this unit authored or
+# extended for the U3 capability: the 15 U3-authored modules plus the shared
+# host/transaction/browser/profile/artifact modules and the guarded owner
+# repositories U3 extended (all listed in source-manifest.json). Legacy suites,
+# generated data and other units' modules are excluded, and nothing is narrowed
+# to inflate a result.
+[run]
+source = backend
+
+[report]
+include =
+    backend/u3_policy.py
+    backend/u3_host.py
+    backend/modules/corpus/maintenance.py
+    backend/modules/corpus/reading.py
+    backend/modules/corpus/u3_http.py
+    backend/modules/discovery/citations.py
+    backend/modules/discovery/u3_search.py
+    backend/modules/discovery/u3_http.py
+    backend/modules/library/u3_dispositions.py
+    backend/modules/library/u3_history.py
+    backend/modules/summarization/u3_catalog.py
+    backend/modules/summarization/u3_dispatch.py
+    backend/modules/summarization/u3_glossary.py
+    backend/modules/summarization/u3_http.py
+    backend/modules/summarization/u3_provider.py
+    backend/local_host.py
+    backend/transactions.py
+    backend/local_browser.py
+    backend/artifacts.py
+    backend/local_profile.py
+    backend/modules/discovery/local_search.py
+    backend/modules/discovery/guarded_repository.py
+    backend/modules/library/repository/guarded.py
+    backend/modules/summarization/guarded_repository.py
+    backend/modules/accounts/local_http.py
+omit =
+    backend/modules/*/tests/*
+    */__pycache__/*
+exclude_also =
+    if TYPE_CHECKING:
+    raise NotImplementedError
+    \.\.\.
+show_missing = True
+skip_covered = False

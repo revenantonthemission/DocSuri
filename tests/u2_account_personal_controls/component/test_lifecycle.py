@@ -1,0 +1,148 @@
+from uuid import UUID, uuid4
+
+import pytest
+
+from backend.modules.accounts.control_repository import ControlRepository
+from backend.modules.accounts.services.control_lifecycle import ControlLifecycleService
+
+PASSWORD = 'Synthetic!Research2026'
+pytestmark = pytest.mark.u2_component
+
+
+@pytest.fixture
+def authority(isolated_authority):
+    """Lifecycle requests must not accumulate on the shared fixture owner."""
+    return isolated_authority
+
+
+def lifecycle(entry):
+    return ControlLifecycleService(entry, (('Library','references'), ('ServiceOperations','restore')), revision='test-u2-manifest')
+
+
+def request(service, authority):
+    value = ControlRepository(service.transactions, service.entry.control_policy).profile(authority)
+    return service.request(authority, uuid4(), UUID(value['lifecycleRevision']), 'withdraw', PASSWORD)
+
+
+def test_withdraw_revokes_access_before_cleanup(entry, authority):
+    service = lifecycle(entry)
+    result = request(service, authority)
+    assert result['accessRevoked'] and result['disposition'] == 'pending'
+    with pytest.raises(Exception):
+        ControlRepository(service.transactions, service.entry.control_policy).profile(authority)
+
+
+def test_one_scope_cannot_complete_manifest(entry, authority):
+    service = lifecycle(entry)
+    result = request(service, authority)
+    ticket = service.claim(UUID(result['requestId']), 'Library', 'references')
+    outcome = service.acknowledge(ticket, evidence=uuid4(), reason='test-reference-suppression')
+    assert outcome['disposition'] == 'pending'
+
+
+def test_missing_restore_evidence_is_blocked(entry, authority):
+    service = lifecycle(entry)
+    result = request(service, authority)
+    ticket = service.claim(UUID(result['requestId']), 'ServiceOperations', 'restore')
+    assert service.acknowledge(ticket, evidence=None, reason='restore-not-demonstrated')['disposition'] == 'blocked'
+
+
+def test_stale_ticket_rejected(entry, authority):
+    service = lifecycle(entry)
+    result = request(service, authority)
+    ticket = service.claim(UUID(result['requestId']), 'Library', 'references')
+    ticket['generation'] += 1
+    with pytest.raises(ValueError, match='stale'):
+        service.acknowledge(ticket, evidence=uuid4(), reason='stale')
+
+
+def test_wrong_participant_cannot_claim(entry, authority):
+    service = lifecycle(entry)
+    result = request(service, authority)
+    with pytest.raises(PermissionError):
+        service.claim(UUID(result['requestId']), 'Uninstalled', 'all-data')
+
+
+def test_restore_cannot_undo_current_withdrawal(entry, authority, identities):
+    service = lifecycle(entry)
+    result = request(service, authority)
+    assert service.evaluate_restore(identities['a'], UUID(result['revision']))['decision'] == 'deny'
+
+
+def test_all_scope_evidence_required_for_completion(entry, authority):
+    service = lifecycle(entry)
+    result = request(service, authority)
+    for participant, scope in service.manifest:
+        ticket = service.claim(UUID(result['requestId']), participant, scope)
+        outcome = service.acknowledge(ticket, evidence=uuid4(), reason='synthetic-participant-test')
+    assert outcome['disposition'] == 'complete'
+
+
+def test_erased_identity_gets_no_reactivation_proof(entry, authority, connect, identities):
+    with connect('accounts') as conn:
+        conn.execute("UPDATE accounts.account SET lifecycle_state='erased',active=false WHERE id=%s", (identities['a'],))
+    flow = str(uuid4())
+    entry.request_reactivation(uuid4(), 'u2-a@fixture.invalid', flow)
+    with connect('accounts') as conn:
+        assert conn.execute("SELECT count(*) AS n FROM accounts.control_proof WHERE flow_hash=%s AND purpose='reactivate'", (entry.verifier('flow', flow),)).fetchone()['n'] == 0
+
+
+def test_confirmation_binds_action_and_preserves_original_expiry(entry, authority):
+    service = lifecycle(entry)
+    profile = ControlRepository(service.transactions, entry.control_policy).profile(authority)
+    revision, operation = UUID(profile['lifecycleRevision']), uuid4()
+    confirmation = service.prepare_confirmation(authority, operation, revision, 'withdraw', PASSWORD)
+    assert service.prepare_confirmation(authority, operation, revision, 'withdraw', PASSWORD) == confirmation
+    with pytest.raises(PermissionError):
+        service.request_confirmed(authority, uuid4(), UUID(confirmation['confirmationRef']), 'erase')
+    result = service.request_confirmed(authority, uuid4(), UUID(confirmation['confirmationRef']), 'withdraw')
+    assert result['accessRevoked']
+
+
+def test_confirmation_cannot_cross_session(entry, authority, connect, identities):
+    service = lifecycle(entry)
+    profile = ControlRepository(service.transactions, entry.control_policy).profile(authority)
+    confirmation = service.prepare_confirmation(authority, uuid4(), UUID(profile['lifecycleRevision']), 'withdraw', PASSWORD)
+    from backend.transactions import Authority
+    other = Authority(identities['b'], uuid4())
+    with pytest.raises(PermissionError):
+        service.request_confirmed(other, uuid4(), UUID(confirmation['confirmationRef']), 'withdraw')
+
+
+def test_withdrawn_owner_reactivates_with_one_time_proof(entry, authority, connect, mailbox):
+    """Reactivation needs the verified owner proof; scoped completion revives access."""
+    manifest = (('Library', 'references'),)
+    withdraw = ControlLifecycleService(entry, manifest, revision='reactivate-test')
+    first = request(withdraw, authority)
+    with connect('accounts') as conn:
+        row = conn.execute(
+            "SELECT email,lifecycle_state,active FROM accounts.account WHERE id=%s",
+            (authority.account_id,),
+        ).fetchone()
+    assert row['lifecycle_state'] == 'withdrawn' and not row['active']
+
+    flow = str(uuid4())
+    operation = uuid4()
+    entry.request_reactivation(operation, row['email'], flow)
+    values = [value for value in mailbox('reactivate') if value.get('flowBinding') == flow]
+    assert len(values) == 1
+    proof = values[0]
+    result = withdraw.reactivate(
+        uuid4(), UUID(proof['challengeId']), proof['proof'], proof['flowBinding']
+    )
+    assert result['disposition'] == 'reactivation_pending'
+    # The exact proof is single-use: the same verification cannot reactivate twice.
+    with pytest.raises(PermissionError):
+        withdraw.reactivate(
+            uuid4(), UUID(proof['challengeId']), proof['proof'], proof['flowBinding']
+        )
+
+    service = ControlLifecycleService(entry, manifest, revision='reactivate-test')
+    ticket = service.claim(UUID(result['requestId']), 'Library', 'references')
+    service.acknowledge(ticket, evidence=uuid4(), reason='reactivation-reference-check')
+    with connect('accounts') as conn:
+        revived = conn.execute(
+            "SELECT lifecycle_state,active FROM accounts.account WHERE id=%s",
+            (authority.account_id,),
+        ).fetchone()
+    assert revived == {'lifecycle_state': 'active', 'active': True}

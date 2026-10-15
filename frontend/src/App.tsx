@@ -1,5 +1,5 @@
 /**
- * U1 Korean research workspace shell.
+ * Korean research workspace shell.
  *
  * One find → understand → save → revisit journey over the canonical C13
  * browser bindings. Private state is scoped to the current account: an account
@@ -17,9 +17,18 @@ import {
   SessionBootstrap,
   Transport,
   VOCABULARY,
+  retryTransient,
 } from './api';
 import { Notice, Panel, StatusLine, describeError, focusHeading, notice } from './ui';
 import { PaperWorkspace, SavedPaper } from './paper';
+
+import type { WorkspaceCapabilityCatalog } from '../types/wire/dtos';
+import { AuthenticationPanel, takeProofLink } from './auth';
+import { AccountControls, LifecycleProgress } from './account-controls';
+import { PersonalControls } from './personal-controls';
+import { UsageControls } from './usage-controls';
+import { LibraryControls } from './library-controls';
+import { CorpusWorkspace } from './u3-corpus/corpus-workspace';
 
 type Appearance = 'light' | 'dark' | 'system';
 type NavigationItem = {
@@ -75,8 +84,21 @@ const NAV_COPY: Record<string, string> = {
   jobs: '작업',
   account: '계정',
 };
-const OWNER_BOUND = new Set(['library', 'settings', 'usage', 'jobs']);
+const OWNER_BOUND = new Set(['library', 'settings', 'usage', 'jobs', 'account']);
 const APPEARANCE_KEY = 'docsuri.u1.appearance';
+const AUTHORITY_CHANNEL = 'docsuri.authority-boundary';
+type AuthorityNotice = { kind: 'authority-changed'; nonce: string };
+
+function isAuthorityNotice(value: unknown): value is AuthorityNotice {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<AuthorityNotice>;
+  return (
+    Object.keys(candidate).length === 2 &&
+    candidate.kind === 'authority-changed' &&
+    typeof candidate.nonce === 'string' &&
+    /^[a-f\d-]{36}$/i.test(candidate.nonce)
+  );
+}
 
 function storedAppearance(): Appearance {
   try {
@@ -94,22 +116,150 @@ function applyAppearance(value: Appearance) {
 
 export default function App({ transport }: { transport?: Transport }) {
   const client = useMemo(() => transport ?? new Transport(), [transport]);
+  const [catalogReady, setCatalogReady] = useState(false);
+  const [catalog, setCatalog] = useState<WorkspaceCapabilityCatalog | null>(null);
+  const [boundary, setBoundary] = useState(0);
+  const [lifecycleId, setLifecycleId] = useState<string | null>(null);
+  const [initialProof, setInitialProof] = useState(takeProofLink);
+  const [proofActive, setProofActive] = useState(() => !!initialProof);
+  const [appearanceNotice, setAppearanceNotice] = useState<Notice | null>(null);
   const [bootstrap, setBootstrap] = useState<SessionBootstrap | null>(null);
   const [bootstrapped, setBootstrapped] = useState(false);
   const [navigation, setNavigation] = useState<NavigationItem[]>([]);
-  const [view, setView] = useState<'search' | 'paper' | 'library'>('search');
+  const [view, setView] = useState<
+    'search' | 'paper' | 'library' | 'account' | 'settings' | 'usage'
+  >('search');
   const [paper, setPaper] = useState<PaperRef | null>(null);
   const [rerun, setRerun] = useState<QueryContext | null>(null);
+  const searchContext = useRef<QueryContext | null>(null);
   const [appearance, setAppearance] = useState<Appearance>(storedAppearance);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [entryNotice, setEntryNotice] = useState<Notice | null>(null);
   const mainHeading = useRef<HTMLHeadingElement | null>(null);
+  const authorityChannel = useRef<BroadcastChannel | null>(null);
+
+  const controlPolicy = catalog?.capabilities.find(
+    (value) => value.id === 'account.controls' && value.state === 'available',
+  )?.policy;
+  const isControls = !!controlPolicy;
+  // The U3 corpus workspace replaces the live search/reading surfaces when the
+  // corpus owner capabilities are installed in this realm.
+  const isCorpusWorkspace =
+    catalog?.capabilities.some(
+      (value) => value.id === 'corpus.maintenance' && value.state === 'available',
+    ) ?? false;
+
+  useEffect(() => {
+    client
+      .get<WorkspaceCapabilityCatalog>('/api/v2/capabilities')
+      .then(setCatalog)
+      .catch(() => setCatalog(null))
+      .finally(() => setCatalogReady(true));
+  }, [client]);
+  useEffect(
+    () =>
+      client.subscribe(() => {
+        setBoundary(client.generation);
+        setBootstrap(null);
+        setSettings(null);
+        setPaper(null);
+        setRerun(null);
+        searchContext.current = null;
+      }),
+    [client],
+  );
 
   const refreshSession = useCallback(async () => {
     const value = await client.bootstrap();
     setBootstrap(value);
     return value;
   }, [client]);
+
+  const announceAuthorityChange = useCallback(() => {
+    const event: AuthorityNotice = { kind: 'authority-changed', nonce: crypto.randomUUID() };
+    try {
+      if (authorityChannel.current) authorityChannel.current.postMessage(event);
+      else {
+        // The fallback event contains no identity, session, proof or form data.
+        window.localStorage.setItem(AUTHORITY_CHANNEL, JSON.stringify(event));
+        window.localStorage.removeItem(AUTHORITY_CHANNEL);
+      }
+    } catch {
+      // Restricted storage cannot prevent local invalidation; foreground checks remain.
+    }
+  }, []);
+
+  const authorityChanged = useCallback(async () => {
+    client.invalidateBoundary();
+    announceAuthorityChange();
+    const value = await refreshSession();
+    // A completion or failure notice belongs to the entry that just ended;
+    // a signed-in session clears it rather than replaying stale text.
+    if (value.signedIn) setEntryNotice(null);
+    return value;
+  }, [client, announceAuthorityChange, refreshSession]);
+
+  useEffect(() => {
+    let active = true;
+    const recheck = () => {
+      void refreshSession().catch((error) => {
+        if (active) setEntryNotice(describeError(error));
+      });
+    };
+    const receive = (value: unknown) => {
+      if (!isAuthorityNotice(value)) return;
+      // Remount protected forms immediately, before a possibly delayed network read.
+      client.invalidateBoundary();
+      setLifecycleId(null);
+      setInitialProof(null);
+      setProofActive(false);
+      setAppearanceNotice(null);
+      recheck();
+    };
+    let channel: BroadcastChannel | null = null;
+    try {
+      if (typeof window.BroadcastChannel === 'function') {
+        channel = new window.BroadcastChannel(AUTHORITY_CHANNEL);
+        channel.onmessage = (event: MessageEvent<unknown>) => receive(event.data);
+        authorityChannel.current = channel;
+      }
+    } catch {
+      // A disabled channel uses the same non-secret storage-event fallback.
+    }
+    const storage = (event: StorageEvent) => {
+      if (event.key !== AUTHORITY_CHANNEL || !event.newValue || event.newValue.length > 160)
+        return;
+      try {
+        receive(JSON.parse(event.newValue));
+      } catch {
+        // Ignore malformed notifications; never interpret them as account data.
+      }
+    };
+    const leave = () => {
+      client.invalidateBoundary();
+    };
+    const restore = (event: PageTransitionEvent) => {
+      if (event.persisted) recheck();
+    };
+    const foreground = () => {
+      if (document.visibilityState === 'visible') recheck();
+    };
+    window.addEventListener('storage', storage);
+    window.addEventListener('focus', foreground);
+    document.addEventListener('visibilitychange', foreground);
+    window.addEventListener('pagehide', leave);
+    window.addEventListener('pageshow', restore);
+    return () => {
+      active = false;
+      channel?.close();
+      if (authorityChannel.current === channel) authorityChannel.current = null;
+      window.removeEventListener('storage', storage);
+      window.removeEventListener('focus', foreground);
+      document.removeEventListener('visibilitychange', foreground);
+      window.removeEventListener('pagehide', leave);
+      window.removeEventListener('pageshow', restore);
+    };
+  }, [client, refreshSession]);
 
   useEffect(() => {
     applyAppearance(appearance);
@@ -126,10 +276,11 @@ export default function App({ transport }: { transport?: Transport }) {
 
   useEffect(() => {
     let active = true;
-    client
-      .post<{ items: NavigationItem[] }>('/api/v2/c01/host-resolve-navigation', {
+    retryTransient(() =>
+      client.post<{ items: NavigationItem[] }>('/api/v2/c01/host-resolve-navigation', {
         routeId: 'search',
-      })
+      }),
+    )
       .then((value) => {
         if (active) setNavigation(value.items);
       })
@@ -170,16 +321,22 @@ export default function App({ transport }: { transport?: Transport }) {
     } catch {
       /* storage failure keeps a usable temporary selection, no persistence promise */
     }
-    if (signedIn && settings) {
+    if (signedIn) {
       try {
+        const currentSettings =
+          settings ?? (await client.post<Settings>('/api/v2/c03/settings-read', {}));
         const updated = await client.post<Settings>('/api/v2/c03/settings-update', {
           appearance: value,
           policyRef: SETTINGS_POLICY,
-          expectedRevision: settings.revision,
+          expectedRevision: currentSettings.revision,
         });
         setSettings((current) => (current ? { ...current, ...updated } : current));
+        setAppearance(value);
+        setAppearanceNotice(notice('polite', '화면 모드를 저장했어요'));
       } catch {
-        /* the local selection stays; the account preference was not confirmed */
+        setAppearanceNotice(
+          notice('alert', '화면 모드는 임시 변경이에요. 계정에 저장되지 않았어요'),
+        );
       }
     }
   };
@@ -192,7 +349,12 @@ export default function App({ transport }: { transport?: Transport }) {
 
   const navigationItems = navigation.length
     ? navigation
-    : Object.keys(NAV_COPY).map((routeId) => ({ routeId, titleKey: routeId, capabilityId: '', available: routeId === 'search' }));
+    : Object.keys(NAV_COPY).map((routeId) => ({
+        routeId,
+        titleKey: routeId,
+        capabilityId: '',
+        available: routeId === 'search',
+      }));
 
   return (
     <div className="shell" data-testid="app-shell" data-account={accountId}>
@@ -203,7 +365,11 @@ export default function App({ transport }: { transport?: Transport }) {
         <p className="brand">DocSuri 연구 공간</p>
         <nav aria-label="주요 이동" data-testid="navigation">
           {navigationItems
-            .filter((item) => !OWNER_BOUND.has(item.routeId) || signedIn)
+            .filter(
+              (item) =>
+                !OWNER_BOUND.has(item.routeId) ||
+                (signedIn && catalogReady && navigation.length > 0),
+            )
             .map((item) => (
               <button
                 key={item.routeId}
@@ -215,6 +381,9 @@ export default function App({ transport }: { transport?: Transport }) {
                 onClick={() => {
                   if (item.routeId === 'search') setView('search');
                   else if (item.routeId === 'library') setView('library');
+                  else if (isControls && ['account', 'settings', 'usage'].includes(item.routeId))
+                    setView(item.routeId as 'account' | 'settings' | 'usage');
+                  focusHeading(mainHeading);
                 }}
                 data-testid={`nav-${item.routeId}`}
               >
@@ -245,7 +414,10 @@ export default function App({ transport }: { transport?: Transport }) {
                 } catch {
                   /* local private state still clears below */
                 }
+                client.invalidateBoundary();
+                announceAuthorityChange();
                 setBootstrap(null);
+                setLifecycleId(null);
                 setSettings(null);
                 setPaper(null);
                 setRerun(null);
@@ -260,34 +432,104 @@ export default function App({ transport }: { transport?: Transport }) {
         </div>
       </header>
       <main id="main" tabIndex={-1} ref={mainHeading}>
-        {!bootstrapped ? (
+        {!bootstrapped || !catalogReady ? (
           <Panel title="시작하기" titleRef={mainHeading} testId="bootstrapping">
             <p role="status">세션을 확인하고 있어요</p>
           </Panel>
         ) : (
           <>
-            {!signedIn ? (
-              <EntryPanel client={client} noticeValue={entryNotice} onSignedIn={refreshSession} />
+            {!signedIn || (isControls && proofActive) ? (
+              isControls ? (
+                <AuthenticationPanel
+                  key={`entry-${boundary}`}
+                  client={client}
+                  policy={controlPolicy!}
+                  noticeValue={entryNotice}
+                  onSignedIn={authorityChanged}
+                  onLifecycle={setLifecycleId}
+                  initialProof={initialProof}
+                  // A pending protected link survives the bootstrap boundary
+                  // remount; it clears only when its flow actually completes.
+                  onProofConsumed={() => setProofActive(true)}
+                  onProofComplete={() => {
+                    setInitialProof(null);
+                    setProofActive(false);
+                    // The authority refresh remounts this panel; the completion
+                    // notice survives at the shell so it is never lost.
+                    setEntryNotice(
+                      notice('polite', '인증 요청을 확인했어요. 필요한 경우 다시 로그인해 주세요'),
+                    );
+                  }}
+                />
+              ) : (
+                <EntryPanel
+                  client={client}
+                  noticeValue={entryNotice}
+                  onSignedIn={authorityChanged}
+                  initialProof={initialProof}
+                  onProofConsumed={() => setInitialProof(null)}
+                />
+              )
             ) : null}
             {/* Account change remounts the workspace: no prior-owner private state. */}
-            <div key={accountId}>
-              {view === 'search' ? (
+            <div key={`${accountId}:${boundary}`} className="workspace-content">
+              <StatusLine value={appearanceNotice} />
+              {isControls && lifecycleId ? (
+                <LifecycleProgress client={client} id={lifecycleId} />
+              ) : null}
+              {signedIn && isControls && view === 'account' ? (
+                <AccountControls
+                  client={client}
+                  policy={controlPolicy!}
+                  onAuthorityChange={authorityChanged}
+                  onLifecycle={setLifecycleId}
+                />
+              ) : null}
+              {signedIn && isControls && view === 'settings' ? (
+                <PersonalControls
+                  client={client}
+                  policy={controlPolicy!}
+                  onAppearance={setAppearance}
+                />
+              ) : null}
+              {signedIn && isControls && view === 'usage' ? (
+                <UsageControls client={client} policy={controlPolicy!} />
+              ) : null}
+              {view === 'search' && isCorpusWorkspace ? (
+                <CorpusWorkspace client={client} signedIn={signedIn} />
+              ) : null}
+              {view === 'search' && !isCorpusWorkspace ? (
                 <SearchWorkspace
                   client={client}
                   signedIn={signedIn}
-                  initialQuery={rerun}
+                  initialQuery={rerun ?? searchContext.current}
+                  onContext={(query) => {
+                    searchContext.current = query;
+                  }}
                   onOpenPaper={openPaper}
                 />
               ) : null}
               {view === 'paper' && paper ? (
                 <PaperWorkspace
                   transport={client}
+                  libraryPolicy={controlPolicy}
                   paper={paper}
                   signedIn={signedIn}
                   onBack={() => setView('search')}
                 />
               ) : null}
-              {view === 'library' ? (
+              {view === 'library' && signedIn && isControls ? (
+                <LibraryControls
+                  client={client}
+                  policy={controlPolicy!}
+                  onOpenPaper={openPaper}
+                  onRunQuery={(query) => {
+                    setRerun(query);
+                    setView('search');
+                  }}
+                />
+              ) : null}
+              {view === 'library' && !isControls ? (
                 <LibraryWorkspace
                   client={client}
                   signedIn={signedIn}
@@ -307,6 +549,8 @@ export default function App({ transport }: { transport?: Transport }) {
 }
 
 function EntryPanel({
+  initialProof,
+  onProofConsumed,
   client,
   noticeValue,
   onSignedIn,
@@ -314,27 +558,34 @@ function EntryPanel({
   client: Transport;
   noticeValue: Notice | null;
   onSignedIn: () => Promise<SessionBootstrap>;
+  initialProof?: ReturnType<typeof takeProofLink>;
+  onProofConsumed?: () => void;
 }) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [local, setLocal] = useState<Notice | null>(null);
-  const [verification, setVerification] = useState<{ challengeId: string; flowBinding: string } | null>(
-    null,
-  );
+  const [verification, setVerification] = useState<{
+    challengeId: string;
+    flowBinding: string;
+  } | null>(null);
   const [proof, setProof] = useState('');
   const heading = useRef<HTMLHeadingElement | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('action') === 'verify-email') {
+    if (initialProof?.action === 'verify-email') {
+      setVerification(initialProof.verification);
+      setProof(initialProof.verification.proof);
+      onProofConsumed?.();
+    } else if (params.get('action') === 'verify-email') {
       setVerification({
         challengeId: params.get('challengeId') ?? '',
         flowBinding: params.get('flowBinding') ?? '',
       });
       setProof(params.get('proof') ?? '');
     }
-  }, []);
+  }, [initialProof, onProofConsumed]);
 
   useEffect(() => {
     focusHeading(heading);
@@ -402,7 +653,12 @@ function EntryPanel({
         <form onSubmit={verify} className="stack" data-testid="verification-form">
           <p>인증을 완료해 주세요</p>
           <label htmlFor="proof">인증 코드</label>
-          <input id="proof" value={proof} onChange={(event) => setProof(event.target.value)} required />
+          <input
+            id="proof"
+            value={proof}
+            onChange={(event) => setProof(event.target.value)}
+            required
+          />
           <button type="submit">인증 완료</button>
         </form>
       ) : (
@@ -448,6 +704,7 @@ function EntryPanel({
 }
 
 function SearchWorkspace({
+  onContext,
   client,
   signedIn,
   initialQuery,
@@ -456,6 +713,7 @@ function SearchWorkspace({
   client: Transport;
   signedIn: boolean;
   initialQuery: QueryContext | null;
+  onContext?: (query: QueryContext) => void;
   onOpenPaper: (paper: PaperRef) => void;
 }) {
   const heading = useRef<HTMLHeadingElement | null>(null);
@@ -505,6 +763,7 @@ function SearchWorkspace({
       policyRef: SEARCH_POLICY,
     };
     const request = ++sequence.current;
+    onContext?.(query);
     setSubmitted(query);
     setState('loading');
     setError(null);
@@ -683,9 +942,12 @@ function LibraryWorkspace({
         client.post<{ items: SavedSearch[] }>('/api/v2/c03/library-list-saved-searches', {
           page: { limit: 20 },
         }),
-        client.post<{ items: HistoryRow[]; clearBoundary: string }>('/api/v2/c03/library-list-history', {
-          page: { limit: 20 },
-        }),
+        client.post<{ items: HistoryRow[]; clearBoundary: string }>(
+          '/api/v2/c03/library-list-history',
+          {
+            page: { limit: 20 },
+          },
+        ),
         client.post<{ items: Measure[] }>('/api/v2/c03/usage-inspect', { page: {} }),
       ]);
       setPapers(paperPage.items);
@@ -755,7 +1017,11 @@ function LibraryWorkspace({
               {record.savedTitle ?? record.savedPaperId}
             </button>
             <span className="muted"> · {record.sourceDisposition}</span>
-            <button type="button" onClick={() => void removePaper(record)} data-testid="remove-saved-paper">
+            <button
+              type="button"
+              onClick={() => void removePaper(record)}
+              data-testid="remove-saved-paper"
+            >
               저장 취소
             </button>
           </li>
@@ -767,7 +1033,11 @@ function LibraryWorkspace({
         {searches.map((record) => (
           <li key={record.savedSearchId} data-testid="saved-search">
             <span>{record.queryContext.query}</span>
-            <button type="button" onClick={() => onRerun(record.queryContext)} data-testid="rerun-query">
+            <button
+              type="button"
+              onClick={() => onRerun(record.queryContext)}
+              data-testid="rerun-query"
+            >
               다시 검색
             </button>
           </li>

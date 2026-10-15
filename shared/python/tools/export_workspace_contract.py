@@ -86,7 +86,7 @@ def build() -> dict[Path, str]:
         document = {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$id": identity,
-            "$comment": "Generated canonical contract release 2.0.0; source SHA256:"
+            "$comment": "Generated canonical contract release " + api["info"]["version"] + "; source SHA256:"
             + hashlib.sha256(source.encode()).hexdigest(),
             "$defs": selected,
         }

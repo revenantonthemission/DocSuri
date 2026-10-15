@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from backend.transactions import Authority, OwnerTransactions, guard
 
@@ -176,5 +176,49 @@ class GuardedUsageRepository:
                 "SELECT * FROM usage.reservation WHERE account_id=%s AND operation_id=%s",
                 (authority.account_id, operation),
             ).fetchone()
+
+        return self.transactions.run("usage", read)
+
+    def inspect_assignment(self, authority: Authority) -> dict:
+        """U2 read-only initial assignment; absence never allocates capacity."""
+        if self.transactions.profile.realm != "account-controls":
+            raise ValueError("U2 assignment profile required")
+
+        def read(conn):
+            guard(conn, authority, purpose="account-control")
+            from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
+
+            tick = conn.execute(
+                "SELECT floor(extract(epoch FROM clock_timestamp())/%s)::bigint AS n",
+                (SYNTHETIC_POLICY.period_seconds,),
+            ).fetchone()["n"]
+            period = "u2-period:" + str(tick)
+            row = conn.execute(
+                "SELECT * FROM usage.entitlement WHERE account_id=%s", (authority.account_id,)
+            ).fetchone()
+            if row is None:
+                return {
+                    "accountId": str(authority.account_id),
+                    "revision": str(
+                        uuid5(NAMESPACE_URL, str(authority.account_id) + ":assignment-empty:1")
+                    ),
+                    "allocation": 0,
+                    "disposition": "unassigned",
+                    "periodId": period,
+                    "counts": {},
+                }
+            rows = conn.execute(
+                "SELECT disposition,sum(quantity) AS quantity FROM usage.reservation WHERE account_id=%s "
+                "AND period_id=%s GROUP BY disposition",
+                (authority.account_id, period),
+            ).fetchall()
+            return {
+                "accountId": str(authority.account_id),
+                "revision": str(row["assignment_revision"]),
+                "allocation": row["allocation"],
+                "disposition": "revoked" if row["revoked"] else "assigned",
+                "periodId": period,
+                "counts": {item["disposition"]: item["quantity"] for item in rows},
+            }
 
         return self.transactions.run("usage", read)

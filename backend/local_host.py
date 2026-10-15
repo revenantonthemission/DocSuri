@@ -304,6 +304,16 @@ def assemble(profile: LocalProfile, *, routers=(), lifespan=None) -> FastAPI:
         if required is None or transactions is None:
             return JSONResponse({"ready": False, "missing": ["assembly"]}, status_code=503)
         report = await run_in_threadpool(local_observation.readiness, transactions, required)
+        loop = getattr(app.state, "control_loop", None)
+        if profile.realm in ("account-controls", "corpus-maintenance"):
+            report["backgroundWork"] = (
+                dict(loop.status) if loop is not None else {"state": "stopped"}
+            )
+            capacity = getattr(app.state, "control_capacity", None)
+            report["admitting"] = bool(capacity and capacity.admitting)
+            if (not report["admitting"] or loop is None or
+                    loop.status["state"] in {"stopped", "degraded", "deadline"}):
+                report["ready"] = False
         return JSONResponse(report, status_code=200 if report["ready"] else 503)
 
     @app.get("/api/v2/capabilities")
@@ -385,11 +395,18 @@ def assemble_journey(profile: LocalProfile) -> FastAPI:
     from .modules.summarization.local_http import assistance_router
     from .transactions import OwnerTransactions
 
-    if profile.realm != "journey" or profile.origin != JOURNEY_ORIGIN:
+    controls = profile.realm == "account-controls" and profile.origin == "https://127.0.0.1:18049"
+    if not controls and (profile.realm != "journey" or profile.origin != JOURNEY_ORIGIN):
         raise ValueError("journey assembly requires the owned HTTPS realm")
     transactions = OwnerTransactions(profile)
     try:
-        entry = GuardedEntryService(transactions)
+        if controls:
+            from .modules.accounts.control_policy import SYNTHETIC_POLICY
+            from .modules.accounts.services.control_entry import ControlEntryService
+
+            entry = ControlEntryService(transactions, SYNTHETIC_POLICY)
+        else:
+            entry = GuardedEntryService(transactions)
         anonymous = Preauthentication(entry)
         corpus_repository = CorpusRepository(
             transactions,
@@ -398,13 +415,41 @@ def assemble_journey(profile: LocalProfile) -> FastAPI:
         assistance_files = PrivateArtifacts(profile.root / "assistance-files")
         quality_ready = assistance_readiness(profile)
         catalog = journey_capabilities(quality_ready)
+        if controls:
+            for capability in catalog:
+                if capability['id'] == 'usage.wallet':
+                    capability['policy'] = SYNTHETIC_POLICY.reference
+                    capability['modeIds'] = ['finite-synthetic-period']
+            for name, modes in (
+                ('account.controls',['profile','consent','credentials','mfa','lifecycle']),
+                ('account.identity-fixtures',['google','orcid']),
+                ('personalization.reset',['delete_behavior','reset_profile']),
+                ('usage.administration',['synthetic-free']),
+            ):
+                catalog.append({'id':name,'state':'available','modeIds':modes,'languageIds':['ko'],
+                    'levelIds':['synthetic-only'],'formatIds':['json'],'policy':SYNTHETIC_POLICY.reference})
+            catalog.append({'id':'account.public-activation','state':'policy_pending','modeIds':[],
+                'languageIds':['ko'],'levelIds':['G1-G8-evidence-required'],'formatIds':['json'],
+                'policy':SYNTHETIC_POLICY.reference})
+        personalization = None
+        library_activity = corpus_activity = None
+        if controls:
+            from .modules.accounts.control_cursor import ControlCursor
+            from .modules.personalization.control_service import PersonalizationControlService, ProducerBinding
+            from .modules.personalization.activity import ActivityRelay
+            library_producer, corpus_producer = ProducerBinding("Library"), ProducerBinding("CorpusContent")
+            personalization = PersonalizationControlService(transactions, SYNTHETIC_POLICY,
+                ControlCursor(bytes.fromhex(entry.verifier("cursor", "u2-controls-v1"))),
+                producers=(library_producer, corpus_producer))
+            library_activity = ActivityRelay(personalization, library_producer)
+            corpus_activity = ActivityRelay(personalization, corpus_producer)
         routers = (
             account_router(entry),
             host_router(transactions, entry=entry, anonymous=anonymous, catalog=catalog),
-            corpus_router(transactions, entry=entry),
+            corpus_router(transactions, entry=entry, activity=corpus_activity),
             discovery_router(transactions, entry=entry, anonymous=anonymous),
-            library_router(transactions, entry=entry),
-            settings_router(transactions, entry=entry),
+            library_router(transactions, entry=entry, activity=library_activity),
+            settings_router(transactions, entry=entry, controls=personalization),
             usage_router(transactions, entry=entry),
             assistance_router(
                 transactions,
@@ -414,16 +459,55 @@ def assemble_journey(profile: LocalProfile) -> FastAPI:
                 corpus_repository=corpus_repository,
             ),
         )
+        lifecycle = None
+        if controls:
+            from .modules.accounts.control_http import control_router
+            from .modules.accounts.services.control_lifecycle import ControlLifecycleService
+
+            manifest = (
+                ("AccountAccess", "live_records"),
+                ("AccountAccess", "derived_artifacts"),
+                ("Library", "live_records"),
+                ("Personalization", "live_records"),
+                ("Personalization", "derived_artifacts"),
+                ("Personalization", "pending_work"),
+                ("UsageEntitlements", "live_records"),
+                ("PaperAssistance", "live_records"),
+                ("PaperAssistance", "derived_artifacts"),
+                ("PaperAssistance", "pending_work"),
+                ("DiscoveryCitations", "live_records"),
+                ("ServiceOperations", "backups"),
+                ("ServiceOperations", "restore_enforcement"),
+            )
+            lifecycle = ControlLifecycleService(entry, manifest, revision="u2-owners-v1")
+            routers += (control_router(entry, lifecycle),)
 
         @asynccontextmanager
         async def lifetime(app):
+            loop = None
+            if controls:
+                from .control_runtime import ControlLoop
+                loop = ControlLoop(app.state.control_worker, capacity=app.state.control_capacity)
+                app.state.control_loop = loop
+                loop.start()
             try:
                 yield
             finally:
+                if loop is not None:
+                    await loop.close()
                 transactions.close()
 
         app = assemble(profile, routers=routers, lifespan=lifetime)
+        if controls:
+            from .control_runtime import ControlAdmission, ControlCapacity
+            app.state.control_capacity = ControlCapacity(transactions)
+            app.add_middleware(ControlAdmission, capacity=app.state.control_capacity)
+        app.state.personalization = personalization
         app.state.entry = entry
+        app.state.lifecycle = lifecycle
+        if controls:
+            from .control_worker import ControlWorker
+            app.state.control_worker = ControlWorker(entry,lifecycle,personalization,assistance_files)
         app.state.transactions = transactions
         app.state.capability_catalog = catalog
         app.state.required_capabilities = set(OWNERS)

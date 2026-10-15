@@ -16,8 +16,11 @@ from backend.local_browser import (
     read_payload,
     require_post_headers,
 )
+from backend.modules.accounts.control_cursor import ControlCursor
+from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
 from backend.modules.discovery.guarded_repository import GuardedDiscoveryRepository
 from backend.modules.discovery.local_search import SearchPageBuilder, validate_query
+from backend.modules.library.control_service import ControlLibraryService
 from backend.modules.library.repository.guarded import GuardedLibraryRepository
 from docsuri_ops.local_models import ModelUnavailable
 from docsuri_shared.workspace import wire
@@ -47,8 +50,13 @@ def cursor_key(root: Path) -> bytes:
 def discovery_router(transactions, *, entry, anonymous, embed_query=None) -> APIRouter:
     origin = transactions.profile.origin
     repository = GuardedDiscoveryRepository(transactions)
-    library = GuardedLibraryRepository(transactions)
-    builder = SearchPageBuilder(cursor_key(transactions.profile.root))
+    key = cursor_key(transactions.profile.root)
+    library = (
+        ControlLibraryService(transactions, SYNTHETIC_POLICY, ControlCursor(key))
+        if transactions.profile.realm == "account-controls"
+        else GuardedLibraryRepository(transactions)
+    )
+    builder = SearchPageBuilder(key)
     router = APIRouter(route_class=boundary_route(origin))
 
     @router.post("/api/v2/c05/search")
@@ -66,6 +74,13 @@ def discovery_router(transactions, *, entry, anonymous, embed_query=None) -> API
         limit = value["page"].get("limit") or 20
         if type(limit) is not int or not 1 <= limit <= 100:
             raise BrowserDenied(422, "INVALID_ARGUMENT")
+        execution = uuid4()
+        admission = None
+        if authority is not None and transactions.profile.realm == "account-controls":
+            digest = hashlib.sha256(
+                json.dumps(query, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest()
+            admission = await run_in_threadpool(repository.admit, authority, execution, digest)
         snapshot = await run_in_threadpool(repository.snapshot, authority, query=query["query"])
         if value.get("snapshotRevision") is not None and value["snapshotRevision"] != str(
             snapshot["publication"]["revision"]
@@ -80,7 +95,6 @@ def discovery_router(transactions, *, entry, anonymous, embed_query=None) -> API
             except ModelUnavailable:
                 raise BrowserDenied(503, "DEPENDENCY_UNAVAILABLE") from None
             query_vector = vector
-        execution = uuid4()
         owner = str(authority.account_id) if authority else "guest"
         response = builder.build(
             snapshot=snapshot,
@@ -101,6 +115,7 @@ def discovery_router(transactions, *, entry, anonymous, embed_query=None) -> API
                     response["hits"],
                     repository,
                     library,
+                    admission,
                 )
             except Exception:
                 relayed = False
@@ -115,10 +130,11 @@ def discovery_router(transactions, *, entry, anonymous, embed_query=None) -> API
     return router
 
 
-def _relay_fact(authority, execution, query, hits, repository, library):
+def _relay_fact(authority, execution, query, hits, repository, library, admission=None):
     """Durable search fact plus current Library boundary; a clear suppresses older facts."""
-    library.ensure_boundary(authority)
-    boundary = library.history_boundary(authority)
+    if admission is None:
+        library.ensure_boundary(authority)
+        admission = library.history_boundary(authority)["generation"]
     digest = hashlib.sha256(
         json.dumps(query, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
@@ -128,7 +144,7 @@ def _relay_fact(authority, execution, query, hits, repository, library):
         query,
         digest,
         hits,
-        boundary["generation"],
+        admission,
     )
     accepted = library.accept_history(authority, fact)
     repository.acknowledge_history(authority, execution, delivered=accepted)

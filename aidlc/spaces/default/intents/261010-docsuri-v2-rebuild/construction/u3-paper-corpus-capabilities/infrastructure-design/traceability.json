@@ -1,0 +1,36 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "u3-paper-corpus-capabilities",
+  "upstream_ids": [
+    "NFR1.3", "NFR2.2", "NFR2.3",
+    "NFR3.3", "NFR3.4",
+    "NFR4.3", "NFR4.4",
+    "NFR5.1", "NFR5.3",
+    "NFR6.1",
+    "NFR7.1", "NFR7.2", "NFR7.3",
+    "NFR8.1", "NFR8.2",
+    "NFR9.1", "NFR9.2",
+    "NFR10.1", "NFR10.2"
+  ],
+  "coverage": [
+    { "id": "NFR1.3", "status": "OK", "target": "Scoped database/operations phases with staged-effect, watermark and change-fact assertions (cicd-pipeline: Delivery pipeline)" },
+    { "id": "NFR2.2", "status": "OK", "target": "Measurement wiring and baseline procedure in the operations phase (cicd-pipeline: Resource configuration and $0 guardrails)" },
+    { "id": "NFR2.3", "status": "OK", "target": "Bounded per-phase resources and page/polling limits in evidence (cicd-pipeline: Delivery pipeline + Resource configuration)" },
+    { "id": "NFR3.3", "status": "OK", "target": "Migration ordering with stop-migrate-start and CAS publication rollback (cicd-pipeline: Migration, publication and rollback procedures)" },
+    { "id": "NFR3.4", "status": "OK", "target": "Quarantine restore replaying withdrawal boundaries before serving (cicd-pipeline: Migration, publication and rollback procedures)" },
+    { "id": "NFR4.3", "status": "OK", "target": "Untrusted-input integration cases and conformance-checked doubles (cicd-pipeline: Delivery pipeline — Integration/Contract conformance)" },
+    { "id": "NFR4.4", "status": "OK", "target": "Secret-free pipeline stages, scans and redacted evidence (cicd-pipeline: Secrets and protected material)" },
+    { "id": "NFR5.1", "status": "OK", "target": "Permission-gated fixture preparation; refusal states as first-class expectations (cicd-pipeline: Resource configuration and $0 guardrails)" },
+    { "id": "NFR5.3", "status": "OK", "target": "Mode-restricted protected fixtures and projection-hygiene checks (cicd-pipeline: Secrets and protected material)" },
+    { "id": "NFR6.1", "status": "OK", "target": "Scoped frontend/browser stage incl. reflow and automated accessibility checks with recorded limitations (cicd-pipeline: Delivery pipeline)" },
+    { "id": "NFR7.1", "status": "OK", "target": "Scoped runner pattern extending the existing application; no new service, broker or store (cicd-pipeline: Environment and release flow)" },
+    { "id": "NFR7.2", "status": "OK", "target": "Reproducible setup/defect/repair evidence with recorded durations (cicd-pipeline: Evidence and recovery operations)" },
+    { "id": "NFR7.3", "status": "OK", "target": "Lockfile/audit/compatibility evidence gates for dependency changes (cicd-pipeline: Delivery pipeline — Lint & typecheck/Contract conformance)" },
+    { "id": "NFR8.1", "status": "OK", "target": "$0 guardrails: no paid providers/runners/overages; loud refusal for human decision (cicd-pipeline: Resource configuration and $0 guardrails)" },
+    { "id": "NFR8.2", "status": "OK", "target": "Finite resource configuration with exhaustion schedules and recorded envelope (cicd-pipeline: Resource configuration and $0 guardrails)" },
+    { "id": "NFR9.1", "status": "OK", "target": "Evidence bundle with safe correlation and redaction (cicd-pipeline: Delivery pipeline — Evidence bundle)" },
+    { "id": "NFR9.2", "status": "OK", "target": "Readiness checks with observed/estimated/unknown/stale distinction in operations (cicd-pipeline: Evidence and recovery operations)" },
+    { "id": "NFR10.1", "status": "OK", "target": "Contract-conformance stage exercising C04–C06/C13/C14 including Q-01–Q-04 closure (cicd-pipeline: Delivery pipeline — Contract conformance)" },
+    { "id": "NFR10.2", "status": "OK", "target": "Incompatibility refusal checks and double-conformance verification (cicd-pipeline: Delivery pipeline — Contract conformance)" }
+  ]
+}
