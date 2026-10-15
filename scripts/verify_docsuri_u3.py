@@ -707,7 +707,7 @@ def prepare_fixtures(path: Path) -> dict:
     """
     import importlib.util
 
-    _, value = manifest(path)
+    manifest(path)  # identity must validate before any fixture write
     spec = importlib.util.spec_from_file_location(
         "u3_fixtures", ROOT / "tests/u3_paper_corpus_capabilities/fixtures.py"
     )

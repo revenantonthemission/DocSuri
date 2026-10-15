@@ -26,7 +26,9 @@ def serve(environment_file: Path, seconds: int) -> dict:
     if profile.realm != "corpus-maintenance" or profile.database_name != "docsuri_u3":
         raise ValueError("U3 server requires the owned corpus-maintenance realm")
     inspect_transport(profile)
-    assemble_u3(profile).state.profile  # one explicit bounded assembly check
+    app = assemble_u3(profile)  # one explicit bounded assembly check
+    if app.state.profile.run_id != profile.run_id:
+        raise ValueError("U3 assembly identity mismatch")
     return {"state": "assembled", "unit": "u3-paper-corpus-capabilities"}
 
 

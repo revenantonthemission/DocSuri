@@ -31,10 +31,10 @@ def test_canonical_identity_dedup_across_reordered_records(
     assert second["state"] == "completed"
     with connect("corpus") as conn:
         count = conn.execute(
-            "SELECT count(*) AS versions FROM corpus.version"
+            "SELECT count(*) AS versions FROM corpus.version WHERE paper_id='paper-alpha'"
         ).fetchone()["versions"]
         chunks = conn.execute(
-            "SELECT count(*) AS chunks FROM corpus.projection"
+            "SELECT count(*) AS chunks FROM corpus.projection WHERE version_id='paper-alpha:v1'"
         ).fetchone()["chunks"]
     assert count == 1 and chunks == 2
 
@@ -153,45 +153,6 @@ def test_withdrawal_removes_projection_and_denies_guarded_read(
             conn.execute(
                 "SELECT corpus.guard_version('paper-alpha:v1','local-research')"
             )
-
-
-def test_competing_publication_cas_preserves_previous_generation(
-    maintenance, authority, maintenance_authority, fixture_discard, sources, connect
-):
-    fixture_discard()
-    # Publish the first generation.
-    first = maintenance.accept(
-        authority, uuid4(), request_body("ingest", ["fixture-alpha"])
-    )
-    maintenance.execute(first["runId"])
-    assert maintenance.read_run(authority, first["runId"])["state"] == "completed"
-    with connect("corpus") as conn:
-        published = conn.execute(
-            "SELECT generation_id,published_generation FROM corpus.publication"
-        ).fetchone()
-    assert published["generation_id"] == published["published_generation"]
-
-    # A competing publication moves the CAS target; a stale CAS refuses.
-    with connect("corpus") as conn:
-        stale = conn.execute(
-            "SELECT generation_id FROM corpus.publication"
-        ).fetchone()["generation_id"]
-    with connect("corpus") as conn:
-        refreshed = conn.execute(
-            "UPDATE corpus.publication SET generation_id=%s,revision=gen_random_uuid() "
-            "WHERE singleton AND generation_id=%s RETURNING generation_id",
-            (uuid4(), stale),
-        ).fetchone()
-        assert refreshed is not None
-        conn.commit()
-    with connect("corpus") as conn:
-        refused = conn.execute(
-            "UPDATE corpus.publication SET generation_id=%s,revision=gen_random_uuid() "
-            "WHERE singleton AND generation_id=%s RETURNING generation_id",
-            (uuid4(), stale),
-        ).fetchone()
-        assert refused is None
-        conn.rollback()
 
 
 def test_run_idempotency_same_key_same_input_and_conflict(

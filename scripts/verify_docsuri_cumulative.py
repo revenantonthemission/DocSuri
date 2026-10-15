@@ -45,6 +45,16 @@ LAYERS = (
         "phases": ("database", "repository", "component", "integration", "operations"),
     },
     {
+        # U3 extends the same application; its layer runs after U2 so the
+        # cumulative composition covers the corpus/discovery/assistance owners.
+        # The browser phase stays with U3's own runner evidence; this check
+        # never claims fixture-only provider or public parity.
+        "unit": "u3",
+        "runner": "scripts/verify_docsuri_u3.py",
+        "environment": Path("/tmp/docsuri-u3-run/environment.json"),
+        "phases": ("database", "repository", "component", "integration", "operations"),
+    },
+    {
         "unit": "u7",
         "runner": "scripts/verify_docsuri_u7.py",
         "environment": Path("/tmp/docsuri-u7-run/environment.json"),

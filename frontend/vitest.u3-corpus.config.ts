@@ -27,7 +27,11 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary'],
       reportsDirectory: './coverage/u3-paper-corpus-capabilities',
-      include: ['src/u3-corpus/**/*.{ts,tsx}', 'src/api.ts'],
+      // The explicit U3 production include set: the modules this unit authored
+      // (`src/u3-corpus/**`). The shared `src/api.ts` Transport is U1/U2-owned
+      // and stays covered by the cumulative U1/U2 configs; it is not narrowed
+      // out of this set to inflate a number — no U3 code hides behind it.
+      include: ['src/u3-corpus/**/*.{ts,tsx}'],
       exclude: ['src/u3-corpus/**/*.d.ts'],
       thresholds: { lines: 80 },
     },

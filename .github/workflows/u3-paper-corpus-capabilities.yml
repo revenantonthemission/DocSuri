@@ -1,0 +1,159 @@
+name: U3 paper and corpus capabilities
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'backend/**'
+      - 'ops/src/docsuri_ops/**'
+      - 'shared/**'
+      - 'frontend/src/**'
+      - 'frontend/test/u3-paper-corpus-capabilities/**'
+      - 'frontend/e2e/u3-paper-corpus-capabilities/**'
+      - 'frontend/package.json'
+      - 'frontend/pnpm-lock.yaml'
+      - 'frontend/*u3-corpus*'
+      - 'scripts/*docsuri_u3*.py'
+      - 'scripts/u3_browser_fixtures.py'
+      - 'tests/u3_paper_corpus_capabilities/**'
+      - '.github/workflows/u3-paper-corpus-capabilities.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Standard public-repository runners only. No self-hosted runner, cloud
+# credentials, public deployment or privileged pull_request_target execution.
+# Untrusted pull requests receive no secrets and run read-only stages.
+concurrency:
+  group: u3-corpus-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.14.0'
+      - run: corepack enable
+      - name: Frozen frontend dependencies
+        run: corepack pnpm@9.15.9 --dir frontend install --frozen-lockfile --ignore-scripts
+      - name: Workspace typecheck
+        working-directory: frontend
+        run: >-
+          corepack pnpm@9.15.9 exec tsc --noEmit --strict --jsx react-jsx
+          --module esnext --moduleResolution bundler --target ES2022
+          --lib dom,dom.iterable,ES2022 --skipLibCheck src/main.tsx
+      - name: Execute U3 corpus frontend checks with coverage
+        working-directory: frontend
+        run: corepack pnpm@9.15.9 exec vitest run --config vitest.u3-corpus.config.ts --coverage
+      - name: Build shared workspace
+        run: corepack pnpm@9.15.9 --dir frontend exec vite build
+
+  owners:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      max-parallel: 1
+      fail-fast: true
+      matrix:
+        phase: [database, repository, component, integration, operations]
+    env:
+      DOCSURI_U3_ENVIRONMENT_FILE: /tmp/docsuri-u3-run/environment.json
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          version: '0.9.0'
+      - name: Frozen Python dependencies
+        run: uv sync --project backend --frozen --python 3.13.7
+      - name: Pinned free local database image
+        run: docker pull postgres@sha256:a3b7f434b2dc57ce85a67e171163eb8ab1a1ebcb39d27484661f26b1dfbe30d6
+      - name: Create isolated synthetic realm
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u3.py
+          --phase setup --profile synthetic-local
+          --environment-file "$DOCSURI_U3_ENVIRONMENT_FILE"
+      - name: Apply verified ordered migrations
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u3.py
+          --phase migrate --profile synthetic-local
+          --environment-file "$DOCSURI_U3_ENVIRONMENT_FILE"
+      - name: Execute owner checks (zero tests or skips fail)
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u3.py
+          --phase "${{ matrix.phase }}" --profile synthetic-local
+          --environment-file "$DOCSURI_U3_ENVIRONMENT_FILE"
+      - name: Evidence boundary
+        if: always()
+        run: >-
+          echo "Each matrix job has an independent disposable synthetic realm.
+          Browser journeys, cumulative U1/U2/U3 completion verification and
+          public-provider activation remain separate evidence. Private logs,
+          keys, receipts and database backups are never uploaded as CI artifacts."
+
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    needs: owners
+    env:
+      DOCSURI_U3_ENVIRONMENT_FILE: /tmp/docsuri-u3-run/environment.json
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.14.0'
+      - run: corepack enable
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          version: '0.9.0'
+      - name: Frozen dependencies
+        run: |
+          uv sync --project backend --frozen --python 3.13.7
+          corepack pnpm@9.15.9 --dir frontend install --frozen-lockfile --ignore-scripts
+      - name: Browser runtime
+        working-directory: frontend
+        run: corepack pnpm@9.15.9 exec playwright install --with-deps chromium
+      - name: Build shared workspace
+        run: corepack pnpm@9.15.9 --dir frontend exec vite build
+      - name: Pinned free local database image
+        run: docker pull postgres@sha256:a3b7f434b2dc57ce85a67e171163eb8ab1a1ebcb39d27484661f26b1dfbe30d6
+      - name: Create isolated synthetic realm
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u3.py
+          --phase setup --profile synthetic-local
+          --environment-file "$DOCSURI_U3_ENVIRONMENT_FILE"
+      - name: Apply verified ordered migrations
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u3.py
+          --phase migrate --profile synthetic-local
+          --environment-file "$DOCSURI_U3_ENVIRONMENT_FILE"
+      - name: Execute browser journeys over the mounted host
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u3.py
+          --phase browser --profile synthetic-local
+          --environment-file "$DOCSURI_U3_ENVIRONMENT_FILE"
+
+  evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    needs: [frontend, owners]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Dependency identity and advisory checks (frozen inputs)
+        run: |
+          echo "Frozen inputs: backend/uv.lock, shared/python/uv.lock, frontend/pnpm-lock.yaml"
+          sha256sum backend/uv.lock shared/python/uv.lock frontend/pnpm-lock.yaml
+          echo "Dependency/advisory/license review evidence is recorded in the unit's"
+          echo "code-summary.md; no paid dependency or provider is introduced by U3."
