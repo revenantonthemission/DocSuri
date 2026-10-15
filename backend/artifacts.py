@@ -27,7 +27,11 @@ class ArtifactUnavailable(RuntimeError):
 
 class PrivateArtifacts:
     def __init__(self, root: Path, *, maximum_bytes: int = 131072):
-        expected = {Path("/tmp/docsuri-u1-run").resolve(), Path("/tmp/docsuri-u2-run").resolve()}
+        expected = {
+            Path("/tmp/docsuri-u1-run").resolve(),
+            Path("/tmp/docsuri-u2-run").resolve(),
+            Path("/tmp/docsuri-u3-run").resolve(),
+        }
         if root.parent not in expected or root.name not in (
             "corpus-files",
             "assistance-files",

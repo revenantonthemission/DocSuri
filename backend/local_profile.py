@@ -70,6 +70,7 @@ class LocalProfile:
         profiles = {
             Path("/tmp/docsuri-u1-run").resolve() / "environment.json": "u1",
             Path("/tmp/docsuri-u2-run").resolve() / "environment.json": "u2",
+            Path("/tmp/docsuri-u3-run").resolve() / "environment.json": "u3",
         }
         expected = manifest.resolve()
         unit = profiles.get(expected)
@@ -105,7 +106,8 @@ class LocalProfile:
             raise ValueError("runtime manifest must not carry migration credentials")
         if value["expiresAt"] <= time.time():
             raise ValueError("synthetic retention expired")
-        application_port, database_port = (18039, 15439) if unit == "u1" else (18049, 15449)
+        ports = {"u1": (18039, 15439), "u2": (18049, 15449), "u3": (18059, 15459)}
+        application_port, database_port = ports[unit]
         if value["applicationPort"] != application_port or value["databasePort"] != database_port:
             raise ValueError("unexpected owned listener")
         if unit == "u2":
@@ -124,6 +126,23 @@ class LocalProfile:
                 value["expiresAt"],
                 "docsuri_u2",
                 "account-controls",
+            )
+        if unit == "u3":
+            if (
+                value.get("unit") != "u3-paper-corpus-capabilities"
+                or value.get("database") != "docsuri_u3"
+                or value.get("realm") != "corpus-maintenance"
+                or not time.time() < value["expiresAt"] <= time.time() + 86400
+            ):
+                raise ValueError("wrong U3 owned realm or finite retention")
+            return cls(
+                expected.parent,
+                value["runId"],
+                "https://127.0.0.1:18059",
+                15459,
+                value["expiresAt"],
+                "docsuri_u3",
+                "corpus-maintenance",
             )
         return cls(
             expected.parent, value["runId"], "http://127.0.0.1:18039", 15439, value["expiresAt"]

@@ -30,6 +30,7 @@ ENTRY_COOKIE = "docsuri_entry"
 JOURNEY_ORIGIN = "https://127.0.0.1:18039"
 JOURNEY_AUTHORITY = "127.0.0.1:18039"
 CONTROLS_ORIGIN = "https://127.0.0.1:18049"
+CORPUS_ORIGIN = "https://127.0.0.1:18059"
 
 
 class BrowserDenied(Exception):
@@ -78,7 +79,7 @@ def boundary_route(
     missing: tuple[int, str] = (404, "FORBIDDEN"),
 ):
     """One route class for every canonical browser adapter; identical dispositions."""
-    if origin not in (JOURNEY_ORIGIN, CONTROLS_ORIGIN):
+    if origin not in (JOURNEY_ORIGIN, CONTROLS_ORIGIN, CORPUS_ORIGIN):
         raise ValueError("unowned browser origin")
     expected_authority = urlsplit(origin).netloc
     if authority is not None and authority != expected_authority:
@@ -144,7 +145,11 @@ async def read_payload(request: Request, schema):
     if request.headers.get("content-type", "").split(";", 1)[0] != "application/json":
         raise BrowserDenied(422, "INVALID_ARGUMENT")
     raw = bytearray()
-    maximum = 65536 if request.headers.get("host") == "127.0.0.1:18049" else 8192
+    maximum = (
+        65536
+        if request.headers.get("host") in ("127.0.0.1:18049", "127.0.0.1:18059")
+        else 8192
+    )
     async with asyncio.timeout(5):
         async for chunk in request.stream():
             if len(raw) + len(chunk) > maximum:

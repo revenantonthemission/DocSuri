@@ -13,9 +13,12 @@ class GuardedDiscoveryRepository:
         self.transactions = transactions
 
     def admit(self, authority: Authority, execution: UUID, query_hash: str) -> int:
-        """Persist U2 admission before search work, serialized with history clear."""
-        if self.transactions.profile.realm != "account-controls" or len(query_hash) != 64:
-            raise ValueError("U2 admission binding required")
+        """Persist admission before search work, serialized with history clear."""
+        if self.transactions.profile.realm not in (
+            "account-controls",
+            "corpus-maintenance",
+        ) or len(query_hash) != 64:
+            raise ValueError("admission binding required")
 
         def write(conn):
             revision = guard(conn, authority)
@@ -100,11 +103,20 @@ class GuardedDiscoveryRepository:
         query_hash: str,
         results: list[dict],
         generation: int | None,
+        *,
+        snapshot_revision=None,
+        degradation: str = "none",
     ) -> dict:
+        if degradation not in ("none", "semantic-unavailable", "partial", "provider-limited"):
+            raise ValueError("unknown retrieval degradation")
+
         def write(conn):
             if authority:
                 revision = guard(conn, authority)
-                if self.transactions.profile.realm == "account-controls":
+                if self.transactions.profile.realm in (
+                    "account-controls",
+                    "corpus-maintenance",
+                ):
                     admitted = conn.execute(
                         "SELECT * FROM discovery.admission WHERE execution_id=%s",
                         (execution,),
@@ -119,8 +131,8 @@ class GuardedDiscoveryRepository:
                         raise PermissionError("missing or changed search admission")
             return conn.execute(
                 "INSERT INTO discovery.execution(id,account_id,query,query_hash,"
-                "captured_generation,results,relay_state) VALUES(%s,%s,%s,%s,%s,%s,%s) "
-                "RETURNING *",
+                "captured_generation,results,relay_state,snapshot_revision,degradation) "
+                "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *",
                 (
                     execution,
                     authority.account_id if authority else None,
@@ -129,10 +141,29 @@ class GuardedDiscoveryRepository:
                     generation,
                     Jsonb(results),
                     "pending" if authority else "none",
+                    snapshot_revision,
+                    degradation,
                 ),
             ).fetchone()
 
         return self.transactions.run("discovery", write)
+
+    def checkpoint(self, authority: Authority) -> dict:
+        """Completed-search admission checkpoint handed to Library (C05)."""
+
+        def read(conn):
+            revision = guard(conn, authority)
+            sequence = conn.execute(
+                "SELECT discovery.history_checkpoint(%s,%s) AS sequence",
+                (authority.account_id, authority.session_id),
+            ).fetchone()["sequence"]
+            return {
+                "ownerId": str(authority.account_id),
+                "admissionSequence": int(sequence),
+                "revision": str(revision),
+            }
+
+        return self.transactions.run("discovery", read)
 
     def pending_history(self, authority: Authority) -> list[dict]:
         def read(conn):
@@ -142,6 +173,27 @@ class GuardedDiscoveryRepository:
                 "relay_state='pending' ORDER BY completed_at,id LIMIT 20",
                 (authority.account_id,),
             ).fetchall()
+
+        return self.transactions.run("discovery", read)
+
+    def execution(self, authority: Authority | None, execution: UUID) -> dict:
+        """Owner-first read of one recorded execution; foreign reads stay absent."""
+
+        def read(conn):
+            if authority:
+                guard(conn, authority)
+                row = conn.execute(
+                    "SELECT * FROM discovery.execution WHERE id=%s AND account_id=%s",
+                    (execution, authority.account_id),
+                ).fetchone()
+            else:
+                row = conn.execute(
+                    "SELECT * FROM discovery.execution WHERE id=%s AND account_id IS NULL",
+                    (execution,),
+                ).fetchone()
+            if row is None:
+                raise PermissionError("execution unavailable")
+            return row
 
         return self.transactions.run("discovery", read)
 

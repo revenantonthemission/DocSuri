@@ -85,10 +85,11 @@ class DeadlineConnection:
 class OwnerTransactions:
     def __init__(self, profile: LocalProfile, *, process: str = "api"):
         limits = {"api": 4, "worker": 2, "observation": 1, "maintenance": 1}
-        controls = profile.realm == "account-controls"
+        # The managed realms run an embedded supervised worker; their API and
+        # worker share five normal slots, with two observation/recovery slots
+        # and one runner slot reserved inside the twelve connection budget.
+        controls = profile.realm in ("account-controls", "corpus-maintenance")
         if controls:
-            # The U2 API and embedded workers share five normal slots; two
-            # observation/recovery slots and one runner slot remain reserved.
             limits = {"api": 5, "worker": 5, "observation": 2, "maintenance": 1}
         if process not in limits:
             raise ValueError("unknown bounded process role")
@@ -109,6 +110,7 @@ class OwnerTransactions:
             ("docsuri_u1", "diagnostic"),
             ("docsuri_u1_journey", "journey"),
             ("docsuri_u2", "account-controls"),
+            ("docsuri_u3", "corpus-maintenance"),
         }:
             raise ValueError("unknown explicit database realm")
         # Separate databases do not receive separate process connection budgets.

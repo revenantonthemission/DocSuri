@@ -39,6 +39,7 @@ def _transport_prefix(profile: LocalProfile) -> str:
     bindings = {
         ("journey", "https://127.0.0.1:18039", "docsuri_u1_journey"): "journey-tls",
         ("account-controls", "https://127.0.0.1:18049", "docsuri_u2"): "account-controls-tls",
+        ("corpus-maintenance", "https://127.0.0.1:18059", "docsuri_u3"): "corpus-maintenance-tls",
     }
     prefix = bindings.get((profile.realm, profile.origin, profile.database_name))
     if prefix is None:

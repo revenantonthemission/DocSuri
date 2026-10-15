@@ -1,0 +1,25 @@
+# U3 paper/corpus coverage configuration.
+#
+# Every actual U3 production Python path: the finite policy module, the three
+# owner modules this unit extends (CorpusContent, Discovery, PaperAssistance)
+# and the U3 host glue that mounts them. Tests, fixtures and generated-only
+# data are excluded; nothing is excluded to inflate the result.
+[run]
+source =
+    backend/u3_policy.py
+    backend/u3_host.py
+    backend/modules/corpus
+    backend/modules/discovery
+    backend/modules/summarization
+omit =
+    backend/modules/discovery/pyproject.toml
+    */__pycache__/*
+    tests/*
+
+[report]
+exclude_also =
+    if TYPE_CHECKING:
+    raise NotImplementedError
+    \.\.\.
+show_missing = True
+skip_covered = False

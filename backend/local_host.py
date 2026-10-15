@@ -305,7 +305,7 @@ def assemble(profile: LocalProfile, *, routers=(), lifespan=None) -> FastAPI:
             return JSONResponse({"ready": False, "missing": ["assembly"]}, status_code=503)
         report = await run_in_threadpool(local_observation.readiness, transactions, required)
         loop = getattr(app.state, "control_loop", None)
-        if profile.realm == "account-controls":
+        if profile.realm in ("account-controls", "corpus-maintenance"):
             report["backgroundWork"] = dict(loop.status) if loop is not None else {"state": "stopped"}
             capacity = getattr(app.state, "control_capacity", None)
             report["admitting"] = bool(capacity and capacity.admitting)
