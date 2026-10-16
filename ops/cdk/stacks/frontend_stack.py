@@ -71,8 +71,12 @@ _ORIGIN_DOMAIN = "app-origin.docsuri.org"  # ALB origin name (distinct from back
 # shared X-Origin-Verify secret (accepted as a 2nd value on the backend ALB rule).
 _BACKEND_ORIGIN_DOMAIN = "origin.docsuri.org"
 _ZONE_NAME = "docsuri.org"
-_ZONE_ID = "Z0084324NUV4EPLJ7JH9"
+# Zone in account 559352512800; registrar NS delegation must point at this zone for
+# anything deployed into it to resolve.
+_ZONE_ID = "Z01838052MFR28NGE6XV1"
 # Viewer cert lives in us-east-1 (CloudFront requirement); created out-of-band, DNS-validated.
+# Still pinned to decommissioned account 028317349537 — must be reissued in 559352512800
+# (needs working NS delegation for DNS validation) before any non-dev deploy of this stack.
 _VIEWER_CERT_ARN = "arn:aws:acm:us-east-1:028317349537:certificate/8973dd50-5acb-4cb6-9a68-c64ddcdf0243"  # noqa: E501
 # com.amazonaws.global.cloudfront.origin-facing in ap-northeast-2.
 _CLOUDFRONT_PREFIX_LIST = "pl-22a6434b"
