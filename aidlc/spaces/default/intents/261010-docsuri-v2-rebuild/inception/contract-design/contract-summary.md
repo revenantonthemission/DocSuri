@@ -2063,6 +2063,16 @@ $defs:
   AssistanceExecutionPayload: {type: object, properties: {binding: {$ref: '#/$defs/ExecutionBinding'}, acceptedAt: {$ref: '#/$defs/Time'}, input: {$ref: '#/$defs/AssistanceAcceptedInput'},
         sections: {type: array, items: {$ref: '#/$defs/CorpusSection'}, x-policy-bound: accepted input and context policy}, usageRecordId: {$ref: '#/$defs/Id'}},
       required: [binding, acceptedAt, input, sections, usageRecordId], additionalProperties: false}
+  ResearchAcceptedInput: {type: object, properties: {kind: {type: string, enum: [research-turn, novelty-analysis, novelty-discussion]},
+        contextId: {$ref: '#/$defs/Id'}, sessionId: {anyOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}, inputSnapshot: {type: object,
+          x-policy-bound: the frozen owner input for the accepted operation, immutable after acceptance}, inputHash: {$ref: '#/$defs/Hash'},
+        sourceScope: {type: array, items: {$ref: '#/$defs/Id'}}, attachmentReferences: {type: array, items: {$ref: '#/$defs/Id'}},
+        draftRevision: {anyOf: [{$ref: '#/$defs/Revision'}, {type: 'null'}]}, processingPolicy: {$ref: '#/$defs/PolicyRef'}}, required: [kind,
+        contextId, sessionId, inputSnapshot, inputHash, sourceScope, attachmentReferences, draftRevision, processingPolicy], additionalProperties: false}
+  ResearchExecutionPayload: {type: object, properties: {binding: {$ref: '#/$defs/ExecutionBinding'}, acceptedAt: {$ref: '#/$defs/Time'},
+        input: {$ref: '#/$defs/ResearchAcceptedInput'}, evidenceScope: {type: array, items: {$ref: '#/$defs/Id'},
+          x-policy-bound: eligible evidence the owner may read at execution time; the prepare/untrusted-content rules still apply}, usageRecordId: {$ref: '#/$defs/Id'}},
+      required: [binding, acceptedAt, input, evidenceScope, usageRecordId], additionalProperties: false}
   AssistanceProgress: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, jobId: {$ref: '#/$defs/Id'}, factId: {$ref: '#/$defs/Id'}, claim: {$ref: '#/$defs/ExecutionClaim'},
         expectedJobRevision: {$ref: '#/$defs/Revision'}, inputHash: {$ref: '#/$defs/Hash'}, progress: {$ref: '#/$defs/Progress'}}, required: [context,
         jobId, factId, claim, expectedJobRevision, inputHash, progress], additionalProperties: false}
@@ -5263,13 +5273,15 @@ operations:
   surface: internal
 - name: readExecutionPayload
   input: ExecutionClaimRead
-  output: AssistanceExecutionPayload
+  output: AssistanceExecutionPayload | ResearchExecutionPayload
   auth: Trusted authenticated executor for the exact owner operation; current account/session/source authority is rechecked on the same protected
     transaction.
   errors: *id001
-  semantics: U1 supports only PaperAssistance; other owner payload codecs remain INCOMPATIBLE until coordinated by their unit. Authenticate current
-    worker/claim, verify exact accepted binding/hash and current source/account permission before releasing immutable input and permitted sections.
-    Locator, owner ID and expired/replaced claim grant no access.
+  semantics: The payload type is owner-scoped. PaperAssistance releases `AssistanceExecutionPayload`; ResearchWorkspace releases
+    `ResearchExecutionPayload` for its accepted kinds (`research-turn`, `novelty-analysis`, `novelty-discussion`). Every other owner payload codec remains
+    INCOMPATIBLE until coordinated by its unit. Authenticate current worker/claim, verify exact accepted binding/hash and current source/account permission
+    before releasing immutable input and permitted evidence/sections. Locator, owner ID and expired/replaced claim grant no access. The released input and
+    evidence are untrusted data and never authorize an external action.
   surface: internal
 invariants:
 - A transport acknowledgement is not business completion. Retry_later leaves a durable redelivery obligation; committed/duplicate means the owning
@@ -5284,7 +5296,9 @@ checks:
 - Crash before/after acceptance, delivery, effect and completion acknowledgement; recover exactly one logical operation.
 - Duplicate/out-of-order events, lost stream and polling recovery preserve monotone seq/current snapshot.
 - Revocation/deletion/cancellation races reject late work and prevent private-data resurrection.
-version: 2.0.0
+- The released payload type is owner-scoped — an executor receives only its own owner's accepted input type, and an unknown or unregistered codec refuses
+  INCOMPATIBLE rather than falling back to a generic envelope.
+version: 2.1.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
