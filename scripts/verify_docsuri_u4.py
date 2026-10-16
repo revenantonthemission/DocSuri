@@ -793,6 +793,7 @@ def bounded_process(
 
     for value in previous:
         signal.signal(value, interrupted)
+    failure_metrics = None
     try:
         with (
             os.fdopen(descriptor, "wb") as stream,
@@ -837,17 +838,42 @@ def bounded_process(
                     break
             stream.flush()
             os.fsync(stream.fileno())
+    except (Refused, RuntimeError, OSError) as error:
+        reasons = {
+            "private process log exceeded 16 MiB": "log-limit",
+            "private application log exceeded 16 MiB": "companion-log-limit",
+            "owned application exited during browser verification": "companion-exit",
+            "process tree exceeded RSS safety budget": "rss-limit",
+            "owned process supervision interrupted": "interrupted",
+        }
+        failure_metrics = {
+            "exitCode": 1,
+            "reason": reasons.get(str(error), "supervision-error"),
+            "elapsedSeconds": time.monotonic() - beginning,
+            "peakRssBytes": peak,
+            "logBytes": count,
+            "processStopped": False,
+        }
+        error.supervision = failure_metrics
+        raise
     finally:
         try:
             if process is not None:
                 stop(process)
                 process.stdout.close()
+            if failure_metrics is not None:
+                failure_metrics["processStopped"] = process is None or process.poll() is not None
         finally:
             for value, previous_handler in previous.items():
                 signal.signal(value, previous_handler)
     bounded_stop = code is None
     if bounded_stop and not allow_bounded_stop:
-        raise Refused("owned process exceeded its deadline")
+        error = Refused("owned process exceeded its deadline")
+        error.supervision = {
+            "exitCode": 1, "reason": "deadline", "elapsedSeconds": time.monotonic() - beginning,
+            "peakRssBytes": peak, "logBytes": count, "processStopped": True,
+        }
+        raise error
     return {
         "exitCode": 0 if bounded_stop else code,
         "reason": "bounded-stop" if bounded_stop else "process-exit",
@@ -1109,6 +1135,7 @@ def run_phase(phase: str, path: Path) -> dict:
         )
     except (Refused, RuntimeError, OSError) as error:
         failure = type(error).__name__
+        supervision = getattr(error, "supervision", {})
     finally:
         if server is not None:
             stop(server)
@@ -1161,25 +1188,25 @@ def run_phase(phase: str, path: Path) -> dict:
         evidence["sourceChangedDuringRun"] = True
         evidence["exitCode"] = evidence["exitCode"] or 1
     private_json(RUN / f"{phase}-evidence-{time.time_ns()}.json", evidence)
-    print(
-        json.dumps(
-            {
-                key: evidence[key]
-                for key in (
-                    "phase",
-                    "exitCode",
-                    "tests",
-                    "failures",
-                    "errors",
-                    "skipped",
-                )
-                if key in evidence
-            }
-        )
-    )
+    print(json.dumps(safe_phase_summary(evidence)))
     if evidence["exitCode"]:
         raise Refused("U4 phase failed; evidence preserved")
     return {"state": "passed", "phase": phase}
+
+
+def safe_phase_summary(evidence):
+    """Only fixed classifications and numeric supervision; never private log content."""
+    result = {key: evidence[key] for key in (
+        "phase", "exitCode", "tests", "failures", "errors", "skipped",
+        "failureCategory", "missingTestReport", "invalidTestReport", "sourceChangedDuringRun",
+    ) if key in evidence}
+    result["supervision"] = {
+        key: evidence.get("supervision", {}).get(key)
+        for key in (
+            "reason", "exitCode", "elapsedSeconds", "peakRssBytes", "logBytes", "processStopped",
+        )
+    }
+    return result
 
 
 def main() -> int:
