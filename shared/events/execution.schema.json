@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://docsuri.dev/shared/events/execution.schema.json",
-  "$comment": "Generated canonical contract release 3.0.0; source SHA256:bcd115c1ff7a057c3496896b2fc122a203835a4c78471da73a9043b891f4c56a",
+  "$comment": "Generated canonical contract release 3.0.0; source SHA256:0fbbea3863829bc3f68eae4acbe9e128dd60fe3359116e9f5a5a469d32e8e704",
   "$defs": {
     "Principal": {
       "oneOf": [
@@ -1323,6 +1323,9 @@
               "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/AssistanceResult"
             },
             {
+              "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/ResearchArtifact"
+            },
+            {
               "type": "null"
             }
           ]
@@ -1426,6 +1429,98 @@
                 "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
               },
               "error": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ownerComponent": {
+                "const": "ResearchWorkspace"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "prepared": {
+                "anyOf": [
+                  {
+                    "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/ResearchArtifact"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "prepared": {
+                "anyOf": [
+                  {
+                    "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/AssistanceResult"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ownerComponent": {
+                "const": "ResearchWorkspace"
+              },
+              "outcome": {
+                "const": "succeeded"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "prepared": {
+                "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/ResearchArtifact"
+              },
+              "resultRef": {
+                "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/ResultRef"
+              },
+              "usageRecordId": {
+                "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+              },
+              "error": {
+                "type": "null"
+              },
+              "progress": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ownerComponent": {
+                "const": "ResearchWorkspace"
+              },
+              "outcome": {
+                "not": {
+                  "const": "succeeded"
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "prepared": {
+                "type": "null"
+              },
+              "resultRef": {
                 "type": "null"
               }
             }

@@ -35,7 +35,7 @@ disturbed.
 
 ## Acceptance criteria
 
-- [ ] C00/C14 amended and re-versioned; existing PaperAssistance consumers unaffected.
+- [x] C00/C14 amended and re-versioned; shared PaperAssistance schema and consumer regressions pass. Mounted U4 and cumulative runtime checks remain below.
 - [ ] U4 registers a durable payload codec for its operation kinds.
 - [ ] A mounted `acquireExecutionClaim` → payload-read → `recordCompletion` round trip passes for U4.
 - [ ] U4's fail-closed refusal is replaced by the enabled path (plan Step 15 stays unchecked until then).
@@ -64,3 +64,22 @@ Repository issues are disabled, so this record is the work item; its contract ha
 is now resolved and merged into the record. The remaining criteria run inside U4's
 code generation, so the natural pickup is to resume U4 rather than mint a separate
 intent.
+
+## Completion-envelope correction (2026-10-16)
+
+U4 implementation exposed the remaining completion half: the 2.1.0 payload
+amendment still allowed only AssistanceResult in DispatchFact.prepared. The
+historical reproduction in `completion-repro.py` pins commit `45413571` and
+demonstrates that mismatch. `completion-proposal.md` records the additive
+correction applied before enabling research work: C14 2.2.0 carries a typed
+ResearchArtifact only for ResearchWorkspace and explicitly maps its immutable
+artifact reference to ResultRef. The original PaperAssistance schema branch
+and DispatchCommand discriminator are preserved.
+
+Verification: canonical export and generated-binding drift checks pass; the
+shared Python suite passes, including 14 completion-envelope checks covering
+both owners, required success evidence and rejection of substituted owners,
+wrong artifact shapes and results on non-success outcomes. Generated types are
+serialization bindings, not a replacement for current authority, reference
+equality, lease/fence and state-transition checks in the owning transaction.
+The mounted U4 checks and Step 15 remain incomplete until separately proved.
