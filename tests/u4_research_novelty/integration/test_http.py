@@ -453,7 +453,28 @@ def test_delete_requires_exact_scope_and_tombstone_hides_session(mounted):
     assert changed.json()["code"] == "IDEMPOTENCY_CONFLICT"
     assert post(
         mounted.client, "read-research-session", {"sessionId": created["sessionId"]}
-    ).status_code in (404, 409)
+    ).status_code == 404
+
+
+def test_manuscript_policy_is_enforced_before_admission(mounted):
+    source = scope(mounted, purpose="novelty")
+    before = mounted.service.repository.run(
+        mounted.authority,
+        lambda conn: conn.execute("SELECT count(*) AS n FROM research.admission").fetchone()["n"],
+    )
+    for attachments in ([], [str(uuid4())]):
+        body = {
+            "scope": dict(source, attachmentIds=attachments),
+            "text": "Synthetic manuscript", "inputMode": "manuscript", "policy": POLICY,
+        }
+        response = post(mounted.client, "accept-novelty-analysis", body)
+        assert response.status_code == 503
+        assert response.json()["code"] == "POLICY_UNRESOLVED"
+    after = mounted.service.repository.run(
+        mounted.authority,
+        lambda conn: conn.execute("SELECT count(*) AS n FROM research.admission").fetchone()["n"],
+    )
+    assert after == before
 
 
 def test_revoked_session_cannot_read_prior_private_context(mounted):

@@ -153,6 +153,7 @@ export function ResearchJob({
           disabled={action.busy || action.unknown}
           onClick={() =>
             void action.run(async () => {
+              const generation = request.current;
               // A new authority check must not leave an earlier private result on screen if refused.
               setResult(null);
               onNoveltyResult?.(null);
@@ -164,6 +165,7 @@ export function ResearchJob({
                   contentHash: source.contentHash,
                 },
               });
+              if (!alive.current || generation !== request.current) return;
               if (
                 value.availability === 'ready' &&
                 (value.prepared.artifact.artifactId !== source.resultId ||

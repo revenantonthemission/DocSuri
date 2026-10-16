@@ -98,6 +98,22 @@ test('an explicit question reaches a real source-bound result; reload never acce
   await page.getByRole('button', { name: '준비된 결과 열기' }).click();
   await expect(page.getByRole('region', { name: '준비된 연구 결과' })).toBeVisible();
   expect(accepts).toHaveLength(1);
+  const otherView = await page.context().newPage();
+  try {
+    await otherView.goto('/');
+    await openResearch(otherView);
+    await otherView.getByRole('button', { name: /연구 1 열기/ }).click();
+    await otherView.getByText('현재 연구 삭제', { exact: true }).click();
+    await otherView.getByLabel('현재 연구 삭제 범위를 확인했습니다').check();
+    await otherView.getByRole('button', { name: '현재 연구 삭제 확인', exact: true }).click();
+    await expect(otherView.getByText(/현재 연구.*삭제 경계/)).toBeVisible();
+    await page.getByRole('button', { name: '진행 상태 새로고침' }).click();
+    await expect(page.getByRole('region', { name: '연구 작업 상태' }).getByRole('alert')).toBeVisible();
+    await expect(page.getByRole('region', { name: '준비된 연구 결과' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '준비된 결과 열기' })).toHaveCount(0);
+  } finally {
+    await otherView.close();
+  }
 });
 
 test('novelty analysis and cancellation expose actual owner-committed progress', async ({

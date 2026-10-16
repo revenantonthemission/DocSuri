@@ -365,6 +365,9 @@ class ResearchExecution(ResearchJobs):
         )
 
     def step(self):
+        # Rejected work has no job row. Its durable closure must still recover
+        # quota after a failed release, process restart or browser revocation.
+        self.admission.reconcile_release(self.usage)
         row = self.transactions.run(
             "research",
             lambda conn: conn.execute(

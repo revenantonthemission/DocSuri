@@ -160,7 +160,7 @@ def test_tombstone_prevents_payload(execution):
             "UPDATE research.context SET lifecycle='deleted' WHERE id=%s", (row["context_id"],)
         ),
     )
-    with pytest.raises(ResearchError, match="CONFLICT"):
+    with pytest.raises(ResearchError, match="NOT_FOUND"):
         codec.readExecutionPayload(authority, acquired["claim"])
 
 

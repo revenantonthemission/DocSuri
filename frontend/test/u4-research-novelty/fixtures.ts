@@ -117,7 +117,7 @@ type Schema = {
   $ref?: string;
   type?: string;
   required?: string[];
-  properties?: Record<string, Schema>;
+  properties?: Record<string, Schema | undefined>;
   additionalProperties?: boolean;
   enum?: unknown[];
   const?: unknown;
@@ -168,7 +168,7 @@ export function conforms(name: string, value: unknown) {
       )
         return false;
       return Object.entries(spec.properties ?? {}).every(
-        ([key, item]) => !(key in record) || matches(item, record[key]),
+        ([key, item]) => !(key in record) || (item !== undefined && matches(item, record[key])),
       );
     }
     return true;

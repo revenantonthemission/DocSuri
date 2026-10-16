@@ -25,8 +25,6 @@ class ResearchAdmission(ResearchRepository):
             ).fetchone()
             if row["input_hash"] != input_hash:
                 raise ResearchError("IDEMPOTENCY_CONFLICT")
-            if row["state"] == "closed":
-                raise ResearchError("CONFLICT")
             return row
 
         return self.run(authority, prepare)
@@ -54,6 +52,9 @@ class ResearchAdmission(ResearchRepository):
     def accept_with_usage(self, authority, key, value, kind, usage, jobs, *, queue_limit):
         admission = self.prepare(authority, key, value)
         operation = admission["operation_id"]
+        if admission["state"] == "closed":
+            self.reconcile_release(usage, operation)
+            raise ResearchError("CONFLICT")
         try:
             reservation = usage.reserve(authority, operation, admission["input_hash"])
             return jobs.accept(
@@ -69,6 +70,39 @@ class ResearchAdmission(ResearchRepository):
             # Preserve both obligations: a retry resolves this exact admission.
             raise
         except (ResearchError, ValueError):
-            proof = self.close(authority, operation)
-            usage.reject_operation(proof)
+            self.close(authority, operation)
+            self.reconcile_release(usage, operation)
             raise
+
+    def reconcile_release(self, usage, operation=None):
+        """Complete a durable closure without depending on a live browser session.
+
+        Both unknown release commits and crashes before the local acknowledgement
+        replay the same proof. Closure prevents any subsequent job acceptance.
+        """
+        def pending(conn):
+            return conn.execute(
+                "SELECT * FROM research.admission WHERE state='closed' "
+                "AND NOT release_reconciled "
+                "AND (%s::uuid IS NULL OR operation_id=%s) ORDER BY operation_id LIMIT 1",
+                (operation, operation),
+            ).fetchone()
+
+        row = self.transactions.run("research", pending)
+        if not row:
+            return False
+        proof = {
+            "accountId": str(row["owner_id"]),
+            "operationId": str(row["operation_id"]),
+            "intentHash": row["input_hash"],
+        }
+        usage.reject_operation(dict(proof, proofHash=digest(dict(proof, state="closed"))))
+        self.transactions.run(
+            "research",
+            lambda conn: conn.execute(
+                "UPDATE research.admission SET release_reconciled=true "
+                "WHERE operation_id=%s AND state='closed' AND input_hash=%s",
+                (row["operation_id"], row["input_hash"]),
+            ),
+        )
+        return True

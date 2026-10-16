@@ -61,6 +61,7 @@ MIGRATIONS = (
     ("operations", "ops/src/docsuri_ops/u4_capacity.sql"),
     ("research", "backend/modules/research/u4_schema.sql"),
     ("research", "backend/modules/research/u4_admission.sql"),
+    ("research", "backend/modules/research/u4_release_obligation.sql"),
 )
 TEST_PHASES = (
     "database",
@@ -494,16 +495,7 @@ def setup(path: Path) -> dict:
         ["docker", "volume", "create", "--label", f"{LABEL}={run_id}", value["volume"]]
     )
     require(database_command(value), extra={"POSTGRES_PASSWORD": password})
-    for _ in range(30):
-        result = command(
-            ["docker", "exec", run_id, "pg_isready", "-U", "postgres", "-d", DATABASE],
-            timeout=3,
-        )
-        if result.returncode == 0:
-            break
-        time.sleep(0.5)
-    else:
-        raise Refused("database startup failed; owned resources preserved")
+    wait_database_endpoint(value)
     migrate(path, base_only=True)
     return {
         "state": "base-installed",
@@ -525,6 +517,26 @@ def connect_admin(value: dict):
         password=secret["databaseAdminPassword"],
         connect_timeout=3,
     )
+
+
+def wait_database_endpoint(value):
+    """Probe the authenticated TCP endpoint migrations actually use, not initdb's socket."""
+    import psycopg
+
+    deadline = time.monotonic() + 105  # Previous 30 * (3-second probe + 0.5-second wait).
+    for _ in range(30):
+        if deadline - time.monotonic() < 4.5:
+            break  # Leave room for the bounded connect, query and retry delay.
+        try:
+            with connect_admin(value) as conn:
+                conn.execute("SET LOCAL statement_timeout=1000")
+                row = conn.execute("SELECT current_database()").fetchone()
+                if row != (DATABASE,):
+                    raise Refused("database endpoint identity differs; owned resources preserved")
+            return
+        except (psycopg.OperationalError, psycopg.InterfaceError):
+            time.sleep(0.5)
+    raise Refused("database TCP startup failed; owned resources preserved")
 
 
 def install_base(conn, value: dict, credentials: dict, hashes: dict) -> None:

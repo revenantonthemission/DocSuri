@@ -41,7 +41,7 @@ class ResearchRepository:
         if not row:
             raise ResearchError("NOT_FOUND")
         if active and row["lifecycle"] != "active":
-            raise ResearchError("CONFLICT")
+            raise ResearchError("NOT_FOUND")
         return row
 
     @staticmethod
@@ -54,7 +54,7 @@ class ResearchRepository:
             raise ResearchError("NOT_FOUND")
         ResearchRepository.context(conn, authority, row["context_id"], active=active)
         if active and row["lifecycle"] != "active":
-            raise ResearchError("CONFLICT")
+            raise ResearchError("NOT_FOUND")
         return row
 
     @staticmethod

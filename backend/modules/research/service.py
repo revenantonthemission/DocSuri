@@ -201,6 +201,12 @@ class ResearchService:
             )
             value = dict(value, scope=job["scope"])
         self.scope(authority, value["scope"])
+        if kind == "novelty-analysis":
+            if value.get("inputMode") not in {"topic", "manuscript"}:
+                raise ResearchError("INVALID_ARGUMENT")
+            if value["inputMode"] == "manuscript":
+                # UI controls are not the boundary: private processing is suspended.
+                raise ResearchError("POLICY_UNRESOLVED")
         if value.get("submittedDraft"):
             raise ResearchError("POLICY_UNRESOLVED")
         if self.execution is None or not self.execution.enabled:

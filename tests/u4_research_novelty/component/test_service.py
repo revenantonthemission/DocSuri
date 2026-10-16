@@ -60,7 +60,8 @@ def test_codec_gate_rejects_before_acceptance(service, authority):
         service.accept(
             authority,
             str(uuid4()),
-            {"scope": scope, "text": "test", "policy": service.policy.reference()},
+            {"scope": scope, "text": "test", "policy": service.policy.reference(),
+             "inputMode": "topic"},
             "novelty-analysis",
         )
 

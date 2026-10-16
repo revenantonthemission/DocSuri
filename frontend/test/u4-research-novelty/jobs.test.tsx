@@ -9,7 +9,7 @@ const reference = { jobId: 'job-a', contextId: 'context-a', kind: 'research-turn
 afterEach(() => window.history.replaceState(null, '', '/'));
 
 describe('progress, recovery and result reads', () => {
-  it.each(['status', 'artifact'] as const)(
+  it.each(['status', 'artifact', 'deleted'] as const)(
     'clears a previously displayed result and discussion source when a later %s read is refused',
     async (path) => {
       let denied = false;
@@ -17,6 +17,7 @@ describe('progress, recovery and result reads', () => {
       const server = new Double()
         .on('read-research-job', () => {
           if (denied && path === 'status') throw apiError('FORBIDDEN');
+          if (denied && path === 'deleted') throw apiError('NOT_FOUND');
           return complete({ kind: 'novelty-analysis' });
         })
         .on('read-research-artifact', () => {
@@ -35,7 +36,7 @@ describe('progress, recovery and result reads', () => {
       denied = true;
       await userEvent.click(
         screen.getByRole('button', {
-          name: path === 'status' ? '진행 상태 새로고침' : '준비된 결과 열기',
+          name: path === 'artifact' ? '준비된 결과 열기' : '진행 상태 새로고침',
         }),
       );
       await screen.findByRole('alert');

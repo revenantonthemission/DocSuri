@@ -2,6 +2,56 @@
   "version": 1,
   "imports": [
     {
+      "file": "backend/local_browser.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/local_host.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/local_host.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/accounts/control_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/accounts/control_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "execution",
+      "local": "execution",
+      "generated": [
+        "docsuri_shared._generated.events:execution_schema"
+      ],
+      "shadowed": false
+    },
+    {
       "file": "backend/modules/accounts/guard.py",
       "module": "docsuri_shared.authz",
       "symbol": "AuthorizationGuard",
@@ -15,6 +65,16 @@
       "symbol": "Decision",
       "local": "Decision",
       "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/accounts/local_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
       "shadowed": false
     },
     {
@@ -138,6 +198,16 @@
       "shadowed": false
     },
     {
+      "file": "backend/modules/accounts/services/control_lifecycle.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
       "file": "backend/modules/accounts/services/signup.py",
       "module": "docsuri_shared.events",
       "symbol": "AccountCreated",
@@ -153,6 +223,72 @@
       "symbol": "Principal",
       "local": "Principal",
       "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/corpus/local_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/corpus/source_parser.py",
+      "module": "docsuri_shared.dtos",
+      "symbol": "SourceTier",
+      "local": "SourceTier",
+      "generated": [
+        "docsuri_shared._generated.dtos.docmodel_schema:SourceTier"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/corpus/source_parser.py",
+      "module": "docsuri_shared.docmodel_contract",
+      "symbol": "DOCMODEL_PARSER_VERSION",
+      "local": "DOCMODEL_PARSER_VERSION",
+      "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/corpus/source_parser.py",
+      "module": "docsuri_shared.docmodel_contract",
+      "symbol": "DOCMODEL_SCHEMA_VERSION",
+      "local": "DOCMODEL_SCHEMA_VERSION",
+      "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/corpus/u3_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/discovery/local_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/discovery/local_search.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
       "shadowed": false
     },
     {
@@ -558,6 +694,26 @@
       "shadowed": false
     },
     {
+      "file": "backend/modules/discovery/u3_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/discovery/u3_search.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
       "file": "backend/modules/evidence/assembler.py",
       "module": "docsuri_shared._generated.dtos.evidence_schema",
       "symbol": "EvidenceCoverage",
@@ -948,6 +1104,16 @@
       "shadowed": false
     },
     {
+      "file": "backend/modules/library/control_service.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
       "file": "backend/modules/library/controller.py",
       "module": "docsuri_shared.authz",
       "symbol": "Principal",
@@ -1024,11 +1190,31 @@
       "shadowed": false
     },
     {
+      "file": "backend/modules/library/local_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
       "file": "backend/modules/library/ports.py",
       "module": "docsuri_shared.authz",
       "symbol": "Principal",
       "local": "Principal",
       "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/library/repository/guarded.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
       "shadowed": false
     },
     {
@@ -1406,11 +1592,71 @@
       "shadowed": false
     },
     {
+      "file": "backend/modules/personalization/control_service.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/personalization/control_service.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "execution",
+      "local": "execution",
+      "generated": [
+        "docsuri_shared._generated.events:execution_schema"
+      ],
+      "shadowed": false
+    },
+    {
       "file": "backend/modules/personalization/controller.py",
       "module": "docsuri_shared.authz",
       "symbol": "Principal",
       "local": "Principal",
       "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/personalization/guarded_service.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/personalization/local_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/personalization/reset_repository.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/plans/control_service.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
       "shadowed": false
     },
     {
@@ -1438,6 +1684,126 @@
       "shadowed": false
     },
     {
+      "file": "backend/modules/plans/local_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/research/evidence.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/research/execution.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "execution",
+      "local": "execution_wire",
+      "generated": [
+        "docsuri_shared._generated.events:execution_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/research/http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/execution.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "execution",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.events:execution_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/guarded_repository.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "browser_wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/guarded_repository.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "execution",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.events:execution_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/local_catalog.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/local_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/local_result.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/payload.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "execution",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.events:execution_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/requests.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
       "file": "backend/modules/summarization/src/summarization/adapters/s3_docmodel.py",
       "module": "docsuri_shared.dtos",
       "symbol": "DocModel",
@@ -1456,6 +1822,40 @@
       "shadowed": false
     },
     {
+      "file": "backend/modules/summarization/src/summarization/adapters/s3_docmodel.py",
+      "module": "docsuri_shared.private_docs",
+      "symbol": "is_private_paper_id",
+      "local": "is_private_paper_id",
+      "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/src/summarization/adapters/s3_docmodel.py",
+      "module": "docsuri_shared.private_docs",
+      "symbol": "private_docmodel_key",
+      "local": "private_docmodel_key",
+      "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/src/summarization/api/router.py",
+      "module": "docsuri_shared.private_docs",
+      "symbol": "is_private_paper_id",
+      "local": "is_private_paper_id",
+      "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/src/summarization/domain/cache_key.py",
+      "module": "docsuri_shared.dtos",
+      "symbol": "DocModel",
+      "local": "DocModel",
+      "generated": [
+        "docsuri_shared._generated.dtos.docmodel_schema:DocModel"
+      ],
+      "shadowed": false
+    },
+    {
       "file": "backend/modules/summarization/src/summarization/domain/cache_key.py",
       "module": "docsuri_shared.docmodel_contract",
       "symbol": "DOCMODEL_PARSER_VERSION",
@@ -1470,6 +1870,46 @@
       "local": "DocModel",
       "generated": [
         "docsuri_shared._generated.dtos.docmodel_schema:DocModel"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/src/summarization/domain/prepared_result.py",
+      "module": "docsuri_shared.dtos",
+      "symbol": "DocModel",
+      "local": "DocModel",
+      "generated": [
+        "docsuri_shared._generated.dtos.docmodel_schema:DocModel"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/src/summarization/domain/prepared_result.py",
+      "module": "docsuri_shared._generated.dtos.docmodel_schema",
+      "symbol": "SourceMode",
+      "local": "SourceMode",
+      "generated": [
+        "docsuri_shared._generated.dtos.docmodel_schema:SourceMode"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/src/summarization/domain/prepared_result.py",
+      "module": "docsuri_shared._generated.dtos.docmodel_schema",
+      "symbol": "SourceTier",
+      "local": "SourceTier",
+      "generated": [
+        "docsuri_shared._generated.dtos.docmodel_schema:SourceTier"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/src/summarization/domain/prepared_result.py",
+      "module": "docsuri_shared._generated.dtos.docmodel_schema",
+      "symbol": "Type",
+      "local": "Type",
+      "generated": [
+        "docsuri_shared._generated.dtos.docmodel_schema:Type"
       ],
       "shadowed": false
     },
@@ -1570,6 +2010,36 @@
       "shadowed": false
     },
     {
+      "file": "backend/modules/summarization/u3_catalog.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/u3_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/summarization/worker.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "execution",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.events:execution_schema"
+      ],
+      "shadowed": false
+    },
+    {
       "file": "backend/modules/trends/controller.py",
       "module": "docsuri_shared.authz",
       "symbol": "Principal",
@@ -1585,6 +2055,14 @@
       "generated": [
         "docsuri_shared._generated.dtos.docmodel_schema:DocModel"
       ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/user_docmodel/coordinator.py",
+      "module": "docsuri_shared.private_docs",
+      "symbol": "private_doc_id",
+      "local": "private_doc_id",
+      "generated": [],
       "shadowed": false
     },
     {
@@ -1622,6 +2100,38 @@
       "module": "docsuri_shared.vector_spec",
       "symbol": "EMBEDDING_SPEC",
       "local": "EMBEDDING_SPEC",
+      "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "ingestion/src/docsuri_ingestion/adapters/aws.py",
+      "module": "docsuri_shared.private_docs",
+      "symbol": "is_private_paper_id",
+      "local": "is_private_paper_id",
+      "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "ingestion/src/docsuri_ingestion/adapters/aws.py",
+      "module": "docsuri_shared.private_docs",
+      "symbol": "private_doc_id",
+      "local": "private_doc_id",
+      "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "ingestion/src/docsuri_ingestion/adapters/aws.py",
+      "module": "docsuri_shared.private_docs",
+      "symbol": "private_docmodel_key",
+      "local": "private_docmodel_key",
+      "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "ingestion/src/docsuri_ingestion/adapters/aws.py",
+      "module": "docsuri_shared.private_docs",
+      "symbol": "private_docmodel_prefix",
+      "local": "private_docmodel_prefix",
       "generated": [],
       "shadowed": false
     },
@@ -2010,6 +2520,16 @@
       "local": "SharedSeverity",
       "generated": [
         "docsuri_shared._generated.events.incidents_schema:Severity"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "ops/src/docsuri_ops/platform_control/cli.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "execution",
+      "local": "execution",
+      "generated": [
+        "docsuri_shared._generated.events:execution_schema"
       ],
       "shadowed": false
     }
@@ -2688,6 +3208,13 @@
       ]
     },
     {
+      "file": "ops/server/u1_db_bootstrap.py",
+      "symbol": "Value",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
       "file": "platform_integrity/src/docsuri_platform_integrity/contracts/models.py",
       "symbol": "Value",
       "bases": [
@@ -2697,8 +3224,20 @@
   ],
   "sourceDigests": [
     {
+      "file": "backend/local_browser.py",
+      "sha256": "ddd5d88f7b0ef9cc516de405ecb71bbfb7e88a546b1b380828e62f1126b0b1d0"
+    },
+    {
+      "file": "backend/local_host.py",
+      "sha256": "07cbc71f9d44fa666c52d357c3c2d012bf6ab3040348f9ce44b60cd614c57734"
+    },
+    {
       "file": "backend/middleware/agent_attachments.py",
       "sha256": "c60844558c47c0b7fb1a4bff43bb70ca480bf4cefcd9c4fa8fffbe5dc4f41afa"
+    },
+    {
+      "file": "backend/modules/accounts/control_http.py",
+      "sha256": "5d3b8c9991c3337824a536e393f9ae87f506e5e7e599dce5c6a627766c315cb9"
     },
     {
       "file": "backend/modules/accounts/controller.py",
@@ -2707,6 +3246,10 @@
     {
       "file": "backend/modules/accounts/guard.py",
       "sha256": "f6259a87baba0e4f179d355053c4cd98ccdfd990682129a16297e121a8e032c7"
+    },
+    {
+      "file": "backend/modules/accounts/local_http.py",
+      "sha256": "8042f8b9ca5f252d1d9391c54d8d869fc028c03db3dbb6d85ec66e6f0389f569"
     },
     {
       "file": "backend/modules/accounts/models.py",
@@ -2718,7 +3261,11 @@
     },
     {
       "file": "backend/modules/accounts/services/account_deletion.py",
-      "sha256": "69d3a179bf0a287f26b32d4f3331884a2c817215a4a03a637ff74933759f3493"
+      "sha256": "de585a4997c1503c84e86f6b415c22be4699bd2aa9298715c5195f3c58ad7ea0"
+    },
+    {
+      "file": "backend/modules/accounts/services/control_lifecycle.py",
+      "sha256": "b227532587bbeff7d4c981866db71f7de29401a5164875299d2305f7736f870f"
     },
     {
       "file": "backend/modules/accounts/services/signup.py",
@@ -2727,6 +3274,26 @@
     {
       "file": "backend/modules/citation_graph/controller.py",
       "sha256": "369711ad2fc9d6fb93c5518d31702d9e0f5f2b6ebbb7cd1c56c598af1e81f7ab"
+    },
+    {
+      "file": "backend/modules/corpus/local_http.py",
+      "sha256": "25aec79bd3253051246bb3487f911510de0b1fba335dd2e21e4a2ad6d4ee8dd8"
+    },
+    {
+      "file": "backend/modules/corpus/source_parser.py",
+      "sha256": "685b7750fb7258d144f9e8eec74b2b7002b43bcc0939acb43c0d7126978df4d3"
+    },
+    {
+      "file": "backend/modules/corpus/u3_http.py",
+      "sha256": "7068584d104f6950c4fb07f33740b7e08b6abd7f0db075af62c6991968ce769c"
+    },
+    {
+      "file": "backend/modules/discovery/local_http.py",
+      "sha256": "c5e85e9fb6ccd6c7d861f78bccc6fb2a7af8c11038f0d1950823620180c2ba57"
+    },
+    {
+      "file": "backend/modules/discovery/local_search.py",
+      "sha256": "fbacd1d69e4bc57ed4351f071e5cbc9245517ab982da254c8b1e1b8cc148307f"
     },
     {
       "file": "backend/modules/discovery/src/discovery/adapters/bedrock_embedding.py",
@@ -2805,6 +3372,14 @@
       "sha256": "89e3f470c8debd28fb078fe1400594fc151c62af6be8394a943704949184ed91"
     },
     {
+      "file": "backend/modules/discovery/u3_http.py",
+      "sha256": "643ba15beef87740c4254b0921d2e81bc36e5fb0c93a5c91ce20b5b6c1da8dd7"
+    },
+    {
+      "file": "backend/modules/discovery/u3_search.py",
+      "sha256": "7dda6531824afcd69302f2953936f17429c18a0bc72879313c74a6a3814eddcb"
+    },
+    {
       "file": "backend/modules/evidence/assembler.py",
       "sha256": "19bb5154dd1aa017c1bc33ae8971d9832ebb2d88d84dc7fc09908b450d707b81"
     },
@@ -2865,6 +3440,10 @@
       "sha256": "985cbc054556e4abdb047c21f9e21bb10141c99e5b40bffef1e6afa6842f7809"
     },
     {
+      "file": "backend/modules/library/control_service.py",
+      "sha256": "f634231df322baa2e12e235cea3580eb22a3726cddd516ae32afb3a9ab41dfc9"
+    },
+    {
       "file": "backend/modules/library/controller.py",
       "sha256": "f239f80a90e924156b0a8356be2a3ea93096796633486b4d28d04ba6574f4fd7"
     },
@@ -2877,8 +3456,16 @@
       "sha256": "ffb5ba59f0997d30719152c6c485c85773307276c9c3f200272b412c267ddd8c"
     },
     {
+      "file": "backend/modules/library/local_http.py",
+      "sha256": "a08c9719ffe2ce602fdef94a52f7c7cc1b383088900f62ef18ad509ce79f380b"
+    },
+    {
       "file": "backend/modules/library/ports.py",
       "sha256": "53cad968a14315bf9973370105dda41c4321b8fe209367cf6057b692375fe216"
+    },
+    {
+      "file": "backend/modules/library/repository/guarded.py",
+      "sha256": "b25eebdb6818603f8ce8deb97777e554b5ebc5b6798a1d7c79c1579d31c6154d"
     },
     {
       "file": "backend/modules/library/retraction_consumer.py",
@@ -2949,32 +3536,104 @@
       "sha256": "c34982681358dc177d05b7430f53d9dcefd625c71b374c4bd701070018bdafb6"
     },
     {
+      "file": "backend/modules/personalization/control_service.py",
+      "sha256": "d352678115af609e50f0ebab84bb0b9403a2db3e1cc09ae7092ac6f735c794ae"
+    },
+    {
       "file": "backend/modules/personalization/controller.py",
       "sha256": "e518d80b086b2a71b3e5140be4325cf15b8789a9abf319395accd47e47e21969"
+    },
+    {
+      "file": "backend/modules/personalization/guarded_service.py",
+      "sha256": "bde2a76ab02ce4c2091ce61c974f488bde88369fe130715fe71c0ac336cee85e"
+    },
+    {
+      "file": "backend/modules/personalization/local_http.py",
+      "sha256": "09f2b780aed6c9f28edfd87fb3cbbb098a261d4fd72afe63e2f14ca20abc4562"
     },
     {
       "file": "backend/modules/personalization/models.py",
       "sha256": "efb8ce870a58c60b5760bdd892f6c7b6c4db5b0486c102b8e48e17b0ab994af2"
     },
     {
+      "file": "backend/modules/personalization/reset_repository.py",
+      "sha256": "4731401ee67e84932e402fd6975e2a57edd3c35b7343f6cb5a48c7f862953ddb"
+    },
+    {
+      "file": "backend/modules/plans/control_service.py",
+      "sha256": "4f2946da09f91b93f7abeffacdb5e6f7e92163cb15ab3964fcc63560bf1963ef"
+    },
+    {
       "file": "backend/modules/plans/controller.py",
       "sha256": "cbafd0548dfa1b836d8d2b07e51d001b9125a7777b67a2d3c85e5befc8c555d5"
+    },
+    {
+      "file": "backend/modules/plans/local_http.py",
+      "sha256": "5b90020ee73a85dd9712773cfce83b2ca9e7ba999b5f48c12b200afdb853ef45"
     },
     {
       "file": "backend/modules/plans/models.py",
       "sha256": "cbc382314b18063b71396d59106e6d3256e81a72f40f10c5d02ce415488c9ac8"
     },
     {
+      "file": "backend/modules/research/evidence.py",
+      "sha256": "b9f6ea37dce47de72cc8d037823eccf3dd54ac7f45db156fb98d17d43b66a399"
+    },
+    {
+      "file": "backend/modules/research/execution.py",
+      "sha256": "edacc81d9ce0da81c6cd821b19f4898ac43c782b06bd851df1ffb60a0443212f"
+    },
+    {
+      "file": "backend/modules/research/http.py",
+      "sha256": "3214c935c77e63351fa3b9d9e09b43704488e9379b83bb5534088d6a26b1141a"
+    },
+    {
+      "file": "backend/modules/summarization/execution.py",
+      "sha256": "6b1fb3598c7f592bcc33833c8e681327fc6210ffc2f25ed4dfc67d3bd3631920"
+    },
+    {
+      "file": "backend/modules/summarization/guarded_repository.py",
+      "sha256": "9f84e89e8b79329e824a09177249999826376ffe98e8770493f7b9d2ab3c8bc4"
+    },
+    {
+      "file": "backend/modules/summarization/local_catalog.py",
+      "sha256": "bb08098f570a91d6e86d961331ee3f0bd80b298b5ad2db5f8e77f3b05140667c"
+    },
+    {
+      "file": "backend/modules/summarization/local_http.py",
+      "sha256": "e1368ad3c6bce73e8d4fba7950a1a1000b5d46bd0f99c746bca894c4d2b9d3e3"
+    },
+    {
+      "file": "backend/modules/summarization/local_result.py",
+      "sha256": "6144fe45176c4b2dfbe4ba4c53f310d77dc24584b6f32e9c8c97f19e9be522ef"
+    },
+    {
+      "file": "backend/modules/summarization/payload.py",
+      "sha256": "fd42280817ec4dfb6f04940ef24bdf7a030152663272f7f462f38903dada9c51"
+    },
+    {
+      "file": "backend/modules/summarization/requests.py",
+      "sha256": "60075407a591443d546f1d6cecd989c66d1482061998961bdd23ee27fc3add78"
+    },
+    {
       "file": "backend/modules/summarization/src/summarization/adapters/s3_docmodel.py",
-      "sha256": "62f1b325e781c6af15a853d61c7e4b05e9f3d1b5e0041c07e21d89409de568fb"
+      "sha256": "e2c7168e89b775e217deaea0f5ea3ac235ee8458d3b91bcae0dddfcddc82cd36"
+    },
+    {
+      "file": "backend/modules/summarization/src/summarization/api/router.py",
+      "sha256": "e2cf79905f5819009d5a559fb7ae96c70182beaa855e1396d61172a6a2fad7fa"
     },
     {
       "file": "backend/modules/summarization/src/summarization/domain/cache_key.py",
-      "sha256": "32e8db599099544f6b6165657a0bea04a28ab783a97500899bcafb156637c244"
+      "sha256": "0a3d65cccde87208d7458a7d8eab08f3f8eaeefb62a93ed0ed848bc4f2dd3385"
     },
     {
       "file": "backend/modules/summarization/src/summarization/domain/models.py",
-      "sha256": "d8b331c382a57628edd872a71c360cf8e7ebd493f5f88ea7d8d8dc15cc1b65b9"
+      "sha256": "c977390d177e032deee9bfca1457475cb31f0a8433c53519a06d34c670f29d34"
+    },
+    {
+      "file": "backend/modules/summarization/src/summarization/domain/prepared_result.py",
+      "sha256": "2eb28812e7329991c4b804484d8f223f6e5347a1558e42c3cc3d3e39f283b2f7"
     },
     {
       "file": "backend/modules/summarization/src/summarization/domain/refiner.py",
@@ -2986,15 +3645,27 @@
     },
     {
       "file": "backend/modules/summarization/src/summarization/ports/ports.py",
-      "sha256": "6c5f7169d84ae869ccce99fe7caab609f2306d9e8af75ac70157d1ca7a10be3e"
+      "sha256": "e660b15d857a7c45870d03c866bed2915bc9a43ed971cc3f62c2e27747bf58b2"
     },
     {
       "file": "backend/modules/summarization/src/summarization/real_wiring.py",
-      "sha256": "8508c8694b18721eb33f530ef68b1a651074650767f93a93333734acc8071a68"
+      "sha256": "42c5c9b463660da04a123fab4b5fa5c43fe96bc0c27706be8a8d15d62b6f585e"
     },
     {
       "file": "backend/modules/summarization/src/summarization/service/orchestrator.py",
-      "sha256": "61d0dfdcebf66284c23305a62c65a1736b1e641c679379392db2ad62dc8bcbee"
+      "sha256": "174cc8404323a72a865114161df846ba395a06202fee21c5ff2b7236a2d22a7b"
+    },
+    {
+      "file": "backend/modules/summarization/u3_catalog.py",
+      "sha256": "7c8fdf12e258adbf7c4bc30cc5b892de1c1f87ff4048140615d7a5ba2137ede3"
+    },
+    {
+      "file": "backend/modules/summarization/u3_http.py",
+      "sha256": "7ddf418485094485dc8dcfd23de1f2f4c04a0129c410331a16d46fe9bb89d995"
+    },
+    {
+      "file": "backend/modules/summarization/worker.py",
+      "sha256": "af1bf02ab4aae3b663c5ba716012f81d2786e8f381fe756eb7029c918ed868d4"
     },
     {
       "file": "backend/modules/trends/controller.py",
@@ -3006,7 +3677,7 @@
     },
     {
       "file": "backend/modules/user_docmodel/coordinator.py",
-      "sha256": "d2561de12cacb97bbb472824931c7285ba1dbcc70e0482e937db3629fb5641db"
+      "sha256": "9a8eb056df98ca70b932b2ebfdc435fb5d7359b31b9bea44ec0eb3da1a620ce8"
     },
     {
       "file": "ingestion/src/docsuri_ingestion/adapters/arxiv.py",
@@ -3014,11 +3685,11 @@
     },
     {
       "file": "ingestion/src/docsuri_ingestion/adapters/aws.py",
-      "sha256": "a9c20a02f31b534eff092c6c6dc2a597958a3e95f04728a5048c033427c8babd"
+      "sha256": "e71d8220a530b9699f67647cd6d0c92e4d4456b6c175738d6d20344c83c37f26"
     },
     {
       "file": "ingestion/src/docsuri_ingestion/adapters/local.py",
-      "sha256": "dea8fcd32e163adc95aa1e9535fe24fa655275a99e839dd5462557f14f5ffe3f"
+      "sha256": "53e102e85b8101b5fcc2bba27a78d446db9526778be9ca525611d3d2d10f2599"
     },
     {
       "file": "ingestion/src/docsuri_ingestion/adapters/openai_compat.py",
@@ -3026,15 +3697,15 @@
     },
     {
       "file": "ingestion/src/docsuri_ingestion/application.py",
-      "sha256": "89abf92d55e5bdf8e0ef2977e7f5135cd170707082a3949eda5e571f9a5fa2d3"
+      "sha256": "f6a8886761e569ab18af16fad639b6906b3d2d5a3dcba74b237133398add611a"
     },
     {
       "file": "ingestion/src/docsuri_ingestion/docmodel/builder.py",
-      "sha256": "e84693a102a19ddd12836f80b6dad456bdf3b4e8e78c863f30d4212270c43328"
+      "sha256": "e50fb636c87b4748feb15b65c0fe1f211a9582d837a25e0f50f97aba0888b1a7"
     },
     {
       "file": "ingestion/src/docsuri_ingestion/docmodel/parser.py",
-      "sha256": "9dbd0472ff42433ae8da0dbbc0d5e8ba6390142fe4380bf1c8aadf8d09288c2e"
+      "sha256": "a00df1f2ad8f8c71b1678bedf0968264e96927758ae1fd3cbcb9e53c108764e9"
     },
     {
       "file": "ingestion/src/docsuri_ingestion/docmodel/tei.py",
@@ -3050,7 +3721,7 @@
     },
     {
       "file": "ingestion/src/docsuri_ingestion/ports.py",
-      "sha256": "cd65231b68c6862fc9066439df1c4bdc4589eb2116c1de32a8ed8bd85052c083"
+      "sha256": "bfe92aaf4d2300e406d2f066c23eea4dddb4d1faba22176d27e38ceb430f384d"
     },
     {
       "file": "ingestion/src/docsuri_ingestion/processors.py",
@@ -3073,6 +3744,10 @@
       "sha256": "2d8274c0d76b294d3298af94ae765cad84a23225c9f62f2d420c01ff253b9f97"
     },
     {
+      "file": "ops/server/u1_db_bootstrap.py",
+      "sha256": "d97fb57229d30f1ee4a5e1d3af556f5bd7a5124bbda5be19965f4bed6636e9e0"
+    },
+    {
       "file": "ops/src/docsuri_ops/adapters/local.py",
       "sha256": "2a3d0b7b3d04fabb9b76ba8b4b7fe6a2efeb833752e263d5c43e9f681606d732"
     },
@@ -3081,8 +3756,12 @@
       "sha256": "4eea0f47a49ce20ce838a729efb8aa4c0d973ca93e2566a5b44a614215cd632f"
     },
     {
+      "file": "ops/src/docsuri_ops/platform_control/cli.py",
+      "sha256": "cff2c395dda253ad9676b7ce1e742e6e8cffd116dd31bc2871cc1a836230b2c4"
+    },
+    {
       "file": "platform_integrity/src/docsuri_platform_integrity/contracts/models.py",
-      "sha256": "6930c039fe2db25b62507d596780fe75da232860992498bbc478b3d49675ca6c"
+      "sha256": "c3731fa18f52a42b4c308b0700a81d9ca5685bbfdb689ad6cfe84e1003bd54b3"
     }
   ]
 }

@@ -67,6 +67,9 @@
       "path": "backend/modules/research/u4_admission.sql"
     },
     {
+      "path": "backend/modules/research/u4_release_obligation.sql"
+    },
+    {
       "path": "backend/modules/research/u4_schema.sql"
     },
     {
@@ -178,6 +181,9 @@
       "path": "shared/events/execution.schema.json"
     },
     {
+      "path": "shared/python-consumers.json"
+    },
+    {
       "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/__init__.py"
     },
     {
@@ -244,6 +250,9 @@
       "path": "shared/python/tests/test_research_completion_contract.py"
     },
     {
+      "path": "tests/u3_paper_corpus_capabilities/operations/test_diagnostics.py"
+    },
+    {
       "path": "tests/u4_research_novelty/__init__.py"
     },
     {
@@ -283,10 +292,19 @@
       "path": "tests/u4_research_novelty/integration/test_readiness.py"
     },
     {
+      "path": "tests/u4_research_novelty/integration/test_release_recovery.py"
+    },
+    {
       "path": "tests/u4_research_novelty/operations/test_browser_fixtures.py"
     },
     {
+      "path": "tests/u4_research_novelty/operations/test_database_readiness.py"
+    },
+    {
       "path": "tests/u4_research_novelty/operations/test_runner_transport.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/operations/test_safe_diagnostics.py"
     },
     {
       "path": "tests/u4_research_novelty/repository/test_attachments.py"
