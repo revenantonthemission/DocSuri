@@ -33,6 +33,10 @@ class ResearchJobs(ResearchRepository):
                     or admission["input_hash"] != input_hash
                 ):
                     raise ResearchError("CONFLICT")
+                if admission["state"] == "prepared" and conn.execute(
+                    "SELECT %s<=clock_timestamp() AS expired", (admission["accept_before"],)
+                ).fetchone()["expired"]:
+                    raise ResearchError("CONFLICT")
             self.context(conn, authority, scope["contextId"])
             session_id = value.get("sessionId")
             if session_id:

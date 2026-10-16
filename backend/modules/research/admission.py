@@ -106,3 +106,27 @@ class ResearchAdmission(ResearchRepository):
             ),
         )
         return True
+
+    def recover_prepared(self):
+        """Fence one abandoned admission using only authoritative owner state.
+
+        The same row lock serializes this transition with job acceptance. A
+        committed acceptance survives even when its acknowledgement was lost;
+        closure winning the lock makes late acceptance impossible. The existing
+        durable release obligation also fences a delayed Usage reservation.
+        """
+        def recover(conn):
+            row = conn.execute(
+                "SELECT operation_id FROM research.admission WHERE state='prepared' "
+                "AND accept_before<=clock_timestamp() ORDER BY accept_before,operation_id "
+                "LIMIT 1 FOR UPDATE SKIP LOCKED"
+            ).fetchone()
+            if not row:
+                return False
+            conn.execute(
+                "UPDATE research.admission SET state='closed' WHERE operation_id=%s",
+                (row["operation_id"],),
+            )
+            return True
+
+        return self.transactions.run("research", recover)

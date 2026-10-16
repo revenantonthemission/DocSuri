@@ -7,34 +7,36 @@ Unit: `u4-research-novelty`. Testing Contract: test-after, standard strategy, br
 - Backend: `pytest` with the existing `backend/.venv`; shared fixtures and the owner-scoped realm helpers already used by the U1/U2/U3 suites.
 - Frontend: `vitest` + React Testing Library for components; the existing Playwright harness for the mounted browser journeys.
 - Coverage: the project's configured coverage tooling; the 80% floor applies to this unit's new production paths and is not lowered to make a run pass.
+- Stateful tests require an established, unexpired owned synthetic realm at `/tmp/docsuri-u4-run/environment.json`, with the current migrations and fixtures. Use the existing runner's `setup`, `migrate`, and `fixtures` phases in order; preserve an old consumed realm with `archive-owned` before preparing a fresh one. Never reset quota or extend an old realm's expiry.
+- Run the Python commands below from the repository root with `backend/.venv/bin/python`; a system `python3` may lack the installed database dependencies. The runner supplies the U4 environment, pytest configuration, resource supervision and evidence capture.
 
 ## Exact unit-scoped commands
 
 Run only this unit's tests — never a bare project-wide command:
 
 ```bash
-backend/.venv/bin/python -m pytest tests/u4_research_novelty -q
+backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase coverage --profile synthetic-local --environment-file /tmp/docsuri-u4-run/environment.json
 ```
 
-Per layer while building (test-after: implement the layer, then run its tests):
+Per layer while building (test-after: implement the layer, then run its tests). Each stateful pass consumes finite fixture capacity; check remaining capacity before reuse. The final cumulative pass requires a fresh realm and runs once:
 
 ```bash
-backend/.venv/bin/python -m pytest tests/u4_research_novelty/database -q
-backend/.venv/bin/python -m pytest tests/u4_research_novelty/repository -q
-backend/.venv/bin/python -m pytest tests/u4_research_novelty/component -q
-backend/.venv/bin/python -m pytest tests/u4_research_novelty/integration -q
+backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase database --profile synthetic-local --environment-file /tmp/docsuri-u4-run/environment.json
+backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase repository --profile synthetic-local --environment-file /tmp/docsuri-u4-run/environment.json
+backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase component --profile synthetic-local --environment-file /tmp/docsuri-u4-run/environment.json
+backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase integration --profile synthetic-local --environment-file /tmp/docsuri-u4-run/environment.json
 ```
 
-Frontend:
+Frontend (run from `frontend`):
 
 ```bash
-cd frontend && npx vitest run src/u4-research
+npx vitest run --config vitest.u4-research.config.ts
 ```
 
 Browser journeys (mounted host, real API/DB):
 
 ```bash
-python3 scripts/verify_docsuri_u4.py --phase browser --profile synthetic-local --environment-file /tmp/docsuri-u4-run/environment.json
+backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase browser --profile synthetic-local --environment-file /tmp/docsuri-u4-run/environment.json
 ```
 
 Verify the first command runs before any test is written; a test-first or test-after step is invalid without a runnable command.

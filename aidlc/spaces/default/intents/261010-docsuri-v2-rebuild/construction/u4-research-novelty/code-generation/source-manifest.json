@@ -323,6 +323,12 @@
     },
     {
       "path": "tests/u4_research_novelty/runtime/test_profile_binding.py"
+    },
+    {
+      "path": "backend/modules/research/u4_prepared_recovery.sql"
+    },
+    {
+      "path": "tests/u4_research_novelty/integration/test_prepared_recovery.py"
     }
   ]
 }

@@ -62,6 +62,7 @@ MIGRATIONS = (
     ("research", "backend/modules/research/u4_schema.sql"),
     ("research", "backend/modules/research/u4_admission.sql"),
     ("research", "backend/modules/research/u4_release_obligation.sql"),
+    ("research", "backend/modules/research/u4_prepared_recovery.sql"),
 )
 TEST_PHASES = (
     "database",
