@@ -28130,3 +28130,368 @@
 **Context**: .aidlc-engine > reviewer-dispatch.json
 
 ---
+
+## Artifact Created
+**Timestamp**: 2026-10-16T02:37:58Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/reviews/code-generation/units/u4-research-novelty/24fa3166af3ad245/1.cc00d523e38bfb4ce6780129ead5862d.review.md
+**Context**: .aidlc-engine > reviews > code-generation > units > u4-research-novelty > 24fa3166af3ad245 > 1.cc00d523e38bfb4ce6780129ead5862d.review.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T02:38:11Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: aidlc-architecture-reviewer-agent
+**Agent ID**: 01a1428d-534d-74c3-9301-953564af9d9c
+**Message**: **Reviewer:** aidlc-architecture-reviewer-agent\n\nNOT-READY — review file written.\n\nThree Major findings:\n\n- Closed admissions can strand reserved quota after release failure.\n- Manuscript requests byp
+
+---
+
+## Review Completed
+**Timestamp**: 2026-10-16T02:38:17Z
+**Event**: REVIEW_COMPLETED
+**Stage**: code-generation
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: u4-research-novelty
+**Iteration**: 1
+**Verdict**: NOT-READY
+**Request Fingerprint**: sha256:bcdc0a9d28ad681497070d53e5f283c70fc76d528815ca820a063fdee253c57a
+**Artifact Fingerprint**: sha256:bcdc0a9d28ad681497070d53e5f283c70fc76d528815ca820a063fdee253c57a
+**Request Id**: review:cc00d523e38bfb4ce6780129ead5862d
+**Request Source Fingerprint**: cd6b3c118b601f24c2c7ff2515d31cdad97a69a0d93508539e2722893e3e1e0c
+**Source Fingerprint**: cd6b3c118b601f24c2c7ff2515d31cdad97a69a0d93508539e2722893e3e1e0c
+**Unit Source Fingerprint**: sha256:05cd9419a2bfd0b4f4416613c7bc94f8a3c738012aafb5112ae670999a3c909a
+**Review Record**: .aidlc-engine/reviews/code-generation/units/u4-research-novelty/24fa3166af3ad245/1.json
+**Review Record Digest**: sha256:b4b34d31e207e325e322301802099c0f0df4439ecea31cac0952e1879b7e6988
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T02:40:56Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a1423d-7d33-7830-856f-380ff20567aa
+**Message**: PR #51 at `6e6c05f5`: **16 passed, 16 failed, 4 cancelled, 3 skipped**; all checks finished.\n\n| Finding | Evidence and classification |\n|---|---|\n| U4 browser failure | [Run 38841058509](https://githu
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T02:41:08Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a1428b-4e0d-7903-8c7a-d0397aaba164 last seen 2026-10-16T02:29:50.172Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T02:41:08Z
+**Event**: HUMAN_TURN
+**Session**: 01a14295-93f1-78c1-8c6f-650673426e5f
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-16T02:43:06Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/u4-ci-verification.md
+**Context**: maintenance > u4-ci-verification.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T02:43:50Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a1423d-7d33-7830-856f-380ff20567aa
+**Message**: [Run 38841753531](https://github.com/revenantonthemission/DocSuri/actions/runs/38841753531) completed:\n\n- **Shared contracts and frontend passed.**\n- **Backend failed during setup**, before migrations
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T02:43:53Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a14295-93f1-78c1-8c6f-650673426e5f last seen 2026-10-16T02:41:08.103Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T02:43:53Z
+**Event**: HUMAN_TURN
+**Session**: 01a14298-29bf-7b31-9c29-1c22a66c9d9b
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T02:45:42Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a14298-29bf-7b31-9c29-1c22a66c9d9b last seen 2026-10-16T02:43:53.465Z.
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:46:23Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/u4-ci-verification.md
+**Context**: maintenance > u4-ci-verification.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:47:55Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/source-manifest.json
+**Context**: construction > u4-research-novelty > code-generation > source-manifest.json
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T02:48:12Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a1423d-7d33-7830-856f-380ff20567aa
+**Message**: Fresh realm ready: **`docsuri-u4-4195e6320c8873f7`**.\n\n- Manifest: `/tmp/docsuri-u4-run/environment.json`\n- Corrected TCP readiness passed.\n- **49 migrations**, including `u4_release_obligation.sql`\n-
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T02:48:15Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-16T02:45:42.937Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T02:48:15Z
+**Event**: HUMAN_TURN
+**Session**: 01a1429c-2aa7-7942-ba94-9843209a6f4f
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:48:42Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-16T02:48:43Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/review-repairs.md
+**Context**: construction > u4-research-novelty > code-generation > review-repairs.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:48:53Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-summary.md
+**Context**: construction > u4-research-novelty > code-generation > code-summary.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:50:15Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/review-repairs.md
+**Context**: construction > u4-research-novelty > code-generation > review-repairs.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:51:21Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/u4-ci-verification.md
+**Context**: maintenance > u4-ci-verification.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:53:12Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/review-repairs.md
+**Context**: construction > u4-research-novelty > code-generation > review-repairs.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:53:13Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-summary.md
+**Context**: construction > u4-research-novelty > code-generation > code-summary.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:53:33Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:53:40Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/u4-ci-verification.md
+**Context**: maintenance > u4-ci-verification.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:56:08Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/source-manifest.json
+**Context**: construction > u4-research-novelty > code-generation > source-manifest.json
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:56:33Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/review-repairs.md
+**Context**: construction > u4-research-novelty > code-generation > review-repairs.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:58:17Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/review-repairs.md
+**Context**: construction > u4-research-novelty > code-generation > review-repairs.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:58:17Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/u4-ci-verification.md
+**Context**: maintenance > u4-ci-verification.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:58:18Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-summary.md
+**Context**: construction > u4-research-novelty > code-generation > code-summary.md
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-16T03:00:19Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T03:00:25Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/u4-ci-verification.md
+**Context**: maintenance > u4-ci-verification.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T03:01:32Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a1423d-7d33-7830-856f-380ff20567aa
+**Message**: [U4 CI run 38843024805](https://github.com/revenantonthemission/DocSuri/actions/runs/38843024805) **passed completely** at `83f6aa262e568eee2591f24418eda1ffe275518e`.\n\n| Check | Result | Duration | Pe
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T03:01:36Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a1429c-2aa7-7942-ba94-9843209a6f4f last seen 2026-10-16T02:48:15.523Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T03:01:36Z
+**Event**: HUMAN_TURN
+**Session**: 01a142a8-5f7f-7d03-8401-6022daf3d217
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T03:03:40Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-summary.md
+**Context**: construction > u4-research-novelty > code-generation > code-summary.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T03:03:40Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/review-repairs.md
+**Context**: construction > u4-research-novelty > code-generation > review-repairs.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T03:03:40Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T03:04:14Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T03:04:37Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: aidlc-developer-agent
+**Agent ID**: 01a1423c-9e65-7b53-961b-f7c1842cf0ae
+**Message**: Ready for independent review 2. Documentation is frozen.\n\n- Final CI: **193 backend tests and 6 browser journeys passed**; unchanged 80% coverage gate passed.\n- Manifest: **107 paths**, all present; n
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T03:04:39Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a142a8-5f7f-7d03-8401-6022daf3d217 last seen 2026-10-16T03:01:36.377Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T03:04:39Z
+**Event**: HUMAN_TURN
+**Session**: 01a142ab-2fef-7df3-9d43-47b19c736a91
+
+---

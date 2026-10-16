@@ -1,7 +1,8 @@
 # U4 — Research and novelty implementation
 
-Status: code-generation implementation and local verification finished, ready for
-independent review. This record does not certify
+Status: independent review iteration 1 repairs passed local verification and the
+U4 CI workflow at `83f6aa262e568eee2591f24418eda1ffe275518e`; ready for independent
+review iteration 2. See `review-repairs.md`. This record does not certify
 release parity, public operating feasibility, or completion of the construction checkpoint.
 
 ## What changed
@@ -87,17 +88,40 @@ not complete cross-unit requirements. Sixteen GAP rows preserve unfinished
 model/document parity, draft and account lifecycle policy, complete accessibility
 auditing and clean-checkout reproduction evidence.
 
-Final local verification passed 181 backend tests with zero skips and 87.66%
+Before review iteration 1, local verification passed 181 backend tests with zero skips and 87.66%
 line coverage (every measured authored file at least 82%), 73 frontend tests,
 and all six real browser journeys. The frontend's new source has 99.69% line
 coverage; retained U1/U2/U3 frontend suites passed 18/92/31, and affected U1/U2
 backend runtime suites passed 13/39. Shared contract checks passed 161 tests.
-The final browser and backend runs use the same frozen source digest:
+Those browser and backend runs used the same frozen source digest, now superseded by repairs:
 `c171d721ffd83b8636511925e5c747f2fafd14fed47d0b778d5ec8611423e26a`.
 
+After the review repairs, final local verification passed **191 backend tests**
+with zero skips/failures/errors and **88.22%** coverage (each measured authored
+file at least 82%), **74 frontend tests** with 99.70% new-source line coverage,
+and **six real browser journeys** including two-view deletion and refresh.
+Root and unit-specific frontend TypeScript checks passed without changing their
+configuration. The repaired browser and backend runs share source digest
+`263138dac917df184b469b9886e694fe0ce28f6d0970f0185c50aa4665cae8fa`
+and owned realm `docsuri-u4-6242203c924051fe`, browser then backend coverage.
+Remote CI run 38842485487 subsequently exposed a browser RSS-limit failure.
+The browser-only V8 allocation repair at `83f6aa26` passed 78 operations tests
+and a new six-case local browser run at peak RSS 928,759,808 bytes, preserving
+the exact 1 GiB RSS guard and all journeys. That new browser evidence has source
+digest `f7e5fe9c8fbda21938deb339944d9aba9abcf51bfe1a9f46b1e6089fde5cf442`.
+The earlier local 191-test coverage remains tied to its original source; the
+final-source remote cumulative run passed 193 tests with zero failures/errors/skips
+and the unchanged 80% coverage gate. Its exact percentage is not available in the
+public summary; 88.22% belongs only to the earlier local 191-test run.
+The final remote browser run passed all six journeys with zero failures/errors/skips,
+49 migrations and clean process stops, at peak RSS 1,012,883,456 bytes.
+Shared-contract and frontend jobs also passed in
+[U4 CI run 38843024805](https://github.com/revenantonthemission/DocSuri/actions/runs/38843024805).
+
 See `testing-evidence.md` for failures, repairs and exact evidence records, and
-`source-manifest.json` for application paths. At the local verification cutoff, remote CI had not run. A workflow file alone
-does not establish its execution. Git remains working branch → PR
+`source-manifest.json` for application paths. The earlier pre-review local cutoff
+preceded remote CI; the final successful run above supplies actual execution evidence.
+Git remains working branch → PR
 into develop; release promotion to main and deployment are separate.
 
 The workflow's saved Construction Verification Command still invokes the U1

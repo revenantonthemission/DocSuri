@@ -139,11 +139,79 @@ Evidence: `/tmp/docsuri-u4-run/coverage-evidence-1792117581494612000.json`;
 log: `/tmp/docsuri-u4-run/u4-phase-coverage-1792117570746135000.log`.
 This run and the successful six-case browser run share frozen source SHA-256
 `c171d721ffd83b8636511925e5c747f2fafd14fed47d0b778d5ec8611423e26a`.
-They use separate owned synthetic realms, without quota resets or weakening
-capacity/admission/coverage rules. At the local verification cutoff, remote CI had not run; it and the separately
+Both successful runs used the same owned realm, `docsuri-u4-62afa0fbd17a0584`:
+browser first, then cumulative backend coverage, without quota resets or weakening
+capacity/admission/coverage rules. Earlier failed-run realms were preserved and
+replaced; they are distinct from this final shared-realm pair. At the local verification cutoff, remote CI had not run; it and the separately
 approved construction completion command remain subsequent obligations.
 
 Final evidence file SHA-256 values, independently reported by the runtime owner:
 
 - Browser: `c3df845de49f27db9eaf94eb609f8e490842b25d30c8f19af44e37256085abcc`.
 - Coverage: `40462f4ed1640b8f6459bbfe80794ace2367487e185a3ec2dcc29b8287e81969`.
+
+## Review-iteration repairs — superseding local evidence
+
+The results above describe the pre-review implementation. Review iteration 1
+found five issues; `review-repairs.md` records their fixes and the intervening
+failed checks without replacing the independent verdict.
+
+Final repaired source at commit `3f9b4fe5` passed **191 backend tests**, zero
+failures/errors/skips, **88.22%** line coverage, with every measured authored file
+at least 82%. Its **six real browser journeys** also passed with zero failures,
+errors or skips, including the new two-view tombstone/result-clearing check.
+The frontend passed **74 tests**, root and U4 TypeScript checks, scoped lint and
+Vite build; new source line coverage is 99.70% and combined inherited App coverage
+is 80.03%. Coverage thresholds and resource limits remain unchanged.
+
+Both final repaired runs used the same realm `docsuri-u4-6242203c924051fe`, in the
+order browser → cumulative coverage, and the same source SHA-256
+`263138dac917df184b469b9886e694fe0ce28f6d0970f0185c50aa4665cae8fa`.
+Earlier failed-run realms were preserved, not reset or silently reused.
+
+| Evidence | Result | File SHA-256 |
+|---|---|---|
+| `/tmp/docsuri-u4-run/browser-evidence-1792119106660405000.json` | 6 passed; supervised 11.2136 s; peak RSS 1,020,248,064 bytes | `8659f7b6d3308874795b119bf5eda654ce64ec8a16ab14cd298afddca3ee35bf` |
+| `/tmp/docsuri-u4-run/coverage-evidence-1792119129859501000.json` | 191 passed; supervised 11.2948 s; peak RSS 207,994,880 bytes | `6dc411f0ac54fe355e5075b6faca16d9190a52bcf2a8c599814ff2738d70e4b1` |
+
+Remote CI run 38842485487 subsequently passed backend/shared/frontend but failed
+the browser RSS guard at 1,078,366,208 bytes, with no test report and a stopped
+process. The browser allocation correction and its actual results follow.
+
+## Final allocation repair and remote result
+
+Historical `/tmp/docsuri-u4-run` paths above record their original locations.
+Preservation moved the successful pre-review 62afa realm's files to
+`/private/tmp/docsuri-u4-preserved-docsuri-u4-62afa0fbd17a0584-5deea9fe`
+and the first repaired 4195 realm's files to
+`/private/tmp/docsuri-u4-preserved-docsuri-u4-4195e6320c8873f7-526af6ff`.
+The 6242 realm's evidence remains in `/tmp/docsuri-u4-run`; its previous browser
+XML/report directories were preserved in place before the later browser rerun.
+
+At `83f6aa262e568eee2591f24418eda1ffe275518e`, browser-only Node and renderer V8
+allocations were bounded without changing the 1 GiB process-tree RSS guard,
+300-second deadline or six journeys. All 78 operations tests passed.
+The final local browser run passed six tests, zero failures/errors/skips, in
+10.4965 supervised seconds, peak RSS 928,759,808 bytes. It safely reused the
+6242 realm after a read-only remaining-allocation check; no quota was reset,
+and previous reports were preserved.
+
+- Evidence: `/tmp/docsuri-u4-run/browser-evidence-1792119445909347000.json`.
+- Evidence SHA-256: `2c0ac9c033f760f29984f1570ea8fb72d4947117ca5810a2b802da61d635b4c3`.
+- Source SHA-256: `f7e5fe9c8fbda21938deb339944d9aba9abcf51bfe1a9f46b1e6089fde5cf442`.
+
+The local 191-test/88.22% result remains tied to `3f9b4fe5`; it is not relabelled
+as verification of these changed runtime bytes. Final-source cumulative evidence
+comes from successful
+[U4 CI run 38843024805](https://github.com/revenantonthemission/DocSuri/actions/runs/38843024805),
+at exact commit `83f6aa262e568eee2591f24418eda1ffe275518e`:
+
+| Job | Actual result | Supervised time | Peak RSS |
+|---|---|---|---|
+| Backend `116787190203` | 193 passed; zero failures/errors/skips; unchanged 80% coverage gate passed | 18.029 s | 198,246,400 bytes |
+| Browser `116787414888` | 6 passed; zero failures/errors/skips; 49 migrations; clean stops | 13.508 s | 1,012,883,456 bytes |
+
+Shared-contract and frontend jobs also passed. The exact remote coverage
+percentage is not exposed in the public summary; no percentage is inferred.
+The parent-owned maintenance CI report records broader legacy-workflow outcomes
+separately. Conditional capability gaps and completion-command approval remain.
