@@ -516,10 +516,14 @@ def test_setup_creates_private_identity_once_and_never_reseeds(owned_root, monke
     monkeypatch.setattr(runner, "require", run)
     monkeypatch.setattr(runner, "command", run)
     monkeypatch.setattr(runner, "migrate", lambda path, **kwargs: calls.append(["migrate", kwargs]))
+    monkeypatch.setattr(
+        runner, "wait_database_endpoint", lambda value: calls.append(["tcp-ready", value["runId"]])
+    )
     path = owned_root / "environment.json"
     first = runner.setup(path)
     assert first["state"] == "base-installed"
     value = json.loads(path.read_bytes())
+    assert calls[-2:] == [["tcp-ready", value["runId"]], ["migrate", {"base_only": True}]]
     assert value["container"] == value["runId"]
     assert value["expiresAt"] - value["createdAt"] == 86400
     assert "databaseAdminPassword" not in value
