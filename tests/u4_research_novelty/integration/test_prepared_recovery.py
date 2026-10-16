@@ -178,11 +178,16 @@ def test_concurrent_usage_reserve_and_rejection_share_fence(
     codec, key, operation, value = prepared(transactions, authority, connect)
     for _ in range(32):
         codec.admission.recover_prepared()
-    held, release = Event(), Event()
+    held, release, second_entered = Event(), Event(), Event()
+    pids = set()
     run = transactions.run
 
     def gated(owner, callback, **kwargs):
         def call(conn):
+            if owner == "usage":
+                pids.add(conn.execute("SELECT pg_backend_pid() AS pid").fetchone()["pid"])
+                if len(pids) == 2:
+                    second_entered.set()
             result = callback(conn)
             if owner == "usage" and not held.is_set():
                 held.set()
@@ -202,7 +207,7 @@ def test_concurrent_usage_reserve_and_rejection_share_fence(
         assert held.wait(5)
         delayed = pool.submit(reject if first == "reserve" else reserve)
         try:
-            sleep(0.05)
+            assert second_entered.wait(1), "both real Usage transactions must overlap"
             assert not delayed.done()
         finally:
             release.set()
@@ -225,10 +230,13 @@ def test_acceptance_lock_wins_over_expiry_recovery(
     codec, key, operation, value = prepared(transactions, authority, connect, seconds=1)
     reservation = codec.usage.reserve(authority, operation, digest(value))
     held, release = Event(), Event()
+    pids = set()
     run = transactions.run
 
     def gated(owner, callback, **kwargs):
         def call(conn):
+            if owner == "research":
+                pids.add(conn.execute("SELECT pg_backend_pid() AS pid").fetchone()["pid"])
             result = callback(conn)
             if owner == "research" and isinstance(result, dict) and result.get("id") == operation:
                 held.set()
@@ -246,6 +254,7 @@ def test_acceptance_lock_wins_over_expiry_recovery(
         try:
             sleep(1.05)
             codec.admission.recover_prepared()  # Locked acceptance is skipped, never closed.
+            assert len(pids) == 2, "normal acceptance and actual recovery must overlap in PostgreSQL"
         finally:
             release.set()
         assert future.result(timeout=5)["id"] == operation

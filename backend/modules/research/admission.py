@@ -1,11 +1,23 @@
 """Research admission fencing around the separate UsageEntitlements owner."""
 
+from contextlib import contextmanager
 from uuid import NAMESPACE_URL, uuid5
 
+from backend.control_runtime import RECOVERY_REQUEST
 from backend.transactions import UnknownCommit
 
 from .errors import ResearchError
 from .repository import ResearchRepository, digest
+
+
+@contextmanager
+def recovery_lane():
+    """Durable owner obligations use reserved capacity, never normal admission."""
+    token = RECOVERY_REQUEST.set(True)
+    try:
+        yield
+    finally:
+        RECOVERY_REQUEST.reset(token)
 
 
 class ResearchAdmission(ResearchRepository):
@@ -74,6 +86,7 @@ class ResearchAdmission(ResearchRepository):
             self.reconcile_release(usage, operation)
             raise
 
+    @recovery_lane()
     def reconcile_release(self, usage, operation=None):
         """Complete a durable closure without depending on a live browser session.
 
@@ -107,6 +120,7 @@ class ResearchAdmission(ResearchRepository):
         )
         return True
 
+    @recovery_lane()
     def recover_prepared(self):
         """Fence one abandoned admission using only authoritative owner state.
 

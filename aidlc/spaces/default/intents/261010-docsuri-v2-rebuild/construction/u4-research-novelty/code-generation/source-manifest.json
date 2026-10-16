@@ -329,6 +329,9 @@
     },
     {
       "path": "tests/u4_research_novelty/integration/test_prepared_recovery.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/runtime/test_admission_lane.py"
     }
   ]
 }
