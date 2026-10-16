@@ -29,6 +29,8 @@ import { PersonalControls } from './personal-controls';
 import { UsageControls } from './usage-controls';
 import { LibraryControls } from './library-controls';
 import { CorpusWorkspace } from './u3-corpus/corpus-workspace';
+import { ResearchWorkspace } from './u4-research/research-workspace';
+import { readJobLink } from './u4-research/jobs';
 
 type Appearance = 'light' | 'dark' | 'system';
 type NavigationItem = {
@@ -83,8 +85,12 @@ const NAV_COPY: Record<string, string> = {
   usage: '사용량',
   jobs: '작업',
   account: '계정',
+  research: '연구',
+  novelty: '참신성 분석',
 };
-const OWNER_BOUND = new Set(['library', 'settings', 'usage', 'jobs', 'account']);
+const OWNER_BOUND = new Set([
+  'library', 'settings', 'usage', 'jobs', 'account', 'research', 'novelty',
+]);
 const APPEARANCE_KEY = 'docsuri.u1.appearance';
 const AUTHORITY_CHANNEL = 'docsuri.authority-boundary';
 type AuthorityNotice = { kind: 'authority-changed'; nonce: string };
@@ -127,8 +133,19 @@ export default function App({ transport }: { transport?: Transport }) {
   const [bootstrapped, setBootstrapped] = useState(false);
   const [navigation, setNavigation] = useState<NavigationItem[]>([]);
   const [view, setView] = useState<
-    'search' | 'paper' | 'library' | 'account' | 'settings' | 'usage'
-  >('search');
+    'search' | 'paper' | 'library' | 'account' | 'settings' | 'usage' | 'research' | 'novelty'
+  >(() => {
+    const job = readJobLink();
+    return job ? (job.kind === 'research-turn' ? 'research' : 'novelty') : 'search';
+  });
+  useEffect(() => {
+    const followResearchLink = () => {
+      const target = readJobLink();
+      if (target) setView(target.kind === 'research-turn' ? 'research' : 'novelty');
+    };
+    window.addEventListener('hashchange', followResearchLink);
+    return () => window.removeEventListener('hashchange', followResearchLink);
+  }, []);
   const [paper, setPaper] = useState<PaperRef | null>(null);
   const [rerun, setRerun] = useState<QueryContext | null>(null);
   const searchContext = useRef<QueryContext | null>(null);
@@ -142,6 +159,12 @@ export default function App({ transport }: { transport?: Transport }) {
     (value) => value.id === 'account.controls' && value.state === 'available',
   )?.policy;
   const isControls = !!controlPolicy;
+  const researchCapability = catalog?.capabilities.find(
+    (value) => value.id === 'research' && ['available', 'degraded'].includes(value.state),
+  );
+  const noveltyCapability = catalog?.capabilities.find(
+    (value) => value.id === 'novelty' && ['available', 'degraded'].includes(value.state),
+  );
   // The U3 corpus workspace replaces the live search/reading surfaces when the
   // corpus owner capabilities are installed in this realm.
   const isCorpusWorkspace =
@@ -383,6 +406,8 @@ export default function App({ transport }: { transport?: Transport }) {
                   else if (item.routeId === 'library') setView('library');
                   else if (isControls && ['account', 'settings', 'usage'].includes(item.routeId))
                     setView(item.routeId as 'account' | 'settings' | 'usage');
+                  else if (['research', 'novelty'].includes(item.routeId))
+                    setView(item.routeId as 'research' | 'novelty');
                   focusHeading(mainHeading);
                 }}
                 data-testid={`nav-${item.routeId}`}
@@ -422,6 +447,8 @@ export default function App({ transport }: { transport?: Transport }) {
                 setPaper(null);
                 setRerun(null);
                 setView('search');
+                if (window.location.hash.startsWith('#research-job?'))
+                  window.history.replaceState(null, '', window.location.pathname);
                 await refreshSession().catch(() => undefined);
               }}
               data-testid="logout"
@@ -495,6 +522,26 @@ export default function App({ transport }: { transport?: Transport }) {
               {signedIn && isControls && view === 'usage' ? (
                 <UsageControls client={client} policy={controlPolicy!} />
               ) : null}
+              {signedIn && researchCapability ? (
+                <ResearchWorkspace
+                  client={client}
+                  purpose="research"
+                  policy={researchCapability.policy}
+                  degraded={researchCapability.state === 'degraded'}
+                  synthetic={researchCapability.modeIds.includes('synthetic-only')}
+                  active={view === 'research'}
+                />
+              ) : null}
+              {signedIn && noveltyCapability ? (
+                <ResearchWorkspace
+                  client={client}
+                  purpose="novelty"
+                  policy={noveltyCapability.policy}
+                  degraded={noveltyCapability.state === 'degraded'}
+                  synthetic={noveltyCapability.modeIds.includes('synthetic-only')}
+                  active={view === 'novelty'}
+                />
+              ) : null}
               {view === 'search' && isCorpusWorkspace ? (
                 <CorpusWorkspace client={client} signedIn={signedIn} />
               ) : null}
@@ -512,7 +559,7 @@ export default function App({ transport }: { transport?: Transport }) {
               {view === 'paper' && paper ? (
                 <PaperWorkspace
                   transport={client}
-                  libraryPolicy={controlPolicy}
+                  {...(controlPolicy ? { libraryPolicy: controlPolicy } : {})}
                   paper={paper}
                   signedIn={signedIn}
                   onBack={() => setView('search')}

@@ -26,6 +26,12 @@ _RECOVERY_POST = frozenset(
         "/api/v2/c06/read-assistance-job",
         "/api/v2/c06/read-prepared-assistance",
         "/api/v2/c06/read-assistance-history",
+        "/api/v2/c07/read-research-session",
+        "/api/v2/c07/list-research-sessions",
+        "/api/v2/c07/read-research-turn",
+        "/api/v2/c07/read-research-job",
+        "/api/v2/c07/read-research-artifact",
+        "/api/v2/c07/restore-draft",
     }
 )
 _RECOVERY_GET = re.compile(

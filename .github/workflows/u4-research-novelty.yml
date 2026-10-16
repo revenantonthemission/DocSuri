@@ -1,0 +1,168 @@
+name: U4 research and novelty
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'backend/**'
+      - 'shared/**'
+      - 'ops/src/docsuri_ops/**'
+      - 'scripts/*docsuri_u4*.py'
+      - 'scripts/u4_*.py'
+      - 'tests/u4_research_novelty/**'
+      - 'frontend/src/**'
+      - 'frontend/*u4*'
+      - 'frontend/e2e/u4-research-novelty/**'
+      - 'frontend/test/u4-research-novelty/**'
+      - 'frontend/package.json'
+      - 'frontend/pnpm-lock.yaml'
+      - '.github/workflows/u4-research-novelty.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: u4-research-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Public-repository standard runners; no deployment, account secrets, paid
+# provider, self-hosted execution or pull_request_target privileges.
+jobs:
+  shared-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          version: '0.9.0'
+      - name: Frozen contract tooling
+        run: uv sync --project shared/python --frozen --python 3.13.7
+      - name: Canonical schema drift
+        run: shared/python/.venv/bin/python shared/python/tools/export_workspace_contract.py --check
+      - name: Generated binding drift
+        run: |
+          export PATH="$PWD/shared/python/.venv/bin:$PATH"
+          shared/python/.venv/bin/python shared/python/tools/generate.py --check
+      - name: Shared contract and consumer regressions
+        working-directory: shared/python
+        run: .venv/bin/python -m pytest -o addopts='' -q --tb=short
+
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.14.0'
+      - run: corepack enable
+      - name: Frozen frontend dependencies
+        run: corepack pnpm@9.15.9 --dir frontend install --frozen-lockfile --ignore-scripts
+      - name: Check research types
+        working-directory: frontend
+        run: corepack pnpm@9.15.9 exec tsc --project tsconfig.u4-research.json --noEmit
+      - name: Lint research frontend
+        working-directory: frontend
+        run: >-
+          corepack pnpm@9.15.9 exec eslint src/u4-research src/App.tsx src/api.ts
+          test/u4-research-novelty e2e/u4-research-novelty
+          vitest.u4-research.config.ts playwright.u4-research.config.ts
+          --parser-options '{"project":"./tsconfig.u4-research.json"}'
+      - name: Execute research frontend checks and coverage
+        working-directory: frontend
+        run: corepack pnpm@9.15.9 exec vitest run --config vitest.u4-research.config.ts --coverage
+      - name: Build shared workspace
+        run: corepack pnpm@9.15.9 --dir frontend exec vite build
+
+  backend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      DOCSURI_U4_ENVIRONMENT_FILE: /tmp/docsuri-u4-run/environment.json
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          version: '0.9.0'
+      - name: Frozen Python dependencies
+        run: uv sync --project backend --frozen --python 3.13.7
+      - name: Lint research and shared runtime changes
+        run: >-
+          backend/.venv/bin/ruff check backend/modules/research backend/u4_*.py
+          backend/local_profile.py backend/transactions.py backend/local_browser.py backend/artifacts.py
+          backend/local_observation.py
+          scripts/verify_docsuri_u4.py scripts/serve_docsuri_u4.py scripts/u4_browser_fixtures.py
+          tests/u4_research_novelty
+      - name: Pinned local database image
+        run: docker pull postgres@sha256:a3b7f434b2dc57ce85a67e171163eb8ab1a1ebcb39d27484661f26b1dfbe30d6
+      - name: Prior-unit transport and recovery regressions
+        run: |
+          backend/.venv/bin/python -m pytest -c backend/pytest.u1-paper-journey.ini --confcutdir=tests/u1_integrated_paper_journey/component tests/u1_integrated_paper_journey/component/test_private_records.py tests/u1_integrated_paper_journey/component/test_local_transport.py -q --tb=short
+          backend/.venv/bin/python -m pytest -c backend/pytest.u2-account-personal-controls.ini --confcutdir=tests/u2_account_personal_controls/operations tests/u2_account_personal_controls/operations/test_transport.py tests/u2_account_personal_controls/operations/test_control_runtime.py -q --tb=short
+      - name: Create isolated synthetic realm
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase setup
+          --profile synthetic-local --environment-file "$DOCSURI_U4_ENVIRONMENT_FILE"
+      - name: Apply ordered migrations
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase migrate
+          --profile synthetic-local --environment-file "$DOCSURI_U4_ENVIRONMENT_FILE"
+      # One complete pass covers every test layer and coverage together.
+      # Repeating the same tests would consume additional bounded fixture quotas.
+      - name: Complete database, component, API, recovery and coverage checks
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase coverage
+          --profile synthetic-local --environment-file "$DOCSURI_U4_ENVIRONMENT_FILE"
+
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    needs: [shared-contracts, frontend, backend]
+    env:
+      DOCSURI_U4_ENVIRONMENT_FILE: /tmp/docsuri-u4-run/environment.json
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.14.0'
+      - run: corepack enable
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          version: '0.9.0'
+      - name: Frozen dependencies
+        run: |
+          uv sync --project backend --frozen --python 3.13.7
+          corepack pnpm@9.15.9 --dir frontend install --frozen-lockfile --ignore-scripts
+      - name: Browser runtime
+        working-directory: frontend
+        run: corepack pnpm@9.15.9 exec playwright install --with-deps chromium
+      - name: Build shared workspace
+        run: corepack pnpm@9.15.9 --dir frontend exec vite build
+      - name: Pinned local database image
+        run: docker pull postgres@sha256:a3b7f434b2dc57ce85a67e171163eb8ab1a1ebcb39d27484661f26b1dfbe30d6
+      - name: Create isolated synthetic realm
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase setup
+          --profile synthetic-local --environment-file "$DOCSURI_U4_ENVIRONMENT_FILE"
+      - name: Apply ordered migrations
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase migrate
+          --profile synthetic-local --environment-file "$DOCSURI_U4_ENVIRONMENT_FILE"
+      - name: Execute mounted browser journeys
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase browser
+          --profile synthetic-local --environment-file "$DOCSURI_U4_ENVIRONMENT_FILE"
+
+# Each job retains its private diagnostics only inside its disposable runner.
+# Database dumps, authentication material and private research text are never
+# uploaded as public artifacts. This lane does not promote main or deploy.

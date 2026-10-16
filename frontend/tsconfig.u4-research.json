@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "incremental": false
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "test/setup.ts",
+    "test/u4-research-novelty/**/*.ts",
+    "test/u4-research-novelty/**/*.tsx",
+    "e2e/u4-research-novelty/**/*.ts",
+    "vitest.u4-research.config.ts",
+    "playwright.u4-research.config.ts"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

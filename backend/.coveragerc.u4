@@ -1,0 +1,16 @@
+# New research production modules. Shared changed paths are measured separately;
+# their historical lines must not conceal missing coverage in the new module.
+[run]
+source = backend,scripts
+
+[report]
+include =
+    backend/modules/research/*.py
+    backend/u4_policy.py
+    backend/u4_host.py
+    scripts/verify_docsuri_u4.py
+    scripts/serve_docsuri_u4.py
+    scripts/u4_browser_fixtures.py
+fail_under = 80
+show_missing = True
+skip_covered = False

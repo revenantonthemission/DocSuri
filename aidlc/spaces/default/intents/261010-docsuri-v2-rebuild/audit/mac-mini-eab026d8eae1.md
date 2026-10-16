@@ -22343,3 +22343,5790 @@
 **Context**: maintenance > c14-payload-amendment > README.md
 
 ---
+
+## Human Turn
+**Timestamp**: 2026-10-16T00:08:50Z
+**Event**: HUMAN_TURN
+**Session**: ses_ec8145890ffexwYzq2mH6bNNzh
+**Reply**: command
+
+---
+
+## Workflow Unparked
+**Timestamp**: 2026-10-16T00:09:14Z
+**Event**: WORKFLOW_UNPARKED
+
+---
+
+## Session Start
+**Timestamp**: 2026-10-16T00:26:58Z
+**Event**: SESSION_STARTED
+**Source**: startup
+**Session**: ses_ec8145890ffexwYzq2mH6bNNzh
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T00:26:59Z
+**Event**: HUMAN_TURN
+**Session**: ses_ec8145890ffexwYzq2mH6bNNzh
+**Reply**: command
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T00:27:37Z
+**Event**: HUMAN_TURN
+**Session**: ses_ec8145890ffexwYzq2mH6bNNzh
+**Reply**: command
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T00:28:04Z
+**Event**: HUMAN_TURN
+**Session**: ses_ec8145890ffexwYzq2mH6bNNzh
+**Reply**: command
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T00:28:44Z
+**Event**: HUMAN_TURN
+**Session**: ses_ec8145890ffexwYzq2mH6bNNzh
+**Reply**: command
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T00:56:28Z
+**Event**: HUMAN_TURN
+**Session**: ses_ec8145890ffexwYzq2mH6bNNzh
+**Reply**: command
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T00:57:04Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a136a2-782b-7900-a049-5cb7221d63da last seen 2026-10-13T18:59:41.360Z.
+
+---
+
+## Session Resume
+**Timestamp**: 2026-10-16T00:57:04Z
+**Event**: SESSION_RESUMED
+**Source**: resume
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T00:57:05Z
+**Event**: HUMAN_TURN
+**Session**: 01a124bb-a18b-7ff3-8b21-612616b7c2bd
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-16T00:57:34Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T01:07:06Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a1423d-7d33-7830-856f-380ff20567aa
+**Message**: The first real U4 PostgreSQL tests need a properly owned U4 realm. Tool availability and disk space currently suffice; realm registration and the occupied database port are the immediate blockers.\n\n- 
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:09:43Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/unit-test-instructions.md
+**Context**: construction > u4-research-novelty > code-generation > unit-test-instructions.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:09:44Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest -c backend/pytest.u3-paper-corpus.ini --confcutdir=tests/u4_research_novelty/runtime tests/u4_research_novelty/runtime/test_p
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:09:46Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check backend/local_profile.py backend/transactions.py backend/local_browser.py tests/u4_research_novelty/runtime/test_profile_binding.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:09:59Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/src/u4-research/api.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:10:00Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/src/u4-research/action.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:10:01Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/src/u4-research/evidence.tsx
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:10:03Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-generation-plan.md
+**Context**: construction > u4-research-novelty > code-generation > code-generation-plan.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:10:15Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python shared/python/tools/generate.py --check
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:10:17Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: gh repo view --json nameWithOwner,visibility
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:10:27Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: uv run --frozen python tools/generate.py --check
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:10:34Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/conftest.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:10:36Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check backend/u4_policy.py backend/modules/research tests/u4_research_novelty/conftest.py tests/u4_research_novelty/database
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:10:45Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json;from pathlib import Path;x=json.loads(Path("shared/events/execution.schema.json").read_text())["$defs"]\nfor k in ["ExecutionBinding","Ex
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:10:46Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '650,780p' aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/functional-design/entities.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:10:47Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: ls shared/python/.venv/bin/datamodel-codegen; docker stats --no-stream --format '{{.Name}} {{.MemUsage}} {{.PIDs}}'; docker ps --format '{{.Names}} {{.Ports}}'
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:10:50Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: rg -n 'coverage|config' scripts/verify_docsuri_u3.py; sed -n '793,970p' scripts/verify_docsuri_u3.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:11:07Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/u4_schema.sql
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:11:18Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/u4-research/action.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:11:19Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/src/u4-research/drafts.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:11:20Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/src/u4-research/sources.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:11:34Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/ops/src/docsuri_ops/local_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:11:35Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/scripts/verify_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:11:38Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json;from pathlib import Path;x=json.loads(Path("shared/events/execution.schema.json").read_text())["$defs"]\nfor k in ["CompletionFact","Work
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:11:39Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/.github/workflows/u4-research-novelty.yml
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:11:41Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: env PATH=<project-dir>/shared/python/.venv/bin:/opt/homebrew/bin:/usr/bin:/bin shared/python/.venv/bin/python shared/python/tools
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:11:45Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json;from pathlib import Path;x=json.loads(Path("shared/events/execution.schema.json").read_text())["$defs"]\nfor k in ["DispatchCommand","Dis
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:11:46Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check scripts/verify_docsuri_u4.py ops/src/docsuri_ops/local_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:11:47Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase archive-legacy --profile synthetic-local --environment-file /tmp/docsuri-u4-run/environment.json
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:12:01Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'from pathlib import Path;x=Path("aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md").read_text();
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:12:03Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/runtime/test_profile_binding.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:12:04Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase setup --profile synthetic-local --environment-file /tmp/docsuri-u4-run/environment.json
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:12:04Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest -c backend/pytest.u3-paper-corpus.ini --confcutdir=tests/u4_research_novelty/runtime tests/u4_research_novelty/runtime/test_p
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:12:11Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check --fix scripts/verify_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:12:13Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff format scripts/verify_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:12:39Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: docker run --rm --network none --read-only --memory 16m --memory-swap 16m --cpus 0.1 --pids-limit 8 --entrypoint cat postgres@sha256:a3b7f434b2dc57ce85a67e17116
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:12:40Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/src/u4-research/jobs.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:12:41Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/src/u4-research/composer.tsx
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-16T01:12:41Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:13:07Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json,pathlib,time; from datetime import datetime,timezone; roots=[pathlib.Path("/tmp/docsuri-"+u+"-run") for u in ("u1","u2","u3","u7")]; pri
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:13:08Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: lsof -nP -iTCP:18039 -iTCP:18049 -iTCP:18059 -sTCP:LISTEN; docker inspect docsuri-u7-62ac590c6fefb334 --format '{{json .Config.Labels}}'
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:13:28Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: docker inspect docsuri-u3-204aa60225e512be --format '{{json .Config.Labels}}'
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:13:30Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: docker exec docsuri-u3-204aa60225e512be psql -U postgres -d docsuri_u3 -Atc "SELECT count(*) FROM pg_stat_activity WHERE backend_type='client backend' AND pid <
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:13:32Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '669,695p' aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md; sed -n '1654,1693p' aidlc/spaces/default
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:13:49Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: docker stop --time 10 docsuri-u3-204aa60225e512be
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:13:50Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/scripts/verify_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:13:51Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/ops/src/docsuri_ops/u4_capacity.sql
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:13:52Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -c 'import json; from pathlib import Path; p=Path("shared/events/execution.schema.json"); d=json.loads(p.read_text()); print(list(d)); 
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:13:53Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/scripts/serve_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:13:54Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:03Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check --fix scripts/verify_docsuri_u4.py scripts/serve_docsuri_u4.py tests/u4_research_novelty/operations/test_runner_transport.py ops/sr
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:08Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/src/u4-research/research-workspace.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:09Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/src/u4-research/research.css
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:10Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/App.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:16Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -c 'import json; d=json.load(open("shared/dtos/workspace.schema.json")); print(json.dumps({k:d["$defs"][k] for k in ["ResearchArtifactR
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:17Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '1,95p' aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-generation-questions.md; sed -n '1,1
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:18Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase setup --profile synthetic-local --environment-file /tmp/docsuri-u4-run/environment.json
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:21Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest -c backend/pytest.u3-paper-corpus.ini tests/u4_research_novelty/operations/test_runner_transport.py -q --tb=short
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:30Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest -c backend/pytest.u3-paper-corpus.ini tests/u4_research_novelty/operations/test_runner_transport.py -q --tb=short
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:37Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase migrate --profile synthetic-local --environment-file /tmp/docsuri-u4-run/environment.json
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:41Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/vitest.u4-research.config.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:42Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/tsconfig.u4-research.json
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:44Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec tsc --project tsconfig.u4-research.json --noEmit
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:14:46Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -c 'from pathlib import Path; from scripts.verify_docsuri_u4 import migrate; migrate(Path("/tmp/docsuri-u4-run/environment.json"))'
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:15:01Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '2290,2317p' frontend/types/wire/dtos.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:15:07Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: env DOCSURI_U4_ENVIRONMENT_FILE=/tmp/docsuri-u4-run/environment.json backend/.venv/bin/python -m pytest tests/u4_research_novelty/database -q
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:15:22Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '680,940p' scripts/verify_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:15:29Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/artifacts.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:15:30Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check backend/artifacts.py backend/local_profile.py backend/transactions.py backend/local_browser.py tests/u4_research_novelty/runtime/te
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:15:42Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-generation-plan.md
+**Context**: construction > u4-research-novelty > code-generation > code-generation-plan.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:15:53Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/App.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:15:55Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/test/u4-research-novelty/fixtures.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:15:57Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec tsc --project tsconfig.u4-research.json --noEmit
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:16:00Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase migrate --profile synthetic-local --environment-file /tmp/docsuri-u4-run/environment.json
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:16:06Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/api.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:16:29Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/artifacts.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:16:31Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/c14-payload-amendment/completion-proposal.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:16:32Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/c14-payload-amendment/completion-repro.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:16:33Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/backend/modules/research/repository.py
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-16T01:16:33Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/c14-payload-amendment/completion-proposal.md
+**Context**: maintenance > c14-payload-amendment > completion-proposal.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-16T01:16:33Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/c14-payload-amendment/completion-repro.py
+**Context**: maintenance > c14-payload-amendment > completion-repro.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:16:35Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/c14-payload-amendment/completion-repro.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:16:43Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/c14-payload-amendment/completion-repro.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:16:45Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check backend/artifacts.py backend/local_profile.py backend/transactions.py backend/local_browser.py tests/u4_research_novelty/runtime/te
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:16:54Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/scripts/verify_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:16:55Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:07Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check --fix scripts/verify_docsuri_u4.py scripts/serve_docsuri_u4.py tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:09Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff format scripts/verify_docsuri_u4.py scripts/serve_docsuri_u4.py tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:10Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest -c backend/pytest.u3-paper-corpus.ini tests/u4_research_novelty/operations/test_runner_transport.py -q --tb=short
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:18Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/fixtures.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:19Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/backend/modules/research/jobs.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:20Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/test/u4-research-novelty/evidence.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:20Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/backend/pytest.u4-research-novelty.ini
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:21Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/test/u4-research-novelty/jobs.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:22Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/backend/.coveragerc.u4
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:31Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest -c backend/pytest.u3-paper-corpus.ini tests/u4_research_novelty/operations/test_runner_transport.py -q --tb=short --cov=scrip
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:38Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:17:38Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+**Context**: inception > contract-design > contract-summary.md
+**Summary Authorization Id**: 4173f9a3634be83e36b08aaae1815b99d6dfe35f8ac43565e575e179312fde3a
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:40Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python shared/python/tools/export_workspace_contract.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:51Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: env PATH=<project-dir>/shared/python/.venv/bin:/opt/homebrew/bin:/usr/bin:/bin shared/python/.venv/bin/python shared/python/tools
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:57Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/tests/u4_research_novelty/repository/test_repository.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:17:59Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: env DOCSURI_U4_ENVIRONMENT_FILE=/tmp/docsuri-u4-run/environment.json backend/.venv/bin/python -m pytest tests/u4_research_novelty/repository -q
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:11Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:18:11Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+**Context**: inception > contract-design > contract-summary.md
+**Summary Authorization Id**: 4173f9a3634be83e36b08aaae1815b99d6dfe35f8ac43565e575e179312fde3a
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:23Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: ls shared/python/tests/*workspace* shared/python/tests/*execution*; sed -n '1,130p' shared/python/src/docsuri_shared/workspace.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:34Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:35Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python shared/python/tools/export_workspace_contract.py --check
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:40Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/test/u4-research-novelty/drafts.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:41Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/test/u4-research-novelty/composer.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:44Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u4-research.config.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:45Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python shared/python/tools/export_workspace_contract.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:45Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check --fix scripts/verify_docsuri_u4.py scripts/serve_docsuri_u4.py tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:48Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff format tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:48Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: env PATH=<project-dir>/shared/python/.venv/bin:/opt/homebrew/bin:/usr/bin:/bin shared/python/.venv/bin/python shared/python/tools
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:50Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest -c backend/pytest.u3-paper-corpus.ini tests/u4_research_novelty/operations/test_runner_transport.py -q --tb=short --cov=scrip
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:52Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec tsc --project tsconfig.u4-research.json --noEmit
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:53Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/backend/modules/research/attachments.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:54Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/tests/u4_research_novelty/repository/test_attachments.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:55Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec eslint src/u4-research src/App.tsx src/api.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:18:56Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: env DOCSURI_U4_ENVIRONMENT_FILE=/tmp/docsuri-u4-run/environment.json backend/.venv/bin/python -m pytest tests/u4_research_novelty/repository -q
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:19:34Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/tests/u4_research_novelty/repository/test_jobs.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:19:35Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/repository/test_repository.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:19:37Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: env DOCSURI_U4_ENVIRONMENT_FILE=/tmp/docsuri-u4-run/environment.json backend/.venv/bin/python -m pytest tests/u4_research_novelty/repository -q
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:20:08Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json; d=json.load(open("shared/dtos/workspace.schema.json")); print(json.dumps({k:d["$defs"][k] for k in ("ResearchOutput","EvidenceRecord","
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:20:13Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json; d=json.load(open("shared/dtos/workspace.schema.json")); print(json.dumps({k:v for k,v in d["$defs"].items() if k in ("ResearchOutput","
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:20:25Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/test/u4-research-novelty/sources.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:20:26Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/test/u4-research-novelty/workspace.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:20:27Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/scripts/verify_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:20:28Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u4-research.config.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:20:57Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/backend/modules/research/evidence.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:20:58Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/scripts/verify_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:20:59Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/backend/modules/research/retrieval.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:20:59Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:21:06Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json; d=json.load(open("shared/dtos/workspace.schema.json")); print(json.dumps(d["$defs"]["ResearchAssessment"],indent=2))'
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:21:08Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -c 'from backend.modules.research.evidence import SyntheticResearchProvider; print(SyntheticResearchProvider().run([]))'
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:21:33Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -c 'from docsuri_shared.dtos.workspace_schema import ResearchOutput; print(ResearchOutput)'
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:21:49Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/tsconfig.u4-research.json
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:21:50Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/drafts.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:21:51Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/jobs.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:21:52Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/evidence.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:21:53Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/test/u4-research-novelty/shell.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:21:54Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -c 'from backend.modules.research.evidence import SyntheticResearchProvider; print(SyntheticResearchProvider().run([]))'
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:21:55Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u4-research.config.ts --coverage
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:21:58Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec tsc --project tsconfig.u4-research.json --noEmit
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:00Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python - <<'PY'\nimport json\nfrom pathlib import Path\ns=json.loads(Path('shared/events/execution.schema.json').read_text())\nw=json.loads(
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:01Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python shared/python/tools/export_workspace_contract.py --check
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:08Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/evidence.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:09Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/scripts/verify_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:09Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python - <<'PY'\nfrom docsuri_shared.workspace import execution\nprint(execution.DispatchFact.model_fields['prepared'])\nprint(execution.Di
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:10Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -c 'from backend.modules.research.evidence import SyntheticResearchProvider; print(SyntheticResearchProvider().run([]))'
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:10Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:12Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '1,180p' shared/python/tests/test_events_roundtrip.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:19Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/u4-research/research-workspace.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:20Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u4-research.config.ts --coverage
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:27Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json; d=json.load(open("shared/events/execution.schema.json"))["$defs"]; print(json.dumps({k:v for k,v in d.items() if k in ("ResearchAccepte
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:39Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:41Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check --fix scripts/verify_docsuri_u4.py scripts/serve_docsuri_u4.py tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:42Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff format scripts/verify_docsuri_u4.py scripts/serve_docsuri_u4.py tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:44Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest -c backend/pytest.u3-paper-corpus.ini tests/u4_research_novelty/operations/test_runner_transport.py -q --tb=short --cov=scrip
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:53Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/c14-payload-amendment/completion-repro.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:54Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/c14-payload-amendment/completion-proposal.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:22:55Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/shared/python/tests/test_research_completion_contract.py
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:22:55Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/c14-payload-amendment/completion-repro.py
+**Context**: maintenance > c14-payload-amendment > completion-repro.py
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:22:56Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/c14-payload-amendment/completion-proposal.md
+**Context**: maintenance > c14-payload-amendment > completion-proposal.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:03Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/tests/u4_research_novelty/component/test_evidence.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:05Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/tests/u4_research_novelty/component/test_retrieval.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:07Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest tests/u4_research_novelty/component -q
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:13Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: .venv/bin/python -m pytest tests/test_research_completion_contract.py -q --tb=short
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:13Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/c14-payload-amendment/completion-repro.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:15Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '75,190p' backend/modules/corpus/u3_http.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:15Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: env PATH=<project-dir>/shared/python/.venv/bin:/opt/homebrew/bin:/usr/bin:/bin shared/python/.venv/bin/python shared/python/tools
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:17Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '223,340p' backend/u3_host.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:23Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python - <<'PY'\nimport json\nfrom pathlib import Path\ns=json.loads(Path('shared/dtos/workspace.schema.json').read_text())\nprint(json.dump
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:34Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/scripts/serve_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:34Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/shared/python/tests/test_research_completion_contract.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:35Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:36Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check shared/python/tests/test_research_completion_contract.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:37Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '260,333p' backend/local_host.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:37Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check --fix scripts/verify_docsuri_u4.py scripts/serve_docsuri_u4.py tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:38Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: .venv/bin/python -m pytest -q --tb=short
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:39Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '1,82p' backend/u3_host.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:39Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff format scripts/serve_docsuri_u4.py tests/u4_research_novelty/operations/test_runner_transport.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:42Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest -c backend/pytest.u4-research-novelty.ini tests/u4_research_novelty/operations/test_runner_transport.py -q --tb=short --cov=s
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:49Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/shared/python/tests/test_research_completion_contract.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:50Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/shell.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:51Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/playwright.u4-research.config.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:52Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/e2e/u4-research-novelty/helpers.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:55Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/frontend/e2e/u4-research-novelty/journey.spec.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:56Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'from pathlib import Path; import json; d=json.loads(Path("shared/dtos/workspace.schema.json").read_text())["$defs"]; print("\n".join(k+" "+str(v.get
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:23:57Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec tsc --project tsconfig.u4-research.json --noEmit
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:24:00Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u4-research.config.ts --coverage
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:24:10Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json; d=json.load(open("shared/dtos/workspace.schema.json"))["$defs"]; print(json.dumps({k:v for k,v in d.items() if k in ("ResearchSession",
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:24:23Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: DOCSURI_U4_ENVIRONMENT_FILE=/tmp/docsuri-u4-run/environment.json pnpm exec playwright test --config playwright.u4-research.config.ts --list
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:24:30Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check shared/python/tests/test_research_completion_contract.py backend/local_profile.py backend/local_browser.py backend/transactions.py 
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:24:31Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python -m pytest shared/python/tests/test_research_completion_contract.py -o addopts='' -q --tb=short
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:24:34Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: node -e 'const fs=require("fs"),c=require("crypto"),p="/tmp/docsuri-u4-run/",t=JSON.parse(fs.readFileSync(p+"research-workspace-tls.json")),b=fs.readFileSync(p+
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:24:35Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '205,280p' frontend/src/App.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:05Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/.github/workflows/u4-research-novelty.yml
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:07Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/c14-payload-amendment/README.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:25:07Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/maintenance/c14-payload-amendment/README.md
+**Context**: maintenance > c14-payload-amendment > README.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:09Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: .venv/bin/python -m pytest --collect-only -o addopts='' -q
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:09Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python - <<'PY'\nfrom pathlib import Path\nimport yaml, shutil\np=Path('.github/workflows/u4-research-novelty.yml')\ns=yaml.load(p.read_text
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:14Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/backend/modules/research/service.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:18Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/playwright.u4-research.config.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:20Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/shell.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:22Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/e2e/u4-research-novelty/journey.spec.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:23Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec tsc --project tsconfig.u4-research.json --noEmit
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:26Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: DOCSURI_U4_ENVIRONMENT_FILE=/tmp/docsuri-u4-run/environment.json pnpm exec playwright test --config playwright.u4-research.config.ts --list
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:28Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u4-research.config.ts --coverage
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:35Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: git add aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md aidlc/spaces/default/intents/261010-docsuri-v2-rebu
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:47Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: git commit -m 'fix(contracts): bind research completion artifacts to their owner'
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:51Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec eslint src/u4-research src/App.tsx src/api.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:54Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u2-account-controls.config.ts test/u2-account-personal-controls/authorityIsolation.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:25:58Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/backend/modules/research/u4_admission.sql
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:26:00Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/jobs.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:26:01Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/backend/modules/research/admission.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:26:17Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec eslint src/u4-research test/u4-research-novelty e2e/u4-research-novelty vitest.u4-research.config.ts playwright.u4-research.config.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:26:25Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '1,90p' tests/u2_account_personal_controls/operations/test_control_runtime.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:26:25Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest -c backend/pytest.u1-paper-journey.ini --confcutdir=tests/u1_integrated_paper_journey/component tests/u1_integrated_paper_jou
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:26:26Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/scripts/verify_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:26:28Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python scripts/verify_docsuri_u4.py --phase migrate --profile synthetic-local --environment-file /tmp/docsuri-u4-run/environment.json
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:26:32Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest -c backend/pytest.u2-account-personal-controls.ini --confcutdir=tests/u2_account_personal_controls/operations tests/u2_accoun
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:27:01Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/.github/workflows/u4-research-novelty.yml
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:27:22Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '12,150p' .codex/aidlc-common/protocols/stage-protocol-reviewer.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:27:24Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '150,280p' .codex/aidlc-common/protocols/stage-protocol-reviewer.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:27:36Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/backend/modules/research/execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:27:53Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/u4-research/jobs.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:27:54Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/u4-research/drafts.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:27:55Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/sources.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:27:56Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/workspace.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:27:58Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/drafts.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:27:59Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/.github/workflows/u4-research-novelty.yml
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:28:00Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/scripts/u4_browser_fixtures.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:28:01Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec prettier --write src/u4-research test/u4-research-novelty e2e/u4-research-novelty vitest.u4-research.config.ts playwright.u4-research.config.ts tsconf
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:28:02Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '1,240p' frontend/playwright.u4-research.config.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:28:17Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check --fix scripts/u4_browser_fixtures.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:28:18Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff format scripts/u4_browser_fixtures.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:28:19Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/jobs.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:28:21Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:28:21Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python scripts/u4_browser_fixtures.py --environment-file /tmp/docsuri-u4-run/environment.json --action setup
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:28:42Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/workspace.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:28:44Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec tsc --project tsconfig.u4-research.json --noEmit
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:28:47Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec eslint src/u4-research src/App.tsx src/api.ts test/u4-research-novelty e2e/u4-research-novelty vitest.u4-research.config.ts playwright.u4-research.con
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:28:49Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u4-research.config.ts --coverage
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:29:08Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/tests/u4_research_novelty/component/test_execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:29:10Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: env DOCSURI_U4_ENVIRONMENT_FILE=/tmp/docsuri-u4-run/environment.json backend/.venv/bin/python -m pytest tests/u4_research_novelty/component -q
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:29:12Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u1-paper-journey.config.ts
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-16T01:29:14Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:29:58Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/scripts/verify_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:29:59Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/tests/u4_research_novelty/operations/test_browser_fixtures.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:30:03Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/evidence.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:30:04Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:30:06Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/component/test_execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:30:09Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: env DOCSURI_U4_ENVIRONMENT_FILE=/tmp/docsuri-u4-run/environment.json backend/.venv/bin/python -m pytest tests/u4_research_novelty/component -q
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:30:12Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check --fix scripts/verify_docsuri_u4.py scripts/u4_browser_fixtures.py tests/u4_research_novelty/operations/test_browser_fixtures.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:30:13Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff format scripts/verify_docsuri_u4.py scripts/u4_browser_fixtures.py tests/u4_research_novelty/operations/test_browser_fixtures.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:30:15Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest -c backend/pytest.u4-research-novelty.ini tests/u4_research_novelty/operations/test_browser_fixtures.py tests/u4_research_nov
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:30:17Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '840,1010p' scripts/verify_docsuri_u4.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:30:24Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '1,85p' aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/infrastructure-design/cicd-pipeline.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:30:35Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '194,224p' backend/u3_host.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:30:57Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/scripts/u4_browser_fixtures.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:30:59Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/operations/test_browser_fixtures.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:00Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python - <<'PY'\nimport json\nfrom pathlib import Path\ns=json.loads(Path('shared/dtos/workspace.schema.json').read_text())\nfor n,v in s['$
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:07Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/u3_host.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:09Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/local_host.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:10Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/control_runtime.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:12Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/backend/u4_host.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:13Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '4390,4500p' aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:18Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check --fix scripts/verify_docsuri_u4.py scripts/serve_docsuri_u4.py scripts/u4_browser_fixtures.py tests/u4_research_novelty/operations/
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:19Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff format scripts/u4_browser_fixtures.py tests/u4_research_novelty/operations/test_browser_fixtures.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:21Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest -c backend/pytest.u4-research-novelty.ini tests/u4_research_novelty/operations/test_browser_fixtures.py tests/u4_research_nov
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:22Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check backend/modules/research backend/u4_host.py backend/u4_policy.py tests/u4_research_novelty/component tests/u4_research_novelty/repo
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:24Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python - <<'PY'\nimport json\nfrom pathlib import Path\ns=json.loads(Path('shared/dtos/workspace.schema.json').read_text())\nfor n in ['Rese
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:26Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '4050,4390p' aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:30Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u2-account-controls.config.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:48Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff format --diff backend/modules/research/admission.py backend/modules/research/attachments.py backend/modules/research/evidence.py backend/
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:54Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '10285,10345p' aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:56Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '125,175p' frontend/src/u4-research/jobs.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:31:57Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u3-corpus.config.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:00Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/admission.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:01Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/attachments.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:02Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/evidence.py
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T01:32:04Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a1423d-7d33-7830-856f-380ff20567aa
+**Message**: Implemented the U4 owned runner, HTTPS entrypoint, fixture helper and tests.\n\n- New realm: `docsuri-u4-6272d2ff788e0867`, PostgreSQL **15479**, HTTPS **18079**, database `docsuri_u4`, realm `research-
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:04Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:04Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '60,95p' backend/modules/research/jobs.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:06Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/jobs.py
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T01:32:06Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-16T01:21:32.672Z.
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:06Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '175,215p' frontend/src/u4-research/jobs.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:07Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/repository.py
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T01:32:07Z
+**Event**: HUMAN_TURN
+**Session**: 01a14256-74bb-7491-8beb-cfc042df30b7
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:08Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/retrieval.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:10Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/service.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:11Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/u4_host.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:12Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/u4_policy.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:13Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/component/test_evidence.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:15Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/component/test_execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:16Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/component/test_retrieval.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:17Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/repository/test_attachments.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:18Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/repository/test_jobs.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:20Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/repository/test_repository.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:25Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python - <<'PY'\nimport json\nfrom pathlib import Path\ns=json.loads(Path('shared/dtos/workspace.schema.json').read_text())\nprint(s['$defs'
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:27Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '1,140p' tests/u3_paper_corpus_capabilities/integration/test_http.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:29Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json;d=json.load(open("shared/dtos/workspace.schema.json"))["$defs"];print(json.dumps({k:d[k] for k in ("ResearchDeletion","ResearchDeleteHtt
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:31Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '1,175p' backend/modules/research/repository.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:32Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/u4-research/api.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:33Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/u4-research/composer.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:34Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/u4-research/research-workspace.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:36Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/u4-research/sources.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:38Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json;d=json.load(open("shared/dtos/workspace.schema.json"))["$defs"]; print(json.dumps({k:v for k,v in d.items() if "Session" in k and ("List
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:52Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '4154,4207p' aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:32:57Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json;d=json.load(open("shared/dtos/workspace.schema.json"))["$defs"]; print(json.dumps(d["ResearchSessions"],indent=2))'
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:04Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json;d=json.load(open("shared/dtos/workspace.schema.json"))["$defs"]; print(json.dumps({k:d[k] for k in ("PageInfo","PageRequest")},indent=2)
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:11Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/composer.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:12Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/workspace.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:14Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/sources.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:29Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/local_browser.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:30Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/backend/modules/research/http.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:35Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec prettier --write src/u4-research/api.ts src/u4-research/composer.tsx src/u4-research/research-workspace.tsx src/u4-research/sources.tsx test/u4-resear
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:44Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python - <<'PY'\nfrom docsuri_shared.workspace import wire\nfor n in ['ResearchContext','ResearchSession','ResearchSessions','ResearchDele
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:45Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check backend/modules/research/http.py backend/local_browser.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:45Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec tsc --project tsconfig.u4-research.json --noEmit
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:46Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u4-research.config.ts --coverage
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:47Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec eslint src/u4-research src/App.tsx src/api.ts test/u4-research-novelty e2e/u4-research-novelty vitest.u4-research.config.ts playwright.u4-research.con
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:54Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/repository.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:58Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '1,135p' tests/u3_paper_corpus_capabilities/integration/test_assistance_routes.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:33:59Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '1,150p' backend/modules/research/service.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:34:00Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '331,475p' backend/modules/accounts/services/guarded_entry.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:34:01Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/http.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:34:25Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/service.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:34:58Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shared/python/.venv/bin/python - <<'PY'\nimport json\nfrom pathlib import Path\ns=json.loads(Path('shared/dtos/workspace.schema.json').read_text())\nfor n in ['Rese
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:35:08Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/e2e/u4-research-novelty/helpers.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:35:10Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec prettier --write e2e/u4-research-novelty/helpers.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:35:13Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/tests/u4_research_novelty/component/test_service.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:35:15Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: env DOCSURI_U4_ENVIRONMENT_FILE=/tmp/docsuri-u4-run/environment.json backend/.venv/bin/python -m pytest tests/u4_research_novelty/component -q
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:35:36Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/App.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:35:48Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:35:58Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import json;d=json.load(open("shared/dtos/workspace.schema.json"))["$defs"]; print(d["PaperRef"])'
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:35:59Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: env DOCSURI_U4_ENVIRONMENT_FILE=/tmp/docsuri-u4-run/environment.json backend/.venv/bin/python -c 'from pathlib import Path; from backend.local_profile import Lo
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:36:06Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '23,55p' backend/modules/accounts/local_http.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:36:16Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/accounts/local_http.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:36:17Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -c 'from pathlib import Path; from backend.local_profile import LocalProfile; from backend.u4_host import assemble_u4; a=assemble_u4(Lo
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:36:32Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/tests/u4_research_novelty/integration/test_http.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:36:41Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/u4-research/jobs.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:36:43Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/jobs.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:36:45Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/service.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:36:46Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec prettier --write src/u4-research/jobs.tsx test/u4-research-novelty/jobs.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:36:47Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:36:50Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check --fix backend/modules/research/http.py tests/u4_research_novelty/integration/test_http.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:36:51Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff format backend/modules/research/http.py tests/u4_research_novelty/integration/test_http.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:36:53Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: env DOCSURI_U4_ENVIRONMENT_FILE=/tmp/docsuri-u4-run/environment.json backend/.venv/bin/python -m pytest -c backend/pytest.u4-research-novelty.ini tests/u4_resea
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:01Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff format --diff backend/modules/research/admission.py backend/modules/research/attachments.py backend/modules/research/evidence.py backend/
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:03Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:03Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec tsc --project tsconfig.u4-research.json --noEmit
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:04Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec eslint src/u4-research src/App.tsx src/api.ts test/u4-research-novelty e2e/u4-research-novelty vitest.u4-research.config.ts playwright.u4-research.con
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:04Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/repository.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:05Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u4-research.config.ts --coverage
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:06Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/service.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:07Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/tests/u4_research_novelty/component/test_service.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:10Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '25,125p' backend/modules/research/repository.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:11Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '90,150p' backend/modules/research/service.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:15Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check --select I,F --diff backend/modules/research/admission.py backend/modules/research/attachments.py backend/modules/research/evidence
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:22Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/attachments.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:23Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/admission.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:24Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/jobs.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:26Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/service.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:27Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/repository.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:28Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:31Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check --output-format concise backend/modules/research backend/u4_host.py backend/u4_policy.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:37:45Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/repository.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:38:06Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: python3 -c 'import pathlib,re,ast,json,difflib; files=list(pathlib.Path("backend/modules/research").glob("*.py")); pattern=re.compile(r"^(\s*)(\"(?:[^\"\\]|\\.)
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:38:15Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:38:17Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/attachments.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:38:18Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/jobs.py
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-16T01:38:18Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:38:19Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/admission.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:38:20Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/repository.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:38:22Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/evidence.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:38:24Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check backend/modules/research/http.py backend/local_browser.py tests/u4_research_novelty/integration/test_http.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:38:25Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:38:43Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '199,280p' aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/functional-design/functional-spec.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:38:52Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '4150,4195p' aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/inception/contract-design/contract-summary.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:38:57Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>/tests/u4_research_novelty/component/test_policy.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:38:59Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/ruff check --output-format concise backend/modules/research backend/u4_host.py backend/u4_policy.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:39:00Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/.github/workflows/u4-research-novelty.yml
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:39:22Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: backend/.venv/bin/python -m pytest tests/u4_research_novelty/component/test_policy.py tests/u4_research_novelty/component/test_evidence.py tests/u4_research_nov
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:39:38Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/.coveragerc.u4
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:39:50Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/u4-research/api.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:39:51Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/u4-research/jobs.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:39:52Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/src/u4-research/research-workspace.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:39:58Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '1,135p' .codex/aidlc-common/stages/construction/code-generation.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:40:13Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/jobs.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:40:15Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/execution.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:40:16Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/backend/modules/research/service.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:40:24Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>/frontend/test/u4-research-novelty/workspace.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:40:26Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec prettier --write src/u4-research/api.ts src/u4-research/jobs.tsx src/u4-research/research-workspace.tsx test/u4-research-novelty/workspace.test.tsx
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:40:40Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '1,220p' backend/u3_host.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:40:40Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec vitest run --config vitest.u4-research.config.ts --coverage
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:40:41Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/unit-test-instructions.md
+**Context**: construction > u4-research-novelty > code-generation > unit-test-instructions.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:40:41Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: sed -n '1,240p' backend/local_host.py
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:40:42Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec tsc --project tsconfig.u4-research.json --noEmit
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-16T01:40:42Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: instruction
+**Grant**: none
+**Actor**: subagent
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: pnpm exec eslint src/u4-research src/App.tsx src/api.ts test/u4-research-novelty e2e/u4-research-novelty vitest.u4-research.config.ts playwright.u4-research.con
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-16T01:40:42Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-16T01:42:23Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T01:42:48Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: worker
+**Agent ID**: 01a1423e-a516-7610-bcb4-cfe357448baf
+**Message**: Frontend implementation is ready for the real-service browser pass.\n\n- Added [U4 research UI](<project-dir>/frontend/src/u4-research/research-workspace.tsx), canonical C
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-16T01:44:07Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/source-manifest.json
+**Context**: construction > u4-research-novelty > code-generation > source-manifest.json
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T01:44:58Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a14256-74bb-7491-8beb-cfc042df30b7 last seen 2026-10-16T01:32:06.585Z.
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-16T01:45:36Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-summary.md
+**Context**: construction > u4-research-novelty > code-generation > code-summary.md
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-16T01:49:33Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T01:52:36Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a1423d-7d33-7830-856f-380ff20567aa
+**Message**: Implemented and verified the U4 runner, private fixtures, safe realm preservation, and full-host assembly test.\n\n- Fresh realm: `docsuri-u4-229e5c81fee863dc`; 48 migrations.\n- Cumulative verification:
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T01:52:39Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-16T01:44:58.322Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T01:52:39Z
+**Event**: HUMAN_TURN
+**Session**: 01a14269-43f9-7d93-a288-0bd54bc2ff3e
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-16T01:55:12Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/traceability.json
+**Context**: construction > u4-research-novelty > code-generation > traceability.json
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-16T01:55:12Z
+**Event**: SENSOR_FIRED
+**Fire id**: 07ff0bb9
+**Sensor ID**: traceability
+**Stage slug**: code-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/traceability.json
+
+---
+
+## Sensor Failed
+**Timestamp**: 2026-10-16T01:55:12Z
+**Event**: SENSOR_FAILED
+**Fire id**: 07ff0bb9
+**Sensor ID**: traceability
+**Stage slug**: code-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/traceability.json
+**Detail path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/sensors/code-generation/traceability-07ff0bb9.md
+**Findings count**: 17
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:55:13Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:55:31Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/source-manifest.json
+**Context**: construction > u4-research-novelty > code-generation > source-manifest.json
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:56:00Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-generation-plan.md
+**Context**: construction > u4-research-novelty > code-generation > code-generation-plan.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:56:02Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/source-manifest.json
+**Context**: construction > u4-research-novelty > code-generation > source-manifest.json
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:57:04Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-summary.md
+**Context**: construction > u4-research-novelty > code-generation > code-summary.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:57:21Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:58:40Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T01:59:29Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T02:00:00Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a1423d-7d33-7830-856f-380ff20567aa
+**Message**: Readiness fix verified: **3 focused tests passed**, followed by **164 cumulative tests passed** with **87.28% coverage**.\n\nFinal backend evidence: [coverage log](/tmp/docsuri-u4-run/u4-phase-coverage-
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T02:00:03Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a14269-43f9-7d93-a288-0bd54bc2ff3e last seen 2026-10-16T01:52:39.461Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T02:00:03Z
+**Event**: HUMAN_TURN
+**Session**: 01a14270-0928-7f02-86fd-245a5f669658
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:02:23Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:06:42Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/traceability.json
+**Context**: construction > u4-research-novelty > code-generation > traceability.json
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-16T02:06:43Z
+**Event**: SENSOR_FIRED
+**Fire id**: 3f6a13f8
+**Sensor ID**: traceability
+**Stage slug**: code-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/traceability.json
+
+---
+
+## Sensor Failed
+**Timestamp**: 2026-10-16T02:06:43Z
+**Event**: SENSOR_FAILED
+**Fire id**: 3f6a13f8
+**Sensor ID**: traceability
+**Stage slug**: code-generation
+**Output path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/traceability.json
+**Detail path**: aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/sensors/code-generation/traceability-3f6a13f8.md
+**Findings count**: 16
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:06:44Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-summary.md
+**Context**: construction > u4-research-novelty > code-generation > code-summary.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:11:05Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-16T02:11:14Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:13:00Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-summary.md
+**Context**: construction > u4-research-novelty > code-generation > code-summary.md
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-16T02:14:23Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:14:42Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T02:17:34Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a14270-0928-7f02-86fd-245a5f669658 last seen 2026-10-16T02:00:03.319Z.
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:20:13Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-16T02:22:14Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:22:38Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/source-manifest.json
+**Context**: construction > u4-research-novelty > code-generation > source-manifest.json
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:22:39Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:25:01Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:26:14Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T02:26:17Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: worker
+**Agent ID**: 01a1423e-a516-7610-bcb4-cfe357448baf
+**Message**: U4 frontend is implemented and frozen. **All six real browser tests passed**, with zero failures or skips.\n\nFiles include:\n\n- [U4 workspace](<project-dir>/frontend/src/u
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T02:28:35Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: explorer
+**Agent ID**: 01a1423d-7d33-7830-856f-380ff20567aa
+**Message**: U4 runtime verification is complete.\n\n- Browser: **6 passed**, no failures or skips.\n- Cumulative backend/runtime: **181 passed**, no failures or skips; **87.66% coverage**. Every measured authored fi
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T02:28:37Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-16T02:17:34.323Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T02:28:38Z
+**Event**: HUMAN_TURN
+**Session**: 01a1428a-33e2-74f0-a541-a7f95444fdc9
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:28:44Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-summary.md
+**Context**: construction > u4-research-novelty > code-generation > code-summary.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:28:45Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:28:46Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-generation-plan.md
+**Context**: construction > u4-research-novelty > code-generation > code-generation-plan.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:29:26Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/code-summary.md
+**Context**: construction > u4-research-novelty > code-generation > code-summary.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:29:28Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:29:29Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:29:37Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/testing-evidence.md
+**Context**: construction > u4-research-novelty > code-generation > testing-evidence.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T02:29:47Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: aidlc-developer-agent
+**Agent ID**: 01a1423c-9e65-7b53-961b-f7c1842cf0ae
+**Message**: U4 code generation is ready for independent review.\n\n- Backend: **181 passed**, zero skips/failures/errors; **87.66% coverage**, every measured authored file ≥82%.\n- Frontend: **73 passed**, 99.69% ne
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T02:29:50Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a1428a-33e2-74f0-a541-a7f95444fdc9 last seen 2026-10-16T02:28:37.869Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T02:29:50Z
+**Event**: HUMAN_TURN
+**Session**: 01a1428b-4e0d-7903-8c7a-d0397aaba164
+
+---
+
+## Change Accepted
+**Timestamp**: 2026-10-16T02:30:13Z
+**Event**: CHANGE_ACCEPTED
+**Stage**: code-generation
+**Unit**: u3-paper-corpus-capabilities
+**Checkpoint**: review-receipt
+**Changed**: backend/artifacts.py, backend/local_browser.py, backend/local_host.py, backend/local_profile.py, backend/modules/accounts/local_http.py, backend/transactions.py, backend/u3_host.py, frontend/src/App.tsx, ops/src/docsuri_ops/local_transport.py
+**Recorded**: sha256:db1ad85ac22e077f586e67fd8c92dc4ead50f498566b89a214a4087f03c57133
+**Current**: sha256:2e862dc2347795fca53018f32ee5487e650d030a3557120dfb81ec5350334f8d
+**Details**: backend/artifacts.py, backend/local_browser.py, backend/local_host.py, backend/local_profile.py, backend/modules/accounts/local_http.py, backend/transactions.py, backend/u3_host.py, frontend/src/App.tsx, ops/src/docsuri_ops/local_transport.py changed after the paper corpus capabilities Unit was reviewed; carrying on.
+
+---
+
+## Change Accepted
+**Timestamp**: 2026-10-16T02:30:13Z
+**Event**: CHANGE_ACCEPTED
+**Stage**: code-generation
+**Unit**: u2-account-personal-controls
+**Checkpoint**: review-receipt
+**Changed**: backend/control_runtime.py, frontend/src/api.ts, shared/dtos/workspace.schema.json, shared/events/execution.schema.json, shared/python/src/docsuri_shared/_binding_head.json
+**Recorded**: sha256:9d596eb71c2dfe799d6bcadb83b57262d7bf762ed8a5b8a11291346aa6ee50c9
+**Current**: sha256:6c2fe9cd844d5f023ca48a53a68b00a7a00cfa5ad5cb896564cac6a4b8763255
+**Details**: backend/control_runtime.py, frontend/src/api.ts, shared/dtos/workspace.schema.json, shared/events/execution.schema.json, shared/python/src/docsuri_shared/_binding_head.json changed after the account personal controls Unit was reviewed; carrying on.
+
+---
+
+## Change Accepted
+**Timestamp**: 2026-10-16T02:30:13Z
+**Event**: CHANGE_ACCEPTED
+**Stage**: code-generation
+**Unit**: u1-integrated-paper-journey
+**Checkpoint**: review-receipt
+**Changed**: backend/local_observation.py, tests/u1_integrated_paper_journey/component/test_admission_faults.py
+**Recorded**: sha256:ec2b5535abd0c170530cb159c47c601a72f864902930b72d7d9d73fdedf7a533
+**Current**: sha256:ab462bfaa16ca26820d2dc0ccc1b258a2dd23a292c41cc2e9f3bfb368291fbc2
+**Details**: backend/local_observation.py, tests/u1_integrated_paper_journey/component/test_admission_faults.py changed after the integrated paper journey Unit was reviewed; carrying on.
+
+---
+
+## Error Logged
+**Timestamp**: 2026-10-16T02:30:13Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-log
+**Command**: aidlc-log review --stage code-generation --reviewer aidlc-architecture-reviewer-agent --iteration 1 --unit u4-research-novelty
+**Error**: Cannot record REVIEW_REQUESTED for "code-generation": unit "u4-research-novelty" has no valid source manifest at aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/source-manifest.json (writes[58].path: "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/" contains ignored application source "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/dtos/__pycache__/__init__.cpython-313.pyc"). Write the manifest listing every application-source path the reviewer will inspect, then dispatch the review.
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-16T02:30:54Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/construction/u4-research-novelty/code-generation/source-manifest.json
+**Context**: construction > u4-research-novelty > code-generation > source-manifest.json
+
+---
+
+## Review Requested
+**Timestamp**: 2026-10-16T02:31:00Z
+**Event**: REVIEW_REQUESTED
+**Stage**: code-generation
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: u4-research-novelty
+**Iteration**: 1
+**Artifact Fingerprint**: sha256:bcdc0a9d28ad681497070d53e5f283c70fc76d528815ca820a063fdee253c57a
+**Request Id**: review:cc00d523e38bfb4ce6780129ead5862d
+**Source Fingerprint**: cd6b3c118b601f24c2c7ff2515d31cdad97a69a0d93508539e2722893e3e1e0c
+**Unit Source Fingerprint**: sha256:05cd9419a2bfd0b4f4416613c7bc94f8a3c738012aafb5112ae670999a3c909a
+**Review File**: .aidlc-engine/reviews/code-generation/units/u4-research-novelty/24fa3166af3ad245/1.cc00d523e38bfb4ce6780129ead5862d.review.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-16T02:31:21Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/reviewer-dispatch.json
+**Context**: .aidlc-engine > reviewer-dispatch.json
+
+---
