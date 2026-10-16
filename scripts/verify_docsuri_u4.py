@@ -796,6 +796,10 @@ def bounded_process(
     observation_end = beginning + seconds - min(7, seconds / 2)
     count, peak, code = 0, 0, None
     environment = child_environment()
+    if companion is not None:
+        # Bound the Playwright coordinator and inherited worker heaps. The
+        # aggregate process-tree RSS check below remains authoritative.
+        environment["NODE_OPTIONS"] = "--max-old-space-size=128 --max-semi-space-size=8"
     previous = {
         value: signal.getsignal(value) for value in (signal.SIGTERM, signal.SIGINT)
     }

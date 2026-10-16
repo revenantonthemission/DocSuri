@@ -97,10 +97,10 @@
       "path": "frontend/playwright.u4-research.config.ts"
     },
     {
-      "path": "frontend/src/App.tsx"
+      "path": "frontend/src/api.ts"
     },
     {
-      "path": "frontend/src/api.ts"
+      "path": "frontend/src/App.tsx"
     },
     {
       "path": "frontend/src/u4-research/action.tsx"
@@ -296,6 +296,9 @@
     },
     {
       "path": "tests/u4_research_novelty/operations/test_browser_fixtures.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/operations/test_browser_memory.py"
     },
     {
       "path": "tests/u4_research_novelty/operations/test_database_readiness.py"

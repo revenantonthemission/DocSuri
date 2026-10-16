@@ -113,7 +113,7 @@ export default defineConfig({
             '--disable-dev-shm-usage',
             '--disable-extensions',
             '--renderer-process-limit=1',
-            '--js-flags=--max-old-space-size=256',
+            '--js-flags=--max-old-space-size=128 --max-semi-space-size=8',
           ],
         },
       },
