@@ -28495,3 +28495,114 @@
 **Session**: 01a142ab-2fef-7df3-9d43-47b19c736a91
 
 ---
+
+## Change Accepted
+**Timestamp**: 2026-10-16T03:05:01Z
+**Event**: CHANGE_ACCEPTED
+**Stage**: code-generation
+**Unit**: u3-paper-corpus-capabilities
+**Checkpoint**: review-receipt
+**Changed**: backend/artifacts.py, backend/local_browser.py, backend/local_host.py, backend/local_profile.py, backend/modules/accounts/local_http.py, backend/transactions.py, backend/u3_host.py, frontend/src/App.tsx, ops/src/docsuri_ops/local_transport.py, tests/u3_paper_corpus_capabilities/operations/test_diagnostics.py
+**Recorded**: sha256:db1ad85ac22e077f586e67fd8c92dc4ead50f498566b89a214a4087f03c57133
+**Current**: sha256:b2f0043805621dc0b991909d59edbcaf2d8a8be51c762110a12d8d93d0c64659
+**Details**: backend/artifacts.py, backend/local_browser.py, backend/local_host.py, backend/local_profile.py, backend/modules/accounts/local_http.py, backend/transactions.py, backend/u3_host.py, frontend/src/App.tsx, ops/src/docsuri_ops/local_transport.py, tests/u3_paper_corpus_capabilities/operations/test_diagnostics.py changed after the paper corpus capabilities Unit was reviewed; carrying on.
+
+---
+
+## Review Requested
+**Timestamp**: 2026-10-16T03:05:02Z
+**Event**: REVIEW_REQUESTED
+**Stage**: code-generation
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: u4-research-novelty
+**Iteration**: 2
+**Artifact Fingerprint**: sha256:8c25d3f51f4c8e9518840e72811f596a5288bb955d8196fd8252910768a637aa
+**Request Id**: review:ab672f3f7b2b431df32da85c2b8ae038
+**Source Fingerprint**: cf65812208fb5fbc4546f380c627f92c141c9ac00e4133d6f188563abd49624a
+**Unit Source Fingerprint**: sha256:ca3e40fa4a47d8fd5c31408968b11ac03981d571d51dcde0eb73da5e1a8031e5
+**Review File**: .aidlc-engine/reviews/code-generation/units/u4-research-novelty/24fa3166af3ad245/2.ab672f3f7b2b431df32da85c2b8ae038.review.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-16T03:05:19Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/reviewer-dispatch.json
+**Context**: .aidlc-engine > reviewer-dispatch.json
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-16T03:12:06Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261010-docsuri-v2-rebuild/.aidlc-engine/reviews/code-generation/units/u4-research-novelty/24fa3166af3ad245/2.ab672f3f7b2b431df32da85c2b8ae038.review.md
+**Context**: .aidlc-engine > reviews > code-generation > units > u4-research-novelty > 24fa3166af3ad245 > 2.ab672f3f7b2b431df32da85c2b8ae038.review.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-16T03:12:26Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: aidlc-architecture-reviewer-agent
+**Agent ID**: 01a142ab-ff01-7490-a0c2-a2c1f97b411a
+**Message**: **Reviewer:** aidlc-architecture-reviewer-agent\n\nREADY under the supplied severity rule. Review written to the designated iteration-2 file.\n\nAll five prior findings are fixed. New findings:\n\n- **Major
+
+---
+
+## Review Completed
+**Timestamp**: 2026-10-16T03:12:38Z
+**Event**: REVIEW_COMPLETED
+**Stage**: code-generation
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: u4-research-novelty
+**Iteration**: 2
+**Verdict**: READY
+**Request Fingerprint**: sha256:8c25d3f51f4c8e9518840e72811f596a5288bb955d8196fd8252910768a637aa
+**Artifact Fingerprint**: sha256:8c25d3f51f4c8e9518840e72811f596a5288bb955d8196fd8252910768a637aa
+**Request Id**: review:ab672f3f7b2b431df32da85c2b8ae038
+**Request Source Fingerprint**: cf65812208fb5fbc4546f380c627f92c141c9ac00e4133d6f188563abd49624a
+**Source Fingerprint**: cf65812208fb5fbc4546f380c627f92c141c9ac00e4133d6f188563abd49624a
+**Unit Source Fingerprint**: sha256:ca3e40fa4a47d8fd5c31408968b11ac03981d571d51dcde0eb73da5e1a8031e5
+**Review Record**: .aidlc-engine/reviews/code-generation/units/u4-research-novelty/24fa3166af3ad245/2.json
+**Review Record Digest**: sha256:2e8fa80064fe1141aba684f52b6a3e24ddec0c4a6b86dc8ced834be1f1e1ff36
+
+---
+
+## Error Logged
+**Timestamp**: 2026-10-16T03:12:50Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-state
+**Command**: aidlc-state unit complete --stage code-generation --unit u4-research-novelty
+**Error**: Refusing to complete unit "u4-research-novelty" for "code-generation": it is not the active unit (no unit is active — start it first).
+
+---
+
+## Unit Started
+**Timestamp**: 2026-10-16T03:13:02Z
+**Event**: UNIT_STARTED
+**Stage**: code-generation
+**Unit**: u4-research-novelty
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Unit Completed
+**Timestamp**: 2026-10-16T03:13:04Z
+**Event**: UNIT_COMPLETED
+**Stage**: code-generation
+**Unit**: u4-research-novelty
+**Run floor**: WORKFLOW_STARTED:2026-10-10T13:03:20Z#1
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-16T03:14:24Z
+**Event**: DECISION_RECORDED
+**Stage**: code-generation
+**Decision**: Two reproduced review findings remain before U4 verification and integration: prepared admissions can strand quota after interruption or session revocation, and the approved frontend test command collects no tests. Fix both findings, update the documented command and obtain a fresh review, or keep the findings and proceed to separate verification-command selection?
+**Options**: Fix and re-review,Keep findings
+**Unit**: u4-research-novelty
+
+---
