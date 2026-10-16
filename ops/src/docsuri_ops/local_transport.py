@@ -35,11 +35,12 @@ def _public_bytes(key) -> bytes:
 
 
 def _transport_prefix(profile: LocalProfile) -> str:
-    """Map only the two explicitly provisioned local HTTPS realms."""
+    """Map only explicitly provisioned local HTTPS realms."""
     bindings = {
         ("journey", "https://127.0.0.1:18039", "docsuri_u1_journey"): "journey-tls",
         ("account-controls", "https://127.0.0.1:18049", "docsuri_u2"): "account-controls-tls",
         ("corpus-maintenance", "https://127.0.0.1:18059", "docsuri_u3"): "corpus-maintenance-tls",
+        ("research-workspace", "https://127.0.0.1:18079", "docsuri_u4"): "research-workspace-tls",
     }
     prefix = bindings.get((profile.realm, profile.origin, profile.database_name))
     if prefix is None:

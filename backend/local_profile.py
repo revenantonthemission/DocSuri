@@ -11,6 +11,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+RUN_PARENT = Path("/tmp")
+
 
 def private_bytes(path: Path, *, maximum: int = 16384) -> bytes:
     """Read an owned regular file without blocking on a substituted FIFO/device."""
@@ -68,15 +70,14 @@ class LocalProfile:
     @classmethod
     def load(cls, manifest: Path) -> LocalProfile:
         profiles = {
-            Path("/tmp/docsuri-u1-run").resolve() / "environment.json": "u1",
-            Path("/tmp/docsuri-u2-run").resolve() / "environment.json": "u2",
-            Path("/tmp/docsuri-u3-run").resolve() / "environment.json": "u3",
+            (RUN_PARENT / f"docsuri-{unit}-run").resolve() / "environment.json": unit
+            for unit in ("u1", "u2", "u3", "u4")
         }
         expected = manifest.resolve()
         unit = profiles.get(expected)
         if manifest.is_symlink() or manifest.parent.is_symlink() or unit is None:
             raise ValueError("explicit owned synthetic manifest required")
-        if Path(f"/tmp/docsuri-{unit}-run").is_symlink():
+        if (RUN_PARENT / f"docsuri-{unit}-run").is_symlink():
             raise ValueError("owned run root cannot be a symbolic link")
         for path in (expected.parent, expected, expected.parent / "ownership.json"):
             info = path.lstat()
@@ -106,7 +107,10 @@ class LocalProfile:
             raise ValueError("runtime manifest must not carry migration credentials")
         if value["expiresAt"] <= time.time():
             raise ValueError("synthetic retention expired")
-        ports = {"u1": (18039, 15439), "u2": (18049, 15449), "u3": (18059, 15459)}
+        ports = {
+            "u1": (18039, 15439), "u2": (18049, 15449),
+            "u3": (18059, 15459), "u4": (18079, 15479),
+        }
         application_port, database_port = ports[unit]
         if value["applicationPort"] != application_port or value["databasePort"] != database_port:
             raise ValueError("unexpected owned listener")
@@ -143,6 +147,18 @@ class LocalProfile:
                 value["expiresAt"],
                 "docsuri_u3",
                 "corpus-maintenance",
+            )
+        if unit == "u4":
+            if (
+                value.get("unit") != "u4-research-novelty"
+                or value.get("database") != "docsuri_u4"
+                or value.get("realm") != "research-workspace"
+                or not time.time() < value["expiresAt"] <= time.time() + 86400
+            ):
+                raise ValueError("wrong U4 owned realm or finite retention")
+            return cls(
+                expected.parent, value["runId"], "https://127.0.0.1:18079", 15479,
+                value["expiresAt"], "docsuri_u4", "research-workspace",
             )
         return cls(
             expected.parent, value["runId"], "http://127.0.0.1:18039", 15439, value["expiresAt"]

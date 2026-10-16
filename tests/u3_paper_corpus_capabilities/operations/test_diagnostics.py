@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from backend import local_observation
-from backend.transactions import OwnerTransactions
+from backend.transactions import OWNERS, OwnerTransactions
 
 pytestmark = pytest.mark.u3_operations
 
@@ -18,7 +18,8 @@ def test_readiness_distinguishes_observed_unknown_and_stale(
     transactions = OwnerTransactions(realm[0], process="observation")
     try:
         observations = local_observation.observe_all(transactions)
-        assert set(observations) == set(local_observation.PROBES)
+        assert set(observations) == set(OWNERS)
+        assert "research" not in observations
         for owner, row in observations.items():
             assert row["disposition"] in ("available", "unavailable")
             assert isinstance(row["evidence"], dict)

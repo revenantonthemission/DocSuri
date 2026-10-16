@@ -1,0 +1,237 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "u4-research-novelty",
+  "upstream_ids": [
+    "NFR1.1",
+    "NFR1.2",
+    "NFR1.3",
+    "NFR1.4",
+    "NFR1.5",
+    "NFR2.1",
+    "NFR2.2",
+    "NFR2.3",
+    "NFR3.1",
+    "NFR3.2",
+    "NFR3.3",
+    "NFR3.4",
+    "NFR3.5",
+    "NFR4.1",
+    "NFR4.2",
+    "NFR4.3",
+    "NFR4.4",
+    "NFR4.5",
+    "NFR4.6",
+    "NFR5.1",
+    "NFR5.2",
+    "NFR5.3",
+    "NFR5.4",
+    "NFR5.5",
+    "NFR6.1",
+    "NFR6.2",
+    "NFR6.3",
+    "NFR7.1",
+    "NFR7.2",
+    "NFR7.3",
+    "NFR8.1",
+    "NFR8.2",
+    "NFR9.1",
+    "NFR9.2",
+    "NFR10.1",
+    "NFR10.2",
+    "NFR10.3",
+    "NFR10.4"
+  ],
+  "coverage": [
+    {
+      "id": "NFR1.1",
+      "status": "OK",
+      "target": "Integration and Operations stages: grounding/abstention fixtures and fault schedules"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "OK",
+      "target": "Integration stage through the mounted host; restart/reconnect recovery checks"
+    },
+    {
+      "id": "NFR1.3",
+      "status": "OK",
+      "target": "Integration and Frontend stages: owner/context denial cases per surface"
+    },
+    {
+      "id": "NFR1.4",
+      "status": "OK",
+      "target": "Integration stage: unread-reference fixtures excluded from evidence"
+    },
+    {
+      "id": "NFR1.5",
+      "status": "OK",
+      "target": "Unit/Integration stages: assessment scale and evidence-ID checks"
+    },
+    {
+      "id": "NFR2.1",
+      "status": "OK",
+      "target": "Frontend unit + browser stage: state distinction checks"
+    },
+    {
+      "id": "NFR2.2",
+      "status": "OK",
+      "target": "Database stage: monotonic owner-written job sequence; Frontend unit + browser stage: no feedback loop; Operations stage: ordered-progress assertions"
+    },
+    {
+      "id": "NFR2.3",
+      "status": "OK",
+      "target": "Operations stage: duplicate/double-action schedules; bounded phases"
+    },
+    {
+      "id": "NFR3.1",
+      "status": "OK",
+      "target": "Operations stage fault schedule; Evidence and recovery operations"
+    },
+    {
+      "id": "NFR3.2",
+      "status": "OK",
+      "target": "Database stage: immutable input and monotonic sequence checks"
+    },
+    {
+      "id": "NFR3.3",
+      "status": "OK",
+      "target": "Unit/Operations stages: draft CAS, conflict and exact-revision consumption"
+    },
+    {
+      "id": "NFR3.4",
+      "status": "OK",
+      "target": "Operations stage: tombstone-vs-late-write and tombstone-vs-late-result schedules"
+    },
+    {
+      "id": "NFR3.5",
+      "status": "OK",
+      "target": "Operations stage: cancellation/completion race schedule; one terminal outcome"
+    },
+    {
+      "id": "NFR4.1",
+      "status": "OK",
+      "target": "Privacy and policy gates; Integration stage cross-owner/cross-context cases"
+    },
+    {
+      "id": "NFR4.2",
+      "status": "OK",
+      "target": "Privacy and policy gates: private identity never resolves on a public route"
+    },
+    {
+      "id": "NFR4.3",
+      "status": "OK",
+      "target": "Integration stage: untrusted-content fixtures cannot change authority"
+    },
+    {
+      "id": "NFR4.4",
+      "status": "OK",
+      "target": "Integration stage: revoked, expired and anonymous session cases per private surface; Delivery pipeline: untrusted PR jobs secret-free"
+    },
+    {
+      "id": "NFR4.5",
+      "status": "OK",
+      "target": "Secrets and protected material: no private text or credentials in evidence"
+    },
+    {
+      "id": "NFR4.6",
+      "status": "OK",
+      "target": "Resource configuration: outbound-target validation exercised in every environment"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "Privacy and policy gates; synthetic-only fixtures per environment"
+    },
+    {
+      "id": "NFR5.2",
+      "status": "OK",
+      "target": "Privacy and policy gates: policy-unresolved refusals never become green skips"
+    },
+    {
+      "id": "NFR5.3",
+      "status": "OK",
+      "target": "Migration, expiry and rollback: deletion/restore procedure with derived-data disposition"
+    },
+    {
+      "id": "NFR5.4",
+      "status": "OK",
+      "target": "Environment flow: no private content reused across runs or environments"
+    },
+    {
+      "id": "NFR5.5",
+      "status": "OK",
+      "target": "Deletion and restore procedure: tombstone dominance; no erasure-completeness claim"
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": "Frontend unit + browser stage: keyboard/focus/announcement checks"
+    },
+    {
+      "id": "NFR6.2",
+      "status": "OK",
+      "target": "Frontend stage: destructive-action scope and confirmation checks"
+    },
+    {
+      "id": "NFR6.3",
+      "status": "OK",
+      "target": "Frontend stage: contrast and zoom/reflow checks recorded with limitations"
+    },
+    {
+      "id": "NFR7.1",
+      "status": "OK",
+      "target": "Evidence and recovery operations: clean-checkout reproduction of setup and a representative defect with pinned dependencies"
+    },
+    {
+      "id": "NFR7.2",
+      "status": "OK",
+      "target": "Evidence and recovery operations: documented diagnosis/recovery covering draft, tombstone, job and artifact states including the policy-suspended path"
+    },
+    {
+      "id": "NFR7.3",
+      "status": "OK",
+      "target": "Integration stage: regression plus affected integration checks after a repair"
+    },
+    {
+      "id": "NFR8.1",
+      "status": "OK",
+      "target": "Resource configuration and $0 guardrails: finite bounds with recorded values"
+    },
+    {
+      "id": "NFR8.2",
+      "status": "OK",
+      "target": "Resource configuration: no paid fallback; loud failure instead of overage"
+    },
+    {
+      "id": "NFR9.1",
+      "status": "OK",
+      "target": "Evidence bundle and redaction rules"
+    },
+    {
+      "id": "NFR9.2",
+      "status": "OK",
+      "target": "Evidence and recovery operations: readiness distinction and capability-checked recovery"
+    },
+    {
+      "id": "NFR10.1",
+      "status": "OK",
+      "target": "Contract-conformance stage: C07/C12/C14 state machines and semantics"
+    },
+    {
+      "id": "NFR10.2",
+      "status": "OK",
+      "target": "Contract-conformance stage: immutable artifact tuple and export-identity checks"
+    },
+    {
+      "id": "NFR10.3",
+      "status": "OK",
+      "target": "Execution payload enablement: mounted claim/payload/complete round trip before enablement"
+    },
+    {
+      "id": "NFR10.4",
+      "status": "OK",
+      "target": "Integration/Operations stages: one usage reconciliation per accepted operation"
+    }
+  ],
+  "reverse": []
+}

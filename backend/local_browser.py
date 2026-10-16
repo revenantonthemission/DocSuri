@@ -31,6 +31,7 @@ JOURNEY_ORIGIN = "https://127.0.0.1:18039"
 JOURNEY_AUTHORITY = "127.0.0.1:18039"
 CONTROLS_ORIGIN = "https://127.0.0.1:18049"
 CORPUS_ORIGIN = "https://127.0.0.1:18059"
+RESEARCH_ORIGIN = "https://127.0.0.1:18079"
 
 
 class BrowserDenied(Exception):
@@ -79,7 +80,7 @@ def boundary_route(
     missing: tuple[int, str] = (404, "FORBIDDEN"),
 ):
     """One route class for every canonical browser adapter; identical dispositions."""
-    if origin not in (JOURNEY_ORIGIN, CONTROLS_ORIGIN, CORPUS_ORIGIN):
+    if origin not in (JOURNEY_ORIGIN, CONTROLS_ORIGIN, CORPUS_ORIGIN, RESEARCH_ORIGIN):
         raise ValueError("unowned browser origin")
     expected_authority = urlsplit(origin).netloc
     if authority is not None and authority != expected_authority:
@@ -147,7 +148,9 @@ async def read_payload(request: Request, schema):
     raw = bytearray()
     maximum = (
         65536
-        if request.headers.get("host") in ("127.0.0.1:18049", "127.0.0.1:18059")
+        if request.headers.get("host") in (
+            "127.0.0.1:18049", "127.0.0.1:18059", "127.0.0.1:18079"
+        )
         else 8192
     )
     async with asyncio.timeout(5):

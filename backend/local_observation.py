@@ -40,6 +40,12 @@ class OwnerProbe:
 # on. The probe proves connect + schema + relation + read privilege; an empty
 # store is a normal ready state, not a failure.
 PROBES = {
+    "research": OwnerProbe(
+        "SELECT (SELECT count(*) FROM research.context) AS contexts,"
+        " (SELECT count(*) FROM research.job) AS jobs,"
+        " (SELECT count(*) FROM research.artifact) AS artifacts,"
+        " (SELECT count(*) FROM research.admission) AS admissions"
+    ),
     "accounts": OwnerProbe(
         "SELECT (SELECT count(*) FROM accounts.account) AS accounts,"
         " (SELECT count(*) FROM accounts.session) AS sessions,"
@@ -121,8 +127,11 @@ def probe_owner(transactions: OwnerTransactions, owner: str) -> dict:
     }
 
 
-def observe_all(transactions: OwnerTransactions) -> dict[str, dict]:
-    return {owner: probe_owner(transactions, owner) for owner in PROBES}
+def observe_all(
+    transactions: OwnerTransactions, required: set[str] | None = None
+) -> dict[str, dict]:
+    owners = required if required is not None else set(PROBES) - {"research"}
+    return {owner: probe_owner(transactions, owner) for owner in owners}
 
 
 def record(transactions: OwnerTransactions, observations: dict[str, dict]) -> None:

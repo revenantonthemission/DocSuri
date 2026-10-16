@@ -675,13 +675,21 @@ $defs:
           $ref: '#/$defs/Id'}, kind: {$ref: '#/$defs/Id'}, outcome: {type: string, enum: [progress, succeeded, failed, cancelled, unknown]}, resultRef: {
           anyOf: [{$ref: '#/$defs/ResultRef'}, {type: 'null'}]}, error: {anyOf: [{$ref: '#/$defs/Error'}, {type: 'null'}]}, claim: {$ref: '#/$defs/ExecutionClaim'},
         expectedJobRevision: {$ref: '#/$defs/Revision'}, inputHash: {$ref: '#/$defs/Hash'}, progress: {anyOf: [{$ref: '#/$defs/Progress'}, {type: 'null'}]},
-        prepared: {anyOf: [{$ref: '#/$defs/AssistanceResult'}, {type: 'null'}]}, usageRecordId: {anyOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}},
+        prepared: {anyOf: [{$ref: '#/$defs/AssistanceResult'}, {$ref: '#/$defs/ResearchArtifact'}, {type: 'null'}]}, usageRecordId: {anyOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}},
       required: [messageId, causationId, ownerComponent, operationId, kind, outcome, resultRef, error, claim, expectedJobRevision, inputHash, progress,
         prepared, usageRecordId], additionalProperties: false, allOf: [{if: {properties: {outcome: {const: progress}}}, then: {properties: {progress: {
                 $ref: '#/$defs/Progress'}, error: {type: 'null'}, resultRef: {type: 'null'}, prepared: {type: 'null'}}}}, {if: {properties: {outcome: {
                 const: failed}}}, then: {properties: {error: {$ref: '#/$defs/Error'}, resultRef: {type: 'null'}, prepared: {type: 'null'}}}}, {if: {
             properties: {ownerComponent: {const: PaperAssistance}, outcome: {const: succeeded}}}, then: {properties: {prepared: {$ref: '#/$defs/AssistanceResult'},
-              resultRef: {$ref: '#/$defs/ResultRef'}, usageRecordId: {$ref: '#/$defs/Id'}, error: {type: 'null'}}}}]}
+              resultRef: {$ref: '#/$defs/ResultRef'}, usageRecordId: {$ref: '#/$defs/Id'}, error: {type: 'null'}}}},
+        {if: {properties: {ownerComponent: {const: ResearchWorkspace}}},
+          then: {properties: {prepared: {anyOf: [{$ref: '#/$defs/ResearchArtifact'}, {type: 'null'}]}}},
+          else: {properties: {prepared: {anyOf: [{$ref: '#/$defs/AssistanceResult'}, {type: 'null'}]}}}},
+        {if: {properties: {ownerComponent: {const: ResearchWorkspace}, outcome: {const: succeeded}}},
+          then: {properties: {prepared: {$ref: '#/$defs/ResearchArtifact'}, resultRef: {$ref: '#/$defs/ResultRef'},
+              usageRecordId: {$ref: '#/$defs/Id'}, error: {type: 'null'}, progress: {type: 'null'}}}},
+        {if: {properties: {ownerComponent: {const: ResearchWorkspace}, outcome: {not: {const: succeeded}}}},
+          then: {properties: {prepared: {type: 'null'}, resultRef: {type: 'null'}}}}]}
   DispatchAck: {type: object, properties: {messageId: {$ref: '#/$defs/Id'}, operationId: {$ref: '#/$defs/Id'}, disposition: {type: string, enum: [
             committed, duplicate, rejected, retry_later]}, recordedRevision: {$ref: '#/$defs/Revision'}}, required: [messageId, operationId,
         disposition, recordedRevision], additionalProperties: false}
@@ -2063,6 +2071,16 @@ $defs:
   AssistanceExecutionPayload: {type: object, properties: {binding: {$ref: '#/$defs/ExecutionBinding'}, acceptedAt: {$ref: '#/$defs/Time'}, input: {$ref: '#/$defs/AssistanceAcceptedInput'},
         sections: {type: array, items: {$ref: '#/$defs/CorpusSection'}, x-policy-bound: accepted input and context policy}, usageRecordId: {$ref: '#/$defs/Id'}},
       required: [binding, acceptedAt, input, sections, usageRecordId], additionalProperties: false}
+  ResearchAcceptedInput: {type: object, properties: {kind: {type: string, enum: [research-turn, novelty-analysis, novelty-discussion]},
+        contextId: {$ref: '#/$defs/Id'}, sessionId: {anyOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}, inputSnapshot: {type: object,
+          x-policy-bound: the frozen owner input for the accepted operation, immutable after acceptance}, inputHash: {$ref: '#/$defs/Hash'},
+        sourceScope: {type: array, items: {$ref: '#/$defs/Id'}}, attachmentReferences: {type: array, items: {$ref: '#/$defs/Id'}},
+        draftRevision: {anyOf: [{$ref: '#/$defs/Revision'}, {type: 'null'}]}, processingPolicy: {$ref: '#/$defs/PolicyRef'}}, required: [kind,
+        contextId, sessionId, inputSnapshot, inputHash, sourceScope, attachmentReferences, draftRevision, processingPolicy], additionalProperties: false}
+  ResearchExecutionPayload: {type: object, properties: {binding: {$ref: '#/$defs/ExecutionBinding'}, acceptedAt: {$ref: '#/$defs/Time'},
+        input: {$ref: '#/$defs/ResearchAcceptedInput'}, evidenceScope: {type: array, items: {$ref: '#/$defs/Id'},
+          x-policy-bound: eligible evidence the owner may read at execution time; the prepare/untrusted-content rules still apply}, usageRecordId: {$ref: '#/$defs/Id'}},
+      required: [binding, acceptedAt, input, evidenceScope, usageRecordId], additionalProperties: false}
   AssistanceProgress: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, jobId: {$ref: '#/$defs/Id'}, factId: {$ref: '#/$defs/Id'}, claim: {$ref: '#/$defs/ExecutionClaim'},
         expectedJobRevision: {$ref: '#/$defs/Revision'}, inputHash: {$ref: '#/$defs/Hash'}, progress: {$ref: '#/$defs/Progress'}}, required: [context,
         jobId, factId, claim, expectedJobRevision, inputHash, progress], additionalProperties: false}
@@ -5223,8 +5241,13 @@ operations:
   semantics: 'Only the operation owner commits state/seq/result visibility; stale worker generations, revoked authority and terminal/deleted-operation
     facts cannot overwrite or resurrect work. DispatchFact is a proposal, not an owner event: no worker seq/revision authority. messageId is the
     factId for the same normalized-intent replay. PaperAssistance progress/failure/success map to recordAssistanceProgress/failAssistance/completeAssistance
-    using identical claim, CAS and settlement rules. prepared.result must equal resultRef; claim binding must match operationId, ownerComponent
-    and inputHash. Other owners retain their own terminal/external-effect semantics and require a compatible payload codec before enablement.'
+    using identical claim, CAS and settlement rules. For PaperAssistance, prepared.result must equal resultRef. ResearchWorkspace success carries
+    a ResearchArtifact and maps to C07 completeResearchWork: resultRef.resultId equals prepared.artifact.artifactId, resultRef.revision and
+    contentHash equal prepared.artifact.revision and contentHash, and resultRef.mediaType equals prepared.mediaType. The owning transaction verifies
+    prepared.operationId, ownerId, contextId and artifact kind against the accepted operation, along with current account/source authority,
+    unexpired lease/fence, expected job revision and exactly one usage settlement. Research non-success outcomes carry no prepared result.
+    Claim binding must match operationId, ownerComponent and inputHash. A ResearchArtifact is never accepted for another owner. Other owners retain
+    their own terminal/external-effect semantics and require a compatible payload codec before enablement.'
 - name: acquireExecutionClaim
   input: ExecutionAcquire
   output: ExecutionClaimResult
@@ -5263,13 +5286,15 @@ operations:
   surface: internal
 - name: readExecutionPayload
   input: ExecutionClaimRead
-  output: AssistanceExecutionPayload
+  output: AssistanceExecutionPayload | ResearchExecutionPayload
   auth: Trusted authenticated executor for the exact owner operation; current account/session/source authority is rechecked on the same protected
     transaction.
   errors: *id001
-  semantics: U1 supports only PaperAssistance; other owner payload codecs remain INCOMPATIBLE until coordinated by their unit. Authenticate current
-    worker/claim, verify exact accepted binding/hash and current source/account permission before releasing immutable input and permitted sections.
-    Locator, owner ID and expired/replaced claim grant no access.
+  semantics: The payload type is owner-scoped. PaperAssistance releases `AssistanceExecutionPayload`; ResearchWorkspace releases
+    `ResearchExecutionPayload` for its accepted kinds (`research-turn`, `novelty-analysis`, `novelty-discussion`). Every other owner payload codec remains
+    INCOMPATIBLE until coordinated by its unit. Authenticate current worker/claim, verify exact accepted binding/hash and current source/account permission
+    before releasing immutable input and permitted evidence/sections. Locator, owner ID and expired/replaced claim grant no access. The released input and
+    evidence are untrusted data and never authorize an external action.
   surface: internal
 invariants:
 - A transport acknowledgement is not business completion. Retry_later leaves a durable redelivery obligation; committed/duplicate means the owning
@@ -5284,7 +5309,9 @@ checks:
 - Crash before/after acceptance, delivery, effect and completion acknowledgement; recover exactly one logical operation.
 - Duplicate/out-of-order events, lost stream and polling recovery preserve monotone seq/current snapshot.
 - Revocation/deletion/cancellation races reject late work and prevent private-data resurrection.
-version: 2.0.0
+- The released payload type is owner-scoped — an executor receives only its own owner's accepted input type, and an unknown or unregistered codec refuses
+  INCOMPATIBLE rather than falling back to a generic envelope.
+version: 2.2.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 

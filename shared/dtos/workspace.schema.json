@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://docsuri.dev/shared/dtos/workspace.schema.json",
-  "$comment": "Generated canonical contract release 3.0.0; source SHA256:9db5c5ad9e0fcf6d486fffa6a250dd98fb4d29ef8fc5ea6c7e0eb4fa7617fa07",
+  "$comment": "Generated canonical contract release 3.0.0; source SHA256:0fbbea3863829bc3f68eae4acbe9e128dd60fe3359116e9f5a5a469d32e8e704",
   "$defs": {
     "Id": {
       "type": "string",

@@ -1,0 +1,982 @@
+{
+  "stage": "code-generation",
+  "unit": "u4-research-novelty",
+  "semantics": "OK identifies a bounded implemented contribution, not full release parity. GAP preserves unresolved policy, synthetic-only functionality and verification limits. N/A identifies requirements outside U4; authoritative ownership remains in the approved unit map.",
+  "upstream_ids": [
+    "FR1",
+    "FR1.1",
+    "FR1.2",
+    "FR1.3",
+    "FR2",
+    "FR2.1",
+    "FR2.2",
+    "FR2.3",
+    "FR3",
+    "FR3.1",
+    "FR3.2",
+    "FR3.3",
+    "FR3.4",
+    "FR4",
+    "FR4.1",
+    "FR4.2",
+    "FR5",
+    "FR5.1",
+    "FR5.2",
+    "FR5.3",
+    "FR6",
+    "FR6.1",
+    "FR6.2",
+    "FR6.3",
+    "FR6.4",
+    "FR7",
+    "FR7.1",
+    "FR7.2",
+    "FR8",
+    "FR8.1",
+    "FR8.2",
+    "FR9",
+    "FR9.1",
+    "FR9.2",
+    "FR10",
+    "FR10.1",
+    "FR10.2",
+    "FR11",
+    "FR11.1",
+    "FR11.2",
+    "FR12",
+    "FR12.1",
+    "FR12.2",
+    "FR13",
+    "FR13.1",
+    "FR13.2",
+    "FR13.3",
+    "FR14",
+    "FR14.1",
+    "FR14.2",
+    "FR15",
+    "FR15.1",
+    "FR15.2",
+    "FR16",
+    "FR16.1",
+    "FR16.2",
+    "FR17",
+    "FR17.1",
+    "FR17.2",
+    "FR18",
+    "FR18.1",
+    "FR18.2",
+    "FR18.3",
+    "FR19",
+    "FR19.1",
+    "FR19.2",
+    "FR19.3",
+    "FR20",
+    "FR20.1",
+    "FR20.2",
+    "NFR1",
+    "NFR2",
+    "NFR3",
+    "NFR4",
+    "NFR5",
+    "NFR6",
+    "NFR7",
+    "NFR8",
+    "NFR9",
+    "NFR10",
+    "NFR1.1",
+    "NFR1.2",
+    "NFR1.3",
+    "NFR1.4",
+    "NFR1.5",
+    "NFR2.1",
+    "NFR2.2",
+    "NFR2.3",
+    "NFR3.1",
+    "NFR3.2",
+    "NFR3.3",
+    "NFR3.4",
+    "NFR3.5",
+    "NFR4.1",
+    "NFR4.2",
+    "NFR4.3",
+    "NFR4.4",
+    "NFR4.5",
+    "NFR4.6",
+    "NFR5.1",
+    "NFR5.2",
+    "NFR5.3",
+    "NFR5.4",
+    "NFR5.5",
+    "NFR6.1",
+    "NFR6.2",
+    "NFR6.3",
+    "NFR7.1",
+    "NFR7.2",
+    "NFR7.3",
+    "NFR8.1",
+    "NFR8.2",
+    "NFR9.1",
+    "NFR9.2",
+    "NFR10.1",
+    "NFR10.2",
+    "NFR10.3",
+    "NFR10.4",
+    "BR1.1",
+    "BR1.2",
+    "BR1.3",
+    "BR1.4",
+    "BR1.5",
+    "BR2.1",
+    "BR2.2",
+    "BR2.3",
+    "BR2.4",
+    "BR2.5",
+    "BR3.1",
+    "BR3.2",
+    "BR3.3",
+    "BR3.4",
+    "BR4.1",
+    "BR4.2",
+    "BR4.3",
+    "BR4.4",
+    "BR4.5",
+    "BR4.6",
+    "BR4.7",
+    "BR5.1",
+    "BR5.2",
+    "BR5.3",
+    "BR5.4",
+    "BR5.5",
+    "BR6.1",
+    "BR6.2",
+    "BR6.3",
+    "BR6.4",
+    "BR6.5",
+    "BR7.1",
+    "BR7.2",
+    "BR7.3",
+    "BR7.4",
+    "BR8.1",
+    "BR8.2",
+    "BR8.3",
+    "BR8.4",
+    "BR8.5",
+    "BR8.6",
+    "BR8.7",
+    "BR9.1",
+    "BR9.2"
+  ],
+  "coverage": [
+    {
+      "id": "FR1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR1.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR1.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR1.3",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR2",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "FR2.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR2.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR2.3",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "FR3",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR3.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR3.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR3.3",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR3.4",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR4",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR4.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR4.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR5",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR5.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR5.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR5.3",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR6",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "FR6.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR6.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR6.3",
+      "status": "GAP",
+      "target": "Retention, reactivation and erasure participant/backup policy unresolved."
+    },
+    {
+      "id": "FR6.4",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR7",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR7.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR7.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR8",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "FR8.1",
+      "status": "GAP",
+      "target": "Consent lifecycle participation remains incomplete beyond current authorization checks."
+    },
+    {
+      "id": "FR8.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR9",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR9.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR9.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR10",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR10.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR10.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR11",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR11.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR11.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR12",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR12.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR12.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR13",
+      "status": "GAP",
+      "target": "Useful non-synthetic research and private-document parity remain owed."
+    },
+    {
+      "id": "FR13.1",
+      "status": "GAP",
+      "target": "Synthetic extraction is not useful model-based research/claim comparison parity."
+    },
+    {
+      "id": "FR13.2",
+      "status": "GAP",
+      "target": "Private upload policy and byte binding unresolved; PDF unsupported."
+    },
+    {
+      "id": "FR13.3",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "FR14",
+      "status": "GAP",
+      "target": "Public durable draft policy/allocation/restart discovery unresolved."
+    },
+    {
+      "id": "FR14.1",
+      "status": "OK",
+      "target": "backend/modules/research/repository.py"
+    },
+    {
+      "id": "FR14.2",
+      "status": "OK",
+      "target": "backend/modules/research/repository.py"
+    },
+    {
+      "id": "FR15",
+      "status": "GAP",
+      "target": "Substantive novelty analysis remains synthetic-only."
+    },
+    {
+      "id": "FR15.1",
+      "status": "GAP",
+      "target": "No validated novelty model or substantive assessment adapter."
+    },
+    {
+      "id": "FR15.2",
+      "status": "OK",
+      "target": "backend/modules/research/execution.py"
+    },
+    {
+      "id": "FR16",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "FR16.1",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "FR16.2",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "FR17",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "FR17.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR17.2",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "FR18",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR18.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR18.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR18.3",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR19",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "FR19.1",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "FR19.2",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "FR19.3",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "FR20",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR20.1",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR20.2",
+      "status": "N/A",
+      "target": "Outside U4 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "NFR1",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "frontend/src/u4-research/research-workspace.tsx"
+    },
+    {
+      "id": "NFR3",
+      "status": "OK",
+      "target": "backend/modules/research/execution.py"
+    },
+    {
+      "id": "NFR4",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "NFR5",
+      "status": "OK",
+      "target": "backend/modules/research/jobs.py"
+    },
+    {
+      "id": "NFR6",
+      "status": "OK",
+      "target": "frontend/src/u4-research/research-workspace.tsx"
+    },
+    {
+      "id": "NFR7",
+      "status": "OK",
+      "target": "scripts/verify_docsuri_u4.py"
+    },
+    {
+      "id": "NFR8",
+      "status": "OK",
+      "target": "backend/u4_policy.py"
+    },
+    {
+      "id": "NFR9",
+      "status": "OK",
+      "target": "backend/local_observation.py"
+    },
+    {
+      "id": "NFR10",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "NFR1.1",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "NFR1.3",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "NFR1.4",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "NFR1.5",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "NFR2.1",
+      "status": "OK",
+      "target": "frontend/src/u4-research/research-workspace.tsx"
+    },
+    {
+      "id": "NFR2.2",
+      "status": "OK",
+      "target": "frontend/src/u4-research/research-workspace.tsx"
+    },
+    {
+      "id": "NFR2.3",
+      "status": "OK",
+      "target": "frontend/src/u4-research/research-workspace.tsx"
+    },
+    {
+      "id": "NFR3.1",
+      "status": "OK",
+      "target": "backend/modules/research/execution.py"
+    },
+    {
+      "id": "NFR3.2",
+      "status": "OK",
+      "target": "backend/modules/research/execution.py"
+    },
+    {
+      "id": "NFR3.3",
+      "status": "GAP",
+      "target": "Internal draft CAS tested; public durable recovery policy remains closed."
+    },
+    {
+      "id": "NFR3.4",
+      "status": "OK",
+      "target": "backend/modules/research/execution.py"
+    },
+    {
+      "id": "NFR3.5",
+      "status": "OK",
+      "target": "backend/modules/research/execution.py"
+    },
+    {
+      "id": "NFR4.1",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "NFR4.2",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "NFR4.3",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "NFR4.4",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "NFR4.5",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "NFR4.6",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "backend/modules/research/jobs.py"
+    },
+    {
+      "id": "NFR5.2",
+      "status": "OK",
+      "target": "backend/modules/research/jobs.py"
+    },
+    {
+      "id": "NFR5.3",
+      "status": "GAP",
+      "target": "Physical purge and backup restore obligations remain unresolved."
+    },
+    {
+      "id": "NFR5.4",
+      "status": "OK",
+      "target": "backend/modules/research/jobs.py"
+    },
+    {
+      "id": "NFR5.5",
+      "status": "GAP",
+      "target": "Deletion reports limited; complete lifecycle/restore closure not implemented."
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": "frontend/src/u4-research/research-workspace.tsx"
+    },
+    {
+      "id": "NFR6.2",
+      "status": "OK",
+      "target": "frontend/src/u4-research/research-workspace.tsx"
+    },
+    {
+      "id": "NFR6.3",
+      "status": "GAP",
+      "target": "Full contrast/zoom/reflow audit remains unproven."
+    },
+    {
+      "id": "NFR7.1",
+      "status": "GAP",
+      "target": "Fresh owned realm reproduced; clean-checkout reproduction remains unproven."
+    },
+    {
+      "id": "NFR7.2",
+      "status": "OK",
+      "target": "scripts/verify_docsuri_u4.py"
+    },
+    {
+      "id": "NFR7.3",
+      "status": "OK",
+      "target": "scripts/verify_docsuri_u4.py"
+    },
+    {
+      "id": "NFR8.1",
+      "status": "OK",
+      "target": "backend/u4_policy.py"
+    },
+    {
+      "id": "NFR8.2",
+      "status": "OK",
+      "target": "backend/u4_policy.py"
+    },
+    {
+      "id": "NFR9.1",
+      "status": "OK",
+      "target": "backend/local_observation.py"
+    },
+    {
+      "id": "NFR9.2",
+      "status": "OK",
+      "target": "backend/local_observation.py"
+    },
+    {
+      "id": "NFR10.1",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "NFR10.2",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "NFR10.3",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "NFR10.4",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "BR1.1",
+      "status": "OK",
+      "target": "backend/modules/research/repository.py"
+    },
+    {
+      "id": "BR1.2",
+      "status": "OK",
+      "target": "backend/modules/research/repository.py"
+    },
+    {
+      "id": "BR1.3",
+      "status": "OK",
+      "target": "backend/modules/research/repository.py"
+    },
+    {
+      "id": "BR1.4",
+      "status": "OK",
+      "target": "backend/modules/research/repository.py"
+    },
+    {
+      "id": "BR1.5",
+      "status": "OK",
+      "target": "backend/modules/research/repository.py"
+    },
+    {
+      "id": "BR2.1",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "BR2.2",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "BR2.3",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "BR2.4",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "BR2.5",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "BR3.1",
+      "status": "OK",
+      "target": "backend/modules/research/attachments.py"
+    },
+    {
+      "id": "BR3.2",
+      "status": "OK",
+      "target": "backend/modules/research/attachments.py"
+    },
+    {
+      "id": "BR3.3",
+      "status": "OK",
+      "target": "backend/modules/research/retrieval.py"
+    },
+    {
+      "id": "BR3.4",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "BR4.1",
+      "status": "GAP",
+      "target": "Public draft policy/discovery or lifecycle retention remains unresolved; internal primitives do not establish complete behavior."
+    },
+    {
+      "id": "BR4.2",
+      "status": "OK",
+      "target": "backend/modules/research/repository.py"
+    },
+    {
+      "id": "BR4.3",
+      "status": "OK",
+      "target": "backend/modules/research/repository.py"
+    },
+    {
+      "id": "BR4.4",
+      "status": "GAP",
+      "target": "Public restart draft discovery and retention remain policy-suspended; internal restore alone does not fulfill recovery."
+    },
+    {
+      "id": "BR4.5",
+      "status": "OK",
+      "target": "backend/modules/research/repository.py"
+    },
+    {
+      "id": "BR4.6",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "BR4.7",
+      "status": "OK",
+      "target": "backend/modules/research/repository.py"
+    },
+    {
+      "id": "BR5.1",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "BR5.2",
+      "status": "OK",
+      "target": "backend/modules/research/jobs.py"
+    },
+    {
+      "id": "BR5.3",
+      "status": "OK",
+      "target": "backend/modules/research/jobs.py"
+    },
+    {
+      "id": "BR5.4",
+      "status": "OK",
+      "target": "backend/modules/research/repository.py"
+    },
+    {
+      "id": "BR5.5",
+      "status": "OK",
+      "target": "backend/modules/research/repository.py"
+    },
+    {
+      "id": "BR6.1",
+      "status": "OK",
+      "target": "backend/modules/research/execution.py"
+    },
+    {
+      "id": "BR6.2",
+      "status": "OK",
+      "target": "backend/modules/research/execution.py"
+    },
+    {
+      "id": "BR6.3",
+      "status": "OK",
+      "target": "backend/modules/research/execution.py"
+    },
+    {
+      "id": "BR6.4",
+      "status": "OK",
+      "target": "backend/modules/research/execution.py"
+    },
+    {
+      "id": "BR6.5",
+      "status": "OK",
+      "target": "backend/modules/research/execution.py"
+    },
+    {
+      "id": "BR7.1",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "BR7.2",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "BR7.3",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "BR7.4",
+      "status": "OK",
+      "target": "backend/modules/research/service.py"
+    },
+    {
+      "id": "BR8.1",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "BR8.2",
+      "status": "OK",
+      "target": "backend/modules/research/evidence.py"
+    },
+    {
+      "id": "BR8.3",
+      "status": "OK",
+      "target": "backend/modules/research/jobs.py"
+    },
+    {
+      "id": "BR8.4",
+      "status": "OK",
+      "target": "backend/modules/research/execution.py"
+    },
+    {
+      "id": "BR8.5",
+      "status": "OK",
+      "target": "backend/modules/research/admission.py"
+    },
+    {
+      "id": "BR8.6",
+      "status": "OK",
+      "target": "backend/local_observation.py"
+    },
+    {
+      "id": "BR8.7",
+      "status": "GAP",
+      "target": "Public draft policy/discovery or lifecycle retention remains unresolved; internal primitives do not establish complete behavior."
+    },
+    {
+      "id": "BR9.1",
+      "status": "OK",
+      "target": "backend/u4_policy.py"
+    },
+    {
+      "id": "BR9.2",
+      "status": "OK",
+      "target": "frontend/src/u4-research/research-workspace.tsx"
+    }
+  ],
+  "reverse": []
+}

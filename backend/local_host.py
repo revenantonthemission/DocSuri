@@ -42,6 +42,20 @@ ENTRY_POLICY = {"policyId": "synthetic-local-entry", "revision": "1"}
 # page routes are served by the same static workspace build.
 NAVIGATION = (
     {
+        "routeId": "research",
+        "titleKey": "nav.research",
+        "path": "/research",
+        "capabilityId": "research",
+        "ownerBound": True,
+    },
+    {
+        "routeId": "novelty",
+        "titleKey": "nav.novelty",
+        "path": "/novelty",
+        "capabilityId": "novelty",
+        "ownerBound": True,
+    },
+    {
         "routeId": "search",
         "titleKey": "nav.search",
         "path": "/search",
@@ -105,7 +119,12 @@ def navigation_items(catalog, *, authenticated: bool) -> list[dict]:
     states = {item["id"]: item["state"] for item in catalog}
     items = []
     for entry in NAVIGATION:
-        available = states.get(entry["capabilityId"]) == "available"
+        if entry["capabilityId"] in {"research", "novelty"} and entry["capabilityId"] not in states:
+            continue
+        available = states.get(entry["capabilityId"]) == "available" or (
+            entry["capabilityId"] in {"research", "novelty"}
+            and states.get(entry["capabilityId"]) == "degraded"
+        )
         reason = None
         if not available:
             reason = "nav.capabilityPending"
@@ -139,7 +158,9 @@ def host_router(transactions, *, entry, anonymous, catalog) -> APIRouter:
         )
         value = await read_payload(request, wire.HostNavigationInputHttp)
         requested = value["routeId"]
-        if requested not in {item["routeId"] for item in NAVIGATION}:
+        if requested not in {
+            item["routeId"] for item in navigation_items(catalog, authenticated=session is not None)
+        }:
             raise BrowserDenied(404, "NOT_FOUND")
         if session is not None:
             revision = session.public["session"]["authorityRevision"]
@@ -305,7 +326,7 @@ def assemble(profile: LocalProfile, *, routers=(), lifespan=None) -> FastAPI:
             return JSONResponse({"ready": False, "missing": ["assembly"]}, status_code=503)
         report = await run_in_threadpool(local_observation.readiness, transactions, required)
         loop = getattr(app.state, "control_loop", None)
-        if profile.realm in ("account-controls", "corpus-maintenance"):
+        if profile.realm in ("account-controls", "corpus-maintenance", "research-workspace"):
             report["backgroundWork"] = (
                 dict(loop.status) if loop is not None else {"state": "stopped"}
             )
@@ -435,9 +456,13 @@ def assemble_journey(profile: LocalProfile) -> FastAPI:
         library_activity = corpus_activity = None
         if controls:
             from .modules.accounts.control_cursor import ControlCursor
-            from .modules.personalization.control_service import PersonalizationControlService, ProducerBinding
             from .modules.personalization.activity import ActivityRelay
-            library_producer, corpus_producer = ProducerBinding("Library"), ProducerBinding("CorpusContent")
+            from .modules.personalization.control_service import (
+                PersonalizationControlService,
+                ProducerBinding,
+            )
+            library_producer = ProducerBinding("Library")
+            corpus_producer = ProducerBinding("CorpusContent")
             personalization = PersonalizationControlService(transactions, SYNTHETIC_POLICY,
                 ControlCursor(bytes.fromhex(entry.verifier("cursor", "u2-controls-v1"))),
                 producers=(library_producer, corpus_producer))
@@ -507,7 +532,9 @@ def assemble_journey(profile: LocalProfile) -> FastAPI:
         app.state.lifecycle = lifecycle
         if controls:
             from .control_worker import ControlWorker
-            app.state.control_worker = ControlWorker(entry,lifecycle,personalization,assistance_files)
+            app.state.control_worker = ControlWorker(
+                entry, lifecycle, personalization, assistance_files
+            )
         app.state.transactions = transactions
         app.state.capability_catalog = catalog
         app.state.required_capabilities = set(OWNERS)

@@ -220,11 +220,11 @@ class U3ControlWorker:
         return summary
 
 
-def assemble_u3(profile: LocalProfile) -> FastAPI:
+def assemble_u3(profile: LocalProfile, *, research_factory=None) -> FastAPI:
     """Explicit owned composition; no ambient settings or startup migrations."""
     from .artifacts import PrivateArtifacts
     from .control_runtime import ControlAdmission, ControlCapacity, ControlLoop
-    from .local_browser import CORPUS_ORIGIN
+    from .local_browser import CORPUS_ORIGIN, RESEARCH_ORIGIN
     from .local_host import assemble, host_router
     from .modules.accounts.local_http import account_router
     from .modules.accounts.preauthentication import Preauthentication
@@ -245,7 +245,12 @@ def assemble_u3(profile: LocalProfile) -> FastAPI:
     from .modules.summarization.u3_provider import SyntheticAssistanceExecutor
     from .transactions import OwnerTransactions
 
-    if profile.realm != "corpus-maintenance" or profile.origin != CORPUS_ORIGIN:
+    research = research_factory is not None
+    if research and (profile.database_name, profile.realm, profile.origin) != (
+        "docsuri_u4", "research-workspace", RESEARCH_ORIGIN
+    ):
+        raise ValueError("research contribution requires the exact owned U4 realm")
+    if not research and (profile.realm != "corpus-maintenance" or profile.origin != CORPUS_ORIGIN):
         raise ValueError("U3 assembly requires the owned corpus-maintenance realm")
     transactions = OwnerTransactions(profile)
     try:
@@ -300,6 +305,12 @@ def assemble_u3(profile: LocalProfile) -> FastAPI:
         worker = U3ControlWorker(
             maintenance, dispatch, dispositions, dispatch.admission
         )
+        contribution = None
+        if research:
+            contribution = research_factory(transactions, entry, corpus_repository, worker)
+            routers = (*routers, contribution["router"])
+            catalog.extend(contribution["capabilities"])
+            worker = contribution["worker"]
 
         @asynccontextmanager
         async def lifetime(app):
@@ -323,10 +334,13 @@ def assemble_u3(profile: LocalProfile) -> FastAPI:
         app.state.assistance = dispatch
         app.state.dispositions = dispositions
         app.state.control_worker = worker
+        if contribution is not None:
+            app.state.research = contribution["service"]
+            app.state.research_execution = contribution["execution"]
         app.state.capability_catalog = catalog
-        app.state.required_capabilities = set(OWNERS)
+        app.state.required_capabilities = set(OWNERS) | ({"research"} if research else set())
         app.state.limits = limits_document()
-        observations = observe_all(transactions)
+        observations = observe_all(transactions, app.state.required_capabilities)
         record(transactions, observations)
         app.state.capabilities = {
             owner: row["disposition"] in ("available", "degraded")

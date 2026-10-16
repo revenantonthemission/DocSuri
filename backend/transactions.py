@@ -88,7 +88,12 @@ class OwnerTransactions:
         # The managed realms run an embedded supervised worker; their API and
         # worker share five normal slots, with two observation/recovery slots
         # and one runner slot reserved inside the twelve connection budget.
-        controls = profile.realm in ("account-controls", "corpus-maintenance")
+        controls = profile.realm in (
+            "account-controls", "corpus-maintenance", "research-workspace"
+        )
+        owners = OWNERS | {"research"} if (
+            profile.database_name, profile.realm
+        ) == ("docsuri_u4", "research-workspace") else OWNERS
         if controls:
             limits = {"api": 5, "worker": 5, "observation": 2, "maintenance": 1}
         if process not in limits:
@@ -98,7 +103,7 @@ class OwnerTransactions:
         if path.is_symlink() or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o600:
             raise ValueError("owner credentials are not private")
         value = json.loads(private_bytes(path))
-        if value.get("runId") != profile.run_id or set(value.get("roles", {})) != OWNERS:
+        if value.get("runId") != profile.run_id or set(value.get("roles", {})) != owners:
             raise ValueError("owner credential identity mismatch")
         self.profile = profile
         self._controls = controls
@@ -111,6 +116,7 @@ class OwnerTransactions:
             ("docsuri_u1_journey", "journey"),
             ("docsuri_u2", "account-controls"),
             ("docsuri_u3", "corpus-maintenance"),
+            ("docsuri_u4", "research-workspace"),
         }:
             raise ValueError("unknown explicit database realm")
         # Separate databases do not receive separate process connection budgets.
@@ -130,10 +136,25 @@ class OwnerTransactions:
                     (str(profile.root), profile.run_id, "observation"),
                     threading.BoundedSemaphore(2),
                 )
+        self._owner_gates = {}
+        self._normal_owner_gates = {}
+        if (profile.database_name, profile.realm) == ("docsuri_u4", "research-workspace"):
+            # Separate pools and transaction objects still share each login's
+            # two physical PostgreSQL connections. Permit only one normal
+            # operation per owner so recovery/observation retains a slot.
+            with _GATES_LOCK:
+                for owner in owners:
+                    prefix = (str(profile.root), profile.run_id)
+                    self._owner_gates[owner] = _PROCESS_GATES.setdefault(
+                        (*prefix, "owner", owner), threading.BoundedSemaphore(2)
+                    )
+                    self._normal_owner_gates[owner] = _PROCESS_GATES.setdefault(
+                        (*prefix, "normal-owner", owner), threading.BoundedSemaphore(1)
+                    )
         self._pools = {}
         self._recovery_pools = {}
         self._closed = False
-        for owner in OWNERS:
+        for owner in owners:
             self._pools[owner] = NullConnectionPool(
                 kwargs={
                     "host": "127.0.0.1",
@@ -175,6 +196,7 @@ class OwnerTransactions:
     def run(self, owner: str, action: Callable[[psycopg.Connection], T]) -> T:
         deadline = time.monotonic() + self._transaction_seconds
         gate, pools = self._gate, self._pools
+        normal = self._process in {"api", "worker"}
         if self._controls:
             from .control_runtime import RECOVERY_REQUEST, WORK_DEADLINE
 
@@ -185,6 +207,7 @@ class OwnerTransactions:
                 raise Busy("control work deadline reached")
             if RECOVERY_REQUEST.get() and self._recovery_gate is not None:
                 gate, pools = self._recovery_gate, self._recovery_pools
+                normal = False
         if self._closed or owner not in self._pools:
             raise ValueError("closed or unknown owner pool")
         if time.time() >= self.profile.expires_at:
@@ -193,7 +216,19 @@ class OwnerTransactions:
             timeout=min(self._queue_seconds, max(0.01, deadline - time.monotonic()))
         ):
             raise Busy("process connection allocation exhausted")
+        acquired = [gate]
         try:
+            owner_gates = []
+            if normal and owner in self._normal_owner_gates:
+                owner_gates.append(self._normal_owner_gates[owner])
+            if owner in self._owner_gates:
+                owner_gates.append(self._owner_gates[owner])
+            for owner_gate in owner_gates:
+                if not owner_gate.acquire(
+                    timeout=min(self._queue_seconds, max(0.01, deadline - time.monotonic()))
+                ):
+                    raise Busy("owner connection allocation exhausted")
+                acquired.append(owner_gate)
             for attempt in range(3):
                 try:
                     with pools[owner].connection(
@@ -239,7 +274,8 @@ class OwnerTransactions:
                         raise
             raise Busy("transaction retry budget exhausted")
         finally:
-            gate.release()
+            for acquired_gate in reversed(acquired):
+                acquired_gate.release()
 
 
 def guard(

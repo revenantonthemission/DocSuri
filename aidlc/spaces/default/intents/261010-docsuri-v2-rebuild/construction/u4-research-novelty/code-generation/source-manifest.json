@@ -1,0 +1,337 @@
+{
+  "stage": "code-generation",
+  "unit": "u4-research-novelty",
+  "version": 1,
+  "writes": [
+    {
+      "path": ".github/workflows/u4-research-novelty.yml"
+    },
+    {
+      "path": "backend/.coveragerc.u4"
+    },
+    {
+      "path": "backend/artifacts.py"
+    },
+    {
+      "path": "backend/control_runtime.py"
+    },
+    {
+      "path": "backend/local_browser.py"
+    },
+    {
+      "path": "backend/local_host.py"
+    },
+    {
+      "path": "backend/local_observation.py"
+    },
+    {
+      "path": "backend/local_profile.py"
+    },
+    {
+      "path": "backend/modules/accounts/local_http.py"
+    },
+    {
+      "path": "backend/modules/research/__init__.py"
+    },
+    {
+      "path": "backend/modules/research/admission.py"
+    },
+    {
+      "path": "backend/modules/research/attachments.py"
+    },
+    {
+      "path": "backend/modules/research/errors.py"
+    },
+    {
+      "path": "backend/modules/research/evidence.py"
+    },
+    {
+      "path": "backend/modules/research/execution.py"
+    },
+    {
+      "path": "backend/modules/research/http.py"
+    },
+    {
+      "path": "backend/modules/research/jobs.py"
+    },
+    {
+      "path": "backend/modules/research/repository.py"
+    },
+    {
+      "path": "backend/modules/research/retrieval.py"
+    },
+    {
+      "path": "backend/modules/research/service.py"
+    },
+    {
+      "path": "backend/modules/research/u4_admission.sql"
+    },
+    {
+      "path": "backend/modules/research/u4_release_obligation.sql"
+    },
+    {
+      "path": "backend/modules/research/u4_schema.sql"
+    },
+    {
+      "path": "backend/pytest.u4-research-novelty.ini"
+    },
+    {
+      "path": "backend/transactions.py"
+    },
+    {
+      "path": "backend/u3_host.py"
+    },
+    {
+      "path": "backend/u4_host.py"
+    },
+    {
+      "path": "backend/u4_policy.py"
+    },
+    {
+      "path": "frontend/e2e/u4-research-novelty/helpers.ts"
+    },
+    {
+      "path": "frontend/e2e/u4-research-novelty/journey.spec.ts"
+    },
+    {
+      "path": "frontend/playwright.u4-research.config.ts"
+    },
+    {
+      "path": "frontend/src/api.ts"
+    },
+    {
+      "path": "frontend/src/App.tsx"
+    },
+    {
+      "path": "frontend/src/u4-research/action.tsx"
+    },
+    {
+      "path": "frontend/src/u4-research/api.ts"
+    },
+    {
+      "path": "frontend/src/u4-research/composer.tsx"
+    },
+    {
+      "path": "frontend/src/u4-research/drafts.tsx"
+    },
+    {
+      "path": "frontend/src/u4-research/evidence.tsx"
+    },
+    {
+      "path": "frontend/src/u4-research/jobs.tsx"
+    },
+    {
+      "path": "frontend/src/u4-research/research-workspace.tsx"
+    },
+    {
+      "path": "frontend/src/u4-research/research.css"
+    },
+    {
+      "path": "frontend/src/u4-research/sources.tsx"
+    },
+    {
+      "path": "frontend/test/u4-research-novelty/composer.test.tsx"
+    },
+    {
+      "path": "frontend/test/u4-research-novelty/drafts.test.tsx"
+    },
+    {
+      "path": "frontend/test/u4-research-novelty/evidence.test.tsx"
+    },
+    {
+      "path": "frontend/test/u4-research-novelty/fixtures.ts"
+    },
+    {
+      "path": "frontend/test/u4-research-novelty/jobs.test.tsx"
+    },
+    {
+      "path": "frontend/test/u4-research-novelty/shell.test.tsx"
+    },
+    {
+      "path": "frontend/test/u4-research-novelty/sources.test.tsx"
+    },
+    {
+      "path": "frontend/test/u4-research-novelty/workspace.test.tsx"
+    },
+    {
+      "path": "frontend/tsconfig.u4-research.json"
+    },
+    {
+      "path": "frontend/vitest.u4-research.config.ts"
+    },
+    {
+      "path": "ops/src/docsuri_ops/local_transport.py"
+    },
+    {
+      "path": "ops/src/docsuri_ops/u4_capacity.sql"
+    },
+    {
+      "path": "scripts/serve_docsuri_u4.py"
+    },
+    {
+      "path": "scripts/u4_browser_fixtures.py"
+    },
+    {
+      "path": "scripts/verify_docsuri_u4.py"
+    },
+    {
+      "path": "shared/dtos/workspace.schema.json"
+    },
+    {
+      "path": "shared/events/execution.schema.json"
+    },
+    {
+      "path": "shared/python-consumers.json"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/__init__.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/dtos/__init__.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/dtos/accounts_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/dtos/docmodel_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/dtos/evidence_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/dtos/extended_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/dtos/library_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/dtos/mypage_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/dtos/search_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/dtos/summarization_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/dtos/workspace_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/events/__init__.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/events/account_signals_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/events/execution_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/events/incidents_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/events/ingestion_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/events/paper_retracted_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/events/search_executed_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/vector_spec/__init__.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/04d47908103ab9cbacd570017dc009d548956137dd9c57bf5cf8a2f8d69f8d66/vector_spec/index_record_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_head.json"
+    },
+    {
+      "path": "shared/python/tests/test_research_completion_contract.py"
+    },
+    {
+      "path": "tests/u3_paper_corpus_capabilities/operations/test_diagnostics.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/__init__.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/component/test_admission.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/component/test_evidence.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/component/test_execution.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/component/test_policy.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/component/test_retrieval.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/component/test_service.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/conftest.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/database/test_schema.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/integration/test_assembly.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/integration/test_http.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/integration/test_owner_concurrency.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/integration/test_readiness.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/integration/test_release_recovery.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/operations/test_browser_fixtures.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/operations/test_browser_memory.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/operations/test_database_readiness.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/operations/test_runner_transport.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/operations/test_safe_diagnostics.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/repository/test_attachments.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/repository/test_jobs.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/repository/test_repository.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/runtime/test_owner_capacity.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/runtime/test_profile_binding.py"
+    },
+    {
+      "path": "backend/modules/research/u4_prepared_recovery.sql"
+    },
+    {
+      "path": "tests/u4_research_novelty/integration/test_prepared_recovery.py"
+    },
+    {
+      "path": "tests/u4_research_novelty/runtime/test_admission_lane.py"
+    }
+  ]
+}

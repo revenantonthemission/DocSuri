@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
-
 ARTIFACT_IDENTITY = re.compile(r"[0-9a-f]{32}\.blob")
 
 
@@ -31,6 +30,7 @@ class PrivateArtifacts:
             Path("/tmp/docsuri-u1-run").resolve(),
             Path("/tmp/docsuri-u2-run").resolve(),
             Path("/tmp/docsuri-u3-run").resolve(),
+            Path("/tmp/docsuri-u4-run").resolve(),
         }
         if root.parent not in expected or root.name not in (
             "corpus-files",

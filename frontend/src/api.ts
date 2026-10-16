@@ -147,7 +147,7 @@ export class Transport {
   private csrf = '';
   private identity = '';
   private epoch = 0;
-  private bootstrapFlight?: Promise<SessionBootstrap>;
+  private bootstrapFlight: Promise<SessionBootstrap> | undefined;
   private listeners = new Set<() => void>();
   get generation(): number {
     return this.epoch;

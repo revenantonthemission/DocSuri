@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://docsuri.dev/shared/events/execution.schema.json",
-  "$comment": "Generated canonical contract release 3.0.0; source SHA256:9db5c5ad9e0fcf6d486fffa6a250dd98fb4d29ef8fc5ea6c7e0eb4fa7617fa07",
+  "$comment": "Generated canonical contract release 3.0.0; source SHA256:0fbbea3863829bc3f68eae4acbe9e128dd60fe3359116e9f5a5a469d32e8e704",
   "$defs": {
     "Principal": {
       "oneOf": [
@@ -1323,6 +1323,9 @@
               "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/AssistanceResult"
             },
             {
+              "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/ResearchArtifact"
+            },
+            {
               "type": "null"
             }
           ]
@@ -1426,6 +1429,98 @@
                 "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
               },
               "error": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ownerComponent": {
+                "const": "ResearchWorkspace"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "prepared": {
+                "anyOf": [
+                  {
+                    "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/ResearchArtifact"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "prepared": {
+                "anyOf": [
+                  {
+                    "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/AssistanceResult"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ownerComponent": {
+                "const": "ResearchWorkspace"
+              },
+              "outcome": {
+                "const": "succeeded"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "prepared": {
+                "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/ResearchArtifact"
+              },
+              "resultRef": {
+                "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/ResultRef"
+              },
+              "usageRecordId": {
+                "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+              },
+              "error": {
+                "type": "null"
+              },
+              "progress": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ownerComponent": {
+                "const": "ResearchWorkspace"
+              },
+              "outcome": {
+                "not": {
+                  "const": "succeeded"
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "prepared": {
+                "type": "null"
+              },
+              "resultRef": {
                 "type": "null"
               }
             }
@@ -6865,6 +6960,109 @@
         "acceptedAt",
         "input",
         "sections",
+        "usageRecordId"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchAcceptedInput": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "research-turn",
+            "novelty-analysis",
+            "novelty-discussion"
+          ]
+        },
+        "contextId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "sessionId": {
+          "anyOf": [
+            {
+              "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inputSnapshot": {
+          "type": "object",
+          "x-policy-bound": "the frozen owner input for the accepted operation",
+          "immutable after acceptance": null
+        },
+        "inputHash": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Hash"
+        },
+        "sourceScope": {
+          "type": "array",
+          "items": {
+            "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+          }
+        },
+        "attachmentReferences": {
+          "type": "array",
+          "items": {
+            "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+          }
+        },
+        "draftRevision": {
+          "anyOf": [
+            {
+              "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Revision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "processingPolicy": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "kind",
+        "contextId",
+        "sessionId",
+        "inputSnapshot",
+        "inputHash",
+        "sourceScope",
+        "attachmentReferences",
+        "draftRevision",
+        "processingPolicy"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchExecutionPayload": {
+      "type": "object",
+      "properties": {
+        "binding": {
+          "$ref": "#/$defs/ExecutionBinding"
+        },
+        "acceptedAt": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Time"
+        },
+        "input": {
+          "$ref": "#/$defs/ResearchAcceptedInput"
+        },
+        "evidenceScope": {
+          "type": "array",
+          "items": {
+            "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+          },
+          "x-policy-bound": "eligible evidence the owner may read at execution time; the prepare/untrusted-content rules still apply"
+        },
+        "usageRecordId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        }
+      },
+      "required": [
+        "binding",
+        "acceptedAt",
+        "input",
+        "evidenceScope",
         "usageRecordId"
       ],
       "additionalProperties": false
