@@ -28621,3 +28621,70 @@
 **Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a142ab-2fef-7df3-9d43-47b19c736a91 last seen 2026-10-16T03:04:39.685Z.
 
 ---
+
+## Decision Recorded
+**Timestamp**: 2026-10-16T03:21:16Z
+**Event**: DECISION_RECORDED
+**Stage**: code-generation
+**Decision**: Two reproduced review findings remain before U4 verification and integration: prepared admissions can strand quota after interruption or session revocation, and the approved frontend test command collects no tests. Fix both findings, update the documented command and obtain a fresh review, or keep the findings and proceed to separate verification-command selection?
+**Options**: Fix and re-review,Keep findings
+**Unit**: u4-research-novelty
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-16T03:21:51Z
+**Event**: DECISION_RECORDED
+**Stage**: code-generation
+**Decision**: Two reproduced review findings remain before U4 verification and integration: prepared admissions can strand quota after interruption or session revocation, and the approved frontend test command collects no tests. Fix both findings, update the documented command and obtain a fresh review, or keep the findings and proceed to separate verification-command selection?
+**Options**: Fix and re-review,Keep findings
+
+---
+
+## Guardrail Loaded
+**Timestamp**: 2026-10-16T03:22:18Z
+**Event**: GUARDRAIL_LOADED
+**Scope**: all
+**Path**: .codex/aidlc-rules/
+**Rule count**: 7
+
+---
+
+## Health Check
+**Timestamp**: 2026-10-16T03:22:18Z
+**Event**: HEALTH_CHECKED
+**Request**: /aidlc --doctor
+**Details**: 62 passed, 0 failed
+
+---
+
+## Session End
+**Timestamp**: 2026-10-16T03:22:39Z
+**Event**: SESSION_ENDED
+**Reason**: inferred — Codex has no SessionEnd event (D-4); reconciled at next SessionStart. Prior session 01a124bb-a18b-7ff3-8b21-612616b7c2bd last seen 2026-10-16T03:18:09.131Z.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-16T03:22:39Z
+**Event**: HUMAN_TURN
+**Session**: 01a142bb-a8fb-74b0-9c62-1cc4a1c35d80
+
+---
+
+## Guardrail Loaded
+**Timestamp**: 2026-10-16T03:23:35Z
+**Event**: GUARDRAIL_LOADED
+**Scope**: all
+**Path**: .codex/aidlc-rules/
+**Rule count**: 7
+
+---
+
+## Health Check
+**Timestamp**: 2026-10-16T03:23:35Z
+**Event**: HEALTH_CHECKED
+**Request**: /aidlc --doctor
+**Details**: 62 passed, 0 failed
+
+---
