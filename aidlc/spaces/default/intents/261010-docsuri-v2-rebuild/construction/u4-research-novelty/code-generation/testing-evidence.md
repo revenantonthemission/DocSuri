@@ -215,3 +215,72 @@ Shared-contract and frontend jobs also passed. The exact remote coverage
 percentage is not exposed in the public summary; no percentage is inferred.
 The parent-owned maintenance CI report records broader legacy-workflow outcomes
 separately. Conditional capability gaps and completion-command approval remain.
+
+## R-06/R-07 repair verification — first attempt
+
+The corrected documented frontend command, run from `frontend`, passed 74 tests
+in seven files. Existing React read-only-field warnings remained; no test failed.
+
+Commit `d1281014` used fresh realm `docsuri-u4-5431d89db1c6e741` with 50 migrations.
+Both local phases bound source SHA-256
+`a4b93acad29ff865cd97c5fa9cb4541c6c967f5a01376b20d6e9ada5417b72d3`:
+
+- Browser: six passed, zero failures/errors/skips; 10.728 seconds; peak RSS
+  846,675,968 bytes. Evidence `browser-evidence-1792121713706283000.json`, SHA-256
+  `b1a63120211087d7ead316ac691168d36dac81842f8b173d1e1273e499d220e1`.
+- Backend: 75 passed, one failed, zero errors/skips; 15.648 seconds; peak RSS
+  185,778,176 bytes. Evidence `coverage-evidence-1792121739915239000.json`, SHA-256
+  `a51e2a2e8122892fdef2b766e2fd7567ece840eda13928d04358c87771d62dd4`.
+  Coverage calculation/gating was not reached. The failing test was
+  `test_acceptance_lock_wins_over_expiry_recovery`: normal owner allocation was
+  exhausted before the recovery method could reach the intended database race.
+
+The runner stopped all test/application processes and preserved both outcomes.
+No quota, expiry, coverage threshold or resource bound was reset or weakened.
+The next pass verified the real internal recovery lane and both database race
+orders on a fresh owned realm, as recorded below.
+
+## Prepared-admission recovery — verified source
+
+Commit `bca67823bba0afed705f5967cd4c9d154d5c3ad3` adds the real recovery-lane
+classification and verifies context restoration and distinct live PostgreSQL
+transactions. Fresh owned realm `docsuri-u4-3202e43837d8773e` applied all 50
+migrations and began with two synthetic accounts and two eligible paper fixtures.
+Both phases bind source SHA-256
+`d23300c58cfc55aaa4a73222ed5eb8a0519019bd8c7eb2a4a9d416409b9c6a17`.
+
+| Phase | Passed | Failures/errors/skips | Seconds | Peak process-tree RSS |
+|---|---:|---|---:|---:|
+| Browser | 6 | 0 / 0 / 0 | 10.778 | 782,450,688 bytes |
+| Backend coverage | 216 | 0 / 0 / 0 | 18.597 | 209,977,344 bytes |
+
+Backend line coverage is 88.62%; each measured authored file is at least 82.35%
+(retrieval: 28/34 lines). The 216 tests include 11 prepared-admission integration
+cases and 12 recovery-context cases; these are not additional counts. Checks
+cover expiry/revocation, lost acknowledgements, process restart, acceptance versus
+closure, reserve versus rejection, immutable deadlines and context restoration
+after success, capacity refusal and unknown commit. The same 1 GiB process-tree
+RSS, 300-second deadline and 80% per-file coverage gates remained active.
+
+Evidence below `/tmp/docsuri-u4-run`:
+
+- `browser-evidence-1792122005804882000.json`, SHA-256
+  `3c4c5c5f2caf634d5e4775cc71c22a26413ae1f019a590bd46280fb871b433a9`.
+- `coverage-evidence-1792122038942947000.json`, SHA-256
+  `37a0e45b2eb2e9f0e1074347d8375be5a0b8c03bde5a6af4b63dfeee2be90330`.
+
+Both test/application process groups stopped cleanly. The owned PostgreSQL
+container remains available; a full stateful rerun needs fresh fixtures and must
+not reset quota or extend authority in this spent realm. Previous evidence and
+owned volumes were preserved, with the older container stopped:
+
+- `6242`: `/private/tmp/docsuri-u4-preserved-docsuri-u4-6242203c924051fe-3a3e22c2`.
+- Failed `5431`: `/private/tmp/docsuri-u4-preserved-docsuri-u4-5431d89db1c6e741-058b019e`.
+
+All four jobs passed in
+[CI run 38846639523](https://github.com/revenantonthemission/DocSuri/actions/runs/38846639523)
+at the same commit. Remote backend: 216 passed, 24.993 seconds, peak RSS
+184,848,384 bytes. Remote browser: six passed, 13.444 seconds, peak RSS
+999,849,984 bytes. Both applied 50 migrations, reported no failures/errors/skips
+and stopped cleanly within the unchanged limits. This is bounded U4 evidence, not a full-release parity or
+public-capacity claim. The completion-command decision remains separate.

@@ -1,4 +1,4 @@
-# U4 review iteration 1 — repair record
+# U4 independent review — repair record
 
 The independent verdict remains in `reviews/review-01.md`. This document records
 repairs for a new review; it does not overwrite that verdict or certify readiness.
@@ -118,3 +118,40 @@ and clean stops. Shared-contract and frontend jobs passed. The 1 GiB process-tre
 RSS guard, 300-second deadline, coverage threshold and complete journey scope
 were retained. This establishes readiness for independent review iteration 2;
 it does not replace that review or the separately approved completion command.
+
+## Human-requested repairs after review iteration 2
+
+The human requested both repairs and a fresh review before merge. The independent
+second verdict remains in `reviews/review-02.md`; this record does not replace it.
+
+- R-06: migration 50 gives prepared admissions a fixed, immutable 30-second
+  acceptance window. Worker recovery closes expired prepared rows under the
+  acceptance row lock, then reconciles the existing durable release obligation.
+  Accepted work survives a lost acknowledgement and is rediscoverable after the
+  window; a closed operation rejects late acceptance or reservation. This is a
+  bounded local policy, not a selected public SLA.
+- R-07: the frontend instruction now uses
+  `npx vitest run --config vitest.u4-research.config.ts` from `frontend`; that
+  exact invocation passed 74 tests in seven files. Python instructions now name
+  the installed virtual-environment interpreter and the existing bounded runner,
+  including owned-realm prerequisites. System `python3` lacked `psycopg` in this
+  checkout; using the installed interpreter passed the runner's help/preflight
+  command. Coverage floors were not changed.
+
+At `d1281014`, the new real-store regression suite exposed an additional recovery
+integration problem before review: holding the normal owner connection prevented
+the concurrent recovery call from reaching the database row lock. The actual
+worker had not classified admission recovery for the reserved recovery lane.
+Commit `bca67823` applies that classification to both real internal recovery
+methods and restores the caller's context in every exit path. The concurrent
+tests verify distinct live PostgreSQL backend PIDs, proving that both transactions
+reach the database. No connection allocation or test threshold was relaxed.
+
+On fresh realm `docsuri-u4-3202e43837d8773e`, all 216 backend tests and six browser
+journeys passed without failures, errors or skips. This includes 11 prepared
+recovery integration cases and 12 recovery-context cases; those counts are
+subsets of the 216. Coverage is 88.62%, with every measured authored file above
+the unchanged 80% floor. All four jobs in CI run 38846639523 passed at the same
+source commit. Exact digests, resource measurements and the preceding failure
+remain in `testing-evidence.md`. These checks support the requested fresh
+independent review; they do not substitute for its verdict or authorize merging.

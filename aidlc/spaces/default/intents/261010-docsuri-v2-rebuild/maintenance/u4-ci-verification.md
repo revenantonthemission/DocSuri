@@ -94,3 +94,33 @@ The U4 workflow uses standard runners in this public repository with read-only
 repository permissions. [GitHub's Actions billing documentation](https://docs.github.com/en/billing/concepts/product-billing/github-actions)
 supports the free standard-runner choice. No paid model fallback, larger runner,
 self-hosted execution, public private-data artifact or deployment is configured.
+
+## Prepared-admission recovery repair
+
+[Run 38846093453](https://github.com/revenantonthemission/DocSuri/actions/runs/38846093453)
+checked `d1281014a446a297ff33f7a00103f39d5272675c`. Shared contracts and frontend
+passed. Backend startup and all 50 migrations passed, but its cumulative suite
+stopped after 76 executed tests with one failure, zero errors/skips, in 21.365
+seconds at peak RSS 184,872,960 bytes. Browser was skipped. The public summary
+does not expose the failing test name; the separate local run identified normal
+owner-connection allocation preventing the new acceptance/recovery race check.
+That failure requires a repaired-source run; the earlier green CI remains tied
+to its earlier source and does not verify the new recovery change.
+
+## Recovery-lane repair verified
+
+[Run 38846639523](https://github.com/revenantonthemission/DocSuri/actions/runs/38846639523)
+checked `bca67823bba0afed705f5967cd4c9d154d5c3ad3`. All four U4 jobs passed:
+shared contracts, frontend, backend and browser. Both stateful jobs applied all
+50 migrations and stopped their test/application processes cleanly.
+
+| Phase | Tests passed | Failures/errors/skips | Seconds | Peak process-tree RSS |
+|---|---:|---|---:|---:|
+| Backend coverage | 216 | 0 / 0 / 0 | 24.993 | 184,848,384 bytes |
+| Browser | 6 | 0 / 0 / 0 | 13.444 | 999,849,984 bytes |
+
+The 1 GiB RSS, 300-second deadline and 80% coverage gates were unchanged. The
+public summary does not expose the remote coverage percentage; 88.62% is the
+separate local result. This successful U4 workflow does not change the broader
+legacy-workflow dispositions above, prove full capability parity, select public
+hosting, or replace the fresh review and completion-command decision.

@@ -1,8 +1,7 @@
 # U4 — Research and novelty implementation
 
-Status: independent review iteration 1 repairs passed local verification and the
-U4 CI workflow at `83f6aa262e568eee2591f24418eda1ffe275518e`; ready for independent
-review iteration 2. See `review-repairs.md`. This record does not certify
+The implementation at `bca67823` passed 216 backend tests, six browser journeys,
+and the four-job U4 CI workflow. This record does not certify
 release parity, public operating feasibility, or completion of the construction checkpoint.
 
 ## What changed
@@ -30,6 +29,16 @@ and dispatch commit atomically. Durable closure prevents delayed acceptance;
 only that closure or a terminal execution result can release capacity. Unknown
 commits retain their original identity for reconciliation. Result publication
 binds the exact owner, context, job, input hash, claim/fence and artifact tuple.
+
+Prepared admissions now have an immutable, nonrenewable 30-second acceptance
+window in the isolated local profile. A session-independent worker closes
+expired prepared rows under the same row lock used by acceptance, then replays
+the durable release obligation. An acceptance that won that lock remains
+accepted and can be rediscovered after the window; closure that won prevents
+late acceptance. Usage's rejection tombstone also fences a reservation that
+arrives after closure. Both internal recovery methods use the reserved recovery
+connection lane and restore the caller's context on success or exception. This
+finite local bound is not a public service target.
 
 The canonical C14 amendments add research payload and completion variants.
 Research artifacts are not encoded as assistance results. The owner codec checks
@@ -118,9 +127,20 @@ The final remote browser run passed all six journeys with zero failures/errors/s
 Shared-contract and frontend jobs also passed in
 [U4 CI run 38843024805](https://github.com/revenantonthemission/DocSuri/actions/runs/38843024805).
 
+The subsequent prepared-admission recovery change at `bca67823` passed **216
+backend tests** and **six browser journeys**, with zero failures/errors/skips,
+on fresh owned realm `docsuri-u4-3202e43837d8773e` after all **50 migrations**.
+Both phases bind source digest
+`d23300c58cfc55aaa4a73222ed5eb8a0519019bd8c7eb2a4a9d416409b9c6a17`.
+Local backend coverage is **88.62%**, with each measured authored file at least
+82.35%. The corrected frontend command passed **74 tests in seven files**.
+The unchanged 1 GiB RSS, 300-second deadline and 80% coverage limits passed.
+All four jobs passed in
+[U4 CI run 38846639523](https://github.com/revenantonthemission/DocSuri/actions/runs/38846639523).
+
 See `testing-evidence.md` for failures, repairs and exact evidence records, and
 `source-manifest.json` for application paths. The earlier pre-review local cutoff
-preceded remote CI; the final successful run above supplies actual execution evidence.
+preceded remote CI; the successful runs above supply actual execution evidence.
 Git remains working branch → PR
 into develop; release promotion to main and deployment are separate.
 
