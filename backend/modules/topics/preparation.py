@@ -28,10 +28,15 @@ class DigestPreparation:
             content_limit=self.policy.digest_items_max,
         )
 
-    def prepare(self, topic_id, window, settings_revision):
+    def prepare(self, topic_id, window, settings_revision, *, expected_preferences=None):
         """Select content and create (or adopt) the window's run (BR2.4)."""
         window_start, window_end = window
         items = self.select(topic_id, window_start, window_end)
         return self.repository.prepare_run(
-            topic_id, window_start, window_end, settings_revision, items
+            topic_id,
+            window_start,
+            window_end,
+            settings_revision,
+            items,
+            expected_preferences=expected_preferences,
         )

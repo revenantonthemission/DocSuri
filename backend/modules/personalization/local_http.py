@@ -49,12 +49,17 @@ def settings_router(transactions, *, entry, controls=None) -> APIRouter:
         require_policy(value, POLICY)
         changes = {
             key: value[key]
-            for key in ("searchDefaults", "assistanceDefaults", "appearance")
+            for key in ("searchDefaults", "assistanceDefaults", "appearance", "timeZone")
             if value.get(key) is not None
         }
-        return await run_in_threadpool(
-            service.update, authority, operation, value["expectedRevision"], changes
-        )
+        try:
+            return await run_in_threadpool(
+                service.update, authority, operation, value["expectedRevision"], changes
+            )
+        except ValueError as error:
+            if str(error).startswith("unsupported "):
+                raise BrowserDenied(422, "INVALID_ARGUMENT") from None
+            raise
 
     @router.post("/api/v2/c03/settings-update-onboarding")
     async def update_onboarding(request: Request):

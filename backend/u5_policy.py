@@ -1,10 +1,8 @@
-"""Finite synthetic digest allocations; unresolved real-data policy stays shut.
+"""Finite digest allocations; real delivery requires an explicit free allocation.
 
-One stated delivery zone keeps every window bound and day boundary in one
-comparable timezone (BR1.2: timezone ambiguity is resolved by one stated zone,
-never by mixed-zone comparison). The recorded values are the bounded limits the
-readiness evidence names: selection budget, digest size and recovery bounds.
-No paid provider is part of this policy.
+Owner settings select the calendar zone. Selection, queue and recovery bounds
+remain finite; real attempts additionally spend a durable realm-wide allowance.
+This policy does not establish external account capacity or authorize a send.
 """
 
 from dataclasses import dataclass
@@ -15,7 +13,8 @@ class TopicsPolicy:
     policy_id: str = "u5-synthetic-topics"
     revision: str = "1"
     synthetic_only: bool = True
-    delivery_timezone: str = "Asia/Seoul"
+    delivery_timezone: str = "UTC"  # Compatibility only; owner settings select the zone.
+    real_send_limit: int = 0
     selection_limit: int = 50
     digest_items_max: int = 10
     sends_per_pass: int = 1
@@ -37,8 +36,12 @@ class TopicsPolicy:
             value = getattr(self, name)
             if type(value) is not int or value <= 0:
                 raise ValueError(f"finite positive {name} required")
-        if not self.synthetic_only or self.sends_per_pass != 1:
-            raise ValueError("only the bounded single-send synthetic profile is enabled")
+        if self.sends_per_pass != 1:
+            raise ValueError("single-send passes are required")
+        if type(self.real_send_limit) is not int or not 0 <= self.real_send_limit <= 100:
+            raise ValueError("finite real-send allocation required")
+        if self.synthetic_only != (self.real_send_limit == 0):
+            raise ValueError("real delivery requires an explicit positive allocation")
         if not self.delivery_timezone:
             raise ValueError("one stated delivery zone required")
 

@@ -1185,6 +1185,7 @@ $defs:
         vocabularyRevision: {$ref: '#/$defs/Revision'}}, required: [actionId, languageId, presentationLevelId, vocabularyRevision],
       additionalProperties: false}
   SettingsSnapshot: {type: object, properties: {accountId: {$ref: '#/$defs/Id'}, settingsId: {$ref: '#/$defs/Id'}, revision: {$ref: '#/$defs/Revision'},
+        timeZone: {type: [string, 'null'], minLength: 1, maxLength: 100, description: 'Explicit owner IANA timezone; null means unconfigured.'},
         searchDefaults: {$ref: '#/$defs/SettingsSearchDefaults'}, assistanceDefaults: {$ref: '#/$defs/SettingsAssistanceDefaults'},
         appearance: {type: string, enum: [light, dark, system]}, onboarding: {type: string, enum: [not_started, in_progress, completed,
             skipped]}, interestIds: {type: array, items: {$ref: '#/$defs/Id'}, x-policy-bound: retained interest vocabulary and profile
@@ -1193,10 +1194,10 @@ $defs:
   SettingsReadInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}}, required: [context], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.'}
   SettingsUpdateInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, searchDefaults: {$ref: '#/$defs/SettingsSearchDefaults'}, assistanceDefaults: {
-          $ref: '#/$defs/SettingsAssistanceDefaults'}, appearance: {type: string, enum: [light, dark, system]}, policyRef: {$ref: '#/$defs/PolicyRef'},
+          $ref: '#/$defs/SettingsAssistanceDefaults'}, timeZone: {type: string, minLength: 1, maxLength: 100}, appearance: {type: string, enum: [light, dark, system]}, policyRef: {$ref: '#/$defs/PolicyRef'},
         expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, policyRef, expectedRevision], additionalProperties: false, description: 'Internal
         envelope; context is derived by the trusted boundary, never accepted from a public body.', anyOf: [{required: [searchDefaults]}, {required: [
-            assistanceDefaults]}, {required: [appearance]}]}
+            assistanceDefaults]}, {required: [appearance]}, {required: [timeZone]}]}
   SettingsOnboardingInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, action: {type: string, enum: [save_interests, complete, skip]}, interestIds: {
           type: array, items: {$ref: '#/$defs/Id'}, x-policy-bound: retained interest vocabulary and onboarding policy, uniqueItems: true}, policyRef: {
           $ref: '#/$defs/PolicyRef'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [context, action, interestIds, policyRef, expectedRevision],
@@ -1894,9 +1895,9 @@ $defs:
   SettingsReadInputHttp: {type: object, properties: {}, required: [], additionalProperties: false, description: 'Internal envelope; context is derived by
         the trusted boundary, never accepted from a public body.'}
   SettingsUpdateInputHttp: {type: object, properties: {searchDefaults: {$ref: '#/$defs/SettingsSearchDefaults'}, assistanceDefaults: {$ref: '#/$defs/SettingsAssistanceDefaults'},
-        appearance: {type: string, enum: [light, dark, system]}, policyRef: {$ref: '#/$defs/PolicyRef'}, expectedRevision: {$ref: '#/$defs/Revision'}},
+        timeZone: {type: string, minLength: 1, maxLength: 100}, appearance: {type: string, enum: [light, dark, system]}, policyRef: {$ref: '#/$defs/PolicyRef'}, expectedRevision: {$ref: '#/$defs/Revision'}},
       required: [policyRef, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary,
-        never accepted from a public body.', anyOf: [{required: [searchDefaults]}, {required: [assistanceDefaults]}, {required: [appearance]}]}
+        never accepted from a public body.', anyOf: [{required: [searchDefaults]}, {required: [assistanceDefaults]}, {required: [appearance]}, {required: [timeZone]}]}
   SettingsOnboardingInputHttp: {type: object, properties: {action: {type: string, enum: [save_interests, complete, skip]}, interestIds: {type: array, items: {$ref: '#/$defs/Id'},
           x-policy-bound: retained interest vocabulary and onboarding policy, uniqueItems: true}, policyRef: {$ref: '#/$defs/PolicyRef'}, expectedRevision: {
           $ref: '#/$defs/Revision'}}, required: [action, interestIds, policyRef, expectedRevision], additionalProperties: false, description: 'Internal
@@ -4659,7 +4660,7 @@ invariants:
 - Provider acknowledgements and reconciliation facts are replayable without changing the intended effect. Unknown remote success remains unknown
   if the provider cannot resolve it.
 checks:
-- 'Property: clock/time-zone/DST windows are deliberate, nonoverlapping under the approved cadence policy, and duplicate scheduling retains one
+- 'Property: clock/time-zone/DST schedule occurrences are unique; rolling 7/30-day content lookbacks may overlap with delivery watermarks suppressing repeated items, and duplicate scheduling retains one
   effect.'
 - Race unsubscribe/revocation against queued dispatch; no ineligible send.
 - Inject timeout after remote send; reconciliation cannot duplicate delivery or report false success.
@@ -13411,6 +13412,11 @@ components:
     SettingsSnapshot:
       type: object
       properties:
+        timeZone:
+          type: [string, 'null']
+          minLength: 1
+          maxLength: 100
+          description: 'Explicit owner IANA timezone; null means unconfigured.'
         accountId:
           $ref: '#/components/schemas/Id'
         settingsId:
@@ -16014,6 +16020,10 @@ components:
     SettingsUpdateInputHttp:
       type: object
       properties:
+        timeZone:
+          type: string
+          minLength: 1
+          maxLength: 100
         searchDefaults:
           $ref: '#/components/schemas/SettingsSearchDefaults'
         assistanceDefaults:
@@ -16040,6 +16050,8 @@ components:
         - assistanceDefaults
       - required:
         - appearance
+      - required:
+        - timeZone
     SettingsOnboardingInputHttp:
       type: object
       properties:

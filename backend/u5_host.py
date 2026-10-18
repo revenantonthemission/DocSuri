@@ -23,7 +23,20 @@ class TopicsWorker:
         return result
 
 
-def topics_contribution(transactions, entry, corpus, inherited_worker):
+def topics_contribution(
+    transactions,
+    entry,
+    corpus,
+    inherited_worker,
+    *,
+    policy=None,
+    mail=None,
+    clock=None,
+    unsubscribe=None,
+):
+    from fastapi import APIRouter
+
+    from backend.modules.personalization.local_http import settings_router
     from backend.modules.topics.delivery import DigestDelivery
     from backend.modules.topics.http import topics_router
     from backend.modules.topics.preparation import DigestPreparation
@@ -31,29 +44,75 @@ def topics_contribution(transactions, entry, corpus, inherited_worker):
     from backend.modules.topics.service import TopicsService
     from backend.u5_policy import SYNTHETIC_TOPICS
 
+    policy = policy or SYNTHETIC_TOPICS
     service = TopicsService(transactions)
-    preparation = DigestPreparation(transactions, corpus)
-    delivery = DigestDelivery(transactions, corpus)
-    scheduler = TopicsScheduler(transactions, preparation, delivery)
+    preparation = DigestPreparation(transactions, corpus, policy=policy)
+    if unsubscribe is None and policy.synthetic_only:
+        import datetime as dt
+
+        from backend.modules.topics.unsubscribe import EmailUnsubscribe
+
+        unsubscribe = EmailUnsubscribe(
+            transactions,
+            origin=transactions.profile.origin,
+            expires_at=dt.datetime.fromtimestamp(transactions.profile.expires_at, dt.UTC),
+            synthetic=True,
+        )
+    delivery = DigestDelivery(
+        transactions, corpus, policy=policy, mail=mail, unsubscribe=unsubscribe
+    )
+    scheduler = TopicsScheduler(transactions, preparation, delivery, policy=policy)
+    if clock is not None:
+        if not policy.synthetic_only:
+            raise ValueError("a fixture clock requires synthetic delivery")
+        scheduler._now = clock
+    router = APIRouter()
+    router.include_router(topics_router(transactions, entry=entry, service=service))
+    router.include_router(settings_router(transactions, entry=entry))
+    if unsubscribe is not None:
+        from backend.modules.topics.unsubscribe import unsubscribe_router
+
+        router.include_router(unsubscribe_router(unsubscribe))
     capabilities = [
         {
             "id": "topics.digest",
             "state": "degraded",
             "modeIds": ["synthetic-only"],
-            "languageIds": ["ko"],
-            "levelIds": [],
+            "languageIds": ["en", "ko"],
+            "levelIds": ["standard"],
             "formatIds": ["email"],
-            "policy": SYNTHETIC_TOPICS.reference(),
+            "policy": policy.reference(),
         }
     ]
     return {
         "service": service,
         "scheduler": scheduler,
         "capabilities": capabilities,
-        "router": topics_router(transactions, entry=entry, service=service),
+        "router": router,
         "worker": TopicsWorker(inherited_worker, scheduler),
     }
 
 
 def assemble_u5(profile):
-    return assemble_u4(profile, topics_factory=topics_contribution)
+    import datetime as dt
+    import json
+    from functools import partial
+
+    from backend.local_profile import private_bytes
+
+    def fixture_clock():
+        path = profile.root / "digest-fixture-clock.json"
+        now = dt.datetime.now(dt.UTC)
+        if not path.exists():
+            return now
+        value = json.loads(private_bytes(path))
+        instant = dt.datetime.fromisoformat(value["instant"])
+        if (
+            value.get("runId") != profile.run_id
+            or instant.tzinfo is None
+            or not now - dt.timedelta(hours=1) <= instant <= now + dt.timedelta(days=2)
+        ):
+            raise ValueError("synthetic digest clock binding differs")
+        return instant
+
+    return assemble_u4(profile, topics_factory=partial(topics_contribution, clock=fixture_clock))

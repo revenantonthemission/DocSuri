@@ -1,5 +1,153 @@
 # U5 code summary — topics & digests
 
+## Repair status — 2026-10-19
+
+This section supersedes the earlier implementation account below. Local repairs
+are implemented; completion and merge remain pending.
+Resend is selected, but the human confirms no sender address or test recipient
+exists. No external email was sent and no provider account or domain was created.
+See [external evidence prerequisites](../../../maintenance/u5-real-delivery-evidence.md).
+
+The repair adds authoritative C03 language/standard-level/IANA-zone settings,
+owner-authorized background reads, actual English/Korean presentation, immutable
+preference snapshots and send-admission fencing. The schedule filters due owners
+before pagination, retains intended weekly dates after late execution, uses one
+aware instant, and handles DST gaps/folds with finite searches. Appearance-only
+changes preserve prepared work; effective preference changes discard only unsent
+work. Account bootstrap and logout retain account-control authority after research
+consent withdrawal; research delivery still requires consent.
+
+The account-owned digest adapter returns accepted/refused/unknown with actual
+receipt and acknowledgement time. Local profiles cannot access the network;
+real composition requires explicit free Resend configuration and a finite durable
+send budget. Initial requests use immutable idempotency keys; reconciliation
+never sends again. A hash-only, run-bound cancellation capability supports an
+inert confirmation GET and bounded cookie-free RFC8058 POST; existing browser
+authorization remains unchanged. The assembled middleware/store test uses actual
+lifespan and a real capacity refresh; it proves the route boundary, not startup
+readiness. Public HTTPS, DKIM, proxy logging and real delivery remain unverified.
+
+### Repair verification
+
+Latest stable-source backend verification: **155 passed, zero failures/errors/
+skips, 82.94% aggregate coverage**, retaining the 80% floor. Runtime was 93.61s,
+peak RSS 215,433,216 bytes, and the process stopped. Immutable evidence:
+`/private/tmp/docsuri-u5-preserved-docsuri-u5-68f00b6ee0bcf67a-aa7edb82/coverage-evidence-1792342925464628000.json`.
+This supersedes the earlier 148/146-check backend results below.
+
+The browser fixture helper now derives absolute interpreter/script/root paths
+from its source URL. Both repository-root and frontend working-directory path
+checks, scoped and explicit helper TypeScript checks, and formatting pass.
+A mounted attempt reached one passing journey before exposing a nested runner
+lock in synthetic clock advancement. The repair retains the parent's exclusive
+phase lock and delegates only clock advancement through a private run-bound,
+short-lived capability. Only the Playwright process receives its plaintext
+token; persistent metadata holds its hash. The child validates run, expiry,
+live lock owner and active lock. Setup/unrelated phases still require exclusive
+ownership. Capability metadata is removed on success/failure; broad child
+environment construction is unchanged. Seven focused checks pass, including an
+actual spawned child, refusal cases and cleanup; they also pass in the 155-test suite.
+
+Mounted acceptance remains **unverified**. The final attempt stopped on recurring
+process-observation TimeoutExpired before a test report: exit 1, supervision-error,
+37.712s, 625,885,184-byte peak RSS and stopped process. No causal claim about
+host load is established, and monitoring/time/resource bounds remain unchanged.
+No more retries were made. The complete four-journey mounted proof and real
+provider demonstration remain prerequisites for unit completion and merge.
+Final browser evidence is preserved at
+`/private/tmp/docsuri-u5-preserved-docsuri-u5-87dd16122f1ae63d-a65cdc86/browser-evidence-1792343092561092000.json`.
+The current Vite build passed in 7.921s, peak RSS 571,785,216 bytes. Browser
+execution began (34 log bytes), then supervision failed; this attempt is not
+described as a startup failure. Source SHA-256:
+`4f6e3d10f17129f4352175e262775b63770b184ea2dbd6f4170befab6914cd6d`.
+The database is stopped and its volume retained.
+
+Subsequent scheduling repair filters consent-stopped owners and topics with
+prepared/sending/unknown work before the bounded due page. Queued sending,
+reconciliation and consent cleanup remain separate phases; admission still
+rechecks authority. Two new real-store cases seed 51 blocked topics ahead of
+two eligible topics, exercise three finite passes and assert no additional
+attempts for blocked topics. The first supervised component attempt stopped on
+process-observation TimeoutExpired after five progress markers, before a report:
+`/tmp/docsuri-u5-run/component-evidence-1792341362321630000.json`.
+The failed process was stopped and its realm preserved at
+`/private/tmp/docsuri-u5-preserved-docsuri-u5-eddddd3bf264167a-ff27e224`.
+After a separate bounded host startup diagnostic passed, one fresh coverage
+retry completed: **148 passed, zero failures/errors/skips, 83.08% aggregate**,
+88.60 seconds, 232,833,024-byte peak RSS, stopped process. Both 51-blocked-topic
+cases passed, including repeated finite passes and no new blocked-owner sends.
+Evidence: `/tmp/docsuri-u5-run/coverage-evidence-1792341719463695000.json`, realm
+`docsuri-u5-dd539733ed2faf50`. This verifies the subsequent scheduling change;
+the 146-check result below remains historical. Mounted browser verification is
+coordinated separately after preserving this backend realm.
+
+The prior stable-source coverage command in unit-test-instructions.md completed with
+**146 passed, zero failures/errors/skips, 83.33% aggregate coverage**. The runner
+recorded 83.20 seconds, 219,004,928-byte peak RSS and a stopped process. Evidence:
+`/tmp/docsuri-u5-run/coverage-evidence-1792339838010455000.json`, realm
+`docsuri-u5-dbef52eaa00ced76`. Exact scoped collection also found 146 tests.
+This includes both final runner regressions; no coverage threshold was lowered.
+Individual gaps remain (for example fixture helper74%); aggregate passage does
+not establish untested real transport or mounted browser behavior.
+
+- Scoped initial collection: 81 baseline tests. Repaired backend coverage:
+  **144 passed, zero failed/errors/skips, 83.33% aggregate**, with changed inherited
+  account/personalization files included. Evidence is preserved under
+  `/private/tmp/docsuri-u5-preserved-docsuri-u5-d11d5b70b57c1935-9f68eda7/coverage-evidence-1792338687405729000.json`.
+  This historical repair pass predates the final runner regressions; the final
+  146-check result above supersedes it.
+- Earlier repair aggregate: 137 passed but 75.68% coverage, correctly failed.
+  Seven meaningful inherited session/settings checks added; they exposed and
+  verified the consent-independent logout fix. Component pass: 41 checks.
+- Frontend: approved scoped typecheck passes; Vitest 22 passed, 92.27% lines.
+  Shared canonical export check and Python binding check pass.
+- Browser: four journeys prepared, including empty/no-send. First clean-realm
+  attempt stopped on host process-observation timeout before any product assertion;
+  logs/volume preserved at
+  `/private/tmp/docsuri-u5-preserved-docsuri-u5-5a9c245c5a5e48a2-06f63a09`.
+  The one-second observation limit remains unchanged. Runner now records
+  subprocess supervision failures and stops children; focused regression passes.
+  One accidental direct full operations-file invocation had 11 passes and five
+  missing-manifest setup errors; it is not counted as a suite pass.
+- A subsequent browser attempt produced one failure and three not-run journeys:
+  the host served old static assets without the new preference controls. That
+  failed realm is preserved at
+  `/private/tmp/docsuri-u5-preserved-docsuri-u5-5cc14ee5470b8ed8-2dd9b197`.
+  The runner now rebuilds the current Vite entry before serving, records build
+  command/log/supervision, and refuses failed builds within the original total
+  300-second bound. The focused failed-build regression passes. Final mounted
+  verification remains blocked: the corrected run built successfully in 5.75s
+  (581,877,760-byte peak RSS), then host startup observation raised TimeoutExpired
+  before tests began. The failure has no test report and no fabricated process
+  metrics. Preserve its full evidence at
+  `/private/tmp/docsuri-u5-preserved-docsuri-u5-5aeb407c0268ad99-1e66dc21/browser-evidence-1792339535341341000.json`.
+  No further browser retry was made before rechecking process observation. The empty-state mounted proof and
+  Step12 remain open pending a complete mounted run under the original bounds.
+
+All stateful phases use the exact commands in unit-test-instructions.md. Earlier
+layer passes were database16, repository19, component34, integration22 and
+operations46 before the seven inherited regressions. The backend/browser realms
+are independent; a consumed or failed realm is archived, never cleared or extended.
+
+### Migration and remaining evidence
+
+Fresh corrected **63-migration** installations and the additive **62→63** path
+were exercised. These do not prove adoption of the original failed 59-migration
+realm: its selection-comment bytes differ, so immutable ledger checks refuse drift.
+Preserve that original realm and create the fresh synthetic replacement; never
+rewrite its receipts. No existing-user migration is authorized or claimed.
+
+The scoped runner, selection comment, preference inheritance and owner-zone
+scheduling repairs are implemented and locally tested. Typed real delivery and
+cancellation are implemented, but actual external acceptance and correlated
+recipient evidence remain unavailable. The four mounted browser journeys still
+need a completed pass under the original process/resource bounds.
+
+The source manifest enumerates existing U5 contributions and all repair source,
+tests and generated bindings. Existing account/corpus/research boundaries are
+exercised through the real assembled store; no whole-release parity claim is made.
+Historical results below remain historical evidence, not the repaired-source proof.
+
 Date: 2026-10-18 (Asia/Seoul)
 Unit: u5-topics-digests. Branch: `feature/u5-topics-digests`. Contract: AIDLC-TESTING-CONTRACT `sha256:0b3bdbd990d6def665d447995282ba760f054c761c3ccf40dbbb9fc1b114553b` (methodology test-after, 80% line floor, existing suites stay green).
 

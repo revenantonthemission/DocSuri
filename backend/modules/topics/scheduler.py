@@ -4,7 +4,7 @@ the orphan sweep, one responsibility per bounded pass.
 Every pass runs the same finite sequence: the restart sweep moves orphaned
 `sending` runs to `unknown` (BR3.4), the reconciliation check resolves unknown
 outcomes from send-log evidence (BR3.2), due topics are prepared idempotently
-in the one stated zone (BR1.2/BR2.4) with consent-stopped queued work dropped
+in each owner's confirmed zone (BR1.2/BR2.4) with consent-stopped queued work dropped
 (BR4.2), and at most one send attempt starts per pass behind the checked
 transition guards (BR3.1/BR4.1). Failed runs are never auto-resent (BR3.3):
 the next scheduled window is the only automatic follow-up.
@@ -27,7 +27,7 @@ class TopicsScheduler:
         self.preparation = preparation
         self.delivery = delivery
         self.policy = policy
-        self.zone = ZoneInfo(policy.delivery_timezone)
+        self.zone = dt.UTC
 
     def run_once(self, limit=1):
         if type(limit) is not int or not 1 <= limit <= 10:
@@ -49,9 +49,7 @@ class TopicsScheduler:
 
     def _sweep_orphans(self, result):
         """Orphaned `sending` past the bound moves to `unknown` (BR3.4)."""
-        cutoff = dt.datetime.now(dt.UTC) - dt.timedelta(
-            seconds=self.policy.orphan_after_seconds
-        )
+        cutoff = dt.datetime.now(dt.UTC) - dt.timedelta(seconds=self.policy.orphan_after_seconds)
         for orphan in self.repository.orphaned_sending(cutoff, self.policy.sweep_limit):
             if self.repository.retire_orphan(orphan["id"]) is not None:
                 result["recovered"] += 1
@@ -66,24 +64,30 @@ class TopicsScheduler:
                 result["reconciled"] += 1
 
     def _now(self):
-        """One stated zone for every boundary decision; tests pin this clock."""
+        """One aware instant for SQL and calendar decisions; tests pin this clock."""
         return dt.datetime.now(self.zone)
 
     def _due_window(self, topic):
         """The next chronological window, or None while the topic is not due (BR1.2).
 
         The window is the rolling bound the settings name: [today-(days-1), today]
-        in the one stated zone. The watermark, not window tiling, prevents
+        in the owner's confirmed zone. The watermark, not window tiling, prevents
         repeats (BR2.2), so a failed window's content stays re-deliverable by a
         later window while it remains inside that window's bounds (BR3.3).
         """
-        now_local = self._now()
+        if "window_day" in topic:
+            today = topic["window_day"]
+            return today - dt.timedelta(days=topic["content_window_days"] - 1), today
+        preferences = topic.get("preferences", {})
+        if not preferences.get("timeZone"):
+            return None
+        now_local = self._now().astimezone(ZoneInfo(preferences["timeZone"]))
         today = now_local.date()
         scheduled = topic["delivery_time_local"]
         if topic["cadence"] == "weekly":
             if WEEKDAYS[now_local.weekday()] != topic["delivery_day"]:
                 return None
-        elif now_local.time() < scheduled:
+        if now_local.time() < scheduled:
             return None
         latest = self.repository.latest_window(topic["id"])
         if latest is not None and latest >= today:
@@ -98,7 +102,7 @@ class TopicsScheduler:
             result["recovered"] += len(discarded)
 
     def _evaluate_due(self, result, limit):
-        due = self.repository.due_topics(self.policy.delivery_timezone, self.policy.page_size)
+        due = self.repository.due_topics(self._now(), self.policy.page_size)
         for topic in due:
             if result["prepared"] >= limit:
                 return
@@ -113,7 +117,10 @@ class TopicsScheduler:
                 continue
             try:
                 _, adopted = self.preparation.prepare(
-                    topic["id"], window, topic["settings_revision"]
+                    topic["id"],
+                    window,
+                    topic["settings_revision"],
+                    expected_preferences=topic["preferences"],
                 )
             except TopicsError as error:
                 # A revision change (BR1.3) or window-order refusal re-fires on
@@ -129,7 +136,9 @@ class TopicsScheduler:
         for run in self.repository.prepared_runs(self.policy.sends_per_pass + 5):
             if attempted >= self.policy.sends_per_pass:
                 return
-            sending = self.repository.begin_send(run["id"], self.delivery.path_kind())
+            sending = self.repository.begin_send(
+                run["id"], self.delivery.path_kind(), real_send_limit=self.policy.real_send_limit
+            )
             if sending is None:
                 # Blocked (unsubscribed, consent-stopped, paused, single-flight):
                 # skipped without consuming the pass's send budget (BR3.1/4.1/4.2).

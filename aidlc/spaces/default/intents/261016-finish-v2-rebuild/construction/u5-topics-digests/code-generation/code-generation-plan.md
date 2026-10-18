@@ -4,9 +4,9 @@ Unit: `u5-topics-digests`. Branch: `feature/u5-topics-digests`. Scope: `docsuri-
 
 ## Summary
 
-- Builds: the topics-and-digests capability (follow/unsubscribe/reactivate, per-topic digest settings, scheduled preparation from eligible corpus within the configured window, real email delivery with single-flight and explicit reconciliation, account lifecycle participation) as an embedded contribution of the existing release.
-- Touches: `backend/modules/topics/**`, `backend/u5_*.py`, migration SQL, mounted routes and the worker chain, `backend/lifecycle_effects.py` + `backend/control_worker.py` (participant registration), `frontend/src/u5-topics/**`, `tests/u5_topics_digests/**`, `scripts/verify_docsuri_u5.py` + `scripts/serve_docsuri_u5.py`, per-unit frontend configs, CI lane.
-- Tests: standard strategy — five to eight tests per component plus integration tests for the key boundaries, run per layer after each layer is implemented (test-after); existing suites remain green.
+- Builds: repairs for all six U5 review findings and browser fixture isolation, completing inherited preferences, owner-timezone scheduling, and truthful real/local email delivery without dropping existing digest capabilities.
+- Touches: Topics, Personalization, the existing account email seam, shared contracts and targeted migrations, U5 assembly/configuration, Korean settings UI, unit tests, browser fixtures, verification scripts, and operational instructions.
+- Tests: retain the existing 81 backend checks; add five to eight checks per changed component, real-store/API tests, and at least four mounted browser journeys; preserve existing coverage floors and verify inherited behavior.
 
 ## Testing Contract
 
@@ -75,36 +75,257 @@ Unit: `u5-topics-digests`. Branch: `feature/u5-topics-digests`. Scope: `docsuri-
 }
 ```
 
+## Revision basis and boundary
+
+The human selected **Repair and re-review U5** on the six findings in
+[review-02.md](reviews/review-02.md) and the failed browser checkpoint. This plan
+modifies the existing implementation; it does not restart it or accept missing
+capabilities. The previous plan and implementation are recoverable from
+`1e35045b`. All repair checkboxes below start unchecked.
+
+Inputs remain the approved [functional specification](../functional-design/functional-spec.md),
+[business rules](../functional-design/rules.md), [entity model](../functional-design/entities.md),
+[security requirements](../nfr-requirements/security-requirements.md),
+[technology decisions](../nfr-requirements/tech-stack-decisions.md),
+[security design](../nfr-design/security-design.md),
+[logical components](../nfr-design/logical-components.md),
+[pipeline contribution](../infrastructure-design/cicd-pipeline.md),
+[unit catalogue](../../../inception/units-generation/unit-of-work.md),
+[requirements](../../../inception/requirements-analysis/requirements.md), and
+[delivery plan](../../../inception/delivery-planning/bolt-plan.md).
+The [repair assessment](../../../maintenance/u5-repair-assessment.md) supplies
+source evidence and migration cautions, not a scope waiver.
+
+Keep existing follow/reactivate/unsubscribe, owner checks, revision handling,
+chronological windows, watermark, lifecycle disposition, consent and orphan
+recovery behavior. Preserve the original finite realm expiry, evidence and
+resource bounds, including the corrected expired-realm preservation path.
+Do not copy account or preference ownership into Topics.
+
+## Repair decisions and integration rules
+
+- Language and level use Personalization/C03's authoritative settings and
+  revision, not C02 profile JSON or the unused SQL language column. Mount the
+  necessary settings routes in U5 with account-control authority; manual settings
+  must remain usable independently of research consent. Add a narrow,
+  owner-authorized background read rather than pretending a worker has a browser
+  session. Preserve supported vocabulary; reject unsupported values instead of
+  silently mapping them to Korean or inventing another difficulty.
+- Keep the existing missing-settings defaults `en`/`standard`, explicitly labelled
+  as defaults. The chosen language changes actual digest subject, explanatory
+  text, labels and empty-state presentation; `standard` selects the supported
+  standard presentation. Original paper titles retain their source wording.
+- Resolve the owner's explicit IANA timezone through the settings owner's
+  contract and expose the effective zone. Synthetic fixtures set their zones
+  explicitly. An unconfigured real owner must receive a clear configuration
+  state rather than an assumed location. Validate against the installed timezone
+  database; coordinate schemas, Python/TypeScript bindings, writer and readers.
+  Topic rows hold an execution snapshot, not a second authoritative preference.
+- Use one aware instant and the owner's zone for due-time selection, weekday and
+  inclusive calendar-date windows. Filter due owners before bounded pagination.
+  A DST gap becomes due at the first valid instant after the requested wall time;
+  a repeated wall time creates at most one run for the local window. Preserve
+  chronological ordering and watermark exclusion across timezone changes.
+- Weekly scheduling must satisfy both the selected weekday and wall time. Late
+  execution, including the following day, retains the intended occurrence and
+  local window date. Persist or deterministically recover the next occurrence
+  for bounded chronological catch-up within existing limits. Initial timezone
+  confirmation and later timezone changes set an explicit effective boundary;
+  do not invent historical zones or retroactive sends. Clarify canonical C08's
+  older 'nonoverlapping windows' wording: schedule occurrences are unique, while
+  the approved rolling 7/30-day content lookbacks may overlap and watermarks
+  suppress repeated delivered items.
+- Snapshot preferences, timezone, source revision and effective presentation
+  with the prepared run. A change to the effective language/level/timezone
+  fingerprint invalidates unsent preparation before sending; unrelated
+  appearance/onboarding edits do not. Keep the C03 revision for provenance/CAS.
+  An already-started attempt finishes once.
+  Sent, failed and unknown evidence is never rewritten by a later preference
+  update. Re-prepare discarded work as a new row, preserving BR2.4.
+- Extend the existing email seam with a digest-specific result:
+  `accepted`, `refused`, or `unknown`, actual receipt and acknowledgement time.
+  Existing account email callers keep their established interface. Resolve
+  `pathKind` from the actual bound adapter; content provenance remains separate.
+  Real acceptance requires a valid provider acknowledgement identifier.
+  Timeouts, lost responses and malformed successful responses cannot imply
+  definite refusal. Persist receipt evidence before recording terminal outcomes.
+- Bind a stable provider idempotency key to the immutable run/request where the
+  configured adapter supports it. It protects the initial send; it does not add
+  automatic resend or POST-based reconciliation. Reconciliation reads evidence;
+  missing evidence keeps the outcome unknown until explicit owner resolution.
+  BR3.2, BR3.3 and post-unsubscribe protections remain unchanged.
+- Real operation uses an explicitly configured existing free email adapter,
+  without an implicit SES or paid fallback. Synthetic/local/test profiles remain
+  network-disabled even with ambient credentials. Fail closed on unknown
+  provider names, missing configuration, mismatched policy/adapter, unsupported
+  vocabulary, or exhausted limits. Keep actual account-plan/quota verification
+  and one bounded authorized external demonstration as evidence prerequisites.
+- Email-service credentials remain with the inherited delivery capability and
+  server configuration. Topics neither stores nor logs them. Inception NFR3 is
+  specifically the U6 Notion-token requirement and remains N/A for U5; that does
+  not waive inherited secret-custody obligations. Qualify old statements about
+  'no configuration' as no new service/secret store: the existing adapter still
+  needs explicit composition and documented configuration.
+- Preserve applied migration bytes/receipts. Use targeted additions rather than
+  importing all U2 account SQL into U5's overlapping U3/U4 chain. Correct R-03's
+  mechanism description without rewriting an applied ledger; the corrected
+  unreleased SQL comment needs a fresh verification baseline and a documented
+  path for preserved older synthetic realms.
+
 ## Plan steps (test-after: implement each layer, then write and run its tests)
 
-- [x] **Step 1 — Branch and project structure and production configuration skeleton.** Create `feature/u5-topics-digests` from the current develop-equal HEAD; create `backend/modules/topics/` (`http.py`, `service.py`, `scheduler.py`, `preparation.py`, `delivery.py`, `repository.py`, `errors.py`, `u5_schema.sql`, `__init__.py`) as an embedded module of the existing release, leaving the superseded legacy `backend/modules/trends/` untouched (it is not part of the v2 assembly chain); `backend/u5_host.py` contribution chained on `assemble_u4` (service, owner-scoped router, worker hook on the existing worker entry that evaluates due topics each pass); configuration entries for bounded limits (selection budget, digest size, recovery bounds) with recorded values, no paid provider; the email delivery capability reused from the built application (`backend/modules/accounts/integrations/email.py` seam: local sink/mock in test profiles, the maintainer-configured path in real operation). Trace: unit-of-work U5; NFR6.1; infrastructure-design `cicd-pipeline.md`.
-- [x] **Step 2 — Verify the existing test runner/configuration and record the exact unit-scoped command.** Create `backend/pytest.u5-topics-digests.ini` and the `tests/u5_topics_digests/{database,repository,component,integration,operations,runtime}` roots; confirm `backend/.venv/bin/python -m pytest -c backend/pytest.u5-topics-digests.ini -q` collects cleanly before any test is written and record the exact commands in `unit-test-instructions.md`. Trace: Testing Contract `runner_step`.
-- [x] **Step 3 — Data model / database behavior — implement.** `topics` schema tables and constraints for `FollowedTopic` (status active/unsubscribed, normalized topic key, identity preserved across reactivation), `DigestSettings` (cadence, delivery time, delivery day, window, revision), `DigestRun` (explicit state machine `prepared→sending→sent|failed|unknown`, plus `empty`/`discarded`; window bounds; settings-revision stamp; chronological window uniqueness excluding discarded runs, BR2.4), `DeliveryOutcome` (observed + reconciled states, assumption named), `SendLogEntry` (transport receipt, timestamps, `pathKind`), `TopicDeliveryWatermark` (per-topic sent content), and `topics.lifecycle_evidence` (coordinator contract); migrations applied through the unit verify runner per the U4 precedent. Trace: entities.md; FR1.1–FR1.4; NFR4.1.
-- [x] **Step 4 — Data model / database behavior — write and run its tests after implementation.** Constraint probes: one active subscription per (account, normalized key); reactivation keeps identity/watermark/history; window uniqueness with discarded runs excluded; watermark uniqueness; run states restricted to the machine. Trace: FR1.1, FR1.3; NFR4.1.
-- [x] **Step 5 — Repository / data access — implement.** Owner-scoped repositories for every entity; settings save with revision bump and discard of prepared runs (BR1.3); single-flight query (BR3.1); unreconciled-unknown pause query (BR3.2); chronological window ordering guard (BR2.4); watermark reads and appends; run transitions as checked state changes; lifecycle evidence writes; owner isolation on every read and write (BR5.1). Trace: FR1.1–FR1.4; NFR1.1, NFR1.2.
-- [x] **Step 6 — Repository / data access — write and run its tests after implementation.** Cross-owner denial on every path; duplicate active refusal; revision advance discards prepared runs; duplicate window refusal under racing ticks; watermark exclusion. Trace: BR1.1, BR1.3, BR2.2, BR2.4; NFR1.1.
-- [x] **Step 7 — Business logic — implement.** Follow/unsubscribe/reactivate semantics (BR1.1, BR4.1, including queued-work drop and in-flight attempt completion); settings validation and revision handling (BR1.2, BR1.3); scheduler evaluation of cadence + delivery time in the account's timezone with idempotent preparation (BR1.2, BR2.4); content selection from eligible corpus inside the inclusive window, watermark excluded, empty recorded explicitly (BR2.1–BR2.3); send attempt through the built email capability with single-flight, active-status, consent, and reconciliation-pause guards (BR3.1, BR3.2, BR1.4, BR4.2), writing the SendLogEntry and recording `sent`/`failed`/`unknown`; reconciliation check reading send-log/recipient evidence plus the owner's explicit run-scoped resolve action with the assumption named (BR3.2); restart/recovery sweep moving orphaned `sending` runs to `unknown` with the evidence gap recorded (BR3.4); failed runs never auto-resent (BR3.3); lifecycle participant `TopicsDigests` (writes only its own tables) registered with the coordinator (BR4.3; `backend/lifecycle_effects.py` map + `backend/control_worker.py` participants). Trace: FR1.1–FR1.6; NFR2.1, NFR2.2; NFR4.2, NFR4.3.
-- [x] **Step 8 — Business logic — write and run its tests after implementation.** Timezone boundaries and late firing; re-fire idempotence; chronological ordering; empty vs failed distinction; single-flight race; unknown pause blocks new sends; resolve delivered re-applies the watermark and resolve not-delivered leaves the window able to re-deliver inside later bounds; orphan sweep; unsubscribe queued vs mid-flight; consent stop and restore; reactivation produces no repeat delivery; lifecycle disposition reporting. Trace: BR1.1–BR5.1; NFR2.1; NFR4.1–4.3.
-- [x] **Step 9 — API / endpoint — implement.** Mount `GET topics`, `POST topics` (follow), `DELETE topics/{id}` (unsubscribe), `GET/PUT topics/{id}/settings` (revision-checked save), `POST topics/{id}/runs/{runId}/resolve` (body names the assumption) on the existing host with the shared error vocabulary; owner checks on every access; denials surface as plain refusals. Trace: FR1.1, FR1.2, FR1.4, FR1.5; NFR1.1, NFR1.2.
-- [x] **Step 10 — API / endpoint — write and run its tests after implementation.** Mounted-boundary contract conformance: state-machine guards, revision conflict response, owner denial, idempotent retry, duplicate notice, anonymous refusal. Trace: NFR1.1, NFR4.1; BR5.1.
-- [x] **Step 11 — Frontend behavior — implement.** `frontend/src/u5-topics/**` per frontend-components.md: `TopicsView`, `FollowedTopicsSection`, `TopicList`, `TopicRow` (`TopicSummary`, `DigestSettingsLink`, `ResolveUnknownControl`, `UnsubscribeButton`), `FollowTopicAction`, `DigestSettingsForm` (`CadenceSelect`, `DeliveryTimeInput`, `DeliveryDaySelect`, `ContentWindowSelect`, `InheritedLevelNote`, `SaveButton`), `ConfirmationDialog`; established Transport/SWR patterns, acknowledged-before-optimistic states, inline validation on blur, polite live region for outcome changes (never color-only), Korean labels, WCAG 2.2 AA. Trace: FR1.1, FR1.2, FR1.4, FR1.5; NFR5.1; NFR6.1.
-- [x] **Step 12 — Frontend behavior — write and run its tests after implementation.** Vitest + RTL per component (loading/empty/error/ready/partial, duplicate notice, save-failure retry-safe state, stale-revision reload offer, dialog focus trapping and return) plus mounted browser journeys over the real API/DB (follow → settings → unsubscribe; resolve control; empty digest state). Trace: NFR5.1; FR1.1–FR1.5.
-- [x] **Step 13 — Environment/build configuration.** `scripts/verify_docsuri_u5.py` (phases `setup/migrate/database/repository/component/integration/browser/coverage` following the U4 runner precedent; `SCHEMAS` extended with `topics`; `MIGRATIONS` = the U4 tuple plus U5's SQL), `scripts/serve_docsuri_u5.py` (owned realm and HTTPS local transport), `frontend/vitest.u5-topics.config.ts`, `frontend/tsconfig.u5-topics.json`, `frontend/playwright.u5-topics.config.ts`, `backend/.coveragerc.u5`, and the scoped CI lane `.github/workflows/u5-topics-digests.yml` (shared contracts, frontend, backend, browser jobs mirroring the U4 lane); refusal states never converted into skips. Trace: NFR6.1; infrastructure-design `cicd-pipeline.md`.
-- [x] **Step 14 — Documentation and traceability.** `code-summary.md`, `source-manifest.json` (every created/modified/deleted application path), `traceability.json` for this stage, and the `scripts/verify_docsuri_u5.py` phases used by the completion checkpoint (real email path evidence with `pathKind`). Trace: stage Step 5.
+- [x] **Step 1 — Preserve baseline and bind configuration responsibilities.**
+  Keep the current working branch and failed evidence. Pin source boundaries,
+  component owners, supported preference vocabulary and real/local transport
+  configuration in the existing U5 assembly. No new service, framework, provider
+  account or secret store. Inspect prerequisites without displaying secrets.
+  Trace: FR1; NFR6.1; R-04–R-06; pipeline contribution.
 
-## Requirement → step traceability
+- [x] **Step 2 — Repair and verify the unit-scoped runner instructions.**
+  Correct R-01 in this plan and test instructions to
+  `backend/.venv/bin/python -m pytest -c backend/pytest.u5-topics-digests.ini --collect-only -q tests/u5_topics_digests`.
+  Run from the repository root after approval. The current baseline collects
+  81 tests; record the actual final count rather than prescribing it.
+  Preserve runner supervision and coverage floors. Trace: R-01; Testing Contract.
 
-| Requirement | Steps |
+- [x] **Step 3 — Data model / database behavior — implement.**
+  Add targeted owner-setting/timezone and immutable preparation-snapshot
+  migrations in their owning modules. Bind source revision, presentation,
+  delivery request identity and transport evidence to each run without new
+  duplicated business ownership. Restrict cross-component grants. Preserve
+  terminal evidence, window uniqueness, lifecycle deletion and rollback
+  compatibility. Correct R-03's selection comment to describe direct
+  eligibility/purpose/withdrawal predicates. Trace: FR1.2–FR1.4; NFR1, NFR4;
+  R-03–R-06.
+
+- [x] **Step 4 — Data model / database behavior — test after implementation.**
+  Extend `tests/u5_topics_digests/database/` with fresh-install and upgrade
+  coverage, immutable evidence/revision constraints, timezone validation,
+  restricted grants and rejected migration drift. Keep prior 59-migration
+  realm evidence separate from new baseline evidence. Trace: Step 3; NFR1/NFR4.
+
+- [x] **Step 5 — Repository / data access — implement.**
+  Expose owner-owned background settings reads, resolve timezone before bounded
+  due filtering, snapshot preferences atomically, and fence prepared runs
+  against stale preference/settings revisions at send admission. Preserve
+  receipt-first reconciliation and owner isolation. Keep topic writers inside
+  Topics and preference writers inside Personalization. Trace: FR1.2–FR1.4;
+  BR1.2/1.3/2.4/3.2; R-04–R-06.
+
+- [x] **Step 6 — Repository / data access — test after implementation.**
+  Extend `tests/u5_topics_digests/repository/` for two-owner settings,
+  forbidden cross-owner reads/writes, due-filter pagination, simultaneous
+  preference/send admission, discarded re-preparation, immutable unknown/sent
+  evidence, receipt persistence and watermark correctness. Trace: Step 5;
+  NFR1.1/NFR4.1–NFR4.3.
+
+- [x] **Step 7 — Business logic — implement.**
+  Complete preparation-time language/level consumption and rendering, owner-zone
+  scheduling and weekly/date/DST semantics. Add typed digest transport outcomes
+  through `backend/modules/accounts/integrations/email.py` or an adjacent
+  account-owned adapter, injected by U5 composition. Protect local/test
+  isolation, finite real-send budget and actual provider receipts. Reconciliation
+  never sends again; unresolved ambiguity remains visibly paused. Preserve
+  consent/unsubscribe and all existing lifecycle/recovery guards. Trace:
+  FR1.1–FR1.6; BR1.2–BR4.3; R-04–R-06.
+
+- [x] **Step 8 — Business logic — test after implementation.**
+  Extend `tests/u5_topics_digests/component/` and focused delivery tests for
+  differing owner languages/zones, level behavior, midnight/weekly boundaries,
+  DST gap/fold, late firing, zone changes, stale preparation, accepted/refused/
+  unknown responses, receipt-loss and post-receipt crashes, duplicate/concurrent
+  attempts and expired provider keys. Assert zero network calls in synthetic
+  profiles even with fake ambient credentials; no SES/paid/mock-success fallback.
+  Trace: Step 7; NFR2/NFR4/NFR6; R-04–R-06.
+
+- [x] **Step 9 — API / endpoint — implement.**
+  Mount the owner settings routes in U5, coordinate C03/shared DTO/schema bindings
+  and digest effective-preference readouts, and retain operation/revision
+  receipts and current authority checks. Provide explicit unconfigured-zone,
+  unsupported-preference and real-transport configuration states. Do not expand
+  anonymous access or add an effect-triggering read. Trace: FR1.2/FR1.4;
+  NFR1/NFR2; R-04–R-06.
+
+- [x] **Step 10 — API / endpoint — test after implementation.**
+  Extend `tests/u5_topics_digests/integration/` with mounted settings, revision
+  conflict/lost-ack replay, account switch, foreign references, invalid timezone,
+  consent-independent manual settings, and consent-dependent delivery. Verify
+  inherited account/personalization and research/corpus boundaries through
+  explicit focused regression commands, without claiming whole-release parity.
+  Trace: Step 9; FR1.2/FR1.5/FR1.6; NFR1/NFR2.
+
+- [x] **Step 11 — Frontend behavior — implement.**
+  Show actual inherited language/level/timezone and acknowledged saves in the
+  Korean responsive workspace; link or mount the existing settings UI needed
+  to configure them. Keep wrong-owner/account-switch cleanup, keyboard/focus,
+  appearance modes and truthful delivery/unknown/empty feedback. Correct stale
+  helper text only after its claimed behavior exists. Trace: FR1.2/FR1.4;
+  NFR5.1; R-02/R-04/R-05.
+
+- [ ] **Step 12 — Frontend behavior — test after implementation.**
+  Extend scoped Vitest/RTL tests, then run at least four mounted journeys:
+  follow/settings/unsubscribe, scheduler/local-sink delivery, explicit unknown
+  resolution, and the promised empty-digest state. Include owner preference
+  propagation and truthful no-send empty outcomes. Keep the existing timeout and
+  send limits. Trace: FR1.1–FR1.5; NFR5.1; R-02 and browser failure.
+
+- [ ] **Step 13 — Environment/build configuration and integration evidence.**
+  Repair local suite isolation in `scripts/verify_docsuri_u5.py`, fixture
+  helpers and test configuration as necessary: a browser realm must be fresh
+  and independent of coverage fixtures; preserve consumed/failed realms before
+  preparing replacements. Retain CI's separate backend/browser jobs. Verify
+  formatter/lint/typecheck/schema generation, targeted inherited regressions,
+  U5 backend coverage and mounted browser checks. Document real adapter
+  configuration and finite quota/cost enforcement. Prepare a bounded real-send
+  check; execute it only after verified free capacity, sender, permitted content
+  and an explicitly authorized recipient/send are available. Trace: NFR6.1;
+  R-01/R-06; pipeline contribution; delivery-plan B06.
+
+- [ ] **Step 14 — Documentation, fresh review and completion evidence.**
+  Update `code-summary.md`, `traceability.json`, `source-manifest.json` and
+  instructions with actual changed paths, commands/results, remaining gaps and
+  all six finding dispositions. Coordinate affected formal contract definitions
+  and consumer bindings without silently altering approved capability scope.
+  Obtain a fresh independent architecture review over final source and artifacts;
+  preserve old review/evidence. Run the existing authorized browser checkpoint
+  through AI-DLC after source is settled. Real email evidence and all mandatory
+  conditions must be met before claiming U5 complete; if an external prerequisite
+  remains unavailable, report it rather than substituting a local pass.
+  Only completed work merges by PR into `develop` under `CONVENTIONS.md`.
+  Trace: all FR1 and applicable NFRs; R-01–R-06; stage Step 5/6.
+
+## Requirement and finding traceability
+
+| Requirement or finding | Repair steps |
 |---|---|
-| FR1.1 | 3, 5, 7, 9, 11 |
-| FR1.2 | 3, 5, 7, 9, 11 |
-| FR1.3 | 3, 5, 7, 11 |
-| FR1.4 | 3, 5, 7, 8, 9, 10, 11, 12 |
-| FR1.5 | 3, 5, 7, 9, 11 |
-| FR1.6 | 3, 5, 7, 8 |
-| NFR1 | 5, 6, 9, 10 |
-| NFR2 | 7, 8 |
-| NFR3 | — (N/A for U5: no external-service credentials; the Notion token belongs to U6) |
-| NFR4 | 3, 7, 8, 10 |
-| NFR5 | 11, 12, 13 |
-| NFR6 | 1, 13 |
+| FR1.1 | 1, 7, 8, 12, 14; retain existing follow/reactivation behavior |
+| FR1.2 | 3–12, 14 |
+| FR1.3 | 3–8, 12, 14; retain eligibility/watermark filtering |
+| FR1.4 | 3–14 |
+| FR1.5 / FR1.6 | 5–10, 12–14 |
+| NFR1 / NFR2 | 3–10, 12–14 |
+| NFR3 | N/A for U5: specifically Notion credentials in U6; inherited email secrets still protected |
+| NFR4 | 3–10, 12–14 |
+| NFR5 | 9–14 |
+| NFR6 | 1, 7, 8, 13, 14 |
+| R-01 | 2, 13, 14 |
+| R-02 | 11, 12, 14 |
+| R-03 | 3, 4, 14 |
+| R-04 | 3–12, 14 |
+| R-05 | 3–12, 14 |
+| R-06 | 1, 3–10, 13, 14 |
+| Browser fixture backlog | 12, 13, 14 |
+
+## Completion and evidence boundaries
+
+No current test result is relabelled as a repaired-source result. Preserve 81-test
+coverage and the failed browser proof as baseline evidence, then collect fresh
+results after implementation. The 80% aggregate coverage floor and any existing
+stricter targets remain intact; report per-file gaps honestly. Previously quoted
+473/356 counts are historical references, not assertions about current suites.
+
+The plan authorizes local code/configuration repair and verification. It does
+not authorize paid resources, provider-account creation, unsolicited external
+messages, data migration, production deployment, or promotion to `main`.
+Prepare the exact external demonstration for separate explicit send authorization.
+A real adapter tested with a fake client is contract evidence, not real delivery.

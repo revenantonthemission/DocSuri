@@ -11,8 +11,10 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import secrets
 import sys
+from contextlib import nullcontext
 from pathlib import Path
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
@@ -93,17 +95,24 @@ def fixture_record(profile) -> dict:
 
 
 def seed_accounts(conn, fixtures: dict, hashes: dict, run_id: str) -> None:
-    identifiers = [UUID(account["accountId"]) for account in fixtures["accounts"].values()]
+    identifiers = [
+        UUID(account["accountId"]) for account in fixtures["accounts"].values()
+    ]
     conn.execute(
         "SELECT pg_advisory_xact_lock(hashtext('u5-browser-fixture-accounts'))"
     )
     existing = conn.execute(
         "SELECT id,email FROM accounts.account WHERE id=ANY(%s)", (identifiers,)
     ).fetchall()
-    count = conn.execute("SELECT count(*) AS count FROM accounts.account").fetchone()["count"]
+    count = conn.execute("SELECT count(*) AS count FROM accounts.account").fetchone()[
+        "count"
+    ]
     if count + len(identifiers) - len(existing) > 20:
         raise runner.Refused("finite account fixture allocation exhausted")
-    expected = {UUID(value["accountId"]): value["email"] for value in fixtures["accounts"].values()}
+    expected = {
+        UUID(value["accountId"]): value["email"]
+        for value in fixtures["accounts"].values()
+    }
     if any(expected[row["id"]] != row["email"] for row in existing):
         raise runner.Refused("existing fixture account identity differs")
     for key, account in fixtures["accounts"].items():
@@ -127,7 +136,11 @@ def seed_accounts(conn, fixtures: dict, hashes: dict, run_id: str) -> None:
 def seed_corpus(conn, fixtures: dict) -> None:
     """Synthetic papers dated today: inside every rolling digest window."""
     for paper in PAPERS:
-        metadata = {"fixtureVersion": FIXTURE_VERSION, "runId": fixtures["runId"], "synthetic": True}
+        metadata = {
+            "fixtureVersion": FIXTURE_VERSION,
+            "runId": fixtures["runId"],
+            "synthetic": True,
+        }
         conn.execute(
             "INSERT INTO corpus.paper(id,title,authors,metadata,published_on,withdrawn) "
             "VALUES(%s,%s,%s,%s,CURRENT_DATE,false) ON CONFLICT(id) DO NOTHING",
@@ -153,9 +166,16 @@ def seed_corpus(conn, fixtures: dict) -> None:
                     {
                         "title": paper["title"],
                         "sections": [
-                            {"heading": "Synthetic abstract", "anchor": "abstract", "text": paper["text"]}
+                            {
+                                "heading": "Synthetic abstract",
+                                "anchor": "abstract",
+                                "text": paper["text"],
+                            }
                         ],
-                        "provenance": {"fixtureVersion": FIXTURE_VERSION, "synthetic": True},
+                        "provenance": {
+                            "fixtureVersion": FIXTURE_VERSION,
+                            "synthetic": True,
+                        },
                     }
                 ),
             ),
@@ -286,6 +306,50 @@ def setup(path: Path) -> dict:
             lambda conn: seed_accounts(conn, fixtures, hashes, profile.run_id),
         )
         transactions.run("corpus", lambda conn: seed_corpus(conn, fixtures))
+
+        def seed_preferences(conn):
+            for account in fixtures["accounts"].values():
+                conn.execute(
+                    "INSERT INTO personalization.settings(account_id,revision,defaults) VALUES(%s,%s,%s) ON CONFLICT(account_id) DO NOTHING",
+                    (UUID(account["accountId"]), uuid4(), Jsonb({"timeZone": "UTC"})),
+                )
+
+        transactions.run("personalization", seed_preferences)
+
+        def empty_topic(conn):
+            topic_id = stable_id(profile.run_id, "empty-topic")
+            conn.execute(
+                "INSERT INTO topics.followed_topic(id,account_id,topic_key,display_name) VALUES(%s,%s,'fixture-empty-topic','빈 다이제스트 확인') ON CONFLICT(id) DO UPDATE SET status='active',updated_at=clock_timestamp()",
+                (topic_id, UUID(fixtures["accounts"]["memberB"]["accountId"])),
+            )
+            conn.execute(
+                "INSERT INTO topics.digest_settings(id,topic_id,cadence,delivery_time_local,content_window_days) VALUES(%s,%s,'daily','00:00',7) ON CONFLICT(topic_id) DO NOTHING",
+                (stable_id(profile.run_id, "empty-settings"), topic_id),
+            )
+            return topic_id
+
+        empty_id = transactions.run("topics", empty_topic)
+        from backend.modules.topics.delivery import DigestDelivery
+        from backend.modules.topics.repository import TopicsRepository
+
+        repository = TopicsRepository(transactions)
+        today = dt.datetime.now(dt.UTC).date()
+        items = repository.select_window_content(
+            empty_id,
+            today - dt.timedelta(days=6),
+            today,
+            selection_limit=50,
+            content_limit=10,
+        )
+        run, adopted = repository.prepare_run(
+            empty_id, today - dt.timedelta(days=6), today, 1, items
+        )
+        if not adopted and run["state"] == "prepared":
+            sending = repository.begin_send(run["id"], "local-sink")
+            DigestDelivery(transactions, None).attempt(
+                sending,
+                {"account_id": UUID(fixtures["accounts"]["memberB"]["accountId"])},
+            )
         transactions.run(
             "topics",
             lambda conn: seed_resolve_fixture(
@@ -303,10 +367,37 @@ def setup(path: Path) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--environment-file", type=Path, required=True)
-    parser.add_argument("--action", choices=["setup"], required=True)
+    parser.add_argument("--action", choices=["setup", "advance-clock"], required=True)
     args = parser.parse_args()
-    with runner.exclusive():
-        result = setup(args.environment_file)
+    # Only the authenticated browser child may update its synthetic clock while
+    # the parent holds phase ownership; setup still requires exclusive custody.
+    delegated = args.action == "advance-clock" and bool(
+        os.environ.get("DOCSURI_U5_CLOCK_CAPABILITY")
+    )
+    with nullcontext() if delegated else runner.exclusive():
+        if args.action == "setup":
+            result = setup(args.environment_file)
+        else:
+            profile, value = runner.manifest(args.environment_file)
+            if delegated:
+                runner.authorize_clock_child(value)
+            runner.require_resources(value)
+            # A separate bounded scheduler clock never changes sessions, expiry,
+            # quota, migration receipts or database timestamps.
+            instant = dt.datetime.combine(
+                dt.datetime.now(dt.UTC).date() + dt.timedelta(days=1),
+                dt.time(12),
+                tzinfo=dt.UTC,
+            )
+            runner.private_json(
+                profile.root / "digest-fixture-clock.json",
+                {"runId": profile.run_id, "instant": instant.isoformat()},
+            )
+            result = {
+                "state": "clock-advanced",
+                "synthetic": True,
+                "instant": instant.isoformat(),
+            }
     print(json.dumps(result))
     return 0
 

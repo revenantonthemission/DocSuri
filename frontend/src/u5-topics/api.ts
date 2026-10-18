@@ -8,6 +8,15 @@ export type Cadence = 'daily' | 'weekly';
 export type DeliveryDay = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 export type ContentWindow = 7 | 30;
 
+export type DigestPreferences = {
+  languageId: 'en' | 'ko';
+  presentationLevelId: 'standard';
+  timeZone: string | null;
+  effectiveAt: string | null;
+  sourceRevision: string | null;
+  usesDefaults: boolean;
+};
+
 export type DigestSettings = {
   cadence: Cadence;
   deliveryTimeLocal: string | null;
@@ -24,6 +33,15 @@ export type DigestItem = {
 };
 
 export type DigestRun = {
+  preferenceSnapshot?: DigestPreferences;
+  presentation?: {
+    subject: string;
+    text: string;
+    html: string;
+    languageId: string;
+    presentationLevelId: string;
+    emptyLabel: string;
+  };
   runId: string;
   topicId: string;
   windowStart: string;
@@ -54,6 +72,7 @@ export type LastRun = {
 };
 
 export type Topic = {
+  effectivePreferences?: DigestPreferences;
   topicId: string;
   topicKey: string;
   displayName: string;
@@ -113,7 +132,10 @@ export async function followTopic(
   return client.post<FollowResult>('/api/v2/topics', { topicKey, displayName });
 }
 
-export async function unsubscribeTopic(client: Transport, topicId: string): Promise<UnsubscribeResult> {
+export async function unsubscribeTopic(
+  client: Transport,
+  topicId: string,
+): Promise<UnsubscribeResult> {
   return client.del<UnsubscribeResult>(`/api/v2/topics/${topicId}`);
 }
 
@@ -147,8 +169,7 @@ export async function resolveRun(
   });
 }
 
-export const isValidTime = (value: string): boolean =>
-  /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+export const isValidTime = (value: string): boolean => /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 
 export const isUnresolvedUnknown = (topic: Topic): boolean =>
   topic.lastRun?.state === 'unknown' && topic.lastRun.observedState === 'unknown';

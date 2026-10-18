@@ -137,9 +137,7 @@ function TopicSummary({ topic }: { topic: Topic }) {
       <span className="topic-name" data-testid="topic-name">
         {topic.displayName}
       </span>
-      <span className="topic-status">
-        {topic.status === 'active' ? '구독 중' : '구독 해지'}
-      </span>
+      <span className="topic-status">{topic.status === 'active' ? '구독 중' : '구독 해지'}</span>
       {digest ? (
         <span className="topic-digest" data-testid="last-digest">
           <span aria-hidden="true">{digest.icon}</span> {digest.text}
@@ -182,7 +180,9 @@ function ResolveUnknownControl({
   };
   return (
     <div className="resolve-control" data-testid="resolve-control">
-      <span className="resolve-label">마지막 발송 결과를 확인할 수 없어요. 어느 쪽인지 알려주세요:</span>
+      <span className="resolve-label">
+        마지막 발송 결과를 확인할 수 없어요. 어느 쪽인지 알려주세요:
+      </span>
       <button
         type="button"
         onClick={() => resolve('delivered')}
@@ -329,7 +329,7 @@ export function TopicsView({
   const [rowBusy, setRowBusy] = useState(false);
   const [status, setStatus] = useState<Notice | null>(null);
   const { data, error, isLoading, mutate } = useSWR(
-    active ? 'u5-topics' : null,
+    active ? ['u5-topics', client, client.generation] : null,
     () => listTopics(client),
     {
       revalidateOnFocus: false,
@@ -403,7 +403,9 @@ export function TopicsView({
             {describeError(error).text}
           </p>
         ) : viewState === 'empty' ? (
-          <p data-testid="topics-empty">아직 팔로우한 주제가 없어요. 아래에서 첫 주제를 팔로우해 보세요.</p>
+          <p data-testid="topics-empty">
+            아직 팔로우한 주제가 없어요. 아래에서 첫 주제를 팔로우해 보세요.
+          </p>
         ) : (
           <>
             {viewState === 'partial' ? (
@@ -470,8 +472,8 @@ export function TopicsView({
                 <strong>'{confirmTopic.displayName}'</strong> 주제 구독을 해지할까요?
               </p>
               <p className="dialog-note">
-                구독 해지 즉시 발송이 멈춰요. 이 주제의 대기 중인 발송 준비물은 폐기되고, 이미
-                진행 중인 발송은 결과만 기록돼요. 지금까지의 기록은 남아 있어요.
+                구독 해지 즉시 발송이 멈춰요. 이 주제의 대기 중인 발송 준비물은 폐기되고, 이미 진행
+                중인 발송은 결과만 기록돼요. 지금까지의 기록은 남아 있어요.
               </p>
             </>
           }

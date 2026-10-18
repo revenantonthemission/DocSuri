@@ -8,14 +8,16 @@ from types import SimpleNamespace
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
 from backend.modules.accounts.services.guarded_entry import GuardedEntryService
+from backend.modules.personalization.guarded_service import ASSISTANCE_DEFAULTS, POLICY
+from backend.modules.personalization.local_http import settings_router
 from backend.modules.topics.http import topics_router
 from backend.modules.topics.repository import TopicsRepository
 from backend.modules.topics.service import TopicsService
 from backend.transactions import Authority, OwnerTransactions
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from psycopg.types.json import Jsonb
 
 W1 = ("2026-01-01", "2026-01-07")
 
@@ -32,6 +34,7 @@ def mounted(realm):
     repository = TopicsRepository(transactions)
     app = FastAPI()
     app.include_router(topics_router(transactions, entry=entry, service=service))
+    app.include_router(settings_router(transactions, entry=entry))
     clients, authorities = [], []
     # Reuse the conftest's two stable synthetic accounts: the realm's finite
     # account allocation is never spent on repeated module loads.
@@ -73,6 +76,13 @@ def mounted(realm):
             )
 
         transactions.run("accounts", seed)
+        transactions.run(
+            "personalization",
+            lambda conn: conn.execute(
+                "INSERT INTO personalization.settings(account_id,revision,defaults) VALUES(%s,%s,%s) ON CONFLICT(account_id) DO UPDATE SET revision=excluded.revision,defaults=personalization.settings.defaults || excluded.defaults",
+                (owner, uuid4(), Jsonb({"timeZone": "UTC"})),
+            ),
+        )
         client = TestClient(app, base_url=realm.origin)
         client.cookies.set("session_id", token)
         client.headers.update({"Origin": realm.origin, "X-CSRF-Token": csrf})
@@ -222,12 +232,9 @@ def test_anonymous_refusal(mounted):
     anonymous.headers.update({"Origin": str(mounted.client.base_url), "X-CSRF-Token": "0" * 64})
     assert anonymous.get("/api/v2/topics").status_code == 401
     assert (
-        post(anonymous, "/api/v2/topics", {"topicKey": "x", "displayName": "x"}).status_code
-        == 401
+        post(anonymous, "/api/v2/topics", {"topicKey": "x", "displayName": "x"}).status_code == 401
     )
-    assert (
-        delete(anonymous, f"/api/v2/topics/{uuid4()}").status_code == 401
-    )
+    assert delete(anonymous, f"/api/v2/topics/{uuid4()}").status_code == 401
     anonymous.close()
 
 
@@ -241,7 +248,7 @@ def test_resolve_guards_and_assumption(mounted):
         dt.date(2026, 1, 7),
         revision,
         [{"versionId": "v-http", "paperId": "p-http", "title": "T", "publishedOn": "2026-01-03"}],
-    )    # A prepared run is not awaiting reconciliation: the resolve control refuses.
+    )  # A prepared run is not awaiting reconciliation: the resolve control refuses.
     prepared = post(
         mounted.client,
         f"/api/v2/topics/{topic_id}/runs/{run['id']}/resolve",
@@ -249,9 +256,7 @@ def test_resolve_guards_and_assumption(mounted):
     )
     assert prepared.status_code == 409 and prepared.json()["code"] == "CONFLICT"
     assert repository.begin_send(run["id"], "local-sink") is not None
-    repository.record_transport_facts(
-        run["id"], acknowledged_at=dt.datetime.now(dt.UTC)
-    )
+    repository.record_transport_facts(run["id"], acknowledged_at=dt.datetime.now(dt.UTC))
     repository.finish_send(run["id"], "unknown")
     # The resolve body must name the assumption (BR3.2).
     unnamed = post(
@@ -273,3 +278,104 @@ def test_resolve_guards_and_assumption(mounted):
         {"decision": "not-delivered", "assumption": "second guess"},
     )
     assert closed.status_code == 409 and closed.json()["code"] == "CONFLICT"
+
+
+def settings_read(client):
+    response = post(client, "/api/v2/c03/settings-read", {})
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def settings_update(client, revision, key=None, **changes):
+    return post(
+        client,
+        "/api/v2/c03/settings-update",
+        {"expectedRevision": revision, "policyRef": POLICY, **changes},
+        key,
+    )
+
+
+def test_settings_mounted_and_acknowledged(mounted):
+    before = settings_read(mounted.client)
+    saved = settings_update(
+        mounted.client,
+        before["revision"],
+        timeZone="Asia/Seoul",
+        assistanceDefaults=dict(ASSISTANCE_DEFAULTS, languageId="ko"),
+    )
+    assert saved.status_code == 200, saved.text
+    assert settings_read(mounted.client)["timeZone"] == "Asia/Seoul"
+    topic = follow(mounted.client)["topicId"]
+    view = mounted.client.get(f"/api/v2/topics/{topic}/settings").json()
+    assert view["effectivePreferences"]["languageId"] == "ko"
+
+
+def test_settings_lost_ack_replay_and_stale_revision(mounted):
+    before = settings_read(mounted.client)
+    key = uuid4()
+    first = settings_update(mounted.client, before["revision"], key, appearance="light")
+    replay = settings_update(mounted.client, before["revision"], key, appearance="light")
+    assert first.status_code == replay.status_code == 200
+    assert first.json() == replay.json()
+    stale = settings_update(mounted.client, before["revision"], appearance="dark")
+    assert stale.status_code == 409
+
+
+def test_settings_invalid_zone_and_vocabulary(mounted):
+    before = settings_read(mounted.client)
+    assert (
+        settings_update(mounted.client, before["revision"], timeZone="Mars/Olympus").status_code
+        == 422
+    )
+    assert (
+        settings_update(
+            mounted.client,
+            before["revision"],
+            assistanceDefaults=dict(ASSISTANCE_DEFAULTS, languageId="invented"),
+        ).status_code
+        == 422
+    )
+
+
+def test_settings_other_owner_revision_is_not_authority(mounted):
+    other = settings_read(mounted.other)
+    foreign = settings_update(mounted.client, other["revision"], timeZone="Europe/London")
+    assert foreign.status_code == 409
+    assert settings_read(mounted.other) == other
+
+
+def test_settings_consent_independent_delivery_still_stops(mounted):
+    before = settings_read(mounted.client)
+    mounted.transactions.run(
+        "accounts",
+        lambda conn: conn.execute(
+            "UPDATE accounts.consent SET granted=false WHERE account_id=%s",
+            (mounted.authority.account_id,),
+        ),
+    )
+    try:
+        assert (
+            settings_update(mounted.client, before["revision"], timeZone="UTC").status_code == 200
+        )
+        assert mounted.repository.digest_recipient(mounted.authority.account_id)["granted"] is False
+    finally:
+        mounted.transactions.run(
+            "accounts",
+            lambda conn: conn.execute(
+                "UPDATE accounts.consent SET granted=true WHERE account_id=%s",
+                (mounted.authority.account_id,),
+            ),
+        )
+
+
+def test_settings_require_current_session_and_csrf(mounted):
+    anonymous = TestClient(mounted.client.app, base_url=mounted.client.base_url)
+    assert post(anonymous, "/api/v2/c03/settings-read", {}).status_code in (401, 403)
+    before = settings_read(mounted.client)
+    response = mounted.client.post(
+        "/api/v2/c03/settings-update",
+        json={"expectedRevision": before["revision"], "policyRef": POLICY, "timeZone": "UTC"},
+        headers={"Idempotency-Key": str(uuid4()), "X-CSRF-Token": "incorrect"},
+    )
+    assert response.status_code == 403
+    anonymous.close()

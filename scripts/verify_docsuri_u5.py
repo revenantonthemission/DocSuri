@@ -26,7 +26,7 @@ import time
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +43,7 @@ from verify_docsuri_u4 import MIGRATIONS as U4_MIGRATIONS
 from backend.local_profile import LocalProfile, private_bytes
 
 RUN = Path("/tmp/docsuri-u5-run").resolve()
+_RUNNER_OWNED = False
 PYTHON = ROOT / "backend/.venv/bin/python"
 UNIT = "u5-topics-digests"
 REALM = "topics-digests"
@@ -67,6 +68,10 @@ MIGRATIONS = (
     ("topics", "backend/modules/topics/u5_schema.sql"),
     ("topics", "backend/modules/topics/u5_erasure.sql"),
     ("topics", "backend/modules/topics/u5_run_guard.sql"),
+    ("personalization", "backend/modules/personalization/u5_digest_preferences.sql"),
+    ("topics", "backend/modules/topics/u5_preference_snapshot.sql"),
+    ("topics", "backend/modules/topics/u5_schedule.sql"),
+    ("topics", "backend/modules/topics/u5_unsubscribe_capability.sql"),
 )
 TEST_PHASES = (
     "database",
@@ -128,10 +133,12 @@ def private_json(path: Path, value: object) -> None:
 @contextmanager
 def exclusive():
     """One U5 runner phase, including setup and preservation, across processes."""
+    global _RUNNER_OWNED
     path = RUN.parent / ".docsuri-u5-runner.lock"
     descriptor = os.open(
         path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600
     )
+    acquired = False
     try:
         info = os.fstat(descriptor)
         if (
@@ -145,7 +152,75 @@ def exclusive():
             fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as error:
             raise Refused("another U5 phase is active") from error
+        os.ftruncate(descriptor, 0)
+        os.write(descriptor, str(os.getpid()).encode())
+        os.fsync(descriptor)
+        _RUNNER_OWNED = True
+        acquired = True
         yield
+    finally:
+        if acquired:
+            _RUNNER_OWNED = False
+        os.close(descriptor)
+
+
+@contextmanager
+def browser_clock_delegation(value: dict, seconds: float):
+    """Delegate only fixture-clock writes while the browser parent retains custody."""
+    if not _RUNNER_OWNED or not 0 < seconds <= 300:
+        raise Refused("clock delegation requires bounded runner ownership")
+    token = secrets.token_urlsafe(32)
+    target = RUN / "browser-clock-delegation.json"
+    private_json(
+        target,
+        {
+            "runId": value["runId"],
+            "ownerPid": os.getpid(),
+            "expiresAt": min(value["expiresAt"], time.time() + seconds),
+            "tokenHash": hashlib.sha256(token.encode()).hexdigest(),
+        },
+    )
+    try:
+        yield token
+    finally:
+        target.unlink(missing_ok=True)
+
+
+def authorize_clock_child(value: dict) -> None:
+    """Validate a private browser capability without taking its parent's lock."""
+    token = os.environ.get("DOCSURI_U5_CLOCK_CAPABILITY", "")
+    if not 1 <= len(token) <= 128:
+        raise Refused("clock delegation unavailable")
+    grant = json.loads(private_bytes(RUN / "browser-clock-delegation.json"))
+    if (
+        not isinstance(grant, dict)
+        or type(grant.get("ownerPid")) is not int
+        or grant["ownerPid"] <= 0
+        or type(grant.get("expiresAt")) not in (int, float)
+        or not isinstance(grant.get("tokenHash"), str)
+        or re.fullmatch(r"[a-f0-9]{64}", grant["tokenHash"]) is None
+    ):
+        raise Refused("clock delegation malformed")
+    if (
+        grant.get("runId") != value["runId"]
+        or not time.time() < grant.get("expiresAt", 0) <= value["expiresAt"]
+        or not secrets.compare_digest(
+            grant.get("tokenHash", ""), hashlib.sha256(token.encode()).hexdigest()
+        )
+    ):
+        raise Refused("clock delegation differs or expired")
+    lock = RUN.parent / ".docsuri-u5-runner.lock"
+    owner = private_bytes(lock).decode()
+    if owner != str(grant.get("ownerPid")):
+        raise Refused("clock delegation owner differs")
+    os.kill(int(owner), 0)
+    descriptor = os.open(lock, os.O_RDWR | os.O_NOFOLLOW)
+    try:
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return
+        raise Refused("clock delegation owner is inactive")
     finally:
         os.close(descriptor)
 
@@ -481,7 +556,9 @@ def wait_database_endpoint(value):
     """Probe the authenticated TCP endpoint migrations actually use, not initdb's socket."""
     import psycopg
 
-    deadline = time.monotonic() + 105  # Previous 30 * (3-second probe + 0.5-second wait).
+    deadline = (
+        time.monotonic() + 105
+    )  # Previous 30 * (3-second probe + 0.5-second wait).
     for _ in range(30):
         if deadline - time.monotonic() < 4.5:
             break  # Leave room for the bounded connect, query and retry delay.
@@ -490,7 +567,9 @@ def wait_database_endpoint(value):
                 conn.execute("SET LOCAL statement_timeout=1000")
                 row = conn.execute("SELECT current_database()").fetchone()
                 if row != (DATABASE,):
-                    raise Refused("database endpoint identity differs; owned resources preserved")
+                    raise Refused(
+                        "database endpoint identity differs; owned resources preserved"
+                    )
             return
         except (psycopg.OperationalError, psycopg.InterfaceError):
             time.sleep(0.5)
@@ -744,6 +823,7 @@ def bounded_process(
     companion=None,
     companion_log: Path | None = None,
     allow_bounded_stop: bool = False,
+    clock_capability: str | None = None,
 ) -> dict:
     if not 0 < seconds <= 300 or log.parent != RUN:
         raise Refused("finite owned process bound required")
@@ -755,6 +835,8 @@ def bounded_process(
     observation_end = beginning + seconds - min(7, seconds / 2)
     count, peak, code = 0, 0, None
     environment = child_environment()
+    if clock_capability is not None:
+        environment["DOCSURI_U5_CLOCK_CAPABILITY"] = clock_capability
     if companion is not None:
         # Bound the Playwright coordinator and inherited worker heaps. The
         # aggregate process-tree RSS check below remains authoritative.
@@ -813,7 +895,7 @@ def bounded_process(
                     break
             stream.flush()
             os.fsync(stream.fileno())
-    except (Refused, RuntimeError, OSError) as error:
+    except (Refused, RuntimeError, OSError, subprocess.SubprocessError) as error:
         reasons = {
             "private process log exceeded 16 MiB": "log-limit",
             "private application log exceeded 16 MiB": "companion-log-limit",
@@ -837,7 +919,9 @@ def bounded_process(
                 stop(process)
                 process.stdout.close()
             if failure_metrics is not None:
-                failure_metrics["processStopped"] = process is None or process.poll() is not None
+                failure_metrics["processStopped"] = (
+                    process is None or process.poll() is not None
+                )
         finally:
             for value, previous_handler in previous.items():
                 signal.signal(value, previous_handler)
@@ -845,8 +929,12 @@ def bounded_process(
     if bounded_stop and not allow_bounded_stop:
         error = Refused("owned process exceeded its deadline")
         error.supervision = {
-            "exitCode": 1, "reason": "deadline", "elapsedSeconds": time.monotonic() - beginning,
-            "peakRssBytes": peak, "logBytes": count, "processStopped": True,
+            "exitCode": 1,
+            "reason": "deadline",
+            "elapsedSeconds": time.monotonic() - beginning,
+            "peakRssBytes": peak,
+            "logBytes": count,
+            "processStopped": True,
         }
         raise error
     return {
@@ -1007,6 +1095,10 @@ def run_phase(phase: str, path: Path) -> dict:
     if {name: digest(ROOT / name) for name in LOCKS} != value["locks"]:
         raise Refused("frozen dependency identity changed")
     require_stopped()
+    if phase == "browser" and any(RUN.glob("*-evidence-*.json")):
+        raise Refused(
+            "browser verification requires a fresh realm; preserve this realm before replacement"
+        )
     if phase in {"browser", "integration", "coverage"}:
         from scripts.u5_browser_fixtures import setup as prepare_browser_fixtures
 
@@ -1090,25 +1182,36 @@ def run_phase(phase: str, path: Path) -> dict:
     elif phase == "component":
         args.append("tests/u5_topics_digests/runtime")
     started = time.monotonic()
-    supervision, failure, server = {}, None, None
+    supervision, failure, server, build = {}, None, None, None
     server_log = RUN / f"u5-browser-host-{time.time_ns()}.log"
     try:
         if phase == "browser":
+            build = build_browser_assets(
+                RUN / f"u5-browser-build-{time.time_ns()}.log",
+                seconds=max(0.01, 300 - (time.monotonic() - started)),
+            )
             server = start_server(path, server_log)
-        supervision = bounded_process(
-            args,
-            RUN / f"u5-phase-{phase}-{time.time_ns()}.log",
-            **(
-                {
-                    "seconds": max(0.01, 300 - (time.monotonic() - started)),
-                    "companion": server,
-                    "companion_log": server_log,
-                }
-                if server is not None
-                else {}
-            ),
-        )
-    except (Refused, RuntimeError, OSError) as error:
+        remaining = max(0.01, 300 - (time.monotonic() - started))
+        with (
+            browser_clock_delegation(value, remaining)
+            if phase == "browser"
+            else nullcontext()
+        ) as clock_capability:
+            supervision = bounded_process(
+                args,
+                RUN / f"u5-phase-{phase}-{time.time_ns()}.log",
+                clock_capability=clock_capability,
+                **(
+                    {
+                        "seconds": remaining,
+                        "companion": server,
+                        "companion_log": server_log,
+                    }
+                    if server is not None
+                    else {}
+                ),
+            )
+    except (Refused, RuntimeError, OSError, subprocess.SubprocessError) as error:
         failure = type(error).__name__
         supervision = getattr(error, "supervision", {})
     finally:
@@ -1120,6 +1223,7 @@ def run_phase(phase: str, path: Path) -> dict:
         "command": args,
         "exitCode": 1 if failure else supervision["exitCode"],
         "supervision": supervision,
+        "build": build,
         "failureCategory": failure,
         "durationSeconds": time.monotonic() - started,
         "source": before,
@@ -1169,16 +1273,45 @@ def run_phase(phase: str, path: Path) -> dict:
     return {"state": "passed", "phase": phase}
 
 
+def build_browser_assets(log: Path, *, seconds: float) -> dict:
+    # Vite's approved configuration empties dist and rebuilds the current entry.
+    # Never serve a prior checkout's assets under a current-source test receipt.
+    command = ["corepack", "pnpm@9.15.9", "--dir", "frontend", "exec", "vite", "build"]
+    result = bounded_process(command, log, seconds=seconds)
+    if result["exitCode"]:
+        error = Refused("current browser asset build failed")
+        error.supervision = result
+        raise error
+    return {"command": command, "supervision": result, "log": str(log)}
+
+
 def safe_phase_summary(evidence):
     """Only fixed classifications and numeric supervision; never private log content."""
-    result = {key: evidence[key] for key in (
-        "phase", "exitCode", "tests", "failures", "errors", "skipped",
-        "failureCategory", "missingTestReport", "invalidTestReport", "sourceChangedDuringRun",
-    ) if key in evidence}
+    result = {
+        key: evidence[key]
+        for key in (
+            "phase",
+            "exitCode",
+            "tests",
+            "failures",
+            "errors",
+            "skipped",
+            "failureCategory",
+            "missingTestReport",
+            "invalidTestReport",
+            "sourceChangedDuringRun",
+        )
+        if key in evidence
+    }
     result["supervision"] = {
         key: evidence.get("supervision", {}).get(key)
         for key in (
-            "reason", "exitCode", "elapsedSeconds", "peakRssBytes", "logBytes", "processStopped",
+            "reason",
+            "exitCode",
+            "elapsedSeconds",
+            "peakRssBytes",
+            "logBytes",
+            "processStopped",
         )
     }
     return result

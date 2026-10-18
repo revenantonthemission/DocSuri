@@ -31,10 +31,16 @@
       "path": "backend/local_profile.py"
     },
     {
+      "path": "backend/modules/accounts/integrations/digest_email.py"
+    },
+    {
       "path": "backend/modules/accounts/integrations/email.py"
     },
     {
       "path": "backend/modules/accounts/local_http.py"
+    },
+    {
+      "path": "backend/modules/accounts/services/guarded_entry.py"
     },
     {
       "path": "backend/modules/accounts/u5_digest_recipient.sql"
@@ -47,6 +53,15 @@
     },
     {
       "path": "backend/modules/corpus/u5_digest_read.sql"
+    },
+    {
+      "path": "backend/modules/personalization/guarded_service.py"
+    },
+    {
+      "path": "backend/modules/personalization/local_http.py"
+    },
+    {
+      "path": "backend/modules/personalization/u5_digest_preferences.sql"
     },
     {
       "path": "backend/modules/topics/__init__.py"
@@ -67,6 +82,9 @@
       "path": "backend/modules/topics/preparation.py"
     },
     {
+      "path": "backend/modules/topics/presentation.py"
+    },
+    {
       "path": "backend/modules/topics/repository.py"
     },
     {
@@ -79,10 +97,22 @@
       "path": "backend/modules/topics/u5_erasure.sql"
     },
     {
+      "path": "backend/modules/topics/u5_preference_snapshot.sql"
+    },
+    {
       "path": "backend/modules/topics/u5_run_guard.sql"
     },
     {
+      "path": "backend/modules/topics/u5_schedule.sql"
+    },
+    {
       "path": "backend/modules/topics/u5_schema.sql"
+    },
+    {
+      "path": "backend/modules/topics/u5_unsubscribe_capability.sql"
+    },
+    {
+      "path": "backend/modules/topics/unsubscribe.py"
     },
     {
       "path": "backend/pytest.u5-topics-digests.ini"
@@ -124,6 +154,9 @@
       "path": "frontend/src/u5-topics/digest-settings.tsx"
     },
     {
+      "path": "frontend/src/u5-topics/owner-preferences.tsx"
+    },
+    {
       "path": "frontend/src/u5-topics/topics-view.tsx"
     },
     {
@@ -133,10 +166,16 @@
       "path": "frontend/test/u5-topics/fixtures.ts"
     },
     {
+      "path": "frontend/test/u5-topics/preferences.test.tsx"
+    },
+    {
       "path": "frontend/test/u5-topics/topics.test.tsx"
     },
     {
       "path": "frontend/tsconfig.u5-topics.json"
+    },
+    {
+      "path": "frontend/types/wire/dtos.ts"
     },
     {
       "path": "frontend/vitest.u5-topics.config.ts"
@@ -154,16 +193,160 @@
       "path": "scripts/verify_docsuri_u5.py"
     },
     {
+      "path": "shared/dtos/workspace.schema.json"
+    },
+    {
+      "path": "shared/events/execution.schema.json"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/__init__.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/dtos/__init__.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/dtos/accounts_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/dtos/docmodel_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/dtos/evidence_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/dtos/extended_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/dtos/library_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/dtos/mypage_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/dtos/search_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/dtos/summarization_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/dtos/workspace_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/events/__init__.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/events/account_signals_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/events/execution_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/events/incidents_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/events/ingestion_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/events/paper_retracted_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/events/search_executed_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/vector_spec/__init__.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/7344a7ec6b4d82d0f8c3e958ec2f1a0cc65fa350222364415a020f07288ed417/vector_spec/index_record_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/__init__.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/dtos/__init__.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/dtos/accounts_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/dtos/docmodel_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/dtos/evidence_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/dtos/extended_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/dtos/library_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/dtos/mypage_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/dtos/search_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/dtos/summarization_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/dtos/workspace_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/events/__init__.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/events/account_signals_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/events/execution_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/events/incidents_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/events/ingestion_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/events/paper_retracted_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/events/search_executed_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/vector_spec/__init__.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_generations/fa82b1c071187d864ca2612b732cee735218bf95b07d4548ca73a254613b42fd/vector_spec/index_record_schema.py"
+    },
+    {
+      "path": "shared/python/src/docsuri_shared/_binding_head.json"
+    },
+    {
       "path": "tests/u5_topics_digests/__init__.py"
     },
     {
-      "path": "tests/u5_topics_digests/conftest.py"
+      "path": "tests/u5_topics_digests/component/test_account_settings_regression.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_digest_transport.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_schedule_preferences.py"
     },
     {
       "path": "tests/u5_topics_digests/component/test_topics_logic.py"
     },
     {
+      "path": "tests/u5_topics_digests/conftest.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/database/test_preference_schema.py"
+    },
+    {
       "path": "tests/u5_topics_digests/database/test_schema.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/integration/test_email_unsubscribe.py"
     },
     {
       "path": "tests/u5_topics_digests/integration/test_http.py"
@@ -173,6 +356,9 @@
     },
     {
       "path": "tests/u5_topics_digests/operations/test_runner.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/repository/test_preferences.py"
     },
     {
       "path": "tests/u5_topics_digests/repository/test_repository.py"

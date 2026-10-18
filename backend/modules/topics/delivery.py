@@ -11,48 +11,12 @@ maintainer-configured path actually carried it (BR1.4). The email seam is
 """
 
 import asyncio
-import datetime as dt
-import html as html_module
 
-from backend.modules.accounts.integrations.email import get_email_client
+from backend.modules.accounts.integrations.digest_email import digest_mail_binding
 from backend.transactions import OwnerTransactions
 from backend.u5_policy import SYNTHETIC_TOPICS
 
 from .repository import TopicsRepository
-
-TITLE_LIMIT = 200
-
-
-def render_digest_email(topic, items):
-    """(subject, text, html) for one digest; recipient-derived values escaped."""
-    name = html_module.escape(str(topic["display_name"])[:160], quote=True)
-    count = len(items)
-    subject = f"[DocSuri] '{name}' 주제 다이제스트 ({count}편)"
-    lines = []
-    for item in items:
-        title = str(item.get("title", ""))[:TITLE_LIMIT]
-        published = str(item.get("publishedOn", ""))
-        lines.append(f"- {title} ({published})")
-    body_text = (
-        f"'{topic['display_name']}' 주제의 최신 논문 {count}편입니다.\n\n" + "\n".join(lines)
-        if items
-        else f"'{topic['display_name']}' 주제의 새 소식이 없습니다."
-    )
-    rows = "".join(
-        f"<li>{html_module.escape(str(item.get('title', ''))[:TITLE_LIMIT], quote=True)} "
-        f"({html_module.escape(str(item.get('publishedOn', '')), quote=True)})</li>"
-        for item in items
-    )
-    body_html = (
-        f"<html><body><h3>'{name}' 주제 다이제스트</h3>"
-        f"<p>최신 논문 {count}편입니다.</p><ul>{rows}</ul></body></html>"
-        if items
-        else (
-            f"<html><body><h3>'{name}' 주제 다이제스트</h3>"
-            "<p>새 소식이 없습니다.</p></body></html>"
-        )
-    )
-    return subject, body_text, body_html
 
 
 class DigestDelivery:
@@ -64,12 +28,24 @@ class DigestDelivery:
         corpus,
         *,
         mail=None,
+        unsubscribe=None,
         policy=SYNTHETIC_TOPICS,
     ):
         self.repository = TopicsRepository(transactions)
         self.corpus = corpus
         self.policy = policy
-        self.mail = mail if mail is not None else get_email_client(env="local")
+        self.unsubscribe = unsubscribe
+        self.mail = (
+            mail if mail is not None else digest_mail_binding(synthetic=policy.synthetic_only)
+        )
+        if getattr(self.mail, "path_kind", None) not in ("real", "local-sink"):
+            raise ValueError("digest adapter identity required")
+        if policy.synthetic_only and self.mail.path_kind != "local-sink":
+            raise ValueError("synthetic delivery cannot use real transport")
+        if not policy.synthetic_only and self.mail.path_kind != "real":
+            raise ValueError("real delivery requires a real adapter")
+        if not policy.synthetic_only and unsubscribe is None:
+            raise ValueError("real delivery requires the owner-bound cancellation capability")
 
     def path_kind(self):
         """`local-sink` unless a maintainer-configured path carried the send.
@@ -78,7 +54,7 @@ class DigestDelivery:
         truthful degraded path (BR1.4): no send claims `real` without a
         configured path.
         """
-        return "local-sink"
+        return self.mail.path_kind
 
     def attempt(self, sending, topic):
         """Deliver one sending run; the outcome is recorded before returning."""
@@ -87,11 +63,18 @@ class DigestDelivery:
             return self.repository.finish_send(
                 sending["id"], "failed", failure_reason="recipient-unavailable"
             )
-        subject, text, html = render_digest_email(topic, sending["digest_content"])
         try:
+            unsubscribe_url = (
+                self.unsubscribe.issue(sending["id"]) if self.path_kind() == "real" else None
+            )
             delivered = asyncio.run(
                 asyncio.wait_for(
-                    self.mail.send_digest_email(recipient["email"], subject, text, html),
+                    self.mail.send(
+                        recipient["email"],
+                        sending["presentation"],
+                        sending["request_key"],
+                        **({"unsubscribe_url": unsubscribe_url} if unsubscribe_url else {}),
+                    ),
                     timeout=self.send_seconds,
                 )
             )
@@ -101,11 +84,15 @@ class DigestDelivery:
             return self.repository.finish_send(sending["id"], "unknown")
         # Transport facts land before the outcome: a crash between the two
         # leaves an unknown run whose send log still reconciles it (BR3.2).
-        if delivered is True:
+        if delivered.state == "accepted":
             self.repository.record_transport_facts(
-                sending["id"], acknowledged_at=dt.datetime.now(dt.UTC)
+                sending["id"],
+                transport_receipt=delivered.receipt,
+                acknowledged_at=delivered.acknowledged_at,
             )
             return self.repository.finish_send(sending["id"], "sent")
+        if delivered.state == "unknown":
+            return self.repository.finish_send(sending["id"], "unknown")
         return self.repository.finish_send(
             sending["id"], "failed", failure_reason="delivery-path-refused"
         )
@@ -117,6 +104,10 @@ class DigestDelivery:
         message. Their absence is an evidence gap: silence alone never
         reconciles, so the decision stays with the owner's explicit resolve.
         """
+        if run.get("path_kind") == "real":
+            if run["acknowledged_at"] is not None and run["transport_receipt"]:
+                return "sent"
+            return None
         if run["acknowledged_at"] is not None or run["transport_receipt"] is not None:
             return "sent"
         return None

@@ -98,9 +98,7 @@ def test_cross_owner_denial(transactions, authority, authority_b, connect):
     assert denial.value.code == "NOT_FOUND"
     for call in (
         lambda: repo_.read_run(authority_b, mine, run["id"]),
-        lambda: repo_.save_settings(
-            authority_b, mine, 1, "daily", dt.time(8, 0), None, 7
-        ),
+        lambda: repo_.save_settings(authority_b, mine, 1, "daily", dt.time(8, 0), None, 7),
         lambda: repo_.unsubscribe(authority_b, mine),
         lambda: repo_.resolve_run(authority_b, mine, run["id"], "sent"),
     ):
@@ -118,17 +116,11 @@ def test_settings_revision_conflict_and_discard(transactions, authority, connect
     make_run(repo_, connect, topic_id, W1)
     revision = settings_of(connect, topic_id)["settings_revision"]
     with pytest.raises(TopicsError) as stale:
-        repo_.save_settings(
-            authority, topic_id, revision + 5, "daily", dt.time(9, 0), None, 7
-        )
+        repo_.save_settings(authority, topic_id, revision + 5, "daily", dt.time(9, 0), None, 7)
     assert stale.value.code == "CONFLICT" and stale.value.current["revision"] == revision
-    unchanged = repo_.save_settings(
-        authority, topic_id, revision, "daily", dt.time(8, 0), None, 7
-    )
+    unchanged = repo_.save_settings(authority, topic_id, revision, "daily", dt.time(8, 0), None, 7)
     assert unchanged["unchanged"] is True
-    saved = repo_.save_settings(
-        authority, topic_id, revision, "weekly", dt.time(9, 30), "mon", 30
-    )
+    saved = repo_.save_settings(authority, topic_id, revision, "weekly", dt.time(9, 30), "mon", 30)
     assert saved["unchanged"] is False and len(saved["discarded"]) == 1
     assert settings_of(connect, topic_id)["settings_revision"] == revision + 1
     runs = repo_.read_topic(authority, topic_id)["runs"]
@@ -139,9 +131,7 @@ def test_window_order_and_adoption(transactions, authority, connect):
     repo_ = repo(transactions)
     topic_id = repo_.follow(authority, unique("window-topic"), "Window Topic")["topic"]["id"]
     row = settings_of(connect, topic_id)
-    first, adopted = repo_.prepare_run(
-        topic_id, W1[0], W1[1], row["settings_revision"], [ITEM]
-    )
+    first, adopted = repo_.prepare_run(topic_id, W1[0], W1[1], row["settings_revision"], [ITEM])
     assert adopted is False
     again, adopted_again = repo_.prepare_run(
         topic_id, W1[0], W1[1], row["settings_revision"], [ITEM]
@@ -159,7 +149,9 @@ def test_window_order_and_adoption(transactions, authority, connect):
 
 def test_begin_send_guards(transactions, authority, connect):
     repo_ = repo(transactions)
-    topic_id = repo_.follow(authority, unique("send-guard-topic"), "Send Guard Topic")["topic"]["id"]
+    topic_id = repo_.follow(authority, unique("send-guard-topic"), "Send Guard Topic")["topic"][
+        "id"
+    ]
     account_id = authority.account_id
     later = make_run(repo_, connect, topic_id, W2)
     earlier = make_run(repo_, connect, topic_id, W1)
@@ -225,13 +217,19 @@ def test_send_watermark_exclusion(transactions, authority, connect):
     assert "v-sent-a" in first and "v-sent-b" in first
     assert first.index("v-sent-a") < first.index("v-sent-b")
     assert "v-ineligible" not in first
-    run = make_run(repo_, connect, topic_id, W1, items=[
-        item
-        for item in repo_.select_window_content(
-            topic_id, W1[0], W1[1], selection_limit=50, content_limit=10
-        )
-        if item["versionId"] in ("v-sent-a", "v-sent-b")
-    ])
+    run = make_run(
+        repo_,
+        connect,
+        topic_id,
+        W1,
+        items=[
+            item
+            for item in repo_.select_window_content(
+                topic_id, W1[0], W1[1], selection_limit=50, content_limit=10
+            )
+            if item["versionId"] in ("v-sent-a", "v-sent-b")
+        ],
+    )
     assert repo_.begin_send(run["id"], "local-sink") is not None
     assert repo_.finish_send(run["id"], "sent", transport_receipt="sink-2") is not None
     repeat = select(W1[0], W1[1])
@@ -282,7 +280,10 @@ def test_orphan_sweep_records_evidence_gap(transactions, authority, connect):
             (run["id"],),
         )
     assert run["id"] not in [
-        row["id"] for row in repo_.orphaned_sending(dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=1), 10)
+        row["id"]
+        for row in repo_.orphaned_sending(
+            dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=1), 10
+        )
     ]
     found = repo_.orphaned_sending(dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=5), 10)
     assert run["id"] in [row["id"] for row in found]
@@ -293,5 +294,8 @@ def test_orphan_sweep_records_evidence_gap(transactions, authority, connect):
     assert view["path_kind"] is None and view["transport_receipt"] is None
     assert repo_.retire_orphan(run["id"]) is None
     assert run["id"] not in [
-        row["id"] for row in repo_.orphaned_sending(dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=5), 10)
+        row["id"]
+        for row in repo_.orphaned_sending(
+            dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=5), 10
+        )
     ]

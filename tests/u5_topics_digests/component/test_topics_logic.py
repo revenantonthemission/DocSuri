@@ -9,9 +9,8 @@ import datetime as dt
 from uuid import uuid4
 
 import pytest
-from psycopg.types.json import Jsonb
-
 from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
+from backend.modules.accounts.integrations.digest_email import DigestMailResult
 from backend.modules.topics.control_lifecycle import TopicsDigestsLifecycleParticipant
 from backend.modules.topics.delivery import DigestDelivery
 from backend.modules.topics.errors import TopicsError
@@ -19,6 +18,7 @@ from backend.modules.topics.preparation import DigestPreparation
 from backend.modules.topics.repository import TopicsRepository
 from backend.modules.topics.scheduler import TopicsScheduler
 from backend.modules.topics.service import TopicsService
+from psycopg.types.json import Jsonb
 
 W1 = (dt.date(2026, 1, 1), dt.date(2026, 1, 7))
 W2 = (dt.date(2026, 1, 8), dt.date(2026, 1, 14))
@@ -32,12 +32,16 @@ ITEM = {
 
 
 class RefusingMail:
-    async def send_digest_email(self, email, subject, text, html, *, headers=None):
-        return False
+    path_kind = "local-sink"
+
+    async def send(self, email, presentation, request_key):
+        return DigestMailResult("refused")
 
 
 class UnobservedMail:
-    async def send_digest_email(self, email, subject, text, html, *, headers=None):
+    path_kind = "local-sink"
+
+    async def send(self, email, presentation, request_key):
         raise TimeoutError("transport cut mid-send")
 
 
@@ -76,6 +80,9 @@ def build(transactions, mail=None):
     preparation = DigestPreparation(transactions, None)
     delivery = DigestDelivery(transactions, None, mail=mail)
     scheduler = TopicsScheduler(transactions, preparation, delivery)
+    scheduler._now = lambda: dt.datetime.combine(
+        dt.datetime.now(dt.UTC).date() + dt.timedelta(days=1), dt.time(12), tzinfo=dt.UTC
+    )
     return TopicsService(transactions), scheduler, delivery
 
 
@@ -156,6 +163,7 @@ def test_due_window_boundaries_and_late_firing(transactions):
         "delivery_time_local": dt.time(8, 0),
         "delivery_day": None,
         "content_window_days": 7,
+        "preferences": {"timeZone": "UTC"},
     }
     # Before the scheduled minute the topic is not due (BR1.2).
     scheduler._now = lambda: dt.datetime(2026, 3, 10, 7, 59, tzinfo=scheduler.zone)
@@ -170,6 +178,85 @@ def test_due_window_boundaries_and_late_firing(transactions):
     assert scheduler._due_window(weekly) == (dt.date(2026, 3, 4), dt.date(2026, 3, 10))
     monday = dict(weekly, delivery_day="mon")
     assert scheduler._due_window(monday) is None
+
+
+@pytest.mark.parametrize("blocked_by", ["consent", "unknown"])
+def test_blocked_page_cannot_starve_another_owner(
+    transactions, authority, authority_b, connect, blocked_by
+):
+    service, scheduler, _ = build(transactions)
+    repository = TopicsRepository(transactions)
+    today = dt.datetime.now(dt.UTC).date()
+    tomorrow = today + dt.timedelta(days=1)
+    scheduler._now = lambda: dt.datetime.combine(tomorrow, dt.time(12), tzinfo=dt.UTC)
+    seed_corpus(connect, [("v-fairness", "p-fairness", today, True)])
+    blocked = []
+    # More than one full page sorts before the later owner's 11:00 occurrences.
+    # Seed only through the owner module; do not mock the due query or authority.
+    for _ in range(51):
+        _, topic = follow_topic(service, authority, "blocked-page")
+        make_due(connect, topic)
+        blocked.append(topic)
+        if blocked_by == "unknown":
+            run, _ = repository.prepare_run(
+                topic, today - dt.timedelta(days=6), today, revision_of(connect, topic), [ITEM]
+            )
+            repository.begin_send(run["id"], "local-sink")
+            repository.finish_send(run["id"], "unknown")
+    eligible = []
+    for _ in range(2):
+        _, topic = follow_topic(service, authority_b, "eligible-later")
+        service.save_settings(
+            authority_b,
+            topic,
+            {
+                "revision": 1,
+                "cadence": "daily",
+                "deliveryTimeLocal": "11:00",
+                "deliveryDay": None,
+                "contentWindowDays": 7,
+            },
+        )
+        eligible.append(topic)
+    if blocked_by == "consent":
+        with connect("accounts") as conn:
+            conn.execute(
+                "UPDATE accounts.consent SET granted=false WHERE account_id=%s "
+                "AND purpose='local-research'",
+                (authority.account_id,),
+            )
+    with connect("topics") as conn:
+        attempts_before = conn.execute(
+            "SELECT count(*) AS n FROM topics.send_log_entry l JOIN topics.digest_run r "
+            "ON r.id=l.run_id WHERE r.topic_id=ANY(%s::uuid[])",
+            (blocked,),
+        ).fetchone()["n"]
+    due = repository.due_topics(scheduler._now(), 50)
+    assert not set(blocked).intersection(str(row["id"]) for row in due)
+    assert set(eligible).issubset({str(row["id"]) for row in due})
+    passes = [scheduler.run_once(1) for _ in range(3)]
+    assert all(result["prepared"] <= 1 and result["sent"] <= 1 for result in passes)
+    assert sum(result["sent"] for result in passes) >= 2
+    for topic in eligible:
+        assert any(run["state"] == "sent" for run in service.read_topic(authority_b, topic)["runs"])
+    with connect("topics") as conn:
+        assert (
+            conn.execute(
+                "SELECT count(*) AS n FROM topics.send_log_entry l JOIN topics.digest_run r "
+                "ON r.id=l.run_id WHERE r.topic_id=ANY(%s::uuid[])",
+                (blocked,),
+            ).fetchone()["n"]
+            == attempts_before
+        )
+        if blocked_by == "unknown":
+            assert (
+                conn.execute(
+                    "SELECT count(*) AS n FROM topics.digest_run WHERE topic_id=ANY(%s::uuid[]) "
+                    "AND state='unknown'",
+                    (blocked,),
+                ).fetchone()["n"]
+                == 51
+            )
 
 
 def test_refire_idempotence_and_chronological_ordering(transactions, authority, connect):
@@ -188,7 +275,7 @@ def test_refire_idempotence_and_chronological_ordering(transactions, authority, 
     first = scheduler.run_once(limit=1)
     assert first["prepared"] == 1
     runs = service.read_topic(authority, topic_id)["runs"]
-    today = dt.datetime.now(scheduler.zone).date()
+    today = scheduler._now().date()
     rolling = next(
         r for r in runs if r["windowStart"] == (today - dt.timedelta(days=6)).isoformat()
     )
@@ -338,7 +425,10 @@ def test_owner_resolve_watermark_and_redelivery_bound(transactions, authority, c
     assert repository.begin_send(run2["id"], "local-sink") is not None
     repository.finish_send(run2["id"], "unknown")
     service.resolve(
-        authority, topic_id, run2["id"], {"decision": "not-delivered", "assumption": "no send landed"}
+        authority,
+        topic_id,
+        run2["id"],
+        {"decision": "not-delivered", "assumption": "no send landed"},
     )
     assert service.read_run(authority, topic_id, run2["id"])["state"] == "failed"
     assert "v-c2" not in watermark_ids(connect, topic_id)
@@ -433,15 +523,12 @@ def test_reactivation_never_repeats_delivery(transactions, authority, connect):
     assert again["reactivated"] is True
     # The watermark survived reactivation: this topic's delivered content is
     # never re-sent (other owners' eligible corpus stays selectable).
-    assert (
-        "v-c1"
-        not in [
-            item["versionId"]
-            for item in repository.select_window_content(
-                topic_id, W1[0], W1[1], selection_limit=50, content_limit=10
-            )
-        ]
-    )
+    assert "v-c1" not in [
+        item["versionId"]
+        for item in repository.select_window_content(
+            topic_id, W1[0], W1[1], selection_limit=50, content_limit=10
+        )
+    ]
 
 
 def test_lifecycle_disposition_reporting(transactions, authority, connect):

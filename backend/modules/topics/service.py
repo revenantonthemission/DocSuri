@@ -94,6 +94,8 @@ def _run_payload(row):
         "createdAt": _iso(row["created_at"]),
         "outcome": outcome,
         "sendLog": send_log,
+        "preferenceSnapshot": row.get("preference_snapshot"),
+        "presentation": row.get("presentation"),
     }
 
 
@@ -150,6 +152,7 @@ class TopicsService:
             "followedAt": _iso(view["topic"]["followed_at"]),
             "settings": _settings_payload(view["settings"]),
             "runs": [_run_payload(row) for row in view["runs"]],
+            "effectivePreferences": view["effectivePreferences"],
         }
 
     def read_run(self, authority: Authority, topic_id, run_id):
@@ -197,9 +200,7 @@ class TopicsService:
             raise TopicsError("INVALID_ARGUMENT", current={"field": "assumption"})
         if len(assumption.encode()) > 200:
             raise TopicsError("INVALID_ARGUMENT", current={"field": "assumption"})
-        run = self.repository.resolve_run(
-            authority, topic_id, run_id, DECISIONS[decision]
-        )
+        run = self.repository.resolve_run(authority, topic_id, run_id, DECISIONS[decision])
         return {
             "runId": str(run["id"]),
             "state": run["state"],

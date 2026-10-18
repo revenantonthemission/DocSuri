@@ -67,6 +67,16 @@
 
 - **Construction Verification Command**: backend/.venv/bin/python scripts/verify_docsuri_u5.py --phase browser --profile synthetic-local --environment-file /tmp/docsuri-u5-run/environment.json
 
+- **Active Unit**: u5-topics-digests
+
+- **Unit Stage**: code-generation
+
+- **Unit State**: paused
+
+- **Unit Pause Reason**: Mounted browser acceptance remains unverified after repeated process-observation timeouts; real delivery lacks a verified sender and test recipient. Repairs and fresh review are saved, but plan steps 12 through 14 remain incomplete.
+
+- **Unit Next Action**: Resolve the process-observation prerequisite and complete the four scoped browser journeys under the approved bounds; establish the Resend account, sender, recipient and cancellation endpoint, then preview the exact message and obtain send approval before real delivery verification.
+
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
 
@@ -128,7 +138,9 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-10-18T07:51:34Z
+- **Last Updated**: 2026-10-18T17:10:50Z
+
+- **Construction Autonomy Mode**: gated
 
 ## Session Resume Point
 - **Last Completed Stage**: delivery-planning

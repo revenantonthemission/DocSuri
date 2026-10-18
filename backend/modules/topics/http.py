@@ -77,6 +77,24 @@ class SendLogView(BaseModel):
     acknowledgedAt: str | None = None
 
 
+class EffectivePreferencesView(BaseModel):
+    languageId: str
+    presentationLevelId: str
+    timeZone: str | None = None
+    effectiveAt: str | None = None
+    sourceRevision: str | None = None
+    usesDefaults: bool
+
+
+class DigestPresentationView(BaseModel):
+    subject: str
+    text: str
+    html: str
+    languageId: str
+    presentationLevelId: str
+    emptyLabel: str
+
+
 class DigestRunView(BaseModel):
     runId: str
     topicId: str
@@ -88,6 +106,8 @@ class DigestRunView(BaseModel):
     createdAt: str | None = None
     outcome: DeliveryOutcomeView | None = None
     sendLog: SendLogView | None = None
+    preferenceSnapshot: EffectivePreferencesView | None = None
+    presentation: DigestPresentationView | None = None
 
 
 class LastRunView(BaseModel):
@@ -106,6 +126,7 @@ class TopicView(BaseModel):
     settings: DigestSettingsView | None = None
     lastRun: LastRunView | None = None
     runs: list[DigestRunView] = []
+    effectivePreferences: EffectivePreferencesView | None = None
 
 
 class TopicList(BaseModel):
@@ -162,15 +183,11 @@ def topics_router(transactions, *, entry, service: TopicsService) -> APIRouter:
             rows = await run_in_threadpool(service.list_topics, authority)
         except TopicsError as exc:
             denied(exc)
-        return TopicList.model_validate({"topics": rows}).model_dump(
-            mode="json", exclude_none=True
-        )
+        return TopicList.model_validate({"topics": rows}).model_dump(mode="json", exclude_none=True)
 
     @router.post("/api/v2/topics")
     async def follow(request: Request):
-        _, _, authority = await post_context(
-            request, origin=origin, entry=entry, anonymous=None
-        )
+        _, _, authority = await post_context(request, origin=origin, entry=entry, anonymous=None)
         value = await read_payload(request, TopicFollowHttp)
         try:
             result = await run_in_threadpool(
@@ -182,9 +199,7 @@ def topics_router(transactions, *, entry, service: TopicsService) -> APIRouter:
 
     @router.delete("/api/v2/topics/{topic_id}")
     async def unsubscribe(request: Request, topic_id: str):
-        _, _, authority = await post_context(
-            request, origin=origin, entry=entry, anonymous=None
-        )
+        _, _, authority = await post_context(request, origin=origin, entry=entry, anonymous=None)
         identifier = parse_identifier(topic_id)
         try:
             result = await run_in_threadpool(service.unsubscribe, authority, identifier)
@@ -204,9 +219,7 @@ def topics_router(transactions, *, entry, service: TopicsService) -> APIRouter:
 
     @router.put("/api/v2/topics/{topic_id}/settings")
     async def save_settings(request: Request, topic_id: str):
-        _, _, authority = await post_context(
-            request, origin=origin, entry=entry, anonymous=None
-        )
+        _, _, authority = await post_context(request, origin=origin, entry=entry, anonymous=None)
         identifier = parse_identifier(topic_id)
         value = await read_payload(request, SettingsSaveHttp)
         try:
@@ -217,9 +230,7 @@ def topics_router(transactions, *, entry, service: TopicsService) -> APIRouter:
 
     @router.post("/api/v2/topics/{topic_id}/runs/{run_id}/resolve")
     async def resolve(request: Request, topic_id: str, run_id: str):
-        _, _, authority = await post_context(
-            request, origin=origin, entry=entry, anonymous=None
-        )
+        _, _, authority = await post_context(request, origin=origin, entry=entry, anonymous=None)
         identifier = parse_identifier(topic_id)
         run_identifier = parse_identifier(run_id)
         value = await read_payload(request, ResolveHttp)

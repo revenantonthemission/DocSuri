@@ -9,6 +9,10 @@ source = backend,scripts
 [report]
 include =
     backend/modules/topics/*.py
+    backend/modules/accounts/integrations/digest_email.py
+    backend/modules/accounts/services/guarded_entry.py
+    backend/modules/personalization/guarded_service.py
+    backend/modules/personalization/local_http.py
     backend/u5_policy.py
     backend/u5_host.py
     scripts/serve_docsuri_u5.py

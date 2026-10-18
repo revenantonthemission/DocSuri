@@ -20,6 +20,7 @@ from psycopg.types.json import Jsonb
 from backend.transactions import Authority, OwnerTransactions, guard
 
 from .errors import TopicsError
+from .presentation import preference_fingerprint, render_presentation
 
 CADENCES = ("daily", "weekly")
 WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
@@ -32,7 +33,7 @@ DEFAULT_SETTINGS = {
 }
 RUN_COLUMNS = (
     "id,topic_id,window_start,window_end,state,digest_content,settings_revision,"
-    "created_at,updated_at"
+    "created_at,updated_at,preference_snapshot,presentation,request_key"
 )
 
 
@@ -218,7 +219,7 @@ class TopicsRepository:
             ).fetchone()
             runs = conn.execute(
                 "SELECT r.id,r.topic_id,r.window_start,r.window_end,r.state,r.digest_content,"
-                "r.settings_revision,r.created_at,r.updated_at,o.observed_state,"
+                "r.settings_revision,r.created_at,r.updated_at,r.preference_snapshot,r.presentation,o.observed_state,"
                 "o.reconciled_state,o.failure_reason,l.path_kind,l.transport_receipt,"
                 "l.acknowledged_at FROM topics.digest_run r "
                 "LEFT JOIN topics.delivery_outcome o ON o.run_id=r.id "
@@ -230,6 +231,10 @@ class TopicsRepository:
                 "topic": topic,
                 "settings": settings,
                 "runs": runs,
+                "effectivePreferences": conn.execute(
+                    "SELECT personalization.digest_preferences(%s) AS value",
+                    (authority.account_id,),
+                ).fetchone()["value"],
             }
 
         return self.run(authority, read)
@@ -239,7 +244,7 @@ class TopicsRepository:
             self.topic(conn, authority, topic_id)
             run = conn.execute(
                 "SELECT r.id,r.topic_id,r.window_start,r.window_end,r.state,r.digest_content,"
-                "r.settings_revision,r.created_at,r.updated_at,o.observed_state,"
+                "r.settings_revision,r.created_at,r.updated_at,r.preference_snapshot,r.presentation,o.observed_state,"
                 "o.reconciled_state,o.reconciled_at,o.failure_reason,o.observed_at,"
                 "l.path_kind,l.transport_receipt,l.acknowledged_at "
                 "FROM topics.digest_run r "
@@ -305,17 +310,22 @@ class TopicsRepository:
     def unsubscribe(self, authority, topic_id):
         def unsubscribe(conn):
             topic = self.topic(conn, authority, topic_id)
-            if topic["status"] == "unsubscribed":
-                return {"topic": topic, "discarded": [], "unchanged": True}
-            updated = conn.execute(
-                "UPDATE topics.followed_topic SET status='unsubscribed',updated_at="
-                "clock_timestamp() WHERE id=%s RETURNING *",
-                (topic_id,),
-            ).fetchone()
-            discarded = self.discard_prepared(conn, topic_id)
-            return {"topic": updated, "discarded": discarded, "unchanged": False}
+            return self.unsubscribe_locked(conn, topic)
 
         return self.run(authority, unsubscribe)
+
+    @staticmethod
+    def unsubscribe_locked(conn, topic):
+        """Cancellation only; caller must authorize and lock the topic first."""
+        if topic["status"] == "unsubscribed":
+            return {"topic": topic, "discarded": [], "unchanged": True}
+        updated = conn.execute(
+            "UPDATE topics.followed_topic SET status='unsubscribed',updated_at=clock_timestamp() "
+            "WHERE id=%s RETURNING *",
+            (topic["id"],),
+        ).fetchone()
+        discarded = TopicsRepository.discard_prepared(conn, topic["id"])
+        return {"topic": updated, "discarded": discarded, "unchanged": False}
 
     def resolve_run(self, authority, topic_id, run_id, reconciled_state):
         if reconciled_state not in ("sent", "failed"):
@@ -342,33 +352,33 @@ class TopicsRepository:
 
     # -- worker units ---------------------------------------------------------
 
-    def due_topics(self, zone: str, limit=50):
-        """Active topics whose scheduled time in the one stated zone has arrived
-        and whose rolling window is not already covered by a run (BR1.2).
+    def due_topics(self, now: dt.datetime, limit=50):
+        """Actionable topics due in each owner's confirmed zone (BR1.2).
 
         The due filter lives in the read so the bounded page can never be
-        saturated by not-yet-due topics: every returned row is work this pass
-        can attempt, and later passes drain any excess.
+        Calendar, consent and outstanding-work filters precede the bounded page.
+        Paused owners cannot monopolize it; reconciliation, queued sends and
+        consent cleanup remain independent scheduler phases. Admission rechecks
+        authority because it may change after this read.
         """
-        if not isinstance(zone, str) or not zone:
-            _invalid("zone")
+        if not isinstance(now, dt.datetime) or now.tzinfo is None:
+            _invalid("now")
         if type(limit) is not int or not 1 <= limit <= 50:
             _invalid("limit")
         return self.system(
             lambda conn: conn.execute(
                 "SELECT t.id,t.account_id,t.topic_key,t.display_name,t.status,"
                 "s.cadence,s.delivery_time_local,s.delivery_day,s.content_window_days,"
-                "s.revision AS settings_revision FROM topics.followed_topic t "
+                "s.revision AS settings_revision,d.window_day,d.due_at,d.preferences "
+                "FROM topics.followed_topic t "
                 "JOIN topics.digest_settings s ON s.topic_id=t.id "
+                "JOIN LATERAL topics.next_occurrence(t.id,%s) d ON true "
                 "WHERE t.status='active' "
-                "AND (now() AT TIME ZONE %s)::time >= s.delivery_time_local "
-                "AND (s.cadence='daily' OR lower(to_char(now() AT TIME ZONE %s,'dy'))"
-                "=s.delivery_day) "
-                "AND NOT EXISTS (SELECT 1 FROM topics.digest_run r WHERE r.topic_id=t.id "
-                "AND r.state <> 'discarded' "
-                "AND r.window_end >= (now() AT TIME ZONE %s)::date) "
-                "ORDER BY t.followed_at,t.id LIMIT %s",
-                (zone, zone, zone, limit),
+                "AND (SELECT granted FROM accounts.digest_recipient(t.account_id)) IS TRUE "
+                "AND NOT EXISTS (SELECT 1 FROM topics.digest_run r "
+                "WHERE r.topic_id=t.id AND r.state IN ('prepared','sending','unknown')) "
+                "ORDER BY d.due_at,t.followed_at,t.id LIMIT %s",
+                (now, limit),
             ).fetchall()
         )
 
@@ -435,7 +445,16 @@ class TopicsRepository:
 
         return self.system(select)
 
-    def prepare_run(self, topic_id, window_start, window_end, settings_revision, digest_content):
+    def prepare_run(
+        self,
+        topic_id,
+        window_start,
+        window_end,
+        settings_revision,
+        digest_content,
+        *,
+        expected_preferences=None,
+    ):
         """Adopt the window's non-discarded run or create one; empty content is recorded.
 
         Returns (run, adopted). The chronology and revision gates are the
@@ -450,6 +469,22 @@ class TopicsRepository:
             _invalid("digestContent")
 
         def prepare(conn):
+            topic = conn.execute(
+                "SELECT * FROM topics.followed_topic WHERE id=%s FOR UPDATE", (topic_id,)
+            ).fetchone()
+            if not topic or topic["status"] != "active":
+                raise TopicsError("NOT_FOUND")
+            preferences = conn.execute(
+                "SELECT personalization.digest_preferences(%s) AS value", (topic["account_id"],)
+            ).fetchone()["value"]
+            if expected_preferences is not None and (
+                preference_fingerprint(preferences) != preference_fingerprint(expected_preferences)
+                or preferences["effectiveAt"] != expected_preferences["effectiveAt"]
+            ):
+                raise TopicsError("CONFLICT", current={"field": "effectivePreferences"})
+            if not preferences["timeZone"]:
+                raise TopicsError("INVALID_ARGUMENT", current={"field": "timeZone"})
+            presentation = render_presentation(topic["display_name"], digest_content, preferences)
             existing = conn.execute(
                 "SELECT * FROM topics.digest_run WHERE topic_id=%s AND window_start=%s "
                 "AND window_end=%s AND state <> 'discarded' FOR UPDATE",
@@ -461,7 +496,8 @@ class TopicsRepository:
                 with conn.transaction():
                     run = conn.execute(
                         "INSERT INTO topics.digest_run(id,topic_id,window_start,window_end,"
-                        "digest_content,settings_revision) VALUES(%s,%s,%s,%s,%s,%s) "
+                        "digest_content,settings_revision,preference_snapshot,presentation) "
+                        "VALUES(%s,%s,%s,%s,%s,%s,%s,%s) "
                         "RETURNING " + RUN_COLUMNS,
                         (
                             uuid4(),
@@ -470,6 +506,8 @@ class TopicsRepository:
                             window_end,
                             Jsonb(digest_content),
                             settings_revision,
+                            Jsonb(preferences),
+                            Jsonb(presentation),
                         ),
                     ).fetchone()
             except psycopg.errors.UniqueViolation:
@@ -497,7 +535,7 @@ class TopicsRepository:
 
         return self.system(prepare)
 
-    def begin_send(self, run_id, path_kind):
+    def begin_send(self, run_id, path_kind, *, real_send_limit=0):
         """Checked prepared->sending with active, consent and pause guards (BR3.1/3.2/4.1/4.2).
 
         Returns the sending run row with its send-log skeleton, or None when
@@ -508,10 +546,32 @@ class TopicsRepository:
             _invalid("pathKind")
 
         def begin(conn):
+            if path_kind == "real":
+                if type(real_send_limit) is not int or not 1 <= real_send_limit <= 100:
+                    raise TopicsError("INVALID_ARGUMENT", current={"field": "realSendAllocation"})
+                conn.execute(
+                    "SELECT pg_advisory_xact_lock(hashtext('topics-real-send-allocation'))"
+                )
+                spent = conn.execute(
+                    "SELECT count(*) AS n FROM topics.send_log_entry WHERE path_kind='real'"
+                ).fetchone()["n"]
+                if spent >= real_send_limit:
+                    return None
             run = conn.execute(
                 "SELECT * FROM topics.digest_run WHERE id=%s FOR UPDATE", (run_id,)
             ).fetchone()
             if not run or run["state"] != "prepared":
+                return None
+            owner = conn.execute(
+                "SELECT account_id FROM topics.followed_topic WHERE id=%s", (run["topic_id"],)
+            ).fetchone()["account_id"]
+            current = conn.execute(
+                "SELECT personalization.digest_preferences(%s) AS value", (owner,)
+            ).fetchone()["value"]
+            if not run["preference_snapshot"] or preference_fingerprint(
+                current
+            ) != preference_fingerprint(run["preference_snapshot"]):
+                self._transition(conn, run_id, "prepared", "discarded")
                 return None
             try:
                 with conn.transaction():
@@ -542,7 +602,12 @@ class TopicsRepository:
         return self.system(begin)
 
     def finish_send(
-        self, run_id, observed_state, *, transport_receipt=None, acknowledged_at=None,
+        self,
+        run_id,
+        observed_state,
+        *,
+        transport_receipt=None,
+        acknowledged_at=None,
         failure_reason=None,
     ):
         """Checked sending->terminal; send-log facts set once; outcome recorded (BR3.2).
@@ -678,6 +743,7 @@ class TopicsRepository:
     def retire_orphan(self, run_id):
         """Move one orphaned sending run to unknown; its evidence gap stays visible
         as the absence of a send-log entry (BR3.4)."""
+
         def retire(conn):
             run = conn.execute(
                 "SELECT * FROM topics.digest_run WHERE id=%s FOR UPDATE", (run_id,)

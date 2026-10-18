@@ -152,6 +152,11 @@
   margin: 0;
 }
 
+.digest-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .stale-offer {
   border: 1px solid var(--border, #ccc);
   border-radius: 8px;

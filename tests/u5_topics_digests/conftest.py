@@ -7,10 +7,10 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import psycopg
 import pytest
-from psycopg.rows import dict_row
-
 from backend.local_profile import LocalProfile, private_bytes
 from backend.transactions import Authority, OwnerTransactions
+from psycopg.rows import dict_row
+from psycopg.types.json import Jsonb
 
 
 @pytest.fixture(scope="session")
@@ -79,6 +79,11 @@ def _make_authority(connect, realm, *, suffix):
         conn.execute(
             "INSERT INTO accounts.session(id,account_id,token_hash,csrf_hash,authority_revision,expires_at) VALUES(%s,%s,%s,%s,%s,clock_timestamp()+interval '30 minutes') ON CONFLICT(id) DO UPDATE SET revoked=false,authority_revision=excluded.authority_revision,expires_at=excluded.expires_at",
             (session, owner, str(uuid4()), str(uuid4()), revision),
+        )
+    with connect("personalization") as conn:
+        conn.execute(
+            "INSERT INTO personalization.settings(account_id,revision,defaults) VALUES(%s,%s,%s) ON CONFLICT(account_id) DO UPDATE SET revision=excluded.revision,defaults=personalization.settings.defaults || excluded.defaults",
+            (owner, uuid4(), Jsonb({"timeZone": "UTC"})),
         )
     return Authority(owner, session)
 

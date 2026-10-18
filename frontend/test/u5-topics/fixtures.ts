@@ -33,6 +33,14 @@ export const topic = (changes: Record<string, unknown> = {}): Topic => ({
   status: 'active',
   followedAt: '2026-10-18T00:00:00+00:00',
   settings: settings(),
+  effectivePreferences: {
+    languageId: 'en',
+    presentationLevelId: 'standard',
+    timeZone: 'America/New_York',
+    effectiveAt: '2026-10-18T00:00:00Z',
+    sourceRevision: null,
+    usesDefaults: true,
+  },
   lastRun: { runId: null, state: null, windowEnd: null, observedState: null },
   ...changes,
 });
@@ -41,7 +49,7 @@ export const listing = (topics: Topic[]): TopicList => ({ topics });
 
 export class TopicsDouble {
   generation = 1;
-  calls: { method: string; path: string; body: unknown }[] = [];
+  calls: { method: string; path: string; body: unknown; operationKey?: string }[] = [];
   private routes = new Map<string, (path: string, body: unknown) => unknown>();
 
   on(route: string, handler: (path: string, body: unknown) => unknown) {
@@ -59,9 +67,11 @@ export class TopicsDouble {
   get<T>(path: string): Promise<T> {
     return this.dispatch<T>('GET', path, undefined);
   }
-  post<T>(path: string, body: unknown): Promise<T> {
+  post<T>(path: string, body: unknown, operationKey?: string): Promise<T> {
+    if (operationKey) this.operationKeys.push(operationKey);
     return this.dispatch<T>('POST', path, body);
   }
+  operationKeys: string[] = [];
   put<T>(path: string, body: unknown): Promise<T> {
     return this.dispatch<T>('PUT', path, body);
   }

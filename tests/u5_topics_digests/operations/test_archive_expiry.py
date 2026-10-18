@@ -21,8 +21,13 @@ def profile_factory(tmp_path, monkeypatch):
         root = tmp_path / f"docsuri-{unit}-run"
         root.mkdir(mode=0o700)
         index = int(unit[1:])
-        ports = {1: (18039, 15439), 2: (18049, 15449), 3: (18059, 15459),
-                 4: (18079, 15479), 5: (18089, 15489)}
+        ports = {
+            1: (18039, 15439),
+            2: (18049, 15449),
+            3: (18059, 15459),
+            4: (18079, 15479),
+            5: (18089, 15489),
+        }
         realms = {
             "u1": ("u1-integrated-paper-journey", "diagnostic"),
             "u2": ("u2-account-personal-controls", "account-controls"),
@@ -33,13 +38,20 @@ def profile_factory(tmp_path, monkeypatch):
         run_id = f"docsuri-{unit}-0123456789abcdef"
         created = time.time() - 90000
         value = {
-            "runId": run_id, "profile": "synthetic-local",
-            "repository": str(runner.ROOT), "unit": realms[unit][0],
-            "realm": realms[unit][1], "database": f"docsuri_{unit}",
-            "applicationPort": ports[index][0], "databasePort": ports[index][1],
-            "createdAt": created, "expiresAt": created + 86400 if expires is None else expires,
-            "databaseImage": runner.IMAGE, "policy": runner.POLICY,
-            "container": run_id, "volume": run_id + "-pgdata",
+            "runId": run_id,
+            "profile": "synthetic-local",
+            "repository": str(runner.ROOT),
+            "unit": realms[unit][0],
+            "realm": realms[unit][1],
+            "database": f"docsuri_{unit}",
+            "applicationPort": ports[index][0],
+            "databasePort": ports[index][1],
+            "createdAt": created,
+            "expiresAt": created + 86400 if expires is None else expires,
+            "databaseImage": runner.IMAGE,
+            "policy": runner.POLICY,
+            "container": run_id,
+            "volume": run_id + "-pgdata",
         }
         path = root / "environment.json"
 
@@ -48,9 +60,14 @@ def profile_factory(tmp_path, monkeypatch):
             path.write_bytes(raw)
             path.chmod(0o600)
             marker = root / "ownership.json"
-            marker.write_text(json.dumps({
-                "runId": run_id, "manifestSha256": hashlib.sha256(raw).hexdigest(),
-            }))
+            marker.write_text(
+                json.dumps(
+                    {
+                        "runId": run_id,
+                        "manifestSha256": hashlib.sha256(raw).hexdigest(),
+                    }
+                )
+            )
             marker.chmod(0o600)
 
         save()
@@ -79,13 +96,19 @@ def test_normal_profiles_retain_the_future_retention_bound(profile_factory, unit
     assert LocalProfile.load(path).expires_at == value["expiresAt"]
 
 
-@pytest.mark.parametrize("changes", [
-    {"createdAt": float("nan")}, {"expiresAt": float("inf")},
-    {"createdAt": True}, {"expiresAt": "expired"},
-    {"createdAt": -1}, {"createdAt": 2000000000},
-    {"createdAt": 1000, "expiresAt": 1000},
-    {"createdAt": 1000, "expiresAt": 87401},
-])
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"createdAt": float("nan")},
+        {"expiresAt": float("inf")},
+        {"createdAt": True},
+        {"expiresAt": "expired"},
+        {"createdAt": -1},
+        {"createdAt": 2000000000},
+        {"createdAt": 1000, "expiresAt": 1000},
+        {"createdAt": 1000, "expiresAt": 87401},
+    ],
+)
 def test_preservation_requires_finite_original_retention(profile_factory, changes):
     path, value, save = profile_factory()
     value.update(changes)
@@ -98,31 +121,53 @@ def test_preservation_requires_finite_original_retention(profile_factory, change
 def archival_boundary(profile_factory, monkeypatch):
     path, value, save = profile_factory()
     monkeypatch.setattr(runner, "RUN", path.parent)
-    boundary = {"stopped": False, "clients": 0, "databaseRunId": value["runId"],
-                "containerLabel": value["runId"], "volumeLabel": value["runId"]}
+    boundary = {
+        "stopped": False,
+        "clients": 0,
+        "databaseRunId": value["runId"],
+        "containerLabel": value["runId"],
+        "volumeLabel": value["runId"],
+    }
 
     def require(args, **kwargs):
         if args[:3] == ["docker", "container", "inspect"]:
             record = {
-                "Config": {"Image": runner.IMAGE,
-                           "Labels": {runner.LABEL: boundary["containerLabel"]}},
+                "Config": {
+                    "Image": runner.IMAGE,
+                    "Labels": {runner.LABEL: boundary["containerLabel"]},
+                },
                 "HostConfig": {
-                    "Memory": runner.DB_MEMORY, "MemorySwap": runner.DB_MEMORY,
-                    "NanoCpus": 1_000_000_000, "PidsLimit": 64, "ReadonlyRootfs": True,
-                    "PortBindings": {"5432/tcp": [{"HostIp": "127.0.0.1",
-                                                   "HostPort": str(runner.DATABASE_PORT)}]},
+                    "Memory": runner.DB_MEMORY,
+                    "MemorySwap": runner.DB_MEMORY,
+                    "NanoCpus": 1_000_000_000,
+                    "PidsLimit": 64,
+                    "ReadonlyRootfs": True,
+                    "PortBindings": {
+                        "5432/tcp": [{"HostIp": "127.0.0.1", "HostPort": str(runner.DATABASE_PORT)}]
+                    },
                 },
                 "State": {"Running": not boundary["stopped"]},
-                "Mounts": [{"Type": "volume", "Name": value["volume"],
-                            "Destination": "/var/lib/postgresql/data"}],
+                "Mounts": [
+                    {
+                        "Type": "volume",
+                        "Name": value["volume"],
+                        "Destination": "/var/lib/postgresql/data",
+                    }
+                ],
             }
             assert args[3] == value["container"]
             return subprocess.CompletedProcess(args, 0, json.dumps([record]))
         if args[:3] == ["docker", "volume", "inspect"]:
             assert args[3] == value["volume"]
-            return subprocess.CompletedProcess(args, 0, json.dumps([
-                {"Labels": {runner.LABEL: boundary["volumeLabel"]}},
-            ]))
+            return subprocess.CompletedProcess(
+                args,
+                0,
+                json.dumps(
+                    [
+                        {"Labels": {runner.LABEL: boundary["volumeLabel"]}},
+                    ]
+                ),
+            )
         assert args == ["docker", "stop", "--time", "10", value["container"]]
         boundary["stopped"] = True
         return subprocess.CompletedProcess(args, 0, value["container"])
@@ -168,11 +213,24 @@ def test_expired_owned_idle_realm_is_preserved_without_renewal(archival_boundary
     assert result["volumePreserved"] == value["volume"]
 
 
-@pytest.mark.parametrize("defect", [
-    "hash", "custody", "symlink", "unit", "port", "image", "policy",
-    "container-name", "volume-name", "container-label", "volume-label",
-    "database-identity", "active-client",
-])
+@pytest.mark.parametrize(
+    "defect",
+    [
+        "hash",
+        "custody",
+        "symlink",
+        "unit",
+        "port",
+        "image",
+        "policy",
+        "container-name",
+        "volume-name",
+        "container-label",
+        "volume-label",
+        "database-identity",
+        "active-client",
+    ],
+)
 def test_invalid_or_busy_expired_realms_never_stop_or_move(archival_boundary, defect):
     path, value, save, boundary = archival_boundary
     if defect == "hash":
@@ -184,8 +242,14 @@ def test_invalid_or_busy_expired_realms_never_stop_or_move(archival_boundary, de
         path.rename(target)
         path.symlink_to(target)
     elif defect in {"unit", "port", "image", "policy", "container-name", "volume-name"}:
-        field = {"unit": "unit", "port": "databasePort", "image": "databaseImage",
-                 "policy": "policy", "container-name": "container", "volume-name": "volume"}[defect]
+        field = {
+            "unit": "unit",
+            "port": "databasePort",
+            "image": "databaseImage",
+            "policy": "policy",
+            "container-name": "container",
+            "volume-name": "volume",
+        }[defect]
         value[field] = "foreign"
         save()
     elif defect == "container-label":

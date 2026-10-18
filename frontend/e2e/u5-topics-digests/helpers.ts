@@ -1,9 +1,12 @@
 // U5 browser journey helpers; owned fixtures and failure-only diagnostics.
 import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { expect, type Page, type Response, type TestInfo } from '@playwright/test';
 
 const topicRoutes = /^\/api\/v2\/topics/;
+const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const diagnosticCodes = new Set([
   'CONFLICT',
   'DEADLINE_EXCEEDED',
@@ -26,12 +29,7 @@ export function captureTopicsFailures(page: Page) {
   const records: { method: string; path: string; status: number; code?: string }[] = [];
   const record = (response: Response) => {
     const path = new URL(response.url()).pathname;
-    if (
-      records.length >= 16 ||
-      response.status() < 400 ||
-      !topicRoutes.test(path)
-    )
-      return;
+    if (records.length >= 16 || response.status() < 400 || !topicRoutes.test(path)) return;
     const item: (typeof records)[number] = {
       method: response.request().method(),
       path,
@@ -101,6 +99,20 @@ export async function login(page: Page, account: Account) {
 export async function openTopics(page: Page) {
   await page.getByTestId('nav-topics').click();
   await expect(page.getByTestId('topics-heading')).toBeVisible();
+}
+
+export function advanceSchedulerClock() {
+  execFileSync(
+    join(repositoryRoot, 'backend/.venv/bin/python'),
+    [
+      join(repositoryRoot, 'scripts/u5_browser_fixtures.py'),
+      '--environment-file',
+      '/tmp/docsuri-u5-run/environment.json',
+      '--action',
+      'advance-clock',
+    ],
+    { cwd: repositoryRoot, timeout: 15_000, stdio: 'pipe' },
+  );
 }
 
 export async function scrub(page: Page) {

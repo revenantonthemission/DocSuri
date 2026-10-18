@@ -57,9 +57,14 @@ def test_topic_identity_and_follow_time_are_immutable(connect):
     with connect("topics") as conn:
         identifier = subscribe(conn)
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
-            conn.execute("UPDATE topics.followed_topic SET topic_key='renamed' WHERE id=%s", (identifier,))
+            conn.execute(
+                "UPDATE topics.followed_topic SET topic_key='renamed' WHERE id=%s", (identifier,)
+            )
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
-            conn.execute("UPDATE topics.followed_topic SET followed_at=clock_timestamp() WHERE id=%s", (identifier,))
+            conn.execute(
+                "UPDATE topics.followed_topic SET followed_at=clock_timestamp() WHERE id=%s",
+                (identifier,),
+            )
         assert (
             conn.execute(
                 "UPDATE topics.followed_topic SET status='unsubscribed' WHERE id=%s", (identifier,)
@@ -75,17 +80,32 @@ def test_settings_shape_and_revision_advance(connect):
         with pytest.raises(psycopg.errors.UniqueViolation), conn.transaction():
             add_settings(conn, topic_id)
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
-            conn.execute("UPDATE topics.digest_settings SET cadence='daily',delivery_day=NULL WHERE id=%s", (settings,))
-        conn.execute("UPDATE topics.digest_settings SET cadence='daily',delivery_day=NULL,revision=2 WHERE id=%s", (settings,))
+            conn.execute(
+                "UPDATE topics.digest_settings SET cadence='daily',delivery_day=NULL WHERE id=%s",
+                (settings,),
+            )
+        conn.execute(
+            "UPDATE topics.digest_settings SET cadence='daily',delivery_day=NULL,revision=2 WHERE id=%s",
+            (settings,),
+        )
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
             conn.execute("UPDATE topics.digest_settings SET revision=1 WHERE id=%s", (settings,))
         other = subscribe(conn)
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
-            conn.execute("INSERT INTO topics.digest_settings(id,topic_id,cadence,delivery_time_local,delivery_day,content_window_days) VALUES(%s,%s,'daily','09:00','mon',7)", (uuid4(), other))
+            conn.execute(
+                "INSERT INTO topics.digest_settings(id,topic_id,cadence,delivery_time_local,delivery_day,content_window_days) VALUES(%s,%s,'daily','09:00','mon',7)",
+                (uuid4(), other),
+            )
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
-            conn.execute("INSERT INTO topics.digest_settings(id,topic_id,cadence,delivery_time_local,content_window_days) VALUES(%s,%s,'weekly','09:00',7)", (uuid4(), other))
+            conn.execute(
+                "INSERT INTO topics.digest_settings(id,topic_id,cadence,delivery_time_local,content_window_days) VALUES(%s,%s,'weekly','09:00',7)",
+                (uuid4(), other),
+            )
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
-            conn.execute("INSERT INTO topics.digest_settings(id,topic_id,cadence,delivery_time_local,content_window_days) VALUES(%s,%s,'daily','09:00',14)", (uuid4(), other))
+            conn.execute(
+                "INSERT INTO topics.digest_settings(id,topic_id,cadence,delivery_time_local,content_window_days) VALUES(%s,%s,'daily','09:00',14)",
+                (uuid4(), other),
+            )
 
 
 def test_run_stamps_current_settings_revision_and_keeps_chronology(connect):
@@ -129,7 +149,10 @@ def test_run_state_machine_and_content_immutability(connect):
         empty_topic = subscribe(conn)
         add_settings(conn, empty_topic)
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
-            conn.execute("INSERT INTO topics.digest_run(id,topic_id,window_start,window_end,digest_content,settings_revision) VALUES(%s,%s,'2026-02-01','2026-02-07','{}',1)", (uuid4(), empty_topic))
+            conn.execute(
+                "INSERT INTO topics.digest_run(id,topic_id,window_start,window_end,digest_content,settings_revision) VALUES(%s,%s,'2026-02-01','2026-02-07','{}',1)",
+                (uuid4(), empty_topic),
+            )
         filled = prepared(conn, empty_topic, start="2026-02-01", end="2026-02-07")
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
             advance(conn, filled, "empty")
@@ -152,18 +175,35 @@ def test_send_log_and_outcome_follow_the_run_state(connect):
         add_settings(conn, topic_id)
         run_id = prepared(conn, topic_id, start="2026-01-01", end="2026-01-07")
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
-            conn.execute("INSERT INTO topics.send_log_entry(id,run_id,path_kind) VALUES(%s,%s,'local-sink')", (uuid4(), run_id))
+            conn.execute(
+                "INSERT INTO topics.send_log_entry(id,run_id,path_kind) VALUES(%s,%s,'local-sink')",
+                (uuid4(), run_id),
+            )
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
-            conn.execute("INSERT INTO topics.delivery_outcome(id,run_id,observed_state) VALUES(%s,%s,'failed')", (uuid4(), run_id))
+            conn.execute(
+                "INSERT INTO topics.delivery_outcome(id,run_id,observed_state) VALUES(%s,%s,'failed')",
+                (uuid4(), run_id),
+            )
         advance(conn, run_id, "sending")
-        conn.execute("INSERT INTO topics.send_log_entry(id,run_id,path_kind) VALUES(%s,%s,'local-sink')", (uuid4(), run_id))
+        conn.execute(
+            "INSERT INTO topics.send_log_entry(id,run_id,path_kind) VALUES(%s,%s,'local-sink')",
+            (uuid4(), run_id),
+        )
         with pytest.raises(psycopg.errors.UniqueViolation), conn.transaction():
-            conn.execute("INSERT INTO topics.send_log_entry(id,run_id,path_kind) VALUES(%s,%s,'local-sink')", (uuid4(), run_id))
+            conn.execute(
+                "INSERT INTO topics.send_log_entry(id,run_id,path_kind) VALUES(%s,%s,'local-sink')",
+                (uuid4(), run_id),
+            )
         advance(conn, run_id, "failed")
         outcome = uuid4()
-        conn.execute("INSERT INTO topics.delivery_outcome(id,run_id,observed_state,failure_reason) VALUES(%s,%s,'failed','transport-error')", (outcome, run_id))
+        conn.execute(
+            "INSERT INTO topics.delivery_outcome(id,run_id,observed_state,failure_reason) VALUES(%s,%s,'failed','transport-error')",
+            (outcome, run_id),
+        )
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
-            conn.execute("UPDATE topics.delivery_outcome SET observed_state='sent' WHERE id=%s", (outcome,))
+            conn.execute(
+                "UPDATE topics.delivery_outcome SET observed_state='sent' WHERE id=%s", (outcome,)
+            )
 
 
 def test_watermark_requires_a_sent_run_of_the_same_topic(connect):
@@ -172,15 +212,27 @@ def test_watermark_requires_a_sent_run_of_the_same_topic(connect):
         add_settings(conn, topic_id)
         run_id = prepared(conn, topic_id, start="2026-01-01", end="2026-01-07")
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
-            conn.execute("INSERT INTO topics.topic_delivery_watermark(id,topic_id,content_id,included_in_run_id) VALUES(%s,%s,'c1',%s)", (uuid4(), topic_id, run_id))
+            conn.execute(
+                "INSERT INTO topics.topic_delivery_watermark(id,topic_id,content_id,included_in_run_id) VALUES(%s,%s,'c1',%s)",
+                (uuid4(), topic_id, run_id),
+            )
         advance(conn, run_id, "sending")
         advance(conn, run_id, "sent")
-        conn.execute("INSERT INTO topics.topic_delivery_watermark(id,topic_id,content_id,included_in_run_id) VALUES(%s,%s,'c1',%s)", (uuid4(), topic_id, run_id))
+        conn.execute(
+            "INSERT INTO topics.topic_delivery_watermark(id,topic_id,content_id,included_in_run_id) VALUES(%s,%s,'c1',%s)",
+            (uuid4(), topic_id, run_id),
+        )
         with pytest.raises(psycopg.errors.UniqueViolation), conn.transaction():
-            conn.execute("INSERT INTO topics.topic_delivery_watermark(id,topic_id,content_id,included_in_run_id) VALUES(%s,%s,'c1',%s)", (uuid4(), topic_id, run_id))
+            conn.execute(
+                "INSERT INTO topics.topic_delivery_watermark(id,topic_id,content_id,included_in_run_id) VALUES(%s,%s,'c1',%s)",
+                (uuid4(), topic_id, run_id),
+            )
         other = subscribe(conn)
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
-            conn.execute("INSERT INTO topics.topic_delivery_watermark(id,topic_id,content_id,included_in_run_id) VALUES(%s,%s,'c2',%s)", (uuid4(), other, run_id))
+            conn.execute(
+                "INSERT INTO topics.topic_delivery_watermark(id,topic_id,content_id,included_in_run_id) VALUES(%s,%s,'c2',%s)",
+                (uuid4(), other, run_id),
+            )
 
 
 def test_owner_isolation_and_no_delete(connect):

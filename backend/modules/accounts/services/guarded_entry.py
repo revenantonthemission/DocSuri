@@ -429,7 +429,14 @@ class GuardedEntryService:
             if not row:
                 raise PermissionError("session unavailable")
             authority = Authority(row["account_id"], row["id"])
-            guard(conn, authority)
+            # Account entry and manual settings survive research-consent withdrawal.
+            # Research/content operations retain their own current consent checks.
+            purpose = (
+                "account-control"
+                if self.transactions.profile.realm == "topics-digests"
+                else "local-research"
+            )
+            guard(conn, authority, purpose=purpose)
             if csrf is not None and not hmac.compare_digest(
                 row["csrf_hash"], self.verifier("csrf", csrf)
             ):
@@ -471,7 +478,12 @@ class GuardedEntryService:
         operation = operation or uuid4()
 
         def write(conn):
-            guard(conn, authority)
+            purpose = (
+                "account-control"
+                if self.transactions.profile.realm == "topics-digests"
+                else "local-research"
+            )
+            guard(conn, authority, purpose=purpose)
             conn.execute(
                 "UPDATE accounts.session SET revoked=true WHERE id=%s AND account_id=%s",
                 (authority.session_id, authority.account_id),
