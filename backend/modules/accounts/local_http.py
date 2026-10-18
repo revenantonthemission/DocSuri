@@ -13,6 +13,7 @@ from backend.local_browser import (
     JOURNEY_ORIGIN,
     RESEARCH_ORIGIN,
     SESSION_COOKIE,
+    TOPICS_ORIGIN,
     BrowserDenied,
     boundary_route,
     error_response,
@@ -45,7 +46,13 @@ __all__ = [
 
 def account_router(entry: GuardedEntryService) -> APIRouter:
     origin = entry.transactions.profile.origin
-    if origin not in (JOURNEY_ORIGIN, CONTROLS_ORIGIN, CORPUS_ORIGIN, RESEARCH_ORIGIN):
+    if origin not in (
+        JOURNEY_ORIGIN,
+        CONTROLS_ORIGIN,
+        CORPUS_ORIGIN,
+        RESEARCH_ORIGIN,
+        TOPICS_ORIGIN,
+    ):
         raise ValueError("account browser transport requires the owned HTTPS origin")
     anonymous = Preauthentication(entry)
     # Account errors keep their established 403 disposition for denied identities.

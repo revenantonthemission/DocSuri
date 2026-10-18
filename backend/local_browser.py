@@ -32,6 +32,7 @@ JOURNEY_AUTHORITY = "127.0.0.1:18039"
 CONTROLS_ORIGIN = "https://127.0.0.1:18049"
 CORPUS_ORIGIN = "https://127.0.0.1:18059"
 RESEARCH_ORIGIN = "https://127.0.0.1:18079"
+TOPICS_ORIGIN = "https://127.0.0.1:18089"
 
 
 class BrowserDenied(Exception):
@@ -80,7 +81,9 @@ def boundary_route(
     missing: tuple[int, str] = (404, "FORBIDDEN"),
 ):
     """One route class for every canonical browser adapter; identical dispositions."""
-    if origin not in (JOURNEY_ORIGIN, CONTROLS_ORIGIN, CORPUS_ORIGIN, RESEARCH_ORIGIN):
+    if origin not in (
+        JOURNEY_ORIGIN, CONTROLS_ORIGIN, CORPUS_ORIGIN, RESEARCH_ORIGIN, TOPICS_ORIGIN
+    ):
         raise ValueError("unowned browser origin")
     expected_authority = urlsplit(origin).netloc
     if authority is not None and authority != expected_authority:
@@ -149,7 +152,7 @@ async def read_payload(request: Request, schema):
     maximum = (
         65536
         if request.headers.get("host") in (
-            "127.0.0.1:18049", "127.0.0.1:18059", "127.0.0.1:18079"
+            "127.0.0.1:18049", "127.0.0.1:18059", "127.0.0.1:18079", "127.0.0.1:18089"
         )
         else 8192
     )
@@ -226,6 +229,15 @@ async def optional_authority(request: Request, *, entry):
         UUID(session.public["session"]["accountId"]),
         UUID(session.public["session"]["sessionId"]),
     )
+
+
+async def require_authority(request: Request, *, entry) -> Authority:
+    """Protected reads: an authenticated cookie is required; an anonymous caller
+    is refused before any owner transaction (no guest context, no CSRF demand)."""
+    authority = await optional_authority(request, entry=entry)
+    if authority is None:
+        raise BrowserDenied(401, "UNAUTHENTICATED")
+    return authority
 
 
 def entry_flow(request: Request, anonymous) -> str:

@@ -1,0 +1,18 @@
+# New topics/digests production modules. The verification runner itself is the
+# measurement harness: its safety boundaries are locked by the operations tests,
+# and self-measuring it would require running the harness under coverage with
+# nested data files, so it stays outside the production denominator (recorded
+# as the deliberate U5 deviation from the U4 include shape).
+[run]
+source = backend,scripts
+
+[report]
+include =
+    backend/modules/topics/*.py
+    backend/u5_policy.py
+    backend/u5_host.py
+    scripts/serve_docsuri_u5.py
+    scripts/u5_browser_fixtures.py
+fail_under = 80
+show_missing = True
+skip_covered = False

@@ -205,6 +205,12 @@ export class Transport {
   async get<T>(path: string): Promise<T> {
     return this.call<T>('GET', path, undefined);
   }
+  async put<T>(path: string, body: unknown, operationKey?: string): Promise<T> {
+    return this.call<T>('PUT', path, body, operationKey);
+  }
+  async del<T>(path: string, operationKey?: string): Promise<T> {
+    return this.call<T>('DELETE', path, undefined, operationKey);
+  }
   private async call<T>(
     method: string,
     path: string,
@@ -219,7 +225,9 @@ export class Transport {
         messageKey: 'local.path',
       });
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (body !== undefined) {
+    // Body-carrying mutations and body-less destructive methods (DELETE) demand
+    // the bounded CSRF transport and operation identity alike.
+    if (body !== undefined || method === 'DELETE') {
       headers['X-CSRF-Token'] = await this.ensureCsrf();
       headers['Idempotency-Key'] = operationKey ?? crypto.randomUUID();
     }
@@ -271,10 +279,12 @@ function staleResponse(): ApiError {
 }
 export function safeApiPath(path: string): boolean {
   // Only registered versioned local routes; never provider URLs or dot segments.
+  const canonical =
+    /^\/api\/v2\/(?:session|capabilities|jobs\/[a-zA-Z0-9-]+(?:\/(?:events|result))?|identity\/callback\/(?:google|orcid)|c(?:0[1-9]|1[0-3])\/[a-z][a-z0-9-]*(?:\/[a-zA-Z0-9-]+)?)(?:\?[^#\\]*)?$/;
+  const topics =
+    /^\/api\/v2\/topics(?:\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})?(?:\/settings|\/runs\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\/resolve)?$/;
   return (
-    /^\/api\/v2\/(?:session|capabilities|jobs\/[a-zA-Z0-9-]+(?:\/(?:events|result))?|identity\/callback\/(?:google|orcid)|c(?:0[1-9]|1[0-3])\/[a-z][a-z0-9-]*(?:\/[a-zA-Z0-9-]+)?)(?:\?[^#\\]*)?$/.test(
-      path,
-    ) &&
+    (canonical.test(path) || topics.test(path)) &&
     !/%(?:2e|2f|5c)/i.test(path) &&
     !path.includes('..')
   );

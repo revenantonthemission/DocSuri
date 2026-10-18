@@ -217,6 +217,25 @@ class EmailClientInterface(ABC):
         subject, text, html = _render_account_exists_notice()
         return await self._send(email, subject, text, html)
 
+    async def send_digest_email(
+        self,
+        email: str,
+        subject: str,
+        text: str,
+        html: str,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> bool:
+        """주제 다이제스트 메일 발송 (U5 topics/digests — BR1.4).
+
+        렌더링은 발신 책임(topics 모듈)이 수행하고 여기서는 전송만 한다: 로컬/테스트
+        프로필에서는 Mock(로컬 싱크), 실제 운영에서는 유지보수자가 구성한 무료 경로가
+        이 동일한 프리미티브를 통해 나간다. ``headers``는 다이제스트에 필수가 아니므로
+        지정될 때만 프로바이더로 전달한다(Resend 클라이언트는 헤더 없는 호출만 지원)."""
+        if headers:
+            return await self._send(email, subject, text, html, headers=headers)
+        return await self._send(email, subject, text, html)
+
 
 class MockEmailClient(EmailClientInterface):
     """로컬 테스트를 위해 실제 이메일을 발송하지 않고 터미널 콘솔에 출력하는 Mock 이메일 클라이언트"""

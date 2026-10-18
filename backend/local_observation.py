@@ -46,6 +46,13 @@ PROBES = {
         " (SELECT count(*) FROM research.artifact) AS artifacts,"
         " (SELECT count(*) FROM research.admission) AS admissions"
     ),
+    "topics": OwnerProbe(
+        "SELECT (SELECT count(*) FROM topics.followed_topic) AS topics,"
+        " (SELECT count(*) FROM topics.digest_run) AS runs,"
+        " (SELECT count(*) FROM topics.send_log_entry) AS sends,"
+        " (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace"
+        "  WHERE n.nspname='topics' AND p.proname='guard_run_update') AS guard_functions"
+    ),
     "accounts": OwnerProbe(
         "SELECT (SELECT count(*) FROM accounts.account) AS accounts,"
         " (SELECT count(*) FROM accounts.session) AS sessions,"
@@ -130,7 +137,7 @@ def probe_owner(transactions: OwnerTransactions, owner: str) -> dict:
 def observe_all(
     transactions: OwnerTransactions, required: set[str] | None = None
 ) -> dict[str, dict]:
-    owners = required if required is not None else set(PROBES) - {"research"}
+    owners = required if required is not None else set(PROBES) - {"research", "topics"}
     return {owner: probe_owner(transactions, owner) for owner in owners}
 
 

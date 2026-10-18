@@ -38,6 +38,10 @@ SETTINGS_POLICY = {"policyId": "synthetic-personal-settings", "revision": "1"}
 USAGE_POLICY = {"policyId": "synthetic-four-no-reset", "revision": "1"}
 ENTRY_POLICY = {"policyId": "synthetic-local-entry", "revision": "1"}
 
+# Capabilities whose installed synthetic path is degraded-but-usable; their
+# navigation entries appear only when the capability is actually in the catalog.
+SYNTHETIC_CAPABILITIES = frozenset({"research", "novelty", "topics.digest"})
+
 # Finite installed route manifest. One entry per mounted browser surface; the
 # page routes are served by the same static workspace build.
 NAVIGATION = (
@@ -53,6 +57,13 @@ NAVIGATION = (
         "titleKey": "nav.novelty",
         "path": "/novelty",
         "capabilityId": "novelty",
+        "ownerBound": True,
+    },
+    {
+        "routeId": "topics",
+        "titleKey": "nav.topics",
+        "path": "/topics",
+        "capabilityId": "topics.digest",
         "ownerBound": True,
     },
     {
@@ -119,10 +130,10 @@ def navigation_items(catalog, *, authenticated: bool) -> list[dict]:
     states = {item["id"]: item["state"] for item in catalog}
     items = []
     for entry in NAVIGATION:
-        if entry["capabilityId"] in {"research", "novelty"} and entry["capabilityId"] not in states:
+        if entry["capabilityId"] in SYNTHETIC_CAPABILITIES and entry["capabilityId"] not in states:
             continue
         available = states.get(entry["capabilityId"]) == "available" or (
-            entry["capabilityId"] in {"research", "novelty"}
+            entry["capabilityId"] in SYNTHETIC_CAPABILITIES
             and states.get(entry["capabilityId"]) == "degraded"
         )
         reason = None
@@ -326,7 +337,9 @@ def assemble(profile: LocalProfile, *, routers=(), lifespan=None) -> FastAPI:
             return JSONResponse({"ready": False, "missing": ["assembly"]}, status_code=503)
         report = await run_in_threadpool(local_observation.readiness, transactions, required)
         loop = getattr(app.state, "control_loop", None)
-        if profile.realm in ("account-controls", "corpus-maintenance", "research-workspace"):
+        if profile.realm in (
+            "account-controls", "corpus-maintenance", "research-workspace", "topics-digests"
+        ):
             report["backgroundWork"] = (
                 dict(loop.status) if loop is not None else {"state": "stopped"}
             )

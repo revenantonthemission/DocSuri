@@ -31,6 +31,7 @@ import { LibraryControls } from './library-controls';
 import { CorpusWorkspace } from './u3-corpus/corpus-workspace';
 import { ResearchWorkspace } from './u4-research/research-workspace';
 import { readJobLink } from './u4-research/jobs';
+import { TopicsView } from './u5-topics/topics-view';
 
 type Appearance = 'light' | 'dark' | 'system';
 type NavigationItem = {
@@ -87,9 +88,10 @@ const NAV_COPY: Record<string, string> = {
   account: '계정',
   research: '연구',
   novelty: '참신성 분석',
+  topics: '주제 구독',
 };
 const OWNER_BOUND = new Set([
-  'library', 'settings', 'usage', 'jobs', 'account', 'research', 'novelty',
+  'library', 'settings', 'usage', 'jobs', 'account', 'research', 'novelty', 'topics',
 ]);
 const APPEARANCE_KEY = 'docsuri.u1.appearance';
 const AUTHORITY_CHANNEL = 'docsuri.authority-boundary';
@@ -133,7 +135,15 @@ export default function App({ transport }: { transport?: Transport }) {
   const [bootstrapped, setBootstrapped] = useState(false);
   const [navigation, setNavigation] = useState<NavigationItem[]>([]);
   const [view, setView] = useState<
-    'search' | 'paper' | 'library' | 'account' | 'settings' | 'usage' | 'research' | 'novelty'
+    | 'search'
+    | 'paper'
+    | 'library'
+    | 'account'
+    | 'settings'
+    | 'usage'
+    | 'research'
+    | 'novelty'
+    | 'topics'
   >(() => {
     const job = readJobLink();
     return job ? (job.kind === 'research-turn' ? 'research' : 'novelty') : 'search';
@@ -164,6 +174,9 @@ export default function App({ transport }: { transport?: Transport }) {
   );
   const noveltyCapability = catalog?.capabilities.find(
     (value) => value.id === 'novelty' && ['available', 'degraded'].includes(value.state),
+  );
+  const topicsCapability = catalog?.capabilities.find(
+    (value) => value.id === 'topics.digest' && ['available', 'degraded'].includes(value.state),
   );
   // The U3 corpus workspace replaces the live search/reading surfaces when the
   // corpus owner capabilities are installed in this realm.
@@ -408,6 +421,8 @@ export default function App({ transport }: { transport?: Transport }) {
                     setView(item.routeId as 'account' | 'settings' | 'usage');
                   else if (['research', 'novelty'].includes(item.routeId))
                     setView(item.routeId as 'research' | 'novelty');
+                  else if (item.routeId === 'topics' && topicsCapability)
+                    setView('topics');
                   focusHeading(mainHeading);
                 }}
                 data-testid={`nav-${item.routeId}`}
@@ -540,6 +555,13 @@ export default function App({ transport }: { transport?: Transport }) {
                   degraded={noveltyCapability.state === 'degraded'}
                   synthetic={noveltyCapability.modeIds.includes('synthetic-only')}
                   active={view === 'novelty'}
+                />
+              ) : null}
+              {signedIn && topicsCapability && view === 'topics' ? (
+                <TopicsView
+                  client={client}
+                  degraded={topicsCapability.state === 'degraded'}
+                  synthetic={topicsCapability.modeIds.includes('synthetic-only')}
                 />
               ) : null}
               {view === 'search' && isCorpusWorkspace ? (
