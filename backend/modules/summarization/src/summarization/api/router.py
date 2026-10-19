@@ -153,7 +153,7 @@ def build_router(
             while True:
                 events = job_service.events(ctx, job_id, after_seq=cursor[0], limit=100)
                 for ev in events:
-                    yield f"id: {ev.event_id}\\ndata: {json.dumps(ev.to_dict())}\\n\\n"
+                    yield f"id: {ev.event_id}\ndata: {json.dumps(ev.to_dict())}\n\n"
                     cursor[0] = ev.seq
                     if ev.state in TERMINAL_STATES:
                         sent_terminal = True
