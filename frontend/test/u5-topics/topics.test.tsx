@@ -41,7 +41,9 @@ describe('topics view states', () => {
   it('shows loading, then ready rows with the last-digest indicator', async () => {
     const api = new TopicsDouble().on('GET /api/v2/topics', () =>
       listing([
-        topic({ lastRun: { runId: RUN_ID, state: 'sent', windowEnd: '2026-10-18', observedState: 'sent' } }),
+        topic({
+          lastRun: { runId: RUN_ID, state: 'sent', windowEnd: '2026-10-18', observedState: 'sent' },
+        }),
       ]),
     );
     mount(<TopicsView client={api.client()} />);
@@ -154,9 +156,9 @@ describe('digest settings form', () => {
     expect((form.querySelector('[data-testid="cadence-select"]') as HTMLSelectElement).value).toBe(
       'weekly',
     );
-    expect(
-      (form.querySelector('[data-testid="delivery-day"]') as HTMLSelectElement).value,
-    ).toBe('tue');
+    expect((form.querySelector('[data-testid="delivery-day"]') as HTMLSelectElement).value).toBe(
+      'tue',
+    );
     await userEvent.click(screen.getByTestId('save-button'));
     await screen.findByText(/발송 설정을 저장했어요/);
     const sent = api.calls.find((call) => call.method === 'PUT')?.body;
@@ -223,7 +225,12 @@ describe('digest settings form', () => {
 describe('unknown outcome resolution', () => {
   it('offers both resolutions and posts the named assumption', async () => {
     const unresolved = topic({
-      lastRun: { runId: RUN_ID, state: 'unknown', windowEnd: '2026-10-18', observedState: 'unknown' },
+      lastRun: {
+        runId: RUN_ID,
+        state: 'unknown',
+        windowEnd: '2026-10-18',
+        observedState: 'unknown',
+      },
     });
     const api = new TopicsDouble()
       .on('GET /api/v2/topics', () => listing([unresolved]))
@@ -248,7 +255,9 @@ describe('unknown outcome resolution', () => {
 describe('last-digest copy', () => {
   it('never reports color-only state: every state carries icon and text', () => {
     for (const state of ['sent', 'empty', 'failed', 'unknown', 'prepared', 'sending']) {
-      const view = lastDigestView(topic({ lastRun: { runId: RUN_ID, state, windowEnd: null, observedState: state } }));
+      const view = lastDigestView(
+        topic({ lastRun: { runId: RUN_ID, state, windowEnd: null, observedState: state } }),
+      );
       expect(view).not.toBeNull();
       expect(view!.icon).toBeTruthy();
       expect(view!.text).toBeTruthy();

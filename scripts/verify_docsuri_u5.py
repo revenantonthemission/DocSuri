@@ -37,7 +37,7 @@ sys.path.insert(0, str(ROOT / "ops/src"))
 from bootstrap_docsuri_u1 import SCHEMAS, amend
 from verify_docsuri_u1 import GIB, IMAGE, LOCKS, Refused, command, digest, headroom
 from verify_docsuri_u1 import source_identity as base_source_identity
-from verify_docsuri_u3 import process_rss, stop
+from verify_docsuri_u3 import stop
 from verify_docsuri_u4 import MIGRATIONS as U4_MIGRATIONS
 
 from backend.local_profile import LocalProfile, private_bytes
@@ -815,6 +815,42 @@ def child_environment() -> dict:
     return environment
 
 
+OBSERVATION_SECONDS = 1
+
+
+def process_tree_rss(roots: tuple[int, ...], deadline: float) -> int:
+    """Aggregate RSS of every supervised root's tree from ONE process snapshot.
+
+    Browser verification supervises Playwright and its companion host. Taking a
+    separate `ps` snapshot per root doubled the process-table scans inside each
+    tick and measured the two trees at different instants. One bounded snapshot
+    keeps the unchanged per-observation limit and the aggregate RSS budget; the
+    union also prevents counting a shared descendant twice.
+    """
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise Refused("process deadline reached")
+    result = subprocess.run(
+        ["ps", "-Ao", "pid=,ppid=,rss="],
+        capture_output=True,
+        text=True,
+        timeout=min(OBSERVATION_SECONDS, remaining),
+        check=True,
+    )
+    rows = [
+        tuple(map(int, line.split()))
+        for line in result.stdout.splitlines()
+        if len(line.split()) == 3
+    ]
+    included = set(roots)
+    while True:
+        expanded = included | {child for child, parent, _ in rows if parent in included}
+        if expanded == included:
+            break
+        included = expanded
+    return sum(rss * 1024 for child, _, rss in rows if child in included)
+
+
 def bounded_process(
     args: list[str],
     log: Path,
@@ -834,6 +870,7 @@ def bounded_process(
     beginning = time.monotonic()
     observation_end = beginning + seconds - min(7, seconds / 2)
     count, peak, code = 0, 0, None
+    observations, slowest = 0, 0.0
     environment = child_environment()
     if clock_capability is not None:
         environment["DOCSURI_U5_CLOCK_CAPABILITY"] = clock_capability
@@ -878,15 +915,19 @@ def bounded_process(
                     if count > MAX_LOG:
                         raise Refused("private process log exceeded 16 MiB")
                     stream.write(chunk)
-                rss = process_rss(process.pid, observation_end)
+                roots = (process.pid,)
                 if companion is not None:
                     if companion.poll() is not None:
                         raise Refused(
                             "owned application exited during browser verification"
                         )
-                    rss += process_rss(companion.pid, observation_end)
-                    if companion_log.stat().st_size > MAX_LOG:
-                        raise Refused("private application log exceeded 16 MiB")
+                    roots = (process.pid, companion.pid)
+                observed = time.monotonic()
+                rss = process_tree_rss(roots, observation_end)
+                observations += 1
+                slowest = max(slowest, time.monotonic() - observed)
+                if companion is not None and companion_log.stat().st_size > MAX_LOG:
+                    raise Refused("private application log exceeded 16 MiB")
                 peak = max(peak, rss)
                 if peak > MAX_RSS:
                     raise Refused("process tree exceeded RSS safety budget")
@@ -910,6 +951,8 @@ def bounded_process(
             "peakRssBytes": peak,
             "logBytes": count,
             "processStopped": False,
+            "observations": observations,
+            "slowestObservationSeconds": slowest,
         }
         error.supervision = failure_metrics
         raise
@@ -935,6 +978,8 @@ def bounded_process(
             "peakRssBytes": peak,
             "logBytes": count,
             "processStopped": True,
+            "observations": observations,
+            "slowestObservationSeconds": slowest,
         }
         raise error
     return {
@@ -944,6 +989,8 @@ def bounded_process(
         "peakRssBytes": peak,
         "logBytes": count,
         "processStopped": True,
+        "observations": observations,
+        "slowestObservationSeconds": slowest,
     }
 
 
@@ -980,7 +1027,7 @@ def start_server(path: Path, log: Path):
             if process.poll() is not None:
                 raise Refused("owned application exited before readiness")
             if (
-                process_rss(process.pid, deadline) > MAX_RSS
+                process_tree_rss((process.pid,), deadline) > MAX_RSS
                 or log.stat().st_size > MAX_LOG
             ):
                 raise Refused("owned application exceeded startup bounds")

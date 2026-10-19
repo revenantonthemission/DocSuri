@@ -32,10 +32,10 @@ def test_available_memory_requires_exact_measured_field():
 
 
 def test_process_observation_timeout_stops_child_and_retains_failure(owned_root, monkeypatch):
-    def unavailable(pid, deadline):
+    def unavailable(roots, deadline):
         raise subprocess.TimeoutExpired(["ps"], 1)
 
-    monkeypatch.setattr(runner, "process_rss", unavailable)
+    monkeypatch.setattr(runner, "process_tree_rss", unavailable)
     with pytest.raises(subprocess.TimeoutExpired) as failure:
         runner.bounded_process(
             [sys.executable, "-c", "import time; time.sleep(20)"],
@@ -45,6 +45,61 @@ def test_process_observation_timeout_stops_child_and_retains_failure(owned_root,
     assert failure.value.supervision["reason"] == "supervision-error"
     assert failure.value.supervision["exitCode"] == 1
     assert failure.value.supervision["processStopped"] is True
+
+
+def test_browser_supervision_takes_one_snapshot_per_tick_for_both_roots(owned_root, monkeypatch):
+    companion = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(20)"])
+    companion_log = owned_root / "companion.log"
+    companion_log.write_bytes(b"")
+    snapshots = []
+
+    def observe(roots, deadline):
+        snapshots.append(tuple(roots))
+        return 1024
+
+    monkeypatch.setattr(runner, "process_tree_rss", observe)
+    try:
+        result = runner.bounded_process(
+            [sys.executable, "-c", "import time; time.sleep(0.3)"],
+            owned_root / "browser.log",
+            seconds=5,
+            companion=companion,
+            companion_log=companion_log,
+        )
+    finally:
+        companion.kill()
+        companion.wait()
+    assert snapshots, "supervision never observed the process trees"
+    assert all(len(roots) == 2 for roots in snapshots)
+    assert {roots[1] for roots in snapshots} == {companion.pid}
+    assert result["observations"] == len(snapshots)
+    assert result["exitCode"] == 0
+    assert result["peakRssBytes"] == 1024
+
+
+def test_process_tree_snapshot_unions_trees_without_double_counting(monkeypatch):
+    table = "\n".join(["10 1 100", "11 10 200", "12 11 300", "20 1 400", "21 20 500", "30 1 9999"])
+    calls = []
+
+    def run(args, **kwargs):
+        calls.append((args, kwargs["timeout"]))
+        return subprocess.CompletedProcess(args, 0, stdout=table)
+
+    monkeypatch.setattr(runner.subprocess, "run", run)
+    deadline = time.monotonic() + 30
+    assert runner.process_tree_rss((10, 20), deadline) == (100 + 200 + 300 + 400 + 500) * 1024
+    # A root listed twice, or one inside another's tree, is still counted once.
+    assert runner.process_tree_rss((10, 11, 10), deadline) == (100 + 200 + 300) * 1024
+    assert len(calls) == 2
+    assert all(timeout == runner.OBSERVATION_SECONDS for _, timeout in calls)
+
+
+def test_process_tree_snapshot_refuses_after_its_deadline(monkeypatch):
+    monkeypatch.setattr(
+        runner.subprocess, "run", lambda *a, **k: pytest.fail("snapshot after deadline")
+    )
+    with pytest.raises(runner.Refused, match="process deadline reached"):
+        runner.process_tree_rss((1,), time.monotonic() - 1)
 
 
 def test_browser_assets_always_rebuild_and_refuse_failed_build(owned_root, monkeypatch):
