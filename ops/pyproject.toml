@@ -10,6 +10,7 @@ dependencies = [
     "docsuri-platform-integrity==0.1.0",
     "pydantic>=2.7,<3",
     "psutil>=7,<8",
+    "psycopg[binary]>=3.3.4,<4",
 ]
 
 [dependency-groups]
@@ -37,6 +38,8 @@ packages = ["src/docsuri_ops"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# tests/test_u1_*.py import the operator scripts under server/ as `server.*`.
+pythonpath = ["."]
 addopts = "-q"
 
 [tool.ruff]
