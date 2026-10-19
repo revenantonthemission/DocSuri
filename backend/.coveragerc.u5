@@ -15,8 +15,10 @@ include =
     backend/modules/personalization/local_http.py
     backend/u5_policy.py
     backend/u5_host.py
+    backend/u5_real_delivery.py
     scripts/serve_docsuri_u5.py
     scripts/u5_browser_fixtures.py
+    scripts/u5_real_delivery.py
 fail_under = 80
 show_missing = True
 skip_covered = False

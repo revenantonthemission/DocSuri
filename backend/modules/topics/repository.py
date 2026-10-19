@@ -17,7 +17,12 @@ from uuid import uuid4
 import psycopg
 from psycopg.types.json import Jsonb
 
+from backend.modules.accounts.integrations.digest_email import (
+    PROVIDER_REFUSAL,
+    valid_provider_refusal,
+)
 from backend.transactions import Authority, OwnerTransactions, guard
+from backend.u5_policy import REAL_EVIDENCE_RETENTION_DAYS_MAX
 
 from .errors import TopicsError
 from .presentation import preference_fingerprint, render_presentation
@@ -39,6 +44,14 @@ RUN_COLUMNS = (
 
 def _invalid(message: str):
     raise TopicsError("INVALID_ARGUMENT", current={"field": message})
+
+
+def _validated_recipient(recipient):
+    """None (no address scope) or one bounded address string for the real adapter."""
+    if recipient is None:
+        return
+    if not isinstance(recipient, str) or not 3 <= len(recipient) <= 320 or "@" not in recipient:
+        _invalid("recipient")
 
 
 def _validated_settings(cadence, delivery_time_local, delivery_day, content_window_days):
@@ -352,19 +365,21 @@ class TopicsRepository:
 
     # -- worker units ---------------------------------------------------------
 
-    def due_topics(self, now: dt.datetime, limit=50):
+    def due_topics(self, now: dt.datetime, limit=50, *, recipient=None):
         """Actionable topics due in each owner's confirmed zone (BR1.2).
 
         The due filter lives in the read so the bounded page can never be
         Calendar, consent and outstanding-work filters precede the bounded page.
         Paused owners cannot monopolize it; reconciliation, queued sends and
         consent cleanup remain independent scheduler phases. Admission rechecks
-        authority because it may change after this read.
+        authority because it may change after this read. A real adapter passes
+        its one permitted `recipient`, filtered before the page as well.
         """
         if not isinstance(now, dt.datetime) or now.tzinfo is None:
             _invalid("now")
         if type(limit) is not int or not 1 <= limit <= 50:
             _invalid("limit")
+        _validated_recipient(recipient)
         return self.system(
             lambda conn: conn.execute(
                 "SELECT t.id,t.account_id,t.topic_key,t.display_name,t.status,"
@@ -375,10 +390,12 @@ class TopicsRepository:
                 "JOIN LATERAL topics.next_occurrence(t.id,%s) d ON true "
                 "WHERE t.status='active' "
                 "AND (SELECT granted FROM accounts.digest_recipient(t.account_id)) IS TRUE "
+                "AND (%s::text IS NULL OR "
+                "(SELECT email FROM accounts.digest_recipient(t.account_id)) = %s::text) "
                 "AND NOT EXISTS (SELECT 1 FROM topics.digest_run r "
                 "WHERE r.topic_id=t.id AND r.state IN ('prepared','sending','unknown')) "
                 "ORDER BY d.due_at,t.followed_at,t.id LIMIT %s",
-                (now, limit),
+                (now, recipient, recipient, limit),
             ).fetchall()
         )
 
@@ -535,15 +552,25 @@ class TopicsRepository:
 
         return self.system(prepare)
 
-    def begin_send(self, run_id, path_kind, *, real_send_limit=0):
+    def begin_send(self, run_id, path_kind, *, real_send_limit=0, evidence_retention_days=None):
         """Checked prepared->sending with active, consent and pause guards (BR3.1/3.2/4.1/4.2).
 
         Returns the sending run row with its send-log skeleton, or None when
         the run moved on, the topic is unsubscribed or consent-stopped, an
-        unknown outcome is unreconciled, or another send is in flight.
+        unknown outcome is unreconciled, or another send is in flight. A real
+        attempt stamps its evidence-retention bound (at most 30 days, also
+        enforced by the database); without a stated period it is refused.
         """
         if path_kind not in ("real", "local-sink"):
             _invalid("pathKind")
+        if path_kind == "real":
+            if (
+                type(evidence_retention_days) is not int
+                or not 1 <= evidence_retention_days <= REAL_EVIDENCE_RETENTION_DAYS_MAX
+            ):
+                raise TopicsError("INVALID_ARGUMENT", current={"field": "evidenceRetention"})
+        elif evidence_retention_days not in (None, 0):
+            _invalid("evidenceRetention")
 
         def begin(conn):
             if path_kind == "real":
@@ -592,10 +619,20 @@ class TopicsRepository:
                 return None
             if not sending:
                 return None
+            # One clock reading stamps both the attempt and its retention bound.
             log = conn.execute(
-                "INSERT INTO topics.send_log_entry(id,run_id,path_kind) VALUES(%s,%s,%s) "
-                "RETURNING id",
-                (uuid4(), run_id, path_kind),
+                "INSERT INTO topics.send_log_entry"
+                "(id,run_id,path_kind,attempted_at,evidence_retain_until) "
+                "SELECT %s,%s,%s,c.now,CASE WHEN %s::int IS NULL THEN NULL "
+                "ELSE c.now + make_interval(days => %s::int) END "
+                "FROM (SELECT clock_timestamp() AS now) c RETURNING id",
+                (
+                    uuid4(),
+                    run_id,
+                    path_kind,
+                    evidence_retention_days if path_kind == "real" else None,
+                    evidence_retention_days if path_kind == "real" else None,
+                ),
             ).fetchone()
             return dict(sending, send_log_id=log["id"])
 
@@ -609,11 +646,15 @@ class TopicsRepository:
         transport_receipt=None,
         acknowledged_at=None,
         failure_reason=None,
+        provider_status=None,
+        provider_error=None,
     ):
         """Checked sending->terminal; send-log facts set once; outcome recorded (BR3.2).
 
-        A `sent` finish appends the watermark from the run's own content.
-        Returns the terminal run row, or None when the run is no longer sending.
+        A `sent` finish appends the watermark from the run's own content. A
+        provider refusal may carry its HTTP status and validated error name,
+        recorded once with the outcome. Returns the terminal run row, or None
+        when the run is no longer sending.
         """
         if observed_state not in ("sent", "failed", "unknown"):
             _invalid("observedState")
@@ -621,6 +662,12 @@ class TopicsRepository:
             not isinstance(failure_reason, str) or not 1 <= len(failure_reason.encode()) <= 160
         ):
             _invalid("failureReason")
+        if (provider_status, provider_error) != (None, None) and (
+            observed_state != "failed"
+            or failure_reason != PROVIDER_REFUSAL
+            or not valid_provider_refusal(provider_status, provider_error)
+        ):
+            _invalid("providerRefusal")
 
         def finish(conn):
             run = conn.execute(
@@ -637,9 +684,9 @@ class TopicsRepository:
                     (transport_receipt, acknowledged_at, run_id),
                 )
             conn.execute(
-                "INSERT INTO topics.delivery_outcome(id,run_id,observed_state,failure_reason) "
-                "VALUES(%s,%s,%s,%s)",
-                (uuid4(), run_id, observed_state, failure_reason),
+                "INSERT INTO topics.delivery_outcome(id,run_id,observed_state,failure_reason,"
+                "provider_status,provider_error) VALUES(%s,%s,%s,%s,%s,%s)",
+                (uuid4(), run_id, observed_state, failure_reason, provider_status, provider_error),
             )
             if observed_state == "sent":
                 self.apply_watermark(conn, terminal)
@@ -769,19 +816,55 @@ class TopicsRepository:
         """Drop queued (prepared) work for a consent-stopped topic (BR4.2)."""
         return self.system(lambda conn: self.discard_prepared(conn, topic_id))
 
-    def prepared_runs(self, limit=10):
-        """Prepared runs with their topic facts, oldest first, for the send pass."""
+    def prepared_runs(self, limit=10, *, recipient=None):
+        """Prepared runs with their topic facts, oldest first, for the send pass.
+
+        With a real adapter's permitted `recipient`, other owners' queued runs
+        are excluded before the page so they can never spend the allocation.
+        """
         if type(limit) is not int or not 1 <= limit <= 50:
             _invalid("limit")
+        _validated_recipient(recipient)
         return self.system(
             lambda conn: conn.execute(
                 "SELECT r.id,r.topic_id,r.window_start,r.window_end,r.state,r.digest_content,"
                 "r.settings_revision,r.created_at,r.updated_at,t.account_id,t.topic_key,"
                 "t.display_name FROM topics.digest_run r "
                 "JOIN topics.followed_topic t ON t.id=r.topic_id "
-                "WHERE r.state='prepared' ORDER BY r.created_at,r.id LIMIT %s",
-                (limit,),
+                "WHERE r.state='prepared' AND (%s::text IS NULL OR "
+                "(SELECT email FROM accounts.digest_recipient(t.account_id)) = %s::text) "
+                "ORDER BY r.created_at,r.id LIMIT %s",
+                (recipient, recipient, limit),
             ).fetchall()
+        )
+
+    def expire_real_evidence(self, limit=10):
+        """Clear provider receipts of settled real sends past their retention bound.
+
+        Only `sent`, `failed` or owner/scheduler-reconciled `unknown` runs are
+        eligible: an unresolved outcome keeps its evidence until it is settled.
+        The row (path, attempt and acknowledgement times) stays, so the durable
+        real-send allocation is never replenished. Returns the expired row ids.
+        """
+        if type(limit) is not int or not 1 <= limit <= 50:
+            _invalid("limit")
+        return self.system(
+            lambda conn: [
+                row["id"]
+                for row in conn.execute(
+                    "UPDATE topics.send_log_entry SET transport_receipt=NULL,"
+                    "evidence_expired_at=clock_timestamp() WHERE id IN ("
+                    "SELECT l.id FROM topics.send_log_entry l "
+                    "JOIN topics.digest_run r ON r.id=l.run_id "
+                    "LEFT JOIN topics.delivery_outcome o ON o.run_id=r.id "
+                    "WHERE l.path_kind='real' AND l.evidence_expired_at IS NULL "
+                    "AND l.evidence_retain_until <= clock_timestamp() "
+                    "AND (r.state IN ('sent','failed') "
+                    "OR (r.state='unknown' AND o.reconciled_state IS NOT NULL)) "
+                    "ORDER BY l.evidence_retain_until,l.id LIMIT %s) RETURNING id",
+                    (limit,),
+                ).fetchall()
+            ]
         )
 
     def digest_recipient(self, account_id):

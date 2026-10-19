@@ -72,6 +72,8 @@ MIGRATIONS = (
     ("topics", "backend/modules/topics/u5_preference_snapshot.sql"),
     ("topics", "backend/modules/topics/u5_schedule.sql"),
     ("topics", "backend/modules/topics/u5_unsubscribe_capability.sql"),
+    ("topics", "backend/modules/topics/u5_real_send_retention.sql"),
+    ("topics", "backend/modules/topics/u5_refusal_detail.sql"),
 )
 TEST_PHASES = (
     "database",

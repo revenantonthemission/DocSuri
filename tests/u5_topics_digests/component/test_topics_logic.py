@@ -38,6 +38,18 @@ class RefusingMail:
         return DigestMailResult("refused")
 
 
+class DetailedRefusalMail:
+    """Returns one prepared refusal result; never touches a network."""
+
+    path_kind = "local-sink"
+
+    def __init__(self, result):
+        self.result = result
+
+    async def send(self, email, presentation, request_key):
+        return self.result
+
+
 class UnobservedMail:
     path_kind = "local-sink"
 
@@ -335,6 +347,53 @@ def test_send_outcomes_sent_failed_unknown(transactions, authority, connect):
     )
     assert terminal2["state"] == "unknown"
     assert run_row(connect, run2["id"])["observed_state"] == "unknown"
+
+
+@pytest.mark.parametrize(
+    "result,expected",
+    [
+        (
+            DigestMailResult(
+                "refused",
+                refusal_reason="delivery-path-refused",
+                provider_status=403,
+                provider_error="validation_error",
+            ),
+            ("delivery-path-refused", 403, "validation_error"),
+        ),
+        (
+            DigestMailResult("refused", refusal_reason="recipient-not-permitted"),
+            ("recipient-not-permitted", None, None),
+        ),
+        (
+            DigestMailResult("refused", refusal_reason="unsubscribe-url-invalid"),
+            ("unsubscribe-url-invalid", None, None),
+        ),
+    ],
+)
+def test_refusal_detail_reaches_the_recorded_outcome(
+    transactions, authority, connect, result, expected
+):
+    """A refusal fails once (BR3.3) and records who refused, without provider text."""
+    service, _, _ = build(transactions)
+    repository = TopicsRepository(transactions)
+    _, topic_id = follow_topic(service, authority, base="refusal-detail-topic")
+    run, _ = repository.prepare_run(topic_id, W1[0], W1[1], revision_of(connect, topic_id), [ITEM])
+    delivery = DigestDelivery(transactions, None, mail=DetailedRefusalMail(result))
+    sending = repository.begin_send(run["id"], delivery.path_kind())
+    terminal = delivery.attempt(sending, {"account_id": authority.account_id, "display_name": "T"})
+    assert terminal["state"] == "failed"
+    with connect("topics") as conn:
+        recorded = conn.execute(
+            "SELECT failure_reason,provider_status,provider_error "
+            "FROM topics.delivery_outcome WHERE run_id=%s",
+            (run["id"],),
+        ).fetchone()
+    assert (
+        recorded["failure_reason"],
+        recorded["provider_status"],
+        recorded["provider_error"],
+    ) == expected
 
 
 def test_unknown_pause_and_evidence_reconciliation(transactions, authority, connect):

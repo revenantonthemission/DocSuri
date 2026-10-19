@@ -3,11 +3,32 @@
 The TopicsDigests module joins the one assembled release: its service, its
 owner-scoped router, its capability rows and its worker hook on the existing
 worker entry (evaluating due topics each bounded pass). The email delivery
-capability is reused from the built accounts seam; the synthetic realm's
-delivery path is the local sink, so the capability stays truthfully degraded.
+capability is reused from the built accounts seam. Its capability record is
+derived from the bound adapter: the synthetic realm's local sink reports
+`synthetic-only`; the operator-composed real path (backend/u5_real_delivery.py)
+reports `real-bounded`. Both stay `degraded`: neither is general delivery.
 """
 
 from backend.u4_host import assemble_u4
+
+# One permitted recipient and a finite allocation: real, but not general delivery.
+DELIVERY_MODES = {"local-sink": "synthetic-only", "real": "real-bounded"}
+
+
+def digest_capability(policy, delivery):
+    """The truthful `topics.digest` row for the adapter actually bound."""
+    path = delivery.path_kind()
+    if (path == "real") == policy.synthetic_only:
+        raise ValueError("digest capability policy and adapter disagree")
+    return {
+        "id": "topics.digest",
+        "state": "degraded",
+        "modeIds": [DELIVERY_MODES[path]],
+        "languageIds": ["en", "ko"],
+        "levelIds": ["standard"],
+        "formatIds": ["email"],
+        "policy": policy.reference(),
+    }
 
 
 class TopicsWorker:
@@ -73,19 +94,10 @@ def topics_contribution(
         from backend.modules.topics.unsubscribe import unsubscribe_router
 
         router.include_router(unsubscribe_router(unsubscribe))
-    capabilities = [
-        {
-            "id": "topics.digest",
-            "state": "degraded",
-            "modeIds": ["synthetic-only"],
-            "languageIds": ["en", "ko"],
-            "levelIds": ["standard"],
-            "formatIds": ["email"],
-            "policy": policy.reference(),
-        }
-    ]
+    capabilities = [digest_capability(policy, delivery)]
     return {
         "service": service,
+        "delivery": delivery,
         "scheduler": scheduler,
         "capabilities": capabilities,
         "router": router,

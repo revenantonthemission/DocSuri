@@ -254,6 +254,8 @@ def test_migration_chain_is_append_only_and_present():
         "backend/modules/topics/u5_preference_snapshot.sql",
         "backend/modules/topics/u5_schedule.sql",
         "backend/modules/topics/u5_unsubscribe_capability.sql",
+        "backend/modules/topics/u5_real_send_retention.sql",
+        "backend/modules/topics/u5_refusal_detail.sql",
     ]
     assert guard_index > schema_index
 
@@ -333,6 +335,18 @@ def test_serve_assembles_the_owned_release(realm):
         assert transport.certificate.is_file()
     finally:
         app.state.transactions.close()
+
+
+def test_serve_real_delivery_refuses_without_operator_activation(realm, monkeypatch):
+    import scripts.serve_docsuri_u5 as serve
+    from backend.u5_real_delivery import RealDeliveryRefused
+
+    # Ambient provider variables alone never enable the real composition.
+    monkeypatch.setenv("EMAIL_PROVIDER", "resend")
+    monkeypatch.setenv("RESEND_API_KEY", "fake-credential-for-refusal-check")
+    assert not (realm.root / "real-delivery.json").exists()
+    with pytest.raises(RealDeliveryRefused, match="activation is absent"):
+        serve.assemble(realm.root / "environment.json", real_delivery=True)
 
 
 def test_local_profile_load_requires_the_owned_manifest(realm):

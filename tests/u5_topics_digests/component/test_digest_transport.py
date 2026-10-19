@@ -77,7 +77,10 @@ def test_acceptance_retains_actual_receipt_and_one_click_headers():
 def test_refusal_and_ambiguous_status_never_retry(status, state):
     fake = FakeClient(httpx.Response(status, json={"message": "secret-test owner@example.invalid"}))
     result = send(adapter(fake))
-    assert result == DigestMailResult(state) and len(fake.calls) == 1
+    assert result.state == state and len(fake.calls) == 1
+    if state == "unknown":
+        # Ambiguous statuses carry no refusal detail at all.
+        assert result == DigestMailResult("unknown")
     assert "secret-test" not in repr(result) and "owner@" not in repr(result)
 
 

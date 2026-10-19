@@ -45,7 +45,18 @@ class TopicsScheduler:
         self._drop_consent_stopped(result)
         self._evaluate_due(result, limit)
         self._send_prepared(result)
+        self._expire_real_evidence()
         return result
+
+    def _expire_real_evidence(self):
+        """Clear provider receipts of settled real sends past their retention bound.
+
+        The send-log row itself stays, so the durable real-send allocation is
+        never replenished by expiry. Synthetic policies keep no real evidence.
+        """
+        if self.policy.synthetic_only:
+            return
+        self.repository.expire_real_evidence(self.policy.sweep_limit)
 
     def _sweep_orphans(self, result):
         """Orphaned `sending` past the bound moves to `unknown` (BR3.4)."""
@@ -102,7 +113,9 @@ class TopicsScheduler:
             result["recovered"] += len(discarded)
 
     def _evaluate_due(self, result, limit):
-        due = self.repository.due_topics(self._now(), self.policy.page_size)
+        due = self.repository.due_topics(
+            self._now(), self.policy.page_size, recipient=self.delivery.recipient_scope()
+        )
         for topic in due:
             if result["prepared"] >= limit:
                 return
@@ -133,11 +146,17 @@ class TopicsScheduler:
 
     def _send_prepared(self, result):
         attempted = 0
-        for run in self.repository.prepared_runs(self.policy.sends_per_pass + 5):
+        queued = self.repository.prepared_runs(
+            self.policy.sends_per_pass + 5, recipient=self.delivery.recipient_scope()
+        )
+        for run in queued:
             if attempted >= self.policy.sends_per_pass:
                 return
             sending = self.repository.begin_send(
-                run["id"], self.delivery.path_kind(), real_send_limit=self.policy.real_send_limit
+                run["id"],
+                self.delivery.path_kind(),
+                real_send_limit=self.policy.real_send_limit,
+                evidence_retention_days=self.policy.real_evidence_retention_days,
             )
             if sending is None:
                 # Blocked (unsubscribed, consent-stopped, paused, single-flight):

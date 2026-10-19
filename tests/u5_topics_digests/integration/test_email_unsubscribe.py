@@ -35,7 +35,10 @@ def test_get_is_generic_read_only_confirmation():
         result = client.get(PREFIX + token)
         assert result.status_code == 200 and token not in result.text
         assert "구독 해지 확인" in result.text and service.calls == []
-        assert result.headers["referrer-policy"] == "no-referrer"
+        # same-origin: the page's own form POST carries its real Origin (not
+        # `null`), while the token URL is never sent as a cross-origin referrer.
+        assert result.headers["referrer-policy"] == "same-origin"
+        assert "form-action 'self'" in result.headers["content-security-policy"]
 
 
 def test_both_one_click_encodings_without_cookies_or_auth():

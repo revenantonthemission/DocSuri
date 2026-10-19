@@ -131,9 +131,10 @@ def test_real_send_admission_spends_durable_total_budget(transactions, authority
         ).fetchone()["n"]
     )
     assert spent < 99
-    admitted = repository.begin_send(first["id"], "real", real_send_limit=spent + 1)
+    budget = {"real_send_limit": spent + 1, "evidence_retention_days": 30}
+    admitted = repository.begin_send(first["id"], "real", **budget)
     assert admitted is not None
     repository.finish_send(first["id"], "failed")
     _, second = prepare(transactions, authority)
-    assert repository.begin_send(second["id"], "real", real_send_limit=spent + 1) is None
-    assert repository.begin_send(first["id"], "real", real_send_limit=spent + 1) is None
+    assert repository.begin_send(second["id"], "real", **budget) is None
+    assert repository.begin_send(first["id"], "real", **budget) is None

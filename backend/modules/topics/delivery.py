@@ -46,6 +46,8 @@ class DigestDelivery:
             raise ValueError("real delivery requires a real adapter")
         if not policy.synthetic_only and unsubscribe is None:
             raise ValueError("real delivery requires the owner-bound cancellation capability")
+        if not policy.synthetic_only and not getattr(self.mail, "permitted_recipient", None):
+            raise ValueError("real delivery requires one permitted recipient")
 
     def path_kind(self):
         """`local-sink` unless a maintainer-configured path carried the send.
@@ -55,6 +57,17 @@ class DigestDelivery:
         configured path.
         """
         return self.mail.path_kind
+
+    def recipient_scope(self):
+        """The single address a real adapter may contact; None for the local sink.
+
+        The scheduler filters due topics and queued runs by this address before
+        the bounded page and before admission, so another owner's run can never
+        spend the finite real-send allocation on a refused recipient.
+        """
+        if self.path_kind() != "real":
+            return None
+        return self.mail.permitted_recipient
 
     def attempt(self, sending, topic):
         """Deliver one sending run; the outcome is recorded before returning."""
@@ -93,8 +106,15 @@ class DigestDelivery:
             return self.repository.finish_send(sending["id"], "sent")
         if delivered.state == "unknown":
             return self.repository.finish_send(sending["id"], "unknown")
+        # A definite refusal fails without retry (BR3.3). Its bounded detail says
+        # who refused: a local pre-network reason, or the provider's HTTP status
+        # and validated error name. No provider text or request data is kept.
         return self.repository.finish_send(
-            sending["id"], "failed", failure_reason="delivery-path-refused"
+            sending["id"],
+            "failed",
+            failure_reason=delivered.failure_reason,
+            provider_status=delivered.provider_status,
+            provider_error=delivered.provider_error,
         )
 
     def reconcile_decision(self, run):

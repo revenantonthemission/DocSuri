@@ -21,37 +21,112 @@ from .repository import TopicsRepository
 
 PREFIX = "/api/v2/topics/email-unsubscribe/"
 TOKEN = re.compile(r"[A-Za-z0-9_-]{43}\Z")
+CANCELLATION_PATH = re.compile(re.escape(PREFIX) + r"[A-Za-z0-9_-]{43}\Z")
+
+
+def approved_origin(origin, *, synthetic=False):
+    """An exact HTTPS origin (loopback HTTP only for synthetic realms), or ValueError."""
+    parsed = urlsplit(origin) if isinstance(origin, str) else None
+    local = (
+        synthetic
+        and parsed is not None
+        and parsed.scheme == "http"
+        and parsed.hostname in ("localhost", "127.0.0.1")
+    )
+    if (
+        parsed is None
+        or not (parsed.scheme == "https" or local)
+        or not parsed.hostname
+        or parsed.username
+        or parsed.password
+        or parsed.path not in ("", "/")
+        or parsed.query
+        or parsed.fragment
+    ):
+        raise ValueError("approved unsubscribe origin required")
+    return origin.rstrip("/")
+
+
+# Response headers of the cancellation page and its POST answer.
+#
+# `same-origin`, not `no-referrer`: under the Fetch standard's "append a request
+# `Origin` header" step, a non-GET, non-CORS request (the page's own form POST)
+# serializes its `Origin` as `null` when the document's policy is `no-referrer`,
+# but as the document's real origin under `same-origin` when the target is
+# same-origin. The form posts back to its own URL, so the browser then sends the
+# approved public origin. The token-bearing URL still never leaves this origin as
+# a referrer: `same-origin` sends no referrer cross-origin, and the CSP below
+# loads no subresource and allows form submission only to this origin.
 HEADERS = {
     "Cache-Control": "no-store",
-    "Referrer-Policy": "no-referrer",
+    "Referrer-Policy": "same-origin",
     "Content-Security-Policy": "default-src 'none'; form-action 'self'; frame-ancestors 'none'",
     "X-Content-Type-Options": "nosniff",
 }
+_PAGE_HEADERS = tuple(
+    (name.lower().encode("latin-1"), value.encode("latin-1")) for name, value in HEADERS.items()
+)
+_PAGE_HEADER_NAMES = frozenset(name for name, _ in _PAGE_HEADERS)
+
+
+def _with_page_headers(headers):
+    """A new header list: the cancellation page's own values replace any others."""
+    kept = [(name, value) for name, value in headers if name.lower() not in _PAGE_HEADER_NAMES]
+    return kept + list(_PAGE_HEADERS)
+
+
+class PublicCancellationOrigin:
+    """ASGI middleware for the real composition's cancellation path only.
+
+    Installed outermost by `assemble_u5_real`. On a well-formed cancellation
+    path, for GET and POST only, it:
+
+    - drops an `Origin` header that equals the approved public origin exactly, so
+      the browser confirmation from that origin passes the host boundary; any
+      other origin, including `null`, still reaches (and is refused by) it;
+    - restores the cancellation page's own `HEADERS` on the response. The host
+      boundary writes host-wide `Referrer-Policy: no-referrer` and its CSP on
+      every response; left in place, the browser's form POST would carry
+      `Origin: null` and be refused (review finding R-15).
+
+    Every other path and method passes through untouched. The single-use
+    capability itself, not the origin, authorizes the effect.
+    """
+
+    def __init__(self, app, *, origin):
+        self.app = app
+        self.origin = approved_origin(origin).encode("ascii")
+
+    async def __call__(self, scope, receive, send):
+        if not (
+            scope["type"] == "http"
+            and scope.get("method") in ("GET", "POST")
+            and CANCELLATION_PATH.fullmatch(scope.get("path", ""))
+        ):
+            await self.app(scope, receive, send)
+            return
+        headers = [
+            (name, value)
+            for name, value in scope["headers"]
+            if not (name == b"origin" and value == self.origin)
+        ]
+        if len(headers) != len(scope["headers"]):
+            scope = dict(scope, headers=headers)
+
+        async def send_with_page_headers(message):
+            if message["type"] == "http.response.start":
+                message = dict(message, headers=_with_page_headers(message.get("headers", [])))
+            await send(message)
+
+        await self.app(scope, receive, send_with_page_headers)
 
 
 class EmailUnsubscribe:
     def __init__(self, transactions, *, origin, expires_at, synthetic=False):
-        parsed = urlsplit(origin)
-        local = (
-            synthetic and parsed.scheme == "http" and parsed.hostname in ("localhost", "127.0.0.1")
-        )
-        if (
-            not (parsed.scheme == "https" or local)
-            or not parsed.hostname
-            or parsed.username
-            or parsed.password
-            or parsed.path not in ("", "/")
-            or parsed.query
-            or parsed.fragment
-        ):
-            raise ValueError("approved unsubscribe origin required")
+        origin = approved_origin(origin, synthetic=synthetic)
         if not isinstance(expires_at, dt.datetime) or expires_at.tzinfo is None:
             raise ValueError("explicit capability policy expiry required")
-        self.transactions, self.origin, self.expires_at = (
-            transactions,
-            origin.rstrip("/"),
-            expires_at,
-        )
+        self.transactions, self.origin, self.expires_at = transactions, origin, expires_at
 
     def issue(self, run_id):
         token = secrets.token_urlsafe(32)

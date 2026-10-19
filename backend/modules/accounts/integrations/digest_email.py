@@ -14,22 +14,126 @@ from uuid import UUID
 
 import httpx
 
+# The provider answered with a definite rejection (statuses below).
+PROVIDER_REFUSAL = "delivery-path-refused"
+# Refusals decided on this host before any network call: the provider never saw them.
+RECIPIENT_NOT_PERMITTED = "recipient-not-permitted"
+UNSUBSCRIBE_URL_INVALID = "unsubscribe-url-invalid"
+LOCAL_REFUSALS = (RECIPIENT_NOT_PERMITTED, UNSUBSCRIBE_URL_INVALID)
+# Explicit rejection only. 408/409/5xx can follow an accepted send and stay unknown.
+REFUSED_STATUSES = (400, 401, 403, 404, 413, 422, 429)
+# Resend's machine-readable error `name` (e.g. `validation_error`). Anything else,
+# including an unreadable body, is replaced by the fixed placeholder: free text
+# from the provider (its `message`) is never kept because it can echo the request.
+PROVIDER_ERROR_NAME = re.compile(r"[a-z][a-z0-9_]{0,63}")
+PROVIDER_ERROR_UNAVAILABLE = "name-unavailable"
+
+
+def _is_error_name(value) -> bool:
+    return isinstance(value, str) and PROVIDER_ERROR_NAME.fullmatch(value) is not None
+
+
+def valid_provider_refusal(status, name) -> bool:
+    """A refusing HTTP status with a validated error name or the fixed placeholder."""
+    return (
+        type(status) is int
+        and status in REFUSED_STATUSES
+        and (name == PROVIDER_ERROR_UNAVAILABLE or _is_error_name(name))
+    )
+
 
 @dataclass(frozen=True)
 class DigestMailResult:
+    """One transport outcome. Refusal detail is bounded, non-secret and refused-only.
+
+    `refusal_reason` names who refused (a local reason, or the provider);
+    `provider_status`/`provider_error` are the provider's HTTP status and
+    validated error name, present only when the provider itself refused.
+    """
+
     state: str
     receipt: str | None = None
     acknowledged_at: dt.datetime | None = None
+    refusal_reason: str | None = None
+    provider_status: int | None = None
+    provider_error: str | None = None
 
     def __post_init__(self):
         if self.state not in ("accepted", "refused", "unknown"):
             raise ValueError("unsupported transport result")
         if self.state == "accepted" and (not self.receipt or not self.acknowledged_at):
             raise ValueError("acceptance requires a receipt and time")
+        detail = (self.refusal_reason, self.provider_status, self.provider_error)
+        if self.state != "refused":
+            if detail != (None, None, None):
+                raise ValueError("refusal detail belongs only to a refusal")
+            return
+        if self.refusal_reason not in (None, PROVIDER_REFUSAL, *LOCAL_REFUSALS):
+            raise ValueError("unsupported refusal reason")
+        if self.provider_status is None:
+            if self.provider_error is not None:
+                raise ValueError("a provider error name requires its status")
+            return
+        if self.refusal_reason != PROVIDER_REFUSAL or not valid_provider_refusal(
+            self.provider_status, self.provider_error
+        ):
+            raise ValueError("provider refusal detail is invalid")
+
+    @property
+    def failure_reason(self) -> str:
+        """The recorded failure reason; a detail-free refusal is the provider path's."""
+        return self.refusal_reason or PROVIDER_REFUSAL
+
+
+def provider_error_name(response) -> str:
+    """Resend's error `name` when it is a short identifier, else the placeholder.
+
+    Reads nothing else from the body; never raises, so a malformed refusal body
+    cannot turn a definite rejection into an unknown outcome.
+    """
+    try:
+        value = response.json()
+    except ValueError:
+        return PROVIDER_ERROR_UNAVAILABLE
+    name = value.get("name") if isinstance(value, dict) else None
+    return name if _is_error_name(name) else PROVIDER_ERROR_UNAVAILABLE
+
+
+UNSUBSCRIBE_PATH = "/api/v2/topics/email-unsubscribe/"
+
+
+def digest_message(*, sender, recipient, presentation, unsubscribe_url):
+    """The exact provider payload: content plus the run-bound cancellation additions.
+
+    Pure and network-free, so an operator preview shows byte-for-byte what a
+    send would submit (with the bearer token replaced before display).
+    """
+    link = (
+        f'<p><a href="{html_module.escape(unsubscribe_url, quote=True)}">'
+        "Unsubscribe / 구독 해지</a></p>"
+    )
+    body, closing, rest = presentation["html"].rpartition("</body>")
+    # Keep the cancellation link inside the document body when one is present.
+    html = body + link + closing + rest if closing else presentation["html"] + link
+    return {
+        "from": sender,
+        "to": [recipient],
+        "subject": presentation["subject"],
+        "text": presentation["text"] + f"\n\nUnsubscribe: {unsubscribe_url}",
+        "html": html,
+        "headers": {
+            "List-Unsubscribe": f"<{unsubscribe_url}>",
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
+    }
 
 
 class LocalDigestMail:
     path_kind = "local-sink"
+    permitted_recipient = None  # No address restriction: nothing leaves the host.
+
+    def permits(self, recipient):
+        return True
 
     async def send(self, recipient, presentation, request_key, *, unsubscribe_url=None):
         return DigestMailResult("accepted", "local:" + str(request_key), dt.datetime.now(dt.UTC))
@@ -68,31 +172,33 @@ class ResendDigestMail:
         self._permitted_recipient = permitted_recipient
         self._client_factory = client_factory
 
+    @property
+    def permitted_recipient(self):
+        return self._permitted_recipient
+
+    def permits(self, recipient):
+        """Only the one operator-authorized address may receive a real digest."""
+        return recipient == self._permitted_recipient
+
     async def send(self, recipient, presentation, request_key, *, unsubscribe_url=None):
-        if recipient != self._permitted_recipient:
-            return DigestMailResult("refused")
+        if not self.permits(recipient):
+            return DigestMailResult("refused", refusal_reason=RECIPIENT_NOT_PERMITTED)
         # The service issues this run-bound opaque capability. A configured
         # static URL alone is never sufficient to claim working cancellation.
         if not isinstance(unsubscribe_url, str) or not re.fullmatch(
             re.escape(self._unsubscribe_origin)
-            + r"/api/v2/topics/email-unsubscribe/[A-Za-z0-9_-]{43}",
+            + re.escape(UNSUBSCRIBE_PATH)
+            + r"[A-Za-z0-9_-]{43}",
             unsubscribe_url,
         ):
-            return DigestMailResult("refused")
+            return DigestMailResult("refused", refusal_reason=UNSUBSCRIBE_URL_INVALID)
         key = str(UUID(str(request_key)))
-        url = unsubscribe_url
-        payload = {
-            "from": self._sender,
-            "to": [recipient],
-            "subject": presentation["subject"],
-            "text": presentation["text"] + f"\n\nUnsubscribe: {url}",
-            "html": presentation["html"]
-            + f'<p><a href="{html_module.escape(url, quote=True)}">Unsubscribe / 구독 해지</a></p>',
-            "headers": {
-                "List-Unsubscribe": f"<{url}>",
-                "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-            },
-        }
+        payload = digest_message(
+            sender=self._sender,
+            recipient=recipient,
+            presentation=presentation,
+            unsubscribe_url=unsubscribe_url,
+        )
         try:
             async with self._client_factory(timeout=3.0) as client:
                 response = await client.post(
@@ -105,16 +211,22 @@ class ResendDigestMail:
                 receipt = str(UUID(value["id"]))
                 return DigestMailResult("accepted", receipt, dt.datetime.now(dt.UTC))
             # Explicit rejection only. 408/409/5xx can follow an accepted send.
-            if response.status_code in (400, 401, 403, 404, 413, 422, 429):
-                return DigestMailResult("refused")
+            if response.status_code in REFUSED_STATUSES:
+                return DigestMailResult(
+                    "refused",
+                    refusal_reason=PROVIDER_REFUSAL,
+                    provider_status=response.status_code,
+                    provider_error=provider_error_name(response),
+                )
             return DigestMailResult("unknown")
         except (httpx.HTTPError, ValueError, KeyError, TypeError):
             return DigestMailResult("unknown")
 
 
-def digest_mail_binding(*, synthetic, provider=None, configuration=None):
+def digest_mail_binding(*, synthetic, provider=None, configuration=None, client_factory=None):
+    """Bind the digest transport; `client_factory` replaces HTTP only in contract tests."""
     if synthetic:
-        if provider not in (None, "local-sink") or configuration:
+        if provider not in (None, "local-sink") or configuration or client_factory is not None:
             raise ValueError("synthetic delivery must remain network-disabled")
         return LocalDigestMail()
     if provider != "resend" or not configuration:
@@ -129,4 +241,5 @@ def digest_mail_binding(*, synthetic, provider=None, configuration=None):
         sender=configuration.get("sender"),
         unsubscribe_url=configuration.get("unsubscribeUrl", ""),
         permitted_recipient=configuration.get("permittedRecipient"),
+        **({"client_factory": client_factory} if client_factory is not None else {}),
     )
