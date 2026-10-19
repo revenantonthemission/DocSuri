@@ -172,7 +172,8 @@ class ResetRepository:
                 (str(authority.account_id),),
             )
             prior = conn.execute(
-                "SELECT * FROM personalization.receipt WHERE account_id=%s AND kind='reset' AND key=%s",
+                "SELECT * FROM personalization.receipt "
+                "WHERE account_id=%s AND kind='reset' AND key=%s",
                 (authority.account_id, operation),
             ).fetchone()
             if prior:
@@ -193,7 +194,8 @@ class ResetRepository:
                      Jsonb(self.policy.reference), operation),
                 )
             count = conn.execute(
-                "SELECT count(*) AS n FROM personalization.reset_responsibility WHERE account_id=%s AND disposition<>'complete'",
+                "SELECT count(*) AS n FROM personalization.reset_responsibility "
+                "WHERE account_id=%s AND disposition<>'complete'",
                 (authority.account_id,),
             ).fetchone()["n"]
             if count >= self.policy.max_outstanding:
@@ -205,13 +207,17 @@ class ResetRepository:
                 defaults.pop("interestIds", None)
                 defaults["onboarding"] = "not_started"
             conn.execute(
-                "INSERT INTO personalization.settings(account_id,revision,defaults,input_boundary) VALUES(%s,%s,%s,%s) "
-                "ON CONFLICT(account_id) DO UPDATE SET revision=excluded.revision,defaults=excluded.defaults,input_boundary=excluded.input_boundary",
+                "INSERT INTO personalization.settings(account_id,revision,defaults,input_boundary) "
+                "VALUES(%s,%s,%s,%s) "
+                "ON CONFLICT(account_id) DO UPDATE SET revision=excluded.revision,"
+                "defaults=excluded.defaults,input_boundary=excluded.input_boundary",
                 (authority.account_id, revision, Jsonb(defaults), boundary),
             )
-            accepted = conn.execute(
-                "INSERT INTO personalization.reset_responsibility(id,account_id,action,accepted_settings_revision,"
-                "input_boundary,policy_ref,manifest_revision,disposition,reason_key) VALUES(%s,%s,%s,%s,%s,%s,%s,'pending','cleanup-pending') RETURNING *",
+            conn.execute(
+                "INSERT INTO personalization.reset_responsibility(id,account_id,action,"
+                "accepted_settings_revision,input_boundary,policy_ref,manifest_revision,"
+                "disposition,reason_key) "
+                "VALUES(%s,%s,%s,%s,%s,%s,%s,'pending','cleanup-pending') RETURNING *",
                 (
                     identifier,
                     authority.account_id,
@@ -224,7 +230,9 @@ class ResetRepository:
             ).fetchone()
             for participant, scope in sorted(manifest):
                 conn.execute(
-                    "INSERT INTO personalization.reset_scope(reset_id,participant,scope,manifest_revision) VALUES(%s,%s,%s,%s)",
+                    "INSERT INTO personalization.reset_scope"
+                    "(reset_id,participant,scope,manifest_revision) "
+                    "VALUES(%s,%s,%s,%s)",
                     (identifier, participant, scope, manifest_revision),
                 )
             outcome = wire.SettingsResetResult.model_validate(
@@ -242,7 +250,8 @@ class ResetRepository:
                 }
             ).model_dump(mode="json")
             conn.execute(
-                "INSERT INTO personalization.receipt(account_id,kind,key,intent_hash,outcome) VALUES(%s,'reset',%s,%s,%s)",
+                "INSERT INTO personalization.receipt(account_id,kind,key,intent_hash,outcome) "
+                "VALUES(%s,'reset',%s,%s,%s)",
                 (authority.account_id, operation, fingerprint, Jsonb(outcome)),
             )
             return outcome
@@ -272,8 +281,10 @@ class ResetRepository:
             ):
                 raise ValueError("reset scope not claimable")
             return conn.execute(
-                "UPDATE personalization.reset_scope SET generation=generation+1,attempts=attempts+1,"
-                "lease_until=clock_timestamp()+(%s*interval '1 second'),updated_at=clock_timestamp() "
+                "UPDATE personalization.reset_scope "
+                "SET generation=generation+1,attempts=attempts+1,"
+                "lease_until=clock_timestamp()+(%s*interval '1 second'),"
+                "updated_at=clock_timestamp() "
                 "WHERE reset_id=%s AND participant=%s AND scope=%s RETURNING *",
                 (self.policy.lease_seconds, identifier, participant, scope),
             ).fetchone()
@@ -318,12 +329,15 @@ class ResetRepository:
                     raise ValueError("scope evidence conflict")
                 return reset
             conn.execute(
-                "UPDATE personalization.reset_scope SET disposition=%s,evidence_ref=%s,reason_key=%s,updated_at=clock_timestamp() "
+                "UPDATE personalization.reset_scope "
+                "SET disposition=%s,evidence_ref=%s,reason_key=%s,"
+                "updated_at=clock_timestamp() "
                 "WHERE reset_id=%s AND participant=%s AND scope=%s",
                 (disposition, evidence, reason, identifier, participant, scope),
             )
             remaining = conn.execute(
-                "SELECT count(*) AS n FROM personalization.reset_scope WHERE reset_id=%s AND disposition<>'complete'",
+                "SELECT count(*) AS n FROM personalization.reset_scope "
+                "WHERE reset_id=%s AND disposition<>'complete'",
                 (identifier,),
             ).fetchone()["n"]
             return conn.execute(

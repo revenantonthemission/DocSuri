@@ -14,14 +14,14 @@ import asyncio
 import json
 from typing import Any
 
+import pytest
+
 from summarization.adapters.in_memory_jobs import InMemoryJobStore
 from summarization.api.router import build_router
-from summarization.domain.job import JobError, JobState, TERMINAL_STATES
+from summarization.domain.job import JobError
 from summarization.domain.models import AuthSession, RequestContext
 from summarization.service.job_service import ContentJobService
-from summarization.service.orchestrator import SummarizationOrchestrationService
 
-import pytest
 pytestmark = pytest.mark.asyncio
 
 
@@ -73,7 +73,10 @@ def _principal(user_id: str | None = None) -> AuthSession | None:
 
 def _svc() -> ContentJobService:
     return ContentJobService(
-        store=InMemoryJobStore(), enqueue=lambda j: None, result_ttl_seconds=3600.0, now=lambda: 1000.0
+        store=InMemoryJobStore(),
+        enqueue=lambda _j: None,
+        result_ttl_seconds=3600.0,
+        now=lambda: 1000.0,
     )
 
 
@@ -108,6 +111,7 @@ def _consume_stream_sync(resp) -> list[dict]:
 
 # --- submit ---------------------------------------------------------------
 
+
 async def test_submit_requires_auth() -> None:
     routes = _build(_svc())
     req = _FakeRequest(None, json_body={"taskType": "summarize", "input": {}})
@@ -126,7 +130,9 @@ async def test_submit_rejects_invalid_task_type() -> None:
 
 async def test_submit_returns_durable_receipt_with_job_id_and_state() -> None:
     routes = _build(_svc())
-    req = _FakeRequest(_principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}})
+    req = _FakeRequest(
+        _principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}
+    )
     resp = await routes["/api/content-jobs/submit"](req)
     assert resp.status_code == 202
     body = json.loads(resp.body)
@@ -167,6 +173,7 @@ async def test_submit_different_owner_same_key_gets_different_job() -> None:
 
 # --- state ----------------------------------------------------------------
 
+
 async def test_state_requires_auth() -> None:
     routes = _build(_svc())
     req = _FakeRequest(None)
@@ -184,7 +191,11 @@ async def test_state_not_found_for_unknown_job() -> None:
 async def test_state_not_found_for_another_owners_job() -> None:
     svc = _svc()
     routes = _build(svc)
-    r1 = await routes["/api/content-jobs/submit"](_FakeRequest(_principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}))
+    r1 = await routes["/api/content-jobs/submit"](
+        _FakeRequest(
+            _principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}
+        )
+    )
     job_id = json.loads(r1.body)["jobId"]
     resp = routes["/api/content-jobs/{job_id}/state"](_FakeRequest(_principal("u2")), job_id=job_id)
     assert resp.status_code == 404
@@ -193,11 +204,19 @@ async def test_state_not_found_for_another_owners_job() -> None:
 async def test_state_returns_state_and_error_and_result_ref() -> None:
     svc = _svc()
     routes = _build(svc)
-    r1 = await routes["/api/content-jobs/submit"](_FakeRequest(_principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}))
+    r1 = await routes["/api/content-jobs/submit"](
+        _FakeRequest(
+            _principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}
+        )
+    )
     job_id = json.loads(r1.body)["jobId"]
     svc.mark_queued(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id)
     svc.mark_running(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id)
-    svc.mark_completed(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id, result_ref="summary/2401.1/v1")
+    svc.mark_completed(
+        RequestContext(auth_session=_principal("u1"), request_id="r1"),
+        job_id,
+        result_ref="summary/2401.1/v1",
+    )
     r2 = routes["/api/content-jobs/{job_id}/state"](_FakeRequest(_principal("u1")), job_id=job_id)
     assert r2.status_code == 200
     body = json.loads(r2.body)
@@ -206,10 +225,19 @@ async def test_state_returns_state_and_error_and_result_ref() -> None:
     assert body["resultRef"] == "summary/2401.1/v1"
 
     # Error state
-    job_id2 = svc.submit(RequestContext(auth_session=_principal("u1"), request_id="r1"), "summarize", {}, idempotency_key="k2").job_id
+    job_id2 = svc.submit(
+        RequestContext(auth_session=_principal("u1"), request_id="r1"),
+        "summarize",
+        {},
+        idempotency_key="k2",
+    ).job_id
     svc.mark_queued(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id2)
     svc.mark_running(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id2)
-    svc.mark_failed(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id2, error=JobError("timeout", "시간이 초과되었습니다.", True, retry_after_seconds=30))
+    svc.mark_failed(
+        RequestContext(auth_session=_principal("u1"), request_id="r1"),
+        job_id2,
+        error=JobError("timeout", "시간이 초과되었습니다.", True, retry_after_seconds=30),
+    )
     r3 = routes["/api/content-jobs/{job_id}/state"](_FakeRequest(_principal("u1")), job_id=job_id2)
     body3 = json.loads(r3.body)
     assert body3["state"] == "FAILED"
@@ -218,6 +246,7 @@ async def test_state_returns_state_and_error_and_result_ref() -> None:
 
 
 # --- events ---------------------------------------------------------------
+
 
 async def test_events_requires_auth() -> None:
     routes = _build(_svc())
@@ -236,13 +265,23 @@ async def test_events_not_found_for_unknown_job() -> None:
 async def test_events_streams_from_after_seq() -> None:
     svc = _svc()
     routes = _build(svc)
-    r1 = await routes["/api/content-jobs/submit"](_FakeRequest(_principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}))
+    r1 = await routes["/api/content-jobs/submit"](
+        _FakeRequest(
+            _principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}
+        )
+    )
     job_id = json.loads(r1.body)["jobId"]
     svc.mark_queued(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id)
     svc.mark_running(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id)
-    svc.mark_completed(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id, result_ref="summary/2401.1/v1")
+    svc.mark_completed(
+        RequestContext(auth_session=_principal("u1"), request_id="r1"),
+        job_id,
+        result_ref="summary/2401.1/v1",
+    )
 
-    resp = routes["/api/content-jobs/{job_id}/events"](_FakeRequest(_principal("u1")), job_id=job_id)
+    resp = routes["/api/content-jobs/{job_id}/events"](
+        _FakeRequest(_principal("u1")), job_id=job_id
+    )
     events = await _consume_stream(resp)
     states = [e["state"] for e in events]
     assert states == ["ACCEPTED", "QUEUED", "RUNNING", "COMPLETED"]
@@ -253,13 +292,23 @@ async def test_events_streams_from_after_seq() -> None:
 async def test_events_resume_from_last_event_id_header() -> None:
     svc = _svc()
     routes = _build(svc)
-    r1 = await routes["/api/content-jobs/submit"](_FakeRequest(_principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}))
+    r1 = await routes["/api/content-jobs/submit"](
+        _FakeRequest(
+            _principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}
+        )
+    )
     job_id = json.loads(r1.body)["jobId"]
     svc.mark_queued(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id)
     svc.mark_running(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id)
-    svc.mark_completed(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id, result_ref="summary/2401.1/v1")
+    svc.mark_completed(
+        RequestContext(auth_session=_principal("u1"), request_id="r1"),
+        job_id,
+        result_ref="summary/2401.1/v1",
+    )
 
-    resp = routes["/api/content-jobs/{job_id}/events"](_FakeRequest(_principal("u1"), headers={"last-event-id": f"{job_id}:3"}), job_id=job_id)
+    resp = routes["/api/content-jobs/{job_id}/events"](
+        _FakeRequest(_principal("u1"), headers={"last-event-id": f"{job_id}:3"}), job_id=job_id
+    )
     events = await _consume_stream(resp)
     states = [e["state"] for e in events]
     assert states == ["COMPLETED"]
@@ -268,19 +317,30 @@ async def test_events_resume_from_last_event_id_header() -> None:
 async def test_events_resume_from_last_event_id_query_param() -> None:
     svc = _svc()
     routes = _build(svc)
-    r1 = await routes["/api/content-jobs/submit"](_FakeRequest(_principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}))
+    r1 = await routes["/api/content-jobs/submit"](
+        _FakeRequest(
+            _principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}
+        )
+    )
     job_id = json.loads(r1.body)["jobId"]
     svc.mark_queued(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id)
     svc.mark_running(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id)
-    svc.mark_completed(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id, result_ref="summary/2401.1/v1")
+    svc.mark_completed(
+        RequestContext(auth_session=_principal("u1"), request_id="r1"),
+        job_id,
+        result_ref="summary/2401.1/v1",
+    )
 
-    resp = routes["/api/content-jobs/{job_id}/events"](_FakeRequest(_principal("u1"), query={"lastEventId": f"{job_id}:3"}), job_id=job_id)
+    resp = routes["/api/content-jobs/{job_id}/events"](
+        _FakeRequest(_principal("u1"), query={"lastEventId": f"{job_id}:3"}), job_id=job_id
+    )
     events = await _consume_stream(resp)
     states = [e["state"] for e in events]
     assert states == ["COMPLETED"]
 
 
 # --- result ---------------------------------------------------------------
+
 
 async def test_result_requires_auth() -> None:
     routes = _build(_svc())
@@ -299,9 +359,17 @@ async def test_result_not_found_for_unknown_job() -> None:
 async def test_result_not_found_for_another_owners_job() -> None:
     svc = _svc()
     routes = _build(svc)
-    r1 = await routes["/api/content-jobs/submit"](_FakeRequest(_principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}))
+    r1 = await routes["/api/content-jobs/submit"](
+        _FakeRequest(
+            _principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}
+        )
+    )
     job_id = json.loads(r1.body)["jobId"]
-    svc.mark_completed(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id, result_ref="summary/2401.1/v1")
+    svc.mark_completed(
+        RequestContext(auth_session=_principal("u1"), request_id="r1"),
+        job_id,
+        result_ref="summary/2401.1/v1",
+    )
     r2 = routes["/api/content-jobs/{job_id}/result"](_FakeRequest(_principal("u2")), job_id=job_id)
     assert r2.status_code == 404
 
@@ -309,12 +377,22 @@ async def test_result_not_found_for_another_owners_job() -> None:
 async def test_result_returns_result_ref_when_ready() -> None:
     svc = _svc()
     routes = _build(svc)
-    r1 = await routes["/api/content-jobs/submit"](_FakeRequest(_principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}))
+    r1 = await routes["/api/content-jobs/submit"](
+        _FakeRequest(
+            _principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}
+        )
+    )
     job_id = json.loads(r1.body)["jobId"]
     svc.mark_queued(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id)
     svc.mark_running(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id)
-    svc.mark_completed(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id, result_ref="summary/2401.1/v1")
-    resp = routes["/api/content-jobs/{job_id}/result"](_FakeRequest(_principal("u1")), job_id=job_id)
+    svc.mark_completed(
+        RequestContext(auth_session=_principal("u1"), request_id="r1"),
+        job_id,
+        result_ref="summary/2401.1/v1",
+    )
+    resp = routes["/api/content-jobs/{job_id}/result"](
+        _FakeRequest(_principal("u1")), job_id=job_id
+    )
     assert resp.status_code == 200
     body = json.loads(resp.body)
     assert body["resultRef"] == "summary/2401.1/v1"
@@ -323,35 +401,68 @@ async def test_result_returns_result_ref_when_ready() -> None:
 async def test_result_not_found_for_uncompleted_job() -> None:
     svc = _svc()
     routes = _build(svc)
-    r1 = await routes["/api/content-jobs/submit"](_FakeRequest(_principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}))
+    r1 = await routes["/api/content-jobs/submit"](
+        _FakeRequest(
+            _principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}
+        )
+    )
     job_id = json.loads(r1.body)["jobId"]
-    resp = routes["/api/content-jobs/{job_id}/result"](_FakeRequest(_principal("u1")), job_id=job_id)
+    resp = routes["/api/content-jobs/{job_id}/result"](
+        _FakeRequest(_principal("u1")), job_id=job_id
+    )
     assert resp.status_code == 404
 
 
 async def test_result_not_found_for_failed_job() -> None:
     svc = _svc()
     routes = _build(svc)
-    r1 = await routes["/api/content-jobs/submit"](_FakeRequest(_principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}))
+    r1 = await routes["/api/content-jobs/submit"](
+        _FakeRequest(
+            _principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}
+        )
+    )
     job_id = json.loads(r1.body)["jobId"]
-    svc.mark_failed(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id, error=JobError("internal", "x", True))
-    resp = routes["/api/content-jobs/{job_id}/result"](_FakeRequest(_principal("u1")), job_id=job_id)
+    svc.mark_failed(
+        RequestContext(auth_session=_principal("u1"), request_id="r1"),
+        job_id,
+        error=JobError("internal", "x", True),
+    )
+    resp = routes["/api/content-jobs/{job_id}/result"](
+        _FakeRequest(_principal("u1")), job_id=job_id
+    )
     assert resp.status_code == 404
 
 
 async def test_result_expired_after_ttl() -> None:
     clock = {"t": 1000.0}
-    svc = ContentJobService(store=InMemoryJobStore(), enqueue=lambda j: None, result_ttl_seconds=60.0, now=lambda: clock["t"])
+    svc = ContentJobService(
+        store=InMemoryJobStore(),
+        enqueue=lambda _j: None,
+        result_ttl_seconds=60.0,
+        now=lambda: clock["t"],
+    )
     routes = _build(svc)
-    r1 = await routes["/api/content-jobs/submit"](_FakeRequest(_principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}))
+    r1 = await routes["/api/content-jobs/submit"](
+        _FakeRequest(
+            _principal("u1"), json_body={"taskType": "summarize", "input": {"paperId": "2401.1"}}
+        )
+    )
     job_id = json.loads(r1.body)["jobId"]
     svc.mark_queued(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id)
     svc.mark_running(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id)
-    svc.mark_completed(RequestContext(auth_session=_principal("u1"), request_id="r1"), job_id, result_ref="summary/2401.1/v1")
-    resp = routes["/api/content-jobs/{job_id}/result"](_FakeRequest(_principal("u1")), job_id=job_id)
+    svc.mark_completed(
+        RequestContext(auth_session=_principal("u1"), request_id="r1"),
+        job_id,
+        result_ref="summary/2401.1/v1",
+    )
+    resp = routes["/api/content-jobs/{job_id}/result"](
+        _FakeRequest(_principal("u1")), job_id=job_id
+    )
     assert resp.status_code == 200
     clock["t"] += 120.0
-    resp2 = routes["/api/content-jobs/{job_id}/result"](_FakeRequest(_principal("u1")), job_id=job_id)
+    resp2 = routes["/api/content-jobs/{job_id}/result"](
+        _FakeRequest(_principal("u1")), job_id=job_id
+    )
     assert resp2.status_code == 404
 
 

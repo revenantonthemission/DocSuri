@@ -28,9 +28,9 @@ class AssistanceAdmission:
                 from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
                 from backend.modules.plans.control_service import ControlUsageService
 
-                reservation = ControlUsageService(self.usage.transactions, SYNTHETIC_POLICY).reserve(
-                    authority, admission
-                )
+                reservation = ControlUsageService(
+                    self.usage.transactions, SYNTHETIC_POLICY
+                ).reserve(authority, admission)
             else:
                 reservation = self.usage.reserve(authority, operation, admission["intent_hash"])
         except UsageQuotaExceeded:

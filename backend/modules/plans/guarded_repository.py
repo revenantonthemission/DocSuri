@@ -208,7 +208,8 @@ class GuardedUsageRepository:
                     "counts": {},
                 }
             rows = conn.execute(
-                "SELECT disposition,sum(quantity) AS quantity FROM usage.reservation WHERE account_id=%s "
+                "SELECT disposition,sum(quantity) AS quantity FROM usage.reservation "
+                "WHERE account_id=%s "
                 "AND period_id=%s GROUP BY disposition",
                 (authority.account_id, period),
             ).fetchall()

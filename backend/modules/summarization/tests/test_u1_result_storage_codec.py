@@ -12,6 +12,7 @@ from docsuri_shared.dtos import DocModel
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from pydantic import ValidationError
+
 from summarization.domain.assembler import ResultAssembler
 from summarization.domain.job import JobState
 from summarization.domain.job_protocol import (
@@ -36,7 +37,6 @@ from summarization.domain.result_storage_codec import (
     decode_prepared_content,
     prepared_content_digest,
 )
-
 from tests.stubs import valid_draft
 from tests.test_u1_job_model import capture, job_input, summary_payload, translation_payload
 

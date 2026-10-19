@@ -125,7 +125,8 @@ class GuardedAssistanceRepository:
                     (SYNTHETIC_POLICY.period_seconds,),
                 ).fetchone()["value"]
                 return conn.execute(
-                    "INSERT INTO assistance.admission(operation_id,account_id,intent_hash,intent,disposition,"
+                    "INSERT INTO assistance.admission(operation_id,account_id,intent_hash,intent,"
+                    "disposition,"
                     "period_id,policy_ref) VALUES(%s,%s,%s,%s,'open',%s,%s) RETURNING *",
                     (operation, authority.account_id, frozen_hash, Jsonb(payload),
                      "u2-period:" + str(period), Jsonb(SYNTHETIC_POLICY.reference)),

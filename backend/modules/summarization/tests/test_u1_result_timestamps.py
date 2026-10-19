@@ -6,9 +6,9 @@ from dataclasses import replace
 from datetime import UTC, datetime
 
 import pytest
+
 from summarization.domain import job_protocol
 from summarization.domain.job_protocol import JobProtocolError, JobTask, instant, rfc3339_instant
-
 from tests.test_u1_job_model import capture, translation_payload
 
 

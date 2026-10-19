@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import logging
 import sys
-from pathlib import Path
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -83,7 +83,9 @@ async def lifespan(app: FastAPI):
             log.warning("app-shell: telemetry flush error: %r", exc)
 
 
-def create_app(settings: Settings | None = None, *, local_environment: Path | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None, *, local_environment: Path | None = None
+) -> FastAPI:
     if local_environment is not None:
         if settings is not None:
             raise ValueError('synthetic manifest and ambient Settings cannot be combined')
