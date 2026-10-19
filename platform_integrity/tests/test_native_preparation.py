@@ -198,6 +198,7 @@ def unprivileged_launcher(monkeypatch, program):
     return launch
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS /var/empty worker directory")
 def test_worker_communication_closes_stdin_and_keeps_progress(monkeypatch):
     launch = unprivileged_launcher(monkeypatch, """
 import json, sys
@@ -211,6 +212,7 @@ print(json.dumps(payload))
     assert result["lastStage"] == "input_ready" and result["parentReaped"] is True
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS /var/empty worker directory")
 def test_timeout_preserves_phase_and_reaps_worker(monkeypatch):
     launch = unprivileged_launcher(monkeypatch, """
 import sys, time
@@ -223,6 +225,7 @@ time.sleep(30)
     assert result["cleanup"] == "process_group_killed"
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS /var/empty worker directory")
 def test_timeout_reaps_pipe_holding_descendant(monkeypatch):
     launch = unprivileged_launcher(monkeypatch, """
 import subprocess, sys
@@ -234,6 +237,7 @@ sys.stderr.write('R1PROBE:worker_entered\\n'); sys.stderr.flush()
     assert result["cleanup"] == "process_group_killed"
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS /var/empty worker directory")
 def test_missing_worker_marker_is_distinct_from_file_probe_timeout(monkeypatch):
     launch = unprivileged_launcher(monkeypatch, "import time; time.sleep(30)")
     result = launch(Path(sys.executable), {"uid": os.getuid(), "gid": os.getgid()}, timeout=1)

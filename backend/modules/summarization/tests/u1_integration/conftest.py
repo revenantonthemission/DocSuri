@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import hashlib
+import os
 
 import pytest
-
 from backend.migrations import MigrationBlocked, _atomic_sql
+
 from tests.u1_integration.realm import (
     RealmBlocked,
     open_authority_connection,
@@ -12,9 +13,19 @@ from tests.u1_integration.realm import (
 )
 
 
+def _realm_requested() -> bool:
+    """An operator selects a U1 staging realm only through DOCSURI_U1_* variables."""
+    return any(key.startswith("DOCSURI_U1_") for key in os.environ)
+
+
 @pytest.fixture
 def authority_database():
     """Dedicated database, with transaction rollback; never DROP/TRUNCATE a schema."""
+    # No realm selected at all: these tests need an operator-issued U1 staging
+    # realm, so they skip. Any selected realm, even a partial or invalid one,
+    # still goes through the fail-closed checks below.
+    if not _realm_requested():
+        pytest.skip("no U1 staging realm configured (no DOCSURI_U1_* variables set)")
     try:
         realm = require_authority_realm()
         connection = open_authority_connection(realm)

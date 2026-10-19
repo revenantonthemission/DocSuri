@@ -7,6 +7,7 @@ planned one -- with no effect performed.
 """
 
 import os
+import sys
 import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -133,6 +134,7 @@ def test_live_guard_refuses_when_the_caller_is_not_the_operator_role(seeded):
     assert (outcome.proven, outcome.reason) == (False, "planned_effect_not_admitted")
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS ioreg platform UUID")
 def test_live_guard_receipt_verifies_under_the_normal_verifier(seeded):
     """The capability receipt is a normal receipt: same signer, same verifier, same rules."""
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -160,6 +162,7 @@ def test_live_guard_receipt_verifies_under_the_normal_verifier(seeded):
     assert receipt.artifact == digest(canonical({"identities": [APPLY]}))
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS ioreg platform UUID")
 def test_probe_set_reports_the_guard_unproven_without_a_connection(seeded):
     probes = ProbeSet(release=RELEASE, host=host_identity(), authority=live_authority(seeded),
                       guard_identity=APPLY, guard_definition_digest=STEP)

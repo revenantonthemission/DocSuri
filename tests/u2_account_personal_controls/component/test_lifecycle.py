@@ -113,7 +113,7 @@ def test_withdrawn_owner_reactivates_with_one_time_proof(entry, authority, conne
     """Reactivation needs the verified owner proof; scoped completion revives access."""
     manifest = (('Library', 'references'),)
     withdraw = ControlLifecycleService(entry, manifest, revision='reactivate-test')
-    first = request(withdraw, authority)
+    request(withdraw, authority)
     with connect('accounts') as conn:
         row = conn.execute(
             "SELECT email,lifecycle_state,active FROM accounts.account WHERE id=%s",
