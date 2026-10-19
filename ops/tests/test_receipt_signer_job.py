@@ -73,6 +73,8 @@ def test_credential_records_every_kernel_field(job_mod):
 
 
 def test_drop_to_role_refuses_when_not_already_the_role(job_mod):
+    if sys.platform != "darwin":
+        pytest.skip("macOS group ABI")
     # Unprivileged the syscalls are skipped and the verification must still fail closed rather
     # than letting the caller's own account proceed to sign.
     if os.geteuid() == 0:
