@@ -149,6 +149,13 @@ jobs:
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
+      # Same private temp root as the `platform-integrity` lane: the U1 Colima executor refuses a
+      # protected document below any group/other-writable ancestor, and /tmp is 1777 on Linux.
+      - name: Private temp root (protected-document ancestor checks refuse a world-writable /tmp)
+        run: |
+          sudo install -d -m 755 -o root -g root /r1-private
+          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" /r1-private/tmp
+          echo "TMPDIR=/r1-private/tmp" >> "$GITHUB_ENV"
       - name: Frozen Python dependencies
         run: uv sync --frozen --python 3.13.7
       - name: Lint
@@ -199,43 +206,7 @@ jobs:
       - name: Tests (accounts + library + performance)
         run: uv run --project backend pytest tests/accounts tests/library tests/performance -c pytest.ini
 
-  frontend:
-    name: frontend (U5 · tsc + vitest + type drift + build)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-      - uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v3
-        with:
-          version: 9.15.9
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24.14.0
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: TypeScript check
-        run: pnpm exec tsc --noEmit
-      - name: Type drift guard (generated types match shared/ schemas)
-        run: pnpm run check:types && pnpm run check:consumers && pnpm run test:contracts
-      - name: Production dependency audit (full frozen tree)
-        run: pnpm audit --prod --audit-level high
-      - name: Lint
-        run: pnpm run lint
-      - name: Tests with coverage (feature-scope floor)
-        run: pnpm run test:coverage
-      - name: E2E (Playwright, mock transport)
-        # playwright.config.ts emulates an iPhone 13, which runs on WebKit.
-        run: pnpm exec playwright install --with-deps webkit && pnpm run e2e
-      # tsc + vitest don't webpack-compile the routes, so a build-only break (e.g. a
-      # server-only module leaking into the client graph via the /bff route) passes both
-      # yet fails `next build`. This step is the guard that actually compiles every route.
-      - name: Build
-        run: pnpm exec next build
+  # frontend: retired, superseded by the per-Unit workflows' frontend jobs (u1–u5).
 
   dependency-review:
     name: Dependency review (PR-only · npm + pip)
@@ -457,48 +428,20 @@ jobs:
     name: REM-1 platform suite on macOS (APFS semantics)
     runs-on: macos-latest
     timeout-minutes: 30
+    env:
+      # Run on the operator's interpreter class: uv-managed CPython (ad-hoc signed). Left to
+      # itself uv picked the runner's python.org framework build (Developer ID, hardened
+      # runtime), under which the native keychain tests failed with -25293.
+      UV_MANAGED_PYTHON: "1"
     defaults:
       run:
         working-directory: platform_integrity
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
-      # TEMPORARY DIAGNOSTIC -- REMOVE BEFORE MERGE. A probe, not a check (hence
-      # continue-on-error): the two native keychain tests fail only on the runner with status
-      # -25293 (errSecAuthFailed). The item ACL trusts the interpreter path resolved from
-      # sys.executable, so this prints that interpreter's code signature next to the runner's
-      # macOS, keychain and session state, then runs just those two tests verbosely.
-      # Nothing here prints secret material.
-      - name: "TEMPORARY: keychain diagnostic (remove before merge)"
-        continue-on-error: true
-        run: |
-          uv sync --frozen --all-extras --python 3.13
-          echo "::group::macOS"; sw_vers; echo "::endgroup::"
-          echo "::group::keychains"
-          security list-keychains || true
-          security default-keychain || true
-          default_keychain="$(security default-keychain | sed -e 's/^[[:space:]]*"//' -e 's/"$//')"
-          security show-keychain-info "$default_keychain" || true
-          echo "::endgroup::"
-          echo "::group::interpreter the suite uses"
-          uv run --frozen --all-extras python -c 'import sys; print(sys.executable)'
-          python="$(uv run --frozen --all-extras python -c \
-            'import pathlib, sys; print(pathlib.Path(sys.executable).resolve(strict=True))')"
-          echo "resolved (the path SecTrustedApplicationCreateFromPath receives): $python"
-          codesign -dv --verbose=2 "$python" || true
-          codesign -d --entitlements :- "$python" || true
-          echo "::endgroup::"
-          echo "::group::session"
-          echo "user=$(id -un) uid=$(id -u) console-owner=$(stat -f%Su /dev/console)"
-          echo "launchd session: $(launchctl managername || true)"
-          if [ -t 0 ]; then echo "stdin is a TTY"; else echo "stdin is not a TTY"; fi
-          echo "::endgroup::"
-          uv run --frozen --all-extras pytest -vv -rA \
-            tests/test_receipt_keychain_native.py::test_native_create_locked_refusal_unlock_and_cross_process_read \
-            tests/test_receipt_provisioning_native.py::test_a_purpose_keychain_produces_a_receipt_any_reader_can_verify
       - name: Full suite on APFS
         run: |
-          uv sync --frozen --all-extras --python 3.13
+          uv sync --frozen --all-extras --python 3.13.7
           uv run --frozen --all-extras pytest --tb=short
       - name: Ops suite on APFS
         working-directory: ops
