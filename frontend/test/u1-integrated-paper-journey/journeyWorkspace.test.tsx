@@ -44,9 +44,25 @@ function serve(routes: Routes) {
 
 const NAVIGATION = {
   items: [
-    { routeId: 'search', titleKey: 'nav.search', capabilityId: 'discovery.search', available: true },
-    { routeId: 'library', titleKey: 'nav.library', capabilityId: 'library.saved-work', available: true },
-    { routeId: 'jobs', titleKey: 'nav.jobs', capabilityId: 'assistance.summary', available: false, reasonKey: 'nav.capabilityPending' },
+    {
+      routeId: 'search',
+      titleKey: 'nav.search',
+      capabilityId: 'discovery.search',
+      available: true,
+    },
+    {
+      routeId: 'library',
+      titleKey: 'nav.library',
+      capabilityId: 'library.saved-work',
+      available: true,
+    },
+    {
+      routeId: 'jobs',
+      titleKey: 'nav.jobs',
+      capabilityId: 'assistance.summary',
+      available: false,
+      reasonKey: 'nav.capabilityPending',
+    },
   ],
 };
 
@@ -118,6 +134,43 @@ describe('search workspace', () => {
     expect(screen.getByTestId('filter-author')).toBeInTheDocument();
     const search = calls.find((call) => call.path === '/api/v2/c05/search');
     expect(search?.body).toMatchObject({ query: { query: 'transformer', modeId: 'lexical' } });
+  });
+
+  it('keeps the visible results when a late settings read re-renders the shell', async () => {
+    let release!: () => void;
+    const settingsHeld = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await renderApp(
+      baseRoutes({
+        '/api/v2/c03/settings-read': async () => {
+          await settingsHeld;
+          return {
+            status: 200,
+            json: { revision: 's1', appearance: 'dark', onboarding: 'not_started' },
+          };
+        },
+      }),
+    );
+    fireEvent.change(screen.getByTestId('search-query'), { target: { value: 'transformer' } });
+    fireEvent.click(screen.getByTestId('search-submit'));
+    await screen.findByTestId('search-results');
+    release();
+    await waitFor(() => expect(screen.getByTestId('appearance-select')).toHaveValue('dark'));
+    expect(within(screen.getByTestId('search-results')).getByText(PAPER.title)).toBeInTheDocument();
+    expect(screen.getByTestId('search-status')).toHaveTextContent('1개의 결과를 찾았어요');
+  });
+
+  it('keeps the visible results when the appearance changes after a search', async () => {
+    await renderApp(baseRoutes());
+    fireEvent.change(screen.getByTestId('search-query'), { target: { value: 'transformer' } });
+    fireEvent.click(screen.getByTestId('search-submit'));
+    await screen.findByTestId('search-results');
+    fireEvent.change(screen.getByTestId('appearance-select'), { target: { value: 'dark' } });
+    // The unstubbed settings update fails, so the shell reports a temporary change.
+    await screen.findByText('화면 모드는 임시 변경이에요. 계정에 저장되지 않았어요');
+    expect(within(screen.getByTestId('search-results')).getByText(PAPER.title)).toBeInTheDocument();
+    expect(screen.getByTestId('search-query')).toHaveValue('transformer');
   });
 
   it('shows a truthful empty state only after a successful retrieval', async () => {
@@ -214,7 +267,9 @@ describe('search workspace', () => {
         limitations: [],
       },
     });
-    await waitFor(() => expect(screen.getByTestId('search-status')).toHaveTextContent('1개의 결과'));
+    await waitFor(() =>
+      expect(screen.getByTestId('search-status')).toHaveTextContent('1개의 결과'),
+    );
     expect(screen.queryByText('첫 번째 결과')).not.toBeInTheDocument();
     expect(screen.getByText('두 번째 결과')).toBeInTheDocument();
   });
@@ -228,7 +283,12 @@ describe('paper, save and result reads', () => {
       contentRevision: 'c1',
       contentHash: 'a'.repeat(64),
       sections: [
-        { sectionId: 's1', heading: '3.2 Attention', text: 'softmax(QK^T/sqrt(d_k))V', anchor: 'anchor-1' },
+        {
+          sectionId: 's1',
+          heading: '3.2 Attention',
+          text: 'softmax(QK^T/sqrt(d_k))V',
+          anchor: 'anchor-1',
+        },
       ],
       sourceUrls: ['https://arxiv.org/html/1706.03762v7'],
       coverage: 'complete',
@@ -243,7 +303,11 @@ describe('paper, save and result reads', () => {
         '/api/v2/c03/library-list-saved-papers': () => ({ status: 200, json: { items: [] } }),
         '/api/v2/c06/read-assistance-options': () => ({
           status: 200,
-          json: { revision: 'o1', options: [], limitations: ['요약 모델의 품질 근거가 아직 확인되지 않았어요'] },
+          json: {
+            revision: 'o1',
+            options: [],
+            limitations: ['요약 모델의 품질 근거가 아직 확인되지 않았어요'],
+          },
         }),
         '/api/v2/c06/read-assistance-history': () => ({ status: 200, json: { items: [] } }),
         '/api/v2/c03/library-save-paper': () => ({
@@ -493,9 +557,7 @@ describe('paper, save and result reads', () => {
     await waitFor(() => expect(card).toHaveTextContent('연결이 끊겼어요'));
     await waitFor(() => expect(card).toHaveTextContent('준비된 결과가 있어요'), { timeout: 5000 });
     expect(card).not.toHaveTextContent('연결이 끊겼어요');
-    expect(
-      screen.getAllByTestId('activity-card').length,
-    ).toBe(1);
+    expect(screen.getAllByTestId('activity-card').length).toBe(1);
   });
 });
 
@@ -530,14 +592,19 @@ describe('account switching and preferences', () => {
           status: 200,
           json: { items: [{ state: 'unknown', reasonKey: 'usage.unknown' }] },
         }),
-        '/api/v2/c02/access-logout': () => ({ status: 200, json: { resourceId: 'x', revision: 'r', requestId: 'q' } }),
+        '/api/v2/c02/access-logout': () => ({
+          status: 200,
+          json: { resourceId: 'x', revision: 'r', requestId: 'q' },
+        }),
       }),
     );
     fireEvent.click(screen.getByTestId('nav-library'));
     await screen.findByText('owner-a-private-query');
     account = 'acct-b';
     fireEvent.click(screen.getByTestId('logout'));
-    await waitFor(() => expect(screen.getByTestId('app-shell')).toHaveAttribute('data-account', 'acct-b'));
+    await waitFor(() =>
+      expect(screen.getByTestId('app-shell')).toHaveAttribute('data-account', 'acct-b'),
+    );
     // Logout clears the prior owner's private view; no A query text survives.
     expect(screen.getByTestId('search-workspace')).toBeInTheDocument();
     expect(screen.queryByText('owner-a-private-query')).not.toBeInTheDocument();
