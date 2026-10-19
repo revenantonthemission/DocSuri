@@ -12,12 +12,13 @@ from __future__ import annotations
 
 import asyncio
 import json
+from dataclasses import replace
 from typing import Any
 
 import pytest
 
 from summarization.adapters.in_memory_jobs import InMemoryJobStore
-from summarization.api.router import build_router
+from summarization.api.router import EventStreamTiming, build_router
 from summarization.domain.job import JobError
 from summarization.domain.models import AuthSession, RequestContext
 from summarization.service.job_service import ContentJobService
@@ -337,6 +338,170 @@ async def test_events_resume_from_last_event_id_query_param() -> None:
     events = await _consume_stream(resp)
     states = [e["state"] for e in events]
     assert states == ["COMPLETED"]
+
+
+# --- events: resume cursors and stream bounds -----------------------------
+
+#: Hang guard only: a correct stream over a finished job ends at once; a stream that idles
+#: instead fails here rather than blocking the suite.
+_STREAM_GUARD_SECONDS = 5.0
+_ALL_STATES = ["ACCEPTED", "QUEUED", "RUNNING", "COMPLETED"]
+
+
+class _GlobalEventIdStore(InMemoryJobStore):
+    """RdsJobStore-shaped ids: event_id is one global counter (a BIGSERIAL), never the seq."""
+
+    def __init__(self, first_event_id: int = 9001) -> None:
+        super().__init__()
+        self._next_event_id = first_event_id
+
+    def append_event(self, job_id, owner_id, state, payload, now):  # type: ignore[override]
+        with self._lock:
+            event = super().append_event(job_id, owner_id, state, payload, now)
+            opaque = replace(event, event_id=str(self._next_event_id))
+            self._next_event_id += 1
+            self._events[job_id][-1] = opaque
+            return opaque
+
+
+def _ctx(user_id: str = "u1") -> RequestContext:
+    return RequestContext(auth_session=_principal(user_id), request_id="r1")
+
+
+def _rds_shaped_svc() -> ContentJobService:
+    return ContentJobService(
+        store=_GlobalEventIdStore(),
+        enqueue=lambda _j: None,
+        result_ttl_seconds=3600.0,
+        now=lambda: 1000.0,
+    )
+
+
+async def _submit(routes: dict[str, Any], user_id: str, paper_id: str) -> str:
+    resp = await routes["/api/content-jobs/submit"](
+        _FakeRequest(
+            _principal(user_id), json_body={"taskType": "summarize", "input": {"paperId": paper_id}}
+        )
+    )
+    return json.loads(resp.body)["jobId"]
+
+
+async def _completed_job_with_interleaved_ids(svc: ContentJobService, routes) -> str:
+    """A finished job whose global event ids are interleaved with another owner's job."""
+    job_id = await _submit(routes, "u1", "2401.1")
+    other = await _submit(routes, "u2", "2401.2")
+    svc.mark_queued(_ctx(), job_id)
+    svc.mark_queued(_ctx("u2"), other)
+    svc.mark_running(_ctx(), job_id)
+    svc.mark_completed(_ctx(), job_id, result_ref="summary/2401.1/v1")
+    return job_id
+
+
+def _stream(routes: dict[str, Any], job_id: str, cursor: str | None) -> Any:
+    headers = {"last-event-id": cursor} if cursor is not None else None
+    return routes["/api/content-jobs/{job_id}/events"](
+        _FakeRequest(_principal("u1"), headers=headers), job_id=job_id
+    )
+
+
+async def _consume_raw(resp) -> str:
+    body = ""
+    async for chunk in resp.body_iterator:
+        body += chunk
+    return body
+
+
+async def test_events_resume_with_opaque_store_event_id_delivers_only_later_events() -> None:
+    svc = _rds_shaped_svc()
+    routes = _build(svc)
+    job_id = await _completed_job_with_interleaved_ids(svc, routes)
+    history = svc.events(_ctx(), job_id)
+    running = next(e for e in history if e.state.value == "RUNNING")
+    completed = history[-1]
+    assert running.event_id != str(running.seq)  # the store's id is not the per-job seq
+
+    resp = _stream(routes, job_id, running.event_id)
+    body = await asyncio.wait_for(_consume_raw(resp), timeout=_STREAM_GUARD_SECONDS)
+
+    frames = [block for block in body.strip().split("\n\n") if block.startswith("id: ")]
+    assert len(frames) == 1
+    assert frames[0].split("\n")[0] == f"id: {completed.event_id}"
+    assert json.loads(frames[0].split("\n")[1][len("data: ") :])["state"] == "COMPLETED"
+
+
+@pytest.mark.parametrize(
+    "cursor",
+    ["123456", "job-of-another-caller:3", "{job_id}:99"],
+    ids=["unknown-store-id", "other-jobs-legacy-cursor", "legacy-seq-beyond-history"],
+)
+async def test_events_unresolvable_cursor_replays_the_full_history(cursor: str) -> None:
+    svc = _rds_shaped_svc()
+    routes = _build(svc)
+    job_id = await _completed_job_with_interleaved_ids(svc, routes)
+
+    resp = _stream(routes, job_id, cursor.format(job_id=job_id))
+    events = await asyncio.wait_for(_consume_stream(resp), timeout=_STREAM_GUARD_SECONDS)
+
+    assert [e["state"] for e in events] == _ALL_STATES
+    assert [e["eventId"] for e in events] == [e.event_id for e in svc.events(_ctx(), job_id)]
+
+
+async def test_events_legacy_job_seq_cursor_still_resumes_with_opaque_ids() -> None:
+    svc = _rds_shaped_svc()
+    routes = _build(svc)
+    job_id = await _completed_job_with_interleaved_ids(svc, routes)
+
+    resp = _stream(routes, job_id, f"{job_id}:3")
+    events = await asyncio.wait_for(_consume_stream(resp), timeout=_STREAM_GUARD_SECONDS)
+
+    assert [e["state"] for e in events] == ["COMPLETED"]
+
+
+class _FakeStreamClock:
+    """Deterministic monotonic clock and async sleep for the stream bounds (no real waiting)."""
+
+    def __init__(self) -> None:
+        self.now = 0.0
+        self.sleeps: list[float] = []
+
+    def monotonic(self) -> float:
+        return self.now
+
+    async def sleep(self, seconds: float) -> None:
+        self.sleeps.append(seconds)
+        self.now += seconds
+
+
+async def test_events_idle_stream_sends_heartbeats_and_ends_at_the_lifetime_cap() -> None:
+    clock = _FakeStreamClock()
+    timing = EventStreamTiming(
+        poll_interval_seconds=1.0,
+        heartbeat_interval_seconds=3.0,
+        max_lifetime_seconds=10.0,
+        clock=clock.monotonic,
+        sleep=clock.sleep,
+    )
+    svc = _svc()
+    routes = {
+        r.path: r.endpoint
+        for r in build_router(
+            _FakeOrchestrator(), job_service=svc, event_stream_timing=timing
+        ).routes
+    }
+    job_id = await _submit(routes, "u1", "2401.1")
+    svc.mark_queued(_ctx(), job_id)  # never finishes: the stream has nothing terminal to wait for
+
+    resp = _stream(routes, job_id, None)
+    body = await asyncio.wait_for(_consume_raw(resp), timeout=_STREAM_GUARD_SECONDS)
+
+    blocks = [block for block in body.strip().split("\n\n") if block]
+    data = [json.loads(b.split("data: ", 1)[1]) for b in blocks if b.startswith("id: ")]
+    heartbeats = [b for b in blocks if b == ": keepalive"]
+    assert [e["state"] for e in data] == ["ACCEPTED", "QUEUED"]
+    assert len(heartbeats) == 3  # idle for 3s at t=3, 6 and 9
+    assert len(data) + len(heartbeats) == len(blocks)  # nothing else on the wire
+    assert clock.now == 10.0  # ended exactly at the lifetime cap, not by waiting longer
+    assert set(clock.sleeps) == {1.0}  # it polled at the configured interval
 
 
 # --- result ---------------------------------------------------------------
