@@ -1,0 +1,18 @@
+# Gitleaks configuration for the CI secret scan (.github/workflows/ci.yml).
+# Keep gitleaks' default rules; allowlist only reviewed false positives, each
+# matched by its exact line so the same value anywhere else is still reported.
+title = "DocSuri gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Reviewed false positives (2026-10-19)"
+regexTarget = "line"
+regexes = [
+  # backend/modules/accounts/control_policy.py: public capability reason code, not a credential.
+  '''^\s*"credentials": "G1-policy-unresolved",\s*$''',
+  # ops/tests/test_u1_db_bootstrap.py and tests/u7_controlled_platform_protocols/component/
+  # test_executor.py, test_native_adapter.py: fixed test realm id placeholder.
+  '''^\s*(token|TOKEN) = "0123456789abcdef"\s*$''',
+]
