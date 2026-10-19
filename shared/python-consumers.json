@@ -3733,7 +3733,7 @@
     },
     {
       "file": "backend/modules/summarization/src/summarization/api/router.py",
-      "sha256": "dba46ab977b164e263a3a3ada40eafc26487b8cfcfb53fad6fb5feca54c15130"
+      "sha256": "02eea502fd542c92dd5b360e864cf637bdc3f79c7d21cc87803ba095e2c89a76"
     },
     {
       "file": "backend/modules/summarization/src/summarization/domain/cache_key.py",
