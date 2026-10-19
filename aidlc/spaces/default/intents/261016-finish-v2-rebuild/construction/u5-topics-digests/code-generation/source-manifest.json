@@ -169,6 +169,9 @@
       "path": "frontend/test/u5-topics/preferences.test.tsx"
     },
     {
+      "path": "frontend/test/u5-topics/settings-dialog.test.tsx"
+    },
+    {
       "path": "frontend/test/u5-topics/topics.test.tsx"
     },
     {

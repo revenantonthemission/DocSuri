@@ -262,14 +262,14 @@ Do not copy account or preference ownership into Topics.
   helper text only after its claimed behavior exists. Trace: FR1.2/FR1.4;
   NFR5.1; R-02/R-04/R-05.
 
-- [ ] **Step 12 — Frontend behavior — test after implementation.**
+- [x] **Step 12 — Frontend behavior — test after implementation.**
   Extend scoped Vitest/RTL tests, then run at least four mounted journeys:
   follow/settings/unsubscribe, scheduler/local-sink delivery, explicit unknown
   resolution, and the promised empty-digest state. Include owner preference
   propagation and truthful no-send empty outcomes. Keep the existing timeout and
   send limits. Trace: FR1.1–FR1.5; NFR5.1; R-02 and browser failure.
 
-- [ ] **Step 13 — Environment/build configuration and integration evidence.**
+- [x] **Step 13 — Environment/build configuration and integration evidence.**
   Repair local suite isolation in `scripts/verify_docsuri_u5.py`, fixture
   helpers and test configuration as necessary: a browser realm must be fresh
   and independent of coverage fixtures; preserve consumed/failed realms before

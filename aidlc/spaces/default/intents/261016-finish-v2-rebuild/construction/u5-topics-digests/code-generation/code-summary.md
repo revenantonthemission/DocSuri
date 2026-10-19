@@ -1,5 +1,57 @@
 # U5 code summary — topics & digests
 
+## Steps 12–13 verification — 2026-10-19 (supersedes the mounted-browser status below)
+
+**Browser supervision repair.** Browser verification observed two process trees
+(Playwright and the companion host) by taking a separate `ps -A` snapshot per
+root in every 50 ms tick. That doubled the process-table scans and measured the
+trees at different instants; prior attempts stopped on `TimeoutExpired` from that
+observation. `scripts/verify_docsuri_u5.py` now takes ONE bounded snapshot per tick
+(`process_tree_rss(roots, deadline)`) and sums the union of both trees, so a shared
+descendant cannot be counted twice. The 1-second per-observation limit
+(`OBSERVATION_SECONDS`), the 1 GiB aggregate RSS budget, the 300-second phase bound,
+log limits and the fresh-realm refusal are unchanged. Supervision records now add
+`observations` and `slowestObservationSeconds` for diagnosis. The passing run below
+shows the repaired path works; it does not prove the earlier timeouts had no
+host-load component.
+
+**Mounted browser checkpoint (exact authorized command, fresh realm
+`docsuri-u5-bbedf7e857ba1c5d`, 63 migrations, fixtures only):** 4 tests, 0
+failures/errors/skips, exit 0. Playwright 7.8s; supervision 8.17s, 121 observations,
+slowest 0.0229s, peak RSS 909,737,984 bytes (within, but close to, the 1 GiB
+budget), process stopped. Journeys: follow/preferences/settings/unsubscribe 1.32s;
+scheduler → local-sink delivery with Korean/Asia/Seoul propagation 4.99s; recorded
+empty digest with no send 0.50s; explicit unknown resolution 0.46s. Source
+SHA-256 `2097abb709a6be4bbb2645474755e309f1540bae6b5f1d5e73a014541a5f38f5`.
+Realm preserved at `/private/tmp/docsuri-u5-preserved-docsuri-u5-bbedf7e857ba1c5d-a52f4219`.
+This direct run is not the AI-DLC checkpoint receipt; that must still be produced
+through the checkpoint verifier on a fresh realm.
+
+**Frontend (Step 12):** new `frontend/test/u5-topics/settings-dialog.test.tsx`
+(13 cases: unconfigured zone, Korean non-default readout, unreadable preferences,
+preference-save refresh, weekly day gate with day/window body, stale weekday
+dropped, unchanged save, initial read failure, reload failure, Escape and Tab
+trap, in-dialog unsubscribe confirm/cancel, local-sink vs real path labels).
+Scoped Vitest: **35 passed**, U5 lines **97.93%** (floor 80%); typecheck, CI lint
+command, Prettier and Vite build pass. `topics.test.tsx` was Prettier-formatted
+only.
+
+**Backend (fresh realm `docsuri-u5-272f4bac81e78719`):** coverage phase **158
+passed, zero failures/errors/skips, 82.94% aggregate** (80% floor), 13.2s, peak
+RSS 243,924,992 bytes. Three new runner regressions: one snapshot per tick for both
+roots, union without double counting under the unchanged limit, refusal after the
+deadline. Per-file gaps remain below 80%: `personalization/local_http.py` 35%,
+`scripts/u5_browser_fixtures.py` 73%, `scripts/serve_docsuri_u5.py` 70%,
+`accounts/services/guarded_entry.py` 79%.
+
+**Static and inherited checks:** ruff (CI file list plus `digest_email.py`)
+passes; canonical schema and generated-binding drift checks pass; shared contract
+suite 161 passed; U1 transport/records regression 13 passed; U2 transport/runtime
+regression 39 passed.
+
+**Still open:** real email delivery (no sender, recipient, or authorized message;
+nothing sent); the AI-DLC browser checkpoint receipt; a fresh independent review.
+
 ## Repair status — 2026-10-19
 
 This section supersedes the earlier implementation account below. Local repairs
