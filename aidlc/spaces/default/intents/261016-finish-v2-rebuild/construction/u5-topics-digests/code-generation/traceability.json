@@ -1,0 +1,386 @@
+{
+  "stage": "code-generation",
+  "unit": "u5-topics-digests",
+  "semantics": "OK identifies a bounded implemented contribution verified by the unit's realm phases; GAP preserves an explicitly unresolved policy or synthetic-only limit; N/A identifies a requirement outside U5, retained by its assigned lead unit in the approved unit map.",
+  "upstream_ids": [
+    "FR1",
+    "FR1.1",
+    "FR1.2",
+    "FR1.3",
+    "FR1.4",
+    "FR1.5",
+    "FR1.6",
+    "FR2",
+    "FR2.1",
+    "FR2.2",
+    "FR2.3",
+    "FR2.4",
+    "FR2.5",
+    "FR3",
+    "FR3.1",
+    "FR3.2",
+    "FR4",
+    "FR4.1",
+    "FR4.2",
+    "NFR1",
+    "NFR2",
+    "NFR3",
+    "NFR4",
+    "NFR5",
+    "NFR6",
+    "NFR1.1",
+    "NFR1.2",
+    "NFR2.1",
+    "NFR2.2",
+    "NFR4.1",
+    "NFR4.2",
+    "NFR4.3",
+    "NFR5.1",
+    "NFR6.1",
+    "BR1.1",
+    "BR1.2",
+    "BR1.3",
+    "BR1.4",
+    "BR2.1",
+    "BR2.2",
+    "BR2.3",
+    "BR2.4",
+    "BR3.1",
+    "BR3.2",
+    "BR3.3",
+    "BR3.4",
+    "BR4.1",
+    "BR4.2",
+    "BR4.3",
+    "BR5.1"
+  ],
+  "coverage": [
+    {
+      "id": "FR1",
+      "status": "OK",
+      "target": "backend/u5_real_delivery.py"
+    },
+    {
+      "id": "FR1.1",
+      "status": "OK",
+      "target": "backend/modules/topics/service.py"
+    },
+    {
+      "id": "FR1.2",
+      "status": "OK",
+      "target": "backend/modules/topics/repository.py"
+    },
+    {
+      "id": "FR1.3",
+      "status": "OK",
+      "target": "backend/modules/topics/repository.py"
+    },
+    {
+      "id": "FR1.4",
+      "status": "OK",
+      "target": "backend/modules/accounts/integrations/digest_email.py"
+    },
+    {
+      "id": "FR1.4",
+      "status": "OK",
+      "target": "backend/u5_real_delivery.py"
+    },
+    {
+      "id": "FR1.4",
+      "status": "OK",
+      "target": "backend/modules/topics/u5_refusal_detail.sql"
+    },
+    {
+      "id": "FR1.4",
+      "status": "OK",
+      "target": "backend/modules/topics/u5_real_send_retention.sql"
+    },
+    {
+      "id": "FR1.4",
+      "status": "OK",
+      "target": "scripts/u5_real_delivery.py"
+    },
+    {
+      "id": "FR1.5",
+      "status": "OK",
+      "target": "backend/modules/topics/unsubscribe.py"
+    },
+    {
+      "id": "FR1.5",
+      "status": "OK",
+      "target": "backend/modules/topics/service.py"
+    },
+    {
+      "id": "FR1.6",
+      "status": "OK",
+      "target": "backend/modules/topics/control_lifecycle.py"
+    },
+    {
+      "id": "FR2",
+      "status": "N/A",
+      "target": "Outside U5 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR2.1",
+      "status": "N/A",
+      "target": "Outside U5 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR2.2",
+      "status": "N/A",
+      "target": "Outside U5 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR2.3",
+      "status": "N/A",
+      "target": "Outside U5 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR2.4",
+      "status": "N/A",
+      "target": "Outside U5 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR2.5",
+      "status": "N/A",
+      "target": "Outside U5 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR3",
+      "status": "N/A",
+      "target": "Outside U5 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR3.1",
+      "status": "N/A",
+      "target": "Outside U5 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR3.2",
+      "status": "N/A",
+      "target": "Outside U5 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR4",
+      "status": "N/A",
+      "target": "Outside U5 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR4.1",
+      "status": "N/A",
+      "target": "Outside U5 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "FR4.2",
+      "status": "N/A",
+      "target": "Outside U5 contribution; retained by its assigned lead unit in unit-of-work-story-map.md."
+    },
+    {
+      "id": "NFR1",
+      "status": "OK",
+      "target": "backend/modules/topics/repository.py"
+    },
+    {
+      "id": "NFR1.1",
+      "status": "OK",
+      "target": "backend/modules/topics/repository.py"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "OK",
+      "target": "backend/modules/topics/repository.py"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "backend/modules/topics/delivery.py"
+    },
+    {
+      "id": "NFR2.1",
+      "status": "OK",
+      "target": "backend/modules/topics/delivery.py"
+    },
+    {
+      "id": "NFR2.2",
+      "status": "OK",
+      "target": "backend/modules/topics/errors.py"
+    },
+    {
+      "id": "NFR3",
+      "status": "N/A",
+      "target": "Specifically U6 Notion credentials. U5 inherited email credentials remain server-owned; no waiver of email secret custody."
+    },
+    {
+      "id": "NFR4",
+      "status": "OK",
+      "target": "backend/u5_policy.py"
+    },
+    {
+      "id": "NFR4.1",
+      "status": "OK",
+      "target": "backend/modules/topics/u5_run_guard.sql"
+    },
+    {
+      "id": "NFR4.2",
+      "status": "OK",
+      "target": "backend/modules/topics/u5_schema.sql"
+    },
+    {
+      "id": "NFR4.3",
+      "status": "OK",
+      "target": "backend/u5_policy.py"
+    },
+    {
+      "id": "NFR5",
+      "status": "OK",
+      "target": "frontend/src/u5-topics/topics-view.tsx"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "frontend/src/u5-topics/topics-view.tsx"
+    },
+    {
+      "id": "NFR6",
+      "status": "OK",
+      "target": "backend/u5_real_delivery.py"
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": "backend/u5_policy.py"
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": "backend/u5_real_delivery.py"
+    },
+    {
+      "id": "BR1.1",
+      "status": "OK",
+      "target": "backend/modules/topics/service.py"
+    },
+    {
+      "id": "BR1.2",
+      "status": "OK",
+      "target": "backend/modules/topics/scheduler.py"
+    },
+    {
+      "id": "BR1.3",
+      "status": "OK",
+      "target": "backend/modules/topics/repository.py"
+    },
+    {
+      "id": "BR1.4",
+      "status": "OK",
+      "target": "backend/modules/topics/delivery.py"
+    },
+    {
+      "id": "BR1.4",
+      "status": "OK",
+      "target": "backend/u5_real_delivery.py"
+    },
+    {
+      "id": "BR1.4",
+      "status": "OK",
+      "target": "backend/modules/topics/scheduler.py"
+    },
+    {
+      "id": "BR2.1",
+      "status": "OK",
+      "target": "backend/modules/topics/preparation.py"
+    },
+    {
+      "id": "BR2.2",
+      "status": "OK",
+      "target": "backend/modules/topics/repository.py"
+    },
+    {
+      "id": "BR2.3",
+      "status": "OK",
+      "target": "backend/modules/topics/preparation.py"
+    },
+    {
+      "id": "BR2.4",
+      "status": "OK",
+      "target": "backend/modules/topics/u5_run_guard.sql"
+    },
+    {
+      "id": "BR3.1",
+      "status": "OK",
+      "target": "backend/modules/topics/u5_schema.sql"
+    },
+    {
+      "id": "BR3.2",
+      "status": "OK",
+      "target": "backend/modules/topics/delivery.py"
+    },
+    {
+      "id": "BR3.3",
+      "status": "OK",
+      "target": "backend/modules/topics/scheduler.py"
+    },
+    {
+      "id": "BR3.4",
+      "status": "OK",
+      "target": "backend/modules/topics/scheduler.py"
+    },
+    {
+      "id": "BR4.1",
+      "status": "OK",
+      "target": "backend/modules/topics/service.py"
+    },
+    {
+      "id": "BR4.1",
+      "status": "OK",
+      "target": "backend/modules/topics/unsubscribe.py"
+    },
+    {
+      "id": "BR4.2",
+      "status": "OK",
+      "target": "backend/modules/topics/delivery.py"
+    },
+    {
+      "id": "BR4.3",
+      "status": "OK",
+      "target": "backend/modules/topics/control_lifecycle.py"
+    },
+    {
+      "id": "BR5.1",
+      "status": "OK",
+      "target": "backend/modules/topics/repository.py"
+    }
+  ],
+  "reverse": [],
+  "real_delivery_evidence": {
+    "links": [
+      "FR1.4/BR1.4/NFR6/NFR6.1: backend/u5_real_delivery.py assemble_u5_real (operator-only, scripts/serve_docsuri_u5.py --real-delivery, run-bound real-delivery.json activation, Resend credential from the environment only, no fallback)",
+      "FR1.4: backend/modules/accounts/integrations/digest_email.py typed accepted/refused/unknown result with provider receipt; refusal status and error name",
+      "FR1.4: backend/modules/topics/u5_refusal_detail.sql set-once provider_status/provider_error",
+      "FR1.4: backend/modules/topics/u5_real_send_retention.sql evidence_retain_until (30 days) plus the scheduler retention sweep",
+      "FR1.4: scripts/u5_real_delivery.py check/provision/prepare/preview/outcome operator actions (never constructs the adapter)",
+      "BR1.4: backend/modules/topics/scheduler.py permitted-recipient filter before the bounded page",
+      "FR1.5/BR4.1: backend/modules/topics/unsubscribe.py PublicCancellationOrigin (exact origin, exact path, GET/POST) and the page's same-origin referrer policy (R-15)"
+    ],
+    "first_attempt": "FAILED: realm docsuri-u5-a4ed677392fc22d7, run 2ea6c002-f993-4cc6-9add-36a7867cb911, 2026-10-19 04:49:59 UTC, pathKind real, failed/delivery-path-refused, no receipt; allocation spent",
+    "second_attempt": "SENT: realm docsuri-u5-95df9983c1b017e4, run bdc65d9f-c805-4dbc-bd20-a2a5e650f91c, sender no-reply@mail.rvnnt.dev, attempted 2026-10-19 05:11:26.544 UTC, acknowledged 05:11:26.918 UTC, provider receipt SHA-256 f17b05558fa8cc6c336532267eb17a19b13934d90513317ebe5566f62e0e9064, allocation 1/1 spent; the person confirmed inbox arrival and that mail-app one-click unsubscribe worked",
+    "browser_confirm": "Live browser confirm returned 403 request.origin (Origin: null under no-referrer). Fixed in source and covered by automated tests (component/test_real_composition.py, integration/test_real_delivery.py); not re-run live",
+    "verification": "255 passed; zero failures/errors/skips; 85.01% aggregate; fresh realm docsuri-u5-5302ce36da2f4551; /tmp/docsuri-u5-run/coverage-evidence-1792387423998293000.json",
+    "register": "../../../maintenance/u5-real-delivery-evidence.md"
+  },
+  "repair_evidence": {
+    "backend": "155 passed; zero failures/errors/skips; 82.94% aggregate; /private/tmp/docsuri-u5-preserved-docsuri-u5-68f00b6ee0bcf67a-aa7edb82/coverage-evidence-1792342925464628000.json",
+    "frontend": "22 passed; 92.27% scoped lines; typecheck passed",
+    "browser": "OPEN: current build passed7.921s; browser started then process-observation TimeoutExpired, exit1,missing report,37.712s,625885184peakRSS,processStopped true. Evidence /private/tmp/docsuri-u5-preserved-docsuri-u5-87dd16122f1ae63d-a65cdc86/browser-evidence-1792343092561092000.json; source4f6e3d10f17129f4352175e262775b63770b184ea2dbd6f4170befab6914cd6d. No complete mounted proof/checkpoint receipt; original bounds unchanged.",
+    "migration": "Fresh corrected 63 baseline and additive 62-to-63 exercised; original 59 ledger retained without rewrite, replacement required after comment drift",
+    "implemented_behaviors": [
+      "Scoped runner collection and fresh backend/browser isolation",
+      "Authoritative C03 inheritance and immutable presentation/preference fencing",
+      "Owner-zone calendar scheduling, bounded DST handling and due-before-pagination",
+      "Typed transport receipts, finite real attempt budget and owner-bound cancellation",
+      "Current browser asset rebuild before serving, supervision failure capture"
+    ],
+    "scheduling": "Real-store consent-stop and earlier-unknown regressions each place51 blocked topics ahead of2 eligible topics;3 finite scheduler passes verify later-owner progress with no new blocked attempts. Consent and outstanding-work predicates precede LIMIT50; cleanup/reconciliation remain separate.",
+    "clock_coordination": "7 focused passes and inclusion in155-check full pass. Source-derived absolute helper paths work from root/frontend cwd; private run-bound clock delegation preserves parent lock and refuses unrelated/missing/wrong/foreign/expired/malformed/inactive grants, revoking metadata on success/failure."
+  }
+}

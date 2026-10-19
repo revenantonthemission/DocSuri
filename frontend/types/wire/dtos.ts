@@ -1,4 +1,4 @@
-/* DO NOT EDIT. Declared public schema closure, offline. SHA256:902c99058689d4f818b78cbca2e43e62b2e83b0a9d2bde9166a3aa8316e1f120 */
+/* DO NOT EDIT. Declared public schema closure, offline. SHA256:b3ce859069a0665b61e4adc670254eb0236cd510e9891301467cf08e710d1a4c */
 
 /**
  * Which rung of the fallback ladder produced this doc-model: native arXiv HTML -> ar5iv -> e-print LaTeX -> (last resort) PDF parse. User-uploaded PDFs also use the "pdf" tier — the user-vs-arXiv origin is carried by the paperId "userdoc:" namespace, not a separate tier. Trace: Q6, BR-29, TD-11.
@@ -2883,6 +2883,10 @@ export interface WorkspaceSettingsSnapshot {
   accountId: WorkspaceId;
   settingsId: WorkspaceId;
   revision: WorkspaceRevision;
+  /**
+   * Explicit owner IANA timezone; null means unconfigured.
+   */
+  timeZone?: string | null;
   searchDefaults: WorkspaceSettingsSearchDefaults;
   assistanceDefaults: WorkspaceSettingsAssistanceDefaults;
   appearance: "light" | "dark" | "system";

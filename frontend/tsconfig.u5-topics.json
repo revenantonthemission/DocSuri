@@ -1,0 +1,2 @@
+// U5 topics typecheck scope; mirrors tsconfig.u4-research.json.
+{"extends": "./tsconfig.json", "compilerOptions": {"noUncheckedIndexedAccess": true, "exactOptionalPropertyTypes": true, "noImplicitReturns": true, "incremental": false}, "include": ["src/**/*.ts", "src/**/*.tsx", "test/setup.ts", "test/u5-topics/**/*.ts", "test/u5-topics/**/*.tsx", "e2e/u5-topics-digests/**/*.ts", "vitest.u5-topics.config.ts", "playwright.u5-topics.config.ts"], "exclude": ["node_modules", ".next"]}

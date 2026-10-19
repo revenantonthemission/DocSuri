@@ -81,6 +81,11 @@ class DeadlineConnection:
         self.remaining()
         return self.connection.execute(query, params, **kwargs)
 
+    def transaction(self):
+        """Nested savepoint on the bounded connection: a failed statement rolls
+        back to it and the caller's unit continues."""
+        return self.connection.transaction()
+
 
 class OwnerTransactions:
     def __init__(self, profile: LocalProfile, *, process: str = "api"):
@@ -89,11 +94,14 @@ class OwnerTransactions:
         # worker share five normal slots, with two observation/recovery slots
         # and one runner slot reserved inside the twelve connection budget.
         controls = profile.realm in (
-            "account-controls", "corpus-maintenance", "research-workspace"
+            "account-controls", "corpus-maintenance", "research-workspace", "topics-digests"
         )
-        owners = OWNERS | {"research"} if (
-            profile.database_name, profile.realm
-        ) == ("docsuri_u4", "research-workspace") else OWNERS
+        if (profile.database_name, profile.realm) == ("docsuri_u5", "topics-digests"):
+            owners = OWNERS | {"research", "topics"}
+        elif (profile.database_name, profile.realm) == ("docsuri_u4", "research-workspace"):
+            owners = OWNERS | {"research"}
+        else:
+            owners = OWNERS
         if controls:
             limits = {"api": 5, "worker": 5, "observation": 2, "maintenance": 1}
         if process not in limits:
@@ -117,6 +125,7 @@ class OwnerTransactions:
             ("docsuri_u2", "account-controls"),
             ("docsuri_u3", "corpus-maintenance"),
             ("docsuri_u4", "research-workspace"),
+            ("docsuri_u5", "topics-digests"),
         }:
             raise ValueError("unknown explicit database realm")
         # Separate databases do not receive separate process connection budgets.
@@ -138,7 +147,10 @@ class OwnerTransactions:
                 )
         self._owner_gates = {}
         self._normal_owner_gates = {}
-        if (profile.database_name, profile.realm) == ("docsuri_u4", "research-workspace"):
+        if (profile.database_name, profile.realm) in {
+            ("docsuri_u4", "research-workspace"),
+            ("docsuri_u5", "topics-digests"),
+        }:
             # Separate pools and transaction objects still share each login's
             # two physical PostgreSQL connections. Permit only one normal
             # operation per owner so recovery/observation retains a slot.

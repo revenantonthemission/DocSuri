@@ -13,6 +13,7 @@ from backend.modules.personalization.control_lifecycle import PersonalizationLif
 from backend.modules.plans.guarded_repository import GuardedUsageRepository
 from backend.modules.summarization.admission import AssistanceAdmission
 from backend.modules.summarization.guarded_repository import GuardedAssistanceRepository
+from backend.modules.topics.control_lifecycle import TopicsDigestsLifecycleParticipant
 
 
 class PendingLifecycleEvidence(RuntimeError):
@@ -179,6 +180,7 @@ class ControlWorker:
             "UsageEntitlements": UsageLifecycleParticipant(self.transactions),
             "DiscoveryCitations": DiscoveryLifecycleParticipant(self.transactions),
             "PaperAssistance": AssistanceLifecycleParticipant(self.transactions, files),
+            "TopicsDigests": TopicsDigestsLifecycleParticipant(self.transactions),
         }
         self.admission = AssistanceAdmission(
             GuardedAssistanceRepository(self.transactions, files),

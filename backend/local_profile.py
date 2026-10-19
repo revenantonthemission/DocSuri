@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import re
 import stat
@@ -67,11 +68,12 @@ class LocalProfile:
             "journey",
         )
 
-    @classmethod
-    def load(cls, manifest: Path) -> LocalProfile:
+    @staticmethod
+    def _identity(manifest: Path) -> tuple[Path, str, dict]:
+        """Validate custody and realm identity without granting runtime use."""
         profiles = {
             (RUN_PARENT / f"docsuri-{unit}-run").resolve() / "environment.json": unit
-            for unit in ("u1", "u2", "u3", "u4")
+            for unit in ("u1", "u2", "u3", "u4", "u5")
         }
         expected = manifest.resolve()
         unit = profiles.get(expected)
@@ -105,60 +107,66 @@ class LocalProfile:
             rf"docsuri-{unit}-[0-9a-f]{{16}}", value.get("runId", "")
         ):
             raise ValueError("runtime manifest must not carry migration credentials")
-        if value["expiresAt"] <= time.time():
-            raise ValueError("synthetic retention expired")
         ports = {
             "u1": (18039, 15439), "u2": (18049, 15449),
             "u3": (18059, 15459), "u4": (18079, 15479),
+            "u5": (18089, 15489),
         }
         application_port, database_port = ports[unit]
         if value["applicationPort"] != application_port or value["databasePort"] != database_port:
             raise ValueError("unexpected owned listener")
-        if unit == "u2":
+        realms = {
+            "u2": ("u2-account-personal-controls", "account-controls"),
+            "u3": ("u3-paper-corpus-capabilities", "corpus-maintenance"),
+            "u4": ("u4-research-novelty", "research-workspace"),
+            "u5": ("u5-topics-digests", "topics-digests"),
+        }
+        if unit in realms:
+            unit_name, realm = realms[unit]
             if (
-                value.get("unit") != "u2-account-personal-controls"
-                or value.get("database") != "docsuri_u2"
-                or value.get("realm") != "account-controls"
-                or not time.time() < value["expiresAt"] <= time.time() + 86400
+                value.get("unit") != unit_name
+                or value.get("database") != f"docsuri_{unit}"
+                or value.get("realm") != realm
             ):
-                raise ValueError("wrong U2 owned realm or finite retention")
+                raise ValueError(f"wrong {unit.upper()} owned realm")
+        return expected, unit, value
+
+    @classmethod
+    def preservation_identity(cls, manifest: Path) -> dict:
+        """Return validated finite metadata for preservation, never a runtime profile.
+
+        Expiry prevents execution but must not prevent preserving an idle realm.
+        There is no runtime-input flag to relax load(), and all custody and realm
+        checks are shared with it. The caller must still prove resource ownership
+        and idleness before any stop or move.
+        """
+        _, _, value = cls._identity(manifest)
+        created, expires = value.get("createdAt"), value.get("expiresAt")
+        if (
+            type(created) not in (int, float)
+            or type(expires) not in (int, float)
+            or not math.isfinite(created)
+            or not math.isfinite(expires)
+            or not 0 < created <= time.time()
+            or not created < expires <= created + 86400
+        ):
+            raise ValueError("preservation requires finite original retention")
+        return value
+
+    @classmethod
+    def load(cls, manifest: Path) -> LocalProfile:
+        expected, unit, value = cls._identity(manifest)
+        now = time.time()
+        if value["expiresAt"] <= now:
+            raise ValueError("synthetic retention expired")
+        if unit != "u1":
+            if not now < value["expiresAt"] <= now + 86400:
+                raise ValueError(f"wrong {unit.upper()} finite retention")
             return cls(
-                expected.parent,
-                value["runId"],
-                "https://127.0.0.1:18049",
-                15449,
-                value["expiresAt"],
-                "docsuri_u2",
-                "account-controls",
-            )
-        if unit == "u3":
-            if (
-                value.get("unit") != "u3-paper-corpus-capabilities"
-                or value.get("database") != "docsuri_u3"
-                or value.get("realm") != "corpus-maintenance"
-                or not time.time() < value["expiresAt"] <= time.time() + 86400
-            ):
-                raise ValueError("wrong U3 owned realm or finite retention")
-            return cls(
-                expected.parent,
-                value["runId"],
-                "https://127.0.0.1:18059",
-                15459,
-                value["expiresAt"],
-                "docsuri_u3",
-                "corpus-maintenance",
-            )
-        if unit == "u4":
-            if (
-                value.get("unit") != "u4-research-novelty"
-                or value.get("database") != "docsuri_u4"
-                or value.get("realm") != "research-workspace"
-                or not time.time() < value["expiresAt"] <= time.time() + 86400
-            ):
-                raise ValueError("wrong U4 owned realm or finite retention")
-            return cls(
-                expected.parent, value["runId"], "https://127.0.0.1:18079", 15479,
-                value["expiresAt"], "docsuri_u4", "research-workspace",
+                expected.parent, value["runId"],
+                f"https://127.0.0.1:{value['applicationPort']}",
+                value["databasePort"], value["expiresAt"],
+                value["database"], value["realm"],
             )
         return cls(
             expected.parent, value["runId"], "http://127.0.0.1:18039", 15439, value["expiresAt"]

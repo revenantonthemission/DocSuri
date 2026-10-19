@@ -13,5 +13,13 @@
     "scope": "classic",
     "status": "complete",
     "request": "f74bb3e8"
+  },
+  {
+    "uuid": "01a1452e-e5aa-70a7-903c-8340a398ff50",
+    "slug": "finish-v2-rebuild",
+    "dirName": "261016-finish-v2-rebuild",
+    "scope": "express",
+    "status": "in-flight",
+    "request": "89706d35"
   }
 ]

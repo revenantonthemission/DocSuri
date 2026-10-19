@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from docsuri_shared.workspace import wire
 from psycopg.types.json import Jsonb
@@ -38,7 +39,7 @@ class GuardedSettingsService:
         # an independent full-session account-control purpose.
         self.purpose = (
             "account-control"
-            if transactions.profile.realm == "account-controls"
+            if transactions.profile.realm in ("account-controls", "topics-digests")
             else "local-research"
         )
 
@@ -57,6 +58,7 @@ class GuardedSettingsService:
             "onboarding": stored.get("onboarding", "not_started"),
             "interestIds": stored.get("interestIds", []),
             "policyRef": POLICY,
+            "timeZone": stored.get("timeZone"),
         }
         return wire.SettingsSnapshot.model_validate(value).model_dump(mode="json")
 
@@ -117,6 +119,7 @@ class GuardedSettingsService:
             if previous["revision"] != str(expected_id):
                 raise ValueError("stale settings revision")
             defaults = {
+                "timeZone": previous.get("timeZone"),
                 "searchDefaults": previous["searchDefaults"],
                 "assistanceDefaults": previous["assistanceDefaults"],
                 "onboarding": onboarding,
@@ -140,7 +143,7 @@ class GuardedSettingsService:
         return self.transactions.run("personalization", write)
 
     def update(self, authority: Authority, operation: UUID, expected: str, changes: dict) -> dict:
-        allowed = {"searchDefaults", "assistanceDefaults", "appearance"}
+        allowed = {"searchDefaults", "assistanceDefaults", "appearance", "timeZone"}
         if not changes or set(changes) - allowed:
             raise ValueError("unsupported settings fields")
         expected_id = UUID(expected)
@@ -149,6 +152,11 @@ class GuardedSettingsService:
         ).model_dump(mode="json", exclude_unset=True)
         search = value.get("searchDefaults")
         assistance = value.get("assistanceDefaults")
+        if "timeZone" in value:
+            try:
+                ZoneInfo(value["timeZone"])
+            except (ZoneInfoNotFoundError, ValueError):
+                raise ValueError("unsupported timezone") from None
         if search and (
             search["vocabularyRevision"] != VOCABULARY
             or search["modeId"] not in ("lexical", "semantic")
@@ -190,7 +198,13 @@ class GuardedSettingsService:
             merged = dict(previous, **changes)
             defaults = {
                 key: merged[key]
-                for key in ("searchDefaults", "assistanceDefaults", "onboarding", "interestIds")
+                for key in (
+                    "searchDefaults",
+                    "assistanceDefaults",
+                    "onboarding",
+                    "interestIds",
+                    "timeZone",
+                )
             }
             row = conn.execute(
                 "INSERT INTO personalization.settings(account_id,revision,"

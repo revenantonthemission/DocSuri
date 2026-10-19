@@ -31,6 +31,7 @@ class PrivateArtifacts:
             Path("/tmp/docsuri-u2-run").resolve(),
             Path("/tmp/docsuri-u3-run").resolve(),
             Path("/tmp/docsuri-u4-run").resolve(),
+            Path("/tmp/docsuri-u5-run").resolve(),
         }
         if root.parent not in expected or root.name not in (
             "corpus-files",

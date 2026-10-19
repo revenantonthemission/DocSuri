@@ -16,6 +16,7 @@ def apply_owner_effect(transactions, owner, scopes, ticket, effect):
         "usage": "UsageEntitlements",
         "discovery": "DiscoveryCitations",
         "assistance": "PaperAssistance",
+        "topics": "TopicsDigests",
     }[owner]
     if ticket["participant"] != participant or ticket["scope"] not in scopes:
         raise PermissionError("unregistered lifecycle participant scope")
