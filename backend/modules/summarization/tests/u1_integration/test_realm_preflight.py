@@ -176,23 +176,23 @@ def test_protected_document_semantic_negatives_fail_before_connect(monkeypatch, 
     from tests.u1_integration import realm as module
 
     # Pure reader/schema fixtures, not files or independent isolation receipts.
-    token = "0123456789abcdef"
+    realm_id = "0123456789abcdef"
     endpoint = {"host": "postgres-u1", "address": "172.31.200.2", "port": 5432}
-    binding = {"unit": "u1-job-skeleton", "environment": "u1-staging", "realm_id": token,
+    binding = {"unit": "u1-job-skeleton", "environment": "u1-staging", "realm_id": realm_id,
                "context": "colima", **{key: "a" * 64 for key in (
                    "config_sha256", "guest_id", "runtime_sha256", "source_sha256",
                    "launcher_sha256", "rules_sha256", "credential_channel_sha256")}}
     manifest = {
-        "version": 1, "unit": "u1-job-skeleton", "environment": "u1-staging", "realm_id": token,
+        "version": 1, "unit": "u1-job-skeleton", "environment": "u1-staging", "realm_id": realm_id,
         "workload_hostname": "u1-test", "isolation_receipt_sha256": "b" * 64,
         "internal_network_cidr": "172.31.200.0/24", "binding": binding,
-        "authority_database": {**endpoint, "database": "docsuri_u1_authority_" + token,
-                               "role": "docsuri_u1_authority_" + token, "connection_limit": 4},
-        "purge_database": {**endpoint, "database": "docsuri_u1_purge_" + token,
-                           "role": "docsuri_u1_purge_" + token, "connection_limit": 2},
+        "authority_database": {**endpoint, "database": "docsuri_u1_authority_" + realm_id,
+                               "role": "docsuri_u1_authority_" + realm_id, "connection_limit": 4},
+        "purge_database": {**endpoint, "database": "docsuri_u1_purge_" + realm_id,
+                           "role": "docsuri_u1_purge_" + realm_id, "connection_limit": 2},
     }
     receipt = {
-        "unit": manifest["unit"], "environment": manifest["environment"], "realm_id": token,
+        "unit": manifest["unit"], "environment": manifest["environment"], "realm_id": realm_id,
         "valid_until": "2099-01-01T00:00:00Z", "binding": dict(binding),
         "verified": {"direct_egress_denied": True, "host_lan_production_denied": True,
                      "unqualified_address_families_denied": True},
@@ -206,8 +206,8 @@ def test_protected_document_semantic_negatives_fail_before_connect(monkeypatch, 
            "DOCSURI_U1_ISOLATION_RECEIPT": "/operator/receipt",
            "DOCSURI_U1_ISOLATION_RECEIPT_SHA256": "b" * 64,
            "DOCSURI_U1_AUTHORITY_DSN": ("host=postgres-u1 port=5432 "
-                                       f"dbname=docsuri_u1_authority_{token} "
-                                       f"user=docsuri_u1_authority_{token}")}
+                                       f"dbname=docsuri_u1_authority_{realm_id} "
+                                       f"user=docsuri_u1_authority_{realm_id}")}
     monkeypatch.setattr(module, "_document", lambda path, _digest:
                         manifest if path.endswith("manifest") else receipt)
     monkeypatch.setattr(module.os, "uname", lambda: Mock(sysname="Linux"))

@@ -25,13 +25,17 @@ from docsuri_platform_integrity.deployment.capability import (
 from docsuri_platform_integrity.deployment.operator_plan import read_frozen_plan
 from docsuri_platform_integrity.deployment.receipt import (
     Capability,
-    host_identity,
     verify_capability,
 )
 
 DSN = os.environ.get("REM1_TEST_PG_DSN")
 pytestmark = pytest.mark.skipif(not DSN, reason="isolated REM1_TEST_PG_DSN required")
 RELEASE = "r1-2026.09"
+# A synthetic host. receipt_from, verify_capability and ProbeSet take the host as a parameter,
+# so this module (which runs only on the Linux isolated-Postgres lane) needs no hardware
+# identity; the real ioreg identity is covered on macOS by
+# test_capability_receipts.py::test_host_identity_is_this_machine_and_stable.
+HOST = "00000000-0000-4000-8000-000000000001"
 STEP = digest(b"registered-adopt-step")
 APPLY = "registry:adopt"
 EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
@@ -143,16 +147,17 @@ def test_live_guard_receipt_verifies_under_the_normal_verifier(seeded):
         outcome = probe_native_commit_guard(
             live_authority(seeded), connection=connection, identity=APPLY, definition_digest=STEP)
     assert outcome.proven is True
-    host = host_identity()
-    receipt = receipt_from(outcome, host=host, release=RELEASE, days=1)
+    # Issued for the same authenticated instant the verifier observes below.
+    moment = int(time.time() * 1_000_000)
+    receipt = receipt_from(outcome, host=HOST, release=RELEASE, days=1,
+                           lower=moment, upper=moment)
     key = Ed25519PrivateKey.generate()
     envelope = issue(receipt, key_id="release-key-1", key=key)
-    moment = int(time.time() * 1_000_000)
     trust = {"release-key-1": trust_key(
         "release-key-1", key.public_key(),
         validity=ValidityWindow(valid_from=str(moment - DAY), valid_until=str(moment + 30 * DAY)))}
     proven, reason = verify_capability(
-        envelope, capability=Capability.NATIVE_COMMIT_GUARD, host=host, release=RELEASE,
+        envelope, capability=Capability.NATIVE_COMMIT_GUARD, host=HOST, release=RELEASE,
         trust=trust, lower=moment, upper=moment)
     assert (proven, reason) == (True, "verified")
     # The artifact binds the exact identity set the guard was proven against. The plan file's
@@ -161,7 +166,7 @@ def test_live_guard_receipt_verifies_under_the_normal_verifier(seeded):
 
 
 def test_probe_set_reports_the_guard_unproven_without_a_connection(seeded):
-    probes = ProbeSet(release=RELEASE, host=host_identity(), authority=live_authority(seeded),
+    probes = ProbeSet(release=RELEASE, host=HOST, authority=live_authority(seeded),
                       guard_identity=APPLY, guard_definition_digest=STEP)
     outcomes = probes.run()
     assert outcomes[Capability.NATIVE_COMMIT_GUARD].reason == "not_configured"

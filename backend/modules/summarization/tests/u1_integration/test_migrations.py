@@ -5,10 +5,9 @@ from __future__ import annotations
 import hashlib
 
 import pytest
-from psycopg.errors import CheckViolation, UniqueViolation
-
 from backend.migrations import _atomic_sql
 from backend.migrations.registry import registry
+from psycopg.errors import CheckViolation, UniqueViolation
 
 
 def test_registered_additive_authority_script_follows_unchanged_002() -> None:

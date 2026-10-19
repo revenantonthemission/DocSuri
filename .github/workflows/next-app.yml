@@ -1,0 +1,68 @@
+# CI guard for the deployed frontend: the Next.js app (app/, components/, lib/, middleware.ts)
+# that the web role serves from .next/standalone (ops/server/run.sh). The per-Unit workflows
+# (u1–u5) test only the Vite workspace in src/, so nothing else in CI builds or tests this app.
+# It replaces the retired legacy ci.yml frontend job, without whole-tree eslint and the mock e2e.
+#
+# CI is the only safe place to run `next build`: `docsurictl rebuild` builds in the live checkout,
+# and Next deletes .next before compiling, so a build break found there takes the site down.
+# No path filter: the inventory hashes and the build span the whole frontend tree.
+#
+# Third-party actions are pinned to a commit SHA (not a mutable major tag); the trailing `# vX`
+# comment records the human-readable version.
+name: Next app
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+  # Nightly, after CI's 04:17 run: catches new advisories and registry drift on the pinned tree.
+  schedule:
+    - cron: '37 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: next-app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  next-app:
+    name: next app (tsc · drift guards · tests · production build · audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v3
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.0
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      # next build type-checks only non-test files, so the whole program (tests included) and the
+      # Playwright specs are checked here.
+      - name: Type check (whole program, then the e2e specs)
+        run: pnpm exec tsc --noEmit && pnpm exec tsc -p tsconfig.e2e.json --noEmit
+      - name: Drift guards (wire types, TS consumer inventory, contract generator)
+        run: pnpm run check:types && pnpm run check:consumers && pnpm run test:contracts
+      - name: Tests (every frontend suite, including the Next app's BFF and asset delivery)
+        run: pnpm run test
+      # NEXT_PUBLIC_* are inlined at build time, so build with the values docsurictl rebuild uses.
+      - name: Production build (same settings as docsurictl rebuild)
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_DOCSURI_REAL_API: '1'
+          NEXT_PUBLIC_DOCSURI_RESEARCH_AGENT_ENABLED: 'true'
+          NEXT_PUBLIC_ORCID_LOGIN_ENABLED: 'false'
+        run: pnpm build
+      - name: Production dependency audit (full frozen tree)
+        run: pnpm audit --prod --audit-level high

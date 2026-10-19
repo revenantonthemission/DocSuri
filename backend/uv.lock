@@ -622,6 +622,7 @@ dependencies = [
     { name = "docsuri-platform-integrity" },
     { name = "docsuri-shared" },
     { name = "psutil" },
+    { name = "psycopg", extra = ["binary"] },
     { name = "pydantic" },
 ]
 
@@ -630,6 +631,7 @@ requires-dist = [
     { name = "docsuri-platform-integrity", editable = "../platform_integrity" },
     { name = "docsuri-shared", editable = "../shared/python" },
     { name = "psutil", specifier = ">=7,<8" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4,<4" },
     { name = "pydantic", specifier = ">=2.7,<3" },
 ]
 
@@ -733,6 +735,7 @@ dev = [
     { name = "coverage", specifier = "==7.10.7" },
     { name = "hypothesis", specifier = ">=6.100" },
     { name = "pytest", specifier = ">=8.0" },
+    { name = "pytest-asyncio", specifier = ">=0.23" },
     { name = "pytest-cov", specifier = "==7.0.0" },
     { name = "ruff", specifier = ">=0.6" },
 ]

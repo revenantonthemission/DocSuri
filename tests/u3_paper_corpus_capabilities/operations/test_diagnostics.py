@@ -94,7 +94,13 @@ def test_diagnostics_are_secret_free(realm, fixture_discard):
     secret_values.extend(value for key, value in keys.items() if key.endswith("cursor") or key.endswith("provider"))
     admin = json.loads((run_root / "migration-credentials.json").read_text())
     secret_values.append(admin["databaseAdminPassword"])
-    inspected = list(run_root.glob("*evidence*.json")) + list(run_root.glob("browser-*.log"))
+    # The U3 runner's private phase logs are named u3-phase-*.log; the running
+    # phase's own log exists even in a fresh realm that has no prior evidence.
+    inspected = (
+        list(run_root.glob("*evidence*.json"))
+        + list(run_root.glob("browser-*.log"))
+        + list(run_root.glob("u3-phase-*.log"))
+    )
     for path in inspected:
         text = path.read_text(errors="replace")
         for secret in secret_values:

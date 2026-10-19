@@ -12,11 +12,11 @@ import re
 from datetime import timedelta
 
 import pytest
+from backend.migrations.registry import registry
 from psycopg.errors import CheckViolation, ForeignKeyViolation
+
 from summarization.domain.job_protocol import JobTask
 from summarization.domain.prepared_result import PreparationIdentity, PreparedJobResult
-
-from backend.migrations.registry import registry
 from tests.test_u1_job_model import job_input, summary_payload, translation_payload
 from tests.u1_integration.conftest import admitted_schema_statements
 

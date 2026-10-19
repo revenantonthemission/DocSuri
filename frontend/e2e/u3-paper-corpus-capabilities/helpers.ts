@@ -26,7 +26,15 @@ function privateJson(file: string) {
 }
 
 export function helper(
-  action: 'setup' | 'withdraw' | 'expire' | 'restore-eligible' | 'reset-jobs',
+  // Mirrors ACTIONS in scripts/u3_browser_fixtures.py.
+  action:
+    | 'setup'
+    | 'publish'
+    | 'reset-corpus'
+    | 'withdraw'
+    | 'restore-eligible'
+    | 'expire'
+    | 'reset-jobs',
   paper?: string,
 ) {
   const args = [
@@ -70,5 +78,7 @@ export async function search(page: Page, query: string, mode: 'lexical' | 'seman
 
 export async function openFirstResult(page: Page) {
   await page.getByTestId('result-row').first().locator('button').click();
-  await expect(page.getByTestId('reading-surface').or(page.getByTestId('content-state'))).toBeVisible();
+  await expect(
+    page.getByTestId('reading-surface').or(page.getByTestId('content-state')),
+  ).toBeVisible();
 }

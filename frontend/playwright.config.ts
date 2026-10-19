@@ -6,6 +6,9 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  // Unit browser journeys (e2e/u<N>-*/) need their own provisioned realms and run through their
+  // own playwright.u*.config.ts; this config owns only the mock-transport specs at the e2e/ root.
+  testIgnore: /[\\/]e2e[\\/]u\d+-[^\\/]+[\\/]/,
   use: {
     baseURL: 'http://localhost:3000',
     ...devices['iPhone 13'],

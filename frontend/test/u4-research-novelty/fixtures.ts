@@ -115,7 +115,7 @@ export const apiError = (code: string) =>
 
 type Schema = {
   $ref?: string;
-  type?: string;
+  type?: string | string[];
   required?: string[];
   properties?: Record<string, Schema | undefined>;
   additionalProperties?: boolean;
@@ -145,20 +145,24 @@ export function conforms(name: string, value: unknown) {
     if (spec.if && !matches(matches(spec.if, data) ? (spec.then ?? {}) : (spec.else ?? {}), data))
       return false;
     if (spec.not && matches(spec.not, data)) return false;
-    if (spec.type === 'null') return data === null;
-    if (spec.type === 'string')
+    const types = Array.isArray(spec.type) ? spec.type : [spec.type];
+    return types.some((type) => matchesType(type, spec, data));
+  }
+  function matchesType(type: string | undefined, spec: Schema, data: unknown): boolean {
+    if (type === 'null') return data === null;
+    if (type === 'string')
       return typeof data === 'string' && data.length >= (spec.minLength ?? 0);
-    if (spec.type === 'integer' || spec.type === 'number')
+    if (type === 'integer' || type === 'number')
       return (
         typeof data === 'number' &&
         Number.isFinite(data) &&
-        (spec.type !== 'integer' || Number.isInteger(data)) &&
+        (type !== 'integer' || Number.isInteger(data)) &&
         data >= (spec.minimum ?? -Infinity)
       );
-    if (spec.type === 'boolean') return typeof data === 'boolean';
-    if (spec.type === 'array')
+    if (type === 'boolean') return typeof data === 'boolean';
+    if (type === 'array')
       return Array.isArray(data) && data.every((item) => matches(spec.items ?? {}, item));
-    if (spec.type === 'object' || spec.properties || spec.required) {
+    if (type === 'object' || spec.properties || spec.required) {
       if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
       const record = data as Record<string, unknown>;
       if (spec.required?.some((key) => !(key in record))) return false;

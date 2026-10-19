@@ -1,4 +1,5 @@
 import os
+import sys
 from dataclasses import replace
 from pathlib import Path
 
@@ -137,6 +138,7 @@ def collector(tmp_path, chrony_socket, monkeypatch):
     return nts.ChronyCollector(script, digest(script.read_bytes()), chrony_socket, D)
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS clock context")
 def test_native_clock_context_is_observable_and_epoch_stable():
     from docsuri_platform_integrity.adapters.nts import native_time
 
@@ -147,6 +149,7 @@ def test_native_clock_context_is_observable_and_epoch_stable():
     assert second.wall_us >= first.wall_us
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS clock context")
 def test_protected_observer_produces_a_frame_from_the_live_socket(collector):
     frame = collector.collect()
     assert frame.authenticated is True

@@ -43,6 +43,14 @@ jobs:
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86
+      # The receipt signer refuses a keychain below any group/other-writable ancestor, and on
+      # Linux pytest's tmp_path sits under /tmp (1777). macOS gives every user a private 0700
+      # TMPDIR, so only the Linux lanes need this root-owned, private temp root.
+      - name: Private temp root (the keychain ancestor check refuses a world-writable /tmp)
+        run: |
+          sudo install -d -m 755 -o root -g root /r1-private
+          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" /r1-private/tmp
+          echo "TMPDIR=/r1-private/tmp" >> "$GITHUB_ENV"
       - run: uv sync --frozen --all-extras --python 3.13
       - run: uv run --frozen --all-extras ruff check .
       - run: uv run --frozen --all-extras pytest
@@ -58,6 +66,8 @@ jobs:
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
+      - name: Frozen Python dependencies
+        run: uv sync --frozen --python 3.13.7
       - name: Schema drift guard (generated bindings match the SSOT)
         run: uv run --frozen python tools/generate.py --check
       - name: Actual Python consumer inventory
@@ -79,6 +89,8 @@ jobs:
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
+      - name: Frozen Python dependencies
+        run: uv sync --frozen --python 3.13.7
       - name: Lint
         run: uv run ruff check .
       - name: Tests
@@ -96,6 +108,8 @@ jobs:
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
+      - name: Frozen Python dependencies
+        run: uv sync --frozen --python 3.13.7
       - name: Lint
         run: uv run ruff check .
       - name: Tests (incl. the api router extra)
@@ -113,6 +127,8 @@ jobs:
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
+      - name: Frozen Python dependencies
+        run: uv sync --frozen --python 3.13.7
       - name: Lint
         run: uv run ruff check .
       # --all-extras, not `--extra api` like discovery: test_docmodel_endpoint.py imports the S3
@@ -133,6 +149,15 @@ jobs:
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
+      # Same private temp root as the `platform-integrity` lane: the U1 Colima executor refuses a
+      # protected document below any group/other-writable ancestor, and /tmp is 1777 on Linux.
+      - name: Private temp root (protected-document ancestor checks refuse a world-writable /tmp)
+        run: |
+          sudo install -d -m 755 -o root -g root /r1-private
+          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" /r1-private/tmp
+          echo "TMPDIR=/r1-private/tmp" >> "$GITHUB_ENV"
+      - name: Frozen Python dependencies
+        run: uv sync --frozen --python 3.13.7
       - name: Lint
         run: uv run ruff check .
       - name: Tests
@@ -150,6 +175,8 @@ jobs:
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
+      - name: Frozen Python dependencies
+        run: uv sync --frozen --python 3.13.7
       - name: Lint
         run: uv run ruff check .
       - name: Tests (asserts discovery actually mounts)
@@ -169,47 +196,20 @@ jobs:
       # (pythonpath=. · asyncio_mode=auto). The accounts/library/ops module lanes self-lint with
       # their own ruff.toml (the app-shell ruff excludes modules/), so gate them here — plus the
       # root tests/ tree itself, which no other lane covered (ruff defaults catch F401 there).
+      - name: Frozen Python dependencies
+        run: uv sync --project backend --frozen --python 3.13.7
       - name: Lint (accounts + library + ops modules + root tests/)
         run: uv run --project backend ruff check backend/modules/accounts backend/modules/library backend/modules/ops tests
+      # Only the suites this job is named for. The per-Unit suites under tests/u*/ belong to their
+      # own u*.yml workflows and backend/pytest.u*.ini (pythonpath, markers, import mode);
+      # collected together under the root pytest.ini they collide and cannot import. Note that
+      # u1-paper-journey.yml only collects its suite and u7 runs only its component scope.
+      # tests/performance holds a k6 load script, which pytest does not collect and CI does not run.
       - name: Tests (accounts + library)
-        run: uv run --project backend pytest tests -c pytest.ini
+        run: uv run --project backend pytest tests/accounts tests/library tests/performance -c pytest.ini
 
-  frontend:
-    name: frontend (U5 · tsc + vitest + type drift + build)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-      - uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v3
-        with:
-          version: 9.15.9
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24.14.0
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: TypeScript check
-        run: pnpm exec tsc --noEmit
-      - name: Type drift guard (generated types match shared/ schemas)
-        run: pnpm run check:types && pnpm run check:consumers && pnpm run test:contracts
-      - name: Production dependency audit (full frozen tree)
-        run: pnpm audit --prod --audit-level high
-      - name: Lint
-        run: pnpm run lint
-      - name: Tests with coverage (feature-scope floor)
-        run: pnpm run test:coverage
-      - name: E2E (Playwright, mock transport)
-        run: pnpm exec playwright install --with-deps chromium && pnpm run e2e
-      # tsc + vitest don't webpack-compile the routes, so a build-only break (e.g. a
-      # server-only module leaking into the client graph via the /bff route) passes both
-      # yet fails `next build`. This step is the guard that actually compiles every route.
-      - name: Build
-        run: pnpm exec next build
+  # frontend: retired; replaced by .github/workflows/next-app.yml. The per-Unit u1–u5 frontend
+  # jobs cover only the Vite workspace in src/, not the deployed Next app.
 
   dependency-review:
     name: Dependency review (PR-only · npm + pip)
@@ -235,18 +235,24 @@ jobs:
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
+      # --no-emit-local drops every first-party path dependency (shared, discovery, summarization,
+      # ops, platform_integrity, ...). They are not on PyPI, so pip-audit cannot audit them, and
+      # uv writes their paths relative to the project while pip resolves them relative to the
+      # repo root. Their third-party dependencies are still exported and audited. pip-audit
+      # evaluates the exported environment markers under its own interpreter, so that
+      # interpreter is pinned to the deploy Python (3.13.7) rather than whatever uvx finds.
       - name: Run pip-audit on Backend
         run: |
-          uv export --project backend --frozen --no-dev --no-emit-workspace --no-emit-package docsuri-shared --no-emit-package docsuri-discovery --no-emit-package docsuri-summarization --no-emit-package docsuri-ops -o backend/requirements.audit.txt
-          uvx pip-audit==2.10.1 -r backend/requirements.audit.txt
+          uv export --project backend --frozen --no-dev --no-emit-local -o backend/requirements.audit.txt
+          uvx --python 3.13.7 pip-audit==2.10.1 -r backend/requirements.audit.txt
       - name: Run pip-audit on Ingestion
         run: |
-          uv export --project ingestion --frozen --all-extras --no-dev --no-emit-workspace --no-emit-package docsuri-shared -o ingestion/requirements.audit.txt
-          uvx pip-audit==2.10.1 -r ingestion/requirements.audit.txt
+          uv export --project ingestion --frozen --all-extras --no-dev --no-emit-local -o ingestion/requirements.audit.txt
+          uvx --python 3.13.7 pip-audit==2.10.1 -r ingestion/requirements.audit.txt
       - name: Run pip-audit on Ops
         run: |
-          uv export --project ops --frozen --no-dev --no-emit-workspace --no-emit-package docsuri-shared -o ops/requirements.audit.txt
-          uvx pip-audit==2.10.1 -r ops/requirements.audit.txt
+          uv export --project ops --frozen --no-dev --no-emit-local -o ops/requirements.audit.txt
+          uvx --python 3.13.7 pip-audit==2.10.1 -r ops/requirements.audit.txt
       # BLOCKING, license-free secret scan. The gitleaks-action v2 needs an org licence (why the
       # old step was continue-on-error/advisory), so run the gitleaks CLI via its pinned image and
       # fail on any finding. --no-git scans the CURRENT tree (what this PR delivers) rather than
@@ -277,6 +283,8 @@ jobs:
       # marked PENDING below are audited and reported but not yet blocking, because their CVE
       # disposition (CVE-2026-82049, CVE-2026-85091) is still an open operator item. They are kept
       # visible here on purpose: silently dropping them is how a closure audit rots.
+      # --no-emit-local: first-party path packages (the project itself and its in-repo deps) are
+      # not on PyPI and cannot be hash-pinned; their third-party closure is still audited.
       - name: Full-closure pip-audit (all deploy + tool projects)
         run: |
           set -uo pipefail
@@ -285,12 +293,12 @@ jobs:
           while IFS= read -r pyproject; do
             project="$(dirname "$pyproject")"
             echo "::group::$project"
-            if ! uv export --project "$project" --frozen --all-extras --no-dev \
+            if ! uv export --project "$project" --frozen --all-extras --no-dev --no-emit-local \
                  -o "/tmp/$(echo "$project" | tr '/' '_').audit.txt"; then
               echo "::error::$project failed to export a frozen closure"
               echo "::endgroup::"; failed=1; continue
             fi
-            if uvx pip-audit==2.10.1 -r "/tmp/$(echo "$project" | tr '/' '_').audit.txt"; then
+            if uvx --python 3.13.7 pip-audit==2.10.1 -r "/tmp/$(echo "$project" | tr '/' '_').audit.txt"; then
               echo "clean"
             elif [[ "$pending" == *" $project "* ]]; then
               echo "::warning::$project has un-dispositioned findings (PENDING operator item)"
@@ -319,6 +327,12 @@ jobs:
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+      # Same private temp root as the `platform-integrity` lane (keychain ancestor check).
+      - name: Private temp root (the keychain ancestor check refuses a world-writable /tmp)
+        run: |
+          sudo install -d -m 755 -o root -g root /r1-private
+          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" /r1-private/tmp
+          echo "TMPDIR=/r1-private/tmp" >> "$GITHUB_ENV"
       - name: Platform integrity at release profile
         working-directory: platform_integrity
         env:
@@ -330,7 +344,7 @@ jobs:
         working-directory: ops
         env:
           R1_TEST_PROFILE: release
-        run: uv run --frozen pytest
+        run: uv run --frozen --python 3.13.7 pytest
 
 
   # Step 15. The 185 isolated Postgres tests skip on every other lane, so a green CI has never
@@ -352,27 +366,36 @@ jobs:
           POSTGRES_USER: rem1_test
           POSTGRES_PASSWORD: isolated-test-only
           POSTGRES_DB: rem1_test
-        ports: ["5432:5432"]
+        # The harness refuses any realm but 127.0.0.1:15439 ("disposable realm only").
+        ports: ["15439:5432"]
         options: >-
           --health-cmd "pg_isready -U rem1_test -d rem1_test"
           --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+      # Same private temp root as the `platform-integrity` lane (keychain ancestor check).
+      - name: Private temp root (the keychain ancestor check refuses a world-writable /tmp)
+        run: |
+          sudo install -d -m 755 -o root -g root /r1-private
+          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" /r1-private/tmp
+          echo "TMPDIR=/r1-private/tmp" >> "$GITHUB_ENV"
       - name: Link the service under the name the harness asserts
         # The mtls/recovery tests exec into a container by this exact name, which a service
-        # container does not provide on its own.
+        # container does not provide on its own. Look it up by the id the runner assigned:
+        # `ancestor=postgres` never matches an image pulled by digest only (no tag).
+        env:
+          SERVICE_CONTAINER_ID: ${{ job.services.postgres.id }}
         run: |
           set -euo pipefail
-          sudo docker ps -q --filter "ancestor=postgres" | head -1
-          cid="$(sudo docker ps -q --filter "ancestor=postgres" | head -1)"
+          cid="$SERVICE_CONTAINER_ID"
           test -n "$cid" || { echo "::error::no postgres service container found"; exit 1; }
           sudo docker rename "$cid" "$REM1_TEST_CONTAINER"
           sudo docker exec "$REM1_TEST_CONTAINER" pg_isready -U rem1_test -d rem1_test
       - name: Platform integrity with isolated Postgres
         working-directory: platform_integrity
         env:
-          REM1_TEST_PG_DSN: postgresql://rem1_test:isolated-test-only@127.0.0.1:5432/rem1_test
+          REM1_TEST_PG_DSN: postgresql://rem1_test:isolated-test-only@127.0.0.1:15439/rem1_test
           REM1_TEST_CONTAINER: rem1-test-pg-20260924
         run: |
           uv sync --frozen --all-extras --python 3.13
@@ -383,7 +406,7 @@ jobs:
         # green. The only honest check is to run them and require zero skips.
         working-directory: platform_integrity
         env:
-          REM1_TEST_PG_DSN: postgresql://rem1_test:isolated-test-only@127.0.0.1:5432/rem1_test
+          REM1_TEST_PG_DSN: postgresql://rem1_test:isolated-test-only@127.0.0.1:15439/rem1_test
           REM1_TEST_CONTAINER: rem1-test-pg-20260924
         run: |
           set -uo pipefail
@@ -408,6 +431,11 @@ jobs:
     name: REM-1 platform suite on macOS (APFS semantics)
     runs-on: macos-latest
     timeout-minutes: 30
+    env:
+      # Run on the operator's interpreter class: uv-managed CPython (ad-hoc signed). Left to
+      # itself uv picked the runner's python.org framework build (Developer ID, hardened
+      # runtime), under which the native keychain tests failed with -25293.
+      UV_MANAGED_PYTHON: "1"
     defaults:
       run:
         working-directory: platform_integrity
@@ -416,8 +444,8 @@ jobs:
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
       - name: Full suite on APFS
         run: |
-          uv sync --frozen --all-extras --python 3.13
+          uv sync --frozen --all-extras --python 3.13.7
           uv run --frozen --all-extras pytest --tb=short
       - name: Ops suite on APFS
         working-directory: ops
-        run: uv run --frozen pytest
+        run: uv run --frozen --python 3.13.7 pytest

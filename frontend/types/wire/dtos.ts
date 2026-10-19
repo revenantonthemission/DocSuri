@@ -383,11 +383,51 @@ export type WorkspaceResearchArtifactResponse =
  * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
  *
  * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessSessionInputHttp".
+ */
+export type WorkspaceAccessSessionInputHttp = Record<string, never>;
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessLogoutInputHttp".
+ */
+export type WorkspaceAccessLogoutInputHttp = Record<string, never>;
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessProfileInputHttp".
+ */
+export type WorkspaceAccessProfileInputHttp = Record<string, never>;
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceSettingsReadInputHttp".
+ */
+export type WorkspaceSettingsReadInputHttp = Record<string, never>;
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "WorkspaceSettingsUpdateInputHttp".
  */
 export type WorkspaceSettingsUpdateInputHttp = {
   [k: string]: unknown;
 };
+/**
+ * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceUsagePlanInputHttp".
+ */
+export type WorkspaceUsagePlanInputHttp = Record<string, never>;
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAssistanceGlossaryReadHttp".
+ */
+export type WorkspaceAssistanceGlossaryReadHttp = Record<string, never>;
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "WorkspaceResearchDeleteHttp".
@@ -408,7 +448,9 @@ export type WorkspaceAssistanceHistoryRow = {
   [k: string]: unknown;
 };
 
-export interface PublicWire {}
+export interface PublicWire {
+  [k: string]: never;
+}
 /**
  * Self-signup input. Source: AccountController.signup(req: SignupRequest, ctx) (component-methods U3). `password` is INPUT-ONLY and NOT logged (SEC-3); policy/breach checks are server-side (PasswordPolicy). Trace: dtos.md §2, FR-7, US-A1, SEC-12.
  *
@@ -3746,13 +3788,6 @@ export interface WorkspaceHostNavigationInputHttp {
  * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
  *
  * This interface was referenced by `PublicWire`'s JSON-Schema
- * via the `definition` "WorkspaceAccessSessionInputHttp".
- */
-export interface WorkspaceAccessSessionInputHttp {}
-/**
- * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
- *
- * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "WorkspaceAccessRegisterInputHttp".
  */
 export interface WorkspaceAccessRegisterInputHttp {
@@ -3794,13 +3829,6 @@ export interface WorkspaceAccessLoginInputHttp {
   password: WorkspaceAccessSecret;
   policyRef: WorkspacePolicyRef;
 }
-/**
- * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
- *
- * This interface was referenced by `PublicWire`'s JSON-Schema
- * via the `definition` "WorkspaceAccessLogoutInputHttp".
- */
-export interface WorkspaceAccessLogoutInputHttp {}
 /**
  * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
  *
@@ -3932,13 +3960,6 @@ export interface WorkspaceAccessMfaRecoveryInputHttp {
   verification: WorkspaceAccessChallengeProof;
   policyRef: WorkspacePolicyRef;
 }
-/**
- * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
- *
- * This interface was referenced by `PublicWire`'s JSON-Schema
- * via the `definition` "WorkspaceAccessProfileInputHttp".
- */
-export interface WorkspaceAccessProfileInputHttp {}
 /**
  * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
  *
@@ -4094,13 +4115,6 @@ export interface WorkspaceLibraryClearHistoryInputHttp {
  * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
  *
  * This interface was referenced by `PublicWire`'s JSON-Schema
- * via the `definition` "WorkspaceSettingsReadInputHttp".
- */
-export interface WorkspaceSettingsReadInputHttp {}
-/**
- * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
- *
- * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "WorkspaceSettingsOnboardingInputHttp".
  */
 export interface WorkspaceSettingsOnboardingInputHttp {
@@ -4159,13 +4173,6 @@ export interface WorkspaceSettingsResetInputHttp {
 export interface WorkspaceUsageInspectInputHttp {
   page: WorkspacePageRequest;
 }
-/**
- * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
- *
- * This interface was referenced by `PublicWire`'s JSON-Schema
- * via the `definition` "WorkspaceUsagePlanInputHttp".
- */
-export interface WorkspaceUsagePlanInputHttp {}
 /**
  * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
  *
@@ -4315,11 +4322,6 @@ export interface WorkspaceAssistanceResultRequestHttp {
   jobId: WorkspaceId;
   result?: WorkspaceResultRef;
 }
-/**
- * This interface was referenced by `PublicWire`'s JSON-Schema
- * via the `definition` "WorkspaceAssistanceGlossaryReadHttp".
- */
-export interface WorkspaceAssistanceGlossaryReadHttp {}
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "WorkspaceAssistanceGlossaryWriteHttp".

@@ -41,6 +41,8 @@ def signing_key(path: Path, *, mode=0o600, uid=None):
 
 
 def restore_receipt(path: Path, *, release=RELEASE, host=None):
+    # host=None binds the receipt to this machine through host_identity(), which reads the
+    # hardware UUID with macOS ioreg. Tests whose path never compares the host pass one.
     from docsuri_platform_integrity.contracts.codec import canonical
 
     moment = int(time.time() * 1_000_000)
@@ -60,6 +62,8 @@ def run(*args, cwd=None):
 
 
 def test_probe_only_never_reads_a_key_and_never_writes(tmp_path):
+    if sys.platform != "darwin":
+        pytest.skip("macOS ioreg platform UUID (the issuer binds probes to this host)")
     config = tmp_path / "config.json"
     restore_receipt(tmp_path / "restore.json")
     config.write_text(json.dumps({"restoreReceipt": str(tmp_path / "restore.json")}))
@@ -93,7 +97,7 @@ def test_issuance_requires_the_protected_profile(tmp_path):
 
 def test_a_caller_configuration_cannot_replace_the_protected_policy(tmp_path):
     config = tmp_path / "config.json"
-    restore_receipt(tmp_path / "restore.json")
+    restore_receipt(tmp_path / "restore.json", host="H")
     config.write_text(json.dumps({"restoreReceipt": str(tmp_path / "restore.json")}))
     result = run("--config", str(config), "--profile", "test", "--release", RELEASE)
     payload = json.loads(result.stdout)
@@ -104,7 +108,7 @@ def test_a_caller_configuration_cannot_replace_the_protected_policy(tmp_path):
 
 def test_issuance_without_a_profile_is_refused(tmp_path):
     config = tmp_path / "config.json"
-    restore_receipt(tmp_path / "restore.json")
+    restore_receipt(tmp_path / "restore.json", host="H")
     config.write_text(json.dumps({"restoreReceipt": str(tmp_path / "restore.json")}))
     result = run("--config", str(config), "--release", RELEASE, "--out", str(tmp_path / "out"))
     assert result.returncode == 2
@@ -148,6 +152,8 @@ def test_a_symlinked_signing_key_is_refused(tmp_path):
 
 
 def test_native_commit_guard_is_unproven_when_its_section_is_absent(tmp_path):
+    if sys.platform != "darwin":
+        pytest.skip("macOS ioreg platform UUID (the issuer binds probes to this host)")
     config = tmp_path / "config.json"
     restore_receipt(tmp_path / "restore.json")
     config.write_text(json.dumps({"restoreReceipt": str(tmp_path / "restore.json")}))
@@ -160,6 +166,8 @@ def test_native_commit_guard_is_unproven_when_its_section_is_absent(tmp_path):
 
 
 def test_a_receipt_for_another_release_is_not_proven(tmp_path):
+    if sys.platform != "darwin":
+        pytest.skip("macOS ioreg platform UUID (the issuer binds probes to this host)")
     config = tmp_path / "config.json"
     restore_receipt(tmp_path / "restore.json", release="r1-2026.10")
     config.write_text(json.dumps({"restoreReceipt": str(tmp_path / "restore.json")}))
@@ -189,6 +197,8 @@ def test_a_non_canonical_configuration_is_refused(tmp_path):
 
 def test_probe_only_writes_nothing_anywhere(tmp_path):
     """Diagnostics are readonly: no receipt, no temporary, no key material echoed."""
+    if sys.platform != "darwin":
+        pytest.skip("macOS ioreg platform UUID (the issuer binds probes to this host)")
     config = tmp_path / "config.json"
     restore_receipt(tmp_path / "restore.json")
     config.write_text(json.dumps({"restoreReceipt": str(tmp_path / "restore.json")}))
@@ -223,7 +233,7 @@ def test_build_probe_set_leaves_absent_sections_unconfigured():
 def test_the_probe_config_carries_no_secret_material(tmp_path):
     """Guard against a credential ever being pasted into the reference document."""
     config = tmp_path / "config.json"
-    restore_receipt(tmp_path / "restore.json")
+    restore_receipt(tmp_path / "restore.json", host="H")
     config.write_text(json.dumps({
         "restoreReceipt": str(tmp_path / "restore.json"),
         "keychainRoles": [{"keychain": "/k", "service": "s", "account": "a"}],
@@ -390,6 +400,8 @@ def test_guard_approval_and_fence_must_name_the_same_target(tmp_path):
 
 def test_declared_but_unusable_guard_reports_its_reason_and_others_still_run(tmp_path):
     """One broken section must not hide the status of the other four capabilities."""
+    if sys.platform != "darwin":
+        pytest.skip("macOS ioreg platform UUID (the issuer binds probes to this host)")
     config = tmp_path / "config.json"
     restore_receipt(tmp_path / "restore.json")
     section = guard_section(tmp_path, deadlineSeconds=9999)
@@ -406,6 +418,8 @@ def test_declared_but_unusable_guard_reports_its_reason_and_others_still_run(tmp
 
 
 def test_guard_section_without_a_clock_section_is_unusable(tmp_path):
+    if sys.platform != "darwin":
+        pytest.skip("macOS ioreg platform UUID (the issuer binds probes to this host)")
     config = tmp_path / "config.json"
     restore_receipt(tmp_path / "restore.json")
     config.write_text(json.dumps({"restoreReceipt": str(tmp_path / "restore.json"),
@@ -417,6 +431,8 @@ def test_guard_section_without_a_clock_section_is_unusable(tmp_path):
 
 
 def test_wrong_typed_guard_section_fails_closed_rather_than_crashing(tmp_path):
+    if sys.platform != "darwin":
+        pytest.skip("macOS ioreg platform UUID (the issuer binds probes to this host)")
     config = tmp_path / "config.json"
     config.write_text(json.dumps({"nativeCommitGuard": ["not", "an", "object"]}))
     result = run("--config", str(config), "--release", RELEASE, "--probe-only")

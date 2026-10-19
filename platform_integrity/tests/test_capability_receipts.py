@@ -1,6 +1,7 @@
 """A capability claim is only acceptance when a trusted, host-bound receipt proves it."""
 
 import base64
+import sys
 import time
 
 import pytest
@@ -207,6 +208,7 @@ def test_signed_receipt_survives_a_canonical_round_trip():
     assert decode(canonical(envelope)) == envelope
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS ioreg platform UUID")
 def test_host_identity_is_this_machine_and_stable():
     identity = host_identity()
     assert len(identity) == 36 and identity == identity.upper()

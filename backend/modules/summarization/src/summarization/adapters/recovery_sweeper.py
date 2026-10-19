@@ -17,12 +17,11 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any
 
-from ..adapters.rds_jobs import RdsJobStore
 from ..adapters.content_job_queue import ContentJobQueue
+from ..adapters.rds_jobs import RdsJobStore
 from ..domain.job import JobState
-from ..domain.models import SummaryRequest, Task, TargetLang, Persona, Scope
+from ..domain.models import Persona, Scope, SummaryRequest, TargetLang, Task
 from ..service.job_service import ContentJobService
 
 log = logging.getLogger(__name__)
@@ -83,7 +82,14 @@ class OrphanedJobSweeper:
                 # the existing job. The job service marks it ACCEPTED again (idempotent).
                 # We also explicitly advance to QUEUED so the worker sees progress.
                 self._job_service.mark_queued(
-                    type("ctx", (), {"auth_session": type("s", (), {"user_id": job.owner_id})(), "request_id": ""})(),
+                    type(
+                        "ctx",
+                        (),
+                        {
+                            "auth_session": type("s", (), {"user_id": job.owner_id})(),
+                            "request_id": "",
+                        },
+                    )(),
                     job.job_id,
                 )
                 requeued += 1
@@ -95,7 +101,7 @@ class OrphanedJobSweeper:
 
     def _build_request(self, job) -> SummaryRequest | None:
         """Reconstruct a SummaryRequest from the job's input."""
-        from ..domain.models import SummaryRequest, Task, TargetLang, Persona, Scope
+        from ..domain.models import SummaryRequest
 
         inp = job.input
         task_type = inp.get("taskType") or job.task_type
@@ -137,14 +143,14 @@ def sweep_orphaned_jobs(
 
     Creates the necessary adapters, runs the sweep, and returns the count.
     """
-    from ..adapters.rds_jobs import RdsJobStore
     from ..adapters.content_job_queue import ContentJobQueue
+    from ..adapters.rds_jobs import RdsJobStore
     from ..service.job_service import ContentJobService
 
     job_store = RdsJobStore(dsn=dsn)
     job_service = ContentJobService(
         store=job_store,
-        enqueue=lambda j: None,
+        enqueue=lambda _j: None,
         result_ttl_seconds=3600.0,
         now=time.time,
     )

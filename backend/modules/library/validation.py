@@ -15,7 +15,6 @@ import re
 import unicodedata
 from collections.abc import Callable
 from datetime import datetime
-from typing import TypeVar
 from uuid import uuid4
 
 from docsuri_shared.authz import Principal
@@ -161,18 +160,14 @@ def to_history_dto(entity: HistoryEntry) -> HistoryEntryDTO:
 
 
 # ── Keyset pagination assembly (BR-L8) ────────────────────────────────────────
-_E = TypeVar("_E")
-_P = TypeVar("_P")
-
-
-def build_page(
-    list_page: Callable[[str, int, CursorKey | None], list[_E]],
+def build_page[E, P](
+    list_page: Callable[[str, int, CursorKey | None], list[E]],
     owner_id: str,
     params: PageParams,
-    key_of: Callable[[_E], CursorKey],
-    to_dto: Callable[[_E], object],
-    page_ctor: Callable[..., _P],
-) -> _P:
+    key_of: Callable[[E], CursorKey],
+    to_dto: Callable[[E], object],
+    page_ctor: Callable[..., P],
+) -> P:
     """Assemble a most-recent-first page DTO. Fetches ``limit + 1`` rows to detect a further
     page, trims to ``limit``, and emits ``nextCursor`` only when more rows remain (BR-L8).
     Validation errors (bad limit / tampered cursor) raise ``ValidationException`` → 422.

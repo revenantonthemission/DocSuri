@@ -16,6 +16,7 @@ allowed*, and it is the layer that keeps three promises the queue-only design co
 from __future__ import annotations
 
 import logging
+import re
 import time
 from collections.abc import Callable
 from typing import Any
@@ -40,6 +41,20 @@ _RUNNING_ONLY_STATE = frozenset({JobState.RUNNING})
 #: Effect names for the ND-Q8 ledger. One per externally-observable, money-spending step, so a
 #: redelivery after a crash re-attempts only what did not happen.
 EFFECT_GENERATE = "generate"
+
+#: History page size when resolving a stream cursor; a job's log is short, so usually one read.
+_CURSOR_PAGE_LIMIT = 100
+#: The seq part of a legacy ``"<job>:<seq>"`` cursor (seq is bounded to 2**53 - 1 in storage).
+_LEGACY_SEQ = re.compile(r"[0-9]{1,16}")
+
+
+def _legacy_seq(job_id: str, cursor: str) -> int | None:
+    """The seq of a ``"<job_id>:<seq>"`` cursor for *this* job, or None for any other shape."""
+    prefix = f"{job_id}:"
+    if not cursor.startswith(prefix):
+        return None
+    digits = cursor[len(prefix) :]
+    return int(digits) if _LEGACY_SEQ.fullmatch(digits) else None
 
 
 class SubmitOutcome:
@@ -193,6 +208,28 @@ class ContentJobService:
         if self._owned(ctx, job_id) is None:
             return []
         return self._store.list_events(job_id, after_seq=after_seq, limit=limit)
+
+    def resume_seq(self, ctx: RequestContext, job_id: str, cursor: str | None) -> int:
+        """The per-job ``seq`` a stream cursor names, resolved through the caller's own history.
+
+        The cursor is the SSE ``id:`` the stream sent: the store's opaque ``event_id`` (a global
+        id in RdsJobStore, ``"<job>:<seq>"`` in the in-memory store), never a value to cast to a
+        seq. The legacy ``"<job>:<seq>"`` form still resolves when that seq is in this job's
+        history. Anything else (unknown, another job's, malformed) resumes from 0: a full replay,
+        which the client de-duplicates by ``eventId``.
+        """
+        if not cursor:
+            return 0
+        legacy = _legacy_seq(job_id, cursor)
+        after = 0
+        while True:
+            page = self.events(ctx, job_id, after_seq=after, limit=_CURSOR_PAGE_LIMIT)
+            for event in page:
+                if event.event_id == cursor or event.seq == legacy:
+                    return event.seq
+            if len(page) < _CURSOR_PAGE_LIMIT or page[-1].seq <= after:
+                return 0
+            after = page[-1].seq
 
     # --- worker-side progression ------------------------------------------------------------
 

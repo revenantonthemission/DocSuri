@@ -91,7 +91,14 @@ const NAV_COPY: Record<string, string> = {
   topics: '주제 구독',
 };
 const OWNER_BOUND = new Set([
-  'library', 'settings', 'usage', 'jobs', 'account', 'research', 'novelty', 'topics',
+  'library',
+  'settings',
+  'usage',
+  'jobs',
+  'account',
+  'research',
+  'novelty',
+  'topics',
 ]);
 const APPEARANCE_KEY = 'docsuri.u1.appearance';
 const AUTHORITY_CHANNEL = 'docsuri.authority-boundary';
@@ -263,8 +270,7 @@ export default function App({ transport }: { transport?: Transport }) {
       // A disabled channel uses the same non-secret storage-event fallback.
     }
     const storage = (event: StorageEvent) => {
-      if (event.key !== AUTHORITY_CHANNEL || !event.newValue || event.newValue.length > 160)
-        return;
+      if (event.key !== AUTHORITY_CHANNEL || !event.newValue || event.newValue.length > 160) return;
       try {
         receive(JSON.parse(event.newValue));
       } catch {
@@ -421,8 +427,7 @@ export default function App({ transport }: { transport?: Transport }) {
                     setView(item.routeId as 'account' | 'settings' | 'usage');
                   else if (['research', 'novelty'].includes(item.routeId))
                     setView(item.routeId as 'research' | 'novelty');
-                  else if (item.routeId === 'topics' && topicsCapability)
-                    setView('topics');
+                  else if (item.routeId === 'topics' && topicsCapability) setView('topics');
                   focusHeading(mainHeading);
                 }}
                 data-testid={`nav-${item.routeId}`}
@@ -798,15 +803,13 @@ function SearchWorkspace({
   const [savedSearch, setSavedSearch] = useState<Notice | null>(null);
   const sequence = useRef(0);
 
+  // initialQuery seeds a fresh mount only (the state initializers above): the shell
+  // remounts this workspace on every view or authority change. While mounted, a shell
+  // re-render hands back the context this workspace just submitted, and re-applying it
+  // would wipe the visible results.
   useEffect(() => {
-    if (initialQuery) {
-      setDraft(initialQuery.query);
-      setOrder(initialQuery.orderId);
-      setState('idle');
-      setResponse(null);
-    }
     focusHeading(heading);
-  }, [initialQuery]);
+  }, []);
 
   const runSearch = async (event?: React.FormEvent) => {
     event?.preventDefault();

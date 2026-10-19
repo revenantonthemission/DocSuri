@@ -63,10 +63,11 @@ def test_wrong_participant_cannot_claim(entry, authority):
         service.claim(UUID(result['requestId']), 'Uninstalled', 'all-data')
 
 
-def test_restore_cannot_undo_current_withdrawal(entry, authority, identities):
+def test_restore_cannot_undo_current_withdrawal(entry, authority):
     service = lifecycle(entry)
     result = request(service, authority)
-    assert service.evaluate_restore(identities['a'], UUID(result['revision']))['decision'] == 'deny'
+    # Evaluate the owner this case withdrew (the isolated authority), not the shared fixture owner.
+    assert service.evaluate_restore(authority.account_id, UUID(result['revision']))['decision'] == 'deny'
 
 
 def test_all_scope_evidence_required_for_completion(entry, authority):
@@ -113,7 +114,7 @@ def test_withdrawn_owner_reactivates_with_one_time_proof(entry, authority, conne
     """Reactivation needs the verified owner proof; scoped completion revives access."""
     manifest = (('Library', 'references'),)
     withdraw = ControlLifecycleService(entry, manifest, revision='reactivate-test')
-    first = request(withdraw, authority)
+    request(withdraw, authority)
     with connect('accounts') as conn:
         row = conn.execute(
             "SELECT email,lifecycle_state,active FROM accounts.account WHERE id=%s",

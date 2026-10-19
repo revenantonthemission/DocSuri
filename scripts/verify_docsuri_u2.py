@@ -94,6 +94,9 @@ MIGRATIONS = (
     ("discovery", "backend/modules/discovery/u2_restore_erasure.sql"),
     ("operations", "ops/src/docsuri_ops/u2_capacity.sql"),
     ("operations", "ops/src/docsuri_ops/u2_capacity_database.sql"),
+    # The shared Discovery execution writer records snapshot_revision and
+    # degradation for every realm, so this realm carries U3's column migration.
+    ("discovery", "backend/modules/discovery/u3_schema.sql"),
 )
 PHASES = (
     "setup",

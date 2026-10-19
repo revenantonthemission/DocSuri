@@ -3,7 +3,6 @@ from uuid import uuid4
 
 import psycopg
 import pytest
-from psycopg.types.json import Jsonb
 
 pytestmark = pytest.mark.u2_database
 

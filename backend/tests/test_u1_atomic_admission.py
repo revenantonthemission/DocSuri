@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
+import sys
 from contextlib import contextmanager
 from dataclasses import replace
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -206,9 +209,33 @@ def test_inherited_byte_lock_baseline_and_reconciliation_refusals(monkeypatch, t
         migrations.apply_migrations("postgresql://unused")
 
 
-def test_fixture_preadmits_every_definition_before_any_ddl(monkeypatch) -> None:
-    from tests.u1_integration import conftest
+SUMMARIZATION_ROOT = Path(__file__).resolve().parents[1] / "modules" / "summarization"
 
+
+def _is_tests_package(name: str) -> bool:
+    return name == "tests" or name.startswith("tests.")
+
+
+@pytest.fixture
+def summarization_u1_conftest(monkeypatch):
+    """Import the summarization lane's ``tests.u1_integration.conftest``.
+
+    That package resolves ``tests`` against the summarization module root, while in this lane
+    ``tests`` is ``backend/tests``. Swap the import root for the duration of the test and put
+    the backend ``tests`` modules back afterwards.
+    """
+    for name in [name for name in sys.modules if _is_tests_package(name)]:
+        monkeypatch.delitem(sys.modules, name)
+    monkeypatch.syspath_prepend(str(SUMMARIZATION_ROOT))
+    yield importlib.import_module("tests.u1_integration.conftest")
+    for name in [name for name in sys.modules if _is_tests_package(name)]:
+        del sys.modules[name]
+
+
+def test_fixture_preadmits_every_definition_before_any_ddl(
+    monkeypatch, summarization_u1_conftest
+) -> None:
+    conftest = summarization_u1_conftest
     assert len(conftest.admitted_schema_statements()) == 4
     original = conftest._atomic_sql
     seen = []

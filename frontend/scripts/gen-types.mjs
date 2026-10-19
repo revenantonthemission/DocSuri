@@ -16,6 +16,14 @@ const identifier = (name) => {
   const value = name.replace(/[^A-Za-z0-9_]/gu, '_');
   return /^[A-Za-z_]/u.test(value) ? value : `_${value}`;
 };
+// A closed object that declares no members admits only `{}`. The emitter would print it as
+// `interface X {}`, which in TypeScript admits every non-nullish value (0, '', arrays), so such
+// nodes are emitted as `Record<string, never>` instead.
+const MEMBER_KEYWORDS = ['$ref', 'patternProperties', 'propertyNames', 'unevaluatedProperties',
+  'dependentSchemas', 'allOf', 'anyOf', 'oneOf', 'not', 'if'];
+const isClosedEmptyObject = (node) => node.type === 'object' && node.additionalProperties === false &&
+  Object.keys(node.properties ?? {}).length === 0 && (node.required ?? []).length === 0 &&
+  MEMBER_KEYWORDS.every((key) => !Object.hasOwn(node, key));
 
 export async function build(root, { manifest = false } = {}) {
   // An explicit custom root is a developer/test input. Normal CLI/CI always requires the manifest.
@@ -51,6 +59,7 @@ export async function build(root, { manifest = false } = {}) {
     if (Object.keys(result).every((key) => ['title', 'description', 'default', 'examples', '$comment', 'deprecated', 'readOnly', 'writeOnly'].includes(key))) {
       result.tsType = 'unknown';
     }
+    if (isClosedEmptyObject(result)) result.tsType = 'Record<string, never>';
     return result;
   }
   const definitions = {};
@@ -60,7 +69,9 @@ export async function build(root, { manifest = false } = {}) {
       ? { tsType: node ? 'unknown' : 'never', title: name }
       : { ...node, title: name };
   }
-  return compile({ type: 'object', properties: {}, additionalProperties: false, $defs: definitions }, 'PublicWire', {
+  // The root only carries the definitions and must stay an interface for the emitter to declare
+  // them, so its closed empty shape is spelled as a `never` index signature instead.
+  return compile({ type: 'object', properties: {}, additionalProperties: { tsType: 'never' }, $defs: definitions }, 'PublicWire', {
     bannerComment: `/* DO NOT EDIT. Declared public schema closure, offline. SHA256:${hash.digest('hex')} */`,
     unreachableDefinitions: true,
     declareExternallyReferenced: true,

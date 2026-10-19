@@ -44,11 +44,14 @@ def test_every_applied_migration_file_matches_its_retained_hash(connect):
     assert not mismatched, "applied migration bytes changed: " + ", ".join(mismatched)
 
 
-def test_unknown_schema_cannot_be_observed_as_ready(connect):
+def test_unknown_schema_cannot_be_observed_as_ready(connect, transactions):
     """A capability that has no registered probe is never silently ready."""
-    from backend.local_observation import PROBES
+    from backend.local_observation import PROBES, observe_all, record
 
     assert "u2-unknown" not in PROBES
+    # Each realm is disposable: a freshly migrated one has never been served, so
+    # record one bounded observation pass through the owned writer before reading.
+    record(transactions, observe_all(transactions))
     with connect("operations") as conn:
         rows = conn.execute(
             "SELECT capability FROM operations.observation"

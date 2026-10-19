@@ -3110,6 +3110,118 @@
       ]
     },
     {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "DeliveryOutcomeView",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "DigestPresentationView",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "DigestRunView",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "DigestSettingsView",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "EffectivePreferencesView",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "FollowResult",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "LastRunView",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "MutationResult",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "ResolveHttp",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "ResolveResult",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "SendLogView",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "SettingsSaveHttp",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "SettingsSaveResult",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "TopicFollowHttp",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "TopicList",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "symbol": "TopicView",
+      "bases": [
+        "BaseModel"
+      ]
+    },
+    {
       "file": "backend/modules/trends/models.py",
       "symbol": "DigestRunReport",
       "bases": [
@@ -3225,11 +3337,11 @@
   "sourceDigests": [
     {
       "file": "backend/local_browser.py",
-      "sha256": "ddd5d88f7b0ef9cc516de405ecb71bbfb7e88a546b1b380828e62f1126b0b1d0"
+      "sha256": "5c8fff74137b676addaa97d316dc3ff92749fc2f13647ecb943507b4fc259c71"
     },
     {
       "file": "backend/local_host.py",
-      "sha256": "07cbc71f9d44fa666c52d357c3c2d012bf6ab3040348f9ce44b60cd614c57734"
+      "sha256": "3e0dfacc9ef2aa460e670fd47687825b755bc3c70f10afd81546db2a0c6dbea4"
     },
     {
       "file": "backend/middleware/agent_attachments.py",
@@ -3249,7 +3361,7 @@
     },
     {
       "file": "backend/modules/accounts/local_http.py",
-      "sha256": "8042f8b9ca5f252d1d9391c54d8d869fc028c03db3dbb6d85ec66e6f0389f569"
+      "sha256": "f70898c0c36a122c32bc78eca691a856755515b562c0e0efebd7d5f1cc926344"
     },
     {
       "file": "backend/modules/accounts/models.py",
@@ -3489,7 +3601,7 @@
     },
     {
       "file": "backend/modules/library/validation.py",
-      "sha256": "11196037a9d58bb10466261a8279766b79dbe767d7d7cc3ddcada0b161df1a4f"
+      "sha256": "183382e2406bd5e1386b3aa3fbd6aee96fa345018415182d01dbec997fdda91e"
     },
     {
       "file": "backend/modules/mypage/controller.py",
@@ -3545,11 +3657,11 @@
     },
     {
       "file": "backend/modules/personalization/guarded_service.py",
-      "sha256": "bde2a76ab02ce4c2091ce61c974f488bde88369fe130715fe71c0ac336cee85e"
+      "sha256": "3cc38c090f3b16f0aa4f97b83095d8d3556728b0816d67321c6d41850b1cf9ce"
     },
     {
       "file": "backend/modules/personalization/local_http.py",
-      "sha256": "09f2b780aed6c9f28edfd87fb3cbbb098a261d4fd72afe63e2f14ca20abc4562"
+      "sha256": "2dcba531744ee8b96d0ec4f29ab902afbac1dc9c9482be47e07881ad9a39d135"
     },
     {
       "file": "backend/modules/personalization/models.py",
@@ -3557,7 +3669,7 @@
     },
     {
       "file": "backend/modules/personalization/reset_repository.py",
-      "sha256": "4731401ee67e84932e402fd6975e2a57edd3c35b7343f6cb5a48c7f862953ddb"
+      "sha256": "f836c811673fe96ffeb0485f58773bf39c70602406f9d07d24f0f3aca5790d92"
     },
     {
       "file": "backend/modules/plans/control_service.py",
@@ -3581,7 +3693,7 @@
     },
     {
       "file": "backend/modules/research/execution.py",
-      "sha256": "edacc81d9ce0da81c6cd821b19f4898ac43c782b06bd851df1ffb60a0443212f"
+      "sha256": "0619f90476cf65438ed4527993057b30648eac2f8e20b30655846a8ff4c1ae01"
     },
     {
       "file": "backend/modules/research/http.py",
@@ -3593,7 +3705,7 @@
     },
     {
       "file": "backend/modules/summarization/guarded_repository.py",
-      "sha256": "9f84e89e8b79329e824a09177249999826376ffe98e8770493f7b9d2ab3c8bc4"
+      "sha256": "e0c3a956c2d316021c63a2482313db27a15b6614dc77ce80d5c57595d563d7bf"
     },
     {
       "file": "backend/modules/summarization/local_catalog.py",
@@ -3621,7 +3733,7 @@
     },
     {
       "file": "backend/modules/summarization/src/summarization/api/router.py",
-      "sha256": "e2cf79905f5819009d5a559fb7ae96c70182beaa855e1396d61172a6a2fad7fa"
+      "sha256": "02eea502fd542c92dd5b360e864cf637bdc3f79c7d21cc87803ba095e2c89a76"
     },
     {
       "file": "backend/modules/summarization/src/summarization/domain/cache_key.py",
@@ -3666,6 +3778,10 @@
     {
       "file": "backend/modules/summarization/worker.py",
       "sha256": "af1bf02ab4aae3b663c5ba716012f81d2786e8f381fe756eb7029c918ed868d4"
+    },
+    {
+      "file": "backend/modules/topics/http.py",
+      "sha256": "a5e172d60c9c535cbcf52578c0413f87483e8fa6f1b5db6a2e4982ea3a34927b"
     },
     {
       "file": "backend/modules/trends/controller.py",

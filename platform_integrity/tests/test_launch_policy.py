@@ -201,6 +201,7 @@ def test_artifact_paths_reject_traversal_other_releases_and_control_characters()
             validate_manifest(value.model_copy(update={"artifacts": ((PYTHON, D), (name, D))}))
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS group ABI")
 def test_kernel_group_observation_is_available_on_this_host():
     assert isinstance(kernel_groups(), tuple)
 
@@ -483,6 +484,7 @@ def installable_realm(frozen_realm, tmp_path, monkeypatch):
     return launchd_module, value, staged, daemons, SimpleNamespace(calls=calls, loaded=loaded)
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS launchd installer")
 def test_install_verifies_then_bootstraps_every_frozen_entry(installable_realm, monkeypatch):
     launchd_module, value, deployment, daemons, control = installable_realm
     monkeypatch.setattr(launchd_module, "protected_chain", lambda path: None)
@@ -497,6 +499,7 @@ def test_install_verifies_then_bootstraps_every_frozen_entry(installable_realm, 
         canonical(value.model_dump(mode="json"))
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS launchd installer")
 def test_published_manifest_is_readable_but_not_writable_by_service_roles(installable_realm):
     launchd_module, value, deployment, _, _ = installable_realm
     launchd_module.install("test", deployment)
@@ -511,6 +514,7 @@ def test_published_manifest_is_readable_but_not_writable_by_service_roles(instal
     assert path.read_bytes() == canonical(value.model_dump(mode="json"))
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS launchd installer")
 @pytest.mark.parametrize("mode", [0o400, 0o440, 0o644])
 def test_install_repairs_same_digest_manifest_access_mode(installable_realm, mode):
     launchd_module, value, deployment, _, control = installable_realm
@@ -528,6 +532,7 @@ def test_install_repairs_same_digest_manifest_access_mode(installable_realm, mod
     assert control.calls == []
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS launchd installer")
 def test_install_is_idempotent_and_refuses_silent_replacement(installable_realm, monkeypatch):
     launchd_module, value, deployment, daemons, control = installable_realm
     monkeypatch.setattr(launchd_module, "protected_chain", lambda path: None)
@@ -552,6 +557,7 @@ def test_install_is_idempotent_and_refuses_silent_replacement(installable_realm,
     assert control.calls == ["bootout", "bootstrap"]
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS launchd installer")
 def test_install_refuses_before_writing_when_anything_is_unproven(installable_realm, monkeypatch):
     launchd_module, value, deployment, daemons, control = installable_realm
     monkeypatch.setattr(launchd_module, "protected_chain", lambda path: None)
@@ -575,6 +581,7 @@ def test_install_refuses_before_writing_when_anything_is_unproven(installable_re
     assert control.calls == [] and not (launchd_module.REALMS["test"] / "deployment.json").exists()
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS launchd installer")
 def test_install_requires_root_and_refuses_a_foreign_manifest(installable_realm, monkeypatch):
     launchd_module, value, deployment, _, control = installable_realm
     monkeypatch.setattr(launchd_module, "protected_chain", lambda path: None)
@@ -592,6 +599,7 @@ def test_install_requires_root_and_refuses_a_foreign_manifest(installable_realm,
     assert control.calls == []
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS launchd installer")
 def test_install_refuses_to_write_through_a_symlinked_launchd_file(installable_realm,
                                                                   monkeypatch):
     launchd_module, value, deployment, daemons, control = installable_realm
@@ -605,6 +613,7 @@ def test_install_refuses_to_write_through_a_symlinked_launchd_file(installable_r
     assert control.calls == []
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS launchd installer")
 def test_uninstall_bootouts_and_removes_only_its_own_files(installable_realm, monkeypatch):
     launchd_module, value, deployment, daemons, control = installable_realm
     monkeypatch.setattr(launchd_module, "protected_chain", lambda path: None)
@@ -621,6 +630,7 @@ def test_uninstall_bootouts_and_removes_only_its_own_files(installable_realm, mo
     assert not (launchd_module.REALMS["test"] / "deployment.json").exists()
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS launchd installer")
 def test_uninstall_refuses_a_swapped_plist_and_leaves_it_in_place(installable_realm, monkeypatch):
     launchd_module, value, deployment, daemons, control = installable_realm
     monkeypatch.setattr(launchd_module, "protected_chain", lambda path: None)
@@ -634,6 +644,7 @@ def test_uninstall_refuses_a_swapped_plist_and_leaves_it_in_place(installable_re
     assert target.is_file()
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS launchd installer")
 def test_install_cli_reports_state_and_fails_closed_without_root(installable_realm, capsys,
                                                                  monkeypatch):
     launchd_module, value, deployment, _, control = installable_realm
@@ -653,6 +664,7 @@ def test_install_cli_reports_state_and_fails_closed_without_root(installable_rea
     assert report["detail"] == "installer requires root"
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS launchd installer")
 def test_install_repairs_a_drifted_or_half_removed_deployment(installable_realm, monkeypatch):
     launchd_module, value, deployment, daemons, control = installable_realm
     monkeypatch.setattr(launchd_module, "protected_chain", lambda path: None)
@@ -681,6 +693,7 @@ def test_install_repairs_a_drifted_or_half_removed_deployment(installable_realm,
         launchd_module.install("test", deployment, replace=True)
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS launchd installer")
 def test_uninstall_refuses_to_orphan_a_job_launchd_still_holds(installable_realm, monkeypatch):
     launchd_module, value, deployment, daemons, control = installable_realm
     monkeypatch.setattr(launchd_module, "protected_chain", lambda path: None)
@@ -692,6 +705,7 @@ def test_uninstall_refuses_to_orphan_a_job_launchd_still_holds(installable_realm
     assert plist.is_file() and (launchd_module.REALMS["test"] / "deployment.json").is_file()
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="native macOS launchd installer")
 def test_replace_migrates_a_published_manifest_this_release_cannot_validate(
         installable_realm, monkeypatch):
     """A deployment written before a validator tightened must still be replaceable.

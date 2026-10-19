@@ -8,14 +8,21 @@ already-grounded fields. A global handler keeps internals out of error responses
 
 from __future__ import annotations
 
+import asyncio
+import json
+import time
+from collections.abc import AsyncIterator, Awaitable, Callable
+from dataclasses import dataclass
 from typing import Any
 
 from docsuri_shared.private_docs import is_private_paper_id
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
+from starlette.concurrency import run_in_threadpool
 
 from ..adapters._paper_ref import paper_version
 from ..api.gateway_seam import run_summarization
+from ..domain.job import TERMINAL_STATES
 from ..domain.models import (
     AuthSession,
     Persona,
@@ -35,6 +42,71 @@ from ..service.orchestrator import SummarizationOrchestrationService
 # any store/queue access so no cross-tenant read is even attempted.
 _PRIVATE_NAMESPACE_404 = {"status": "not_found"}
 
+# Content-job event stream bounds (REM-2 item 22). The stream polls the durable history, writes an
+# SSE comment while idle (proxies keep the connection, and a vanished client is noticed on that
+# write), and ends after a bounded lifetime; EventSource then resumes with Last-Event-ID.
+EVENT_POLL_INTERVAL_SECONDS = 1.0
+EVENT_HEARTBEAT_INTERVAL_SECONDS = 15.0
+EVENT_STREAM_MAX_SECONDS = 300.0
+EVENT_PAGE_LIMIT = 100
+SSE_HEARTBEAT = ": keepalive\n\n"
+
+
+@dataclass(frozen=True)
+class EventStreamTiming:
+    """Injectable event-stream timing; tests pass a fake clock and sleep so nothing waits."""
+
+    poll_interval_seconds: float = EVENT_POLL_INTERVAL_SECONDS
+    heartbeat_interval_seconds: float = EVENT_HEARTBEAT_INTERVAL_SECONDS
+    max_lifetime_seconds: float = EVENT_STREAM_MAX_SECONDS
+    clock: Callable[[], float] = time.monotonic
+    sleep: Callable[[float], Awaitable[None]] = asyncio.sleep
+
+    def __post_init__(self) -> None:
+        intervals = (
+            self.poll_interval_seconds,
+            self.heartbeat_interval_seconds,
+            self.max_lifetime_seconds,
+        )
+        if not all(value > 0 for value in intervals):
+            raise ValueError("event stream intervals must be positive")
+
+
+async def _job_event_stream(
+    job_service: ContentJobService,
+    ctx: RequestContext,
+    job_id: str,
+    after_seq: int,
+    timing: EventStreamTiming,
+) -> AsyncIterator[str]:
+    """Replay the job's history after ``after_seq``, then follow it to a terminal event.
+
+    An async generator: each store read runs in the threadpool for that one query, and the idle
+    wait is an ``await``, so no worker thread is held between polls and a disconnect stops the
+    stream at its next await or heartbeat write. The lifetime cap also bounds a client that never
+    leaves; it reconnects and resumes from its Last-Event-ID.
+    """
+    started = last_write = timing.clock()
+    cursor = after_seq
+    while True:
+        events = await run_in_threadpool(
+            job_service.events, ctx, job_id, after_seq=cursor, limit=EVENT_PAGE_LIMIT
+        )
+        for event in events:
+            yield f"id: {event.event_id}\ndata: {json.dumps(event.to_dict())}\n\n"
+            cursor = event.seq
+            if event.state in TERMINAL_STATES:
+                return
+        now = timing.clock()
+        if events:
+            last_write = now
+        if now - started >= timing.max_lifetime_seconds:
+            return
+        if now - last_write >= timing.heartbeat_interval_seconds:
+            yield SSE_HEARTBEAT
+            last_write = now
+        await timing.sleep(timing.poll_interval_seconds)
+
 
 def build_router(
     orchestrator: SummarizationOrchestrationService,
@@ -42,8 +114,10 @@ def build_router(
     assets_enabled: bool = False,
     docmodel_enabled: bool = False,
     job_service: ContentJobService | None = None,
+    event_stream_timing: EventStreamTiming | None = None,
 ) -> Any:
     router = APIRouter()
+    timing = event_stream_timing or EventStreamTiming()
 
     @router.post("/api/content-jobs/submit")
     async def submit_content_job(request: Request) -> Any:
@@ -114,9 +188,11 @@ def build_router(
     def content_job_events(request: Request, job_id: str) -> Any:
         """SSE stream of the job's state history (REM-2 item 22 / RJ-AC04, RJ-AC02).
 
-        The client may reconnect with ``Last-Event-ID`` (the per-job seq) to resume from the gap
-        it missed. Each event is a JSON line with {eventId, jobId, state, timestampUs, payload?}.
-        The stream ends when the job reaches a terminal state.
+        The client may reconnect with ``Last-Event-ID`` (the last event ``id:`` it received) to
+        resume from the gap it missed; an id this job's history does not contain replays it in
+        full. Each event is a JSON line with {eventId, jobId, seq, state, timestampUs, payload?}.
+        The stream ends when the job reaches a terminal state or at its lifetime cap, and sends a
+        comment heartbeat while idle.
         """
         if job_service is None:
             return JSONResponse({"status": "unavailable"}, status_code=503)
@@ -131,39 +207,15 @@ def build_router(
         if job is None:
             return JSONResponse({"status": "not_found"}, status_code=404)
 
-        # Resume from Last-Event-ID header (RFC 8030) or query param fallback.
+        # Resume from the Last-Event-ID header (the SSE spec) or the query-param fallback. The
+        # cursor is the last ``id:`` sent, resolved through this job's own authorized history.
         last_event_id = request.headers.get("last-event-id")
         if last_event_id is None:
             last_event_id = request.query_params.get("lastEventId")
-        after_seq = 0
-        if last_event_id is not None:
-            try:
-                after_seq = int(last_event_id.split(":")[-1])
-            except (ValueError, IndexError):
-                after_seq = 0
-
-        from ..domain.job import TERMINAL_STATES
-
-        def event_stream():
-            import json
-            import time
-
-            cursor = [after_seq]
-            sent_terminal = False
-            while True:
-                events = job_service.events(ctx, job_id, after_seq=cursor[0], limit=100)
-                for ev in events:
-                    yield f"id: {ev.event_id}\\ndata: {json.dumps(ev.to_dict())}\\n\\n"
-                    cursor[0] = ev.seq
-                    if ev.state in TERMINAL_STATES:
-                        sent_terminal = True
-                        break
-                if sent_terminal:
-                    break
-                time.sleep(1.0)
+        after_seq = job_service.resume_seq(ctx, job_id, last_event_id)
 
         return StreamingResponse(
-            event_stream(),
+            _job_event_stream(job_service, ctx, job_id, after_seq, timing),
             media_type="text/event-stream",
             headers={
                 "cache-control": "no-cache",
