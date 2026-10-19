@@ -26,7 +26,15 @@ function privateJson(file: string) {
 }
 
 export function helper(
-  action: 'setup' | 'withdraw' | 'expire' | 'restore-eligible' | 'reset-jobs',
+  // Mirrors ACTIONS in scripts/u3_browser_fixtures.py.
+  action:
+    | 'setup'
+    | 'publish'
+    | 'reset-corpus'
+    | 'withdraw'
+    | 'restore-eligible'
+    | 'expire'
+    | 'reset-jobs',
   paper?: string,
 ) {
   const args = [

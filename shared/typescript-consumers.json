@@ -439,38 +439,21 @@
     },
     {
       "file": "frontend/components/SummaryModal.tsx",
+      "module": "@/lib/api/contentJobApi",
+      "symbol": "PreparedResultEnvelope",
+      "local": "PreparedResultEnvelope",
+      "generated": [
+        "SummarizationSummaryDraft",
+        "SummarizationTranslationDraft"
+      ]
+    },
+    {
+      "file": "frontend/components/SummaryModal.tsx",
       "module": "@/types/generated",
       "symbol": "AnchorVM",
       "local": "AnchorVM",
       "generated": [
         "SummarizationAnchor"
-      ]
-    },
-    {
-      "file": "frontend/components/SummaryModal.tsx",
-      "module": "@/types/generated",
-      "symbol": "Persona",
-      "local": "Persona",
-      "generated": [
-        "SummarizationPersona"
-      ]
-    },
-    {
-      "file": "frontend/components/SummaryModal.tsx",
-      "module": "@/types/generated",
-      "symbol": "SummarizeRequest",
-      "local": "SummarizeRequest",
-      "generated": [
-        "SummarizationSummaryRequest"
-      ]
-    },
-    {
-      "file": "frontend/components/SummaryModal.tsx",
-      "module": "@/types/generated",
-      "symbol": "SummarizeScope",
-      "local": "SummarizeScope",
-      "generated": [
-        "SummarizationSummarizeScope"
       ]
     },
     {
@@ -1136,15 +1119,6 @@
     {
       "file": "frontend/lib/api/apiClient.ts",
       "module": "@/types/wire/dtos",
-      "symbol": "ExtendedBackendNoveltyMessage",
-      "local": "BackendNoveltyMessage",
-      "generated": [
-        "ExtendedBackendNoveltyMessage"
-      ]
-    },
-    {
-      "file": "frontend/lib/api/apiClient.ts",
-      "module": "@/types/wire/dtos",
       "symbol": "ExtendedBackendResearchJob",
       "local": "BackendResearchJob",
       "generated": [
@@ -1297,6 +1271,34 @@
     },
     {
       "file": "frontend/lib/api/classifySummarize.ts",
+      "module": "@/types/generated",
+      "symbol": "TranslationVM",
+      "local": "TranslationVM",
+      "generated": [
+        "SummarizationTranslationDraft"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/contentJobApi.ts",
+      "module": "./contentJobContracts",
+      "symbol": "PreparedResultEnvelope",
+      "local": "PreparedResultEnvelope",
+      "generated": [
+        "SummarizationSummaryDraft",
+        "SummarizationTranslationDraft"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/contentJobContracts.ts",
+      "module": "@/types/generated",
+      "symbol": "SummaryVM",
+      "local": "SummaryVM",
+      "generated": [
+        "SummarizationSummaryDraft"
+      ]
+    },
+    {
+      "file": "frontend/lib/api/contentJobContracts.ts",
       "module": "@/types/generated",
       "symbol": "TranslationVM",
       "local": "TranslationVM",
@@ -1500,6 +1502,378 @@
       "local": "SummarizeRequest",
       "generated": [
         "SummarizationSummaryRequest"
+      ]
+    },
+    {
+      "file": "frontend/src/account-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceAccessConsentPage",
+      "local": "Consents",
+      "generated": [
+        "WorkspaceAccessConsentPage"
+      ]
+    },
+    {
+      "file": "frontend/src/account-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceAccessIdentityPage",
+      "local": "Links",
+      "generated": [
+        "WorkspaceAccessIdentityPage"
+      ]
+    },
+    {
+      "file": "frontend/src/account-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceAccessMfaEnrollment",
+      "local": "Enrollment",
+      "generated": [
+        "WorkspaceAccessMfaEnrollment"
+      ]
+    },
+    {
+      "file": "frontend/src/account-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceAccessMfaMaterial",
+      "local": "Material",
+      "generated": [
+        "WorkspaceAccessMfaMaterial"
+      ]
+    },
+    {
+      "file": "frontend/src/account-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceAccessProfile",
+      "local": "Profile",
+      "generated": [
+        "WorkspaceAccessProfile"
+      ]
+    },
+    {
+      "file": "frontend/src/App.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceCapabilityCatalog",
+      "local": "WorkspaceCapabilityCatalog",
+      "generated": [
+        "WorkspaceCapabilityCatalog"
+      ]
+    },
+    {
+      "file": "frontend/src/personal-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceSettingsResetPage",
+      "local": "ResetPage",
+      "generated": [
+        "WorkspaceSettingsResetPage"
+      ]
+    },
+    {
+      "file": "frontend/src/personal-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceSettingsResetResult",
+      "local": "ResetResult",
+      "generated": [
+        "WorkspaceSettingsResetResult"
+      ]
+    },
+    {
+      "file": "frontend/src/personal-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceSettingsResetStatus",
+      "local": "ResetStatus",
+      "generated": [
+        "WorkspaceSettingsResetStatus"
+      ]
+    },
+    {
+      "file": "frontend/src/personal-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceSettingsSnapshot",
+      "local": "Settings",
+      "generated": [
+        "WorkspaceSettingsSnapshot"
+      ]
+    },
+    {
+      "file": "frontend/src/personal-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceSettingsSuggestionPage",
+      "local": "Suggestions",
+      "generated": [
+        "WorkspaceSettingsSuggestionPage"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/composer.tsx",
+      "module": "./api",
+      "symbol": "Artifact",
+      "local": "Artifact",
+      "generated": [
+        "WorkspaceResearchArtifact"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/composer.tsx",
+      "module": "./api",
+      "symbol": "DraftRef",
+      "local": "DraftRef",
+      "generated": [
+        "WorkspaceDraftRef"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/composer.tsx",
+      "module": "./api",
+      "symbol": "Policy",
+      "local": "Policy",
+      "generated": [
+        "WorkspacePolicyRef"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/composer.tsx",
+      "module": "./api",
+      "symbol": "Scope",
+      "local": "Scope",
+      "generated": [
+        "WorkspaceResearchScope"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/composer.tsx",
+      "module": "./api",
+      "symbol": "Session",
+      "local": "Session",
+      "generated": [
+        "WorkspaceResearchSession"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/composer.tsx",
+      "module": "./jobs",
+      "symbol": "JobLink",
+      "local": "JobLink",
+      "generated": [
+        "WorkspaceResearchJobReadHttp"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/drafts.tsx",
+      "module": "./api",
+      "symbol": "DraftKind",
+      "local": "DraftKind",
+      "generated": [
+        "WorkspaceDraftRevision"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/drafts.tsx",
+      "module": "./api",
+      "symbol": "DraftRef",
+      "local": "DraftRef",
+      "generated": [
+        "WorkspaceDraftRef"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/drafts.tsx",
+      "module": "./api",
+      "symbol": "DraftRevision",
+      "local": "DraftRevision",
+      "generated": [
+        "WorkspaceDraftRevision"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/drafts.tsx",
+      "module": "./api",
+      "symbol": "Policy",
+      "local": "Policy",
+      "generated": [
+        "WorkspacePolicyRef"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/evidence.tsx",
+      "module": "./api",
+      "symbol": "ArtifactResponse",
+      "local": "ArtifactResponse",
+      "generated": [
+        "WorkspaceResearchArtifactResponse"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/evidence.tsx",
+      "module": "./api",
+      "symbol": "Evidence",
+      "local": "Evidence",
+      "generated": [
+        "WorkspaceResearchEvidence"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/jobs.tsx",
+      "module": "./api",
+      "symbol": "Artifact",
+      "local": "Artifact",
+      "generated": [
+        "WorkspaceResearchArtifact"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/jobs.tsx",
+      "module": "./api",
+      "symbol": "ArtifactResponse",
+      "local": "ArtifactResponse",
+      "generated": [
+        "WorkspaceResearchArtifactResponse"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/jobs.tsx",
+      "module": "./api",
+      "symbol": "Job",
+      "local": "Job",
+      "generated": [
+        "WorkspaceError",
+        "WorkspaceProgress",
+        "WorkspaceResearchJobReadHttp",
+        "WorkspaceResultRef"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/jobs.tsx",
+      "module": "./api",
+      "symbol": "JobKind",
+      "local": "JobKind",
+      "generated": [
+        "WorkspaceResearchJobReadHttp"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/research-workspace.tsx",
+      "module": "./api",
+      "symbol": "Artifact",
+      "local": "Artifact",
+      "generated": [
+        "WorkspaceResearchArtifact"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/research-workspace.tsx",
+      "module": "./api",
+      "symbol": "Context",
+      "local": "Context",
+      "generated": [
+        "WorkspaceResearchContext"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/research-workspace.tsx",
+      "module": "./api",
+      "symbol": "Deletion",
+      "local": "Deletion",
+      "generated": [
+        "WorkspaceResearchDeletion"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/research-workspace.tsx",
+      "module": "./api",
+      "symbol": "Policy",
+      "local": "Policy",
+      "generated": [
+        "WorkspacePolicyRef"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/research-workspace.tsx",
+      "module": "./api",
+      "symbol": "Session",
+      "local": "Session",
+      "generated": [
+        "WorkspaceResearchSession"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/research-workspace.tsx",
+      "module": "./api",
+      "symbol": "Sessions",
+      "local": "Sessions",
+      "generated": [
+        "WorkspaceResearchSessions"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/research-workspace.tsx",
+      "module": "./jobs",
+      "symbol": "JobLink",
+      "local": "JobLink",
+      "generated": [
+        "WorkspaceResearchJobReadHttp"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/sources.tsx",
+      "module": "../../types/wire/dtos",
+      "symbol": "WorkspaceResearchAttachment",
+      "local": "WorkspaceResearchAttachment",
+      "generated": [
+        "WorkspaceResearchAttachment"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/sources.tsx",
+      "module": "./api",
+      "symbol": "Scope",
+      "local": "Scope",
+      "generated": [
+        "WorkspaceResearchScope"
+      ]
+    },
+    {
+      "file": "frontend/src/usage-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceAccessProfile",
+      "local": "Profile",
+      "generated": [
+        "WorkspaceAccessProfile"
+      ]
+    },
+    {
+      "file": "frontend/src/usage-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceUsageAssignmentSnapshot",
+      "local": "Assignment",
+      "generated": [
+        "WorkspaceUsageAssignmentSnapshot"
+      ]
+    },
+    {
+      "file": "frontend/src/usage-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceUsageMeasurePage",
+      "local": "Measures",
+      "generated": [
+        "WorkspaceUsageMeasurePage"
+      ]
+    },
+    {
+      "file": "frontend/src/usage-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceUsagePlanPresentation",
+      "local": "Plan",
+      "generated": [
+        "WorkspaceUsagePlanPresentation"
+      ]
+    },
+    {
+      "file": "frontend/src/usage-controls.tsx",
+      "module": "../types/wire/dtos",
+      "symbol": "WorkspaceUsageRecordsPage",
+      "local": "Records",
+      "generated": [
+        "WorkspaceUsageRecordsPage"
       ]
     },
     {
@@ -2271,11 +2645,11 @@
     },
     {
       "file": "frontend/components/DocModelViewer.tsx",
-      "sha256": "8c839993a729789263a16db2f5700f51f14689b753a5e3407a3e99053d690483"
+      "sha256": "26fd3c6f4d53325ce00e5bc9037d5254915719ada62613bd77726f60cc060832"
     },
     {
       "file": "frontend/components/FullTranslationIsland.tsx",
-      "sha256": "a7838f54a37035c99e0a95a27398204b091428a23f998909fc023c506fb7bb62"
+      "sha256": "3c298a9a05ca3a4b90705fe5c85ece3803742b5489326a280fee740a01e4151b"
     },
     {
       "file": "frontend/components/library/HistoryScreen.tsx",
@@ -2327,7 +2701,7 @@
     },
     {
       "file": "frontend/components/PaperDetailIsland.tsx",
-      "sha256": "4ba1e1f5eb0834e552bc38e56df1dcacb98643b73651884344a235e22d9d8b26"
+      "sha256": "2d44bdd8cab94985a0fba8659cb5c1f42e9d29e691ac14c1a9d22380b66f5c4e"
     },
     {
       "file": "frontend/components/PersonaToggle.tsx",
@@ -2351,7 +2725,7 @@
     },
     {
       "file": "frontend/components/SummaryModal.tsx",
-      "sha256": "f0df0fd5d25625b705c32f0efd315177b4524582cc6ca2b0fdc31c4ceca42660"
+      "sha256": "f8fe5b66e896f266fdf5a4122e0d90ecbcfd4cf674f5f1772ab33511f8d0a937"
     },
     {
       "file": "frontend/components/SummaryView.tsx",
@@ -2371,7 +2745,7 @@
     },
     {
       "file": "frontend/lib/api/apiClient.ts",
-      "sha256": "18542fad1a4d9bcba51f029525b145ae10382132f78f949910c3a5afe13da364"
+      "sha256": "d620b8418c7f582c533f8a579cc06f4152e6db32040403d92370622bda552eb5"
     },
     {
       "file": "frontend/lib/api/classify.ts",
@@ -2380,6 +2754,14 @@
     {
       "file": "frontend/lib/api/classifySummarize.ts",
       "sha256": "019327719d977ea4dd10be0061602eba0ac752305f229a9ca58119433409b0c0"
+    },
+    {
+      "file": "frontend/lib/api/contentJobApi.ts",
+      "sha256": "3727d341dfdebd8a9ca1a5cc85970b61a48090a647807e472db6e5cad994f483"
+    },
+    {
+      "file": "frontend/lib/api/contentJobContracts.ts",
+      "sha256": "45cfe960ecec7e81780e8feaf5c0bc09de6545b774264b8a0c0cd9cc365a2937"
     },
     {
       "file": "frontend/lib/api/mockTransport.ts",
@@ -2403,7 +2785,7 @@
     },
     {
       "file": "frontend/lib/useAssets.ts",
-      "sha256": "84242682635836f6f32cf0b5f2b2d43445f97ab7715e4f5d6e134dea9f6e7f57"
+      "sha256": "188fcf4ee6f91f7c6d6dbe5ef4033aa496bcb4391e275674835dc52a54833199"
     },
     {
       "file": "frontend/lib/useDocModel.ts",
@@ -2416,6 +2798,46 @@
     {
       "file": "frontend/lib/useSummarize.ts",
       "sha256": "bbb1ab970a6cabcf673b05efba668d0ff58096d4cc1877fb957fb9df83b5b088"
+    },
+    {
+      "file": "frontend/src/account-controls.tsx",
+      "sha256": "0193e327ccb148657311b9b42eeadf0edc72cf8e7403334fa00a2e45e1714b68"
+    },
+    {
+      "file": "frontend/src/App.tsx",
+      "sha256": "5971dcf2ffb626451061c6474af7179243680f89ca2926c782bb2bb35eabd299"
+    },
+    {
+      "file": "frontend/src/personal-controls.tsx",
+      "sha256": "268d55d1066a67c9563f8f6259bc492b27c328bca18bbae54165ba47b9bbeede"
+    },
+    {
+      "file": "frontend/src/u4-research/composer.tsx",
+      "sha256": "2867fb9e6aef37e663d7db1b130168be28dd32ed17f124f7b1aa99b613a1c124"
+    },
+    {
+      "file": "frontend/src/u4-research/drafts.tsx",
+      "sha256": "1199de1265e13b5fb661118478676a7cff56af0cedb40c48a1de4c01fd10e0dd"
+    },
+    {
+      "file": "frontend/src/u4-research/evidence.tsx",
+      "sha256": "9f33a5973bba8cf6f08291c2d8feb5749a147ef04fabdd1122a88e6c579f3dbf"
+    },
+    {
+      "file": "frontend/src/u4-research/jobs.tsx",
+      "sha256": "e6f6ef728fa1f4409e5670c253e681645ba1a4d248635f57f2e3b2c21993d868"
+    },
+    {
+      "file": "frontend/src/u4-research/research-workspace.tsx",
+      "sha256": "8cd60e426f5383890a34b3842e7b9e19979820f7fd8094c0a490825bb700aa1a"
+    },
+    {
+      "file": "frontend/src/u4-research/sources.tsx",
+      "sha256": "c6580452a929f1068c4c59dc24e7d8663b326242b60489de280d8c72c3da2621"
+    },
+    {
+      "file": "frontend/src/usage-controls.tsx",
+      "sha256": "9adbbf5e19209cb9674b60e7521c6c523b45220fa7e073dd4af6f2b91bb2096f"
     },
     {
       "file": "frontend/types/generated/library.ts",

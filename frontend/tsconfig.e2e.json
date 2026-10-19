@@ -1,0 +1,8 @@
+// Playwright browser specs. tsconfig.json excludes e2e/ so the app typecheck, `next build` and the
+// consumer inventory stay app-only; this project gives the specs a home for typechecking and ESLint.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "incremental": false },
+  "include": ["e2e/**/*.ts"],
+  "exclude": ["node_modules", ".next"]
+}

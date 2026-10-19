@@ -42,9 +42,11 @@ it('rejects duplicate JSON members, invalid UTF-8 and nonfinite numeric literals
 
 it('validates the production inventory and keeps internal resources outside public roots', async () => {
   const { catalog } = await loadCatalog(fileURLToPath(new URL('../../shared', import.meta.url)));
-  expect(catalog.documents.size).toBe(14);
-  expect(catalog.consumerRoots('typescript')).toHaveLength(8);
-  expect(catalog.consumerRoots('python')).toHaveLength(14);
+  // Includes the workspace contract from shared/python/tools/export_workspace_contract.py:
+  // dtos/workspace (public, both consumers) and events/execution (internal, Python only).
+  expect(catalog.documents.size).toBe(16);
+  expect(catalog.consumerRoots('typescript')).toHaveLength(9);
+  expect(catalog.consumerRoots('python')).toHaveLength(16);
 });
 
 it('F13 rejects a missing local schema catalog rather than skipping targets', () => {
@@ -69,6 +71,25 @@ it('preserves title fields and annotation-only unknown values in generated wire'
     const generated = await build(root);
     expect(generated).toContain('title: string;');
     expect(generated).toContain('id: unknown;');
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+it('emits closed member-less objects as the empty record, never as an empty interface', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'docsuri-schema-'));
+  try {
+    await writeFile(join(root, 'sample.schema.json'), JSON.stringify({
+      $id: 'https://schema.test/sample', $defs: {
+        Closed: { type: 'object', properties: {}, required: [], additionalProperties: false },
+        Open: { type: 'object', properties: {} },
+        Holder: { type: 'object', properties: { inner: { type: 'object', additionalProperties: false } } },
+      },
+    }));
+    const source = await build(root);
+    expect(source).toContain('export type SampleClosed = Record<string, never>;');
+    expect(source).toContain('inner?: Record<string, never>;');
+    expect(source).toMatch(/export interface SampleOpen \{\n {2}\[k: string\]: unknown;\n\}/u);
+    expect(source).toMatch(/export interface PublicWire \{\n {2}\[k: string\]: never;\n\}/u);
+    expect(source).not.toMatch(/interface \w+ \{\}/u);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
