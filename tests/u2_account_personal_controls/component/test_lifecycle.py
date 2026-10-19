@@ -63,10 +63,11 @@ def test_wrong_participant_cannot_claim(entry, authority):
         service.claim(UUID(result['requestId']), 'Uninstalled', 'all-data')
 
 
-def test_restore_cannot_undo_current_withdrawal(entry, authority, identities):
+def test_restore_cannot_undo_current_withdrawal(entry, authority):
     service = lifecycle(entry)
     result = request(service, authority)
-    assert service.evaluate_restore(identities['a'], UUID(result['revision']))['decision'] == 'deny'
+    # Evaluate the owner this case withdrew (the isolated authority), not the shared fixture owner.
+    assert service.evaluate_restore(authority.account_id, UUID(result['revision']))['decision'] == 'deny'
 
 
 def test_all_scope_evidence_required_for_completion(entry, authority):
