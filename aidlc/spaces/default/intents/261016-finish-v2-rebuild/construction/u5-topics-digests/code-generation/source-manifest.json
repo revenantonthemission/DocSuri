@@ -365,6 +365,36 @@
     },
     {
       "path": "tests/u5_topics_digests/repository/test_repository.py"
+    },
+    {
+      "path": "backend/u5_real_delivery.py"
+    },
+    {
+      "path": "backend/modules/topics/u5_real_send_retention.sql"
+    },
+    {
+      "path": "scripts/u5_real_delivery.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_real_composition.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/integration/test_real_delivery.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/repository/test_real_retention.py"
+    },
+    {
+      "path": "backend/modules/topics/u5_refusal_detail.sql"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_refusal_detail.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/repository/test_refusal_store.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/fetch_origin.py"
     }
   ]
 }

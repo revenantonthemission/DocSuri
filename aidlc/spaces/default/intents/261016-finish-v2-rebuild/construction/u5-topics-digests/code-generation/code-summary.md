@@ -1,6 +1,207 @@
 # U5 code summary — topics & digests
 
-## Steps 12–13 verification — 2026-10-19 (supersedes the mounted-browser status below)
+## Step 15 — reopened attempt confirmation — 2026-10-19
+
+Code Generation was reopened for this Unit only so Step 14 could be marked
+complete after its final review (review-08, READY) froze the plan; the person
+approved the plan with this confirmation step added. No application source
+changed in this attempt. All 131 paths claimed in `source-manifest.json` exist.
+Step 14 is complete: the real digest was accepted by Resend and confirmed in the
+recipient's inbox, the mail client's one-click unsubscribe worked, and the
+browser confirmation path was fixed and is covered by automated tests but has not
+been re-run live (details below). Steps 1–13 outputs are unchanged from the
+previous attempt. A fresh architecture review for this attempt and the
+authorized AI-DLC browser checkpoint follow.
+
+## Step 14 — second real send, browser-confirmation fix (R-15) — 2026-10-19 (current; supersedes every status below)
+
+**Real delivery: sent and reached the inbox.** Realm
+`docsuri-u5-95df9983c1b017e4`, run `bdc65d9f-c805-4dbc-bd20-a2a5e650f91c`,
+sender `no-reply@mail.rvnnt.dev`, recipient `c***@icloud.com` (the one permitted
+recipient), `pathKind: real`, state `sent`. Attempted 2026-10-19 05:11:26.544 UTC,
+acknowledged 05:11:26.918 UTC, provider receipt SHA-256
+`f17b05558fa8cc6c336532267eb17a19b13934d90513317ebe5566f62e0e9064` (plaintext
+kept only in the preserved realm), evidence retained until 2026-11-18 05:11:26
+UTC, allocation 1 of 1 spent. These were re-read with the read-only `outcome`
+action before the realm was preserved with `archive-owned` at
+`/private/tmp/docsuri-u5-preserved-docsuri-u5-95df9983c1b017e4-b5081e79`
+(volume `docsuri-u5-95df9983c1b017e4-pgdata`). The person confirmed inbox
+arrival; provider acceptance plus that confirmation is the recorded inbox
+delivery. The mail app's built-in one-click unsubscribe worked. Afterwards the
+tunnel change was rolled back and the U5 host stopped. Register:
+[`../../../maintenance/u5-real-delivery-evidence.md`](../../../maintenance/u5-real-delivery-evidence.md).
+
+**Browser confirmation failed, now fixed (R-15).** Pressing "구독 해지 확인" on
+the public page returned `403 request.origin` from the host boundary. Root cause,
+reproduced locally against the real `local_host` boundary: the boundary writes
+`Referrer-Policy: no-referrer` (and its CSP) over every response, and the Fetch
+standard serializes a non-CORS, non-GET request's `Origin` as `null` under
+`no-referrer`. `PublicCancellationOrigin` removed only the exact approved origin,
+so `null` reached the boundary. Earlier endpoint checks used header-less POSTs.
+The same reproduction showed the page's own strict CSP never reached the browser
+either.
+
+Fix, in `backend/modules/topics/unsubscribe.py` only: the cancellation `HEADERS`
+declare `Referrer-Policy: same-origin`. `PublicCancellationOrigin` (real
+composition only, outermost, exact 43-character path, GET and POST only) now also
+replaces the boundary's values with the page's own headers on the response. A
+same-origin form POST then carries `Origin: https://docsuri.rvnnt.dev`, which it
+already admits. Why this option rather than accepting `Origin: null`: `null` is
+also what sandboxed and opaque contexts send, so admitting it would loosen the
+boundary for any such context. The referrer-policy change keeps the boundary
+unchanged and keeps the token URL from ever being sent as a cross-origin
+referrer (`same-origin` sends none cross-origin; the CSP loads no subresources
+and allows form posts to this origin only). Not widened: `null`, foreign origins,
+other paths, other methods, the synthetic host and `local_host`.
+
+Tests (no network):
+- `tests/u5_topics_digests/fetch_origin.py` (new helper) implements the Fetch
+  "append a request `Origin` header" rule, so tests derive the browser's `Origin`
+  from the `Referrer-Policy` actually served.
+- `component/test_real_composition.py` (5 new cases, real `local_host` boundary,
+  no database): the rule itself; the page carries exactly its own referrer
+  policy and CSP while other paths keep the boundary's; the browser confirmation
+  under the served policy passes; the old `no-referrer` page yields the refused
+  `null`; only the exact origin on the exact path and methods is admitted, and a
+  header-less one-click POST still works.
+- `integration/test_real_delivery.py`: the assembled `assemble_u5_real` case now
+  checks the served headers, refuses `null`, foreign origins and another path,
+  confirms with the browser-derived origin, and unsubscribes a second topic with
+  a header-less one-click POST, all against the realm store.
+- `integration/test_email_unsubscribe.py`: the router's header assertion changed
+  from `no-referrer` to `same-origin` plus the CSP.
+
+**Verification:** archived the delivery realm first (`archive-owned`, nothing
+deleted), then a fresh realm `docsuri-u5-5302ce36da2f4551` (`setup`, `migrate`
+65 migrations, `fixtures` 2 accounts and 2 papers). Collection **255 tests**.
+Coverage phase **255 passed, 0 failures/errors/skips, 85.01% aggregate** (80%
+floor), 16.8s, peak RSS 249,397,248 bytes, process stopped. Evidence
+`/tmp/docsuri-u5-run/coverage-evidence-1792387423998293000.json`, source
+SHA-256 `51c5e1925a58496f984c8b0da73ef3bbc756d3dc688ca63787d279720cf7f20f`
+(bound `unsubscribe.py` digest
+`99a11fc5eb122fb24e0d6fc5a2b89ab29859154d3ef908f1eee21e1d60d8b4ed`).
+`unsubscribe.py` 92%; every new middleware line is covered (the misses are
+pre-existing error branches). `u5_real_delivery.py` 97%, `u5_policy.py` 95%.
+ruff check, ruff format and `git diff --check` pass on all changed Python.
+
+**Not re-run live.** The fixed browser path has automated coverage only. The
+sending realm has no allocation left, and the tunnel is rolled back. The runbook
+(section 8) now has a dummy-token live check for the next real host.
+
+**Documentation findings folded in:** R-11 (older sections below marked
+historical), R-13 (real-delivery wiring section below; delivery-configuration.md
+brought up to the decided configuration; traceability rows added), R-14 ("one
+real attempt per realm database", with the erasure and fresh-realm resets, in
+`backend/u5_policy.py`, `backend/u5_real_delivery.py`, the runbook and
+delivery-configuration.md), R-15 (runbook endpoint gate), R-16 (preview sender),
+R-17 (runbook run order).
+
+**Known gaps (unchanged, accepted for now):**
+- R-10: unsubscribing from the settings dialog asks for confirmation twice (the
+  in-dialog confirm, then the outer `confirmTopic` dialog). No frontend file was
+  changed in this step.
+- R-12: four files are below 80% line coverage individually:
+  `personalization/local_http.py` 35%, `scripts/serve_docsuri_u5.py` 71%,
+  `scripts/u5_browser_fixtures.py` 73%, `accounts/services/guarded_entry.py` 79%.
+  The aggregate floor is met.
+- The synthetic host still serves the boundary's `no-referrer` on the
+  cancellation page, so a browser confirmation there would be refused. Synthetic
+  realms are loopback-only and their journeys unsubscribe through the signed-in
+  UI, not the email link; the synthetic boundary was deliberately left unchanged.
+
+**Still open:** the AI-DLC browser checkpoint receipt (needs its own fresh
+fixtures-only realm; the current realm `docsuri-u5-5302ce36da2f4551` ran the
+coverage suite, so preserve it first); a fresh independent review; a live re-run
+of the browser confirmation path at the next real-host opportunity.
+
+## Real-delivery wiring (R-13)
+
+| Piece | Where | Behaviour |
+|---|---|---|
+| Real composition | `backend/u5_real_delivery.py` → `assemble_u5_real` | Resend adapter (`digest_mail_binding(synthetic=False)`), policy `REAL_DEMONSTRATION_TOPICS` (`u5-real-demonstration`, limit 1 per realm database, 30-day retention), `EmailUnsubscribe` bound to the public origin with an explicit aware expiry, and `PublicCancellationOrigin`. Refuses on any missing or invalid input; no fallback. |
+| Host flag | `scripts/serve_docsuri_u5.py --real-delivery` | Without it the host is synthetic and never reads provider variables. |
+| Activation file | `<realm>/real-delivery.json` (owner-only, run-bound, at most 4 KiB) | Exactly `runId`, `sender`, `permittedRecipient`, `unsubscribeOrigin`, `capabilityExpiresAt`, `freePlanVerified`, `unsubscribeEndpointVerified`; the gates must be `true`. Never holds the credential. |
+| Credential | process environment | `EMAIL_PROVIDER=resend`, `RESEND_API_KEY` with the `re_…` shape; never written or logged. |
+| Retention | `backend/modules/topics/u5_real_send_retention.sql` + scheduler sweep | `evidence_retain_until = attempted_at + 30 days` (DB maximum); afterwards a settled run's receipt is cleared and the row kept, so the allocation is not replenished. |
+| Scheduler recipient filter | `backend/modules/topics/scheduler.py`, `repository.py` | The real composition reads only the permitted recipient's due topics and queued runs, before the bounded page. |
+| Origin middleware | `backend/modules/topics/unsubscribe.py` → `PublicCancellationOrigin` | Exact origin, exact path, GET/POST; restores the page's own headers (R-15). |
+| Refusal detail | `backend/modules/topics/u5_refusal_detail.sql`, `digest_email.py` | Provider status and error name on a refusal, set once; local reasons separate. |
+| Operator tool | `scripts/u5_real_delivery.py` | `check`, `provision`, `prepare`, `preview`, `outcome`; never constructs the adapter or reads the key's value. |
+
+Results with evidence: real wiring first verified **207 passed, 84.52%**
+(realm `docsuri-u5-482869d6a89fa6c3`,
+`/private/tmp/docsuri-u5-preserved-docsuri-u5-482869d6a89fa6c3-9efdf694/coverage-evidence-1792384373649846000.json`);
+refusal detail 250 passed, 84.93% (realm `docsuri-u5-287134e8035e6532`, below);
+R-15 fix 255 passed, 85.01% (above). All use fake transports.
+
+## Step 14 — first real attempt and refusal detail — 2026-10-19 (historical; superseded by the current section above)
+
+**First authorized real send: failed, real delivery still not done.** Realm
+`docsuri-u5-a4ed677392fc22d7`, run `2ea6c002-f993-4cc6-9add-36a7867cb911`,
+attempted **2026-10-19 04:49:59 UTC**, `pathKind: real`, outcome `failed` /
+`delivery-path-refused`, no provider receipt and no acknowledgement. The realm's
+single allocation is spent (`spent 1`, `remaining 0`). These facts were read
+from the realm with the read-only `outcome` action before any change. The cause
+is **most likely an unverified sending domain, not proven**: the sender was
+`no-reply@docsuri.rvnnt.dev`, while a later read-only `GET /domains` (status
+200, so the key is valid) listed only `mail.rvnnt.dev` as verified. The
+transport then discarded the status code, and the same reason also covered
+local pre-network refusals. The realm was preserved with `archive-owned`
+(container stopped; nothing deleted) at
+`/private/tmp/docsuri-u5-preserved-docsuri-u5-a4ed677392fc22d7-fe26b52f`.
+
+**Refusal detail.** `ResendDigestMail.send` now returns, for 400/401/403/404/
+413/422/429, the HTTP status and Resend's error `name` (`[a-z][a-z0-9_]{0,63}`,
+else the fixed `name-unavailable`). It reads nothing else from the body, and a
+malformed body cannot turn a refusal into `unknown`. Local pre-network refusals
+return `recipient-not-permitted` or `unsubscribe-url-invalid`.
+`DigestMailResult` rejects detail on non-refusals and inconsistent detail.
+`DigestDelivery` records the reason and detail through
+`TopicsRepository.finish_send`, which validates them before writing. The
+appended migration `backend/modules/topics/u5_refusal_detail.sql` (owner
+`topics`, 65th in the runner order) adds `provider_status`/`provider_error` to
+`topics.delivery_outcome`. A CHECK allows them only on a `failed` /
+`delivery-path-refused` outcome with a refusing status and a valid name or the
+placeholder. The replaced `guard_outcome_update` makes them immutable. Not
+recorded: the key, request headers, the response body, Resend's free-text
+`message`, or any extra recipient data. Unchanged: refused → `failed`;
+408/409/5xx/transport errors → `unknown`; no retry; allocation and retention.
+`scripts/u5_real_delivery.py --action outcome` prints a `refusal` object:
+`decidedBy` (`provider`, `local` or `unclassified`), `reachedProvider`,
+`httpStatus`, `errorName` and `detailRecorded`. Legacy rows like the first
+attempt show `detailRecorded: false` instead of a guess.
+
+**Sender domain.** No code change was needed. `parse_activation` validates the
+sender as one bare address and the unsubscribe origin separately, and
+`ResendDigestMail` binds the cancellation link to the origin only. A new test
+covers `no-reply@mail.rvnnt.dev` with `https://docsuri.rvnnt.dev`: activation,
+send payload, preview, and refusal of a link on the sender's host.
+
+**Verification (fake transport only, zero network; fresh realm
+`docsuri-u5-287134e8035e6532`, 65 migrations):** collection 250 tests. Coverage
+phase **250 passed, 0 failures/errors/skips, 84.93% aggregate** (80% floor),
+16.4s, peak RSS 251,461,632 bytes. Changed files: `digest_email.py` 98%,
+`delivery.py` 83%, `repository.py` 87%, `backend/u5_real_delivery.py` 97%,
+`scripts/u5_real_delivery.py` 83%; every new line is covered. The first
+coverage invocation in this realm stopped at collection (two new test modules
+shared the basename `test_refusal_detail.py`; nothing executed); the repository
+module was renamed `test_refusal_store.py` and the rerun passed. New checks:
+`component/test_refusal_detail.py` (each refused status, placeholder cases,
+local refusals with zero calls, result validation, outcome rendering),
+`repository/test_refusal_store.py` (persisted detail, local reason, refusal
+before write, immutability, schema CHECK), a refusal-detail case in
+`component/test_topics_logic.py`, the sender-domain case in
+`component/test_real_composition.py`, the persisted 422 detail in the real
+allocation test, and an end-to-end provision → prepare → refused fake send →
+`outcome` case in `integration/test_real_delivery.py`. ruff check and format
+pass on the changed files.
+
+**Still open:** real email delivery (needs a fresh realm, the runbook's
+`GET /domains` check and the person's approval of a new preview); the AI-DLC
+browser checkpoint receipt (needs its own fresh fixtures-only realm, because
+the current realm ran the coverage suite); a fresh independent review.
+
+## Steps 12–13 verification — 2026-10-19 (historical for real delivery; its mounted-browser result supersedes the status below)
 
 **Browser supervision repair.** Browser verification observed two process trees
 (Playwright and the companion host) by taking a separate `ps -A` snapshot per
@@ -52,9 +253,15 @@ regression 39 passed.
 **Still open:** real email delivery (no sender, recipient, or authorized message;
 nothing sent); the AI-DLC browser checkpoint receipt; a fresh independent review.
 
-## Repair status — 2026-10-19
+## Repair status — 2026-10-19 (historical baseline)
 
-This section supersedes the earlier implementation account below. Local repairs
+> **Historical baseline evidence (R-11).** This section and "Repair
+> verification" below are kept as recorded before Steps 12–14. Their statements
+> that mounted acceptance is unverified, and that no sender, recipient or real
+> send exists, are superseded: the mounted browser run passed (Steps 12–13), and
+> a real digest was sent and reached the inbox (Step 14, current section).
+
+This section superseded the earlier implementation account below. Local repairs
 are implemented; completion and merge remain pending.
 Resend is selected, but the human confirms no sender address or test recipient
 exists. No external email was sent and no provider account or domain was created.
@@ -79,9 +286,9 @@ authorization remains unchanged. The assembled middleware/store test uses actual
 lifespan and a real capacity refresh; it proves the route boundary, not startup
 readiness. Public HTTPS, DKIM, proxy logging and real delivery remain unverified.
 
-### Repair verification
+### Repair verification (historical baseline)
 
-Latest stable-source backend verification: **155 passed, zero failures/errors/
+Stable-source backend verification at the time: **155 passed, zero failures/errors/
 skips, 82.94% aggregate coverage**, retaining the 80% floor. Runtime was 93.61s,
 peak RSS 215,433,216 bytes, and the process stopped. Immutable evidence:
 `/private/tmp/docsuri-u5-preserved-docsuri-u5-68f00b6ee0bcf67a-aa7edb82/coverage-evidence-1792342925464628000.json`.
@@ -389,7 +596,7 @@ above remain historical evidence.
     stable uuid5 accounts, the fixtures' forward-window resolve case). The
     repository/coverage passes were each verified twice.
 
-## Known limits
+## Known limits (historical, 2026-10-18; see the current Step 14 section for today's gaps)
 
 - The synthetic profile's email path is the local sink; a real configured
   path (`pathKind='real'`) stays unimplemented by policy until a maintainer

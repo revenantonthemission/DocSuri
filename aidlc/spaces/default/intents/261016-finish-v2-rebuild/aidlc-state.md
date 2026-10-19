@@ -67,11 +67,11 @@
 
 - **Construction Verification Command**: backend/.venv/bin/python scripts/verify_docsuri_u5.py --phase browser --profile synthetic-local --environment-file /tmp/docsuri-u5-run/environment.json
 
-- **Active Unit**: u5-topics-digests
 
-- **Unit Stage**: code-generation
 
-- **Unit State**: in-progress
+
+
+
 
 
 
@@ -138,7 +138,7 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-10-19T03:18:26Z
+- **Last Updated**: 2026-10-19T05:39:16Z
 
 - **Construction Autonomy Mode**: gated
 

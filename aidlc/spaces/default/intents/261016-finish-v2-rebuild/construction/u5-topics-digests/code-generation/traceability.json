@@ -57,8 +57,8 @@
   "coverage": [
     {
       "id": "FR1",
-      "status": "GAP",
-      "target": "Local retained digest behaviors verified; actual Resend delivery prerequisite remains open."
+      "status": "OK",
+      "target": "backend/u5_real_delivery.py"
     },
     {
       "id": "FR1.1",
@@ -77,8 +77,33 @@
     },
     {
       "id": "FR1.4",
-      "status": "GAP",
-      "target": "Typed local/Resend adapter and receipt-first unknown reconciliation implemented; no sender or test recipient exists, so actual external acceptance/delivery evidence is unavailable."
+      "status": "OK",
+      "target": "backend/modules/accounts/integrations/digest_email.py"
+    },
+    {
+      "id": "FR1.4",
+      "status": "OK",
+      "target": "backend/u5_real_delivery.py"
+    },
+    {
+      "id": "FR1.4",
+      "status": "OK",
+      "target": "backend/modules/topics/u5_refusal_detail.sql"
+    },
+    {
+      "id": "FR1.4",
+      "status": "OK",
+      "target": "backend/modules/topics/u5_real_send_retention.sql"
+    },
+    {
+      "id": "FR1.4",
+      "status": "OK",
+      "target": "scripts/u5_real_delivery.py"
+    },
+    {
+      "id": "FR1.5",
+      "status": "OK",
+      "target": "backend/modules/topics/unsubscribe.py"
     },
     {
       "id": "FR1.5",
@@ -217,13 +242,18 @@
     },
     {
       "id": "NFR6",
-      "status": "GAP",
-      "target": "Bounded synthetic operation verified. Actual free Resend account, sender, quota, recipient and public unsubscribe endpoint evidence remain unavailable."
+      "status": "OK",
+      "target": "backend/u5_real_delivery.py"
     },
     {
       "id": "NFR6.1",
       "status": "OK",
       "target": "backend/u5_policy.py"
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": "backend/u5_real_delivery.py"
     },
     {
       "id": "BR1.1",
@@ -244,6 +274,16 @@
       "id": "BR1.4",
       "status": "OK",
       "target": "backend/modules/topics/delivery.py"
+    },
+    {
+      "id": "BR1.4",
+      "status": "OK",
+      "target": "backend/u5_real_delivery.py"
+    },
+    {
+      "id": "BR1.4",
+      "status": "OK",
+      "target": "backend/modules/topics/scheduler.py"
     },
     {
       "id": "BR2.1",
@@ -291,6 +331,11 @@
       "target": "backend/modules/topics/service.py"
     },
     {
+      "id": "BR4.1",
+      "status": "OK",
+      "target": "backend/modules/topics/unsubscribe.py"
+    },
+    {
       "id": "BR4.2",
       "status": "OK",
       "target": "backend/modules/topics/delivery.py"
@@ -307,6 +352,22 @@
     }
   ],
   "reverse": [],
+  "real_delivery_evidence": {
+    "links": [
+      "FR1.4/BR1.4/NFR6/NFR6.1: backend/u5_real_delivery.py assemble_u5_real (operator-only, scripts/serve_docsuri_u5.py --real-delivery, run-bound real-delivery.json activation, Resend credential from the environment only, no fallback)",
+      "FR1.4: backend/modules/accounts/integrations/digest_email.py typed accepted/refused/unknown result with provider receipt; refusal status and error name",
+      "FR1.4: backend/modules/topics/u5_refusal_detail.sql set-once provider_status/provider_error",
+      "FR1.4: backend/modules/topics/u5_real_send_retention.sql evidence_retain_until (30 days) plus the scheduler retention sweep",
+      "FR1.4: scripts/u5_real_delivery.py check/provision/prepare/preview/outcome operator actions (never constructs the adapter)",
+      "BR1.4: backend/modules/topics/scheduler.py permitted-recipient filter before the bounded page",
+      "FR1.5/BR4.1: backend/modules/topics/unsubscribe.py PublicCancellationOrigin (exact origin, exact path, GET/POST) and the page's same-origin referrer policy (R-15)"
+    ],
+    "first_attempt": "FAILED: realm docsuri-u5-a4ed677392fc22d7, run 2ea6c002-f993-4cc6-9add-36a7867cb911, 2026-10-19 04:49:59 UTC, pathKind real, failed/delivery-path-refused, no receipt; allocation spent",
+    "second_attempt": "SENT: realm docsuri-u5-95df9983c1b017e4, run bdc65d9f-c805-4dbc-bd20-a2a5e650f91c, sender no-reply@mail.rvnnt.dev, attempted 2026-10-19 05:11:26.544 UTC, acknowledged 05:11:26.918 UTC, provider receipt SHA-256 f17b05558fa8cc6c336532267eb17a19b13934d90513317ebe5566f62e0e9064, allocation 1/1 spent; the person confirmed inbox arrival and that mail-app one-click unsubscribe worked",
+    "browser_confirm": "Live browser confirm returned 403 request.origin (Origin: null under no-referrer). Fixed in source and covered by automated tests (component/test_real_composition.py, integration/test_real_delivery.py); not re-run live",
+    "verification": "255 passed; zero failures/errors/skips; 85.01% aggregate; fresh realm docsuri-u5-5302ce36da2f4551; /tmp/docsuri-u5-run/coverage-evidence-1792387423998293000.json",
+    "register": "../../../maintenance/u5-real-delivery-evidence.md"
+  },
   "repair_evidence": {
     "backend": "155 passed; zero failures/errors/skips; 82.94% aggregate; /private/tmp/docsuri-u5-preserved-docsuri-u5-68f00b6ee0bcf67a-aa7edb82/coverage-evidence-1792342925464628000.json",
     "frontend": "22 passed; 92.27% scoped lines; typecheck passed",

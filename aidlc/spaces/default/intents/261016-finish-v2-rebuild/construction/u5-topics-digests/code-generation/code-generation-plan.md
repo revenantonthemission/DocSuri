@@ -281,7 +281,7 @@ Do not copy account or preference ownership into Topics.
   and an explicitly authorized recipient/send are available. Trace: NFR6.1;
   R-01/R-06; pipeline contribution; delivery-plan B06.
 
-- [ ] **Step 14 — Documentation, fresh review and completion evidence.**
+- [x] **Step 14 — Documentation, fresh review and completion evidence.**
   Update `code-summary.md`, `traceability.json`, `source-manifest.json` and
   instructions with actual changed paths, commands/results, remaining gaps and
   all six finding dispositions. Coordinate affected formal contract definitions
@@ -293,6 +293,15 @@ Do not copy account or preference ownership into Topics.
   remains unavailable, report it rather than substituting a local pass.
   Only completed work merges by PR into `develop` under `CONVENTIONS.md`.
   Trace: all FR1 and applicable NFRs; R-01–R-06; stage Step 5/6.
+- [x] **Step 15 — Confirm the finished build for the reopened attempt.**
+  Code Generation was reopened only so Step 14 could be marked complete after its
+  final review froze the plan. Change no application source. Verify every path in
+  `source-manifest.json` exists, record in `code-summary.md` that Step 14 is
+  complete (real delivery accepted and inbox-confirmed; mail-client one-click
+  unsubscribe worked; browser confirm fixed and covered by automated tests but not
+  re-run live), obtain a fresh independent architecture review for this attempt,
+  then run the authorized browser checkpoint through AI-DLC.
+  Trace: stage Step 5/6; R-15.
 
 ## Requirement and finding traceability
 
