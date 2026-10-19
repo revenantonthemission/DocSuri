@@ -200,13 +200,16 @@ jobs:
         run: uv sync --project backend --frozen --python 3.13.7
       - name: Lint (accounts + library + ops modules + root tests/)
         run: uv run --project backend ruff check backend/modules/accounts backend/modules/library backend/modules/ops tests
-      # Only the suites this job is named for. The per-Unit suites under tests/u*/ run in their
-      # own u*.yml workflows with their own backend/pytest.u*.ini (pythonpath, markers, import
-      # mode); collected together under the root pytest.ini they collide and cannot import.
-      - name: Tests (accounts + library + performance)
+      # Only the suites this job is named for. The per-Unit suites under tests/u*/ belong to their
+      # own u*.yml workflows and backend/pytest.u*.ini (pythonpath, markers, import mode);
+      # collected together under the root pytest.ini they collide and cannot import. Note that
+      # u1-paper-journey.yml only collects its suite and u7 runs only its component scope.
+      # tests/performance holds a k6 load script, which pytest does not collect and CI does not run.
+      - name: Tests (accounts + library)
         run: uv run --project backend pytest tests/accounts tests/library tests/performance -c pytest.ini
 
-  # frontend: retired, superseded by the per-Unit workflows' frontend jobs (u1–u5).
+  # frontend: retired; replaced by .github/workflows/next-app.yml. The per-Unit u1–u5 frontend
+  # jobs cover only the Vite workspace in src/, not the deployed Next app.
 
   dependency-review:
     name: Dependency review (PR-only · npm + pip)
