@@ -78,5 +78,7 @@ export async function search(page: Page, query: string, mode: 'lexical' | 'seman
 
 export async function openFirstResult(page: Page) {
   await page.getByTestId('result-row').first().locator('button').click();
-  await expect(page.getByTestId('reading-surface').or(page.getByTestId('content-state'))).toBeVisible();
+  await expect(
+    page.getByTestId('reading-surface').or(page.getByTestId('content-state')),
+  ).toBeVisible();
 }
