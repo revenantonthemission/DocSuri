@@ -1,0 +1,13 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "u6-approved-export",
+  "upstream_ids": ["NFR1", "NFR2", "NFR3", "NFR4", "NFR5", "NFR6"],
+  "coverage": [
+    {"id": "NFR1", "status": "OK", "target": "NFR1.1, NFR1.2, NFR1.3, NFR1.4, NFR1.5"},
+    {"id": "NFR2", "status": "N/A", "target": "consent for digests; U6 sends no digests (owned by U5)"},
+    {"id": "NFR3", "status": "OK", "target": "NFR3.1, NFR3.2, NFR3.3, NFR3.4, NFR3.5, NFR3.6, NFR3.7, NFR3.8, NFR3.9"},
+    {"id": "NFR4", "status": "OK", "target": "NFR4.1, NFR4.2, NFR4.3, NFR4.4, NFR4.5, NFR4.6, NFR4.7, NFR4.8, NFR4.9, NFR4.10, NFR4.11"},
+    {"id": "NFR5", "status": "OK", "target": "NFR5.1"},
+    {"id": "NFR6", "status": "OK", "target": "NFR6.1, NFR6.2, NFR6.3, NFR6.4"}
+  ]
+}

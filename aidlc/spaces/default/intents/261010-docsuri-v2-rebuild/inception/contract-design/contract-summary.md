@@ -11,6 +11,11 @@ under the approved Code Generation plan. The original review remains historical
 evidence for release 1.0.0; amended contracts require finished-work review and
 executable closure evidence. This document does not establish runtime readiness.
 See the [amendment and compatibility record](../../construction/u1-integrated-paper-journey/code-generation/contract-amendment.md).
+Contract release 3.1.0 is an additive minor step: C09 2.1.0 carries U6's approved
+amendments A1–A7, A9, A10 and the A6 extension; every frozen C09 property keeps its
+name, type and requiredness except the two named changes (connectionId optional on
+ExportConnectionRead and ExportConnectionReadHttp; ExportDestinationEntry, a superset
+of ExportDestination, on the two destination response properties).
 Basis: the [confirmed contract plan](contract-design-questions.md),
 [approved unit catalogue](../units-generation/unit-of-work.md),
 [unit DAG](../units-generation/unit-of-work-dependency.md),
@@ -736,10 +741,13 @@ $defs:
   ProviderEmailResult: {type: object, properties: {effectId: {$ref: '#/$defs/Id'}, providerMessageId: {anyOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]},
         disposition: {type: string, enum: [accepted, rejected, unknown]}}, required: [effectId, providerMessageId, disposition], additionalProperties: false}
   ProviderNotionRequest: {type: object, properties: {effectId: {$ref: '#/$defs/Id'}, approvalId: {$ref: '#/$defs/Id'}, connectionId: {$ref: '#/$defs/Id'},
-        destinationId: {$ref: '#/$defs/Id'}, artifact: {$ref: '#/$defs/ResultRef'}, previewHash: {$ref: '#/$defs/Hash'}}, required: [
+        destinationId: {$ref: '#/$defs/Id'}, artifact: {$ref: '#/$defs/ResultRef'}, previewHash: {$ref: '#/$defs/Hash'}, contentHash: {
+          $ref: '#/$defs/Hash'}, marker: {type: string, minLength: 1, maxLength: 200}}, required: [
         effectId, approvalId, connectionId, destinationId, artifact, previewHash], additionalProperties: false}
   ProviderNotionResult: {type: object, properties: {effectId: {$ref: '#/$defs/Id'}, remotePageId: {anyOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}, disposition: {
-          type: string, enum: [committed, rejected, unknown]}}, required: [effectId, remotePageId, disposition], additionalProperties: false}
+          type: string, enum: [committed, rejected, unknown]}, providerRequestId: {$ref: '#/$defs/Id'}, refusalClass: {$ref: '#/$defs/ProviderNotionRefusalClass'}},
+      required: [effectId, remotePageId, disposition], additionalProperties: false}
+  ProviderNotionRefusalClass: {type: string, enum: [token-invalid, no-access, destination-missing, content-rejected, workspace-block-limit, provider-blocked]}
   ProviderIdentityProfileRead: {type: object, properties: {provider: {type: string, enum: [google, orcid]}, subject: {$ref: '#/$defs/Id'}, credentialRef: {$ref: '#/$defs/Id'},
         consentRevision: {$ref: '#/$defs/Revision'}}, required: [provider, subject, credentialRef, consentRevision], additionalProperties: false}
   ProviderIdentityProfileResult: {type: object, properties: {provider: {type: string, enum: [google, orcid]}, subject: {$ref: '#/$defs/Id'}, profileRevision: {
@@ -766,16 +774,19 @@ $defs:
   ProviderNotionInspection: {type: object, properties: {connectionId: {$ref: '#/$defs/Id'}, connectionRevision: {$ref: '#/$defs/Revision'}, valid: {type: boolean},
         destinations: {type: array, items: {type: object, properties: {destinationId: {$ref: '#/$defs/Id'}, title: {type: string, minLength: 1,
                 x-limit-policy: AdmissionPolicy bounds bytes and characters before persistence/processing.}, revision: {$ref: '#/$defs/Revision'},
-              writable: {type: boolean}}, required: [destinationId, title, revision, writable], additionalProperties: false}, x-limit-policy: AdmissionPolicy
-            bounds length; unresolved policy blocks admission.}, page: {$ref: '#/$defs/PageInfo'}, observedAt: {$ref: '#/$defs/Time'}},
+              writable: {type: boolean}, readable: {type: boolean}, creationCapability: {$ref: '#/$defs/ExportCreationCapability'}}, required: [
+              destinationId, title, revision, writable], additionalProperties: false}, x-limit-policy: AdmissionPolicy
+            bounds length; unresolved policy blocks admission.}, page: {$ref: '#/$defs/PageInfo'}, observedAt: {$ref: '#/$defs/Time'},
+        workspaceName: {type: string, minLength: 1, maxLength: 2000}, integrationIdentity: {$ref: '#/$defs/Id'}},
       required: [connectionId, connectionRevision, valid, destinations, page, observedAt], additionalProperties: false}
   ProviderEffectReconcile: {type: object, properties: {effectId: {$ref: '#/$defs/Id'}, providerId: {$ref: '#/$defs/Id'}, credentialRef: {$ref: '#/$defs/Id'},
-        requestHash: {$ref: '#/$defs/Hash'}, remoteReference: {anyOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}}, required: [effectId,
-        providerId, credentialRef, requestHash, remoteReference], additionalProperties: false}
+        requestHash: {$ref: '#/$defs/Hash'}, remoteReference: {anyOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}, marker: {type: string, minLength: 1,
+          maxLength: 200}, destinationId: {$ref: '#/$defs/Id'}, firstAttemptStartedAt: {$ref: '#/$defs/Time'}, writerIdentity: {$ref: '#/$defs/Id'}},
+      required: [effectId, providerId, credentialRef, requestHash, remoteReference], additionalProperties: false}
   ProviderEffectEvidence: {type: object, properties: {effectId: {$ref: '#/$defs/Id'}, disposition: {type: string, enum: [committed, definitely_not_committed,
             unknown]}, remoteReference: {anyOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}, evidenceHash: {anyOf: [{$ref: '#/$defs/Hash'},
-            {type: 'null'}]}, observedAt: {$ref: '#/$defs/Time'}}, required: [effectId, disposition, remoteReference, evidenceHash,
-        observedAt], additionalProperties: false}
+            {type: 'null'}]}, observedAt: {$ref: '#/$defs/Time'}, scanComplete: {type: boolean}}, required: [effectId, disposition, remoteReference,
+        evidenceHash, observedAt], additionalProperties: false}
   LibraryFilter: {type: object, properties: {filterId: {$ref: '#/$defs/Id'}, operatorId: {$ref: '#/$defs/Id'}, values: {type: array, items: {oneOf: [
               {type: string, x-policy-bound: search filter value}, {type: integer}, {type: boolean}]}, x-policy-bound: search vocabulary
             entry and approved input policy}}, required: [filterId, operatorId, values], additionalProperties: false}
@@ -1735,34 +1746,49 @@ $defs:
             credential input bounds; reject and redact invalid credentials.}, expectedRevision: {anyOf: [{$ref: '#/$defs/Revision'},
             {type: 'null'}]}, credentialPolicy: {$ref: '#/$defs/PolicyRef'}}, required: [context, token, expectedRevision, credentialPolicy],
       additionalProperties: false}
-  ExportConnectionRead: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, connectionId: {$ref: '#/$defs/Id'}}, required: [context,
-        connectionId], additionalProperties: false}
+  ExportConnectionRead: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, connectionId: {$ref: '#/$defs/Id'}}, required: [context],
+      additionalProperties: false, description: 'Internal envelope; an absent connectionId names the owner''s single connection (C09 2.1.0, A7).'}
   ExportConnection: {type: object, properties: {connectionId: {$ref: '#/$defs/Id'}, ownerId: {$ref: '#/$defs/Id'}, revision: {$ref: '#/$defs/Revision'},
         provider: {const: notion}, state: {type: string, enum: [connected, disconnected, revoked, unavailable]}, destinationScopeIds: {
           type: array, items: {$ref: '#/$defs/Id'}}, limitations: {type: array, items: {type: string, minLength: 1, x-policy-limit: Resolve
-              content/input byte and character limits before enabling this operation.}}}, required: [connectionId, ownerId, revision,
-        provider, state, destinationScopeIds, limitations], additionalProperties: false}
+              content/input byte and character limits before enabling this operation.}}, workspaceName: {type: string, minLength: 1, maxLength: 2000}},
+      required: [connectionId, ownerId, revision, provider, state, destinationScopeIds, limitations], additionalProperties: false}
   ExportDestination: {type: object, properties: {connectionId: {$ref: '#/$defs/Id'}, workspaceId: {$ref: '#/$defs/Id'}, parentPageId: {$ref: '#/$defs/Id'},
-        formatRevision: {$ref: '#/$defs/Revision'}}, required: [connectionId, workspaceId, parentPageId, formatRevision], additionalProperties: false}
+        formatRevision: {$ref: '#/$defs/Revision'}, destinationId: {$ref: '#/$defs/Id'}, title: {type: string, minLength: 1, maxLength: 2000},
+        context: {type: string, minLength: 1, maxLength: 2000}}, required: [connectionId, workspaceId, parentPageId, formatRevision],
+      additionalProperties: false}
+  ExportDestinationEntry: {type: object, properties: {connectionId: {$ref: '#/$defs/Id'}, workspaceId: {$ref: '#/$defs/Id'}, parentPageId: {$ref: '#/$defs/Id'},
+        formatRevision: {$ref: '#/$defs/Revision'}, destinationId: {$ref: '#/$defs/Id'}, title: {type: string, minLength: 1, maxLength: 2000},
+        context: {type: string, minLength: 1, maxLength: 2000}, readable: {type: boolean}, creationCapability: {$ref: '#/$defs/ExportCreationCapability'},
+        writable: {type: boolean}}, required: [connectionId, workspaceId, parentPageId, formatRevision, destinationId, title], additionalProperties: false}
+  ExportCreationCapability: {type: string, enum: [unknown, confirmed, refused]}
   ExportDestinations: {type: object, properties: {connectionId: {$ref: '#/$defs/Id'}, connectionRevision: {$ref: '#/$defs/Revision'}, destinations: {
-          type: array, items: {$ref: '#/$defs/ExportDestination'}}}, required: [connectionId, connectionRevision, destinations], additionalProperties: false}
+          type: array, items: {$ref: '#/$defs/ExportDestinationEntry'}}, listingComplete: {type: boolean}, lastDestinationId: {$ref: '#/$defs/Id'}},
+      required: [connectionId, connectionRevision, destinations], additionalProperties: false}
   ExportPreviewRequest: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, source: {$ref: '#/$defs/ResearchArtifactRef'}, destination: {
           $ref: '#/$defs/ExportDestination'}, renderPolicy: {$ref: '#/$defs/PolicyRef'}}, required: [context, source, destination,
         renderPolicy], additionalProperties: false}
   ExportPreview: {type: object, properties: {previewId: {$ref: '#/$defs/Id'}, ownerId: {$ref: '#/$defs/Id'}, revision: {$ref: '#/$defs/Revision'},
         source: {$ref: '#/$defs/ResearchArtifactRef'}, sourceEligibilityRevision: {$ref: '#/$defs/Revision'}, connectionRevision: {
-          $ref: '#/$defs/Revision'}, destination: {$ref: '#/$defs/ExportDestination'}, renderedText: {type: string}, renderedContentHash: {
-          $ref: '#/$defs/Hash'}, bindingHash: {$ref: '#/$defs/Hash'}, renderPolicy: {$ref: '#/$defs/PolicyRef'}}, required: [previewId,
+          $ref: '#/$defs/Revision'}, destination: {$ref: '#/$defs/ExportDestinationEntry'}, renderedText: {type: string}, renderedContentHash: {
+          $ref: '#/$defs/Hash'}, bindingHash: {$ref: '#/$defs/Hash'}, renderPolicy: {$ref: '#/$defs/PolicyRef'}, earlierExports: {type: array,
+          items: {$ref: '#/$defs/ExportEarlierExport'}, maxItems: 20}, marker: {type: string, minLength: 1, maxLength: 200}, sourceTitle: {
+          type: string, minLength: 1, maxLength: 2000}}, required: [previewId,
         ownerId, revision, source, sourceEligibilityRevision, connectionRevision, destination, renderedText, renderedContentHash, bindingHash,
         renderPolicy], additionalProperties: false}
+  ExportEarlierExport: {type: object, properties: {effectId: {$ref: '#/$defs/Id'}, disposition: {$ref: '#/$defs/ExportEarlierExportDisposition'},
+        endedAt: {$ref: '#/$defs/Time'}, remoteUrl: {type: string, minLength: 1, format: uri}, outcomeReason: {$ref: '#/$defs/ExportOutcomeReason'}},
+      required: [effectId, disposition, endedAt], additionalProperties: false}
+  ExportEarlierExportDisposition: {type: string, enum: [exported, may-exist]}
   ExportApprovalRequest: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, previewId: {$ref: '#/$defs/Id'}, previewRevision: {$ref: '#/$defs/Revision'},
         bindingHash: {$ref: '#/$defs/Hash'}, explicitApproval: {const: true}}, required: [context, previewId, previewRevision, bindingHash,
         explicitApproval], additionalProperties: false}
   ExportApproval: {type: object, properties: {approvalId: {$ref: '#/$defs/Id'}, ownerId: {$ref: '#/$defs/Id'}, previewId: {$ref: '#/$defs/Id'}, previewRevision: {
           $ref: '#/$defs/Revision'}, bindingHash: {$ref: '#/$defs/Hash'}, approvedAt: {$ref: '#/$defs/Time'}, expiresAt: {anyOf: [
             {$ref: '#/$defs/Time'}, {type: 'null'}]}, state: {type: string, enum: [approved, invalidated, consumed, cancelled, expired]},
-        policy: {$ref: '#/$defs/PolicyRef'}}, required: [approvalId, ownerId, previewId, previewRevision, bindingHash, approvedAt,
-        expiresAt, state, policy], additionalProperties: false}
+        policy: {$ref: '#/$defs/PolicyRef'}, invalidationReason: {$ref: '#/$defs/ExportInvalidationReason'}}, required: [approvalId, ownerId,
+        previewId, previewRevision, bindingHash, approvedAt, expiresAt, state, policy], additionalProperties: false}
+  ExportInvalidationReason: {type: string, enum: [source-changed, destination-changed, connection-changed, authority-revoked, account-withdrawn]}
   ExportExecute: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, approvalId: {$ref: '#/$defs/Id'}, bindingHash: {$ref: '#/$defs/Hash'}},
       required: [context, approvalId, bindingHash], additionalProperties: false}
   ExportEffect: {type: object, properties: {effectId: {$ref: '#/$defs/Id'}, approvalId: {$ref: '#/$defs/Id'}, ownerId: {$ref: '#/$defs/Id'}, revision: {
@@ -1770,12 +1796,40 @@ $defs:
             failed, unknown, cancelled, invalidated]}, remoteReference: {anyOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}, remoteUrl: {
           anyOf: [{type: string, minLength: 1, format: uri}, {type: 'null'}]}, reconciliationEvidenceHash: {anyOf: [{$ref: '#/$defs/Hash'},
             {type: 'null'}]}, limitations: {type: array, items: {type: string, minLength: 1, x-policy-limit: Resolve content/input
-              byte and character limits before enabling this operation.}}}, required: [effectId, approvalId, ownerId, revision, bindingHash,
-        state, remoteReference, remoteUrl, reconciliationEvidenceHash, limitations], additionalProperties: false}
+              byte and character limits before enabling this operation.}}, outcomeReason: {$ref: '#/$defs/ExportOutcomeReason'}, settledBy: {
+          $ref: '#/$defs/ExportSettledBy'}, nextCheckAt: {$ref: '#/$defs/Time'}, settlementOffered: {type: boolean}}, required: [effectId,
+        approvalId, ownerId, revision, bindingHash, state, remoteReference, remoteUrl, reconciliationEvidenceHash, limitations], additionalProperties: false}
+  ExportOutcomeReason: {type: string, enum: [token-invalid, no-access, destination-missing, content-rejected, workspace-block-limit, provider-blocked,
+      rate-limit-budget-spent, not-found-after-checks, owner-settled-delivered, owner-settled-not-delivered, dependency-unavailable, policy-unresolved,
+      source-changed, destination-changed, connection-changed, authority-revoked, account-withdrawn, owner-cancelled]}
+  ExportSettledBy: {type: string, enum: [provider, reconciliation, owner]}
   ExportEffectRead: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, effectId: {$ref: '#/$defs/Id'}}, required: [context, effectId],
       additionalProperties: false}
   ExportCancel: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, approvalId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}},
       required: [context, approvalId, expectedRevision], additionalProperties: false}
+  ExportHistoryList: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, limit: {type: integer, minimum: 1, maximum: 20}, cursor: {
+          anyOf: [{type: string, minLength: 1, maxLength: 512}, {type: 'null'}]}}, required: [context], additionalProperties: false, description: 'Internal
+        envelope; context is derived by the trusted boundary, never accepted from a public body.'}
+  ExportHistoryPage: {type: object, properties: {entries: {type: array, items: {$ref: '#/$defs/ExportHistoryEntry'}, maxItems: 20}, nextCursor: {
+          anyOf: [{type: string, minLength: 1, maxLength: 512}, {type: 'null'}]}}, required: [entries, nextCursor], additionalProperties: false}
+  ExportHistoryEntry: {type: object, properties: {approvalId: {$ref: '#/$defs/Id'}, previewId: {$ref: '#/$defs/Id'}, previewRevision: {$ref: '#/$defs/Revision'},
+        bindingHash: {$ref: '#/$defs/Hash'}, state: {$ref: '#/$defs/ExportApprovalState'}, invalidationReason: {$ref: '#/$defs/ExportInvalidationReason'},
+        approvedAt: {$ref: '#/$defs/Time'}, endedAt: {$ref: '#/$defs/Time'}, sourceTitle: {type: string, minLength: 1, maxLength: 2000}, destinationTitle: {
+          type: string, minLength: 1, maxLength: 2000}, continuable: {type: boolean}, effect: {$ref: '#/$defs/ExportHistoryEffect'}}, required: [
+        approvalId, previewId, previewRevision, bindingHash, state, approvedAt, sourceTitle, destinationTitle, continuable], additionalProperties: false}
+  ExportHistoryEffect: {type: object, properties: {effectId: {$ref: '#/$defs/Id'}, state: {$ref: '#/$defs/ExportEffectState'}, revision: {$ref: '#/$defs/Revision'},
+        remoteUrl: {type: string, minLength: 1, format: uri}, outcomeReason: {$ref: '#/$defs/ExportOutcomeReason'}, settledBy: {$ref: '#/$defs/ExportSettledBy'},
+        nextCheckAt: {$ref: '#/$defs/Time'}, possibleDuplicates: {type: array, items: {$ref: '#/$defs/ExportPossibleDuplicate'}, maxItems: 10},
+        settlementOffered: {type: boolean}}, required: [effectId, state, revision, possibleDuplicates, settlementOffered], additionalProperties: false}
+  ExportPossibleDuplicate: {type: object, properties: {remoteReference: {$ref: '#/$defs/Id'}, remoteUrl: {type: string, minLength: 1, format: uri}},
+      required: [remoteReference], additionalProperties: false}
+  ExportApprovalState: {type: string, enum: [approved, invalidated, consumed, cancelled, expired]}
+  ExportEffectState: {type: string, enum: [accepted, executing, succeeded, failed, unknown, cancelled, invalidated]}
+  ExportSettle: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, effectId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'},
+        disposition: {$ref: '#/$defs/ExportSettleDisposition'}, assumptionAccepted: {const: true}, remoteUrl: {type: string, minLength: 1, format: uri}},
+      required: [context, effectId, expectedRevision, disposition, assumptionAccepted], additionalProperties: false, description: 'Internal envelope;
+        context is derived by the trusted boundary, never accepted from a public body.'}
+  ExportSettleDisposition: {type: string, enum: [delivered, not-delivered]}
   SessionBootstrap: {type: object, properties: {signedIn: {type: boolean}, accountId: {anyOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}, authorityRevision: {
           anyOf: [{$ref: '#/$defs/Revision'}, {type: 'null'}]}, csrfToken: {type: string, minLength: 1, x-limit-policy: AdmissionPolicy
             bounds bytes and characters before persistence/processing.}}, required: [signedIn, accountId, authorityRevision, csrfToken],
@@ -2007,7 +2061,7 @@ $defs:
   ExportConnectionConfigureHttp: {type: object, properties: {token: {type: string, minLength: 1, writeOnly: true, x-policy-limit: Resolved credential input bounds;
             reject and redact invalid credentials.}, expectedRevision: {anyOf: [{$ref: '#/$defs/Revision'}, {type: 'null'}]}, credentialPolicy: {
           $ref: '#/$defs/PolicyRef'}}, required: [token, expectedRevision, credentialPolicy], additionalProperties: false}
-  ExportConnectionReadHttp: {type: object, properties: {connectionId: {$ref: '#/$defs/Id'}}, required: [connectionId], additionalProperties: false}
+  ExportConnectionReadHttp: {type: object, properties: {connectionId: {$ref: '#/$defs/Id'}}, required: [], additionalProperties: false}
   ExportPreviewRequestHttp: {type: object, properties: {source: {$ref: '#/$defs/ResearchArtifactRef'}, destination: {$ref: '#/$defs/ExportDestination'}, renderPolicy: {
           $ref: '#/$defs/PolicyRef'}}, required: [source, destination, renderPolicy], additionalProperties: false}
   ExportApprovalRequestHttp: {type: object, properties: {previewId: {$ref: '#/$defs/Id'}, previewRevision: {$ref: '#/$defs/Revision'}, bindingHash: {$ref: '#/$defs/Hash'},
@@ -2017,6 +2071,11 @@ $defs:
   ExportEffectReadHttp: {type: object, properties: {effectId: {$ref: '#/$defs/Id'}}, required: [effectId], additionalProperties: false}
   ExportCancelHttp: {type: object, properties: {approvalId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}}, required: [approvalId,
         expectedRevision], additionalProperties: false}
+  ExportHistoryListHttp: {type: object, properties: {limit: {type: integer, minimum: 1, maximum: 20}, cursor: {anyOf: [{type: string, minLength: 1,
+            maxLength: 512}, {type: 'null'}]}}, required: [], additionalProperties: false}
+  ExportSettleHttp: {type: object, properties: {effectId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}, disposition: {
+          $ref: '#/$defs/ExportSettleDisposition'}, assumptionAccepted: {const: true}, remoteUrl: {type: string, minLength: 1, format: uri}}, required: [
+        effectId, expectedRevision, disposition, assumptionAccepted], additionalProperties: false}
   OpsQueryHttp: {type: object, properties: {page: {$ref: '#/$defs/PageRequest'}, capability: {$ref: '#/$defs/Id'}}, required: [page], additionalProperties: false}
   OpsRecoveryRequestHttp: {type: object, properties: {incidentId: {$ref: '#/$defs/Id'}, ownerComponent: {$ref: '#/$defs/Id'}, operation: {$ref: '#/$defs/Id'},
         targetId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}, evidenceRefs: {type: array, items: {$ref: '#/$defs/Id'},
@@ -4738,7 +4797,8 @@ operations:
   - IDEMPOTENCY_CONFLICT
   semantics: 'Preserve retained owner-token configuration: protected same-origin write-only token input, current-owner binding and CAS credential
     replacement. Validate with provider then store through resolved credential protection; never echo token to response, browser persistence or
-    normal logs. Token replacement invalidates approvals using prior connection revision.'
+    normal logs. Token replacement invalidates approvals using prior connection revision. C09 2.1.0 (A7): the response carries workspaceName
+    when Notion reports one for the accepted token.'
   surface: browser
 - name: readNotionConnection
   input: ExportConnectionRead
@@ -4751,7 +4811,11 @@ operations:
   - NOT_FOUND
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Return safe connection disposition/scope, never credential material.
+  semantics: 'Return safe connection disposition/scope, never credential material. C09 2.1.0 (A7): connectionId is optional; when it is absent
+    the server reads the current owner''s single connection. workspaceName, when present, is the Notion workspace name reported for the stored
+    token. destinationScopeIds holds the activation destination in the real composition and is empty otherwise. An internal pre-connection
+    reservation is never returned; while one exists the connection reads exactly as when no connection exists, and state stays one of the four
+    listed values.'
   surface: browser
 - name: disconnectNotion
   input: ExportConnectionRead
@@ -4766,8 +4830,8 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
   - OUTCOME_UNKNOWN
-  semantics: Persist revoked/disconnected authority boundary; pending previews/approvals/effects cannot reuse it. Remote published content is
-    not claimed deleted.
+  semantics: 'Persist revoked/disconnected authority boundary; pending previews/approvals/effects cannot reuse it. Remote published content is
+    not claimed deleted. C09 2.1.0 (A7): connectionId is optional; when it is absent the current owner''s single connection is disconnected.'
   surface: browser
 - name: listExportDestinations
   input: ExportConnectionRead
@@ -4780,7 +4844,14 @@ operations:
   - NOT_FOUND
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: List only currently permitted destinations from owner's connection; partial/unavailable provider scope is explicit.
+  semantics: 'List only currently permitted destinations from owner''s connection; partial/unavailable provider scope is explicit. C09 2.1.0
+    (A1, A6, A7): connectionId is optional as for readNotionConnection. Notion grants access per shared page but enforces the connection-wide
+    content-creation permission only when writing, so "currently permitted destinations" is read as pages shared with the connection that are
+    readable and not known to be refused. Each entry carries required destinationId (the parent page id) and title (a placeholder when the page
+    is untitled), an optional location context, and, as far as known, readable, creationCapability (unknown, confirmed or refused) and writable
+    (false when the page is unreadable or the connection''s creation capability is refused, true otherwise). listingComplete false marks a partial
+    or unavailable listing. lastDestinationId names the destination of the owner''s most recent succeeded export; it is only a preselection hint,
+    used when that page is listed and readable.'
   surface: browser
 - name: prepareExportPreview
   input: ExportPreviewRequest
@@ -4795,8 +4866,18 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - SOURCE_INELIGIBLE
   - CONFLICT
-  semantics: Read C07 exact eligible novelty artifact; freeze source tuple, owner, destination, connection revision and rendered content in canonical
-    bindingHash. Preparing preview performs no Notion write.
+  semantics: 'Read C07 exact eligible novelty artifact; freeze source tuple, owner, destination, connection revision and rendered content in canonical
+    bindingHash. Preparing preview performs no Notion write. C09 2.1.0 (A1, A5): in the request, destinationId, title and context are optional
+    and never trusted; the server derives destinationId from parentPageId and reads title and context from Notion. The response destination
+    is an ExportDestinationEntry. sourceTitle, marker (the export marker, the text of the last top-level block) and earlierExports (bounded;
+    earlier exports of the same source and destination that succeeded or may exist in Notion) are optional. Hash rule (NFR4.2): renderedContentHash
+    is the SHA-256 of the canonical page-creation body tree {"properties": {"title": ...}, "children": [...]}, exactly as it is sent, serialized
+    as JSON with sorted keys, compact separators and UTF-8 without escaping (the form ResearchWorkspace uses for its content hashes, with no domain
+    prefix). For C09 2.1.0 this supersedes the rule in Canonical identity that hashes the renderedText bytes; renderedText is the read-only plain-text
+    projection of that tree. bindingHash keeps the canonical rule: SHA-256 of the prefix docsuri:export-binding:v1 and a newline, followed by
+    the JCS bytes of the object containing exactly ownerId, previewId, revision, source, sourceEligibilityRevision, connectionRevision, destination,
+    renderedContentHash and renderPolicy, where destination holds only destinationId, connectionId, workspaceId, parentPageId and formatRevision
+    (never title or context, so renaming a page does not void an approval). Golden byte vectors for both hashes: shared/export-hash-vectors.json.'
   surface: browser
 - name: approveExportPreview
   input: ExportApprovalRequest
@@ -4812,8 +4893,9 @@ operations:
   - CONFLICT
   - SOURCE_INELIGIBLE
   - IDEMPOTENCY_CONFLICT
-  semantics: Require deliberate explicit approval of exact previewRevision/bindingHash. Revalidate source/destination/connection/current owner;
-    a changed binding requires a new preview and approval.
+  semantics: 'Require deliberate explicit approval of exact previewRevision/bindingHash. Revalidate source/destination/connection/current owner;
+    a changed binding requires a new preview and approval. C09 2.1.0 (A9): every returned approval carries invalidationReason (source-changed,
+    destination-changed, connection-changed, authority-revoked or account-withdrawn) when, and only when, it is invalidated.'
   surface: browser
 - name: executeApprovedExport
   input: ExportExecute
@@ -4831,8 +4913,11 @@ operations:
   - APPROVAL_REQUIRED
   - OUTCOME_UNKNOWN
   - CAPACITY_EXHAUSTED
-  semantics: Before any external effect recheck exact immutable source revision/hash, current eligibility, destination, connection, owner and
-    approval policy. Durably bind one effect to approval then dispatch; identical retry returns original effect.
+  semantics: 'Before any external effect recheck exact immutable source revision/hash, current eligibility, destination, connection, owner and
+    approval policy. Durably bind one effect to approval then dispatch; identical retry returns original effect. C09 2.1.0 (A6 extension): the
+    notion.write message carries contentHash (the bound renderedContentHash) and marker, and the adapter writes only when the body it sends recomputes
+    to contentHash. A write result adds providerRequestId and, for disposition rejected, refusalClass. A rate-limited answer is the provider outcome
+    retry_later with the stated wait in the provider outcome''s retryAfterSeconds and no committed disposition.'
   surface: browser
 - name: readExportEffect
   input: ExportEffectRead
@@ -4845,7 +4930,9 @@ operations:
   - NOT_FOUND
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Read outcome only. Unknown is not failed or success; refresh never creates or repeats a publication.
+  semantics: 'Read outcome only. Unknown is not failed or success; refresh never creates or repeats a publication. C09 2.1.0 (A4): an effect
+    may carry outcomeReason (why it ended failed, invalidated or cancelled, or how the owner settled it), settledBy, nextCheckAt (for an unknown
+    effect, when the next reconciliation check runs) and settlementOffered (whether the owner may now settle it).'
   surface: browser
 - name: cancelExportApproval
   input: ExportCancel
@@ -4860,8 +4947,49 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   - CONFLICT
   - OUTCOME_UNKNOWN
-  semantics: CAS invalidate unconsumed approval before dispatch; in-flight/existing external effect cannot be promised undone and returns conflict/unknown
-    for explicit reconciliation.
+  semantics: 'CAS invalidate unconsumed approval before dispatch; in-flight/existing external effect cannot be promised undone and returns conflict/unknown
+    for explicit reconciliation. C09 2.1.0 (A10): expectedRevision is the preview revision while the approval is approved and unconsumed, and
+    the approval becomes cancelled; it is the effect revision when the approval is consumed and its effect is still accepted, and the effect
+    becomes cancelled with outcomeReason owner-cancelled while the approval stays consumed. Cancel returns the approval in both cases; the client
+    reads the effect to see its cancelled state. An effect that has left accepted is never promised undone.'
+  surface: browser
+- name: listExportHistory
+  input: ExportHistoryList
+  output: ExportHistoryPage
+  auth: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+  errors:
+  - INVALID_ARGUMENT
+  - UNAUTHENTICATED
+  - FORBIDDEN
+  - NOT_FOUND
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  semantics: 'C09 2.1.0 (A2): page the current owner''s exports keyed by approval, newest first, with limit 1 to 20 and an opaque cursor. Each
+    entry carries the approval state, invalidationReason, approvedAt and endedAt (when the export ended: the approval was cancelled or invalidated,
+    or its bound effect reached a terminal state), the source and destination titles, previewId, previewRevision and bindingHash for continue
+    and cancel, and continuable (the approving session is still current). When an effect is bound, the entry carries its state, revision, remoteUrl,
+    outcomeReason, settledBy, nextCheckAt, bounded possibleDuplicates (further pages carrying the same marker) and settlementOffered. Reading history
+    never exports and never changes a record.'
+  surface: browser
+- name: settleExportEffect
+  input: ExportSettle
+  output: ExportEffect
+  auth: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+  errors:
+  - INVALID_ARGUMENT
+  - UNAUTHENTICATED
+  - FORBIDDEN
+  - NOT_FOUND
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  - CONFLICT
+  - IDEMPOTENCY_CONFLICT
+  semantics: 'C09 2.1.0 (A3): the owner settles an unknown effect as delivered or not-delivered under expectedRevision (the effect revision),
+    with assumptionAccepted true, only once settlement is offered (the settling wait has passed and checks cannot decide, the connection cannot
+    read the destination, or scanning has stopped). delivered moves the effect to succeeded and not-delivered to failed, with settledBy owner and
+    outcomeReason owner-settled-delivered or owner-settled-not-delivered. The optional remoteUrl must be a Notion page link and is shown only,
+    never used as identity. Settling never writes to Notion. A changed revision or an effect not offered for settlement answers CONFLICT; the
+    same key with a changed request answers IDEMPOTENCY_CONFLICT.'
   surface: browser
 - name: reconcileExportEffect
   input: ExportEffectRead
@@ -4875,8 +5003,10 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - OUTCOME_UNKNOWN
-  semantics: Query evidence for original effect identity/remote reference; do not blindly repeat write. Another write is permitted only after
-    proven non-occurrence and still-valid approval/current authority.
+  semantics: 'Query evidence for original effect identity/remote reference; do not blindly repeat write. Another write is permitted only after
+    proven non-occurrence and still-valid approval/current authority. C09 2.1.0 (A6 extension): the effect.reconcile message adds marker (the
+    search key), destinationId, firstAttemptStartedAt and writerIdentity. Scan evidence maps marker found to committed and every other result
+    to unknown, with scanComplete; a scan never yields definitely_not_committed.'
   surface: internal
 invariants:
 - 'R-02: the same ResearchArtifactRef tuple appears in C07 source read and C09 preview; bindingHash additionally fixes rendered content, destination,
@@ -4940,7 +5070,7 @@ bindings:
 - approval.bindingHash == effect.bindingHash == current verified preview binding
 - current connection/source eligibility/destination authority is checked at dispatch authorization point
 - revocation concurrent with an already-dispatched remote effect is reported/reconciled rather than falsely claimed undone
-version: 2.0.0
+version: 2.1.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -5324,7 +5454,7 @@ Only the operations explicitly listed here are externally mounted. A surface tag
 openapi: 3.1.1
 info:
   title: DocSuri application v2 boundary
-  version: 3.0.0
+  version: 3.1.0
   description: Proposed browser/application contracts; legacy removal requires consumer evidence and approved transition.
 servers:
 - url: /
@@ -11218,6 +11348,122 @@ paths:
           $ref: '#/components/responses/E504'
         default:
           $ref: '#/components/responses/Edefault'
+  /api/v2/c09/list-export-history:
+    post:
+      operationId: C09_listExportHistory
+      summary: 'Owner-approved Notion export and uncertain-effect reconciliation: listExportHistory'
+      x-contract-operation: C09.listExportHistory
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C09.listExportHistory semantic rules. Derive internal context server-side; never accept it in this body.
+      security:
+      - sessionCookie: []
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+        description: Bound to current session or anonymous bootstrap; verify Origin too.
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          $ref: '#/components/schemas/Id'
+        description: Required for mutations; on pure queries it does not create a persistent mutation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportHistoryListHttp'
+      responses:
+        '200':
+          description: Committed outcome or explicitly discriminated pending/conflict/unavailable result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportHistoryPage'
+        '400':
+          $ref: '#/components/responses/E400'
+        '401':
+          $ref: '#/components/responses/E401'
+        '403':
+          $ref: '#/components/responses/E403'
+        '404':
+          $ref: '#/components/responses/E404'
+        '409':
+          $ref: '#/components/responses/E409'
+        '410':
+          $ref: '#/components/responses/E410'
+        '422':
+          $ref: '#/components/responses/E422'
+        '429':
+          $ref: '#/components/responses/E429'
+        '503':
+          $ref: '#/components/responses/E503'
+        '504':
+          $ref: '#/components/responses/E504'
+        default:
+          $ref: '#/components/responses/Edefault'
+  /api/v2/c09/settle-export-effect:
+    post:
+      operationId: C09_settleExportEffect
+      summary: 'Owner-approved Notion export and uncertain-effect reconciliation: settleExportEffect'
+      x-contract-operation: C09.settleExportEffect
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C09.settleExportEffect semantic rules. Derive internal context server-side; never accept it in this body.
+      security:
+      - sessionCookie: []
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+        description: Bound to current session or anonymous bootstrap; verify Origin too.
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          $ref: '#/components/schemas/Id'
+        description: Required for mutations; on pure queries it does not create a persistent mutation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportSettleHttp'
+      responses:
+        '200':
+          description: Committed outcome or explicitly discriminated pending/conflict/unavailable result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportEffect'
+        '400':
+          $ref: '#/components/responses/E400'
+        '401':
+          $ref: '#/components/responses/E401'
+        '403':
+          $ref: '#/components/responses/E403'
+        '404':
+          $ref: '#/components/responses/E404'
+        '409':
+          $ref: '#/components/responses/E409'
+        '410':
+          $ref: '#/components/responses/E410'
+        '422':
+          $ref: '#/components/responses/E422'
+        '429':
+          $ref: '#/components/responses/E429'
+        '503':
+          $ref: '#/components/responses/E503'
+        '504':
+          $ref: '#/components/responses/E504'
+        default:
+          $ref: '#/components/responses/Edefault'
   /api/v2/c11/read-dashboard:
     post:
       operationId: C11_readDashboard
@@ -15297,6 +15543,10 @@ components:
             type: string
             minLength: 1
             x-policy-limit: Resolve content/input byte and character limits before enabling this operation.
+        workspaceName:
+          type: string
+          minLength: 1
+          maxLength: 2000
       required:
       - connectionId
       - ownerId
@@ -15317,12 +15567,63 @@ components:
           $ref: '#/components/schemas/Id'
         formatRevision:
           $ref: '#/components/schemas/Revision'
+        destinationId:
+          $ref: '#/components/schemas/Id'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        context:
+          type: string
+          minLength: 1
+          maxLength: 2000
       required:
       - connectionId
       - workspaceId
       - parentPageId
       - formatRevision
       additionalProperties: false
+    ExportDestinationEntry:
+      type: object
+      properties:
+        connectionId:
+          $ref: '#/components/schemas/Id'
+        workspaceId:
+          $ref: '#/components/schemas/Id'
+        parentPageId:
+          $ref: '#/components/schemas/Id'
+        formatRevision:
+          $ref: '#/components/schemas/Revision'
+        destinationId:
+          $ref: '#/components/schemas/Id'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        context:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        readable:
+          type: boolean
+        creationCapability:
+          $ref: '#/components/schemas/ExportCreationCapability'
+        writable:
+          type: boolean
+      required:
+      - connectionId
+      - workspaceId
+      - parentPageId
+      - formatRevision
+      - destinationId
+      - title
+      additionalProperties: false
+    ExportCreationCapability:
+      type: string
+      enum:
+      - unknown
+      - confirmed
+      - refused
     ExportDestinations:
       type: object
       properties:
@@ -15333,7 +15634,11 @@ components:
         destinations:
           type: array
           items:
-            $ref: '#/components/schemas/ExportDestination'
+            $ref: '#/components/schemas/ExportDestinationEntry'
+        listingComplete:
+          type: boolean
+        lastDestinationId:
+          $ref: '#/components/schemas/Id'
       required:
       - connectionId
       - connectionRevision
@@ -15355,7 +15660,7 @@ components:
         connectionRevision:
           $ref: '#/components/schemas/Revision'
         destination:
-          $ref: '#/components/schemas/ExportDestination'
+          $ref: '#/components/schemas/ExportDestinationEntry'
         renderedText:
           type: string
         renderedContentHash:
@@ -15364,6 +15669,19 @@ components:
           $ref: '#/components/schemas/Hash'
         renderPolicy:
           $ref: '#/components/schemas/PolicyRef'
+        earlierExports:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExportEarlierExport'
+          maxItems: 20
+        marker:
+          type: string
+          minLength: 1
+          maxLength: 200
+        sourceTitle:
+          type: string
+          minLength: 1
+          maxLength: 2000
       required:
       - previewId
       - ownerId
@@ -15377,6 +15695,31 @@ components:
       - bindingHash
       - renderPolicy
       additionalProperties: false
+    ExportEarlierExport:
+      type: object
+      properties:
+        effectId:
+          $ref: '#/components/schemas/Id'
+        disposition:
+          $ref: '#/components/schemas/ExportEarlierExportDisposition'
+        endedAt:
+          $ref: '#/components/schemas/Time'
+        remoteUrl:
+          type: string
+          minLength: 1
+          format: uri
+        outcomeReason:
+          $ref: '#/components/schemas/ExportOutcomeReason'
+      required:
+      - effectId
+      - disposition
+      - endedAt
+      additionalProperties: false
+    ExportEarlierExportDisposition:
+      type: string
+      enum:
+      - exported
+      - may-exist
     ExportApproval:
       type: object
       properties:
@@ -15406,6 +15749,8 @@ components:
           - expired
         policy:
           $ref: '#/components/schemas/PolicyRef'
+        invalidationReason:
+          $ref: '#/components/schemas/ExportInvalidationReason'
       required:
       - approvalId
       - ownerId
@@ -15417,6 +15762,14 @@ components:
       - state
       - policy
       additionalProperties: false
+    ExportInvalidationReason:
+      type: string
+      enum:
+      - source-changed
+      - destination-changed
+      - connection-changed
+      - authority-revoked
+      - account-withdrawn
     ExportEffect:
       type: object
       properties:
@@ -15460,6 +15813,14 @@ components:
             type: string
             minLength: 1
             x-policy-limit: Resolve content/input byte and character limits before enabling this operation.
+        outcomeReason:
+          $ref: '#/components/schemas/ExportOutcomeReason'
+        settledBy:
+          $ref: '#/components/schemas/ExportSettledBy'
+        nextCheckAt:
+          $ref: '#/components/schemas/Time'
+        settlementOffered:
+          type: boolean
       required:
       - effectId
       - approvalId
@@ -15472,6 +15833,161 @@ components:
       - reconciliationEvidenceHash
       - limitations
       additionalProperties: false
+    ExportOutcomeReason:
+      type: string
+      enum:
+      - token-invalid
+      - no-access
+      - destination-missing
+      - content-rejected
+      - workspace-block-limit
+      - provider-blocked
+      - rate-limit-budget-spent
+      - not-found-after-checks
+      - owner-settled-delivered
+      - owner-settled-not-delivered
+      - dependency-unavailable
+      - policy-unresolved
+      - source-changed
+      - destination-changed
+      - connection-changed
+      - authority-revoked
+      - account-withdrawn
+      - owner-cancelled
+    ExportSettledBy:
+      type: string
+      enum:
+      - provider
+      - reconciliation
+      - owner
+    ExportHistoryPage:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExportHistoryEntry'
+          maxItems: 20
+        nextCursor:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 512
+          - type: 'null'
+      required:
+      - entries
+      - nextCursor
+      additionalProperties: false
+    ExportHistoryEntry:
+      type: object
+      properties:
+        approvalId:
+          $ref: '#/components/schemas/Id'
+        previewId:
+          $ref: '#/components/schemas/Id'
+        previewRevision:
+          $ref: '#/components/schemas/Revision'
+        bindingHash:
+          $ref: '#/components/schemas/Hash'
+        state:
+          $ref: '#/components/schemas/ExportApprovalState'
+        invalidationReason:
+          $ref: '#/components/schemas/ExportInvalidationReason'
+        approvedAt:
+          $ref: '#/components/schemas/Time'
+        endedAt:
+          $ref: '#/components/schemas/Time'
+        sourceTitle:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        destinationTitle:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        continuable:
+          type: boolean
+        effect:
+          $ref: '#/components/schemas/ExportHistoryEffect'
+      required:
+      - approvalId
+      - previewId
+      - previewRevision
+      - bindingHash
+      - state
+      - approvedAt
+      - sourceTitle
+      - destinationTitle
+      - continuable
+      additionalProperties: false
+    ExportHistoryEffect:
+      type: object
+      properties:
+        effectId:
+          $ref: '#/components/schemas/Id'
+        state:
+          $ref: '#/components/schemas/ExportEffectState'
+        revision:
+          $ref: '#/components/schemas/Revision'
+        remoteUrl:
+          type: string
+          minLength: 1
+          format: uri
+        outcomeReason:
+          $ref: '#/components/schemas/ExportOutcomeReason'
+        settledBy:
+          $ref: '#/components/schemas/ExportSettledBy'
+        nextCheckAt:
+          $ref: '#/components/schemas/Time'
+        possibleDuplicates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExportPossibleDuplicate'
+          maxItems: 10
+        settlementOffered:
+          type: boolean
+      required:
+      - effectId
+      - state
+      - revision
+      - possibleDuplicates
+      - settlementOffered
+      additionalProperties: false
+    ExportPossibleDuplicate:
+      type: object
+      properties:
+        remoteReference:
+          $ref: '#/components/schemas/Id'
+        remoteUrl:
+          type: string
+          minLength: 1
+          format: uri
+      required:
+      - remoteReference
+      additionalProperties: false
+    ExportApprovalState:
+      type: string
+      enum:
+      - approved
+      - invalidated
+      - consumed
+      - cancelled
+      - expired
+    ExportEffectState:
+      type: string
+      enum:
+      - accepted
+      - executing
+      - succeeded
+      - failed
+      - unknown
+      - cancelled
+      - invalidated
+    ExportSettleDisposition:
+      type: string
+      enum:
+      - delivered
+      - not-delivered
     SessionBootstrap:
       type: object
       properties:
@@ -16809,8 +17325,7 @@ components:
       properties:
         connectionId:
           $ref: '#/components/schemas/Id'
-      required:
-      - connectionId
+      required: []
       additionalProperties: false
     ExportPreviewRequestHttp:
       type: object
@@ -16872,6 +17387,42 @@ components:
       required:
       - approvalId
       - expectedRevision
+      additionalProperties: false
+    ExportHistoryListHttp:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 20
+        cursor:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 512
+          - type: 'null'
+      required: []
+      additionalProperties: false
+    ExportSettleHttp:
+      type: object
+      properties:
+        effectId:
+          $ref: '#/components/schemas/Id'
+        expectedRevision:
+          $ref: '#/components/schemas/Revision'
+        disposition:
+          $ref: '#/components/schemas/ExportSettleDisposition'
+        assumptionAccepted:
+          const: true
+        remoteUrl:
+          type: string
+          minLength: 1
+          format: uri
+      required:
+      - effectId
+      - expectedRevision
+      - disposition
+      - assumptionAccepted
       additionalProperties: false
     OpsQueryHttp:
       type: object

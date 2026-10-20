@@ -32,6 +32,8 @@ import { CorpusWorkspace } from './u3-corpus/corpus-workspace';
 import { ResearchWorkspace } from './u4-research/research-workspace';
 import { readJobLink } from './u4-research/jobs';
 import { TopicsView } from './u5-topics/topics-view';
+import { findExportCapability } from './u6-export/api';
+import { ExportView } from './u6-export/export-view';
 
 type Appearance = 'light' | 'dark' | 'system';
 type NavigationItem = {
@@ -89,6 +91,7 @@ const NAV_COPY: Record<string, string> = {
   research: '연구',
   novelty: '참신성 분석',
   topics: '주제 구독',
+  export: '내보내기',
 };
 const OWNER_BOUND = new Set([
   'library',
@@ -99,6 +102,7 @@ const OWNER_BOUND = new Set([
   'research',
   'novelty',
   'topics',
+  'export',
 ]);
 const APPEARANCE_KEY = 'docsuri.u1.appearance';
 const AUTHORITY_CHANNEL = 'docsuri.authority-boundary';
@@ -151,6 +155,7 @@ export default function App({ transport }: { transport?: Transport }) {
     | 'research'
     | 'novelty'
     | 'topics'
+    | 'export'
   >(() => {
     const job = readJobLink();
     return job ? (job.kind === 'research-turn' ? 'research' : 'novelty') : 'search';
@@ -185,6 +190,7 @@ export default function App({ transport }: { transport?: Transport }) {
   const topicsCapability = catalog?.capabilities.find(
     (value) => value.id === 'topics.digest' && ['available', 'degraded'].includes(value.state),
   );
+  const exportCapability = findExportCapability(catalog);
   // The U3 corpus workspace replaces the live search/reading surfaces when the
   // corpus owner capabilities are installed in this realm.
   const isCorpusWorkspace =
@@ -428,6 +434,7 @@ export default function App({ transport }: { transport?: Transport }) {
                   else if (['research', 'novelty'].includes(item.routeId))
                     setView(item.routeId as 'research' | 'novelty');
                   else if (item.routeId === 'topics' && topicsCapability) setView('topics');
+                  else if (item.routeId === 'export' && exportCapability) setView('export');
                   focusHeading(mainHeading);
                 }}
                 data-testid={`nav-${item.routeId}`}
@@ -560,6 +567,7 @@ export default function App({ transport }: { transport?: Transport }) {
                   degraded={noveltyCapability.state === 'degraded'}
                   synthetic={noveltyCapability.modeIds.includes('synthetic-only')}
                   active={view === 'novelty'}
+                  exportCapability={exportCapability}
                 />
               ) : null}
               {signedIn && topicsCapability && view === 'topics' ? (
@@ -568,6 +576,9 @@ export default function App({ transport }: { transport?: Transport }) {
                   degraded={topicsCapability.state === 'degraded'}
                   synthetic={topicsCapability.modeIds.includes('synthetic-only')}
                 />
+              ) : null}
+              {signedIn && exportCapability && view === 'export' ? (
+                <ExportView client={client} capability={exportCapability} />
               ) : null}
               {view === 'search' && isCorpusWorkspace ? (
                 <CorpusWorkspace client={client} signedIn={signedIn} />

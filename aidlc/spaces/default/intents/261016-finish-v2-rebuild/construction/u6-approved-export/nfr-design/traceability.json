@@ -1,0 +1,188 @@
+{
+  "stage": "nfr-design",
+  "unit": "u6-approved-export",
+  "upstream_ids": [
+    "NFR1.1",
+    "NFR1.2",
+    "NFR1.3",
+    "NFR1.4",
+    "NFR1.5",
+    "NFR3.1",
+    "NFR3.2",
+    "NFR3.3",
+    "NFR3.4",
+    "NFR3.5",
+    "NFR3.6",
+    "NFR3.7",
+    "NFR3.8",
+    "NFR3.9",
+    "NFR4.1",
+    "NFR4.2",
+    "NFR4.3",
+    "NFR4.4",
+    "NFR4.5",
+    "NFR4.6",
+    "NFR4.7",
+    "NFR4.8",
+    "NFR4.9",
+    "NFR4.10",
+    "NFR4.11",
+    "NFR5.1",
+    "NFR6.1",
+    "NFR6.2",
+    "NFR6.3",
+    "NFR6.4"
+  ],
+  "coverage": [
+    {
+      "id": "NFR1.1",
+      "status": "OK",
+      "target": "Security design section 3: the session guard (transactions.guard calling accounts.guard_session) in every store function, owner-filtered records, one not-found answer for foreign and missing identifiers"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "OK",
+      "target": "Security design sections 3 and 8.2: background work on one effect at a time; the source re-read through U4's export read with the approving owner's Authority; claim guard re-checks session and account"
+    },
+    {
+      "id": "NFR1.3",
+      "status": "OK",
+      "target": "Security design section 3: boundary_route, post_context (origin, CSRF header, Idempotency-Key), read_payload bounded JSON and the 64 KB admission bound; token accepted only by configure"
+    },
+    {
+      "id": "NFR1.4",
+      "status": "OK",
+      "target": "Security design sections 3 and 10: lifecycle participant under the role mapped by amendment A8, acting at once, evidence once per request and scope"
+    },
+    {
+      "id": "NFR1.5",
+      "status": "OK",
+      "target": "Security design sections 10 and 14 (decision D4): unapproved previews removed after 7 days; unconsumed approvals bounded by the approving session and trimmed when it ends (NFR1.5 clause and NFR4.10 retention row superseded); settled copies trimmed; workspace name removed with its connection; erasure keeps count-only evidence"
+    },
+    {
+      "id": "NFR3.1",
+      "status": "OK",
+      "target": "Security design section 4.1: DSE1 envelope, AES-256-GCM with a fresh 96-bit nonce, associated data binding key version, account, connection and connection revision"
+    },
+    {
+      "id": "NFR3.2",
+      "status": "OK",
+      "target": "Security design sections 4.2, 4.3 and 4.6 (decisions D1, D2, D14): shared custody helper with the built keyring's mechanics and per-keyring limits (U2 keeps generation 1 to 3, U6 counts generations without that cap), U6's own key folder, no recovery copy, key file deleted only after every preservation check passes"
+    },
+    {
+      "id": "NFR3.3",
+      "status": "OK",
+      "target": "Security design sections 4.4 and 4.5 (decision D3): first start versus loss decided with the marker and the sealed-token count witness; create-key-after-loss, rotate-key with re-sealing, skipped and reported tokens under missing versions, retire-key at zero; operator functions reached as the schema owner through the environment tool"
+    },
+    {
+      "id": "NFR3.4",
+      "status": "OK",
+      "target": "Security design sections 3 and 5.1 to 5.3 (decision D13): the only places a plaintext token exists, no validation echo, no body logging, a configure receipt with no token material, envelope columns reachable only through runtime and operator functions run with the schema owner's rights"
+    },
+    {
+      "id": "NFR3.5",
+      "status": "OK",
+      "target": "Security design section 6.1 (decision D10): a dedicated HTTP client and SDK client per operation, never shared, pooled or entered, closed in a finally step together with the token"
+    },
+    {
+      "id": "NFR3.6",
+      "status": "OK",
+      "target": "Security design sections 6.1, 7 and 5.5 (decision D11): token opening, client creation and the call inside the reduced region; every Exception and the deadline reduced to a fixed category without message or chain; outside cancellation propagates unlogged; rules for any future error reporter"
+    },
+    {
+      "id": "NFR3.7",
+      "status": "OK",
+      "target": "Security design sections 4.1, 7 and 10 (decision D16): envelope and key version cleared in the transaction that ends the connection's use; a stored-token 401 revokes only by compare-and-set on the opened revision; a candidate-token 401 stores nothing and leaves the connection unchanged"
+    },
+    {
+      "id": "NFR3.8",
+      "status": "OK",
+      "target": "Security design sections 6.2 to 6.4 (decisions D7, D10): GuardedTransport origin pinning, identifier validation, 2 MB streaming cap, no redirects, trust_env off; least-privilege integration capabilities"
+    },
+    {
+      "id": "NFR3.9",
+      "status": "OK",
+      "target": "Security design section 5.4: dedicated SDK logger with a NullHandler that does not propagate; httpx and httpcore kept at WARNING or above"
+    },
+    {
+      "id": "NFR4.1",
+      "status": "OK",
+      "target": "Security design sections 3 and 8.2 (decision D8): replays return the original by idempotency key; the effect and its attempt are recorded and committed before any Notion call"
+    },
+    {
+      "id": "NFR4.2",
+      "status": "OK",
+      "target": "Security design section 8.4 (decision D12): canonical tree hashed in U4's digest form, frozen by a trigger, rechecked with marker and parent before every write; contentHash and marker in the provider messages; fake Notion hash check"
+    },
+    {
+      "id": "NFR4.3",
+      "status": "OK",
+      "target": "Security design section 7: write classification retries only 429 not blocked and 529, reads the status, body code and additional_data itself (block_limit block_creation for the workspace block limit), SDK retries off, everything else uncertain"
+    },
+    {
+      "id": "NFR4.4",
+      "status": "OK",
+      "target": "Security design sections 8.1, 8.2 and 8.6 (decision D9): export lane outside the worker pass; deadlineAt of attempt start plus 90 seconds enforced by asyncio.timeout; expiry is uncertain; settling wait counted from deadlineAt"
+    },
+    {
+      "id": "NFR4.5",
+      "status": "OK",
+      "target": "Security design section 8.5: 10-minute window from the first rate-limited answer, at most 4 attempts, failure only with no outstanding attempt, immediate failure when the stated wait passes the window"
+    },
+    {
+      "id": "NFR4.6",
+      "status": "OK",
+      "target": "Security design sections 9.1 to 9.3 (decisions D5, D6, D15): read budgets, database pace of 2 requests per second per connection with bounded contention handling, at most 3 read retries within the budget, interactive caps of two per process and one per connection that fail at once"
+    },
+    {
+      "id": "NFR4.7",
+      "status": "OK",
+      "target": "Security design section 9.4: manual paging with page size 100, descent into container blocks, writer identity and clock margin filter, marker check, two complete scans before not-found"
+    },
+    {
+      "id": "NFR4.8",
+      "status": "OK",
+      "target": "Security design section 8.2 step 3: compare-and-set to executing and the ExportAttempt insert in one committed transaction"
+    },
+    {
+      "id": "NFR4.9",
+      "status": "OK",
+      "target": "Security design section 10: housekeeping invalidates only on definite answers from AccountAccess or U4; could-not-check leaves the approval approved; the could-not-check wait row now serves NFR4.9 and BR3.3 (section 14)"
+    },
+    {
+      "id": "NFR4.10",
+      "status": "OK",
+      "target": "Security design sections 9.1, 11 and 14: ExportPolicy carries every operating value, the read budgets and the interactive caps as finite checked values; the mislabelled row is corrected; the retention row follows D4; the 24-hour could-not-check bound stays as a backstop"
+    },
+    {
+      "id": "NFR4.11",
+      "status": "OK",
+      "target": "Security design section 10: per-owner limits (1 in flight, 20 bound per rolling hour) enforced at binding; a refusal leaves the approval unconsumed"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "Logical components section 9: axe checks with WCAG 2.2 AA tags on every U6 view and dialog, a keyboard-only journey, a 320 CSS px reflow run and component tests for colour, field errors and the polite live region"
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": "Security design section 11: MIT-licensed notion-client, no paid service, Notion's Free plan"
+    },
+    {
+      "id": "NFR6.2",
+      "status": "OK",
+      "target": "Security design section 11: operator-only real composition requiring free-terms evidence in the run-bound real-export settings; POLICY_UNRESOLVED otherwise"
+    },
+    {
+      "id": "NFR6.3",
+      "status": "OK",
+      "target": "Security design sections 6.2 and 11: fake Notion transport under the real SDK for every test, CI run and synthetic environment; synthetic compositions cannot build the network transport"
+    },
+    {
+      "id": "NFR6.4",
+      "status": "OK",
+      "target": "Security design sections 9.2 and 10: database pace per connection and per-owner limits keep usage inside the free integration limits"
+    }
+  ]
+}

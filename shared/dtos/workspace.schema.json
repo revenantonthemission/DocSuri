@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://docsuri.dev/shared/dtos/workspace.schema.json",
-  "$comment": "Generated canonical contract release 3.0.0; source SHA256:981105788bb236422f23305495f6d2865474afe73a6d84e811b7acca4dca34ae",
+  "$comment": "Generated canonical contract release 3.1.0; source SHA256:9ef6c9cd2ca848be703d6c70524d185625fb77610d0168eb61d9bc13bae7fb0b",
   "$defs": {
     "Id": {
       "type": "string",
@@ -4853,6 +4853,11 @@
             "minLength": 1,
             "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
           }
+        },
+        "workspaceName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
         }
       },
       "required": [
@@ -4880,6 +4885,19 @@
         },
         "formatRevision": {
           "$ref": "#/$defs/Revision"
+        },
+        "destinationId": {
+          "$ref": "#/$defs/Id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
         }
       },
       "required": [
@@ -4889,6 +4907,62 @@
         "formatRevision"
       ],
       "additionalProperties": false
+    },
+    "ExportDestinationEntry": {
+      "type": "object",
+      "properties": {
+        "connectionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/Id"
+        },
+        "parentPageId": {
+          "$ref": "#/$defs/Id"
+        },
+        "formatRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "destinationId": {
+          "$ref": "#/$defs/Id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "readable": {
+          "type": "boolean"
+        },
+        "creationCapability": {
+          "$ref": "#/$defs/ExportCreationCapability"
+        },
+        "writable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "connectionId",
+        "workspaceId",
+        "parentPageId",
+        "formatRevision",
+        "destinationId",
+        "title"
+      ],
+      "additionalProperties": false
+    },
+    "ExportCreationCapability": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "confirmed",
+        "refused"
+      ]
     },
     "ExportDestinations": {
       "type": "object",
@@ -4902,8 +4976,14 @@
         "destinations": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/ExportDestination"
+            "$ref": "#/$defs/ExportDestinationEntry"
           }
+        },
+        "listingComplete": {
+          "type": "boolean"
+        },
+        "lastDestinationId": {
+          "$ref": "#/$defs/Id"
         }
       },
       "required": [
@@ -4935,7 +5015,7 @@
           "$ref": "#/$defs/Revision"
         },
         "destination": {
-          "$ref": "#/$defs/ExportDestination"
+          "$ref": "#/$defs/ExportDestinationEntry"
         },
         "renderedText": {
           "type": "string"
@@ -4948,6 +5028,23 @@
         },
         "renderPolicy": {
           "$ref": "#/$defs/PolicyRef"
+        },
+        "earlierExports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExportEarlierExport"
+          },
+          "maxItems": 20
+        },
+        "marker": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "sourceTitle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
         }
       },
       "required": [
@@ -4964,6 +5061,41 @@
         "renderPolicy"
       ],
       "additionalProperties": false
+    },
+    "ExportEarlierExport": {
+      "type": "object",
+      "properties": {
+        "effectId": {
+          "$ref": "#/$defs/Id"
+        },
+        "disposition": {
+          "$ref": "#/$defs/ExportEarlierExportDisposition"
+        },
+        "endedAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "remoteUrl": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uri"
+        },
+        "outcomeReason": {
+          "$ref": "#/$defs/ExportOutcomeReason"
+        }
+      },
+      "required": [
+        "effectId",
+        "disposition",
+        "endedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ExportEarlierExportDisposition": {
+      "type": "string",
+      "enum": [
+        "exported",
+        "may-exist"
+      ]
     },
     "ExportApproval": {
       "type": "object",
@@ -5008,6 +5140,9 @@
         },
         "policy": {
           "$ref": "#/$defs/PolicyRef"
+        },
+        "invalidationReason": {
+          "$ref": "#/$defs/ExportInvalidationReason"
         }
       },
       "required": [
@@ -5022,6 +5157,16 @@
         "policy"
       ],
       "additionalProperties": false
+    },
+    "ExportInvalidationReason": {
+      "type": "string",
+      "enum": [
+        "source-changed",
+        "destination-changed",
+        "connection-changed",
+        "authority-revoked",
+        "account-withdrawn"
+      ]
     },
     "ExportEffect": {
       "type": "object",
@@ -5092,6 +5237,18 @@
             "minLength": 1,
             "x-policy-limit": "Resolve content/input byte and character limits before enabling this operation."
           }
+        },
+        "outcomeReason": {
+          "$ref": "#/$defs/ExportOutcomeReason"
+        },
+        "settledBy": {
+          "$ref": "#/$defs/ExportSettledBy"
+        },
+        "nextCheckAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "settlementOffered": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -5107,6 +5264,215 @@
         "limitations"
       ],
       "additionalProperties": false
+    },
+    "ExportOutcomeReason": {
+      "type": "string",
+      "enum": [
+        "token-invalid",
+        "no-access",
+        "destination-missing",
+        "content-rejected",
+        "workspace-block-limit",
+        "provider-blocked",
+        "rate-limit-budget-spent",
+        "not-found-after-checks",
+        "owner-settled-delivered",
+        "owner-settled-not-delivered",
+        "dependency-unavailable",
+        "policy-unresolved",
+        "source-changed",
+        "destination-changed",
+        "connection-changed",
+        "authority-revoked",
+        "account-withdrawn",
+        "owner-cancelled"
+      ]
+    },
+    "ExportSettledBy": {
+      "type": "string",
+      "enum": [
+        "provider",
+        "reconciliation",
+        "owner"
+      ]
+    },
+    "ExportHistoryPage": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExportHistoryEntry"
+          },
+          "maxItems": 20
+        },
+        "nextCursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "entries",
+        "nextCursor"
+      ],
+      "additionalProperties": false
+    },
+    "ExportHistoryEntry": {
+      "type": "object",
+      "properties": {
+        "approvalId": {
+          "$ref": "#/$defs/Id"
+        },
+        "previewId": {
+          "$ref": "#/$defs/Id"
+        },
+        "previewRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "bindingHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "state": {
+          "$ref": "#/$defs/ExportApprovalState"
+        },
+        "invalidationReason": {
+          "$ref": "#/$defs/ExportInvalidationReason"
+        },
+        "approvedAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "endedAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "sourceTitle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "destinationTitle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "continuable": {
+          "type": "boolean"
+        },
+        "effect": {
+          "$ref": "#/$defs/ExportHistoryEffect"
+        }
+      },
+      "required": [
+        "approvalId",
+        "previewId",
+        "previewRevision",
+        "bindingHash",
+        "state",
+        "approvedAt",
+        "sourceTitle",
+        "destinationTitle",
+        "continuable"
+      ],
+      "additionalProperties": false
+    },
+    "ExportHistoryEffect": {
+      "type": "object",
+      "properties": {
+        "effectId": {
+          "$ref": "#/$defs/Id"
+        },
+        "state": {
+          "$ref": "#/$defs/ExportEffectState"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "remoteUrl": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uri"
+        },
+        "outcomeReason": {
+          "$ref": "#/$defs/ExportOutcomeReason"
+        },
+        "settledBy": {
+          "$ref": "#/$defs/ExportSettledBy"
+        },
+        "nextCheckAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "possibleDuplicates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExportPossibleDuplicate"
+          },
+          "maxItems": 10
+        },
+        "settlementOffered": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "effectId",
+        "state",
+        "revision",
+        "possibleDuplicates",
+        "settlementOffered"
+      ],
+      "additionalProperties": false
+    },
+    "ExportPossibleDuplicate": {
+      "type": "object",
+      "properties": {
+        "remoteReference": {
+          "$ref": "#/$defs/Id"
+        },
+        "remoteUrl": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uri"
+        }
+      },
+      "required": [
+        "remoteReference"
+      ],
+      "additionalProperties": false
+    },
+    "ExportApprovalState": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "invalidated",
+        "consumed",
+        "cancelled",
+        "expired"
+      ]
+    },
+    "ExportEffectState": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "executing",
+        "succeeded",
+        "failed",
+        "unknown",
+        "cancelled",
+        "invalidated"
+      ]
+    },
+    "ExportSettleDisposition": {
+      "type": "string",
+      "enum": [
+        "delivered",
+        "not-delivered"
+      ]
     },
     "SessionBootstrap": {
       "type": "object",
@@ -7027,9 +7393,7 @@
           "$ref": "#/$defs/Id"
         }
       },
-      "required": [
-        "connectionId"
-      ],
+      "required": [],
       "additionalProperties": false
     },
     "ExportPreviewRequestHttp": {
@@ -7117,6 +7481,59 @@
       "required": [
         "approvalId",
         "expectedRevision"
+      ],
+      "additionalProperties": false
+    },
+    "ExportHistoryListHttp": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "cursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "ExportSettleHttp": {
+      "type": "object",
+      "properties": {
+        "effectId": {
+          "$ref": "#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "disposition": {
+          "$ref": "#/$defs/ExportSettleDisposition"
+        },
+        "assumptionAccepted": {
+          "const": true
+        },
+        "remoteUrl": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uri"
+        }
+      },
+      "required": [
+        "effectId",
+        "expectedRevision",
+        "disposition",
+        "assumptionAccepted"
       ],
       "additionalProperties": false
     },

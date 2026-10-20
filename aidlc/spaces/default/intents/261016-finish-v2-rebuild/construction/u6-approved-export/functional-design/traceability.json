@@ -1,0 +1,37 @@
+{
+  "stage": "functional-design",
+  "unit": "u6-approved-export",
+  "upstream_ids": ["FR1", "FR1.1", "FR1.2", "FR1.3", "FR1.4", "FR1.5", "FR1.6", "FR2", "FR2.1", "FR2.2", "FR2.3", "FR2.4", "FR2.5", "FR3", "FR3.1", "FR3.2", "FR4", "FR4.1", "FR4.2"],
+  "coverage": [
+    {"id": "FR1", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR1.1", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR1.2", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR1.3", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR1.4", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR1.5", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR1.6", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR2", "status": "N/A", "target": "requirement group heading; covered through FR2.1-FR2.5 below"},
+    {"id": "FR3", "status": "N/A", "target": "assigned to U8 (u8-service-operations-integration) by the unit story map"},
+    {"id": "FR3.1", "status": "N/A", "target": "assigned to U8 (u8-service-operations-integration) by the unit story map"},
+    {"id": "FR3.2", "status": "N/A", "target": "assigned to U8 (u8-service-operations-integration) by the unit story map"},
+    {"id": "FR4", "status": "N/A", "target": "assigned to U8 (u8-service-operations-integration) by the unit story map"},
+    {"id": "FR4.1", "status": "N/A", "target": "assigned to U8 (u8-service-operations-integration) by the unit story map"},
+    {"id": "FR4.2", "status": "N/A", "target": "assigned to U8 (u8-service-operations-integration) by the unit story map"},
+    {"id": "FR2.1", "status": "OK", "target": "BR1.1, BR1.2, BR1.3, BR1.5, BR1.6"},
+    {"id": "FR2.2", "status": "OK", "target": "BR2.1, BR2.2, BR2.6"},
+    {"id": "FR2.3", "status": "OK", "target": "BR2.3, BR3.1, BR3.2, BR3.6"},
+    {"id": "FR2.4", "status": "OK", "target": "BR2.4, BR2.5, BR4.1, BR4.2, BR4.3, BR4.4, BR4.5, BR4.6, BR4.7, BR5.1, BR6.4"},
+    {"id": "FR2.5", "status": "OK", "target": "BR1.4, BR3.3, BR3.4, BR3.5, BR3.7, BR6.1"}
+  ],
+  "reverse": [
+    {"id": "BR5.2", "status": "N/A", "target": "per-owner pacing protecting the free integration (NFR6); no FR names metering"},
+    {"id": "BR6.2", "status": "N/A", "target": "account erasure removes the protected token and all export records (NFR3; unit lifecycle-participant responsibility)"},
+    {"id": "BR6.3", "status": "N/A", "target": "reactivation restores no credential (NFR3; unit lifecycle-participant responsibility)"},
+    {"id": "BR6.5", "status": "N/A", "target": "lifecycle participant writes only its own records once per request and scope, without deferring (NFR1)"},
+    {"id": "BR7.1", "status": "N/A", "target": "cross-cutting owner isolation on every operation (NFR1)"},
+    {"id": "BR7.2", "status": "N/A", "target": "no secrets, content or provider text in logs, evidence or errors (NFR3)"},
+    {"id": "BR8.1", "status": "N/A", "target": "synthetic mode uses a local fake Notion only (NFR6)"},
+    {"id": "BR8.2", "status": "N/A", "target": "real export bounded to the authorized test destination until U8 (NFR6; confirmed Q6)"},
+    {"id": "BR8.3", "status": "N/A", "target": "unresolved policy blocks with POLICY_UNRESOLVED, no paid fallback (NFR6; C09 invariant)"}
+  ]
+}

@@ -3,26 +3,40 @@
 Rotation retains decrypt-only prior keys. Removing one requires separate evidence
 that no retained proof, factor or backup needs it; this module offers no removal.
 The existing verifier-derived key is imported only as the legacy u2-v1 version.
+
+The private-file mechanics live in the shared helper `backend.key_custody` (security
+design §4.2, D1); this keyring is a thin setting of it. Its configuration stays at class
+level, and `root`, `run_id` and `legacy_key` stay the only state of each instance, so
+`ControlKeyring.__new__` followed by setting those three attributes still builds a
+working keyring.
 """
 
 from __future__ import annotations
 
 import base64
-import fcntl
-import json
-import os
-import re
 import secrets
-import stat
-from contextlib import contextmanager
 from pathlib import Path
 from uuid import uuid4
 
+from backend import key_custody
 from backend.modules.accounts.control_policy import PolicyUnavailable
 
 
 class ControlKeyring:
     filename = "account-control-keyring.json"
+    custody = key_custody.CustodySettings(
+        filename="account-control-keyring.json",
+        lock_name="account-control-keyring.lock",
+        marker_name="account-control-keyring.initialized",
+        staging_prefix=".control-key-",
+        version_pattern=r"u2-(?:v1|[0-9a-f]{32})",
+        generation_min=1,
+        generation_max=3,
+        error=PolicyUnavailable,
+        lock_message="account-control lock custody unavailable",
+        custody_message="account-control encryption custody unavailable",
+        missing_key_message="required retained encryption key unavailable",
+    )
 
     def __init__(self, root: Path, run_id: str, legacy_key: bytes):
         if root.resolve() != Path("/tmp/docsuri-u2-run").resolve() or len(legacy_key) != 32:
@@ -30,33 +44,16 @@ class ControlKeyring:
         self.root, self.run_id, self.legacy_key = root, run_id, legacy_key
         self.read()
 
-    @contextmanager
     def _lock(self):
-        fd = os.open(
-            self.root / "account-control-keyring.lock",
-            os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW,
-            0o600,
-        )
-        try:
-            info = os.fstat(fd)
-            if (
-                not stat.S_ISREG(info.st_mode)
-                or info.st_uid != os.getuid()
-                or stat.S_IMODE(info.st_mode) != 0o600
-            ):
-                raise PolicyUnavailable("account-control lock custody unavailable")
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            yield
-        finally:
-            os.close(fd)
+        return key_custody.exclusive_lock(self.custody, self.root)
 
     def read(self) -> dict:
         if (
             not (self.root / self.filename).exists()
             and not (self.root / self.filename).is_symlink()
         ):
-            if (self.root / "account-control-keyring.initialized").exists():
-                raise PolicyUnavailable("account-control encryption custody unavailable")
+            if (self.root / self.custody.marker_name).exists():
+                raise PolicyUnavailable(self.custody.custody_message)
             # Compatibility reads create no files. Only the trusted rotation command
             # establishes independently retained encryption-key custody.
             return {
@@ -65,74 +62,17 @@ class ControlKeyring:
                 "generation": 1,
                 "keys": {"u2-v1": base64.b64encode(self.legacy_key).decode()},
             }
-        try:
-            fd = os.open(self.root / self.filename, os.O_RDONLY | os.O_NOFOLLOW)
-            with os.fdopen(fd) as stream:
-                info = os.fstat(stream.fileno())
-                if (
-                    not stat.S_ISREG(info.st_mode)
-                    or info.st_uid != os.getuid()
-                    or stat.S_IMODE(info.st_mode) != 0o600
-                    or info.st_size > 4096
-                ):
-                    raise ValueError("private key custody mismatch")
-
-                def unique(pairs):
-                    record = {}
-                    for key, item in pairs:
-                        if key in record:
-                            raise ValueError("duplicate key custody field")
-                        record[key] = item
-                    return record
-
-                value = json.load(stream, object_pairs_hook=unique)
-            if (
-                set(value) != {"runId", "active", "generation", "keys"}
-                or value["runId"] != self.run_id
-                or type(value["generation"]) is not int
-                or not isinstance(value["keys"], dict)
-                or not 1 <= value["generation"] <= 3
-                or not 1 <= len(value["keys"]) <= 3
-                or value["active"] not in value["keys"]
-            ):
-                raise ValueError("keyring identity mismatch")
-            for version, encoded in value["keys"].items():
-                if (
-                    not re.fullmatch(r"u2-(?:v1|[0-9a-f]{32})", version)
-                    or len(base64.b64decode(encoded, validate=True)) != 32
-                ):
-                    raise ValueError("bounded encryption key version required")
-            return value
-        except (OSError, ValueError, TypeError, KeyError) as error:
-            raise PolicyUnavailable("account-control encryption custody unavailable") from error
+        return key_custody.read_record(self.custody, self.root, self.run_id)
 
     def _write(self, value):
-        path = self.root / self.filename
-        staging = self.root / (".control-key-" + uuid4().hex)
-        fd = os.open(staging, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
-        try:
-            with os.fdopen(fd, "w") as stream:
-                json.dump(value, stream)
-                stream.flush()
-                os.fsync(stream.fileno())
-            os.replace(staging, path)
-            directory = os.open(self.root, os.O_RDONLY | os.O_DIRECTORY)
-            try:
-                os.fsync(directory)
-            finally:
-                os.close(directory)
-        finally:
-            staging.unlink(missing_ok=True)
+        key_custody.write(self.custody, self.root, value)
 
     @property
     def active_version(self):
         return self.read()["active"]
 
     def key(self, version: str) -> bytes:
-        record = self.read()
-        if version not in record["keys"]:
-            raise PolicyUnavailable("required retained encryption key unavailable")
-        return base64.b64decode(record["keys"][version], validate=True)
+        return key_custody.retained_key(self.custody, self.read(), version)
 
     def rotate(self) -> dict:
         """Trusted local operator only; caller stops writers and retains backup custody."""
@@ -144,18 +84,8 @@ class ControlKeyring:
             record["keys"][version] = base64.b64encode(secrets.token_bytes(32)).decode()
             record["active"] = version
             record["generation"] += 1
-            marker = self.root / "account-control-keyring.initialized"
-            if not marker.exists():
-                fd = os.open(marker, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
-                with os.fdopen(fd, "w") as stream:
-                    stream.write(self.run_id)
-                    stream.flush()
-                    os.fsync(stream.fileno())
-                directory = os.open(self.root, os.O_RDONLY | os.O_DIRECTORY)
-                try:
-                    os.fsync(directory)
-                finally:
-                    os.close(directory)
+            if not (self.root / self.custody.marker_name).exists():
+                key_custody.create_marker(self.custody, self.root, self.run_id)
             # Marker first: a crash before the atomic ring write fails closed.
             self._write(record)
             return {

@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "description": "Golden byte vectors for the C09 2.1.0 export hashes. Read by the shared contract test, the backend rendering test and the fake Notion's test. Data only: no suite imports another suite's test module to obtain these values.",
+  "renderedContentHash": {
+    "rule": "SHA-256 of the canonical page-creation body tree {\"properties\": {\"title\": ...}, \"children\": [...]} serialized as JSON with sorted keys, compact separators (',' and ':') and UTF-8 without escaping non-ASCII; no domain prefix (the form of ResearchWorkspace's digest; NFR4.2).",
+    "cases": [
+      {
+        "name": "minimal-page",
+        "input": {
+          "properties": {
+            "title": [
+              {
+                "type": "text",
+                "text": {
+                  "content": "신규성 검토: Attention Is All You Need"
+                }
+              }
+            ]
+          },
+          "children": [
+            {
+              "object": "block",
+              "type": "paragraph",
+              "paragraph": {
+                "rich_text": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "요약: 관련 연구 3건을 확인했습니다."
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "object": "block",
+              "type": "paragraph",
+              "paragraph": {
+                "rich_text": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "docsuri-export:preview-a:1"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "canonicalHex": "7b226368696c6472656e223a5b7b226f626a656374223a22626c6f636b222c22706172616772617068223a7b22726963685f74657874223a5b7b2274657874223a7b22636f6e74656e74223a22ec9a94ec95bd3a20eab480eba0a820ec97b0eab5ac2033eab1b4ec9d8420ed9995ec9db8ed9688ec8ab5eb8b88eb8ba42e227d2c2274797065223a2274657874227d5d7d2c2274797065223a22706172616772617068227d2c7b226f626a656374223a22626c6f636b222c22706172616772617068223a7b22726963685f74657874223a5b7b2274657874223a7b22636f6e74656e74223a22646f63737572692d6578706f72743a707265766965772d613a31227d2c2274797065223a2274657874227d5d7d2c2274797065223a22706172616772617068227d5d2c2270726f70657274696573223a7b227469746c65223a5b7b2274657874223a7b22636f6e74656e74223a22ec8ba0eab79cec84b120eab280ed86a03a20417474656e74696f6e20497320416c6c20596f75204e656564227d2c2274797065223a2274657874227d5d7d7d",
+        "sha256": "d8097e7357a95a10d9aba2d4bf70f11de23747df4ca8c110814a328121766e7b"
+      },
+      {
+        "name": "escapes-and-astral",
+        "input": {
+          "children": [
+            {
+              "object": "block",
+              "type": "heading_2",
+              "heading_2": {
+                "rich_text": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "Quote \" backslash \\ tab \t line\nend \u001f unit"
+                    },
+                    "annotations": {
+                      "bold": true,
+                      "italic": false
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "object": "block",
+              "type": "bulleted_list_item",
+              "bulleted_list_item": {
+                "rich_text": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "🔬 실험 · résumé · 中文"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "object": "block",
+              "type": "paragraph",
+              "paragraph": {
+                "rich_text": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": "docsuri-export:preview-b:2"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "properties": {
+            "title": [
+              {
+                "type": "text",
+                "text": {
+                  "content": "Untitled 🔬 \"draft\""
+                }
+              }
+            ]
+          }
+        },
+        "canonicalHex": "7b226368696c6472656e223a5b7b2268656164696e675f32223a7b22726963685f74657874223a5b7b22616e6e6f746174696f6e73223a7b22626f6c64223a747275652c226974616c6963223a66616c73657d2c2274657874223a7b22636f6e74656e74223a2251756f7465205c22206261636b736c617368205c5c20746162205c74206c696e655c6e656e64205c753030316620756e6974227d2c2274797065223a2274657874227d5d7d2c226f626a656374223a22626c6f636b222c2274797065223a2268656164696e675f32227d2c7b2262756c6c657465645f6c6973745f6974656d223a7b22726963685f74657874223a5b7b2274657874223a7b22636f6e74656e74223a22f09f94ac20ec8ba4ed979820c2b72072c3a973756dc3a920c2b720e4b8ade69687227d2c2274797065223a2274657874227d5d7d2c226f626a656374223a22626c6f636b222c2274797065223a2262756c6c657465645f6c6973745f6974656d227d2c7b226f626a656374223a22626c6f636b222c22706172616772617068223a7b22726963685f74657874223a5b7b2274657874223a7b22636f6e74656e74223a22646f63737572692d6578706f72743a707265766965772d623a32227d2c2274797065223a2274657874227d5d7d2c2274797065223a22706172616772617068227d5d2c2270726f70657274696573223a7b227469746c65223a5b7b2274657874223a7b22636f6e74656e74223a22556e7469746c656420f09f94ac205c2264726166745c22227d2c2274797065223a2274657874227d5d7d7d",
+        "sha256": "11efdaa2613b2e3ea643ca809aab07b95e7c6f5b6f108dbbe685ee0a773b12f0"
+      },
+      {
+        "name": "empty-children",
+        "input": {
+          "properties": {
+            "title": [
+              {
+                "type": "text",
+                "text": {
+                  "content": "(제목 없음)"
+                }
+              }
+            ]
+          },
+          "children": []
+        },
+        "canonicalHex": "7b226368696c6472656e223a5b5d2c2270726f70657274696573223a7b227469746c65223a5b7b2274657874223a7b22636f6e74656e74223a2228eca09cebaaa920ec9786ec9d8c29227d2c2274797065223a2274657874227d5d7d7d",
+        "sha256": "56505b3008e2d66270b031211d73cda2697274ab787b890e8c2f6dda28829b0e"
+      }
+    ]
+  },
+  "bindingHash": {
+    "rule": "SHA-256 of the prefix bytes followed by the RFC 8785 (JCS) bytes of the object containing exactly ownerId, previewId, revision, source, sourceEligibilityRevision, connectionRevision, destination, renderedContentHash and renderPolicy, where destination holds only destinationId, connectionId, workspaceId, parentPageId and formatRevision. canonicalHex is the JCS bytes alone, without the prefix.",
+    "prefix": "docsuri:export-binding:v1\n",
+    "cases": [
+      {
+        "name": "first-revision",
+        "input": {
+          "ownerId": "account-a",
+          "previewId": "preview-a",
+          "revision": "1",
+          "source": {
+            "artifactId": "artifact-1",
+            "revision": "3",
+            "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "sourceEligibilityRevision": "7",
+          "connectionRevision": "1",
+          "destination": {
+            "destinationId": "0f6c3a7e2b9d4c1e8a5f6b7c8d9e0a1b",
+            "connectionId": "connection-a",
+            "workspaceId": "workspace-a",
+            "parentPageId": "0f6c3a7e2b9d4c1e8a5f6b7c8d9e0a1b",
+            "formatRevision": "1"
+          },
+          "renderedContentHash": "d8097e7357a95a10d9aba2d4bf70f11de23747df4ca8c110814a328121766e7b",
+          "renderPolicy": {
+            "policyId": "u6-render",
+            "revision": "1"
+          }
+        },
+        "canonicalHex": "7b22636f6e6e656374696f6e5265766973696f6e223a2231222c2264657374696e6174696f6e223a7b22636f6e6e656374696f6e4964223a22636f6e6e656374696f6e2d61222c2264657374696e6174696f6e4964223a223066366333613765326239643463316538613566366237633864396530613162222c22666f726d61745265766973696f6e223a2231222c22706172656e74506167654964223a223066366333613765326239643463316538613566366237633864396530613162222c22776f726b73706163654964223a22776f726b73706163652d61227d2c226f776e65724964223a226163636f756e742d61222c22707265766965774964223a22707265766965772d61222c2272656e646572506f6c696379223a7b22706f6c6963794964223a2275362d72656e646572222c227265766973696f6e223a2231227d2c2272656e6465726564436f6e74656e7448617368223a2264383039376537333537613935613130643961626132643462663730663131646532333734376466346361386331313038313461333238313231373636653762222c227265766973696f6e223a2231222c22736f75726365223a7b2261727469666163744964223a2261727469666163742d31222c22636f6e74656e7448617368223a2261616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161222c227265766973696f6e223a2233227d2c22736f75726365456c69676962696c6974795265766973696f6e223a2237227d",
+        "sha256": "5a67124235e237b638c28e986ab01422732861f70c33f18e8c4317d0e9c10518"
+      },
+      {
+        "name": "non-ascii-identifiers",
+        "input": {
+          "renderPolicy": {
+            "revision": "12",
+            "policyId": "u6-render"
+          },
+          "renderedContentHash": "11efdaa2613b2e3ea643ca809aab07b95e7c6f5b6f108dbbe685ee0a773b12f0",
+          "destination": {
+            "formatRevision": "2",
+            "parentPageId": "1a2b3c4d5e6f708192a3b4c5d6e7f809",
+            "workspaceId": "작업공간-β",
+            "connectionId": "connection-b",
+            "destinationId": "1a2b3c4d5e6f708192a3b4c5d6e7f809"
+          },
+          "connectionRevision": "4",
+          "sourceEligibilityRevision": "9",
+          "source": {
+            "contentHash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "revision": "10",
+            "artifactId": "artifact-é"
+          },
+          "revision": "2",
+          "previewId": "preview-b",
+          "ownerId": "account-b"
+        },
+        "canonicalHex": "7b22636f6e6e656374696f6e5265766973696f6e223a2234222c2264657374696e6174696f6e223a7b22636f6e6e656374696f6e4964223a22636f6e6e656374696f6e2d62222c2264657374696e6174696f6e4964223a223161326233633464356536663730383139326133623463356436653766383039222c22666f726d61745265766973696f6e223a2232222c22706172656e74506167654964223a223161326233633464356536663730383139326133623463356436653766383039222c22776f726b73706163654964223a22ec9e91ec9785eab3b5eab0842dceb2227d2c226f776e65724964223a226163636f756e742d62222c22707265766965774964223a22707265766965772d62222c2272656e646572506f6c696379223a7b22706f6c6963794964223a2275362d72656e646572222c227265766973696f6e223a223132227d2c2272656e6465726564436f6e74656e7448617368223a2231316566646161323631336232653365613634336361383039616162303762393565376336663562366631303864626265363835656530613737336231326630222c227265766973696f6e223a2232222c22736f75726365223a7b2261727469666163744964223a2261727469666163742dc3a9222c22636f6e74656e7448617368223a2230313233343536373839616263646566303132333435363738396162636465663031323334353637383961626364656630313233343536373839616263646566222c227265766973696f6e223a223130227d2c22736f75726365456c69676962696c6974795265766973696f6e223a2239227d",
+        "sha256": "8b2da0e6e28a3541aeb61f051e45e6a52f7b0dda5c4287c7b9409fd6bc7a939a"
+      }
+    ]
+  }
+}

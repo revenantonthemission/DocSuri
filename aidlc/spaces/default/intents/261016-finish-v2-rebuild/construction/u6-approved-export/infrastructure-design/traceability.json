@@ -1,0 +1,188 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "u6-approved-export",
+  "upstream_ids": [
+    "NFR1.1",
+    "NFR1.2",
+    "NFR1.3",
+    "NFR1.4",
+    "NFR1.5",
+    "NFR3.1",
+    "NFR3.2",
+    "NFR3.3",
+    "NFR3.4",
+    "NFR3.5",
+    "NFR3.6",
+    "NFR3.7",
+    "NFR3.8",
+    "NFR3.9",
+    "NFR4.1",
+    "NFR4.2",
+    "NFR4.3",
+    "NFR4.4",
+    "NFR4.5",
+    "NFR4.6",
+    "NFR4.7",
+    "NFR4.8",
+    "NFR4.9",
+    "NFR4.10",
+    "NFR4.11",
+    "NFR5.1",
+    "NFR6.1",
+    "NFR6.2",
+    "NFR6.3",
+    "NFR6.4"
+  ],
+  "coverage": [
+    {
+      "id": "NFR1.1",
+      "status": "N/A",
+      "target": "Owner checks on every access: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "N/A",
+      "target": "Background work acting as the service: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR1.3",
+      "status": "OK",
+      "target": "The U6 environment origin 127.0.0.1:18099 joins the browser boundary origin list and the 64 KB request-size allowlist of read_payload (cicd-pipeline.md section 4.2)"
+    },
+    {
+      "id": "NFR1.4",
+      "status": "OK",
+      "target": "U6's migration chain applies an accounts-owned migration as docsuri_accounts_owner that maps the ApprovedExport participant to docsuri_export in accounts.guard_lifecycle_effect and grants it, and accounts.lifecycle_effect_action, to the export roles; U6's tool grants docsuri_export the session guard; a database-layer test checks both (cicd-pipeline.md sections 3.2 and 4.3)"
+    },
+    {
+      "id": "NFR1.5",
+      "status": "OK",
+      "target": "After disconnect, the preserved real-export environment still holds the owner's workspace name, integration identity and page identifiers; the operator removes its folder, container and volume as soon as the evidence is checked and no later than 7 days after the real export, recorded as a retention obligation in the evidence (cicd-pipeline.md section 5)"
+    },
+    {
+      "id": "NFR3.1",
+      "status": "N/A",
+      "target": "Token sealing with AES-256-GCM: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR3.2",
+      "status": "OK",
+      "target": "Environment setup creates the export-keys folder with mode 0700 inside the U6 environment folder; only after every refusal check passes, the destructive archive-owned phase removes leftover staging files, refusing before the key unlink if any removal fails, and then deletes the key file by one unlink, on a live or an expired environment; no key in CI artifacts, caches or the repository (cicd-pipeline.md sections 4.3, 4.4 and 7)"
+    },
+    {
+      "id": "NFR3.3",
+      "status": "OK",
+      "target": "Operator phases create-key-after-loss, rotate-key, retire-key and key-counts of the U6 environment tool, through its administrative path acting as the export schema owner; rotate-key refuses and shows the counts rather than add a fourth key version, and publishes a new version by atomic replace (cicd-pipeline.md section 4.5)"
+    },
+    {
+      "id": "NFR3.4",
+      "status": "OK",
+      "target": "No Notion token in CI, files or environment variables: the fake Notion in every CI run and test; real-export settings without a token; every synthetic phase refuses while real-export.json exists, so no synthetic run can open the stored token; real-export evidence holds no token and only digests of provider identifiers; no artifact uploads (cicd-pipeline.md sections 4.3, 5 and 7)"
+    },
+    {
+      "id": "NFR3.5",
+      "status": "N/A",
+      "target": "One client per operation: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR3.6",
+      "status": "N/A",
+      "target": "Error reduction and error-reporter rules: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR3.7",
+      "status": "OK",
+      "target": "Real composition close-down: the owner disconnects, which deletes the stored token in the same step, before the destructive archive deletes the key (cicd-pipeline.md section 5)"
+    },
+    {
+      "id": "NFR3.8",
+      "status": "N/A",
+      "target": "Provider boundary checks in the guarded transport: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR3.9",
+      "status": "N/A",
+      "target": "SDK and HTTP logger configuration: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR4.1",
+      "status": "N/A",
+      "target": "Effect recording before any write and replays: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR4.2",
+      "status": "N/A",
+      "target": "Bound-content hashing and checking: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR4.3",
+      "status": "OK",
+      "target": "notion-client pinned exactly to 3.1.0 and hash-locked in backend/uv.lock; in CI it is installed only by frozen syncs of that lock, in U6's backend and browser jobs and the root CI's backend app-shell and root-suites jobs; the SDK retry settings were checked against that version and an upgrade is a reviewed change (cicd-pipeline.md sections 1.2 and 2.1)"
+    },
+    {
+      "id": "NFR4.4",
+      "status": "N/A",
+      "target": "The write attempt deadline: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR4.5",
+      "status": "N/A",
+      "target": "The rate-limit window: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR4.6",
+      "status": "N/A",
+      "target": "Read pace, retries, budgets and interactive caps: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR4.7",
+      "status": "N/A",
+      "target": "Reconciliation scans: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR4.8",
+      "status": "N/A",
+      "target": "Atomic start of an attempt: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR4.9",
+      "status": "N/A",
+      "target": "Housekeeping on definite answers only: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR4.10",
+      "status": "N/A",
+      "target": "Operating values in the export policy: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR4.11",
+      "status": "N/A",
+      "target": "Per-owner limits at binding: application-level, no infrastructure consequence"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "U6 workflow browser job: axe checks with the wcag2a, wcag2aa, wcag21aa and wcag22aa tags on every U6 view and dialog, a keyboard-only journey and a 320 CSS px reflow run; frontend job: Vitest component checks for colour, field errors and the live region (cicd-pipeline.md sections 2.2 and 3.2)"
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": "notion-client 3.1.0, MIT-licensed, is the only new dependency; the U6 workflow runs on GitHub's standard runners for a public repository, with no paid provider, secrets or self-hosted runner (cicd-pipeline.md sections 1.2 and 2.1)"
+    },
+    {
+      "id": "NFR6.2",
+      "status": "OK",
+      "target": "The operator-only real composition requires the run-bound real-export settings with the activation destination and the free-terms evidence; any gap refuses with POLICY_UNRESOLVED (cicd-pipeline.md sections 4.6 and 5)"
+    },
+    {
+      "id": "NFR6.3",
+      "status": "OK",
+      "target": "Every CI job, test and synthetic environment phase uses the fake Notion under the real SDK: tests of the real composition inject it through a test-only transport seam, and a test-wide guard makes building the network transport fail in every pytest run; the serve phase never starts the real composition; no runner holds a Notion token (cicd-pipeline.md sections 2.5, 3.2, 5 and 7)"
+    },
+    {
+      "id": "NFR6.4",
+      "status": "N/A",
+      "target": "Pace and per-owner limits: application-level, no infrastructure consequence"
+    }
+  ]
+}

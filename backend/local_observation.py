@@ -53,6 +53,15 @@ PROBES = {
         " (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace"
         "  WHERE n.nspname='topics' AND p.proname='guard_run_update') AS guard_functions"
     ),
+    # Counts of the tables the runtime role reads in full; the connection table is
+    # column-granted only and holds the sealed tokens, so it is not counted here.
+    "export": OwnerProbe(
+        "SELECT (SELECT count(*) FROM export.preview_pair) AS previews,"
+        " (SELECT count(*) FROM export.approval) AS approvals,"
+        " (SELECT count(*) FROM export.effect) AS effects,"
+        " (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace"
+        "  WHERE n.nspname='export' AND p.proname='guard_effect_update') AS guard_functions"
+    ),
     "accounts": OwnerProbe(
         "SELECT (SELECT count(*) FROM accounts.account) AS accounts,"
         " (SELECT count(*) FROM accounts.session) AS sessions,"
@@ -137,7 +146,7 @@ def probe_owner(transactions: OwnerTransactions, owner: str) -> dict:
 def observe_all(
     transactions: OwnerTransactions, required: set[str] | None = None
 ) -> dict[str, dict]:
-    owners = required if required is not None else set(PROBES) - {"research", "topics"}
+    owners = required if required is not None else set(PROBES) - {"research", "topics", "export"}
     return {owner: probe_owner(transactions, owner) for owner in owners}
 
 

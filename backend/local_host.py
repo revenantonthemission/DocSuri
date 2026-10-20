@@ -40,7 +40,7 @@ ENTRY_POLICY = {"policyId": "synthetic-local-entry", "revision": "1"}
 
 # Capabilities whose installed synthetic path is degraded-but-usable; their
 # navigation entries appear only when the capability is actually in the catalog.
-SYNTHETIC_CAPABILITIES = frozenset({"research", "novelty", "topics.digest"})
+SYNTHETIC_CAPABILITIES = frozenset({"research", "novelty", "topics.digest", "export"})
 
 # Finite installed route manifest. One entry per mounted browser surface; the
 # page routes are served by the same static workspace build.
@@ -64,6 +64,13 @@ NAVIGATION = (
         "titleKey": "nav.topics",
         "path": "/topics",
         "capabilityId": "topics.digest",
+        "ownerBound": True,
+    },
+    {
+        "routeId": "export",
+        "titleKey": "nav.export",
+        "path": "/export",
+        "capabilityId": "export",
         "ownerBound": True,
     },
     {
@@ -338,7 +345,8 @@ def assemble(profile: LocalProfile, *, routers=(), lifespan=None) -> FastAPI:
         report = await run_in_threadpool(local_observation.readiness, transactions, required)
         loop = getattr(app.state, "control_loop", None)
         if profile.realm in (
-            "account-controls", "corpus-maintenance", "research-workspace", "topics-digests"
+            "account-controls", "corpus-maintenance", "research-workspace", "topics-digests",
+            "approved-export",
         ):
             report["backgroundWork"] = (
                 dict(loop.status) if loop is not None else {"state": "stopped"}

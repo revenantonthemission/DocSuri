@@ -220,13 +220,46 @@ class U3ControlWorker:
         return summary
 
 
+def _contribution_gates(
+    profile: LocalProfile, *, research: bool, topics: bool, export: bool
+) -> None:
+    """Each contribution is admitted only in its exact owned realm, before any connection.
+
+    U6 reaches the topics gate through `assemble_u5`, which always passes a topics
+    factory, so that gate admits the U6 triple beside U5's. The export gate admits an
+    export factory only in the U6 triple, and only with the inherited research and
+    topics contributions. The research gate is reached only without topics.
+    """
+    from .local_browser import CORPUS_ORIGIN, EXPORT_ORIGIN, RESEARCH_ORIGIN, TOPICS_ORIGIN
+
+    realm = (profile.database_name, profile.realm, profile.origin)
+    u6_realm = ("docsuri_u6", "approved-export", EXPORT_ORIGIN)
+    if export:
+        if realm != u6_realm:
+            raise ValueError("export contribution requires the exact owned U6 realm")
+        if not (research and topics):
+            raise ValueError("the U6 realm hosts the inherited research and topics contributions")
+    if topics:
+        if realm not in (("docsuri_u5", "topics-digests", TOPICS_ORIGIN), u6_realm):
+            raise ValueError("topics contribution requires the exact owned U5 realm")
+        if not research:
+            raise ValueError("the U5 realm hosts the inherited research contribution")
+    elif research and realm != ("docsuri_u4", "research-workspace", RESEARCH_ORIGIN):
+        raise ValueError("research contribution requires the exact owned U4 realm")
+    elif not research and (
+        profile.realm != "corpus-maintenance" or profile.origin != CORPUS_ORIGIN
+    ):
+        raise ValueError("U3 assembly requires the owned corpus-maintenance realm")
+
+
 def assemble_u3(
-    profile: LocalProfile, *, research_factory=None, topics_factory=None
+    profile: LocalProfile, *, research_factory=None, topics_factory=None, export_factory=None
 ) -> FastAPI:
     """Explicit owned composition; no ambient settings or startup migrations."""
+    import asyncio
+
     from .artifacts import PrivateArtifacts
     from .control_runtime import ControlAdmission, ControlCapacity, ControlLoop
-    from .local_browser import CORPUS_ORIGIN, RESEARCH_ORIGIN, TOPICS_ORIGIN
     from .local_host import assemble, host_router
     from .modules.accounts.local_http import account_router
     from .modules.accounts.preauthentication import Preauthentication
@@ -249,21 +282,8 @@ def assemble_u3(
 
     research = research_factory is not None
     topics = topics_factory is not None
-    if topics:
-        if (profile.database_name, profile.realm, profile.origin) != (
-            "docsuri_u5", "topics-digests", TOPICS_ORIGIN
-        ):
-            raise ValueError("topics contribution requires the exact owned U5 realm")
-        if not research:
-            raise ValueError("the U5 realm hosts the inherited research contribution")
-    elif research and (profile.database_name, profile.realm, profile.origin) != (
-        "docsuri_u4", "research-workspace", RESEARCH_ORIGIN
-    ):
-        raise ValueError("research contribution requires the exact owned U4 realm")
-    elif not research and (
-        profile.realm != "corpus-maintenance" or profile.origin != CORPUS_ORIGIN
-    ):
-        raise ValueError("U3 assembly requires the owned corpus-maintenance realm")
+    export = export_factory is not None
+    _contribution_gates(profile, research=research, topics=topics, export=export)
     transactions = OwnerTransactions(profile)
     try:
         entry = GuardedEntryService(transactions)
@@ -333,15 +353,35 @@ def assemble_u3(
             catalog.extend(topics_contribution_value["capabilities"])
             worker = topics_contribution_value["worker"]
 
+        export_contribution_value = None
+        if export:
+            # The export service reads U4's results through the research service.
+            export_contribution_value = export_factory(
+                transactions, entry, corpus_repository, worker, research=contribution["service"]
+            )
+            routers = (*routers, export_contribution_value["router"])
+            catalog.extend(export_contribution_value["capabilities"])
+            worker = export_contribution_value["worker"]
+        export_lane = None
+        if export_contribution_value is not None:
+            export_lane = export_contribution_value["lane"]
+
         @asynccontextmanager
         async def lifetime(app):
             loop = ControlLoop(app.state.control_worker, capacity=app.state.control_capacity)
             app.state.control_loop = loop
-            loop.start()
             try:
+                if export_lane is not None:
+                    # The lane runs before the first pass can hand it an item.
+                    export_lane.start()
+                loop.start()
                 yield
             finally:
                 await loop.close()
+                if export_lane is not None:
+                    # After the last pass, before the pools: the item in hand may still
+                    # record its outcome, up to its own deadline.
+                    await asyncio.to_thread(export_lane.stop)
                 transactions.close()
 
         app = assemble(profile, routers=routers, lifespan=lifetime)
@@ -361,11 +401,15 @@ def assemble_u3(
         if topics_contribution_value is not None:
             app.state.topics = topics_contribution_value["service"]
             app.state.topics_scheduler = topics_contribution_value["scheduler"]
+        if export_contribution_value is not None:
+            app.state.export = export_contribution_value["service"]
+            app.state.export_lane = export_lane
         app.state.capability_catalog = catalog
         app.state.required_capabilities = (
             set(OWNERS)
             | ({"research"} if research else set())
             | ({"topics"} if topics else set())
+            | ({"export"} if export else set())
         )
         app.state.limits = limits_document()
         observations = observe_all(transactions, app.state.required_capabilities)

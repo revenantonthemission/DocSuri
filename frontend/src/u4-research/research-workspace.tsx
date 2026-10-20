@@ -15,6 +15,8 @@ import {
   type Sessions,
 } from './api';
 import { NoveltyDiscussion, ResearchComposer } from './composer';
+import { NoveltyExportAction } from './export-action';
+import type { Capability } from '../u6-export/api';
 import { forgetJobLink, keepJobLink, readJobLink, ResearchJob, type JobLink } from './jobs';
 import './research.css';
 
@@ -25,6 +27,7 @@ export function ResearchWorkspace({
   degraded = false,
   synthetic = false,
   policy,
+  exportCapability,
 }: {
   client: Transport;
   purpose: 'research' | 'novelty';
@@ -32,6 +35,8 @@ export function ResearchWorkspace({
   degraded?: boolean;
   synthetic?: boolean;
   policy: Policy;
+  /** U6's export capability; the novelty result offers its export entry only with it. */
+  exportCapability?: Capability | undefined;
 }) {
   const [listing, setListing] = useState<Sessions | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -414,6 +419,14 @@ export function ResearchWorkspace({
           source={novelty}
           policy={policy}
           onAccepted={accepted}
+        />
+      ) : null}
+      {novelty && exportCapability ? (
+        <NoveltyExportAction
+          key={`export:${novelty.artifact.artifactId}`}
+          client={client}
+          capability={exportCapability}
+          novelty={novelty}
         />
       ) : null}
     </section>

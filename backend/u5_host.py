@@ -105,7 +105,7 @@ def topics_contribution(
     }
 
 
-def assemble_u5(profile):
+def assemble_u5(profile, *, export_factory=None):
     import datetime as dt
     import json
     from functools import partial
@@ -127,4 +127,8 @@ def assemble_u5(profile):
             raise ValueError("synthetic digest clock binding differs")
         return instant
 
-    return assemble_u4(profile, topics_factory=partial(topics_contribution, clock=fixture_clock))
+    return assemble_u4(
+        profile,
+        topics_factory=partial(topics_contribution, clock=fixture_clock),
+        export_factory=export_factory,
+    )

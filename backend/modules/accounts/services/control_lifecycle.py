@@ -341,7 +341,11 @@ class ControlLifecycleService:
                 "disposition": (
                     "erased"
                     if request["action"] == "erase"
-                    and row["reason_key"] != "bounded-audit-identifiers-retained"
+                    and row["reason_key"]
+                    not in (
+                        "bounded-audit-identifiers-retained",
+                        "external-copies-retained-by-owner",
+                    )
                     else "retained_by_policy"
                 )
                 if complete

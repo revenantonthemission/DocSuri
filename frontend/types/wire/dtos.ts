@@ -1,4 +1,4 @@
-/* DO NOT EDIT. Declared public schema closure, offline. SHA256:b3ce859069a0665b61e4adc670254eb0236cd510e9891301467cf08e710d1a4c */
+/* DO NOT EDIT. Declared public schema closure, offline. SHA256:aa309366c8441099521478c5e5b3e2153463033e0f9c1da7811a71b0db0aced1 */
 
 /**
  * Which rung of the fallback ladder produced this doc-model: native arXiv HTML -> ar5iv -> e-print LaTeX -> (last resort) PDF parse. User-uploaded PDFs also use the "pdf" tier — the user-vs-arXiv origin is carried by the paperId "userdoc:" namespace, not a separate tier. Trace: Q6, BR-29, TD-11.
@@ -379,6 +379,76 @@ export type WorkspaceResearchArtifactResponse =
       artifactId: WorkspaceId;
       reasonKey: string;
     };
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportCreationCapability".
+ */
+export type WorkspaceExportCreationCapability = "unknown" | "confirmed" | "refused";
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportEarlierExportDisposition".
+ */
+export type WorkspaceExportEarlierExportDisposition = "exported" | "may-exist";
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportOutcomeReason".
+ */
+export type WorkspaceExportOutcomeReason =
+  | "token-invalid"
+  | "no-access"
+  | "destination-missing"
+  | "content-rejected"
+  | "workspace-block-limit"
+  | "provider-blocked"
+  | "rate-limit-budget-spent"
+  | "not-found-after-checks"
+  | "owner-settled-delivered"
+  | "owner-settled-not-delivered"
+  | "dependency-unavailable"
+  | "policy-unresolved"
+  | "source-changed"
+  | "destination-changed"
+  | "connection-changed"
+  | "authority-revoked"
+  | "account-withdrawn"
+  | "owner-cancelled";
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportInvalidationReason".
+ */
+export type WorkspaceExportInvalidationReason =
+  | "source-changed"
+  | "destination-changed"
+  | "connection-changed"
+  | "authority-revoked"
+  | "account-withdrawn";
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportSettledBy".
+ */
+export type WorkspaceExportSettledBy = "provider" | "reconciliation" | "owner";
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportApprovalState".
+ */
+export type WorkspaceExportApprovalState = "approved" | "invalidated" | "consumed" | "cancelled" | "expired";
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportEffectState".
+ */
+export type WorkspaceExportEffectState =
+  | "accepted"
+  | "executing"
+  | "succeeded"
+  | "failed"
+  | "unknown"
+  | "cancelled"
+  | "invalidated";
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportSettleDisposition".
+ */
+export type WorkspaceExportSettleDisposition = "delivered" | "not-delivered";
 /**
  * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.
  *
@@ -3670,6 +3740,7 @@ export interface WorkspaceExportConnection {
   state: "connected" | "disconnected" | "revoked" | "unavailable";
   destinationScopeIds: WorkspaceId[];
   limitations: string[];
+  workspaceName?: string;
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -3680,6 +3751,25 @@ export interface WorkspaceExportDestination {
   workspaceId: WorkspaceId;
   parentPageId: WorkspaceId;
   formatRevision: WorkspaceRevision;
+  destinationId?: WorkspaceId;
+  title?: string;
+  context?: string;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportDestinationEntry".
+ */
+export interface WorkspaceExportDestinationEntry {
+  connectionId: WorkspaceId;
+  workspaceId: WorkspaceId;
+  parentPageId: WorkspaceId;
+  formatRevision: WorkspaceRevision;
+  destinationId: WorkspaceId;
+  title: string;
+  context?: string;
+  readable?: boolean;
+  creationCapability?: WorkspaceExportCreationCapability;
+  writable?: boolean;
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -3688,7 +3778,9 @@ export interface WorkspaceExportDestination {
 export interface WorkspaceExportDestinations {
   connectionId: WorkspaceId;
   connectionRevision: WorkspaceRevision;
-  destinations: WorkspaceExportDestination[];
+  destinations: WorkspaceExportDestinationEntry[];
+  listingComplete?: boolean;
+  lastDestinationId?: WorkspaceId;
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -3701,11 +3793,270 @@ export interface WorkspaceExportPreview {
   source: WorkspaceResearchArtifactRef;
   sourceEligibilityRevision: WorkspaceRevision;
   connectionRevision: WorkspaceRevision;
-  destination: WorkspaceExportDestination;
+  destination: WorkspaceExportDestinationEntry;
   renderedText: string;
   renderedContentHash: WorkspaceHash;
   bindingHash: WorkspaceHash;
   renderPolicy: WorkspacePolicyRef;
+  /**
+   * @maxItems 20
+   */
+  earlierExports?:
+    | []
+    | [WorkspaceExportEarlierExport]
+    | [WorkspaceExportEarlierExport, WorkspaceExportEarlierExport]
+    | [WorkspaceExportEarlierExport, WorkspaceExportEarlierExport, WorkspaceExportEarlierExport]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ]
+    | [
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport,
+        WorkspaceExportEarlierExport
+      ];
+  marker?: string;
+  sourceTitle?: string;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportEarlierExport".
+ */
+export interface WorkspaceExportEarlierExport {
+  effectId: WorkspaceId;
+  disposition: WorkspaceExportEarlierExportDisposition;
+  endedAt: WorkspaceTime;
+  remoteUrl?: string;
+  outcomeReason?: WorkspaceExportOutcomeReason;
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -3721,6 +4072,7 @@ export interface WorkspaceExportApproval {
   expiresAt: WorkspaceTime | null;
   state: "approved" | "invalidated" | "consumed" | "cancelled" | "expired";
   policy: WorkspacePolicyRef;
+  invalidationReason?: WorkspaceExportInvalidationReason;
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -3737,6 +4089,374 @@ export interface WorkspaceExportEffect {
   remoteUrl: string | null;
   reconciliationEvidenceHash: WorkspaceHash | null;
   limitations: string[];
+  outcomeReason?: WorkspaceExportOutcomeReason;
+  settledBy?: WorkspaceExportSettledBy;
+  nextCheckAt?: WorkspaceTime;
+  settlementOffered?: boolean;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportHistoryPage".
+ */
+export interface WorkspaceExportHistoryPage {
+  /**
+   * @maxItems 20
+   */
+  entries:
+    | []
+    | [WorkspaceExportHistoryEntry]
+    | [WorkspaceExportHistoryEntry, WorkspaceExportHistoryEntry]
+    | [WorkspaceExportHistoryEntry, WorkspaceExportHistoryEntry, WorkspaceExportHistoryEntry]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ]
+    | [
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry,
+        WorkspaceExportHistoryEntry
+      ];
+  nextCursor: string | null;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportHistoryEntry".
+ */
+export interface WorkspaceExportHistoryEntry {
+  approvalId: WorkspaceId;
+  previewId: WorkspaceId;
+  previewRevision: WorkspaceRevision;
+  bindingHash: WorkspaceHash;
+  state: WorkspaceExportApprovalState;
+  invalidationReason?: WorkspaceExportInvalidationReason;
+  approvedAt: WorkspaceTime;
+  endedAt?: WorkspaceTime;
+  sourceTitle: string;
+  destinationTitle: string;
+  continuable: boolean;
+  effect?: WorkspaceExportHistoryEffect;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportHistoryEffect".
+ */
+export interface WorkspaceExportHistoryEffect {
+  effectId: WorkspaceId;
+  state: WorkspaceExportEffectState;
+  revision: WorkspaceRevision;
+  remoteUrl?: string;
+  outcomeReason?: WorkspaceExportOutcomeReason;
+  settledBy?: WorkspaceExportSettledBy;
+  nextCheckAt?: WorkspaceTime;
+  /**
+   * @maxItems 10
+   */
+  possibleDuplicates:
+    | []
+    | [WorkspaceExportPossibleDuplicate]
+    | [WorkspaceExportPossibleDuplicate, WorkspaceExportPossibleDuplicate]
+    | [WorkspaceExportPossibleDuplicate, WorkspaceExportPossibleDuplicate, WorkspaceExportPossibleDuplicate]
+    | [
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate
+      ]
+    | [
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate
+      ]
+    | [
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate
+      ]
+    | [
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate
+      ]
+    | [
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate
+      ]
+    | [
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate
+      ]
+    | [
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate,
+        WorkspaceExportPossibleDuplicate
+      ];
+  settlementOffered: boolean;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportPossibleDuplicate".
+ */
+export interface WorkspaceExportPossibleDuplicate {
+  remoteReference: WorkspaceId;
+  remoteUrl?: string;
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -4540,7 +5260,7 @@ export interface WorkspaceExportConnectionConfigureHttp {
  * via the `definition` "WorkspaceExportConnectionReadHttp".
  */
 export interface WorkspaceExportConnectionReadHttp {
-  connectionId: WorkspaceId;
+  connectionId?: WorkspaceId;
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -4583,6 +5303,25 @@ export interface WorkspaceExportEffectReadHttp {
 export interface WorkspaceExportCancelHttp {
   approvalId: WorkspaceId;
   expectedRevision: WorkspaceRevision;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportHistoryListHttp".
+ */
+export interface WorkspaceExportHistoryListHttp {
+  limit?: number;
+  cursor?: string | null;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceExportSettleHttp".
+ */
+export interface WorkspaceExportSettleHttp {
+  effectId: WorkspaceId;
+  expectedRevision: WorkspaceRevision;
+  disposition: WorkspaceExportSettleDisposition;
+  assumptionAccepted: true;
+  remoteUrl?: string;
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema

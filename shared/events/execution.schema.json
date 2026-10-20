@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://docsuri.dev/shared/events/execution.schema.json",
-  "$comment": "Generated canonical contract release 3.0.0; source SHA256:981105788bb236422f23305495f6d2865474afe73a6d84e811b7acca4dca34ae",
+  "$comment": "Generated canonical contract release 3.1.0; source SHA256:9ef6c9cd2ca848be703d6c70524d185625fb77610d0168eb61d9bc13bae7fb0b",
   "$defs": {
     "Principal": {
       "oneOf": [
@@ -2004,6 +2004,14 @@
         },
         "previewHash": {
           "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Hash"
+        },
+        "contentHash": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Hash"
+        },
+        "marker": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
         }
       },
       "required": [
@@ -2039,6 +2047,12 @@
             "rejected",
             "unknown"
           ]
+        },
+        "providerRequestId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "refusalClass": {
+          "$ref": "#/$defs/ProviderNotionRefusalClass"
         }
       },
       "required": [
@@ -2047,6 +2061,17 @@
         "disposition"
       ],
       "additionalProperties": false
+    },
+    "ProviderNotionRefusalClass": {
+      "type": "string",
+      "enum": [
+        "token-invalid",
+        "no-access",
+        "destination-missing",
+        "content-rejected",
+        "workspace-block-limit",
+        "provider-blocked"
+      ]
     },
     "ProviderIdentityProfileRead": {
       "type": "object",
@@ -2290,6 +2315,12 @@
               },
               "writable": {
                 "type": "boolean"
+              },
+              "readable": {
+                "type": "boolean"
+              },
+              "creationCapability": {
+                "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/ExportCreationCapability"
               }
             },
             "required": [
@@ -2307,6 +2338,14 @@
         },
         "observedAt": {
           "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Time"
+        },
+        "workspaceName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "integrationIdentity": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
         }
       },
       "required": [
@@ -2343,6 +2382,20 @@
               "type": "null"
             }
           ]
+        },
+        "marker": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "destinationId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "firstAttemptStartedAt": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Time"
+        },
+        "writerIdentity": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
         }
       },
       "required": [
@@ -2390,6 +2443,9 @@
         },
         "observedAt": {
           "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Time"
+        },
+        "scanComplete": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -6500,10 +6556,10 @@
         }
       },
       "required": [
-        "context",
-        "connectionId"
+        "context"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "Internal envelope; an absent connectionId names the owner's single connection (C09 2.1.0, A7)."
     },
     "ExportPreviewRequest": {
       "type": "object",
@@ -6612,6 +6668,70 @@
         "expectedRevision"
       ],
       "additionalProperties": false
+    },
+    "ExportHistoryList": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "cursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "context"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "ExportSettle": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "effectId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Revision"
+        },
+        "disposition": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/ExportSettleDisposition"
+        },
+        "assumptionAccepted": {
+          "const": true
+        },
+        "remoteUrl": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uri"
+        }
+      },
+      "required": [
+        "context",
+        "effectId",
+        "expectedRevision",
+        "disposition",
+        "assumptionAccepted"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
     },
     "ProcessLiveness": {
       "type": "object",

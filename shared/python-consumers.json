@@ -1064,6 +1064,26 @@
       "shadowed": false
     },
     {
+      "file": "backend/modules/export/http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/export/notion_adapter.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "execution",
+      "local": "execution",
+      "generated": [
+        "docsuri_shared._generated.events:execution_schema"
+      ],
+      "shadowed": false
+    },
+    {
       "file": "backend/modules/library/authz.py",
       "module": "docsuri_shared.authz",
       "symbol": "AccountId",
@@ -3337,11 +3357,11 @@
   "sourceDigests": [
     {
       "file": "backend/local_browser.py",
-      "sha256": "5c8fff74137b676addaa97d316dc3ff92749fc2f13647ecb943507b4fc259c71"
+      "sha256": "21b47418aa92251b357f9bab6a2c50510b3df6791f7427ebefe4db60c4c038ff"
     },
     {
       "file": "backend/local_host.py",
-      "sha256": "3e0dfacc9ef2aa460e670fd47687825b755bc3c70f10afd81546db2a0c6dbea4"
+      "sha256": "c19f5a650434d5a38eea6f9acb311f86b2bcafd5123ca40d778fcbdc13ae6c0f"
     },
     {
       "file": "backend/middleware/agent_attachments.py",
@@ -3361,7 +3381,7 @@
     },
     {
       "file": "backend/modules/accounts/local_http.py",
-      "sha256": "f70898c0c36a122c32bc78eca691a856755515b562c0e0efebd7d5f1cc926344"
+      "sha256": "25fb9091f32a82697d64507bfa741d392a2b4368fabd5de511ddc1e7b247a9df"
     },
     {
       "file": "backend/modules/accounts/models.py",
@@ -3377,7 +3397,7 @@
     },
     {
       "file": "backend/modules/accounts/services/control_lifecycle.py",
-      "sha256": "b227532587bbeff7d4c981866db71f7de29401a5164875299d2305f7736f870f"
+      "sha256": "14c1e8dc106c38cccf42750009d9d50e0ae8bb63a7c250f912e2456993c2e613"
     },
     {
       "file": "backend/modules/accounts/services/signup.py",
@@ -3548,6 +3568,14 @@
       "sha256": "288a5959481511ae62ad112a1e1d50545efc34decd13bb4dc98e5c4e1d545e5a"
     },
     {
+      "file": "backend/modules/export/http.py",
+      "sha256": "de5cea463c27bd05f32c4c4c625740288517c7f91c62e187dbaac7711f95d04c"
+    },
+    {
+      "file": "backend/modules/export/notion_adapter.py",
+      "sha256": "12e8950ba11f8eba8a11fe702f29cf60e374b7d8f74b07798369f23bbbf9c83a"
+    },
+    {
       "file": "backend/modules/library/authz.py",
       "sha256": "985cbc054556e4abdb047c21f9e21bb10141c99e5b40bffef1e6afa6842f7809"
     },
@@ -3657,7 +3685,7 @@
     },
     {
       "file": "backend/modules/personalization/guarded_service.py",
-      "sha256": "3cc38c090f3b16f0aa4f97b83095d8d3556728b0816d67321c6d41850b1cf9ce"
+      "sha256": "48f190d397b4ccd4e0dbe611c05c49e0ff8e474d5cd8f7729468e139be423a04"
     },
     {
       "file": "backend/modules/personalization/local_http.py",

@@ -65,7 +65,22 @@
 
 
 
-- **Construction Verification Command**: backend/.venv/bin/python scripts/verify_docsuri_u5.py --phase browser --profile synthetic-local --environment-file /tmp/docsuri-u5-run/environment.json
+- **Construction Verification Command**: backend/.venv/bin/python scripts/verify_docsuri_u6.py --phase browser --profile synthetic-local --environment-file /tmp/docsuri-u6-run/environment.json
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -116,7 +131,7 @@
 
 ### CONSTRUCTION PHASE
 Per unit: [TBD]
-- [R] functional-design — EXECUTE
+- [-] functional-design — EXECUTE
 - [ ] nfr-requirements — EXECUTE
 - [ ] nfr-design — EXECUTE
 - [ ] infrastructure-design — EXECUTE
@@ -138,7 +153,7 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-10-19T05:39:16Z
+- **Last Updated**: 2026-10-20T12:45:24Z
 
 - **Construction Autonomy Mode**: gated
 

@@ -456,7 +456,7 @@ def test_owned_rotation_preserves_bytes_and_refuses_live_or_foreign_resources(
     runner.private_json(owned_root / "environment.json", value)
     runner.private_json(owned_root / "failed-evidence.json", {"failed": True})
     expected = {p.name: p.read_bytes() for p in owned_root.iterdir()}
-    monkeypatch.setattr(runner, "manifest", lambda path: (None, value))
+    monkeypatch.setattr(runner, "preservation_manifest", lambda path: value)
     monkeypatch.setattr(runner, "require_stopped", lambda: None)
 
     def resources(_):

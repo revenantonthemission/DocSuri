@@ -33,6 +33,7 @@ CONTROLS_ORIGIN = "https://127.0.0.1:18049"
 CORPUS_ORIGIN = "https://127.0.0.1:18059"
 RESEARCH_ORIGIN = "https://127.0.0.1:18079"
 TOPICS_ORIGIN = "https://127.0.0.1:18089"
+EXPORT_ORIGIN = "https://127.0.0.1:18099"
 
 
 class BrowserDenied(Exception):
@@ -82,7 +83,8 @@ def boundary_route(
 ):
     """One route class for every canonical browser adapter; identical dispositions."""
     if origin not in (
-        JOURNEY_ORIGIN, CONTROLS_ORIGIN, CORPUS_ORIGIN, RESEARCH_ORIGIN, TOPICS_ORIGIN
+        JOURNEY_ORIGIN, CONTROLS_ORIGIN, CORPUS_ORIGIN, RESEARCH_ORIGIN, TOPICS_ORIGIN,
+        EXPORT_ORIGIN,
     ):
         raise ValueError("unowned browser origin")
     expected_authority = urlsplit(origin).netloc
@@ -152,7 +154,8 @@ async def read_payload(request: Request, schema):
     maximum = (
         65536
         if request.headers.get("host") in (
-            "127.0.0.1:18049", "127.0.0.1:18059", "127.0.0.1:18079", "127.0.0.1:18089"
+            "127.0.0.1:18049", "127.0.0.1:18059", "127.0.0.1:18079", "127.0.0.1:18089",
+            "127.0.0.1:18099",
         )
         else 8192
     )

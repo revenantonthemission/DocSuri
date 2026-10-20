@@ -10,6 +10,7 @@ from backend.local_browser import (
     CONTROLS_ORIGIN,
     CORPUS_ORIGIN,
     ENTRY_COOKIE,
+    EXPORT_ORIGIN,
     JOURNEY_ORIGIN,
     RESEARCH_ORIGIN,
     SESSION_COOKIE,
@@ -52,6 +53,7 @@ def account_router(entry: GuardedEntryService) -> APIRouter:
         CORPUS_ORIGIN,
         RESEARCH_ORIGIN,
         TOPICS_ORIGIN,
+        EXPORT_ORIGIN,
     ):
         raise ValueError("account browser transport requires the owned HTTPS origin")
     anonymous = Preauthentication(entry)
