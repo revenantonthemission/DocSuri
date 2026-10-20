@@ -679,3 +679,17 @@ Both are already in the source manifest.
 | U1, U2, U7 | as in 11.1 | stopped by the restart; run folders lost; not touched since |
 
 The production services were not touched.
+
+### 11.9 CI on PR #54: the TypeScript consumer inventory
+
+- PR #54's "next app" job failed its drift guard `check:consumers` with `consumer inventory
+  incomplete`. `shared/typescript-consumers.json` pins a SHA-256 of every source file that
+  uses the wire types, and two of them changed after the inventory's last refresh:
+  `frontend/src/u4-research/jobs.tsx` (deviation 38) and `frontend/src/u6-export/dialogs.tsx`
+  (deviation 39). The imports, declarations, casts and adapters were unchanged.
+- Fix: `node scripts/inventory-consumers.mjs --write` (from `frontend/`) regenerated the two
+  digests (2 lines).
+- After it: `check:types` ok, `check:consumers` ok, `test:contracts` 2 files, 33 tests passed;
+  `tsc --noEmit --incremental false` with `tsconfig.json` and with `tsconfig.e2e.json`: both exit
+  0. The job's production build was left to CI, because this machine serves production from
+  `frontend/`.
