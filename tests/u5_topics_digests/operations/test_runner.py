@@ -1,5 +1,6 @@
 """Real filesystem/process checks for the synthetic U5 runner's safety boundaries."""
 
+import datetime as dt
 import json
 import stat
 import subprocess
@@ -35,7 +36,7 @@ def test_process_observation_timeout_stops_child_and_retains_failure(owned_root,
     def unavailable(roots, deadline):
         raise subprocess.TimeoutExpired(["ps"], 1)
 
-    monkeypatch.setattr(runner, "process_tree_rss", unavailable)
+    monkeypatch.setattr(runner, "process_tree_memory", unavailable)
     with pytest.raises(subprocess.TimeoutExpired) as failure:
         runner.bounded_process(
             [sys.executable, "-c", "import time; time.sleep(20)"],
@@ -55,9 +56,9 @@ def test_browser_supervision_takes_one_snapshot_per_tick_for_both_roots(owned_ro
 
     def observe(roots, deadline):
         snapshots.append(tuple(roots))
-        return 1024
+        return 1024, None
 
-    monkeypatch.setattr(runner, "process_tree_rss", observe)
+    monkeypatch.setattr(runner, "process_tree_memory", observe)
     try:
         result = runner.bounded_process(
             [sys.executable, "-c", "import time; time.sleep(0.3)"],
@@ -100,6 +101,60 @@ def test_process_tree_snapshot_refuses_after_its_deadline(monkeypatch):
     )
     with pytest.raises(runner.Refused, match="process deadline reached"):
         runner.process_tree_rss((1,), time.monotonic() - 1)
+
+
+def test_proportional_bytes_reads_pss_and_falls_back_to_rss(tmp_path, monkeypatch):
+    (tmp_path / "7").write_text("Rss:  900 kB\nPss:  300 kB\nShared_Clean: 600 kB\n")
+    (tmp_path / "8").write_text("Rss:  900 kB\n")
+    monkeypatch.setattr(runner, "SMAPS_ROLLUP", str(tmp_path / "{pid}"))
+    assert runner.proportional_bytes(7, 900) == 300 * 1024
+    # No Pss line, or a process that exited before the read: its full RSS counts.
+    assert runner.proportional_bytes(8, 900) == 900 * 1024
+    assert runner.proportional_bytes(9, 900) == 900 * 1024
+
+
+def test_process_tree_memory_enforces_pss_only_on_linux(monkeypatch):
+    table = "\n".join(["10 1 100", "11 10 200", "30 1 9999"])
+    monkeypatch.setattr(
+        runner.subprocess, "run", lambda args, **k: subprocess.CompletedProcess(args, 0, stdout=table)
+    )
+    monkeypatch.setattr(runner, "proportional_bytes", lambda pid, kib: kib * 1024 // 4)
+    deadline = time.monotonic() + 30
+    monkeypatch.setattr(runner.sys, "platform", "darwin")
+    assert runner.process_tree_memory((10,), deadline) == (300 * 1024, None)
+    monkeypatch.setattr(runner.sys, "platform", "linux")
+    assert runner.process_tree_memory((10,), deadline) == (300 * 1024, 75 * 1024)
+    assert runner.enforced_bytes(300 * 1024, 75 * 1024) == 75 * 1024
+    assert runner.enforced_bytes(300 * 1024, None) == 300 * 1024
+
+
+@pytest.mark.parametrize("over", ["pss", "rss"])
+def test_supervision_enforces_the_proportional_budget_where_measured(owned_root, monkeypatch, over):
+    big = runner.MAX_RSS + 1
+    reading = (1024, big) if over == "pss" else (big, 1024)
+    monkeypatch.setattr(runner, "process_tree_memory", lambda roots, deadline: reading)
+    command = [sys.executable, "-c", "import time; time.sleep(0.3)"]
+    if over == "pss":
+        with pytest.raises(runner.Refused) as refused:
+            runner.bounded_process(command, owned_root / "pss.log", seconds=5)
+        assert refused.value.supervision["reason"] == "rss-limit"
+        assert refused.value.supervision["peakPssBytes"] == big
+    else:
+        # Shared pages inflate the RSS sum; the proportional sum is under budget.
+        result = runner.bounded_process(command, owned_root / "rss.log", seconds=5)
+        assert result["exitCode"] == 0
+        assert (result["peakRssBytes"], result["peakPssBytes"]) == (big, 1024)
+
+
+@pytest.mark.parametrize("hour", ["05:00", "16:00", "23:59"])
+def test_advance_clock_moves_one_day_whatever_the_hour(hour):
+    from scripts import u5_browser_fixtures as fixtures
+
+    now = dt.datetime.fromisoformat(f"2026-10-20T{hour}:00+00:00")
+    instant = fixtures.advanced_clock(now)
+    assert instant == now + dt.timedelta(days=1)
+    # Inside the host's accepted window for the delegated clock (u5_host).
+    assert now - dt.timedelta(hours=1) <= instant <= now + dt.timedelta(days=2)
 
 
 def test_browser_assets_always_rebuild_and_refuse_failed_build(owned_root, monkeypatch):

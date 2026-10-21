@@ -48,7 +48,10 @@ def research_contribution(transactions, entry, corpus, inherited_worker):
     }
 
 
-def assemble_u4(profile, *, topics_factory=None):
+def assemble_u4(profile, *, topics_factory=None, export_factory=None):
     return assemble_u3(
-        profile, research_factory=research_contribution, topics_factory=topics_factory
+        profile,
+        research_factory=research_contribution,
+        topics_factory=topics_factory,
+        export_factory=export_factory,
     )

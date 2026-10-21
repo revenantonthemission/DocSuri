@@ -73,7 +73,7 @@ class LocalProfile:
         """Validate custody and realm identity without granting runtime use."""
         profiles = {
             (RUN_PARENT / f"docsuri-{unit}-run").resolve() / "environment.json": unit
-            for unit in ("u1", "u2", "u3", "u4", "u5")
+            for unit in ("u1", "u2", "u3", "u4", "u5", "u6")
         }
         expected = manifest.resolve()
         unit = profiles.get(expected)
@@ -110,7 +110,7 @@ class LocalProfile:
         ports = {
             "u1": (18039, 15439), "u2": (18049, 15449),
             "u3": (18059, 15459), "u4": (18079, 15479),
-            "u5": (18089, 15489),
+            "u5": (18089, 15489), "u6": (18099, 15499),
         }
         application_port, database_port = ports[unit]
         if value["applicationPort"] != application_port or value["databasePort"] != database_port:
@@ -120,6 +120,7 @@ class LocalProfile:
             "u3": ("u3-paper-corpus-capabilities", "corpus-maintenance"),
             "u4": ("u4-research-novelty", "research-workspace"),
             "u5": ("u5-topics-digests", "topics-digests"),
+            "u6": ("u6-approved-export", "approved-export"),
         }
         if unit in realms:
             unit_name, realm = realms[unit]

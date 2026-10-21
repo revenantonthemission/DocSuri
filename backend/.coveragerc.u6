@@ -1,0 +1,30 @@
+# U6 approved-export production modules, plus the U2-owned files U6 changes and the
+# composition file whose gates and lane lifecycle U6 adds (`backend/u3_host.py`, beyond
+# cicd-pipeline §2.5's list; recorded for approval at the U6 checkpoint). The
+# verification runner `scripts/verify_docsuri_u6.py` is the measurement harness and stays
+# outside the denominator, as in U5; its destructive archive lives in the measured
+# `scripts/u6_preservation.py`, which the coverage phase also reports on its own at 80%.
+[run]
+source = backend,scripts
+
+[report]
+include =
+    backend/modules/export/*.py
+    backend/u6_policy.py
+    backend/u6_host.py
+    backend/u6_real_export.py
+    backend/key_custody.py
+    backend/modules/accounts/control_keys.py
+    backend/modules/accounts/services/control_lifecycle.py
+    backend/modules/accounts/services/guarded_entry.py
+    backend/modules/personalization/guarded_service.py
+    backend/u3_host.py
+    scripts/serve_docsuri_u6.py
+    scripts/u6_browser_fixtures.py
+    scripts/u6_preservation.py
+    scripts/u6_real_export.py
+omit =
+    scripts/verify_docsuri_u6.py
+fail_under = 80
+show_missing = True
+skip_covered = False

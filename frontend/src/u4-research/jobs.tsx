@@ -66,6 +66,11 @@ export function ResearchJob({
   const request = useRef(0);
   const alive = useRef(true);
   const action = useResearchAction(client);
+  // These controls stay focusable while their read runs (aria-disabled, not disabled): a
+  // focused button that becomes disabled drops keyboard focus to the document, and Tab
+  // then restarts at the top of the page (WCAG 2.4.3). Their handlers ignore presses.
+  const refreshUnavailable = loading || action.busy;
+  const openUnavailable = action.busy || action.unknown;
   const update = (next: Job) => {
     checkedJob(next, reference);
     if (latest.current && next.seq < latest.current.seq) return;
@@ -139,7 +144,13 @@ export function ResearchJob({
       {job?.progress.mode === 'determinate' ? (
         <progress aria-label="작업 진행" value={job.progress.current} max={job.progress.total} />
       ) : null}
-      <button type="button" disabled={loading || action.busy} onClick={() => void refresh()}>
+      <button
+        type="button"
+        aria-disabled={refreshUnavailable}
+        onClick={() => {
+          if (!refreshUnavailable) void refresh();
+        }}
+      >
         진행 상태 새로고침
       </button>
       <p className="muted">
@@ -150,8 +161,9 @@ export function ResearchJob({
       {job?.state === 'succeeded' && job.result ? (
         <button
           type="button"
-          disabled={action.busy || action.unknown}
-          onClick={() =>
+          aria-disabled={openUnavailable}
+          onClick={() => {
+            if (openUnavailable) return;
             void action.run(async () => {
               const generation = request.current;
               // A new authority check must not leave an earlier private result on screen if refused.
@@ -177,8 +189,8 @@ export function ResearchJob({
               setResult(value);
               if (value.availability === 'ready' && value.prepared.kind === 'novelty-result')
                 onNoveltyResult?.(value.prepared);
-            })
-          }
+            });
+          }}
         >
           준비된 결과 열기
         </button>

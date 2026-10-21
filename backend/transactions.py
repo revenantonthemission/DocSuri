@@ -94,9 +94,12 @@ class OwnerTransactions:
         # worker share five normal slots, with two observation/recovery slots
         # and one runner slot reserved inside the twelve connection budget.
         controls = profile.realm in (
-            "account-controls", "corpus-maintenance", "research-workspace", "topics-digests"
+            "account-controls", "corpus-maintenance", "research-workspace", "topics-digests",
+            "approved-export",
         )
-        if (profile.database_name, profile.realm) == ("docsuri_u5", "topics-digests"):
+        if (profile.database_name, profile.realm) == ("docsuri_u6", "approved-export"):
+            owners = OWNERS | {"research", "topics", "export"}
+        elif (profile.database_name, profile.realm) == ("docsuri_u5", "topics-digests"):
             owners = OWNERS | {"research", "topics"}
         elif (profile.database_name, profile.realm) == ("docsuri_u4", "research-workspace"):
             owners = OWNERS | {"research"}
@@ -126,6 +129,7 @@ class OwnerTransactions:
             ("docsuri_u3", "corpus-maintenance"),
             ("docsuri_u4", "research-workspace"),
             ("docsuri_u5", "topics-digests"),
+            ("docsuri_u6", "approved-export"),
         }:
             raise ValueError("unknown explicit database realm")
         # Separate databases do not receive separate process connection budgets.
@@ -150,6 +154,7 @@ class OwnerTransactions:
         if (profile.database_name, profile.realm) in {
             ("docsuri_u4", "research-workspace"),
             ("docsuri_u5", "topics-digests"),
+            ("docsuri_u6", "approved-export"),
         }:
             # Separate pools and transaction objects still share each login's
             # two physical PostgreSQL connections. Permit only one normal

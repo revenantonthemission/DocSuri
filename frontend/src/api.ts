@@ -101,6 +101,7 @@ export async function retryTransient<T>(work: () => Promise<T>, attempts = 2): P
 
 const SAFE_CODES = new Set([
   'APPROVAL_REQUIRED',
+  'CAPACITY_EXHAUSTED',
   'CONFLICT',
   'DEADLINE_EXCEEDED',
   'DEPENDENCY_UNAVAILABLE',
@@ -108,8 +109,10 @@ const SAFE_CODES = new Set([
   'IDEMPOTENCY_CONFLICT',
   'INVALID_ARGUMENT',
   'INVALID_CONTENT',
+  'INVALID_TOKEN',
   'NOT_FOUND',
   'NOT_READY',
+  'OUTCOME_UNKNOWN',
   'POLICY_UNRESOLVED',
   'QUOTA_EXCEEDED',
   'RATE_LIMITED',
@@ -256,7 +259,11 @@ export class Transport {
     if (!response.ok) {
       const error = new ApiError(response.status, envelope(value));
       // A guest's refusal is not an expiry: only a signed-in caller loses authority here.
-      if (error.envelope.code === 'UNAUTHENTICATED' && this.identity !== 'guest' && this.identity !== '') {
+      if (
+        error.envelope.code === 'UNAUTHENTICATED' &&
+        this.identity !== 'guest' &&
+        this.identity !== ''
+      ) {
         this.invalidateBoundary();
       }
       throw error;
@@ -328,6 +335,16 @@ export function dispositionCopy(code: string): string {
       return '시간이 초과되었어요';
     case 'INVALID_ARGUMENT':
       return '입력을 확인해 주세요';
+    case 'OUTCOME_UNKNOWN':
+      return '외부 서비스에서의 처리 결과를 아직 확인하고 있어요';
+    case 'INVALID_TOKEN':
+      return '토큰을 확인할 수 없어요';
+    case 'CAPACITY_EXHAUSTED':
+      return '지금은 더 처리할 수 없어요. 잠시 후 다시 시도해 주세요';
+    case 'SOURCE_INELIGIBLE':
+      return '이 자료는 이 작업에 사용할 수 없어요';
+    case 'APPROVAL_REQUIRED':
+      return '다시 확인하고 승인해 주세요';
     default:
       return '문제가 발생했어요';
   }

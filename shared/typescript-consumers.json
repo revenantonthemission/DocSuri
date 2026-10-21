@@ -1712,6 +1712,24 @@
       ]
     },
     {
+      "file": "frontend/src/u4-research/export-action.tsx",
+      "module": "../u6-export/api",
+      "symbol": "Capability",
+      "local": "Capability",
+      "generated": [
+        "WorkspaceCapabilityCatalog"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/export-action.tsx",
+      "module": "./api",
+      "symbol": "Artifact",
+      "local": "Artifact",
+      "generated": [
+        "WorkspaceResearchArtifact"
+      ]
+    },
+    {
       "file": "frontend/src/u4-research/jobs.tsx",
       "module": "./api",
       "symbol": "Artifact",
@@ -1748,6 +1766,15 @@
       "local": "JobKind",
       "generated": [
         "WorkspaceResearchJobReadHttp"
+      ]
+    },
+    {
+      "file": "frontend/src/u4-research/research-workspace.tsx",
+      "module": "../u6-export/api",
+      "symbol": "Capability",
+      "local": "Capability",
+      "generated": [
+        "WorkspaceCapabilityCatalog"
       ]
     },
     {
@@ -1829,6 +1856,285 @@
       "local": "Scope",
       "generated": [
         "WorkspaceResearchScope"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/connect-form.tsx",
+      "module": "./api",
+      "symbol": "Connection",
+      "local": "Connection",
+      "generated": [
+        "WorkspaceExportConnection"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/connect-form.tsx",
+      "module": "./api",
+      "symbol": "Policy",
+      "local": "Policy",
+      "generated": [
+        "WorkspacePolicyRef"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/copy.ts",
+      "module": "./api",
+      "symbol": "ApprovalState",
+      "local": "ApprovalState",
+      "generated": [
+        "WorkspaceExportApprovalState"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/copy.ts",
+      "module": "./api",
+      "symbol": "ConnectionState",
+      "local": "ConnectionState",
+      "generated": [
+        "WorkspaceExportConnection"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/copy.ts",
+      "module": "./api",
+      "symbol": "CreationCapability",
+      "local": "CreationCapability",
+      "generated": [
+        "WorkspaceExportCreationCapability"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/copy.ts",
+      "module": "./api",
+      "symbol": "EffectState",
+      "local": "EffectState",
+      "generated": [
+        "WorkspaceExportEffectState"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/copy.ts",
+      "module": "./api",
+      "symbol": "InvalidationReason",
+      "local": "InvalidationReason",
+      "generated": [
+        "WorkspaceExportInvalidationReason"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/copy.ts",
+      "module": "./api",
+      "symbol": "OutcomeReason",
+      "local": "OutcomeReason",
+      "generated": [
+        "WorkspaceExportOutcomeReason"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/destination-step.tsx",
+      "module": "./api",
+      "symbol": "Connection",
+      "local": "Connection",
+      "generated": [
+        "WorkspaceExportConnection"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/destination-step.tsx",
+      "module": "./api",
+      "symbol": "DestinationEntry",
+      "local": "DestinationEntry",
+      "generated": [
+        "WorkspaceExportDestinationEntry"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/destination-step.tsx",
+      "module": "./api",
+      "symbol": "Destinations",
+      "local": "Destinations",
+      "generated": [
+        "WorkspaceExportDestinations"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/dialogs.tsx",
+      "module": "./api",
+      "symbol": "HistoryEntry",
+      "local": "HistoryEntry",
+      "generated": [
+        "WorkspaceExportHistoryEntry"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/dialogs.tsx",
+      "module": "./api",
+      "symbol": "SettleDisposition",
+      "local": "SettleDisposition",
+      "generated": [
+        "WorkspaceExportSettleDisposition"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/export-flow.tsx",
+      "module": "./api",
+      "symbol": "ArtifactRef",
+      "local": "ArtifactRef",
+      "generated": [
+        "WorkspaceResearchArtifactRef"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/export-flow.tsx",
+      "module": "./api",
+      "symbol": "Capability",
+      "local": "Capability",
+      "generated": [
+        "WorkspaceCapabilityCatalog"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/export-flow.tsx",
+      "module": "./api",
+      "symbol": "Connection",
+      "local": "Connection",
+      "generated": [
+        "WorkspaceExportConnection"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/export-flow.tsx",
+      "module": "./api",
+      "symbol": "DestinationEntry",
+      "local": "DestinationEntry",
+      "generated": [
+        "WorkspaceExportDestinationEntry"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/export-flow.tsx",
+      "module": "./api",
+      "symbol": "Effect",
+      "local": "Effect",
+      "generated": [
+        "WorkspaceExportEffect"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/export-view.tsx",
+      "module": "./api",
+      "symbol": "Capability",
+      "local": "Capability",
+      "generated": [
+        "WorkspaceCapabilityCatalog"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/export-view.tsx",
+      "module": "./api",
+      "symbol": "Connection",
+      "local": "Connection",
+      "generated": [
+        "WorkspaceExportConnection"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/history.tsx",
+      "module": "./api",
+      "symbol": "HistoryEntry",
+      "local": "HistoryEntry",
+      "generated": [
+        "WorkspaceExportHistoryEntry"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/history.tsx",
+      "module": "./api",
+      "symbol": "HistoryPage",
+      "local": "HistoryPage",
+      "generated": [
+        "WorkspaceExportHistoryPage"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/history.tsx",
+      "module": "./dialogs",
+      "symbol": "SettleChoice",
+      "local": "SettleChoice",
+      "generated": [
+        "WorkspaceExportSettleDisposition"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/outcome-step.tsx",
+      "module": "./api",
+      "symbol": "Effect",
+      "local": "Effect",
+      "generated": [
+        "WorkspaceExportEffect"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/preview-step.tsx",
+      "module": "./api",
+      "symbol": "ArtifactRef",
+      "local": "ArtifactRef",
+      "generated": [
+        "WorkspaceResearchArtifactRef"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/preview-step.tsx",
+      "module": "./api",
+      "symbol": "Capability",
+      "local": "Capability",
+      "generated": [
+        "WorkspaceCapabilityCatalog"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/preview-step.tsx",
+      "module": "./api",
+      "symbol": "Connection",
+      "local": "Connection",
+      "generated": [
+        "WorkspaceExportConnection"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/preview-step.tsx",
+      "module": "./api",
+      "symbol": "DestinationEntry",
+      "local": "DestinationEntry",
+      "generated": [
+        "WorkspaceExportDestinationEntry"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/preview-step.tsx",
+      "module": "./api",
+      "symbol": "EarlierExport",
+      "local": "EarlierExport",
+      "generated": [
+        "WorkspaceExportEarlierExport"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/preview-step.tsx",
+      "module": "./api",
+      "symbol": "Effect",
+      "local": "Effect",
+      "generated": [
+        "WorkspaceExportEffect"
+      ]
+    },
+    {
+      "file": "frontend/src/u6-export/preview-step.tsx",
+      "module": "./api",
+      "symbol": "Preview",
+      "local": "Preview",
+      "generated": [
+        "WorkspaceExportPreview"
       ]
     },
     {
@@ -2805,7 +3111,7 @@
     },
     {
       "file": "frontend/src/App.tsx",
-      "sha256": "9a3bc0233b0aca75f2f48edb0d9975750e9a0361ce3068a178c75257af5d1cf6"
+      "sha256": "6ad42b2964a4d4c241bc447b74e6157cc7919b31775435eebdb8610c1c49e91e"
     },
     {
       "file": "frontend/src/personal-controls.tsx",
@@ -2824,16 +3130,56 @@
       "sha256": "9f33a5973bba8cf6f08291c2d8feb5749a147ef04fabdd1122a88e6c579f3dbf"
     },
     {
+      "file": "frontend/src/u4-research/export-action.tsx",
+      "sha256": "2fd62227c9c06d6f4136dcfa85aa50598893c8949bdb5b01d976e46b0ab0f97a"
+    },
+    {
       "file": "frontend/src/u4-research/jobs.tsx",
-      "sha256": "e6f6ef728fa1f4409e5670c253e681645ba1a4d248635f57f2e3b2c21993d868"
+      "sha256": "573bd403c4358f5f134dee3d1e9a78e2c72638c3b4c598db03b6a75f0d3cf64a"
     },
     {
       "file": "frontend/src/u4-research/research-workspace.tsx",
-      "sha256": "8cd60e426f5383890a34b3842e7b9e19979820f7fd8094c0a490825bb700aa1a"
+      "sha256": "b4c7f4dae3457df28a2b15135dcb80a8754e588b3f8867fb3f9fc706d54489d5"
     },
     {
       "file": "frontend/src/u4-research/sources.tsx",
       "sha256": "c6580452a929f1068c4c59dc24e7d8663b326242b60489de280d8c72c3da2621"
+    },
+    {
+      "file": "frontend/src/u6-export/connect-form.tsx",
+      "sha256": "8395584986b8cbd8537712f5882afc2535830a4baf8c75d8cfb3d97165d7e1a3"
+    },
+    {
+      "file": "frontend/src/u6-export/copy.ts",
+      "sha256": "ed23b1444e334aa9182a8ec37fe4d88ba087cfe8559c358398a39015b125940c"
+    },
+    {
+      "file": "frontend/src/u6-export/destination-step.tsx",
+      "sha256": "fd10a31358ecb1fe4df235a1b434b4a4941068ca95bccd19f722e0c2c109a40b"
+    },
+    {
+      "file": "frontend/src/u6-export/dialogs.tsx",
+      "sha256": "06451bef829ee04a9e4f425f92c520bfa23da8d8afb231731e4619085b08af07"
+    },
+    {
+      "file": "frontend/src/u6-export/export-flow.tsx",
+      "sha256": "ed1df754ab50f692eb6b239d17cffab64dc72f179e4531e1c5304b74bd8cd31e"
+    },
+    {
+      "file": "frontend/src/u6-export/export-view.tsx",
+      "sha256": "3cc5d1478892228bcd9a2441420cf4be4875234a4de9b461985c82a8c43bde49"
+    },
+    {
+      "file": "frontend/src/u6-export/history.tsx",
+      "sha256": "fb840a24abb8c43ea46ceaa0caa0e721fd36481a8465c7bfd9e1d403ae64ee36"
+    },
+    {
+      "file": "frontend/src/u6-export/outcome-step.tsx",
+      "sha256": "c906a5f60dadde5c2a84cc7642fd2d4cbfafc3e5ad0fb0de904f350bcdcefa3a"
+    },
+    {
+      "file": "frontend/src/u6-export/preview-step.tsx",
+      "sha256": "9171c7a1bf26cadaf4be0348a72f04c16ad70a5462a3753c49194f940c94d84d"
     },
     {
       "file": "frontend/src/usage-controls.tsx",

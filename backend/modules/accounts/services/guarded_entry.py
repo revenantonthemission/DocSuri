@@ -433,7 +433,7 @@ class GuardedEntryService:
             # Research/content operations retain their own current consent checks.
             purpose = (
                 "account-control"
-                if self.transactions.profile.realm == "topics-digests"
+                if self.transactions.profile.realm in ("topics-digests", "approved-export")
                 else "local-research"
             )
             guard(conn, authority, purpose=purpose)
@@ -480,7 +480,7 @@ class GuardedEntryService:
         def write(conn):
             purpose = (
                 "account-control"
-                if self.transactions.profile.realm == "topics-digests"
+                if self.transactions.profile.realm in ("topics-digests", "approved-export")
                 else "local-research"
             )
             guard(conn, authority, purpose=purpose)

@@ -39,7 +39,8 @@ class GuardedSettingsService:
         # an independent full-session account-control purpose.
         self.purpose = (
             "account-control"
-            if transactions.profile.realm in ("account-controls", "topics-digests")
+            if transactions.profile.realm
+            in ("account-controls", "topics-digests", "approved-export")
             else "local-research"
         )
 

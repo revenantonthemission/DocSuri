@@ -13,6 +13,7 @@ export default mergeConfig(base, {
       'test/u3-paper-corpus-capabilities/**/*.test.{ts,tsx}',
       'test/u4-research-novelty/**/*.test.{ts,tsx}',
       'test/u5-topics/**/*.test.{ts,tsx}',
+      'test/u6-export/**/*.test.{ts,tsx}',
     ],
   },
 });

@@ -1,0 +1,2 @@
+// U6 export typecheck scope; mirrors tsconfig.u5-topics.json.
+{"extends": "./tsconfig.json", "compilerOptions": {"noUncheckedIndexedAccess": true, "exactOptionalPropertyTypes": true, "noImplicitReturns": true, "incremental": false}, "include": ["src/**/*.ts", "src/**/*.tsx", "test/setup.ts", "test/u6-export/**/*.ts", "test/u6-export/**/*.tsx", "e2e/u6-approved-export/**/*.ts", "vitest.u6-export.config.ts", "playwright.u6-export.config.ts"], "exclude": ["node_modules", ".next"]}

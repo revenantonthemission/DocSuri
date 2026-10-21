@@ -156,14 +156,38 @@ def manifest(path: Path) -> tuple[LocalProfile, dict]:
         or profile.database_name != DATABASE
     ):
         raise Refused("U4 requires its own explicit realm")
+    require_manifest_identity(value, profile.run_id)
+    return profile, value
+
+
+def require_manifest_identity(value: dict, run_id: str) -> None:
+    """Bind both runtime and preservation metadata to this runner's resources."""
     if value.get("databaseImage") != IMAGE or value.get("policy") != POLICY:
         raise Refused("U4 image or policy identity differs")
     if (
-        value.get("container") != profile.run_id
-        or value.get("volume") != profile.run_id + "-pgdata"
+        value.get("container") != run_id
+        or value.get("volume") != run_id + "-pgdata"
     ):
         raise Refused("U4 resource names differ from run identity")
-    return profile, value
+
+
+def preservation_manifest(path: Path) -> dict:
+    """Validated original metadata of U4's own realm for preservation only.
+
+    Unlike manifest(), an expired realm is accepted, because expiry prevents
+    execution but must not prevent preserving an idle realm. It never yields a
+    runtime profile and never changes the recorded expiry.
+    """
+    value = LocalProfile.preservation_identity(path)
+    if (
+        path != RUN / "environment.json"
+        or value.get("unit") != UNIT
+        or value.get("realm") != REALM
+        or value.get("database") != DATABASE
+    ):
+        raise Refused("U4 preservation requires its own explicit realm")
+    require_manifest_identity(value, value["runId"])
+    return value
 
 
 def require_resources(value: dict) -> None:
@@ -385,8 +409,9 @@ def archive_owned(path: Path) -> dict:
     This explicit phase never deletes a container, volume or file, modifies an
     expiry, adopts a different label, or stops an application to make it idle.
     The caller holds the runner lock; other database clients prevent rotation.
+    An expired realm is preserved as it is; its expiry is never renewed.
     """
-    _, value = manifest(path)
+    value = preservation_manifest(path)
     require_resources(value)
     require_stopped()
     opened = command(["lsof", "+D", str(RUN)], timeout=10)

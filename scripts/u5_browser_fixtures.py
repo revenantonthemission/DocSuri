@@ -46,6 +46,17 @@ PAPERS = (
 )
 
 
+def advanced_clock(now: dt.datetime) -> dt.datetime:
+    """The scheduler fixture clock after `advance-clock`: exactly one day on.
+
+    A daily delivery time that follows the follow (or a settings change) then
+    falls inside the advanced day in every owner zone. A fixed hour of the next
+    UTC date missed Seoul's next delivery whenever the Seoul date ran a day ahead
+    of the UTC date (00:00-09:00 KST).
+    """
+    return now + dt.timedelta(days=1)
+
+
 def stable_id(run_id: str, purpose: str) -> UUID:
     return uuid5(NAMESPACE_URL, run_id + ":u5-browser:" + purpose)
 
@@ -384,11 +395,7 @@ def main() -> int:
             runner.require_resources(value)
             # A separate bounded scheduler clock never changes sessions, expiry,
             # quota, migration receipts or database timestamps.
-            instant = dt.datetime.combine(
-                dt.datetime.now(dt.UTC).date() + dt.timedelta(days=1),
-                dt.time(12),
-                tzinfo=dt.UTC,
-            )
+            instant = advanced_clock(dt.datetime.now(dt.UTC))
             runner.private_json(
                 profile.root / "digest-fixture-clock.json",
                 {"runId": profile.run_id, "instant": instant.isoformat()},
