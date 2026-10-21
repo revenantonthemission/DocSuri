@@ -34,7 +34,9 @@ dependencies = [
 # core dependency (BR-29). Only required when MULTIMODAL_ASSETS_ENABLED=true.
 assets = [
     "pypdfium2>=4.30,<5",
-    "Pillow>=12.2,<13",
+    # Pillow >=13.0: eight CVEs in 12.3.0 (CVE-2026-112395, -112397, -112400, -112404,
+    # -112895, -112896, -112897, -112899) fixed in 13.0.0 (pip-audit / Security Scan gate).
+    "Pillow>=13.0,<14",
 ]
 
 [dependency-groups]
