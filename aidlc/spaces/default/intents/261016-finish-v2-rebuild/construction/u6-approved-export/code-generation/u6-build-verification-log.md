@@ -693,3 +693,32 @@ The production services were not touched.
   `tsc --noEmit --incremental false` with `tsconfig.json` and with `tsconfig.e2e.json`: both exit
   0. The job's production build was left to CI, because this machine serves production from
   `frontend/`.
+
+### 11.10 The two browser jobs on PR #54 (the person asked to fix both before merging)
+
+- **U6 browser job, Linux runner:** stopped at 8.5 s on `rss-limit` with a peak of 1,075,593,216
+  bytes (1.77 MiB over 1 GiB), while its second test ran. The runners sum `ps` RSS over the
+  Playwright and host trees, and Linux counts every page Chromium's processes share once per
+  process. U5's job reads 8.5–10% higher on Linux than on macOS for the same reason (1.006 GB
+  on CI against a 0.927 GB local run).
+  - Fix in `scripts/verify_docsuri_u6.py` and `scripts/verify_docsuri_u5.py`: the same one-snapshot
+    process list, and on Linux each process's proportional set size from
+    `/proc/<pid>/smaps_rollup`, so a shared page counts once overall. A process that exited or
+    cannot be read counts its full RSS. The 1 GiB budget is unchanged. macOS keeps the stricter
+    RSS sum. Records carry `peakRssBytes` and the new `peakPssBytes`.
+- **U5 browser job:** "a follow reaches a delivered digest" fails whenever the follow happens
+  between 00:00 and 08:59 KST (15:00–23:59 UTC). `advance-clock` set the fixture clock to the next
+  UTC date at 12:00 UTC (21:00 KST), which is before the next daily 00:00 KST delivery, so the new
+  topic was never due. Scheduling is correct: it must not deliver a time that passed before the
+  follow (BR1.2). U6's changes do not touch any of this; develop fails the same way at night.
+  - Fix in `scripts/u5_browser_fixtures.py`: `advanced_clock(now)` moves the clock exactly one
+    day, within U5's host bound (at most two days ahead).
+- **Tests:** `tests/u5_topics_digests/operations/test_runner.py` and
+  `tests/u6_approved_export/operations/test_u6_runner.py` gain proportional-memory tests (the
+  rollup read and its fallback, Linux-only use, enforcement on the proportional sum), and U5's
+  file gains the clock test at 05:00, 16:00 and 23:59 UTC. Results: U5 file 29 passed and U6 file
+  20 passed without an environment; their environment-backed tests need a U5 or U6 environment
+  file. With the U5 environment file, 34 passed and 1 failed: its fixture-setup test's `docker`
+  call reached OrbStack, which had become the default Docker context, and the runner passes no
+  context to children. `ruff check` passes on all five files. The Linux runners are the
+  verification for the proportional measurement.

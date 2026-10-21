@@ -260,7 +260,7 @@ def test_clock_delegation_is_bounded_owned_and_revoked(owned_root, monkeypatch):
 
 
 def test_browser_supervision_watches_the_host_and_stops_at_its_exit(owned_root, monkeypatch):
-    monkeypatch.setattr(runner, "process_tree_rss", lambda roots, deadline: 1024)
+    monkeypatch.setattr(runner, "process_tree_memory", lambda roots, deadline: (1024, None))
     companion = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(0.2)"])
     log = owned_root / "host.log"
     log.write_bytes(b"")
@@ -279,8 +279,48 @@ def test_browser_supervision_watches_the_host_and_stops_at_its_exit(owned_root, 
     assert failure.value.supervision["processStopped"] is True
 
 
+def test_proportional_bytes_reads_pss_and_falls_back_to_rss(tmp_path, monkeypatch):
+    (tmp_path / "7").write_text("Rss:  900 kB\nPss:  300 kB\n")
+    monkeypatch.setattr(runner, "SMAPS_ROLLUP", str(tmp_path / "{pid}"))
+    assert runner.proportional_bytes(7, 900) == 300 * 1024
+    # A process that exited before the read counts its full RSS.
+    assert runner.proportional_bytes(8, 900) == 900 * 1024
+
+
+def test_process_tree_memory_enforces_pss_only_on_linux(monkeypatch):
+    table = "\n".join(["10 1 100", "11 10 200", "30 1 9999"])
+    monkeypatch.setattr(
+        runner.subprocess, "run", lambda args, **k: subprocess.CompletedProcess(args, 0, stdout=table)
+    )
+    monkeypatch.setattr(runner, "proportional_bytes", lambda pid, kib: kib * 1024 // 4)
+    deadline = time.monotonic() + 30
+    monkeypatch.setattr(runner.sys, "platform", "darwin")
+    assert runner.process_tree_memory((10,), deadline) == (300 * 1024, None)
+    monkeypatch.setattr(runner.sys, "platform", "linux")
+    assert runner.process_tree_memory((10,), deadline) == (300 * 1024, 75 * 1024)
+    assert runner.process_tree_rss((10,), deadline) == 300 * 1024
+
+
+@pytest.mark.parametrize("over", ["pss", "rss"])
+def test_supervision_enforces_the_proportional_budget_where_measured(owned_root, monkeypatch, over):
+    big = runner.MAX_RSS + 1
+    reading = (1024, big) if over == "pss" else (big, 1024)
+    monkeypatch.setattr(runner, "process_tree_memory", lambda roots, deadline: reading)
+    command = [sys.executable, "-c", "import time; time.sleep(0.3)"]
+    if over == "pss":
+        with pytest.raises(runner.Refused) as refused:
+            runner.bounded_process(command, owned_root / "pss.log", seconds=5)
+        assert refused.value.supervision["reason"] == "rss-limit"
+        assert refused.value.supervision["peakPssBytes"] == big
+    else:
+        # Shared pages inflate the RSS sum; the proportional sum is under budget.
+        result = runner.bounded_process(command, owned_root / "rss.log", seconds=5)
+        assert result["exitCode"] == 0
+        assert (result["peakRssBytes"], result["peakPssBytes"]) == (big, 1024)
+
+
 def test_serve_bound_ends_normally_and_other_phases_fail_at_it(owned_root, monkeypatch):
-    monkeypatch.setattr(runner, "process_tree_rss", lambda roots, deadline: 1024)
+    monkeypatch.setattr(runner, "process_tree_memory", lambda roots, deadline: (1024, None))
     sleeper = [sys.executable, "-c", "import time; time.sleep(30)"]
     stopped = runner.bounded_process(
         sleeper, owned_root / "serve.log", seconds=1, allow_bounded_stop=True

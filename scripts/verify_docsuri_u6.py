@@ -750,8 +750,11 @@ def child_environment() -> dict:
 OBSERVATION_SECONDS = 1
 
 
-def process_tree_rss(roots: tuple[int, ...], deadline: float) -> int:
-    """Aggregate RSS of every supervised root's tree from ONE process snapshot."""
+SMAPS_ROLLUP = "/proc/{pid}/smaps_rollup"
+
+
+def process_tree_rows(roots: tuple[int, ...], deadline: float) -> list[tuple[int, int]]:
+    """(pid, RSS KiB) of every supervised root's tree from ONE process snapshot."""
     remaining = deadline - time.monotonic()
     if remaining <= 0:
         raise Refused("process deadline reached")
@@ -773,7 +776,46 @@ def process_tree_rss(roots: tuple[int, ...], deadline: float) -> int:
         if expanded == included:
             break
         included = expanded
-    return sum(rss * 1024 for child, _, rss in rows if child in included)
+    return [(child, rss) for child, _, rss in rows if child in included]
+
+
+def process_tree_rss(roots: tuple[int, ...], deadline: float) -> int:
+    """Aggregate RSS of every supervised root's tree from ONE process snapshot."""
+    return sum(rss * 1024 for _, rss in process_tree_rows(roots, deadline))
+
+
+def proportional_bytes(pid: int, rss_kib: int) -> int:
+    """One process's proportional set size from its Linux `smaps_rollup`.
+
+    A page shared by N processes counts 1/N in each, so a tree's sum counts it
+    once. A process that exited or cannot be read counts its full RSS instead.
+    """
+    try:
+        with open(SMAPS_ROLLUP.format(pid=pid), encoding="ascii") as rollup:
+            for line in rollup:
+                if line.startswith("Pss:"):
+                    return int(line.split()[1]) * 1024
+    except (OSError, ValueError, IndexError):
+        pass
+    return rss_kib * 1024
+
+
+def process_tree_memory(roots: tuple[int, ...], deadline: float) -> tuple[int, int | None]:
+    """(RSS sum, PSS sum) of the supervised trees from ONE process snapshot.
+
+    The budget is enforced on the PSS sum where Linux provides it, because its
+    `ps` RSS counts each page Chromium's processes share once per process.
+    Elsewhere the PSS sum is None and the stricter RSS sum is enforced.
+    """
+    rows = process_tree_rows(roots, deadline)
+    rss = sum(kib * 1024 for _, kib in rows)
+    if not sys.platform.startswith("linux"):
+        return rss, None
+    return rss, sum(proportional_bytes(pid, kib) for pid, kib in rows)
+
+
+def enforced_bytes(rss: int, pss: int | None) -> int:
+    return rss if pss is None else pss
 
 
 def supervision_record(reason: str, beginning: float, totals: dict, *, stopped: bool) -> dict:
@@ -782,6 +824,7 @@ def supervision_record(reason: str, beginning: float, totals: dict, *, stopped: 
         "reason": reason,
         "elapsedSeconds": time.monotonic() - beginning,
         "peakRssBytes": totals["peak"],
+        "peakPssBytes": totals["peakPss"],
         "logBytes": totals["count"],
         "processStopped": stopped,
         "observations": totals["observations"],
@@ -820,7 +863,7 @@ def bounded_process(
     process, code, failure = None, None, None
     beginning = time.monotonic()
     observation_end = beginning + seconds - min(7, seconds / 2)
-    totals = {"count": 0, "peak": 0, "observations": 0, "slowest": 0.0}
+    totals = {"count": 0, "peak": 0, "peakPss": None, "observations": 0, "slowest": 0.0}
     environment = child_environment()
     if clock_capability is not None:
         environment[CLOCK_CAPABILITY] = clock_capability
@@ -903,11 +946,14 @@ def supervise(
                 raise Refused("private application log exceeded 16 MiB")
             roots = (process.pid, companion.pid)
         observed = time.monotonic()
-        rss = process_tree_rss(roots, observation_end)
+        rss, pss = process_tree_memory(roots, observation_end)
         totals["observations"] += 1
         totals["slowest"] = max(totals["slowest"], time.monotonic() - observed)
         totals["peak"] = max(totals["peak"], rss)
-        if totals["peak"] > MAX_RSS:
+        if pss is not None:
+            totals["peakPss"] = max(totals["peakPss"] or 0, pss)
+        # The reason keeps its name; on Linux it is the proportional (PSS) budget.
+        if enforced_bytes(totals["peak"], totals["peakPss"]) > MAX_RSS:
             raise Refused("process tree exceeded RSS safety budget")
         code = process.poll()
         if code is not None and not selector.get_map():
@@ -940,7 +986,10 @@ def start_server(path: Path, log: Path):
         while time.monotonic() < deadline:
             if process.poll() is not None:
                 raise Refused("owned application exited before readiness")
-            if process_tree_rss((process.pid,), deadline) > MAX_RSS or log.stat().st_size > MAX_LOG:
+            if (
+                enforced_bytes(*process_tree_memory((process.pid,), deadline)) > MAX_RSS
+                or log.stat().st_size > MAX_LOG
+            ):
                 raise Refused("owned application exceeded startup bounds")
             try:
                 with urllib.request.urlopen(
@@ -1295,6 +1344,7 @@ def safe_phase_summary(evidence):
             "exitCode",
             "elapsedSeconds",
             "peakRssBytes",
+            "peakPssBytes",
             "logBytes",
             "processStopped",
         )
