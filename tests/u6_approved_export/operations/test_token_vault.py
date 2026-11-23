@@ -1,10 +1,16 @@
 """Sealed Notion tokens: bound to one connection revision, fresh nonces, no secret text."""
 
+import base64
+import json
+import secrets
 from uuid import uuid4
 
 import pytest
+from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
 from backend.modules.export.errors import ProtectionUnavailable
-from backend.modules.export.token_keyring import TokenKeyring
+from backend.modules.export.token_keyring import KEY_FILE, TokenKeyring
 from backend.modules.export.token_vault import (
     ENVELOPE_TAG,
     NONCE_BYTES,
@@ -48,6 +54,48 @@ def test_seal_and_open_round_trip_in_the_dse1_layout(keyring, binding):
     assert envelope[5 : 5 + len(version)].decode() == version
     assert TOKEN.encode() not in envelope
     assert vault.open(envelope, **binding) == TOKEN
+
+
+def test_an_envelope_opens_independently_under_aes_256_gcm_and_the_design_aad(keyring, binding):
+    """NFR3.1 by security design §4.1's literal layout, never the module's constants."""
+    bound = {**binding, "revision": 12}
+    envelope, version = TokenVault(keyring).seal(TOKEN, **bound)
+    record = json.loads((keyring.root / KEY_FILE).read_text())
+    key = base64.b64decode(record["keys"][version], validate=True)
+    size = envelope[4]
+    nonce = envelope[5 + size : 5 + size + 12]
+    sealed = envelope[5 + size + 12 :]
+
+    def aad(
+        prefix="u6-notion-token:",
+        version=version,
+        account=bound["account_id"],
+        connection=bound["connection_id"],
+        revision=12,
+    ) -> bytes:
+        return f"{prefix}{version}:{account}:{connection}:{revision}".encode("ascii")
+
+    def opens(**change) -> bool:
+        try:
+            AESGCM(key).decrypt(nonce, sealed, aad(**change))
+        except InvalidTag:
+            return False
+        return True
+
+    assert envelope[:4] == b"DSE1"
+    assert size == len(version) == 35
+    assert envelope[5:40] == version.encode("ascii") and version == record["active"]
+    lengths = (len(key), len(nonce), len(envelope))
+    assert lengths == (32, 12, 4 + 1 + 35 + 12 + len(TOKEN.encode("utf-8")) + 16)
+    assert AESGCM(key).decrypt(nonce, sealed, aad()) == TOKEN.encode("utf-8")
+    changes = {
+        "version": {"version": "u6-" + secrets.token_hex(16)},
+        "prefix": {"prefix": "u2-notion-token:"},
+        "account": {"account": uuid4()},
+        "connection": {"connection": uuid4()},
+        "revision": {"revision": 13},
+    }
+    assert [name for name, change in changes.items() if opens(**change)] == []
 
 
 def test_the_version_column_equals_the_envelopes_version(keyring, binding):

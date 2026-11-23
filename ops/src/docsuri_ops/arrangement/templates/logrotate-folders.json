@@ -1,0 +1,1 @@
+{"comment": "The rotation job's fixed folder list (observability-design § 7, security-design § 7.3), as docsuri_ops.logrotate.FOLDERS holds it. Arrangement version ${version}.", "folders": ${folders}}

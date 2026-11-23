@@ -6,6 +6,7 @@ import os
 import secrets
 
 import pytest
+
 from backend import key_custody
 from backend.modules.accounts.control_keys import ControlKeyring
 from backend.modules.accounts.control_policy import PolicyUnavailable
@@ -55,7 +56,9 @@ def test_rotation_adds_up_to_three_keys_then_refuses_and_keeps_the_record(ring):
     first = ring.rotate()
     second = ring.rotate()
     assert (first["generation"], second["generation"]) == (2, 3)
-    assert second["retainedVersions"] == sorted(["u2-v1", first["activeVersion"], second["activeVersion"]])
+    assert second["retainedVersions"] == sorted(
+        ["u2-v1", first["activeVersion"], second["activeVersion"]]
+    )
     before = ring.read()
     with pytest.raises(
         PolicyUnavailable, match="^keyring retention capacity requires an explicit decision$"

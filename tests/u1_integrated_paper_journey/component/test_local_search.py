@@ -103,17 +103,19 @@ def test_cursor_tamper_expiry_and_oversize_are_rejected():
         builder.build(**args, limit=1, cursor=cursor)
 
 
-def test_cursor_from_previous_ranking_contract_requires_restart(monkeypatch):
+def test_cursor_from_previous_ranking_contract_requires_restart():
+    # SearchPageBuilder binds its compatibility when it is constructed, so the
+    # previous ranking contract is passed in explicitly rather than patched later.
     import backend.modules.discovery.local_search as module
 
-    builder = SearchPageBuilder(b"x" * 32)
     args = example()
-    current = module.COMPATIBILITY
-    monkeypatch.setattr(module, "COMPATIBILITY", "local-search-1")
-    old = builder.build(**args, limit=1)["page"]["nextCursor"]
-    monkeypatch.setattr(module, "COMPATIBILITY", current)
+    previous = SearchPageBuilder(b"x" * 32, compatibility="local-search-1")
+    old = previous.build(**args, limit=1)["page"]["nextCursor"]
+    assert previous.build(**args, limit=1, cursor=old)["hits"]
+    current = SearchPageBuilder(b"x" * 32)
+    assert current.compatibility == module.COMPATIBILITY != "local-search-1"
     with pytest.raises(ValueError, match="cursor"):
-        builder.build(**args, limit=1, cursor=old)
+        current.build(**args, limit=1, cursor=old)
 
 
 def test_semantic_dependency_failure_cannot_be_a_successful_empty_result():

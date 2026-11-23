@@ -10,6 +10,21 @@ export const RESEARCH_LIMITS = {
   papers: 2,
   links: 8,
 } as const;
+// The production research policy's question bound (U8 plan Step 41; the server's
+// `PRODUCTION_RESEARCH`). Every other policy keeps U4's limits.
+export const PRODUCTION_RESEARCH_POLICY_ID = 'docsuri-production-research';
+export const PRODUCTION_TEXT_BYTES = 2_048;
+export type ResearchLimits = {
+  titleBytes: number;
+  textBytes: number;
+  papers: number;
+  links: number;
+};
+export function researchLimits(policy: Policy): ResearchLimits {
+  return policy.policyId === PRODUCTION_RESEARCH_POLICY_ID
+    ? { ...RESEARCH_LIMITS, textBytes: PRODUCTION_TEXT_BYTES }
+    : { ...RESEARCH_LIMITS };
+}
 export const utf8Bytes = (value: string): number => new TextEncoder().encode(value).byteLength;
 export type Policy = W.WorkspacePolicyRef;
 export type Scope = W.WorkspaceResearchScope;

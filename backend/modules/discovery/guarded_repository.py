@@ -17,6 +17,7 @@ class GuardedDiscoveryRepository:
         if self.transactions.profile.realm not in (
             "account-controls",
             "corpus-maintenance",
+            "service-operations", "production",
         ) or len(query_hash) != 64:
             raise ValueError("admission binding required")
 
@@ -116,6 +117,7 @@ class GuardedDiscoveryRepository:
                 if self.transactions.profile.realm in (
                     "account-controls",
                     "corpus-maintenance",
+                    "service-operations", "production",
                 ):
                     admitted = conn.execute(
                         "SELECT * FROM discovery.admission WHERE execution_id=%s",

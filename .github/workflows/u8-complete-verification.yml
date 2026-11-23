@@ -1,0 +1,273 @@
+name: U8 complete verification
+
+# The complete verification of the whole application (U8 plan Step 44, cicd-pipeline
+# § 3.2): every push and pull request to develop and main, with no paths filter, and
+# manual runs. Public-repository standard runners; no secrets, no deployment, no
+# pull_request_target privileges.
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: u8-complete-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOCSURI_U8_ENVIRONMENT_FILE: /tmp/docsuri-u8-run/environment.json
+
+# Each job reports under a name of its own, `U8 complete / <job id>`, which no other workflow
+# uses; branch protection and `docsuri-release install` match a check run by that name (the
+# infrastructure re-check's R-13). The ids stay, and `needs:` with them.
+jobs:
+  shared-contracts:
+    name: U8 complete / shared-contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          version: '0.9.0'
+      - name: Frozen contract tooling
+        run: uv sync --project shared/python --frozen --python 3.13.7
+      - name: Canonical schema drift
+        run: shared/python/.venv/bin/python shared/python/tools/export_workspace_contract.py --check
+      - name: Generated binding drift
+        run: |
+          export PATH="$PWD/shared/python/.venv/bin:$PATH"
+          shared/python/.venv/bin/python shared/python/tools/generate.py --check
+      - name: Shared contract suite, with the operations contract
+        working-directory: shared/python
+        run: .venv/bin/python -m pytest -o addopts='' -q --tb=short
+
+  frontend:
+    name: U8 complete / frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.14.0'
+      - run: corepack enable
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          version: '0.9.0'
+      - name: Frozen dependencies
+        run: |
+          corepack pnpm@9.15.9 --dir frontend install --frozen-lockfile --ignore-scripts
+          uv sync --project backend --frozen --python 3.13.7
+      - name: Complete application types
+        working-directory: frontend
+        run: corepack pnpm@9.15.9 exec tsc --project tsconfig.u8-complete.json --noEmit --incremental false
+      - name: Lint the complete application
+        working-directory: frontend
+        run: >-
+          corepack pnpm@9.15.9 exec eslint src/u8-shell src/u8-jobs src/u8-operations
+          src/u8-entry src/App.tsx src/api.ts src/ui.tsx test/u8-complete e2e/u8-complete
+          vitest.u8-complete.config.ts playwright.u8-complete.config.ts
+          --parser-options '{"project":"./tsconfig.u8-complete.json"}'
+      - name: U8's Vitest lane with coverage
+        working-directory: frontend
+        run: corepack pnpm@9.15.9 exec vitest run --config vitest.u8-complete.config.ts --coverage
+      # `build-gate`'s program: the workspace build from the lockfile, with its checks.
+      - name: Build gate
+        run: backend/.venv/bin/python scripts/u8_build_workspace.py
+
+  backend:
+    name: U8 complete / backend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          version: '0.9.0'
+      - name: Private temporary folder
+        run: |
+          sudo install -d -m 755 -o root -g root /r1-private
+          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" /r1-private/tmp
+          echo "TMPDIR=/r1-private/tmp" >> "$GITHUB_ENV"
+      - name: Frozen Python dependencies
+        run: uv sync --project backend --frozen --python 3.13.7
+      # Decision "The pgvector pin and the lane's image": the pins are asserted first,
+      # then the `postgres:16.14` base is pulled by digest; `setup` builds the image from
+      # it and pgvector's pinned source, and `migrate` asserts the server and extension.
+      - name: Assert the database image pins
+        run: >-
+          backend/.venv/bin/python -c "import sys; sys.path[:0] = ['ops/src'];
+          from docsuri_ops.arrangement import runtimes as r;
+          assert r.POSTGRESQL_VERSION == '16.14' and r.PGVECTOR.version == '0.8.7';
+          assert r.POSTGRES_BASE_IMAGE.startswith('postgres@sha256:');
+          print(r.DATABASE_IMAGE_TAG, r.POSTGRES_BASE_IMAGE)"
+      - name: Pinned database base image
+        run: >-
+          docker pull "$(backend/.venv/bin/python -c "import sys; sys.path[:0] = ['ops/src'];
+          from docsuri_ops.arrangement import runtimes as r; print(r.POSTGRES_BASE_IMAGE)")"
+      # U8's own files at E, F, I, UP and B with a line length of 100 (Step 95(l), L1-34),
+      # then the shared contract and the earlier units' paths under their own
+      # configurations. Seven invocations, each with the pinned Ruff 0.16.8 and no cache.
+      - name: Lint U8's targets
+        run: |
+          set -eu
+          ruff="$PWD/backend/.venv/bin/ruff"
+          # 1. U8's tests.
+          "$ruff" check --no-cache --config scripts/u8-lint.toml tests/u8_service_operations_integration
+          # 2. U8's scripts: Ruff's default selection, extended (the globs expand here).
+          # shellcheck disable=SC2046
+          "$ruff" check --no-cache --config scripts/u8-lint-scripts.toml $(cat scripts/u8-lint-targets.txt)
+          # 3. U8's own backend and ops files under their folders' own configurations.
+          "$ruff" check --no-cache backend/u8_*.py backend/production_boundary.py \
+            backend/log_events.py backend/request_context.py backend/maintenance_server.py \
+            backend/import_parity.py backend/modules/operations ops/src/docsuri_ops \
+            backend/modules/plans/u8_usage.py backend/modules/research/control_lifecycle.py \
+            backend/modules/research/job_list.py backend/modules/discovery/u8_search.py \
+            backend/modules/corpus/limits.py backend/modules/corpus/paper_import.py \
+            backend/modules/personalization/import_repository.py \
+            backend/modules/summarization/model_runtime.py \
+            backend/modules/summarization/u8_assistance_sources.py
+          # 4. U8's own files in the accounts folder, with nothing ignored.
+          (cd backend/modules/accounts && "$ruff" check --no-cache \
+            --config ../../../scripts/u8-lint-accounts.toml \
+            entry_limits.py integrations/email_allowance.py \
+            integrations/identity_providers.py integrations/account_mail.py \
+            integrations/provider_gate.py integrations/u8_digest_mail.py u8_verifier_key.py \
+            u8_control_policy.py u8_entry.py u8_mail_outbox.py u8_mfa.py u8_identity.py \
+            u8_lifecycle.py u8_control_http.py u8_local_http.py \
+            services/v2_rollback_apply.py services/rollback_outcomes.py repository/imports.py \
+            services/first_sign_in.py services/v1_import.py)
+          # 5. U8's own file in the library folder, with nothing ignored.
+          (cd backend/modules/library && "$ruff" check --no-cache \
+            --config ../../../scripts/u8-lint-library.toml repository/imports.py)
+          # 6. The shared contract under its own pyproject.toml.
+          (cd shared/python && "$ruff" check --no-cache .)
+          # 7. The earlier units' paths under their own configurations.
+          "$ruff" check --no-cache backend/local_profile.py backend/transactions.py \
+            backend/local_browser.py backend/local_host.py backend/artifacts.py \
+            backend/control_worker.py backend/control_runtime.py backend/lifecycle_effects.py \
+            backend/modules/accounts backend/modules/research backend/modules/discovery \
+            backend/modules/corpus backend/modules/export backend/modules/topics \
+            backend/modules/personalization backend/u5_real_delivery.py \
+            backend/u6_real_export.py backend/u5_policy.py backend/u6_policy.py
+      - name: Create the composed realm
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u8.py --phase setup
+          --profile synthetic-local --environment-file "$DOCSURI_U8_ENVIRONMENT_FILE"
+      - name: Apply the composed chain
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u8.py --phase migrate
+          --profile synthetic-local --environment-file "$DOCSURI_U8_ENVIRONMENT_FILE"
+      # Every lane as its own part under the 300-second bound, then the combined report
+      # at the 80% floor (the person's decision of 2026-10-23, "Split into parts"). The
+      # component, integration and operations lanes run in parts (`coverage-component-1`
+      # and `-2`; `coverage-integration-1` to `-4`; `coverage-operations-1` to `-3`; the
+      # person's decision of 2026-10-26, "Split it in two", and U8 plan Step 46 after the
+      # 2026-10-31 times), eleven parts in all, appending to one coverage data file.
+      - name: Coverage, by its parts, and the combined report
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u8.py --phase coverage
+          --profile synthetic-local --environment-file "$DOCSURI_U8_ENVIRONMENT_FILE"
+      - name: U2's tests on the composed chain
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u8.py --phase u2-regression
+          --profile synthetic-local --environment-file "$DOCSURI_U8_ENVIRONMENT_FILE"
+
+  browser:
+    name: U8 complete / browser
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    needs: [shared-contracts, frontend, backend]
+    steps:
+      # The restore verification (J09) refuses while free space, less the source
+      # database, is at or below the 20 GiB threshold (BR6.6); a standard runner keeps
+      # about 14 GB free until its preinstalled toolchains are removed.
+      - name: Room on the runner's disk
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          # The compatibility phase's previous v2 tag: a depth-1 checkout lists no tag, and
+          # with `fetch-tags` alone a shallow fetch follows only tags on the fetched
+          # commit, so the whole history is fetched with every tag and its commit.
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.14.0'
+      - run: corepack enable
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          version: '0.9.0'
+      - name: Private temporary folder
+        run: |
+          sudo install -d -m 755 -o root -g root /r1-private
+          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" /r1-private/tmp
+          echo "TMPDIR=/r1-private/tmp" >> "$GITHUB_ENV"
+      - name: Frozen dependencies
+        run: |
+          uv sync --project backend --frozen --python 3.13.7
+          corepack pnpm@9.15.9 --dir frontend install --frozen-lockfile --ignore-scripts
+      - name: Browser runtime
+        working-directory: frontend
+        run: corepack pnpm@9.15.9 exec playwright install --with-deps chromium
+      - name: Assert the database image pins
+        run: >-
+          backend/.venv/bin/python -c "import sys; sys.path[:0] = ['ops/src'];
+          from docsuri_ops.arrangement import runtimes as r;
+          assert r.POSTGRESQL_VERSION == '16.14' and r.PGVECTOR.version == '0.8.7';
+          assert r.POSTGRES_BASE_IMAGE.startswith('postgres@sha256:');
+          print(r.DATABASE_IMAGE_TAG, r.POSTGRES_BASE_IMAGE)"
+      - name: Pinned database base image
+        run: >-
+          docker pull "$(backend/.venv/bin/python -c "import sys; sys.path[:0] = ['ops/src'];
+          from docsuri_ops.arrangement import runtimes as r; print(r.POSTGRES_BASE_IMAGE)")"
+      - name: Create the composed realm
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u8.py --phase setup
+          --profile synthetic-local --environment-file "$DOCSURI_U8_ENVIRONMENT_FILE"
+      - name: Apply the composed chain
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u8.py --phase migrate
+          --profile synthetic-local --environment-file "$DOCSURI_U8_ENVIRONMENT_FILE"
+      # The backup and restore checks run on the small database (the person's decision
+      # of 2026-10-23, "Smaller database"): the fixtures stop before the corpus, and the
+      # verification run loads it after `restore-paths` and `browser-recovery`.
+      - name: Fixtures, before the corpus
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u8.py --phase fixtures --corpus skip
+          --profile synthetic-local --environment-file "$DOCSURI_U8_ENVIRONMENT_FILE"
+      - name: The complete verification
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u8.py --phase verification-run
+          --profile synthetic-local --environment-file "$DOCSURI_U8_ENVIRONMENT_FILE"
+      - name: The previous release's critical journeys
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u8.py --phase compatibility
+          --profile synthetic-local --environment-file "$DOCSURI_U8_ENVIRONMENT_FILE"
+      # The VerificationRun record alone: journey identifiers, results and evidence
+      # references, never logs, dumps, keys or account material.
+      - name: Keep the VerificationRun
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: u8-verification-run
+          path: /tmp/docsuri-u8-run/verification/*.json
+          retention-days: 90
+          if-no-files-found: warn
+
+# Each job keeps its private diagnostics inside its disposable runner. This lane does not
+# promote main or deploy.

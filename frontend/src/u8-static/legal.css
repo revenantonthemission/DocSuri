@@ -1,0 +1,77 @@
+/* The script-free documents (BR5.6, BR9.10): /privacy, /terms and the maintenance
+   notice, over the workspace's global styles, with a readable line length. */
+
+/* The accent's text variant with workspace.css's values: these pages load only globals.css
+   and this file, and the light value on the dark canvas falls under 4.5:1 (L1-40). */
+:root {
+  --color-accent-text: #2963df;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-accent-text: #5b8bff;
+  }
+}
+
+:root[data-theme='light'] {
+  --color-accent-text: #2963df;
+}
+
+:root[data-theme='dark'] {
+  --color-accent-text: #5b8bff;
+}
+
+/* Every visible target is at least 24×24 CSS px by its box (L1-40). */
+.legal header a,
+.notice a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 24px;
+  min-inline-size: 24px;
+}
+
+.legal {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 2rem clamp(1rem, 4vw, 2rem) 4rem;
+  line-height: 1.7;
+}
+
+.legal header {
+  margin-bottom: 1.5rem;
+}
+
+.legal header a {
+  color: var(--color-accent-text, #2963df);
+}
+
+.legal header a:focus-visible {
+  outline: 0.1875rem solid var(--color-accent-text, #2963df);
+  outline-offset: 0.125rem;
+}
+
+.legal h1 {
+  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  margin: 0 0 0.5rem;
+}
+
+.legal h2 {
+  font-size: 1.125rem;
+  margin: 2rem 0 0.5rem;
+}
+
+.legal .updated {
+  color: var(--color-text-muted, #6b7280);
+  margin-bottom: 1.5rem;
+}
+
+.legal ul {
+  padding-inline-start: 1.25rem;
+}
+
+.notice {
+  max-width: 32rem;
+  margin: 20vh auto 0;
+  padding: 2rem clamp(1rem, 4vw, 2rem);
+  text-align: center;
+}

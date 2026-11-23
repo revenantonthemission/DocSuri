@@ -19,6 +19,7 @@ import re
 import stat
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 MAX_REQUEST_BYTES = 65536
@@ -187,7 +188,11 @@ def apply_effect(request: dict, *, injected_fault: str | None = None) -> dict:
     return _credential_effect(target_id, directory, token)
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, *, effect: Callable[..., dict] | None = None) -> int:
+    """Read one request, run one effect, write one settlement record.
+
+    `effect` defaults to this module's `apply_effect`, looked up when called; a caller
+    that runs its own bounded child passes its own effect and reuses this framing."""
     raw = sys.stdin.buffer.read(MAX_REQUEST_BYTES + 1)
     if len(raw) > MAX_REQUEST_BYTES:
         sys.stderr.write("request too large\n")
@@ -199,7 +204,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     injected = request.pop("injectedFault", None)
     try:
-        result = apply_effect(request, injected_fault=injected)
+        result = (apply_effect if effect is None else effect)(request, injected_fault=injected)
     except (ValueError, KeyError, OSError) as exc:
         result = {"status": "not-applied", "effectRefs": [], "error": _error("internal", str(exc))}
     sys.stdout.write(json.dumps(result, sort_keys=True))

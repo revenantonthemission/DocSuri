@@ -3,20 +3,20 @@ the C09 routes, the capability row, the navigation entry, readiness with the exp
 probe, one control worker pass through the inherited chain, and the shutdown order.
 
 The realm persists across phases and holds due effects of synthetic owners that have no
-account; the pass's hand-over is kept to this test's own effects (it has none), so the
-lane never acts on rows outside this test's fixtures. Housekeeping runs as the real pass
-runs it, as `lane_flows.drain` does.
+account; both conftest owners are freshened first, and the pass's hand-over may reach
+rows outside this test's fixtures, which the shared lane handles as it does in
+production. Housekeeping runs as the real pass runs it, as `lane_flows.drain` does.
 """
 
 from uuid import uuid4
 
-from backend import control_runtime
-from backend.modules.export.repository import ExportRepository
-from backend.u6_host import assemble_u6
 from docsuri_shared.workspace import wire
 from fastapi.testclient import TestClient
 
+from backend import control_runtime
+from backend.u6_host import assemble_u6
 from tests.u6_approved_export import lane_flows as lf
+from tests.u6_approved_export import store_flows as flows
 
 
 def spy_method(monkeypatch, owner, name: str, calls: list, label: str) -> None:
@@ -30,7 +30,9 @@ def spy_method(monkeypatch, owner, name: str, calls: list, label: str) -> None:
     monkeypatch.setattr(owner, name, spy)
 
 
-def test_assemble_u6_mounts_export_and_stops_in_order(realm, monkeypatch):
+def test_assemble_u6_mounts_export_and_stops_in_order(
+    realm, monkeypatch, connect, authority, authority_b
+):
     order: list[str] = []
     passes: list[str] = []
     loop_close = control_runtime.ControlLoop.close
@@ -40,7 +42,8 @@ def test_assemble_u6_mounts_export_and_stops_in_order(realm, monkeypatch):
         order.append("control-loop")
 
     monkeypatch.setattr(control_runtime.ControlLoop, "close", close)
-    monkeypatch.setattr(ExportRepository, "due_items", lambda self, now, limit=None: [])
+    flows.fresh(connect, authority.account_id)
+    flows.fresh(connect, authority_b.account_id)
 
     app = assemble_u6(realm)
     lane, worker = app.state.export_lane, app.state.control_worker

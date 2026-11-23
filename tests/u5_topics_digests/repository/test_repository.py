@@ -172,7 +172,7 @@ def test_begin_send_guards(transactions, authority, connect):
     assert repo_.discard_prepared_runs(topic_id) == []
 
 
-def test_unknown_pause_and_reconcile(transactions, authority, connect):
+def _unknown_pause_and_reconcile(transactions, authority, connect):
     repo_ = repo(transactions)
     topic_id = repo_.follow(authority, unique("pause-topic"), "Pause Topic")["topic"]["id"]
     later = make_run(repo_, connect, topic_id, W2)
@@ -246,7 +246,7 @@ def test_send_watermark_exclusion(transactions, authority, connect):
     assert "v-fresh" not in shrunk
 
 
-def test_owner_resolve_action(transactions, authority, connect):
+def _owner_resolve_action(transactions, authority, connect):
     repo_ = repo(transactions)
     topic_id = repo_.follow(authority, unique("resolve-topic"), "Resolve Topic")["topic"]["id"]
     run = make_run(repo_, connect, topic_id, W1)
@@ -268,6 +268,22 @@ def test_owner_resolve_action(transactions, authority, connect):
     resolved_failed = repo_.resolve_run(authority, topic_id, not_delivered["id"], "failed")
     assert resolved_failed["state"] == "failed"
     assert repo_.reconcile_run(not_delivered["id"], "failed") is None
+
+
+# Plan Step 38 (decision L3-1): two same-rule cases merged into one parametrized test,
+# each original body kept unchanged as a case function, so each case is still its own
+# collected item and its id names the original test.
+@pytest.mark.parametrize(
+    "case",
+    [_unknown_pause_and_reconcile, _owner_resolve_action],
+    ids=["unknown_pause_and_reconcile", "owner_resolve_action"],
+)
+def test_an_unknown_outcome_pauses_until_reconciled_or_resolved_once(
+    transactions, authority, connect, case
+):
+    """One rule, closing an unknown outcome: it blocks the topic's next send until the
+    evidence reconciles it or its owner resolves it, and it closes exactly once."""
+    case(transactions, authority, connect)
 
 
 def test_orphan_sweep_records_evidence_gap(transactions, authority, connect):

@@ -25,9 +25,8 @@ import sys
 from pathlib import Path
 from uuid import UUID
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "ops/src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ops/src"))
 
 from backend.local_profile import LocalProfile, private_bytes
 from backend.modules.export.errors import ExportError
@@ -47,6 +46,7 @@ from backend.u6_real_export import (
     real_policy,
 )
 
+ROOT = Path(__file__).resolve().parents[1]
 REALM = "approved-export"
 # Seven days is the longest time U6 keeps a rendered copy (NFR1.5); the preserved
 # environment must be removed by then (cicd-pipeline §5 step 13).

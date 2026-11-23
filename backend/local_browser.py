@@ -9,6 +9,7 @@ supplied identity and never reads ambient settings.
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import hmac
 import json
 import time
@@ -34,6 +35,25 @@ CORPUS_ORIGIN = "https://127.0.0.1:18059"
 RESEARCH_ORIGIN = "https://127.0.0.1:18079"
 TOPICS_ORIGIN = "https://127.0.0.1:18089"
 EXPORT_ORIGIN = "https://127.0.0.1:18099"
+# U8: the composed realm's public stand-in and production's public host.
+COMPLETE_ORIGIN = "https://127.0.0.1:18110"
+PRODUCTION_ORIGIN = "https://docsuri.rvnnt.dev"
+
+# D13: the request's server-made identifier. The complete assembly's request context
+# (`backend/request_context.py`) sets it for each request; an earlier assembly never
+# sets it, so its answers keep the values they always carried.
+CURRENT_REQUEST_ID: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "docsuri_request_id", default=None
+)
+
+
+def request_identifier(default: str | None = None) -> str:
+    """The current request's identifier, or `default` (a fresh random value when none
+    is given) outside a request context."""
+    current = CURRENT_REQUEST_ID.get()
+    if current is not None:
+        return current
+    return str(uuid4()) if default is None else default
 
 
 class BrowserDenied(Exception):
@@ -43,14 +63,16 @@ class BrowserDenied(Exception):
         self.status, self.code, self.retry_after = status, code, retry_after
 
 
-def error_response(status: int, code: str, *, retry_after: int | None = None) -> JSONResponse:
+def error_response(
+    status: int, code: str, *, retry_after: int | None = None, message_key: str | None = None
+) -> JSONResponse:
     from docsuri_shared.workspace import wire
 
     value = {
         "code": code,
-        "requestId": str(uuid4()),
+        "requestId": request_identifier(),
         "retryable": code in {"RATE_LIMITED", "DEPENDENCY_UNAVAILABLE"},
-        "messageKey": "request." + code.lower(),
+        "messageKey": message_key or "request." + code.lower(),
     }
     if retry_after is not None:
         value["retryAfterSeconds"] = retry_after
@@ -84,7 +106,7 @@ def boundary_route(
     """One route class for every canonical browser adapter; identical dispositions."""
     if origin not in (
         JOURNEY_ORIGIN, CONTROLS_ORIGIN, CORPUS_ORIGIN, RESEARCH_ORIGIN, TOPICS_ORIGIN,
-        EXPORT_ORIGIN,
+        EXPORT_ORIGIN, COMPLETE_ORIGIN, PRODUCTION_ORIGIN,
     ):
         raise ValueError("unowned browser origin")
     expected_authority = urlsplit(origin).netloc
@@ -132,8 +154,12 @@ def boundary_route(
                     return error_response(422, "INVALID_ARGUMENT")
                 except UnknownCommit:
                     return error_response(409, "UNKNOWN_OUTCOME")
-                except Busy:
-                    return error_response(429, "RATE_LIMITED")
+                except Busy as exc:
+                    # A refusal may name its own fixed message key (U8's provider start
+                    # limits); every other Busy keeps the built `request.rate_limited`.
+                    return error_response(
+                        429, "RATE_LIMITED", message_key=getattr(exc, "message_key", None)
+                    )
                 except TimeoutError:
                     return error_response(504, "DEADLINE_EXCEEDED")
                 except ValueError:
@@ -155,7 +181,7 @@ async def read_payload(request: Request, schema):
         65536
         if request.headers.get("host") in (
             "127.0.0.1:18049", "127.0.0.1:18059", "127.0.0.1:18079", "127.0.0.1:18089",
-            "127.0.0.1:18099",
+            "127.0.0.1:18099", "127.0.0.1:18110", "docsuri.rvnnt.dev",
         )
         else 8192
     )

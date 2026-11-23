@@ -38,8 +38,18 @@ class ControlKeyring:
         missing_key_message="required retained encryption key unavailable",
     )
 
-    def __init__(self, root: Path, run_id: str, legacy_key: bytes):
-        if root.resolve() != Path("/tmp/docsuri-u2-run").resolve() or len(legacy_key) != 32:
+    def __init__(
+        self, root: Path, run_id: str, legacy_key: bytes, *, production_root: Path | None = None
+    ):
+        # U2's realm keeps the ring at its run root; the composed realm and production
+        # keep it in the profile's `control-keys/` folder (U8 plan Step 9).
+        allowed = {
+            Path("/tmp/docsuri-u2-run").resolve(),
+            Path("/tmp/docsuri-u8-run/control-keys").resolve(),
+        }
+        if production_root is not None:
+            allowed = {production_root / "control-keys"}
+        if root.resolve() not in {path.resolve() for path in allowed} or len(legacy_key) != 32:
             raise ValueError("owned account-control key allocation required")
         self.root, self.run_id, self.legacy_key = root, run_id, legacy_key
         self.read()

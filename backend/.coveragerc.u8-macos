@@ -1,0 +1,14 @@
+# U8's thin macOS tool adapters, measured in `ci.yml`'s `macos-filesystem` job (or this
+# Mac's `arrangement` phase), where the real tools run. Each file is in exactly one of
+# the two U8 reports: these three are omitted from `.coveragerc.u8`.
+[run]
+source = ops/src
+
+[report]
+include =
+    ops/src/docsuri_ops/arrangement/macos.py
+    ops/src/docsuri_ops/standing/macos.py
+    ops/src/docsuri_ops/isolation_macos.py
+fail_under = 80
+show_missing = True
+skip_covered = False

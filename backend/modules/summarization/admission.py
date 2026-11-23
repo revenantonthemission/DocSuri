@@ -24,12 +24,15 @@ class AssistanceAdmission:
         if admission["disposition"] == "rejected":
             raise ValueError("original admission was rejected; no automatic restart")
         try:
-            if self.usage.transactions.profile.realm == "account-controls":
-                from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
+            # U2's reservation in U2's realm and, by the row "U2's controls in the complete
+            # app", in the composed and production realms, each under its own policy.
+            if self.usage.transactions.profile.realm in (
+                    "account-controls", "service-operations", "production"):
+                from backend.modules.accounts.control_policy import for_realm
                 from backend.modules.plans.control_service import ControlUsageService
 
                 reservation = ControlUsageService(
-                    self.usage.transactions, SYNTHETIC_POLICY
+                    self.usage.transactions, for_realm(self.usage.transactions.profile.realm)
                 ).reserve(authority, admission)
             else:
                 reservation = self.usage.reserve(authority, operation, admission["intent_hash"])

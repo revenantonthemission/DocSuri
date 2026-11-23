@@ -1,0 +1,2 @@
+// U8 complete-application typecheck scope; mirrors tsconfig.u6-export.json.
+{"extends": "./tsconfig.json", "compilerOptions": {"noUncheckedIndexedAccess": true, "exactOptionalPropertyTypes": true, "noImplicitReturns": true, "incremental": false}, "include": ["src/**/*.ts", "src/**/*.tsx", "test/setup.ts", "test/u8-complete/**/*.ts", "test/u8-complete/**/*.tsx", "e2e/u8-complete/**/*.ts", "vitest.u8-complete.config.ts", "playwright.u8-complete.config.ts"], "exclude": ["node_modules", ".next"]}

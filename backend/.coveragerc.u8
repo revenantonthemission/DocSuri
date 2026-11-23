@@ -1,0 +1,136 @@
+# U8 complete service operations and integration: every U8 file except the thin macOS
+# tool adapters (measured in `.coveragerc.u8-macos` instead), plus every shared and owner
+# file U8 changes (the plan's "What U8 changes outside its own files"). Each file is in
+# exactly one of the two reports, and none is left out to raise a percentage. Lines of
+# a changed shared file that only an earlier realm reaches count as missed, so U8's own
+# code must carry the total. The runner `scripts/verify_docsuri_u8.py` is the
+# measurement harness and stays outside the denominator; `operations/test_u8_tool.py`
+# tests its behaviour. A later step that changes a further shared or owner file adds it
+# here in the same change.
+[run]
+source = backend,scripts,ops/src
+
+[report]
+include =
+    # U8's own backend files.
+    backend/u8_*.py
+    backend/production_boundary.py
+    backend/log_events.py
+    backend/request_context.py
+    backend/maintenance_server.py
+    backend/modules/operations/*.py
+    backend/modules/operations/migration/*.py
+    backend/modules/accounts/entry_limits.py
+    backend/modules/accounts/integrations/email_allowance.py
+    backend/modules/accounts/integrations/identity_providers.py
+    backend/modules/accounts/integrations/account_mail.py
+    backend/modules/accounts/integrations/provider_gate.py
+    backend/modules/accounts/integrations/u8_digest_mail.py
+    backend/modules/accounts/u8_verifier_key.py
+    backend/modules/accounts/u8_control_policy.py
+    backend/modules/accounts/u8_entry.py
+    backend/modules/accounts/u8_mail_outbox.py
+    backend/modules/accounts/u8_mfa.py
+    backend/modules/accounts/u8_identity.py
+    backend/modules/accounts/u8_lifecycle.py
+    backend/modules/accounts/u8_control_http.py
+    backend/modules/accounts/u8_local_http.py
+    backend/modules/plans/u8_usage.py
+    backend/modules/accounts/services/v2_rollback_apply.py
+    backend/modules/accounts/services/rollback_outcomes.py
+    backend/modules/research/control_lifecycle.py
+    backend/modules/research/job_list.py
+    backend/modules/discovery/u8_search.py
+    backend/import_parity.py
+    backend/modules/accounts/repository/imports.py
+    backend/modules/accounts/services/first_sign_in.py
+    backend/modules/corpus/limits.py
+    backend/modules/library/repository/imports.py
+    backend/modules/personalization/import_repository.py
+    backend/modules/summarization/model_runtime.py
+    backend/modules/summarization/u8_assistance_sources.py
+    backend/modules/corpus/paper_import.py
+    backend/modules/accounts/services/v1_import.py
+    # U8's own ops files (the macOS adapters are in `.coveragerc.u8-macos`).
+    ops/src/docsuri_ops/backup_agent/*.py
+    ops/src/docsuri_ops/standing/*.py
+    ops/src/docsuri_ops/arrangement/*.py
+    ops/src/docsuri_ops/migration/*.py
+    ops/src/docsuri_ops/cutover/*.py
+    ops/src/docsuri_ops/u8_platform/*.py
+    ops/src/docsuri_ops/u8_platform/drivers/*.py
+    ops/src/docsuri_ops/isolation_check.py
+    ops/src/docsuri_ops/logrotate.py
+    ops/src/docsuri_ops/backup_unlock.py
+    ops/src/docsuri_ops/pf_loader.py
+    ops/src/docsuri_ops/release.py
+    ops/src/docsuri_ops/production_tool.py
+    ops/src/docsuri_ops/production_wiring.py
+    ops/src/docsuri_ops/research_review.py
+    # U8's own scripts.
+    scripts/serve_docsuri_u8.py
+    scripts/u8_*.py
+    # Shared host files U8 changes.
+    backend/local_profile.py
+    backend/transactions.py
+    backend/local_browser.py
+    backend/local_host.py
+    backend/artifacts.py
+    backend/control_worker.py
+    backend/control_runtime.py
+    backend/lifecycle_effects.py
+    ops/src/docsuri_ops/local_transport.py
+    ops/src/docsuri_ops/u2_restore.py
+    # Owner files U8 changes.
+    backend/modules/accounts/local_http.py
+    backend/modules/accounts/control_http.py
+    backend/modules/accounts/services/control_lifecycle.py
+    backend/modules/accounts/control_policy.py
+    backend/modules/accounts/control_keys.py
+    backend/modules/accounts/services/guarded_entry.py
+    backend/modules/accounts/services/control_entry.py
+    backend/modules/accounts/services/control_mfa.py
+    backend/modules/accounts/services/control_identity.py
+    backend/modules/accounts/integrations/digest_email.py
+    backend/modules/personalization/guarded_service.py
+    backend/modules/research/jobs.py
+    backend/modules/research/service.py
+    backend/modules/research/http.py
+    backend/modules/research/repository.py
+    backend/modules/discovery/local_search.py
+    backend/modules/discovery/local_embedding.py
+    backend/modules/corpus/source_parser.py
+    backend/modules/corpus/maintenance.py
+    backend/modules/corpus/repository.py
+    backend/modules/export/notion_session.py
+    backend/modules/export/lane.py
+    backend/modules/export/service.py
+    backend/modules/export/binding.py
+    backend/u6_real_export.py
+    backend/u6_policy.py
+    backend/modules/topics/scheduler.py
+    backend/modules/topics/repository.py
+    backend/modules/discovery/guarded_repository.py
+    backend/modules/library/local_http.py
+    backend/modules/library/repository/guarded.py
+    backend/modules/personalization/local_http.py
+    backend/modules/plans/control_service.py
+    backend/modules/plans/guarded_repository.py
+    backend/modules/plans/local_http.py
+    backend/modules/summarization/admission.py
+    backend/modules/summarization/guarded_repository.py
+    backend/modules/summarization/payload.py
+    backend/modules/summarization/requests.py
+    backend/modules/summarization/u3_catalog.py
+    backend/modules/summarization/u3_http.py
+    backend/modules/summarization/u3_dispatch.py
+    ops/src/docsuri_ops/platform_control/executor.py
+    ops/src/docsuri_ops/platform_control/native_adapter.py
+omit =
+    scripts/verify_docsuri_u8.py
+    ops/src/docsuri_ops/arrangement/macos.py
+    ops/src/docsuri_ops/standing/macos.py
+    ops/src/docsuri_ops/isolation_macos.py
+fail_under = 80
+show_missing = True
+skip_covered = False

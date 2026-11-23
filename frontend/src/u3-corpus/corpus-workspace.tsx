@@ -11,13 +11,7 @@ import { SearchHit, api } from './api';
 import { ReadingSection, SearchSection } from './search-reading';
 import { AssistanceSection, GlossarySection } from './assistance';
 
-export function CorpusWorkspace({
-  client,
-  signedIn,
-}: {
-  client: Transport;
-  signedIn: boolean;
-}) {
+export function CorpusWorkspace({ client, signedIn }: { client: Transport; signedIn: boolean }) {
   const [hit, setHit] = useState<SearchHit | null>(null);
   const [content, setContent] = useState<{
     revision: string;
@@ -38,20 +32,11 @@ export function CorpusWorkspace({
       </div>
       {hit !== null ? (
         <>
-          <button
-            type="button"
-            onClick={() => setHit(null)}
-            data-testid="reading-back"
-          >
+          <button type="button" onClick={() => setHit(null)} data-testid="reading-back">
             검색으로 돌아가기
           </button>
-          <ReadingSection client={client} hit={hit} signedIn={signedIn} />
-          <ContentBinding
-            client={client}
-            hit={hit}
-            signedIn={signedIn}
-            onBound={setContent}
-          />
+          <ReadingSection client={client} hit={hit} signedIn={signedIn} headingRef={heading} />
+          <ContentBinding client={client} hit={hit} signedIn={signedIn} onBound={setContent} />
           {content ? (
             <AssistanceSection
               client={client}

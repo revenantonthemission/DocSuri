@@ -1,13 +1,13 @@
 """NFR3.4, NFR3.6, NFR3.9: no token in any log record, exception text, result or stored
 row after forced failures of every kind, and no reduced error carries a chain."""
 
-import dataclasses
 import json
 import logging
-from collections.abc import Mapping
 
 import httpx
 import pytest
+from notion_client.errors import build_request_error
+
 from backend.modules.export.classification import ReducedError, Verdict
 from backend.modules.export.fake_notion import (
     HANG,
@@ -20,8 +20,6 @@ from backend.modules.export.fake_notion import (
     Answer,
 )
 from backend.modules.export.notion_adapter import ScanRequest
-from notion_client.errors import build_request_error
-
 from tests.u6_approved_export import notion_flows as nf
 
 LOGGERS = ("", "httpx", "httpcore", "notion_client", "docsuri.export.notion_sdk")
@@ -47,35 +45,6 @@ FAILURES = [
     Answer.of(REDIRECT),
     Answer.of(HANG),
 ]
-
-
-def walk(value, seen=None):
-    """Every value reachable from a result: dataclass fields, mappings and sequences."""
-    seen = seen if seen is not None else set()
-    if id(value) in seen:
-        return
-    seen.add(id(value))
-    yield value
-    if dataclasses.is_dataclass(value) and not isinstance(value, type):
-        children = [getattr(value, f.name) for f in dataclasses.fields(value)]
-    elif isinstance(value, Mapping):
-        children = list(value.values())
-    elif isinstance(value, (list, tuple, set, frozenset)):
-        children = list(value)
-    elif hasattr(value, "model_dump"):
-        children = [value.model_dump()]
-    else:
-        children = []
-    for child in children:
-        yield from walk(child, seen)
-
-
-def assert_clean(results, token):
-    for result in results:
-        for value in walk(result):
-            assert not isinstance(value, BaseException)
-            assert not isinstance(value, str) or token not in value
-        assert token not in repr(result)
 
 
 @pytest.fixture
@@ -122,7 +91,7 @@ async def test_no_token_leaks_from_reads_after_any_failure(setup, caplog, failur
             ),
         ),
     ]
-    assert_clean(results, setup["token"])
+    nf.assert_clean(results, setup["token"])
     assert setup["token"] not in captured_text(caplog)
 
 
@@ -139,7 +108,7 @@ async def test_no_token_leaks_from_a_write_after_any_failure(
         nf.write_request(bound, setup["connection"], setup["bot"]),
         deadline_seconds=1,
     )
-    assert_clean([result, result.provider_result(), result.provider_outcome()], setup["token"])
+    nf.assert_clean([result, result.provider_result(), result.provider_outcome()], setup["token"])
     assert setup["token"] not in captured_text(caplog)
     with connect("export") as conn:
         rows = conn.execute(
@@ -160,8 +129,8 @@ async def test_a_candidate_refusal_and_a_custody_fault_leak_nothing(
     stranger = nf.adapter(setup["repo"], nf.vault(other), setup["fake"], setup["policy"])
     faulted = await stranger.identify(setup["target"])
     assert refused.category == "token-invalid" and faulted.category == "protection-unavailable"
-    assert_clean([refused, faulted], token)
-    assert_clean([refused, faulted], setup["token"])
+    nf.assert_clean([refused, faulted], token)
+    nf.assert_clean([refused, faulted], setup["token"])
     assert token not in repr(candidate)  # the caller holds it, but never shows it
     text = captured_text(caplog)
     assert token not in text and setup["token"] not in text
@@ -195,4 +164,4 @@ async def test_every_reduced_error_has_no_cause_and_no_context(setup):
 
     result = await session.run(setup["target"], 1, work)
     assert result.category == "could-not-check" and result.verdict.cause == "retries-spent"
-    assert_clean([result], setup["token"])
+    nf.assert_clean([result], setup["token"])

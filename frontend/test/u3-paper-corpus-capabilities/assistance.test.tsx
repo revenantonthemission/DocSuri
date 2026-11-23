@@ -1,6 +1,6 @@
 /** U3 assistance states: options, acceptance, ordered progress and results. */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AssistanceSection } from '../../src/u3-corpus/assistance';
@@ -31,8 +31,44 @@ const optionsPayload = {
   limitations: ['선택한 원문 부분만 처리합니다.', '이 환경은 합성(synthetic) 실행기를 사용합니다.'],
 };
 
-function renderAssistance(extra: (client: ContractDouble) => ContractDouble = (c) => c) {
-  let client = new ContractDouble()
+const jobId = '44444444-4444-4444-4444-444444444444';
+
+/** An EventSource stand-in that records each stream and replays named frames. */
+class FakeEventSource {
+  static instances: FakeEventSource[] = [];
+  listeners = new Map<string, ((event: MessageEvent) => void)[]>();
+  closed = false;
+  emitted = 0;
+  onerror: (() => void) | null = null;
+  constructor(public url: string) {
+    FakeEventSource.instances.push(this);
+  }
+  addEventListener(name: string, handler: (event: MessageEvent) => void) {
+    this.listeners.set(name, [...(this.listeners.get(name) ?? []), handler]);
+  }
+  close() {
+    this.closed = true;
+  }
+  emit(name: string, data: unknown) {
+    this.emitted += 1;
+    for (const handler of this.listeners.get(name) ?? []) {
+      act(() => handler({ data: JSON.stringify(data) } as MessageEvent));
+    }
+  }
+}
+
+function sectionProps(client: ContractDouble) {
+  return {
+    client: client.asTransport(),
+    paper,
+    contentRevision: content.content.contentRevision,
+    contentHash: content.content.contentHash,
+    signedIn: true,
+  };
+}
+
+function assistanceDouble(): ContractDouble {
+  return new ContractDouble()
     .on('/api/v2/c06/read-assistance-options', () => optionsPayload)
     .on('/api/v2/c06/read-glossary', () => ({
       ownerId: 'owner-a',
@@ -49,7 +85,11 @@ function renderAssistance(extra: (client: ContractDouble) => ContractDouble = (c
       acceptedAt: '2026-10-15T00:00:00+00:00',
     }))
     .on('/api/v2/jobs/44444444-4444-4444-4444-444444444444', () =>
-      jobSnapshot({ state: 'succeeded', seq: 5, progress: { mode: 'determinate', current: 1, total: 1 } }),
+      jobSnapshot({
+        state: 'succeeded',
+        seq: 5,
+        progress: { mode: 'determinate', current: 1, total: 1 },
+      }),
     )
     .on('/api/v2/jobs/44444444-4444-4444-4444-444444444444/result', () => ({
       availability: 'ready',
@@ -70,22 +110,18 @@ function renderAssistance(extra: (client: ContractDouble) => ContractDouble = (c
         methodRevision: 'options-r1',
       },
     }));
-  client = extra(client);
-  render(
-    <AssistanceSection
-      client={client.asTransport()}
-      paper={paper}
-      contentRevision={content.content.contentRevision}
-      contentHash={content.content.contentHash}
-      signedIn
-    />,
-  );
+}
+
+function renderAssistance(extra: (client: ContractDouble) => ContractDouble = (c) => c) {
+  const client = extra(assistanceDouble());
+  render(<AssistanceSection {...sectionProps(client)} />);
   return client;
 }
 
 afterEach(() => {
   vi.unstubAllGlobals();
   window.localStorage.clear();
+  FakeEventSource.instances = [];
 });
 
 describe('U3 assistance surface', () => {
@@ -159,34 +195,9 @@ describe('U3 assistance surface', () => {
   });
 
   it('ignores stale progress frames and keeps the newest snapshot', async () => {
-    const frames: string[] = [];
-    class FakeEventSource {
-      static instances: FakeEventSource[] = [];
-      listeners = new Map<string, ((event: MessageEvent) => void)[]>();
-      closed = false;
-      constructor(public url: string) {
-        FakeEventSource.instances.push(this);
-      }
-      addEventListener(name: string, handler: (event: MessageEvent) => void) {
-        this.listeners.set(name, [...(this.listeners.get(name) ?? []), handler]);
-      }
-      onerror: (() => void) | null = null;
-      close() {
-        this.closed = true;
-      }
-      emit(name: string, data: unknown) {
-        frames.push(JSON.stringify(data));
-        for (const handler of this.listeners.get(name) ?? []) {
-          handler({ data: JSON.stringify(data) } as MessageEvent);
-        }
-      }
-    }
     vi.stubGlobal('EventSource', FakeEventSource as unknown as typeof EventSource);
-    const jobId = '44444444-4444-4444-4444-444444444444';
     renderAssistance((client) =>
-      client.on(`/api/v2/jobs/${jobId}`, () =>
-        jobSnapshot({ state: 'running', seq: 1 }),
-      ),
+      client.on(`/api/v2/jobs/${jobId}`, () => jobSnapshot({ state: 'running', seq: 1 })),
     );
     await waitFor(() => expect(screen.getByTestId('start-summary')).toBeInTheDocument());
     await userEvent.click(screen.getByTestId('start-summary'));
@@ -194,9 +205,123 @@ describe('U3 assistance surface', () => {
     const source = FakeEventSource.instances[0];
     source.emit('snapshot', jobSnapshot({ seq: 4, state: 'running' }));
     source.emit('snapshot', jobSnapshot({ seq: 2, state: 'running' }));
-    await waitFor(() =>
-      expect(screen.getByTestId('activity-card')).toHaveTextContent('순서 4'),
+    await waitFor(() => expect(screen.getByTestId('activity-card')).toHaveTextContent('순서 4'));
+    expect(source.emitted).toBe(2);
+  });
+});
+
+describe('U3 assistance revisit', () => {
+  function revisit(state: string, extra: (client: ContractDouble) => ContractDouble = (c) => c) {
+    vi.stubGlobal('EventSource', FakeEventSource as unknown as typeof EventSource);
+    window.localStorage.setItem('docsuri.u3.job.paper-alpha', jobId);
+    const client = extra(
+      assistanceDouble().on(`/api/v2/jobs/${jobId}`, () => jobSnapshot({ state, seq: 3 })),
     );
-    expect(frames).toHaveLength(2);
+    const view = render(<AssistanceSection {...sectionProps(client)} />);
+    return { client, view };
+  }
+
+  it.each(['accepted', 'running'])(
+    'follows a retained %s job until its prepared result appears',
+    async (state) => {
+      const { client } = revisit(state);
+      await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
+      const source = FakeEventSource.instances[0];
+      expect(source.url).toBe(`/api/v2/jobs/${jobId}/events`);
+      expect(screen.getByTestId('job-progress')).toHaveTextContent(state);
+      expect(screen.queryByTestId('prepared-result')).not.toBeInTheDocument();
+      client.on(`/api/v2/jobs/${jobId}`, () =>
+        jobSnapshot({
+          state: 'succeeded',
+          seq: 5,
+          progress: { mode: 'determinate', current: 1, total: 1 },
+        }),
+      );
+      source.emit('snapshot', jobSnapshot({ state: 'succeeded', seq: 5 }));
+      await waitFor(() => expect(screen.getByTestId('prepared-result')).toBeInTheDocument());
+      expect(screen.getByTestId('job-progress')).toHaveTextContent('succeeded');
+      expect(source.closed).toBe(true);
+      expect(client.calls.some((call) => call.path.endsWith('/accept-assistance'))).toBe(false);
+    },
+  );
+
+  it('shows a retained succeeded result without watching it', async () => {
+    revisit('succeeded');
+    await waitFor(() => expect(screen.getByTestId('prepared-result')).toBeInTheDocument());
+    expect(FakeEventSource.instances).toHaveLength(0);
+  });
+
+  it('shows a retained failed job without watching it', async () => {
+    const { client } = revisit('failed', (double) =>
+      double.on(`/api/v2/jobs/${jobId}/result`, () => ({
+        availability: 'failed',
+        jobId,
+        reasonKey: 'result.failed',
+      })),
+    );
+    await waitFor(() => expect(screen.getByTestId('job-progress')).toHaveTextContent('failed'));
+    await waitFor(() => expect(screen.getByTestId('result-state')).toBeInTheDocument());
+    expect(FakeEventSource.instances).toHaveLength(0);
+    expect(client.calls.filter((call) => call.path === `/api/v2/jobs/${jobId}`)).toHaveLength(1);
+  });
+
+  it('keeps one watch across re-renders and closes it on unmount', async () => {
+    const { client, view } = revisit('running');
+    await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
+    view.rerender(<AssistanceSection {...sectionProps(client)} />);
+    view.rerender(<AssistanceSection {...sectionProps(client)} />);
+    expect(FakeEventSource.instances).toHaveLength(1);
+    const source = FakeEventSource.instances[0];
+    expect(source.closed).toBe(false);
+    view.unmount();
+    expect(source.closed).toBe(true);
+  });
+
+  it('starts no watch when unmounted before the retained read returns', async () => {
+    let release: (value: unknown) => void = () => undefined;
+    const pending = new Promise((resolve) => {
+      release = resolve;
+    });
+    const { view } = revisit('running', (double) =>
+      double.on(`/api/v2/jobs/${jobId}`, () => pending),
+    );
+    view.unmount();
+    release(jobSnapshot({ state: 'running', seq: 3 }));
+    // A macrotask lets the whole read chain settle before the assertion.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(FakeEventSource.instances).toHaveLength(0);
+  });
+
+  it('closes the watch when the paper changes', async () => {
+    const { client, view } = revisit('running');
+    await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
+    const source = FakeEventSource.instances[0];
+    const otherPaper = { ...paper, paperId: 'paper-beta' };
+    view.rerender(<AssistanceSection {...sectionProps(client)} paper={otherPaper} />);
+    expect(source.closed).toBe(true);
+    expect(FakeEventSource.instances).toHaveLength(1);
+  });
+
+  it('keeps following new work accepted while the retained read is in flight', async () => {
+    const retainedJob = '55555555-5555-5555-5555-555555555555';
+    let release: (value: unknown) => void = () => undefined;
+    const pending = new Promise((resolve) => {
+      release = resolve;
+    });
+    vi.stubGlobal('EventSource', FakeEventSource as unknown as typeof EventSource);
+    window.localStorage.setItem('docsuri.u3.job.paper-alpha', retainedJob);
+    const client = assistanceDouble()
+      .on(`/api/v2/jobs/${retainedJob}`, () => pending)
+      .on(`/api/v2/jobs/${jobId}`, () => jobSnapshot({ state: 'running', seq: 2 }));
+    render(<AssistanceSection {...sectionProps(client)} />);
+    await waitFor(() => expect(screen.getByTestId('start-summary')).toBeEnabled());
+    await userEvent.click(screen.getByTestId('start-summary'));
+    await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
+    await act(async () => {
+      release(jobSnapshot({ jobId: retainedJob, state: 'running', seq: 3 }));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const open = FakeEventSource.instances.filter((source) => !source.closed);
+    expect(open.map((source) => source.url)).toEqual([`/api/v2/jobs/${jobId}/events`]);
   });
 });

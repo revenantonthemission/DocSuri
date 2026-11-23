@@ -64,12 +64,34 @@ class FixtureIdentityProvider:
 
 
 class ControlIdentityService:
+    """U2's identity flows. Three hooks that do nothing (`_check_adapter` in `begin`,
+    `_admit_start` in `begin`'s transaction and `_finish_refused` in `complete`), the
+    realm's cap on open flows (`flow_capacity`, U2's 20) and four seams holding the built
+    code (`_require_issuer`, `_authorization_url`, `_replay` and `_sign_in_outcome`) let
+    U8's `ArrivalIdentityService` replace them in the complete realms only (U8 plan Steps
+    19 and 44)."""
+
+    # The open provider sign-ins and links the realm holds at once.
+    flow_capacity = 20
+
     def __init__(self, entry, providers: dict[str, IdentityProvider]):
         if set(providers) != {"google", "orcid"} or any(
             name != provider.name for name, provider in providers.items()
         ):
             raise ValueError("distinct Google and ORCID adapters required")
         self.entry, self.providers, self.transactions = entry, providers, entry.transactions
+
+    def _check_adapter(self, adapter) -> None:
+        """A start's check of its adapter, after the input checks; the built start has
+        none."""
+
+    def _admit_start(self, conn, identifier: UUID) -> None:
+        """In the start's transaction, right after its flow is written; the built start
+        admits every flow its count allows."""
+
+    def _finish_refused(self, identifier: UUID) -> None:
+        """After a claimed flow's finish was refused, before the refusal is raised again;
+        the built flow stays as the refusal left it."""
 
     def begin(
         self, authority: Authority | None, provider: str, intent: str, binding: str, route: str
@@ -83,6 +105,7 @@ class ControlIdentityService:
         if intent == "link" and authority is None:
             raise PermissionError("link owner required")
         adapter = self.providers[provider]
+        self._check_adapter(adapter)
         identifier, state, nonce, verifier = (
             uuid4(),
             secrets.token_urlsafe(32),
@@ -95,7 +118,7 @@ class ControlIdentityService:
             count = conn.execute(
                 "SELECT count(*) AS n FROM accounts.identity_flow WHERE expires_at>clock_timestamp() AND disposition IN ('pending','exchanging')"
             ).fetchone()["n"]
-            if count >= 20:
+            if count >= self.flow_capacity:
                 raise ValueError("finite identity flow capacity")
             row = conn.execute(
                 "INSERT INTO accounts.identity_flow(id,account_id,provider,intent,state_hash,binding_hash,authority_revision,"
@@ -119,6 +142,7 @@ class ControlIdentityService:
                     self.entry.protection_version(protected),
                 ),
             ).fetchone()
+            self._admit_start(conn, identifier)
             return {
                 "flowId": str(identifier),
                 "state": state,
@@ -130,23 +154,13 @@ class ControlIdentityService:
 
         return self.transactions.run("accounts", write)
 
-    def fixture_authorization(self, accepted: dict) -> str:
+    def _require_issuer(self, provider) -> None:
         """Only the installed synthetic adapter can issue a local protocol fixture."""
-        provider = self.providers[accepted["provider"]]
         if not isinstance(provider, FixtureIdentityProvider):
             raise PermissionError("fixture provider required")
-        identifier = UUID(accepted["flowId"])
 
-        def read(conn):
-            row = conn.execute(
-                "SELECT secret_ciphertext,disposition FROM accounts.identity_flow WHERE id=%s",
-                (identifier,),
-            ).fetchone()
-            if not row or row["disposition"] != "pending":
-                raise PermissionError("fixture flow unavailable")
-            return self.entry.reveal("identity:" + str(identifier), row["secret_ciphertext"])
-
-        secret = self.transactions.run("accounts", read)
+    def _authorization_url(self, provider, identifier: UUID, accepted: dict, secret: dict) -> str:
+        """The address the browser goes to: the synthetic adapter's protocol fixture."""
         claims = IdentityClaims(
             provider.name,
             "synthetic-researcher-" + provider.name,
@@ -162,6 +176,58 @@ class ControlIdentityService:
             + "?"
             + urlencode({"flow": str(identifier), "state": accepted["state"], "code": code})
         )
+
+    def fixture_authorization(self, accepted: dict) -> str:
+        """Only the installed synthetic adapter can issue a local protocol fixture."""
+        provider = self.providers[accepted["provider"]]
+        self._require_issuer(provider)
+        identifier = UUID(accepted["flowId"])
+
+        def read(conn):
+            row = conn.execute(
+                "SELECT secret_ciphertext,disposition FROM accounts.identity_flow WHERE id=%s",
+                (identifier,),
+            ).fetchone()
+            if not row or row["disposition"] != "pending":
+                raise PermissionError("fixture flow unavailable")
+            return self.entry.reveal("identity:" + str(identifier), row["secret_ciphertext"])
+
+        secret = self.transactions.run("accounts", read)
+        return self._authorization_url(provider, identifier, accepted, secret)
+
+    def _replay(self, row: dict, token: str, csrf: str):
+        """A completed flow read again: its sign-in's session, or its link's outcome."""
+        if row["intent"] == "sign_in":
+            return self.entry.inspect_session(token)
+        return row["outcome"]
+
+    def _sign_in_outcome(self, conn, account, linked, token: str, csrf: str, identifier):
+        """A provider sign-in's session for an admitted, linked account (the built rule:
+        the second factor's continuation, or a full session)."""
+        factor = conn.execute(
+            "SELECT id FROM accounts.mfa_enrollment WHERE account_id=%s AND state='active'",
+            (account["id"],),
+        ).fetchone()
+        if account["role"] == "administrator" and not factor:
+            raise PermissionError("administrator factor unavailable")
+        requires_mfa = account["role"] == "administrator" or factor is not None
+        session = conn.execute(
+            "INSERT INTO accounts.session(id,account_id,token_hash,csrf_hash,authority_revision,expires_at,purpose,flow_id) "
+            "VALUES(%s,%s,%s,%s,%s,clock_timestamp()+(%s*interval '1 second'),%s,%s) RETURNING *",
+            (
+                uuid4(),
+                account["id"],
+                self.entry.verifier("session", token),
+                self.entry.verifier("csrf", csrf),
+                account["authority_revision"],
+                self.entry.control_policy.proof_seconds
+                if requires_mfa
+                else self.entry.control_policy.session_seconds,
+                "primary_mfa_continuation" if requires_mfa else "full_session",
+                identifier,
+            ),
+        ).fetchone()
+        return self.entry.public_session(session)
 
     def complete(
         self,
@@ -213,9 +279,7 @@ class ControlIdentityService:
         token = self.entry.verifier("identity-cookie", str(identifier))
         csrf = self.entry.verifier("session-csrf", token)
         if protected is None:
-            if row["intent"] == "sign_in":
-                return self.entry.inspect_session(token)
-            return row["outcome"]
+            return self._replay(row, token, csrf)
         adapter = self.providers[row["provider"]]
         try:
             claims = adapter.exchange(
@@ -306,37 +370,18 @@ class ControlIdentityService:
                     or account["lifecycle_state"] != "active"
                 ):
                     raise PermissionError("linked account unavailable")
-                factor = conn.execute(
-                    "SELECT id FROM accounts.mfa_enrollment WHERE account_id=%s AND state='active'",
-                    (account["id"],),
-                ).fetchone()
-                if account["role"] == "administrator" and not factor:
-                    raise PermissionError("administrator factor unavailable")
-                requires_mfa = account["role"] == "administrator" or factor is not None
-                session = conn.execute(
-                    "INSERT INTO accounts.session(id,account_id,token_hash,csrf_hash,authority_revision,expires_at,purpose,flow_id) "
-                    "VALUES(%s,%s,%s,%s,%s,clock_timestamp()+(%s*interval '1 second'),%s,%s) RETURNING *",
-                    (
-                        uuid4(),
-                        account["id"],
-                        self.entry.verifier("session", token),
-                        self.entry.verifier("csrf", csrf),
-                        account["authority_revision"],
-                        self.entry.control_policy.proof_seconds
-                        if requires_mfa
-                        else self.entry.control_policy.session_seconds,
-                        "primary_mfa_continuation" if requires_mfa else "full_session",
-                        identifier,
-                    ),
-                ).fetchone()
-                outcome = self.entry.public_session(session)
+                outcome = self._sign_in_outcome(conn, account, linked, token, csrf, identifier)
             conn.execute(
                 "UPDATE accounts.identity_flow SET disposition='complete',outcome=%s WHERE id=%s",
                 (Jsonb(outcome), identifier),
             )
             return outcome
 
-        outcome = self.transactions.run("accounts", finish)
+        try:
+            outcome = self.transactions.run("accounts", finish)
+        except Exception:
+            self._finish_refused(identifier)
+            raise
         return SessionTransport(token, csrf, outcome) if row["intent"] == "sign_in" else outcome
 
     def list_links(self, authority: Authority) -> list[dict]:

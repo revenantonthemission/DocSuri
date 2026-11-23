@@ -7,11 +7,13 @@ from uuid import UUID
 
 import psycopg
 from backend.local_browser import (
+    COMPLETE_ORIGIN,
     CONTROLS_ORIGIN,
     CORPUS_ORIGIN,
     ENTRY_COOKIE,
     EXPORT_ORIGIN,
     JOURNEY_ORIGIN,
+    PRODUCTION_ORIGIN,
     RESEARCH_ORIGIN,
     SESSION_COOKIE,
     TOPICS_ORIGIN,
@@ -29,6 +31,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
+from .control_policy import SYNTHETIC_POLICY
 from .preauthentication import Preauthentication
 from .services.guarded_entry import GuardedEntryService
 
@@ -45,7 +48,11 @@ __all__ = [
 ]
 
 
-def account_router(entry: GuardedEntryService) -> APIRouter:
+def account_router(entry: GuardedEntryService, *, routes=None) -> APIRouter:
+    """The account browser routes. `routes` are a complete realm's (U8's
+    `d1_account_router`, the person's decision of 2026-10-24), matched before the built
+    ones; an entry with account controls and no such routes is served only in U2's
+    realm."""
     origin = entry.transactions.profile.origin
     if origin not in (
         JOURNEY_ORIGIN,
@@ -54,11 +61,17 @@ def account_router(entry: GuardedEntryService) -> APIRouter:
         RESEARCH_ORIGIN,
         TOPICS_ORIGIN,
         EXPORT_ORIGIN,
+        COMPLETE_ORIGIN,
+        PRODUCTION_ORIGIN,
     ):
         raise ValueError("account browser transport requires the owned HTTPS origin")
+    if routes is None and hasattr(entry, "control_policy"):
+        SYNTHETIC_POLICY.require_realm(entry.transactions.profile.realm)
     anonymous = Preauthentication(entry)
     # Account errors keep their established 403 disposition for denied identities.
     router = APIRouter(route_class=boundary_route(origin, missing=(403, "FORBIDDEN")))
+    if routes is not None:
+        router.include_router(routes)
 
     async def payload(request, schema):
         return await read_payload(request, schema)
@@ -113,7 +126,9 @@ def account_router(entry: GuardedEntryService) -> APIRouter:
             if not hmac.compare_digest(session.csrf, request.headers['x-csrf-token']):
                 raise BrowserDenied(403, 'FORBIDDEN')
         else:
-            anonymous.read(request.cookies.get(ENTRY_COOKIE, ''), csrf=request.headers['x-csrf-token'])
+            anonymous.read(
+                request.cookies.get(ENTRY_COOKIE, ''), csrf=request.headers['x-csrf-token']
+            )
         await payload(request, wire.AccessSessionInputHttp)
         return wire.AccessSessionStatus.model_validate(
             session.public if session else {"state": "anonymous", "requestId": str(operation)}

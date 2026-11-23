@@ -7,7 +7,9 @@ realm; the token keyring lives in the test's own temporary folder, with a stub w
 that reports no sealed tokens (the key-decision table's first-start row).
 """
 
+import dataclasses
 import datetime as dt
+from collections.abc import Mapping
 from uuid import uuid4
 
 from backend.modules.export.fake_notion import FakeNotion
@@ -24,7 +26,6 @@ from backend.modules.export.store_support import canonical_digest
 from backend.modules.export.token_keyring import TokenKeyring
 from backend.modules.export.token_vault import TokenVault
 from backend.u6_policy import ExportPolicy
-
 from tests.u6_approved_export import store_flows as flows
 
 WORKSPACE_ID = "0b7d2a51c4e94f36a8e1d2c3b4a59687"
@@ -165,6 +166,38 @@ def bound_effect(repo, authority, connection, destination: str) -> dict:
     approval = flows.approve(repo, authority, preview, at)
     effect = repo.bind_effect(authority, approval["id"], uuid4(), now=at)["effect"]
     return {"preview": preview, "approval": approval, "effect": effect}
+
+
+def walk(value, seen=None):
+    """Every value reachable from a result: dataclass fields, mappings and sequences.
+
+    (Lifted from `test_token_exposure.py`, so no test module imports another one.)
+    """
+    seen = seen if seen is not None else set()
+    if id(value) in seen:
+        return
+    seen.add(id(value))
+    yield value
+    if dataclasses.is_dataclass(value) and not isinstance(value, type):
+        children = [getattr(value, f.name) for f in dataclasses.fields(value)]
+    elif isinstance(value, Mapping):
+        children = list(value.values())
+    elif isinstance(value, (list, tuple, set, frozenset)):
+        children = list(value)
+    elif hasattr(value, "model_dump"):
+        children = [value.model_dump()]
+    else:
+        children = []
+    for child in children:
+        yield from walk(child, seen)
+
+
+def assert_clean(results, token):
+    for result in results:
+        for value in walk(result):
+            assert not isinstance(value, BaseException)
+            assert not isinstance(value, str) or token not in value
+        assert token not in repr(result)
 
 
 def write_request(bound: dict, connection: dict, writer: str, **overrides) -> WriteRequest:

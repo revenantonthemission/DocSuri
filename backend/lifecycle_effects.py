@@ -18,6 +18,8 @@ def apply_owner_effect(transactions, owner, scopes, ticket, effect):
         "assistance": "PaperAssistance",
         "topics": "TopicsDigests",
         "export": "ApprovedExport",
+        # U8 (BR2.3): ResearchWorkspace's participant writes through docsuri_research.
+        "research": "ResearchWorkspace",
     }[owner]
     if ticket["participant"] != participant or ticket["scope"] not in scopes:
         raise PermissionError("unregistered lifecycle participant scope")

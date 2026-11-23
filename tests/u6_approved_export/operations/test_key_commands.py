@@ -6,22 +6,26 @@ tests under versions this folder never had; assertions name only this test's ver
 
 import base64
 import json
+import os
 import secrets
+import stat
 from uuid import uuid4
 
 import psycopg
 import pytest
+
 from backend import key_custody
 from backend.modules.export import key_commands
 from backend.modules.export.errors import ProtectionUnavailable
 from backend.modules.export.token_keyring import (
     KEY_FILE,
+    LOCK_FILE,
+    MARKER_FILE,
     SETTINGS,
     KeyOperationRefused,
     TokenKeyring,
 )
 from backend.modules.export.token_vault import TokenVault
-
 from tests.u6_approved_export import export_rows as rows
 
 RUN = "u6-key-commands-test"
@@ -130,10 +134,24 @@ def test_commands_run_as_the_schema_owner_and_refuse_the_runtime_login(operator,
 
 
 def test_create_key_after_loss_refuses_unless_the_state_is_loss(operator, connect, folder):
+    assert list(folder.iterdir()) == []
     created = keyed_folder(operator, connect, folder)
     assert created["generation"] == 1 and (folder / KEY_FILE).exists()
+    marker = folder / MARKER_FILE
+    info = marker.lstat()
+    assert sorted(os.listdir(folder)) == [
+        "export-token-keyring.initialized",
+        "export-token-keyring.json",
+        "export-token-keyring.lock",
+    ]
+    assert stat.S_ISREG(info.st_mode)
+    assert stat.S_IMODE(info.st_mode) == 0o600
+    assert info.st_uid == os.getuid()
+    assert info.st_nlink == 1
+    assert marker.read_text() == RUN
     with pytest.raises(KeyOperationRefused, match="not-a-loss"):
         key_commands.create_key_after_loss(folder, RUN, operator)
+    assert marker.read_text() == RUN and marker.stat().st_ino == info.st_ino
     (folder / KEY_FILE).chmod(0o644)  # broken custody is fixed, never replaced
     with pytest.raises(ProtectionUnavailable, match="key-custody-broken"):
         key_commands.create_key_after_loss(folder, RUN, operator)
@@ -215,8 +233,20 @@ def test_after_a_loss_rotation_skips_and_reports_tokens_under_the_missing_versio
 ):
     keyed_folder(operator, connect, folder)
     sealed = seal_into_realm(connect, folder)
+    # U6 reads only whether the marker exists; sentinel bytes show it is never re-created.
+    marker = folder / MARKER_FILE
+    marker.write_bytes(b"marker-before-loss:" + uuid4().hex.encode())
+
+    def marker_state() -> tuple:
+        return (marker.read_bytes(), marker.stat().st_ino, stat.S_IMODE(marker.stat().st_mode))
+
+    before = marker_state()
     (folder / KEY_FILE).unlink()  # the marker stays: the table says loss
     created = key_commands.create_key_after_loss(folder, RUN, operator)
+    assert marker_state() == before
+    assert marker.stat().st_nlink == 1
+    assert created["activeVersion"] != sealed["version"]
+    assert sorted(os.listdir(folder)) == sorted([KEY_FILE, LOCK_FILE, MARKER_FILE])
     assert_counts_only(created, sealed)
     assert created["counts"][sealed["version"]] == 1
     assert created["tokensUnderMissingVersions"] >= 1
@@ -225,6 +255,9 @@ def test_after_a_loss_rotation_skips_and_reports_tokens_under_the_missing_versio
     assert report["counts"][sealed["version"]] == 1
     assert report["tokensUnderMissingVersions"] >= 1 and report["resealed"] == 0
     assert bytes(opened(connect, sealed)["sealed_token"]) == sealed["envelope"]
+    assert marker_state() == before
+    assert marker.stat().st_nlink == 1
+    assert sorted(os.listdir(folder)) == sorted([KEY_FILE, LOCK_FILE, MARKER_FILE])
 
 
 @pytest.mark.parametrize(

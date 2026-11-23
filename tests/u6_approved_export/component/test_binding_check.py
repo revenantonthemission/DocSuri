@@ -1,15 +1,15 @@
 """The shared binding check: definite change versus could-not-check for every fact, the
-42501 mapping, and the gate slot taken only for approve and continue (BR3.1, BR3.3)."""
+42501 mapping, and the gate slot taken only for approve (BR3.1, BR3.3)."""
 
 from uuid import UUID, uuid4
 
 import psycopg
 import pytest
+
 from backend.modules.export.binding import BindingCheck, BoundFacts
 from backend.modules.export.fake_notion import Answer
 from backend.modules.research.errors import ResearchError
 from backend.u6_policy import real_activation_export
-
 from tests.u6_approved_export import service_flows as sf
 from tests.u6_approved_export import store_flows as flows
 
@@ -32,19 +32,6 @@ def prepared(rig, *, session=None):
 
 def verdict_of(verdict) -> tuple:
     return verdict.status, verdict.reason, verdict.code
-
-
-class FaultySessions:
-    """The real store, except that the session guard cannot run."""
-
-    def __init__(self, repository):
-        self._repository = repository
-
-    def session_is_current(self, account_id, session_id):
-        raise psycopg.OperationalError("guard unreachable")
-
-    def __getattr__(self, name):
-        return getattr(self._repository, name)
 
 
 def test_unchanged_facts_answer_unchanged_and_the_lane_takes_no_gate_slot(
@@ -72,16 +59,20 @@ def test_the_session_fact(transactions, connect, authority, tmp_path):
         "authority-revoked",
         "UNAUTHENTICATED",
     )
+    # The real guard fails for real: a held session row runs it into the realm's lock bound.
     again = sf.build(transactions, connect, authority, tmp_path, keys="again")
-    live, _ = prepared(again)
-    faulty = BindingCheck(
-        FaultySessions(again.repo), again.service.adapter, again.research, again.policy
-    )
-    assert verdict_of(faulty.check(live)) == (
+    waiting = flows.second_session(connect, authority)
+    live, _ = prepared(again, session=waiting.session_id)
+    with flows.held_session(connect, waiting):
+        with pytest.raises(psycopg.errors.LockNotAvailable):
+            again.repo.session_is_current(waiting.account_id, waiting.session_id)
+        held = again.service.binding.check(live)
+    assert verdict_of(held) == (
         "could-not-check",
         "dependency-unavailable",
         "DEPENDENCY_UNAVAILABLE",
     )
+    assert again.service.binding.check(live).unchanged
 
 
 def test_the_connection_fact(transactions, connect, authority, tmp_path):
@@ -193,7 +184,11 @@ def test_the_destination_fact_and_a_definite_change_wins(
     )
 
 
-def test_approve_and_continue_take_a_gate_slot_and_a_refused_slot_cannot_check(
+def page_reads(rig) -> int:
+    return sum(1 for entry in rig.fake.requests if entry.path.startswith("/v1/pages/"))
+
+
+def test_approve_takes_a_gate_slot_a_continue_reads_no_destination_and_a_refused_slot_cannot_check(
     transactions, connect, authority, tmp_path
 ):
     rig = sf.build(transactions, connect, authority, tmp_path)
@@ -203,9 +198,10 @@ def test_approve_and_continue_take_a_gate_slot_and_a_refused_slot_cannot_check(
     asked = len(rig.gate.asked)
     approval = rig.approve(rig.preview(page))
     assert rig.gate.asked[asked + 1 :] == [connection]  # the preview's read, then approve's
-    asked = len(rig.gate.asked)
+    asked, reads = len(rig.gate.asked), page_reads(rig)
     rig.execute(approval)  # a continue: another key than the approval's
-    assert rig.gate.asked[asked:] == [connection]
+    assert rig.gate.asked[asked:] == []
+    assert page_reads(rig) == reads
     assert rig.gate.try_acquire(connection)
     try:
         refused = rig.service.binding.check(facts, gate_key=connection)
@@ -215,4 +211,15 @@ def test_approve_and_continue_take_a_gate_slot_and_a_refused_slot_cannot_check(
         "could-not-check",
         "dependency-unavailable",
         "DEPENDENCY_UNAVAILABLE",
+    )
+
+    rig.fake.page(page).readable = False
+    asked, reads = len(rig.gate.asked), page_reads(rig)
+    assert rig.service.binding.check(facts, destination=False).unchanged
+    assert page_reads(rig) == reads
+    assert rig.gate.asked[asked:] == []
+    assert verdict_of(rig.service.binding.check(facts)) == (
+        "changed",
+        "destination-changed",
+        "CONFLICT",
     )

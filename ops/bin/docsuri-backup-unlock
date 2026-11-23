@@ -1,0 +1,20 @@
+#!/Library/DocSuri/release/.venv/bin/python -I
+"""docsuri-backup-unlock: the backup volume's unlock job (NFR3.5, NFR7.3).
+
+Run as root with no argument at boot and every 60 seconds. While the volume DocSuri_Backup
+is present and locked, it reads the passphrase from the System keychain and passes it to
+diskutil on standard input only, then checks the volume reads unlocked; it writes one
+JSON line to control/logs/ and to standard output, never the passphrase. It refuses to
+run when the environment holds PYTHON*, DYLD_* or LD_* variables.
+"""
+
+import sys
+
+if sys.argv[1:] == ["--self-check"]:
+    from docsuri_ops.release import self_check
+
+    raise SystemExit(self_check(__file__))
+
+from docsuri_ops.backup_unlock import main
+
+raise SystemExit(main())

@@ -72,3 +72,59 @@ def test_recovery_policy_never_bypasses_admin(entry):
             service.recover()
     with pytest.raises(PolicyUnavailable):
         service.recover(entry, uuid4(), "administrator")
+
+
+def current_step():
+    return int(time.time()) // 30
+
+
+def test_begin_replays_its_enrollment(entry, authority):
+    service, operation = ControlMfaService(entry), uuid4()
+    first = service.begin(authority, PASSWORD, operation)
+    assert service.begin(authority, PASSWORD, operation) == first
+
+
+def test_active_factor_requires_controlled_replacement(entry, authority):
+    service, started, material = enroll(entry, authority)
+    service.confirm(authority, UUID(started['enrollmentId']), totp(material['seed'], current_step()), uuid4())
+    with pytest.raises(ValueError, match='controlled replacement'):
+        service.begin(authority, PASSWORD, uuid4())
+
+
+def test_code_outside_the_drift_window_keeps_the_factor_inactive(entry, authority, connect):
+    service, started, material = enroll(entry, authority)
+    with pytest.raises(PermissionError, match='factor unavailable'):
+        service.confirm(authority, UUID(started['enrollmentId']), totp(material['seed'], current_step() + 10), uuid4())
+    with connect('accounts') as conn:
+        assert conn.execute("SELECT state FROM accounts.mfa_enrollment WHERE id=%s",
+                            (UUID(started['enrollmentId']),)).fetchone()['state'] == 'inactive'
+
+
+def test_confirmation_replays_and_refuses_unknown_enrollments(entry, authority):
+    service, started, material = enroll(entry, authority)
+    operation, code = uuid4(), totp(material['seed'], current_step())
+    first = service.confirm(authority, UUID(started['enrollmentId']), code, operation)
+    assert service.confirm(authority, UUID(started['enrollmentId']), code, operation) == first
+    with pytest.raises(PermissionError, match='enrollment unavailable'):
+        service.confirm(authority, uuid4(), code, uuid4())
+
+
+def test_full_session_cannot_be_used_as_a_second_factor_continuation(entry):
+    session = entry.login('u2-a@fixture.invalid', PASSWORD)
+    assert session.public['state'] == 'authenticated'
+    with pytest.raises(PermissionError, match='primary continuation required'):
+        ControlMfaService(entry).verify(session.token, session.csrf, uuid4(), uuid4(), '000000')
+
+
+def test_continuation_without_an_active_factor_issues_no_session(entry, authority, connect):
+    service, started, material = enroll(entry, authority)
+    service.confirm(authority, UUID(started['enrollmentId']), totp(material['seed'], current_step() - 1), uuid4())
+    session = entry.login('u2-a@fixture.invalid', PASSWORD)
+    assert session.public['state'] == 'mfa_required'
+    with connect('accounts') as conn:
+        conn.execute("UPDATE accounts.mfa_enrollment SET state='invalidated' WHERE id=%s",
+                     (UUID(started['enrollmentId']),))
+    with pytest.raises(PermissionError, match='factor unavailable'):
+        service.verify(session.token, session.csrf, UUID(session.public['challengeId']),
+                       UUID(session.public['flowBinding']), totp(material['seed'], current_step()))
+    assert entry.inspect_session(session.token).public['state'] == 'mfa_required'

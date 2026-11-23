@@ -1,0 +1,13 @@
+# ${prefix}/tunnel/config/${origin_name}.yml (root, 0644): one of the tunnel's three
+# registered configurations (security-design § 6.4). Tunnel routing makes one of them
+# the active one; nothing else changes them. Arrangement version ${version}.
+tunnel: ${tunnel}
+credentials-file: ${credentials}
+no-autoupdate: true
+loglevel: warn
+ingress:
+  - hostname: ssh.rvnnt.dev
+    service: ssh://localhost:22
+  - hostname: docsuri.rvnnt.dev
+    service: ${service}
+${origin_request}  - service: http_status:404

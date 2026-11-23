@@ -3,10 +3,10 @@
 
 from uuid import UUID, uuid4
 
-from backend.modules.export.fake_notion import Answer
-from backend.u6_policy import real_activation_export
 from docsuri_shared.workspace import wire
 
+from backend.modules.export.fake_notion import Answer
+from backend.u6_policy import real_activation_export
 from tests.u6_approved_export import service_flows as sf
 
 

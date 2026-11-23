@@ -8,6 +8,10 @@ in each owner's confirmed zone (BR1.2/BR2.4) with consent-stopped queued work dr
 (BR4.2), and at most one send attempt starts per pass behind the checked
 transition guards (BR3.1/BR4.1). Failed runs are never auto-resent (BR3.3):
 the next scheduled window is the only automatic follow-up.
+
+The send step reads its queue, whether a send may begin, and the send's start
+through three hooks (`_send_queue`, `_may_begin_send`, `_begin_send`). Each is
+this scheduler's own built expression; a subclass may override them.
 """
 
 import datetime as dt
@@ -134,6 +138,9 @@ class TopicsScheduler:
                     window,
                     topic["settings_revision"],
                     expected_preferences=topic["preferences"],
+                    # The occurrence's own due instant, from the same due row that
+                    # gave the window and the preferences; never this pass's clock.
+                    scheduled_at=topic["due_at"],
                 )
             except TopicsError as error:
                 # A revision change (BR1.3) or window-order refusal re-fires on
@@ -144,20 +151,34 @@ class TopicsScheduler:
             if not adopted:
                 result["prepared"] += 1
 
-    def _send_prepared(self, result):
-        attempted = 0
-        queued = self.repository.prepared_runs(
+    def _send_queue(self):
+        """The prepared runs this pass may attempt, scoped to the adapter's recipient."""
+        return self.repository.prepared_runs(
             self.policy.sends_per_pass + 5, recipient=self.delivery.recipient_scope()
         )
+
+    def _may_begin_send(self):
+        """Whether the next send may begin; always true here."""
+        return True
+
+    def _begin_send(self, run):
+        """The checked prepared->sending start of one run under this policy's bounds."""
+        return self.repository.begin_send(
+            run["id"],
+            self.delivery.path_kind(),
+            real_send_limit=self.policy.real_send_limit,
+            evidence_retention_days=self.policy.real_evidence_retention_days,
+        )
+
+    def _send_prepared(self, result):
+        attempted = 0
+        queued = self._send_queue()
         for run in queued:
             if attempted >= self.policy.sends_per_pass:
                 return
-            sending = self.repository.begin_send(
-                run["id"],
-                self.delivery.path_kind(),
-                real_send_limit=self.policy.real_send_limit,
-                evidence_retention_days=self.policy.real_evidence_retention_days,
-            )
+            if not self._may_begin_send():
+                return
+            sending = self._begin_send(run)
             if sending is None:
                 # Blocked (unsubscribed, consent-stopped, paused, single-flight):
                 # skipped without consuming the pass's send budget (BR3.1/4.1/4.2).

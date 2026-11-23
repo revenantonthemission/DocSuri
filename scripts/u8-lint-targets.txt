@@ -1,0 +1,3 @@
+scripts/u8_*.py
+scripts/serve_docsuri_u8.py
+scripts/verify_docsuri_u8.py

@@ -66,13 +66,19 @@ def test_clear_is_a_compare_and_set_on_the_revision(connect):
     with connect("export") as conn:
         connection, account = rows.connected(conn)
         clear = "SELECT export.clear_token_envelope(%s,%s,%s,%s) AS revision"
-        assert conn.execute(clear, (account, connection, 2, "revoked")).fetchone()["revision"] is None
-        assert conn.execute(clear, (uuid4(), connection, 1, "revoked")).fetchone()["revision"] is None
+        assert (
+            conn.execute(clear, (account, connection, 2, "revoked")).fetchone()["revision"] is None
+        )
+        assert (
+            conn.execute(clear, (uuid4(), connection, 1, "revoked")).fetchone()["revision"] is None
+        )
         assert rows.connection_row(conn, connection)["state"] == "connected"
         with pytest.raises(psycopg.errors.InvalidParameterValue), conn.transaction():
             conn.execute(clear, (account, connection, 1, "pending"))
         assert conn.execute(clear, (account, connection, 1, "revoked")).fetchone()["revision"] == 2
-        assert conn.execute(clear, (account, connection, 2, "revoked")).fetchone()["revision"] is None
+        assert (
+            conn.execute(clear, (account, connection, 2, "revoked")).fetchone()["revision"] is None
+        )
         row = rows.connection_row(conn, connection)
         assert (row["state"], row["revision"]) == ("revoked", 2)
 
@@ -129,7 +135,8 @@ def test_purge_removes_only_unapproved_revisions_past_retention(connect):
 
         def present(facts):
             return conn.execute(
-                "SELECT count(*) AS n FROM export.preview_revision WHERE preview_id=%s AND revision=%s",
+                "SELECT count(*) AS n FROM export.preview_revision "
+                "WHERE preview_id=%s AND revision=%s",
                 (facts["preview_id"], facts["revision"]),
             ).fetchone()["n"]
 
@@ -139,7 +146,12 @@ def test_purge_removes_only_unapproved_revisions_past_retention(connect):
                 (facts["preview_id"],),
             ).fetchone()["n"]
 
-        assert (present(approved), present(superseded), present(lonely), present(fresh)) == (1, 0, 0, 1)
+        assert (present(approved), present(superseded), present(lonely), present(fresh)) == (
+            1,
+            0,
+            0,
+            1,
+        )
         assert (pair(approved), pair(lonely), pair(fresh)) == (1, 0, 1)
         with pytest.raises(psycopg.errors.InvalidParameterValue), conn.transaction():
             conn.execute("SELECT export.purge_unapproved_previews(%s,0,10)", (now(conn),))
@@ -153,7 +165,8 @@ def seed_account_records(conn, account):
     rows.advance(conn, bound["effect"], "unknown")
     conn.execute(
         "INSERT INTO export.reconciliation_check(id,effect_id,checked_at,window_start,result,"
-        "evidence_hash) VALUES(%s,%s,clock_timestamp(),clock_timestamp(),'not-found',repeat('d',64))",
+        "evidence_hash) VALUES(%s,%s,clock_timestamp(),clock_timestamp(),'not-found',"
+        "repeat('d',64))",
         (uuid4(), bound["effect"]),
     )
     conn.execute(
@@ -288,7 +301,8 @@ def test_key_counts_and_status_counts_carry_no_identifiers(connect):
         rows.exported(conn)
         conn.execute(
             "INSERT INTO export.lane_status(outcome) VALUES('pass-complete') "
-            "ON CONFLICT(singleton) DO UPDATE SET outcome=excluded.outcome,observed_at=clock_timestamp()"
+            "ON CONFLICT(singleton) DO UPDATE SET outcome=excluded.outcome,"
+            "observed_at=clock_timestamp()"
         )
         status = conn.execute(
             "SELECT export.status_counts(%s) AS status", (now(conn),)

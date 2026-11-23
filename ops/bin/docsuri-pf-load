@@ -1,0 +1,19 @@
+#!/Library/DocSuri/release/.venv/bin/python -I
+"""docsuri-pf-load: the packet filter's boot job (D10, security-design § 6.8).
+
+Run as root with no argument at boot. It loads /etc/pf.anchors/org.docsuri.v2 under the
+system's com.apple/* anchor point, never editing /etc/pf.conf, enables the filter, checks
+it reads enabled, and writes one JSON line to control/logs/ and to standard output. It
+refuses to run when the environment holds PYTHON*, DYLD_* or LD_* variables.
+"""
+
+import sys
+
+if sys.argv[1:] == ["--self-check"]:
+    from docsuri_ops.release import self_check
+
+    raise SystemExit(self_check(__file__))
+
+from docsuri_ops.pf_loader import main
+
+raise SystemExit(main())

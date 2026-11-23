@@ -45,16 +45,29 @@ POLL_SECONDS = 0.25
 
 
 def assistance_router(
-    transactions, *, entry, files, dispatch, corpus_repository
+    transactions,
+    *,
+    entry,
+    files,
+    dispatch,
+    corpus_repository,
+    source_rule=None,
+    history_bound=100,
+    history_in_one_read=False,
 ) -> APIRouter:
+    """`history_bound` (1-100) bounds `read-assistance-history`'s limit, and
+    `history_in_one_read` takes each row's metadata from the history read's own
+    transaction instead of one `source_metadata` read per row (U8 plan Step 83(b),
+    L1-8); the defaults keep U3's built 100 rows and per-row reads."""
     origin = transactions.profile.origin
     repository = GuardedAssistanceRepository(transactions, files)
     glossary = GlossaryService(transactions)
-    requests = AssistanceRequests(
-        dispatch.admission,
-        corpus_repository,
-        lambda source: catalog_for(source, provider_ready=True),
-    )
+
+    # The one seam (U8 plan Step 23): the composition's source rule, U3's when none.
+    def catalog_of(source):
+        return catalog_for(source, provider_ready=True, rule=source_rule)
+
+    requests = AssistanceRequests(dispatch.admission, corpus_repository, catalog_of)
     router = APIRouter(route_class=boundary_route(origin))
 
     async def authenticated(request: Request):
@@ -170,7 +183,7 @@ def assistance_router(
             raise BrowserDenied(404, "NOT_FOUND") from None
         if source["paper_id"] != value["paper"]["paperId"]:
             raise BrowserDenied(404, "NOT_FOUND")
-        catalog = catalog_for(source, provider_ready=True)
+        catalog = catalog_of(source)
         if catalog is None:
             return unavailable_options(source)
         return catalog.options()
@@ -257,18 +270,25 @@ def assistance_router(
         _, authority = await authenticated(request)
         value = await read_payload(request, wire.AssistanceHistoryReadHttp)
         limit = value["page"].get("limit") or 20
-        if type(limit) is not int or not 1 <= limit <= 100:
+        if type(limit) is not int or not 1 <= limit <= history_bound:
             raise BrowserDenied(422, "INVALID_ARGUMENT")
-        rows = await run_in_threadpool(repository.history, authority, limit)
+        rows = await run_in_threadpool(
+            lambda: repository.history(
+                authority, limit, bound=history_bound, with_metadata=history_in_one_read
+            )
+        )
         wanted_version = value["paper"]["versionId"]
         items = []
         for row in rows:
             accepted = row["payload"].get("acceptedInput")
             if accepted is None or row["version_id"] != wanted_version:
                 continue
-            metadata = await run_in_threadpool(
-                repository.source_metadata, authority, row["version_id"]
-            )
+            if history_in_one_read:
+                metadata = row["metadata"]
+            else:
+                metadata = await run_in_threadpool(
+                    repository.source_metadata, authority, row["version_id"]
+                )
             disposition = (metadata or {}).get("disposition", "unavailable")
             stored = row["result"]
             if stored and stored["availability"] != "retained":

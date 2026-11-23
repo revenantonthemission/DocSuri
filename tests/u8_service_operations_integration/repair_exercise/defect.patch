@@ -1,0 +1,16 @@
+The repair exercise's recorded defect (U8 plan, decision "The repair exercise"; BR10.3):
+navigation resolution treats a stale capability as available, which breaks BR1.3 and
+BR3.2. The `repair-exercise` phase applies it in a clean checkout, runs the affected
+checks, follows the failing request to the resolver, and removes it again.
+
+--- a/backend/u8_routes.py
++++ b/backend/u8_routes.py
+@@ -203,7 +203,7 @@ def navigation_items(states: dict, *, signed_in: bool, administrator: bool) -> l
+         else:
+             state = states.get(entry.capability_id)
+             value = state.state if state is not None else "unknown"
+-            if value in ("available", "degraded"):
++            if value in ("available", "degraded", "stale"):
+                 if entry.access != "anonymous" and not signed_in:
+                     available, reason = False, "nav.authenticationRequired"
+                 else:

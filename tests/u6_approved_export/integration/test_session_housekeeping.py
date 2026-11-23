@@ -8,8 +8,8 @@ from uuid import UUID
 
 from backend.control_runtime import ControlLoop
 from backend.modules.export.worker import ExportWorker
-
 from tests.u6_approved_export import lane_flows as lf
+from tests.u6_approved_export import service_flows as sf
 from tests.u6_approved_export import store_flows as flows
 
 
@@ -21,7 +21,14 @@ class Inherited:
 def test_an_approval_whose_session_ended_is_invalidated_and_trimmed_on_the_next_pass(
     transactions, connect, authority, tmp_path
 ):
-    lr = lf.build(transactions, connect, authority, tmp_path, lane=lf.LaneDouble(idle=False))
+    lr = lf.build(
+        transactions,
+        connect,
+        authority,
+        tmp_path,
+        lane=lf.LaneDouble(idle=False),
+        research=sf.real_research(transactions),
+    )
     lr.rig.configure()
     lf.drain(transactions, lr)
     approver = flows.second_session(connect, authority)
@@ -56,7 +63,9 @@ def test_an_approval_whose_session_ended_is_invalidated_and_trimmed_on_the_next_
 def test_an_accepted_export_of_an_ended_session_is_invalidated_before_any_write(
     transactions, connect, authority, tmp_path
 ):
-    lr = lf.build(transactions, connect, authority, tmp_path)
+    lr = lf.build(
+        transactions, connect, authority, tmp_path, research=sf.real_research(transactions)
+    )
     lr.rig.configure()
     approver = flows.second_session(connect, authority)
     preview = lr.rig.preview(lr.rig.page())

@@ -4,9 +4,10 @@ import json
 
 import httpx
 import pytest
+from notion_client.errors import build_request_error
+
 from backend.modules.export import classification as c
 from backend.modules.export.errors import ProtectionUnavailable
-from notion_client.errors import build_request_error
 
 PAGE = "0b7d2a51c4e94f36a8e1d2c3b4a59687"
 

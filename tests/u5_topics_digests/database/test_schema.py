@@ -42,7 +42,12 @@ def advance(conn, run_id, state):
     )
 
 
-def test_one_subscription_row_per_account_and_key(connect):
+# Plan Step 38 (decision L3-1): same-rule cases are merged into one parametrized test
+# each, every original body kept unchanged as a case function, so each case is still
+# its own collected item and its id names the original test.
+
+
+def _one_subscription_row_per_account_and_key(connect):
     """Reactivation reuses the same row; the key stays unique even when unsubscribed."""
     with connect("topics") as conn:
         account, key = uuid4(), "quantum-error-correction"
@@ -53,7 +58,7 @@ def test_one_subscription_row_per_account_and_key(connect):
         conn.execute("UPDATE topics.followed_topic SET status='active' WHERE id=%s", (first,))
 
 
-def test_topic_identity_and_follow_time_are_immutable(connect):
+def _topic_identity_and_follow_time_are_immutable(connect):
     with connect("topics") as conn:
         identifier = subscribe(conn)
         with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
@@ -71,6 +76,20 @@ def test_topic_identity_and_follow_time_are_immutable(connect):
             ).rowcount
             == 1
         )
+
+
+@pytest.mark.parametrize(
+    "case",
+    [_one_subscription_row_per_account_and_key, _topic_identity_and_follow_time_are_immutable],
+    ids=[
+        "one_subscription_row_per_account_and_key",
+        "topic_identity_and_follow_time_are_immutable",
+    ],
+)
+def test_a_followed_topic_keeps_one_row_with_a_fixed_identity(connect, case):
+    """One rule, the followed topic's identity: one row per account and key, whose key
+    and follow time never change."""
+    case(connect)
 
 
 def test_settings_shape_and_revision_advance(connect):
@@ -121,7 +140,7 @@ def test_run_stamps_current_settings_revision_and_keeps_chronology(connect):
         prepared(conn, topic_id, start="2026-01-08", end="2026-01-14")
 
 
-def test_window_uniqueness_excludes_discarded_runs(connect):
+def _window_uniqueness_excludes_discarded_runs(connect):
     with connect("topics") as conn:
         topic_id = subscribe(conn)
         add_settings(conn, topic_id)
@@ -158,7 +177,7 @@ def test_run_state_machine_and_content_immutability(connect):
             advance(conn, filled, "empty")
 
 
-def test_single_flight_allows_one_sending_run_per_topic(connect):
+def _single_flight_allows_one_sending_run_per_topic(connect):
     with connect("topics") as conn:
         topic_id = subscribe(conn)
         add_settings(conn, topic_id)
@@ -167,6 +186,20 @@ def test_single_flight_allows_one_sending_run_per_topic(connect):
         advance(conn, earlier, "sending")
         with pytest.raises(psycopg.errors.UniqueViolation), conn.transaction():
             advance(conn, later, "sending")
+
+
+@pytest.mark.parametrize(
+    "case",
+    [_window_uniqueness_excludes_discarded_runs, _single_flight_allows_one_sending_run_per_topic],
+    ids=[
+        "window_uniqueness_excludes_discarded_runs",
+        "single_flight_allows_one_sending_run_per_topic",
+    ],
+)
+def test_a_topic_holds_one_live_run_per_window_and_one_sending_run(connect, case):
+    """One rule, the run uniqueness indexes: one live (non-discarded) run per window and
+    at most one sending run per topic."""
+    case(connect)
 
 
 def test_send_log_and_outcome_follow_the_run_state(connect):

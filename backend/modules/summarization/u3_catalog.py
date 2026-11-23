@@ -90,7 +90,11 @@ def definitions_for(source: dict) -> list[dict] | None:
     return definitions or None
 
 
-def catalog_for(source: dict, *, provider_ready: bool) -> AssistanceCatalog | None:
+def catalog_for(source: dict, *, provider_ready: bool, rule=None) -> AssistanceCatalog | None:
+    # The one seam (U8 plan Step 23): a source rule the composition passes builds its own
+    # catalog; without one, U3's built 256-chunk, unique-anchor rule applies.
+    if rule is not None:
+        return rule.catalog(source)
     definitions = definitions_for(source)
     if definitions is None:
         return None

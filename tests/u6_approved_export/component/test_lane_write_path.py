@@ -3,16 +3,17 @@ its 24 h bound, the rate-limit window, no rewrite of an unknown export, the sett
 from `deadlineAt`, and the connection facts of a write's outcome (BR3.3, BR4.2, BR4.3,
 NFR4.4, NFR4.5; security design §8.2, §8.5)."""
 
+import contextlib
 import datetime as dt
 import logging
 from uuid import UUID, uuid4
 
 import psycopg
 import pytest
+
 from backend.modules.export.fake_notion import Answer
 from backend.modules.export.lane import ExportLane, LaneItem
 from backend.modules.research.errors import ResearchError
-
 from tests.u6_approved_export import lane_flows as lf
 from tests.u6_approved_export import notion_flows as nf
 from tests.u6_approved_export import store_flows as flows
@@ -20,11 +21,15 @@ from tests.u6_approved_export import store_flows as flows
 
 class Interleaved:
     """The real store, with a step of another actor run just before or just after the
-    lane's claim, and optionally a pace record that cannot be reserved."""
+    lane's claim, and optionally a hold around the lane's own pace reservation.
 
-    def __init__(self, repository, *, before_claim=None, after_claim=None, pace=True):
+    `pace_hold` is a zero-argument callable returning a context manager (a held row);
+    when given, the real `reserve_pace_slot` runs inside it and its answer is passed back
+    unchanged. The wrapper never answers in the store's place."""
+
+    def __init__(self, repository, *, before_claim=None, after_claim=None, pace_hold=None):
         self._repository = repository
-        self._before, self._after, self._pace = before_claim, after_claim, pace
+        self._before, self._after, self._pace_hold = before_claim, after_claim, pace_hold
 
     def claim(self, *args, **kwargs):
         if self._before:
@@ -35,7 +40,10 @@ class Interleaved:
         return claimed
 
     def reserve_pace_slot(self, *args, **kwargs):
-        return self._repository.reserve_pace_slot(*args, **kwargs) if self._pace else None
+        if self._pace_hold is None:
+            return self._repository.reserve_pace_slot(*args, **kwargs)
+        with self._pace_hold():
+            return self._repository.reserve_pace_slot(*args, **kwargs)
 
     def __getattr__(self, name):
         return getattr(self._repository, name)
@@ -357,7 +365,7 @@ def test_a_session_ended_by_the_time_of_the_claim_invalidates_the_export(
 
 
 def test_an_unopenable_token_at_the_claim_and_an_unreservable_pace_slot_both_wait(
-    transactions, connect, authority, tmp_path
+    transactions, connect, connect_raw, authority, tmp_path
 ):
     lr = lf.build(transactions, connect, authority, tmp_path)
     flow = lf.pressed(lr)
@@ -371,7 +379,11 @@ def test_an_unopenable_token_at_the_claim_and_an_unreservable_pace_slot_both_wai
             available=False,
         )
 
-    assert interleaved_lane(lr, pace=False).run_item(lf.item(flow["effect"])) == "waiting"
+    # The binding check's destination read reserves its slot unheld, through the rig's own
+    # store; only the lane's own reservation meets the held pace row and answers None.
+    pace = (flows.PACE_ROW, (UUID(connection["connectionId"]),))
+    held_pace = interleaved_lane(lr, pace_hold=lambda: flows.held_rows(connect_raw, pace))
+    assert held_pace.run_item(lf.item(flow["effect"])) == "waiting"
     row = lf.row(connect, flow["effect"])
     assert row["state"] == "accepted" and row["waiting_since"] is not None
     assert interleaved_lane(lr, before_claim=unavailable).run_item(lf.item(row)) == "waiting"
@@ -395,28 +407,49 @@ def test_items_that_no_longer_match_their_effect_are_skipped(
 
 
 def test_a_store_fault_is_reduced_to_a_category_and_its_text_never_logged(
-    transactions, connect, authority, tmp_path, caplog
+    transactions, connect, connect_raw, authority, tmp_path, caplog
 ):
     lr = lf.build(transactions, connect, authority, tmp_path)
+    flow = lf.pressed(lr)
+    effect = lf.effect_id(flow["effect"])
+    revision = int(flow["effect"]["revision"])
+    assert lr.lane.run_item(LaneItem("execute", uuid4(), 1)) == "skipped"
+    before = lf.latest_lane_status(connect)
 
-    class Broken:
-        def effect_binding(self, effect_id):
-            raise psycopg.OperationalError("store down: synthetic-secret-detail")
+    # The fault's own text, from a direct status record under a short hold of the singleton.
+    with flows.held_rows(connect_raw, (flows.LANE_STATUS_ROW, ())):
+        with pytest.raises(psycopg.errors.LockNotAvailable) as caught:
+            lr.repo.record_lane_status("error")
+    assert caught.value.sqlstate == "55P03"
+    primary, whole = caught.value.diag.message_primary, str(caught.value)
+    assert primary and primary in whole
 
-        def record_lane_status(self, outcome):
-            raise psycopg.OperationalError("store down: synthetic-secret-detail")
-
-    lane = ExportLane(
-        Broken(), lr.rig.service.adapter, lr.rig.service.binding, policy=lr.rig.policy,
-        clock=lr.clock,
+    holds = contextlib.ExitStack()
+    held = ((flows.EFFECT_ROW, (effect,)), (flows.LANE_STATUS_ROW, ()))
+    lane = interleaved_lane(
+        lr, before_claim=lambda: holds.enter_context(flows.held_rows(connect_raw, *held))
     )
-    with caplog.at_level(logging.DEBUG):
-        assert lane.run_item(LaneItem("execute", uuid4(), 1)) == "error"
-    assert "OperationalError" in caplog.text
-    assert "synthetic-secret-detail" not in caplog.text
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG), holds:
+        assert lane.run_item(lf.item(flow["effect"])) == "error"
+
+    assert [r.getMessage() for r in caplog.records if r.name == "docsuri.export.lane"] == [
+        "export lane execute item ended early (LockNotAvailable)",
+        "export lane status not recorded (LockNotAvailable)",
+    ]
+    assert primary not in caplog.text and whole not in caplog.text
     for record in caplog.records:
         assert record.exc_info is None
         assert not any(isinstance(arg, BaseException) for arg in tuple(record.args or ()))
+    assert lf.latest_lane_status(connect) == before
+    row = lf.row(connect, flow["effect"])
+    assert (row["state"], row["revision"]) == ("accepted", revision)
+    assert lf.attempts(connect, flow["effect"]) == [] and lr.fake.writes == []
+
+    # With the hold ended, the same item runs to its write.
+    assert lr.lane.run_item(lf.item(flow["effect"])) == "succeeded"
+    assert len(lr.fake.writes) == 1
+    assert lf.latest_lane_status(connect)["outcome"] == "succeeded"
 
 
 def test_the_lane_lifecycle_guards(transactions, connect, authority, tmp_path):

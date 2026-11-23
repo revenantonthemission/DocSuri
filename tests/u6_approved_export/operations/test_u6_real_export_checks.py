@@ -7,12 +7,13 @@ outcome is read from an export recorded by the synthetic rig over the fake Notio
 import datetime as dt
 import json
 from dataclasses import replace
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
-from backend.u6_real_export import parse_activation
-from scripts import u6_real_export as operator
 
+from backend.modules.export.repository import WriteOutcome
+from backend.u6_real_export import free_terms_reference, parse_activation
+from scripts import u6_real_export as operator
 from tests.u6_approved_export import service_flows as sf
 
 TODAY = dt.date(2026, 10, 20)
@@ -105,7 +106,11 @@ def test_each_settings_gap_alone(operator_root, realm, case, expected):
     elif case == "terms-not-object":
         write(settings(realm.run_id, freeTerms="free"))
     elif case == "bad-date":
-        write(settings(realm.run_id, freeTerms={**settings("x")["freeTerms"], "checkedOn": "2026-02-30"}))
+        write(
+            settings(
+                realm.run_id, freeTerms={**settings("x")["freeTerms"], "checkedOn": "2026-02-30"}
+            )
+        )
     elif case == "evidence":
         write(settings(realm.run_id))
         (profile.root / "browser-evidence-1.json").write_text("{}")
@@ -156,38 +161,70 @@ def test_the_outcome_holds_digests_only(realm, transactions, connect, authority,
     assert "DocSuri" not in text
 
 
-class Rows:
-    """Answers the outcome query with fixed rows, so the count rule is tested exactly."""
-
-    def __init__(self, rows):
-        self.rows = rows
-
-    def run(self, owner, action):
-        assert owner == "export"
-        return self.rows
-
-
-def test_the_outcome_names_exactly_one_export(realm):
+def test_the_outcome_carries_the_settings_files_free_terms_reference_only(
+    operator_root, realm, transactions, connect, authority, tmp_path
+):
+    profile, write = operator_root
+    write(settings(realm.run_id))
+    rig = sf.build(transactions, connect, authority, tmp_path)
+    rig.configure()
+    pressed = rig.press(rig.page())
+    rig.succeed(pressed["effect"])
     activation = parse_activation(settings(realm.run_id), realm, today=TODAY)
-    row = {
-        "state": "failed",
-        "outcome_reason": "no-access",
-        "settled_by": "provider",
-        "remote_url": None,
-        "response_class": "refused",
-        "provider_request_id": None,
-        "creator_confirmed": None,
-        "path_kind": "real",
-    }
-    for rows in ([], [row, row]):
+
+    record = operator.outcome(
+        transactions,
+        realm,
+        activation,
+        effect_id=UUID(pressed["effect"]["effectId"]),
+        today=TODAY,
+    )
+
+    on_disk = json.loads((profile.root / "real-export.json").read_text())
+    assert record["freeTermsReference"] == free_terms_reference(on_disk["freeTerms"])
+    assert record["freeTermsReference"].startswith("notion-free:2026-10-19:")
+    dump = json.dumps(record)
+    assert "publishedLimits" not in dump
+    assert "memberCount" not in dump
+    assert '"plan"' not in dump
+
+
+def test_the_outcome_names_exactly_one_export(realm, transactions, connect, authority, tmp_path):
+    rig = sf.build(transactions, connect, authority, tmp_path)
+    rig.configure()
+    # One export in flight per owner (BR5.1): export B is settled before export A is pressed.
+    rig.succeed(rig.press(rig.page())["effect"])
+    pressed = rig.press(rig.page())["effect"]
+    effect_id = UUID(pressed["effectId"])
+    claimed = rig.repo.claim(
+        effect_id, int(pressed["revision"]), now=rig.clock.now, path_kind="real"
+    )
+    assert claimed.attempt["path_kind"] == "real"
+    rig.repo.record_write_outcome(
+        effect_id,
+        claimed.attempt["id"],
+        claimed.effect["revision"],
+        WriteOutcome("refused", reason="no-access"),
+        now=rig.clock.now,
+    )
+    activation = parse_activation(settings(realm.run_id), realm, today=TODAY)
+
+    # An unknown id names none; no id names every export, and the realm holds at least two.
+    for unnamed in (uuid4(), None):
         with pytest.raises(operator.OutcomeRefused, match="exactly-one"):
-            operator.outcome(Rows(rows), realm, activation, today=TODAY)
-    record = operator.outcome(Rows([row]), realm, activation, today=TODAY)
+            operator.outcome(transactions, realm, activation, effect_id=unnamed, today=TODAY)
+    record = operator.outcome(transactions, realm, activation, effect_id=effect_id, today=TODAY)
     assert (record["requestIdSha256"], record["pageLinkSha256"]) == (None, None)
     assert record["pathKind"] == "real" and record["outcomeReason"] == "no-access"
+    assert (
+        record["effectState"],
+        record["settledBy"],
+        record["outcomeClass"],
+        record["creatorConfirmed"],
+    ) == ("failed", "provider", "refused", None)
     other = replace(activation, run_id="docsuri-u6-fedcba9876543210")
     with pytest.raises(operator.OutcomeRefused, match="run-differs"):
-        operator.outcome(Rows([row]), realm, other)
+        operator.outcome(transactions, realm, other, effect_id=effect_id)
 
 
 def test_the_actions_refuse_the_wrong_realm_and_missing_settings(realm, capsys):
@@ -200,6 +237,10 @@ def test_the_actions_refuse_the_wrong_realm_and_missing_settings(realm, capsys):
     assert checked["state"] == "gaps" and "settings-absent" in checked["gaps"]
     assert operator.main(["--environment-file", path, "--action", "outcome"]) == 1
     refused = json.loads(capsys.readouterr().out)
-    assert refused == {"state": "refused", "category": "POLICY_UNRESOLVED", "field": "settings-absent"}
+    assert refused == {
+        "state": "refused",
+        "category": "POLICY_UNRESOLVED",
+        "field": "settings-absent",
+    }
     assert not (realm.root / "real-export.json").exists()
     assert operator.source_commit() is None or len(operator.source_commit()) == 40

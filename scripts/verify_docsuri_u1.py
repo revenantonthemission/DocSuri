@@ -209,7 +209,8 @@ def private_json(path: Path, value: object) -> None:
 
 def clean_environment() -> dict[str, str]:
     # Do not pass production database, cloud credentials or provider settings.
-    allowed = ("PATH", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT")
+    # DOCKER_HOST, when set, names the Docker the caller chose (U8 plan L1-76).
+    allowed = ("PATH", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT", "DOCKER_HOST")
     return {name: os.environ[name] for name in allowed if name in os.environ}
 
 

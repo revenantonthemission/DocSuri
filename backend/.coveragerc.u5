@@ -3,6 +3,8 @@
 # and self-measuring it would require running the harness under coverage with
 # nested data files, so it stays outside the production denominator (recorded
 # as the deliberate U5 deviation from the U4 include shape).
+# backend/local_observation.py is a shared file U5 changed (its topics probe);
+# no other report measures it, so this one does (loop-back 1 decision L1-3).
 [run]
 source = backend,scripts
 
@@ -16,6 +18,7 @@ include =
     backend/u5_policy.py
     backend/u5_host.py
     backend/u5_real_delivery.py
+    backend/local_observation.py
     scripts/serve_docsuri_u5.py
     scripts/u5_browser_fixtures.py
     scripts/u5_real_delivery.py

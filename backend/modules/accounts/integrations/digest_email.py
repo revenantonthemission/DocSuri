@@ -139,6 +139,41 @@ class LocalDigestMail:
         return DigestMailResult("accepted", "local:" + str(request_key), dt.datetime.now(dt.UTC))
 
 
+# The shared Resend client: the digest and account-mail adapters post through it.
+RESEND_ENDPOINT = "https://api.resend.com/emails"
+
+
+def network_client(**options) -> httpx.AsyncClient:
+    """The one place a shared Resend client builds its network client. Code reaches it
+    only as a module attribute, so a test-wide guard can replace it."""
+    return httpx.AsyncClient(**options)
+
+
+class ResendClient:
+    """One POST to `/emails` with the message's own `Idempotency-Key`, under the caller's
+    timeout. An injected client factory is used whenever one is given."""
+
+    endpoint = RESEND_ENDPOINT
+
+    def __init__(self, api_key: str, *, client_factory=None):
+        if not api_key:
+            raise ValueError("a Resend API key is required")
+        self._api_key = api_key
+        self._client_factory = client_factory
+
+    async def post(self, payload: dict, idempotency_key: str, *, timeout: float):
+        factory = self._client_factory if self._client_factory is not None else network_client
+        async with factory(timeout=timeout) as client:
+            return await client.post(
+                self.endpoint,
+                headers={
+                    "Authorization": f"Bearer {self._api_key}",
+                    "Idempotency-Key": idempotency_key,
+                },
+                json=payload,
+            )
+
+
 class ResendDigestMail:
     path_kind = "real"
     endpoint = "https://api.resend.com/emails"

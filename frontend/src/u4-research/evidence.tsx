@@ -100,10 +100,28 @@ export function EvidenceResult({ value }: { value: ArtifactResponse }) {
           assessment.score! <= assessment.scaleMaximum! &&
           assessment.evidenceIds.length > 0 &&
           assessment.evidenceIds.every((id) => eligible.has(id));
+        // Novelty without scores (U4's BR6.2; U8 plan Step 41): no score key at all. With
+        // at least one item of evidence, all eligible, it was compared on confirmed evidence
+        // only; with no confirmed evidence it was not compared (your decision of
+        // 2026-10-25, "A new sentence for it"), and its limitation below says why. Evidence
+        // that is only partly eligible, and an assessment that carries a score, keep U4's
+        // text.
+        const unscored =
+          !('score' in assessment) &&
+          !('scaleMinimum' in assessment) &&
+          !('scaleMaximum' in assessment);
+        const confirmed = assessment.evidenceIds.filter((id) => eligible.has(id));
+        const notCompared = unscored && confirmed.length === 0;
+        const scoreless =
+          unscored && confirmed.length > 0 && confirmed.length === assessment.evidenceIds.length;
         return (
           <section key={assessment.criterionId} aria-label={assessment.label}>
             <h4>{assessment.label}</h4>
-            {valid ? (
+            {notCompared ? (
+              <p>확인된 근거가 없어 이 기준은 비교하지 않았어요</p>
+            ) : scoreless ? (
+              <p>점수 없이, 확인된 근거로만 비교했어요</p>
+            ) : valid ? (
               <p>
                 {assessment.score} (척도 {assessment.scaleMinimum}–{assessment.scaleMaximum}) · 방법{' '}
                 {output.methodRevision}

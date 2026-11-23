@@ -15,6 +15,7 @@ import json
 from datetime import UTC, datetime
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
+from backend.modules.corpus.limits import SYNTHETIC_LIMITS, CorpusLimitExceeded, CorpusLimits
 from backend.transactions import Authority, guard
 from backend.u3_policy import (
     CHANGE_KINDS,
@@ -25,7 +26,6 @@ from backend.u3_policy import (
     MAX_RUN_RETRIES,
     PROJECTION_COMPATIBILITY,
     RUN_OPERATIONS,
-    WORKSPACE_BYTES,
     bounded_int,
     require_policy,
 )
@@ -43,10 +43,13 @@ class SourceUnavailable(RuntimeError):
 
 
 class CorpusMaintenance:
-    def __init__(self, transactions, files, sources):
+    def __init__(self, transactions, files, sources, *, limits: CorpusLimits = SYNTHETIC_LIMITS):
+        """`limits` is the profile's (Step 23, `limits.for_profile`); every earlier
+        realm keeps the synthetic ones."""
         self.transactions = transactions
         self.files = files
         self.sources = sources
+        self.limits = limits
 
     # --- W1 acceptance ---------------------------------------------------------
 
@@ -265,7 +268,7 @@ class CorpusMaintenance:
         record = self.sources.read(source_id)
         if record is None:
             raise SourceUnavailable(source_id)
-        normalized = _normalize_source(record)
+        normalized = _normalize_source(record, self.limits)
         if retry_only is not None:
             # Only reconciled retryable stages re-execute; committed stages of
             # the original intended run stay authoritative.
@@ -274,8 +277,10 @@ class CorpusMaintenance:
             ):
                 return
         parsed = normalized["content"]
-        if len(json.dumps(parsed, separators=(",", ":")).encode()) > WORKSPACE_BYTES:
-            raise ValueError("parsed source exceeds the finite workspace allocation")
+        # The parsed text's bound is the profile's (Step 23); the synthetic limits keep
+        # U3's WORKSPACE_BYTES exactly (2 MiB).
+        if len(json.dumps(parsed, separators=(",", ":")).encode()) > self.limits.max_source_bytes:
+            raise CorpusLimitExceeded("parsed source exceeds the finite workspace allocation")
         if normalized["permission"] != "permitted":
             raise ValueError("source permission unresolved")
         chunks = parsed["chunks"]
@@ -908,8 +913,9 @@ def _claim_batch(conn, run_id: UUID, version_id: str, projection_hash: str, chun
             raise ValueError("projection batch hash conflict")
 
 
-def _normalize_source(record: dict) -> dict:
-    """Validate one provider record into canonical, bounded fields."""
+def _normalize_source(record: dict, limits: CorpusLimits = SYNTHETIC_LIMITS) -> dict:
+    """Validate one provider record into canonical, bounded fields; its chunk count is
+    bounded by the profile's limits."""
     required = ("paperId", "versionLabel", "title", "authors", "sourceUrl", "identity", "content")
     if not isinstance(record, dict) or any(key not in record for key in required):
         raise ValueError("malformed source record")
@@ -935,9 +941,11 @@ def _normalize_source(record: dict) -> dict:
         not isinstance(content, dict)
         or not isinstance(content.get("document"), dict)
         or not isinstance(content.get("chunks"), list)
-        or not 1 <= len(content["chunks"]) <= 256
+        or not content["chunks"]
     ):
         raise ValueError("parsed document model missing")
+    if len(content["chunks"]) > limits.max_chunks:
+        raise CorpusLimitExceeded("parsed document exceeds the corpus chunk limit")
     for chunk in content["chunks"]:
         if (
             not isinstance(chunk, dict)

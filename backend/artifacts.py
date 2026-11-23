@@ -25,7 +25,9 @@ class ArtifactUnavailable(RuntimeError):
 
 
 class PrivateArtifacts:
-    def __init__(self, root: Path, *, maximum_bytes: int = 131072):
+    def __init__(
+        self, root: Path, *, maximum_bytes: int = 131072, production_root: Path | None = None
+    ):
         expected = {
             Path("/tmp/docsuri-u1-run").resolve(),
             Path("/tmp/docsuri-u2-run").resolve(),
@@ -33,14 +35,23 @@ class PrivateArtifacts:
             Path("/tmp/docsuri-u4-run").resolve(),
             Path("/tmp/docsuri-u5-run").resolve(),
             Path("/tmp/docsuri-u6-run").resolve(),
+            Path("/tmp/docsuri-u8-run").resolve(),
         }
+        if production_root is not None:
+            # A9: the production profile's roots live under its validated root, and
+            # only there; `for_profile` passes it, so no caller names a root by hand.
+            expected = {production_root}
         if root.parent not in expected or root.name not in (
             "corpus-files",
             "assistance-files",
             "verification-mail",
         ):
             raise ValueError("artifact root outside explicit fixture allocation")
-        if maximum_bytes not in (131072, 2097152):
+        # 16 MiB only for corpus sources under CorpusContent's production limits (U8 Step
+        # 23, performance-design § 11); every other bound is the built one.
+        if maximum_bytes not in (131072, 2097152) and not (
+            maximum_bytes == 16777216 and root.name == "corpus-files"
+        ):
             raise ValueError("unapproved artifact bound")
         root.mkdir(mode=0o700, exist_ok=True)
         info = root.lstat()
@@ -48,6 +59,13 @@ class PrivateArtifacts:
             raise ValueError("artifact root is not private")
         self.root = root
         self.maximum_bytes = maximum_bytes
+
+    @classmethod
+    def for_profile(cls, profile, name: str, *, maximum_bytes: int = 131072) -> PrivateArtifacts:
+        """The artifact root `name` of a profile: under the production profile's root for
+        the production profile (A9), and the synthetic `/tmp` run roots otherwise."""
+        production = profile.root if getattr(profile, "is_production", False) else None
+        return cls(profile.root / name, maximum_bytes=maximum_bytes, production_root=production)
 
     def publish(self, content: bytes) -> Artifact:
         if not content or len(content) > self.maximum_bytes:

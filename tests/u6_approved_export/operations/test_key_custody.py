@@ -1,12 +1,16 @@
 """The shared custody helper keeps the built keyring's private-file mechanics (D1)."""
 
 import base64
+import contextlib
 import json
 import os
 import secrets
+import socket
 import stat
+import threading
 
 import pytest
+
 from backend import key_custody
 from backend.key_custody import CustodySettings
 
@@ -29,6 +33,30 @@ SETTINGS = CustodySettings(
     missing_key_message="probe key unavailable",
 )
 RUN = "probe-run"
+FIFO_WAIT_SECONDS = 5.0
+
+
+def bounded(call, seconds: float = FIFO_WAIT_SECONDS):
+    """`call()` in a daemon thread, waited on for at most `seconds`: answers
+    ("answered", value), ("raised", error) or ("stalled", None). A stalled thread is
+    blocked on a FIFO; the test opens the FIFO's other end to release it."""
+    outcome: list = []
+
+    def run():
+        try:
+            outcome.append(("answered", call()))
+        except BaseException as error:  # noqa: BLE001 - handed back to the test
+            outcome.append(("raised", error))
+
+    worker = threading.Thread(target=run, daemon=True)
+    worker.start()
+    worker.join(seconds)
+    return outcome[0] if outcome else ("stalled", None)
+
+
+def release_fifo(path) -> None:
+    with contextlib.suppress(OSError):
+        os.close(os.open(path, os.O_WRONLY | os.O_NONBLOCK))
 
 
 def encoded_key(size: int = 32) -> str:
@@ -119,6 +147,51 @@ def test_guarded_read_refuses_mode_size_symlink_and_owner(folder, monkeypatch):
     monkeypatch.setattr(key_custody.os, "getuid", lambda: owner + 1)
     with pytest.raises(CustodyFault):
         key_custody.read_record(SETTINGS, folder, RUN)
+
+
+def refused_as_custody(outcome, cause_type) -> BaseException:
+    assert outcome[0] == "raised", outcome
+    error = outcome[1]
+    assert type(error) is CustodyFault
+    assert str(error) == "probe custody unavailable"
+    assert isinstance(error.__cause__, cause_type)
+    return error.__cause__
+
+
+def test_guarded_read_refuses_a_fifo_a_directory_and_a_socket_without_blocking(folder, monkeypatch):
+    """NFR3.2: a non-regular key file is refused at once, never waited on."""
+    path = folder / SETTINGS.filename
+
+    def read():
+        return key_custody.read_record(SETTINGS, folder, RUN)
+
+    os.mkfifo(path)
+    os.chmod(path, 0o600)
+    info = path.lstat()
+    assert stat.S_ISFIFO(info.st_mode) and stat.S_IMODE(info.st_mode) == 0o600
+    assert info.st_uid == os.getuid() and info.st_size <= SETTINGS.max_bytes
+    outcome = bounded(read)
+    if outcome[0] == "stalled":
+        release_fifo(path)
+    cause = refused_as_custody(outcome, ValueError)
+    assert type(cause) is ValueError and str(cause) == "private key custody mismatch"
+    assert stat.S_ISFIFO(path.lstat().st_mode)
+    assert os.listdir(folder) == [SETTINGS.filename]
+    path.unlink()
+
+    path.mkdir(mode=0o700)
+    refused_as_custody(bounded(read), IsADirectoryError)
+    assert path.is_dir() and list(path.iterdir()) == []
+    assert os.listdir(folder) == [SETTINGS.filename]
+    path.rmdir()
+
+    monkeypatch.chdir(folder)
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as server:
+        server.bind(SETTINGS.filename)
+        assert stat.S_ISSOCK(path.lstat().st_mode)
+        outcome = bounded(read)
+    refused_as_custody(outcome, OSError)
+    assert os.listdir(folder) == [SETTINGS.filename]
 
 
 def test_missing_file_refuses_without_creating_anything(folder):

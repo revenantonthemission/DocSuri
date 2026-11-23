@@ -3,11 +3,13 @@ write, read-back, scans, read retries, listings, revocation and custody (§7–�
 
 import asyncio
 import datetime as dt
+import json
 import time
 from uuid import uuid4
 
 import httpx
 import pytest
+
 from backend.modules.export import notion_adapter as adapter_module
 from backend.modules.export.classification import (
     COULD_NOT_CHECK,
@@ -36,7 +38,7 @@ from backend.modules.export.notion_adapter import (
     StoreContentPort,
 )
 from backend.modules.export.notion_session import InteractiveGate, NotionSession
-
+from backend.modules.export.rendering import content_hash
 from tests.u6_approved_export import notion_flows as nf
 
 
@@ -102,7 +104,9 @@ async def test_the_written_body_hashes_to_the_bound_value(setup, authority):
 
     fake = setup["fake"]
     assert result.category == CREATED and result.sent is True
-    assert [entry.content_hash for entry in fake.writes] == [bound["preview"]["rendered_content_hash"]]
+    assert [entry.content_hash for entry in fake.writes] == [
+        bound["preview"]["rendered_content_hash"]
+    ]
     assert fake.pages_under(setup["destination"]) == [result.outcome.remote_reference]
     assert result.outcome.creator_confirmed is True
     assert result.provider_result().disposition == "committed"
@@ -229,7 +233,9 @@ async def test_a_scan_finds_the_marker_inside_containers_and_reports_duplicates(
     first = marked_page(fake, toggle, marker, creator=bot, created_time=earlier)
     second = marked_page(fake, column, marker, creator=bot)
     marked_page(fake, destination, marker, creator=nf.bot_id())
-    marked_page(fake, destination, marker, creator=bot, created_time=nf.now() - dt.timedelta(days=1))
+    marked_page(
+        fake, destination, marker, creator=bot, created_time=nf.now() - dt.timedelta(days=1)
+    )
 
     scan = await setup["adapter"].scan(setup["target"], scan_request(setup, marker))
 
@@ -441,6 +447,87 @@ async def test_a_custody_fault_makes_the_connection_unavailable_and_recovery_rec
     assert unavailable["revision"] == setup["connection"]["revision"]
     assert recovered.category == OK and connected["state"] == "connected"
     assert connected["revision"] == setup["connection"]["revision"]
+
+
+class RecordingTransport(httpx.AsyncBaseTransport):
+    """Stores each request's Notion-Version header, timeout extension and JSON body,
+    then delegates to the fake inside `GuardedTransport`. It never answers on its own."""
+
+    def __init__(self, fake):
+        self._fake = fake
+        self.records = []
+
+    async def handle_async_request(self, request):
+        body = await request.aread()
+        self.records.append(
+            {
+                "method": request.method,
+                "path": request.url.path,
+                "notion_version": request.headers.get("notion-version"),
+                "timeout": request.extensions.get("timeout"),
+                "json": json.loads(body) if body else None,
+            }
+        )
+        return await self._fake.handle_async_request(request)
+
+    async def aclose(self):
+        return None
+
+
+def recording(setup):
+    recorder = RecordingTransport(setup["fake"])
+    session = NotionSession(
+        store=setup["repo"],
+        vault=setup["vault"],
+        policy=setup["policy"],
+        gate=InteractiveGate.for_policy(setup["policy"]),
+        transport_factory=lambda: recorder,
+    )
+    adapter = NotionAdapter(session, setup["repo"], content=StoreContentPort(setup["repo"]))
+    return adapter, recorder
+
+
+async def test_the_sdk_settings_travel_with_every_request(setup, authority):
+    adapter, recorder = recording(setup)
+    bound = nf.bound_effect(setup["repo"], authority, setup["connection"], setup["destination"])
+    request = nf.write_request(bound, setup["connection"], setup["bot"])
+
+    read = await adapter.identify(setup["target"])
+    write = await adapter.create_page(
+        setup["target"], request, deadline_seconds=setup["policy"].write_deadline_seconds
+    )
+
+    assert read.category == OK and write.category == CREATED
+    assert all(record["notion_version"] == "2026-03-11" for record in recorder.records)
+    get = next(record for record in recorder.records if record["method"] == "GET")
+    post = next(record for record in recorder.records if record["method"] == "POST")
+    assert get["path"] == "/v1/users/me"
+    assert get["timeout"] == {"connect": 30.0, "read": 30.0, "write": 30.0, "pool": 30.0}
+    assert post["path"] == "/v1/pages"
+    assert post["timeout"] == {"connect": 90.0, "read": 90.0, "write": 90.0, "pool": 90.0}
+    body = post["json"]
+    assert set(body) == {"parent", "properties", "children"}
+    assert body["parent"] == {"page_id": setup["destination"]}
+    assert (
+        content_hash({"properties": body["properties"], "children": body["children"]})
+        == bound["preview"]["rendered_content_hash"]
+    )
+
+
+async def test_the_search_body_pages_with_its_cursor_and_completes(setup):
+    adapter, recorder = recording(setup)
+    for index in range(3):
+        setup["fake"].add_page(title=f"페이지 {index}")
+    setup["fake"].set_search("complete", page_size=2)
+
+    listing = await adapter.list_destinations(setup["target"])
+
+    searches = [record for record in recorder.records if record["path"] == "/v1/search"]
+    assert len(searches) == 2
+    assert all(record["json"]["page_size"] == 100 for record in searches)
+    assert searches[0]["json"].get("start_cursor") is None
+    assert searches[1]["json"]["start_cursor"] == "2"
+    assert listing.category == OK and listing.complete is True
 
 
 async def test_the_pending_row_holds_no_envelope_and_the_candidate_is_never_stored(

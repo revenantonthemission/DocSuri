@@ -9,6 +9,7 @@ from uuid import UUID, uuid4
 
 import httpx
 import pytest
+
 from backend.modules.export.fake_notion import FakeNotion
 from backend.transactions import Authority
 from scripts import u6_browser_fixtures as fixtures
@@ -27,7 +28,7 @@ def test_fixture_setup_is_idempotent_and_its_result_is_exportable(realm, transac
         "accounts": 2,
         "papers": 2,
         "noveltyResults": 1,
-        "scenarioPages": 13,
+        "scenarioPages": 15,
         "synthetic": True,
     }
     again = fixtures.fixture_record(realm)
@@ -65,6 +66,13 @@ def test_the_record_refuses_any_identity_drift(realm):
         )
     with pytest.raises(runner.Refused, match="novelty binding"):
         fixtures._check_record(realm, {**record, "novelty": None})
+    previous = {
+        spec: names
+        for spec, names in fixtures.SCENARIO_NAMES["specs"].items()
+        if spec != "reflow"
+    }
+    with pytest.raises(runner.Refused, match="identity differs"):
+        fixtures._check_record(realm, {**record, "scenario": previous})
 
 
 def test_the_scenario_gives_each_spec_its_own_destinations(realm):
@@ -78,14 +86,14 @@ def test_the_scenario_gives_each_spec_its_own_destinations(realm):
     assert len(same) == 2 and len({page["parentId"] for page in same}) == 2
     assert pages[fixtures.SCENARIO_NAMES["unreadablePage"]]["readable"] is False
     seen = set()
-    for spec in ("journeys", "keyboard", "accessibility"):
+    for spec in ("journeys", "keyboard", "accessibility", "reflow"):
         names = fixtures.SCENARIO_NAMES["specs"][spec]
         cancel, settle = pages[names["cancel"]], pages[names["settle"]]
         assert cancel["normalPageReads"] == 2
         assert settle["busyChildrenAfterCreate"] is True
         assert settle["createAnswers"] == [{"status": 504}]
         seen |= {cancel["id"], settle["id"]}
-    assert len(seen) == 6
+    assert len(seen) == 8
     assert fixtures.scenario(realm.run_id, token) == value
 
 

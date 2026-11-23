@@ -6,8 +6,8 @@ and reconciliation-pause guards live in the transition itself). The account
 consent is re-checked at send start; a local sink carries synthetic-profile
 sends, and a real send is recorded with `pathKind: real` only when a
 maintainer-configured path actually carried it (BR1.4). The email seam is
-`backend/modules/accounts/integrations/email.py` through the additive
-`send_digest_email` primitive; no provider SDK or paid provider is added.
+`backend/modules/accounts/integrations/digest_email.py`, the account-owned
+digest adapter; no provider SDK or paid provider is added.
 """
 
 import asyncio

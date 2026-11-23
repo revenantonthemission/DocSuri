@@ -1,6 +1,7 @@
 """Owner export shape and live-realm denial; actual quarantine replay is separate."""
 
 from dataclasses import replace
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
@@ -12,6 +13,9 @@ from backend.control_restore import (
     DiscoveryRestore,
     UsageRestore,
 )
+from backend.modules.library import restore as library_restore
+from backend.modules.personalization import restore as personalization_restore
+from docsuri_ops.u2_restore import RestoreRefused, RestoreTransactions
 from docsuri_ops.u2_restore_context import RestoreContext, fragment_digest
 
 pytestmark = pytest.mark.u2_operations
@@ -82,3 +86,38 @@ def test_owner_export_rejects_other_run_before_store_access(transactions):
     bound = replace(context(transactions), run_id="docsuri-u2-" + "f" * 16)
     with pytest.raises(ValueError, match="run mismatch"):
         AccountsRestore.export_restrictions(transactions, bound)
+
+
+@pytest.mark.parametrize("owner", (AssistanceRestore, DiscoveryRestore))
+def test_erasure_bound_owners_need_the_current_account_restrictions(transactions, owner):
+    bound = context(transactions)
+    usage = UsageRestore.export_restrictions(transactions, bound)
+    for accounts in (None, usage):
+        with pytest.raises(ValueError, match="complete current account restrictions required"):
+            owner.export_restrictions(transactions, bound, accounts_fragment=accounts)
+
+
+def test_owner_reconciliation_refuses_another_owners_fragment(transactions):
+    bound = context(transactions)
+    accounts = AccountsRestore.export_restrictions(transactions, bound)
+    with pytest.raises(ValueError, match="restore owner mismatch"):
+        UsageRestore.reconcile_restore(transactions, accounts, bound)
+
+
+@pytest.mark.parametrize("module", (library_restore, personalization_restore))
+def test_settings_and_library_restore_need_their_own_fragments(transactions, module):
+    bound = context(transactions)
+    usage = UsageRestore.export_restrictions(transactions, bound)
+    with pytest.raises(ValueError, match="current AccountAccess checkpoint required"):
+        module.export_restrictions(transactions, bound, accounts_fragment=usage)
+    accounts = AccountsRestore.export_restrictions(transactions, bound)
+    with pytest.raises(ValueError, match="checkpoint required"):
+        module.reconcile_restore(transactions, accounts, bound)
+
+
+def test_quarantined_transactions_refuse_an_unknown_owner_before_any_work():
+    calls = []
+    restore = RestoreTransactions(SimpleNamespace(profile=None), None)
+    with pytest.raises(RestoreRefused, match="unknown restore owner"):
+        restore.run("operator", calls.append)
+    assert calls == []

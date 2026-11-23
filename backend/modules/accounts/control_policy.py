@@ -71,6 +71,19 @@ SYNTHETIC_POLICY = ControlPolicy(
 )
 
 
+def for_realm(realm: str) -> ControlPolicy | None:
+    """The control policy a realm's U2 control paths run under (U8 plan, the row "U2's
+    controls in the complete app", the person's decision of 2026-10-23): U2's realm keeps
+    `SYNTHETIC_POLICY`; the two complete realms take U8's policies, lazily from
+    `u8_control_policy` (the person's decision of 2026-10-24); any other realm has none
+    and keeps its plain path."""
+    if realm in ("service-operations", "production"):
+        from backend.modules.accounts.u8_control_policy import COMPLETE_POLICIES
+
+        return COMPLETE_POLICIES[realm]
+    return {"account-controls": SYNTHETIC_POLICY}.get(realm)
+
+
 def public_evidence() -> dict[str, str]:
     """Safe capability reasons; synthetic proofs never clear these real gates."""
     return {

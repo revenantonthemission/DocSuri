@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://docsuri.dev/shared/dtos/workspace.schema.json",
-  "$comment": "Generated canonical contract release 3.1.0; source SHA256:9ef6c9cd2ca848be703d6c70524d185625fb77610d0168eb61d9bc13bae7fb0b",
+  "$comment": "Generated canonical contract release 4.0.0; source SHA256:3b3117f98cd503adcc7ac9a1d78c86319ce88e7f848f30ae61c7f97b16139b55",
   "$defs": {
     "Id": {
       "type": "string",
@@ -579,6 +579,270 @@
       ],
       "additionalProperties": false
     },
+    "OpsDashboardItem": {
+      "type": "object",
+      "properties": {
+        "observationId": {
+          "$ref": "#/$defs/Id"
+        },
+        "capability": {
+          "$ref": "#/$defs/Id"
+        },
+        "component": {
+          "$ref": "#/$defs/Id"
+        },
+        "observedAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "available",
+            "degraded",
+            "unavailable",
+            "unknown"
+          ]
+        },
+        "evidenceRef": {
+          "$ref": "#/$defs/Id"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        },
+        "freshness": {
+          "type": "string",
+          "enum": [
+            "current",
+            "stale"
+          ]
+        },
+        "ageSeconds": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "observationId",
+        "capability",
+        "component",
+        "observedAt",
+        "revision",
+        "status",
+        "evidenceRef",
+        "limitations"
+      ],
+      "additionalProperties": false,
+      "description": "C11 2.1.0 (A5): an OpsObservation with its derived freshness and age, as readDashboard answers it. Stale is derived at read time and never stored."
+    },
+    "OpsDashboardPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OpsDashboardItem"
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        }
+      },
+      "required": [
+        "items",
+        "page"
+      ],
+      "additionalProperties": false
+    },
+    "OpsIncidentResolutionKind": {
+      "type": "string",
+      "enum": [
+        "capability-available",
+        "abort-reviewed",
+        "rollback-copy-settled",
+        "environment-stopped"
+      ]
+    },
+    "OpsIncidentRead": {
+      "type": "object",
+      "properties": {
+        "incidentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        },
+        "correlationIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "open",
+            "investigating",
+            "recovering",
+            "resolved"
+          ]
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        },
+        "resolutionKind": {
+          "$ref": "#/$defs/OpsIncidentResolutionKind"
+        }
+      },
+      "required": [
+        "incidentId",
+        "revision",
+        "capabilities",
+        "correlationIds",
+        "state",
+        "evidenceRefs"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "resolved"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "resolutionKind"
+            ]
+          }
+        }
+      ],
+      "description": "C11 2.1.0 (A5): an OpsIncident with its resolutionKind, present exactly when resolved (BR3.7)."
+    },
+    "OpsIncidentReadPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OpsIncidentRead"
+          },
+          "x-limit-policy": "AdmissionPolicy bounds length; unresolved policy blocks admission."
+        },
+        "page": {
+          "$ref": "#/$defs/PageInfo"
+        }
+      },
+      "required": [
+        "items",
+        "page"
+      ],
+      "additionalProperties": false
+    },
+    "OpsRecoveryOperation": {
+      "type": "string",
+      "enum": [
+        "backup.create",
+        "restore.verify",
+        "restore.production"
+      ],
+      "description": "C11 2.1.0 (A5, BR4.1): the only recovery procedures offered. The schedule may request only the first two (BR4.2)."
+    },
+    "OpsRecoveryStatus": {
+      "type": "object",
+      "properties": {
+        "recoveryRequestId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "environment": {
+          "type": "string",
+          "enum": [
+            "rehearsal",
+            "live"
+          ]
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "administrator",
+            "schedule"
+          ]
+        },
+        "operation": {
+          "$ref": "#/$defs/OpsRecoveryOperation"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "requested",
+            "awaiting-operator",
+            "running",
+            "verifying",
+            "post-restore-pending",
+            "held",
+            "succeeded",
+            "failed",
+            "unknown",
+            "cancelled",
+            "refused",
+            "expired"
+          ]
+        },
+        "incidentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "maxItems": 16
+        },
+        "createdAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/Time"
+        }
+      },
+      "required": [
+        "recoveryRequestId",
+        "revision",
+        "environment",
+        "origin",
+        "operation",
+        "state",
+        "evidenceRefs",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false,
+      "description": "C11 2.1.0 (A5): a recovery request as the ledger holds it; reading it never starts or advances work."
+    },
     "LibraryFilter": {
       "type": "object",
       "properties": {
@@ -749,6 +1013,14 @@
         },
         "reasonKey": {
           "$ref": "#/$defs/Id"
+        },
+        "placement": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "contextual",
+            "footer"
+          ]
         }
       },
       "required": [
@@ -792,6 +1064,67 @@
         "items",
         "resolvedRouteId",
         "clearPriorOwnerState"
+      ],
+      "additionalProperties": false
+    },
+    "HostNavigationReasonKey": {
+      "type": "string",
+      "enum": [
+        "nav.authenticationRequired",
+        "nav.capabilityPending",
+        "nav.capabilityDegraded",
+        "nav.capabilityUnavailable",
+        "nav.capabilityStale",
+        "nav.capabilityUnknown",
+        "nav.administratorOnly"
+      ],
+      "description": "C01 2.1.0 (A1): the navigation reason-key vocabulary a HostNavigationItem.reasonKey takes; display vocabulary only, never an authorization state."
+    },
+    "HostPublicCapability": {
+      "type": "object",
+      "properties": {
+        "capabilityId": {
+          "$ref": "#/$defs/Id"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "available",
+            "degraded",
+            "unavailable",
+            "unknown",
+            "stale"
+          ]
+        },
+        "reasonKey": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "capabilityId",
+        "state",
+        "reasonKey"
+      ],
+      "additionalProperties": false,
+      "description": "C01 2.1.0 (A1, BR5.9): one capability as a caller with no session sees it: its state and reason key alone, never an age, limitation, evidence reference, count or producer identity."
+    },
+    "HostPublicCapabilityPage": {
+      "type": "object",
+      "properties": {
+        "manifestRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HostPublicCapability"
+          },
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "manifestRevision",
+        "items"
       ],
       "additionalProperties": false
     },
@@ -1602,6 +1935,9 @@
         },
         "reasonKey": {
           "$ref": "#/$defs/Id"
+        },
+        "retainedUntil": {
+          "$ref": "#/$defs/Time"
         }
       },
       "required": [
@@ -1629,6 +1965,20 @@
             "required": [
               "evidenceReference"
             ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "retainedUntil"
+            ]
+          },
+          "then": {
+            "properties": {
+              "disposition": {
+                "const": "retained_by_policy"
+              }
+            }
           }
         }
       ]
@@ -1763,6 +2113,79 @@
           }
         }
       ]
+    },
+    "AccessConsentPendingSession": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "const": "consent_pending"
+        },
+        "session": {
+          "$ref": "#/$defs/AccessPublicSession"
+        },
+        "consentPurposeIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "maxItems": 16,
+          "uniqueItems": true
+        },
+        "expiresAt": {
+          "$ref": "#/$defs/Time"
+        }
+      },
+      "required": [
+        "state",
+        "session",
+        "consentPurposeIds",
+        "expiresAt"
+      ],
+      "additionalProperties": false,
+      "description": "C02 4.0.0 (A3, BR8.6): a migrated account's first sign-in. The session serves only access.listConsents and access.updateConsent until its v2 consents are recorded; a full session follows."
+    },
+    "AccessResetRequired": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "const": "reset_required"
+        },
+        "delivery": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "held",
+            "over_allowance"
+          ]
+        },
+        "messageKey": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "state",
+        "delivery",
+        "messageKey"
+      ],
+      "additionalProperties": false,
+      "description": "C02 4.0.0 (A3, BR8.6): the reset-required marker. No session is issued; the answer says whether the reset mail was accepted for sending, held, or not sent because the email allowance is spent."
+    },
+    "AccessSignInResult": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/AccessKnownSession"
+        },
+        {
+          "$ref": "#/$defs/AccessMfaContinuation"
+        },
+        {
+          "$ref": "#/$defs/AccessConsentPendingSession"
+        },
+        {
+          "$ref": "#/$defs/AccessResetRequired"
+        }
+      ],
+      "description": "C02 4.0.0 (A3): access.login's answer, a superset of AccessLoginResult with the two first-sign-in states."
     },
     "LibrarySavedPaper": {
       "type": "object",
@@ -4233,6 +4656,115 @@
           "additionalProperties": false
         }
       ]
+    },
+    "ResearchJobListKind": {
+      "type": "string",
+      "enum": [
+        "research",
+        "novelty"
+      ]
+    },
+    "ResearchJobListHttp": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/ResearchJobListKind"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        },
+        "cursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "ResearchJobListItem": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "$ref": "#/$defs/Id"
+        },
+        "kind": {
+          "$ref": "#/$defs/ResearchJobListKind"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "running",
+            "cancel_requested",
+            "succeeded",
+            "failed",
+            "cancelled"
+          ]
+        },
+        "createdAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/Time"
+        },
+        "resultAvailable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "jobId",
+        "kind",
+        "label",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "resultAvailable"
+      ],
+      "additionalProperties": false
+    },
+    "ResearchJobListPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ResearchJobListItem"
+          },
+          "maxItems": 50
+        },
+        "nextCursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "nextCursor"
+      ],
+      "additionalProperties": false
     },
     "ResearchTurn": {
       "type": "object",
@@ -7589,6 +8121,60 @@
         "expectedRevision",
         "evidenceRefs",
         "policy"
+      ],
+      "additionalProperties": false
+    },
+    "OpsRecoverySubmissionHttp": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "$ref": "#/$defs/OpsRecoveryOperation"
+        },
+        "targetId": {
+          "$ref": "#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "origin": {
+          "const": "administrator"
+        },
+        "submissionId": {
+          "$ref": "#/$defs/Id"
+        },
+        "incidentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "maxItems": 16
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "operation",
+        "targetId",
+        "expectedRevision",
+        "origin",
+        "submissionId",
+        "policy"
+      ],
+      "additionalProperties": false
+    },
+    "OpsRecoveryStatusReadHttp": {
+      "type": "object",
+      "properties": {
+        "recoveryRequestId": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "recoveryRequestId"
       ],
       "additionalProperties": false
     },

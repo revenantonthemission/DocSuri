@@ -19,6 +19,7 @@ from uuid import UUID, uuid4
 
 from argon2.exceptions import InvalidHashError, VerificationError
 from backend.artifacts import PrivateArtifacts
+from backend.local_profile import verifier_key_path
 from backend.transactions import Authority, Busy, OwnerTransactions, guard
 from psycopg.types.json import Jsonb
 
@@ -43,8 +44,14 @@ class GuardedEntryService:
 
     def __init__(self, transactions: OwnerTransactions):
         self.transactions = transactions
-        self.mail = PrivateArtifacts(transactions.profile.root / "verification-mail")
-        key_path = transactions.profile.root / "account-verifier.key"
+        if getattr(transactions.profile, "is_production", False):
+            # A9: the production profile's mail root lives under its own root.
+            self.mail = PrivateArtifacts.for_profile(transactions.profile, "verification-mail")
+        else:
+            self.mail = PrivateArtifacts(transactions.profile.root / "verification-mail")
+        # The complete realms keep the key in the profile's `verifier-key/` folder
+        # (security-design § 6.2); every earlier realm keeps it at its run root.
+        key_path = verifier_key_path(transactions.profile)
         try:
             descriptor = os.open(key_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         except FileExistsError:
@@ -433,7 +440,8 @@ class GuardedEntryService:
             # Research/content operations retain their own current consent checks.
             purpose = (
                 "account-control"
-                if self.transactions.profile.realm in ("topics-digests", "approved-export")
+                if self.transactions.profile.realm
+                in ("topics-digests", "approved-export", "service-operations", "production")
                 else "local-research"
             )
             guard(conn, authority, purpose=purpose)
@@ -480,7 +488,8 @@ class GuardedEntryService:
         def write(conn):
             purpose = (
                 "account-control"
-                if self.transactions.profile.realm in ("topics-digests", "approved-export")
+                if self.transactions.profile.realm
+                in ("topics-digests", "approved-export", "service-operations", "production")
                 else "local-research"
             )
             guard(conn, authority, purpose=purpose)

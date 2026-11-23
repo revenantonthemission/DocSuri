@@ -80,17 +80,19 @@ def settings_router(transactions, *, entry, controls=None) -> APIRouter:
             interests,
         )
 
-    if transactions.profile.realm == "account-controls":
+    # U2's personal controls in U2's realm and, by the row "U2's controls in the complete
+    # app", in the composed and production realms, each under its own policy.
+    if transactions.profile.realm in ("account-controls", "service-operations", "production"):
         from backend.modules.accounts.control_confirmation import ResetConfirmationService
         from backend.modules.accounts.control_cursor import ControlCursor
-        from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
+        from backend.modules.accounts.control_policy import for_realm
         from backend.modules.personalization.control_service import (
             PersonalizationControlService,
             ProducerBinding,
         )
         from backend.modules.personalization.reset_repository import ResetRepository
 
-        policy = SYNTHETIC_POLICY
+        policy = for_realm(transactions.profile.realm)
         cursor = ControlCursor(bytes.fromhex(entry.verifier("cursor", "u2-controls-v1")))
         controls = controls or PersonalizationControlService(
             transactions, policy, cursor, producers=(ProducerBinding("Library"),)

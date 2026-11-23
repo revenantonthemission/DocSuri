@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://docsuri.dev/shared/events/execution.schema.json",
-  "$comment": "Generated canonical contract release 3.1.0; source SHA256:9ef6c9cd2ca848be703d6c70524d185625fb77610d0168eb61d9bc13bae7fb0b",
+  "$comment": "Generated canonical contract release 4.0.0; source SHA256:3b3117f98cd503adcc7ac9a1d78c86319ce88e7f848f30ae61c7f97b16139b55",
   "$defs": {
     "Principal": {
       "oneOf": [
@@ -400,6 +400,74 @@
         "policy"
       ],
       "additionalProperties": false
+    },
+    "OpsRecoverySubmission": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "operation": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/OpsRecoveryOperation"
+        },
+        "targetId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "expectedRevision": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Revision"
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "administrator",
+            "schedule"
+          ]
+        },
+        "submissionId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "incidentId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+          },
+          "maxItems": 16
+        },
+        "policy": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/PolicyRef"
+        }
+      },
+      "required": [
+        "context",
+        "operation",
+        "targetId",
+        "expectedRevision",
+        "origin",
+        "submissionId",
+        "policy"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope for C11 requestRecovery (A5); context is derived by the trusted boundary. The idempotency key is the digest of origin, requester, operation, target, expected revision and submissionId (BR4.9)."
+    },
+    "OpsRecoveryStatusRead": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "recoveryRequestId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        }
+      },
+      "required": [
+        "context",
+        "recoveryRequestId"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope for C11 readRecoveryStatus (A5); context is derived by the trusted boundary."
     },
     "ProviderRequest": {
       "oneOf": [
@@ -2846,6 +2914,17 @@
       "additionalProperties": false,
       "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
     },
+    "HostCapabilityRead": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/HostCapabilitiesPage"
+        },
+        {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/HostPublicCapabilityPage"
+        }
+      ],
+      "description": "C01 2.1.0 (A1): host.listCapabilities answers the full page to an authorized diagnostic caller and the public projection to a caller with no session."
+    },
     "AccessSessionInput": {
       "type": "object",
       "properties": {
@@ -3168,6 +3247,40 @@
       ],
       "additionalProperties": false
     },
+    "AccessIdentityConsentPending": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "const": "consent_pending"
+        },
+        "identityLink": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/AccessIdentityLink"
+        },
+        "session": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/AccessPublicSession"
+        },
+        "consentPurposeIds": {
+          "type": "array",
+          "items": {
+            "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+          },
+          "maxItems": 16,
+          "uniqueItems": true
+        },
+        "expiresAt": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Time"
+        }
+      },
+      "required": [
+        "state",
+        "identityLink",
+        "session",
+        "consentPurposeIds",
+        "expiresAt"
+      ],
+      "additionalProperties": false,
+      "description": "C02 4.0.0 (A3, BR8.6, decision of 2026-10-22): a migrated account's first sign-in through Google or ORCID. As AccessConsentPendingSession on the password path, the session serves only access.listConsents and access.updateConsent until its v2 consents are recorded; a full session follows."
+    },
     "AccessIdentityResult": {
       "oneOf": [
         {
@@ -3178,6 +3291,9 @@
         },
         {
           "$ref": "#/$defs/AccessIdentityMfa"
+        },
+        {
+          "$ref": "#/$defs/AccessIdentityConsentPending"
         }
       ]
     },
@@ -3908,6 +4024,401 @@
       ],
       "additionalProperties": false,
       "description": "Internal envelope; context is derived by the trusted boundary, never accepted from a public body."
+    },
+    "AccessSessionPurpose": {
+      "type": "string",
+      "enum": [
+        "full_session",
+        "primary_mfa_continuation",
+        "reactivation_status",
+        "preauthentication",
+        "mfa",
+        "proof",
+        "consent_pending"
+      ],
+      "description": "C02 4.0.0 (A3): the one purpose rule of a session. consent_pending is a purpose-limited session a migrated account's first sign-in opens; every guard denies it everything but giving consents. An unknown purpose is denied (common rule 7)."
+    },
+    "AccessAdmission": {
+      "type": "string",
+      "enum": [
+        "maintainer-only",
+        "open"
+      ],
+      "description": "C02 4.0.0 (A3): admission is a policy input read from the profile. maintainer-only admits only administrators; open admits migrated accounts, and registration stays governed by the public-activation evidence policy."
+    },
+    "AccessVerifierKeyReplaceInput": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "expectedKeyRevision": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Revision"
+        },
+        "reasonKey": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        }
+      },
+      "required": [
+        "context",
+        "expectedKeyRevision",
+        "reasonKey"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope for the operator's verifier-key replacement (BR6.2); context is derived by the trusted boundary."
+    },
+    "AccessVerifierKeyReplaced": {
+      "type": "object",
+      "properties": {
+        "keyRevision": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Revision"
+        },
+        "sessionsEnded": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "proofsEnded": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "replacedAt": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Time"
+        }
+      },
+      "required": [
+        "keyRevision",
+        "sessionsEnded",
+        "proofsEnded",
+        "replacedAt"
+      ],
+      "additionalProperties": false
+    },
+    "LifecycleRetentionReasonKey": {
+      "type": "string",
+      "enum": [
+        "external-copies-retained-by-owner",
+        "backups-retained-until-disposal"
+      ],
+      "description": "C02 4.0.0 (A3, U6 A8, BR2.5): a scope reason key AccountAccess reports as retained by policy, never as erased. ServiceOperations reports its backups scope with backups-retained-until-disposal and the latest date by which every backup set and retained copy that may hold the owner's data is gone (LifecycleScopeDisposition.retainedUntil)."
+    },
+    "CorpusCanonicalIdentity": {
+      "type": "string",
+      "pattern": "^(arxiv|doi|key):[^\\s@]{1,240}$",
+      "description": "C04 2.1.0 (A4): the one canonical paper identity: an arXiv id without its version, a DOI, or the corpus's canonical key, each lower-case prefixed."
+    },
+    "CorpusVersionIdentity": {
+      "type": "string",
+      "pattern": "^(arxiv|doi|key):[^\\s@]{1,240}@v[1-9][0-9]{0,3}$",
+      "description": "C04 2.1.0 (A4): the one canonical version identity: a canonical paper identity and its version number."
+    },
+    "ImportOutcome": {
+      "type": "object",
+      "properties": {
+        "sourceKey": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "targetId": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "imported",
+            "unchanged",
+            "updated",
+            "refused"
+          ]
+        },
+        "reasonKey": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "storedDigest": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Hash"
+        }
+      },
+      "required": [
+        "sourceKey",
+        "targetId",
+        "disposition",
+        "storedDigest"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "disposition": {
+                "const": "refused"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reasonKey"
+            ]
+          }
+        }
+      ],
+      "description": "A4: one import's outcome. targetId is derived from (v1, kind, source id), so a repeated import changes nothing (BR8.3). storedDigest is the SHA-256 of the stored normalized fields."
+    },
+    "AccountImport": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "sourceKey": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "email": {
+          "anyOf": [
+            {
+              "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/AccessEmail"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "emailVerified": {
+          "type": "boolean"
+        },
+        "passwordVerifier": {
+          "anyOf": [
+            {
+              "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/AccessSecret"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "active",
+            "pending",
+            "locked",
+            "deactivated",
+            "pending_deletion"
+          ]
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "user",
+            "admin"
+          ]
+        },
+        "createdAt": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Time"
+        }
+      },
+      "required": [
+        "context",
+        "sourceKey",
+        "email",
+        "emailVerified",
+        "passwordVerifier",
+        "state",
+        "role",
+        "createdAt"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope for C02 access.importAccount (A4); trusted composition authority only."
+    },
+    "IdentityLinkImport": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "sourceKey": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "accountSourceKey": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "google",
+            "orcid"
+          ]
+        },
+        "providerSubject": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "confirmed": {
+          "type": "boolean"
+        },
+        "linkedAt": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Time"
+        }
+      },
+      "required": [
+        "context",
+        "sourceKey",
+        "accountSourceKey",
+        "provider",
+        "providerSubject",
+        "confirmed",
+        "linkedAt"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope for C02 access.importIdentityLink (A4); trusted composition authority only."
+    },
+    "SettingsImport": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "sourceKey": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "accountSourceKey": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "maxProperties": 64
+        }
+      },
+      "required": [
+        "context",
+        "sourceKey",
+        "accountSourceKey",
+        "settings"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope for C03 settings.importSettings (A4); trusted composition authority only."
+    },
+    "SavedPaperImport": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "sourceKey": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "accountSourceKey": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "paper": {
+          "$ref": "#/$defs/CorpusCanonicalIdentity"
+        },
+        "savedAt": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Time"
+        }
+      },
+      "required": [
+        "context",
+        "sourceKey",
+        "accountSourceKey",
+        "paper",
+        "savedAt"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope for C03 library.importSavedPaper (A4); trusted composition authority only. Saved papers that differ only by version suffix collapse into one."
+    },
+    "PaperImport": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "sourceKey": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "version": {
+          "$ref": "#/$defs/CorpusVersionIdentity"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "maxProperties": 64
+        },
+        "contentRef": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Id"
+        },
+        "contentHash": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Hash"
+        }
+      },
+      "required": [
+        "context",
+        "sourceKey",
+        "version",
+        "metadata",
+        "contentRef",
+        "contentHash"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope for C04 importPaper (A4); trusted composition authority only. CorpusContent matches the paper by its canonical identity, converts its content and applies its eligibility and size limits."
+    },
+    "ImportParityRead": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "account",
+            "identity-link",
+            "settings",
+            "saved-paper",
+            "paper"
+          ]
+        }
+      },
+      "required": [
+        "context",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope for each owner's parity read (A4); trusted composition authority only."
+    },
+    "ImportParityDigest": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "account",
+            "identity-link",
+            "settings",
+            "saved-paper",
+            "paper"
+          ]
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "digest": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Hash"
+        },
+        "observedAt": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/Time"
+        }
+      },
+      "required": [
+        "kind",
+        "count",
+        "digest",
+        "observedAt"
+      ],
+      "additionalProperties": false,
+      "description": "A4: an order-independent digest over the compared normalized fields of every imported record of one kind."
     },
     "LibrarySavePaperInput": {
       "type": "object",
@@ -6230,6 +6741,39 @@
         "contextId"
       ],
       "additionalProperties": false
+    },
+    "ResearchJobList": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/CommandContext"
+        },
+        "kind": {
+          "$ref": "https://docsuri.dev/shared/dtos/workspace.schema.json#/$defs/ResearchJobListKind"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        },
+        "cursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "context"
+      ],
+      "additionalProperties": false,
+      "description": "Internal envelope for C07 listResearchJobs (A2); context is derived by the trusted boundary, never accepted from a public body."
     },
     "ResearchTurnRead": {
       "type": "object",

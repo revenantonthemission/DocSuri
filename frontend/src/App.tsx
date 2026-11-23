@@ -28,21 +28,57 @@ import { AccountControls, LifecycleProgress } from './account-controls';
 import { PersonalControls } from './personal-controls';
 import { UsageControls } from './usage-controls';
 import { LibraryControls } from './library-controls';
+import { setLibraryPolicy } from './u3-corpus/api';
 import { CorpusWorkspace } from './u3-corpus/corpus-workspace';
 import { ResearchWorkspace } from './u4-research/research-workspace';
 import { readJobLink } from './u4-research/jobs';
 import { TopicsView } from './u5-topics/topics-view';
 import { findExportCapability } from './u6-export/api';
 import { ExportView } from './u6-export/export-view';
+import { AnnouncerProvider } from './u8-shell/announcer';
+import { isCompleteAnswer, isPublicPage, statesOf } from './u8-shell/capabilities';
+import {
+  EARLIER_ASSEMBLY,
+  captureReturn,
+  claimRouteFocus,
+  restoreReturn,
+  returnTarget,
+  useRouteFocus,
+  type FocusRequest,
+  type ReturnPoint,
+} from './u8-shell/focus';
+import { Footer } from './u8-shell/footer';
+import { WorkspaceNavigation, type NavigationStatus } from './u8-shell/navigation';
+import { useOwnerBoundary } from './u8-shell/owner-boundary';
+import type { NavItem } from './u8-shell/reasons';
+import shellStyles from './u8-shell/shell.module.css';
+import { JobsView } from './u8-jobs/jobs-view';
+import { OperationsView } from './u8-operations/operations-view';
+import { CallbackPage, takeCallbackArrival } from './u8-entry/callback-page';
+import { EmailChangeProof } from './u8-entry/email-change-proof';
+import {
+  CompleteEntry,
+  controlPolicyFor,
+  takeFragmentProof,
+  type Proof,
+} from './u8-entry/entry-panel';
+import { AdminMfaPrompt } from './u8-entry/first-sign-in';
 
 type Appearance = 'light' | 'dark' | 'system';
-type NavigationItem = {
-  routeId: string;
-  titleKey: string;
-  capabilityId: string;
-  available: boolean;
-  reasonKey?: string;
-};
+type NavigationItem = NavItem;
+type View =
+  | 'search'
+  | 'paper'
+  | 'library'
+  | 'account'
+  | 'settings'
+  | 'usage'
+  | 'research'
+  | 'novelty'
+  | 'topics'
+  | 'export'
+  | 'jobs'
+  | 'operations';
 type SearchHit = {
   paper: PaperRef;
   title: string;
@@ -80,30 +116,6 @@ type Measure = {
 };
 type Settings = { revision: string; appearance: Appearance; onboarding: string };
 
-const NAV_COPY: Record<string, string> = {
-  search: '검색',
-  paper: '논문',
-  library: '내 서재',
-  settings: '설정',
-  usage: '사용량',
-  jobs: '작업',
-  account: '계정',
-  research: '연구',
-  novelty: '참신성 분석',
-  topics: '주제 구독',
-  export: '내보내기',
-};
-const OWNER_BOUND = new Set([
-  'library',
-  'settings',
-  'usage',
-  'jobs',
-  'account',
-  'research',
-  'novelty',
-  'topics',
-  'export',
-]);
 const APPEARANCE_KEY = 'docsuri.u1.appearance';
 const AUTHORITY_CHANNEL = 'docsuri.authority-boundary';
 type AuthorityNotice = { kind: 'authority-changed'; nonce: string };
@@ -137,6 +149,30 @@ export default function App({ transport }: { transport?: Transport }) {
   const client = useMemo(() => transport ?? new Transport(), [transport]);
   const [catalogReady, setCatalogReady] = useState(false);
   const [catalog, setCatalog] = useState<WorkspaceCapabilityCatalog | null>(null);
+  // The raw capability answer: the complete assembly answers a caller with no full
+  // session with the public projection (BR5.9), which carries no catalog rows.
+  const [capabilityAnswer, setCapabilityAnswer] = useState<unknown>(null);
+  const complete = isCompleteAnswer(capabilityAnswer);
+  const capabilityStates = useMemo(() => statesOf(capabilityAnswer), [capabilityAnswer]);
+  const [navStatus, setNavStatus] = useState<NavigationStatus>('loading');
+  const [navAttempt, setNavAttempt] = useState(0);
+  // The provider's answer leaves the address in this first render, before the first commit
+  // and before the capability, session and navigation reads (L1-15).
+  const [callbackProvider, setCallbackProvider] = useState<string | null>(takeCallbackArrival);
+  // An email link's proof leaves the address in this first render too, whatever the
+  // session (L1-1). A kept proof waits for one owner change only (`proofWait`).
+  const [emailProof, setEmailProof] = useState<Proof | null>(takeFragmentProof);
+  const proofWait = useRef({ baseline: null as string | null, waited: false, shown: false });
+  const [completeNotice, setCompleteNotice] = useState<Notice | null>(null);
+  const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
+  const requestFocus = useCallback((testId?: string) => {
+    setFocusRequest((current) => ({
+      id: (current?.id ?? 0) + 1,
+      ...(testId !== undefined ? { testId } : {}),
+    }));
+  }, []);
+  const [arrival, setArrival] = useState<unknown>(undefined);
+  const returnPoint = useRef<ReturnPoint | null>(null);
   const [boundary, setBoundary] = useState(0);
   const [lifecycleId, setLifecycleId] = useState<string | null>(null);
   const [initialProof, setInitialProof] = useState(takeProofLink);
@@ -145,18 +181,7 @@ export default function App({ transport }: { transport?: Transport }) {
   const [bootstrap, setBootstrap] = useState<SessionBootstrap | null>(null);
   const [bootstrapped, setBootstrapped] = useState(false);
   const [navigation, setNavigation] = useState<NavigationItem[]>([]);
-  const [view, setView] = useState<
-    | 'search'
-    | 'paper'
-    | 'library'
-    | 'account'
-    | 'settings'
-    | 'usage'
-    | 'research'
-    | 'novelty'
-    | 'topics'
-    | 'export'
-  >(() => {
+  const [view, setView] = useState<View>(() => {
     const job = readJobLink();
     return job ? (job.kind === 'research-turn' ? 'research' : 'novelty') : 'search';
   });
@@ -181,6 +206,9 @@ export default function App({ transport }: { transport?: Transport }) {
     (value) => value.id === 'account.controls' && value.state === 'available',
   )?.policy;
   const isControls = !!controlPolicy;
+  // The complete workspace's citation save sends the reading page's own library policy
+  // (U8, the person's decision of 2026-10-23); every earlier realm keeps U3's built one.
+  setLibraryPolicy(complete ? controlPolicy : undefined);
   const researchCapability = catalog?.capabilities.find(
     (value) => value.id === 'research' && ['available', 'degraded'].includes(value.state),
   );
@@ -191,6 +219,9 @@ export default function App({ transport }: { transport?: Transport }) {
     (value) => value.id === 'topics.digest' && ['available', 'degraded'].includes(value.state),
   );
   const exportCapability = findExportCapability(catalog);
+  const operationsPolicy = catalog?.capabilities.find(
+    (value) => value.id === 'operations.ledger',
+  )?.policy;
   // The U3 corpus workspace replaces the live search/reading surfaces when the
   // corpus owner capabilities are installed in this realm.
   const isCorpusWorkspace =
@@ -198,13 +229,23 @@ export default function App({ transport }: { transport?: Transport }) {
       (value) => value.id === 'corpus.maintenance' && value.state === 'available',
     ) ?? false;
 
+  const readCapabilities = useCallback(
+    () =>
+      client
+        .get<unknown>('/api/v2/capabilities')
+        .then((value) => {
+          setCapabilityAnswer(value);
+          setCatalog(isPublicPage(value) ? null : (value as WorkspaceCapabilityCatalog));
+        })
+        .catch(() => {
+          setCapabilityAnswer(null);
+          setCatalog(null);
+        }),
+    [client],
+  );
   useEffect(() => {
-    client
-      .get<WorkspaceCapabilityCatalog>('/api/v2/capabilities')
-      .then(setCatalog)
-      .catch(() => setCatalog(null))
-      .finally(() => setCatalogReady(true));
-  }, [client]);
+    void readCapabilities().finally(() => setCatalogReady(true));
+  }, [readCapabilities]);
   useEffect(
     () =>
       client.subscribe(() => {
@@ -330,15 +371,62 @@ export default function App({ transport }: { transport?: Transport }) {
       }),
     )
       .then((value) => {
-        if (active) setNavigation(value.items);
+        if (!active) return;
+        setNavigation(value.items);
+        setNavStatus('resolved');
       })
       .catch(() => {
-        if (active) setNavigation([]);
+        if (!active) return;
+        setNavigation([]);
+        setNavStatus('error');
       });
     return () => {
       active = false;
     };
-  }, [client, signedIn, accountId]);
+  }, [client, signedIn, accountId, navAttempt]);
+
+  // The complete assembly answers by session (BR5.9), so its capability list is read
+  // again whenever the owner changes; earlier assemblies keep their single read.
+  const owner = `${signedIn ? 'member' : 'guest'}:${accountId}`;
+  const seenOwner = useRef(owner);
+  useEffect(() => {
+    if (seenOwner.current === owner) return;
+    seenOwner.current = owner;
+    if (complete) void readCapabilities();
+  }, [owner, complete, readCapabilities]);
+  const clearOwnerViews = useCallback(() => {
+    returnPoint.current = null;
+    setArrival(undefined);
+  }, []);
+  useOwnerBoundary(complete ? owner : EARLIER_ASSEMBLY, clearOwnerViews);
+  // A kept email-link proof waits for one owner change only: an email change for the next
+  // sign-in, the other kinds for the next sign-out. Any other owner change, and any owner
+  // change after the proof was shown, drops it, so it never reaches another account's
+  // session (Step 91(l)). The first settled owner is the baseline, not a change.
+  useEffect(() => {
+    if (!complete || !bootstrapped || !catalogReady) return;
+    const wait = proofWait.current;
+    if (wait.baseline === null || wait.baseline === owner) {
+      wait.baseline = owner;
+      return;
+    }
+    wait.baseline = owner;
+    if (!emailProof) return;
+    const expected = emailProof.action === 'email-change' ? signedIn : !signedIn;
+    if (wait.shown || wait.waited || !expected) setEmailProof(null);
+    else wait.waited = true;
+  }, [owner, signedIn, complete, bootstrapped, catalogReady, emailProof]);
+  const showEmailChange = complete && signedIn && emailProof?.action === 'email-change';
+  // Once shown, the proof is dropped at the next owner change; the entry that sign-out
+  // mounts in that same render must not start from it (Step 92(j)).
+  const [proofShown, setProofShown] = useState(false);
+  useEffect(() => {
+    if (!showEmailChange || proofWait.current.shown) return;
+    proofWait.current.shown = true;
+    setProofShown(true);
+    requestFocus('email-change-proof');
+  }, [showEmailChange, requestFocus]);
+  useRouteFocus(complete ? view : EARLIER_ASSEMBLY, complete ? focusRequest : null);
 
   useEffect(() => {
     if (!signedIn) {
@@ -390,59 +478,119 @@ export default function App({ transport }: { transport?: Transport }) {
   };
 
   const openPaper = (value: PaperRef) => {
+    // BR5.8: a paper opened from a result returns to that result's place and focus.
+    if (complete && view !== 'paper') returnPoint.current = captureReturn(view);
     setPaper(value);
     setView('paper');
     window.requestAnimationFrame(() => mainHeading.current?.focus());
   };
 
-  const navigationItems = navigation.length
-    ? navigation
-    : Object.keys(NAV_COPY).map((routeId) => ({
-        routeId,
-        titleKey: routeId,
-        capabilityId: '',
-        available: routeId === 'search',
-      }));
+  const closePaper = () => {
+    const point = returnPoint.current;
+    returnPoint.current = null;
+    if (!point) {
+      setView('search');
+      return;
+    }
+    setView(point.view === 'library' ? 'library' : 'search');
+    // The route change returns focus to the result the paper was opened from (BR5.8).
+    claimRouteFocus(returnTarget(point));
+    restoreReturn(point);
+  };
 
-  return (
+  const selectRoute = (routeId: string) => {
+    if (routeId === 'search') setView('search');
+    else if (routeId === 'library') setView('library');
+    else if (isControls && ['account', 'settings', 'usage'].includes(routeId))
+      setView(routeId as 'account' | 'settings' | 'usage');
+    else if (['research', 'novelty'].includes(routeId)) setView(routeId as 'research' | 'novelty');
+    else if (routeId === 'topics' && topicsCapability) setView('topics');
+    else if (routeId === 'export' && exportCapability) setView('export');
+    else if (complete && (routeId === 'jobs' || routeId === 'operations')) setView(routeId);
+    focusHeading(mainHeading);
+  };
+
+  // An entry that needs a session takes the person to the sign-in form (BR5.2).
+  const requireSignIn = () => {
+    // When the view changes, the route change lands on the sign-in field, not on the
+    // heading the search view focuses as it mounts (Step 91(f)).
+    if (complete && view !== 'search')
+      claimRouteFocus(() => document.getElementById('entry-email'));
+    setView('search');
+    window.requestAnimationFrame(() => document.getElementById('entry-email')?.focus());
+  };
+
+  const leaveCallback = useCallback((answer?: unknown) => {
+    window.history.replaceState(null, '', '/search');
+    setCallbackProvider(null);
+    if (answer !== undefined) setArrival(answer);
+  }, []);
+  const arrive = useCallback((answer: unknown) => leaveCallback(answer), [leaveCallback]);
+  // The arrival page leaves with its focused callback-back: the entry's heading takes the
+  // focus, or the view's first heading for a signed-in person (Step 91(g)).
+  const returnFromCallback = useCallback(() => {
+    leaveCallback();
+    if (signedIn) requestFocus();
+    else requestFocus('complete-entry');
+  }, [leaveCallback, requestFocus, signedIn]);
+  // The arrival page's maintenance notice leaves with its 관리자 로그인 for the sign-in
+  // form, its email field focused (NFR1.3). It requests no heading focus, so the route
+  // focus does not take the focus back from the field; the sign-in form is asked for one
+  // frame later, after the search view that mounts in the page's place has focused its
+  // own heading in its first frame.
+  const signInAsAdministratorFromCallback = () => {
+    leaveCallback();
+    window.requestAnimationFrame(requireSignIn);
+  };
+
+  const signOut = async () => {
+    try {
+      await client.post('/api/v2/c02/access-logout', {});
+    } catch {
+      /* local private state still clears below */
+    }
+    client.invalidateBoundary();
+    announceAuthorityChange();
+    setBootstrap(null);
+    setLifecycleId(null);
+    setSettings(null);
+    setPaper(null);
+    setRerun(null);
+    setView('search');
+    if (window.location.hash.startsWith('#research-job?'))
+      window.history.replaceState(null, '', window.location.pathname);
+    await refreshSession().catch(() => undefined);
+    // The session read remounts the workspace; focus then lands on the entry's heading,
+    // even when the view was already search (Step 91(g)).
+    if (complete) requestFocus('complete-entry');
+  };
+
+  // An administrator's setup-only session reads only the public projection until the
+  // second factor is enrolled (BR3.8); it sees the enrollment prompt and nothing else.
+  const setupOnly = complete && signedIn && isPublicPage(capabilityAnswer);
+  const entryPolicy = controlPolicy ?? controlPolicyFor(window.location.origin);
+
+  const shell = (
     <div className="shell" data-testid="app-shell" data-account={accountId}>
       <a className="skip" href="#main">
         본문으로 건너뛰기
       </a>
       <header className="topbar">
         <p className="brand">DocSuri 연구 공간</p>
-        <nav aria-label="주요 이동" data-testid="navigation">
-          {navigationItems
-            .filter(
-              (item) =>
-                !OWNER_BOUND.has(item.routeId) ||
-                (signedIn && catalogReady && navigation.length > 0),
-            )
-            .map((item) => (
-              <button
-                key={item.routeId}
-                type="button"
-                className={view === item.routeId ? 'nav active' : 'nav'}
-                aria-current={view === item.routeId ? 'page' : undefined}
-                aria-disabled={!item.available}
-                disabled={!item.available}
-                onClick={() => {
-                  if (item.routeId === 'search') setView('search');
-                  else if (item.routeId === 'library') setView('library');
-                  else if (isControls && ['account', 'settings', 'usage'].includes(item.routeId))
-                    setView(item.routeId as 'account' | 'settings' | 'usage');
-                  else if (['research', 'novelty'].includes(item.routeId))
-                    setView(item.routeId as 'research' | 'novelty');
-                  else if (item.routeId === 'topics' && topicsCapability) setView('topics');
-                  else if (item.routeId === 'export' && exportCapability) setView('export');
-                  focusHeading(mainHeading);
-                }}
-                data-testid={`nav-${item.routeId}`}
-              >
-                {NAV_COPY[item.routeId] ?? item.titleKey}
-              </button>
-            ))}
-        </nav>
+        <WorkspaceNavigation
+          items={navigation}
+          status={navStatus}
+          current={view}
+          signedIn={signedIn}
+          catalogReady={catalogReady}
+          complete={complete}
+          onSelect={selectRoute}
+          onRequireSignIn={requireSignIn}
+          onRetry={() => {
+            setNavStatus('loading');
+            setNavAttempt((value) => value + 1);
+          }}
+        />
         <div className="session">
           <label className="visually-hidden" htmlFor="appearance-select">
             화면 모드
@@ -458,28 +606,7 @@ export default function App({ transport }: { transport?: Transport }) {
             <option value="dark">어둡게</option>
           </select>
           {signedIn ? (
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  await client.post('/api/v2/c02/access-logout', {});
-                } catch {
-                  /* local private state still clears below */
-                }
-                client.invalidateBoundary();
-                announceAuthorityChange();
-                setBootstrap(null);
-                setLifecycleId(null);
-                setSettings(null);
-                setPaper(null);
-                setRerun(null);
-                setView('search');
-                if (window.location.hash.startsWith('#research-job?'))
-                  window.history.replaceState(null, '', window.location.pathname);
-                await refreshSession().catch(() => undefined);
-              }}
-              data-testid="logout"
-            >
+            <button type="button" onClick={() => void signOut()} data-testid="logout">
               로그아웃
             </button>
           ) : null}
@@ -490,9 +617,46 @@ export default function App({ transport }: { transport?: Transport }) {
           <Panel title="시작하기" titleRef={mainHeading} testId="bootstrapping">
             <p role="status">세션을 확인하고 있어요</p>
           </Panel>
+        ) : callbackProvider ? (
+          <CallbackPage
+            client={client}
+            provider={callbackProvider}
+            onArrived={arrive}
+            onBack={returnFromCallback}
+            states={capabilityStates}
+            onAdministratorSignIn={signInAsAdministratorFromCallback}
+          />
+        ) : setupOnly ? (
+          <AdminMfaPrompt
+            client={client}
+            policy={entryPolicy}
+            mode="setup"
+            onSignInAgain={() => void signOut()}
+          />
         ) : (
           <>
-            {!signedIn || (isControls && proofActive) ? (
+            {complete && !signedIn ? (
+              <CompleteEntry
+                client={client}
+                states={capabilityStates}
+                {...(arrival !== undefined ? { initialAnswer: arrival } : {})}
+                initialProof={proofShown ? null : emailProof}
+                initialNotice={completeNotice}
+                onProofTaken={() => setEmailProof(null)}
+                onSignedIn={async () => {
+                  const value = await authorityChanged();
+                  await readCapabilities();
+                  setCompleteNotice(null);
+                  // The completed sign-in lands on the destination's first heading; a kept
+                  // email-change proof takes the focus itself as it shows (Step 91(g), (l)).
+                  if (emailProof?.action !== 'email-change') requestFocus();
+                  return value;
+                }}
+              />
+            ) : // The complete assembly no longer shows U2's sign-in panel for a query-string
+            // proof (your answer of 2026-11-11, "Stop showing it"): its links arrive in the
+            // fragment. Every earlier assembly keeps this branch as built.
+            !signedIn || (!complete && isControls && proofActive) ? (
               isControls ? (
                 <AuthenticationPanel
                   key={`entry-${boundary}`}
@@ -527,6 +691,38 @@ export default function App({ transport }: { transport?: Transport }) {
             ) : null}
             {/* Account change remounts the workspace: no prior-owner private state. */}
             <div key={`${accountId}:${boundary}`} className="workspace-content">
+              {showEmailChange && emailProof ? (
+                <EmailChangeProof
+                  client={client}
+                  proof={emailProof}
+                  onDone={() => {
+                    // The route ended the session: ask for a sign-in with the new address.
+                    setEmailProof(null);
+                    setCompleteNotice(
+                      notice(
+                        'polite',
+                        '이메일 변경을 확인했습니다. 새 이메일 주소로 다시 로그인해 주세요.',
+                      ),
+                    );
+                    void authorityChanged()
+                      .catch(() => undefined)
+                      .finally(() => requestFocus('complete-entry'));
+                  }}
+                  onOpenAccount={() => {
+                    // Opening 계정 from the panel lands on its first heading even when the
+                    // view was already 계정 and so does not change (Step 91(g)).
+                    setEmailProof(null);
+                    setView('account');
+                    requestFocus();
+                  }}
+                  onLeave={() => {
+                    // The panel leaves with its focused 닫기: the view's first heading, else
+                    // #main, takes the focus, never the page body (Step 91(g)).
+                    setEmailProof(null);
+                    requestFocus();
+                  }}
+                />
+              ) : null}
               <StatusLine value={appearanceNotice} />
               {isControls && lifecycleId ? (
                 <LifecycleProgress client={client} id={lifecycleId} />
@@ -537,6 +733,7 @@ export default function App({ transport }: { transport?: Transport }) {
                   policy={controlPolicy!}
                   onAuthorityChange={authorityChanged}
                   onLifecycle={setLifecycleId}
+                  {...(complete ? { isCompleteApp: true } : {})}
                 />
               ) : null}
               {signedIn && isControls && view === 'settings' ? (
@@ -580,6 +777,22 @@ export default function App({ transport }: { transport?: Transport }) {
               {signedIn && exportCapability && view === 'export' ? (
                 <ExportView client={client} capability={exportCapability} />
               ) : null}
+              {signedIn && complete && view === 'jobs' ? (
+                <JobsView
+                  client={client}
+                  onOpenResearch={() => setView('research')}
+                  onOpenView={(kind) => setView(kind)}
+                />
+              ) : null}
+              {signedIn && complete && view === 'operations' && operationsPolicy ? (
+                <OperationsView
+                  client={client}
+                  account={accountId}
+                  controlPolicy={entryPolicy}
+                  operationsPolicy={operationsPolicy}
+                  onSignInAgain={() => void signOut()}
+                />
+              ) : null}
               {view === 'search' && isCorpusWorkspace ? (
                 <CorpusWorkspace client={client} signedIn={signedIn} />
               ) : null}
@@ -600,7 +813,7 @@ export default function App({ transport }: { transport?: Transport }) {
                   {...(controlPolicy ? { libraryPolicy: controlPolicy } : {})}
                   paper={paper}
                   signedIn={signedIn}
-                  onBack={() => setView('search')}
+                  onBack={closePaper}
                 />
               ) : null}
               {view === 'library' && signedIn && isControls ? (
@@ -629,7 +842,18 @@ export default function App({ transport }: { transport?: Transport }) {
           </>
         )}
       </main>
+      {complete ? <Footer /> : null}
     </div>
+  );
+  // Only the complete assembly carries the shell's live region, emptied at each owner
+  // change (L1-26), and the wrapper whose request id takes its line's colour (L1-40);
+  // earlier assemblies keep their own status regions and styles unchanged.
+  return complete ? (
+    <AnnouncerProvider owner={owner}>
+      <div className={shellStyles.completeShell}>{shell}</div>
+    </AnnouncerProvider>
+  ) : (
+    shell
   );
 }
 

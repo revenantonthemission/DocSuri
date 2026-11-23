@@ -18,10 +18,12 @@ through U4's export read under the approving owner's authority, and last a direc
 of the destination through Notion. The first definite change wins; a could-not-check is
 kept while the remaining facts are still checked, so a definite change found later still
 wins. The Notion read is skipped once a definite change is known, or while the
-connection cannot be used.
+connection cannot be used. A check with `destination=False`, the continue's (BR3.7 as
+amended), stops before the Notion read: it checks the local facts only, makes no Notion
+request and asks no gate slot, and the lane's pre-write check reads the destination.
 
-Approve and continue pass the connection id as the gate key, so the destination read
-takes an interactive slot (D15); the lane passes none.
+Approve passes the connection id as the gate key, so the destination read takes an
+interactive slot (D15); the lane passes none.
 """
 
 import asyncio
@@ -192,8 +194,15 @@ class BindingCheck:
         self._research = research
         self._policy = policy
 
-    def check(self, facts: BoundFacts, *, gate_key: UUID | None = None) -> BindingVerdict:
-        """Re-derive the binding; see the module docstring for the verdicts."""
+    def check(
+        self, facts: BoundFacts, *, gate_key: UUID | None = None, destination: bool = True
+    ) -> BindingVerdict:
+        """Re-derive the binding; see the module docstring for the verdicts.
+
+        With `destination=False` (the continue's check) the approving session, the
+        connection revision, the real allowance and the source are checked as always,
+        and the Notion read of the destination is skipped: no Notion request, no gate
+        slot."""
         if not isinstance(facts, BoundFacts):
             raise TypeError("bound facts are required")
         found: list[BindingVerdict] = []
@@ -210,6 +219,8 @@ class BindingCheck:
             return connection
         if changed(self._allowance(facts)) or changed(self._source(facts)):
             return found[-1]
+        if not destination:
+            return found[0] if found else _UNCHANGED
         if connection is None and changed(self._destination(facts, gate_key)):
             return found[-1]
         return found[0] if found else _UNCHANGED

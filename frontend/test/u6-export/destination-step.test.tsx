@@ -165,6 +165,42 @@ describe('listed pages', () => {
   });
 });
 
+describe('provider text stays text', () => {
+  it('renders a hostile title and context as text, never as elements', async () => {
+    const api = new ExportDouble().on('list-export-destinations', () =>
+      destinations([entry({ title: '<img src=x onerror="x">', context: '<b>{{x}}</b>' })]),
+    );
+    const { container } = mount(
+      <DestinationStep
+        client={api.client()}
+        connection={connection()}
+        initial={null}
+        onChoose={vi.fn()}
+      />,
+    );
+    await screen.findByTestId('destination-list');
+
+    const [option] = options();
+    expect(option!.textContent).toContain('<img src=x onerror="x">');
+    expect(option!.textContent).toContain('<b>{{x}}</b>');
+    expect(screen.queryByRole('img')).toBeNull();
+    expect(container.querySelector('img, b')).toBeNull();
+  });
+
+  it('offers radios carrying listing entry ids and never a free-text field', async () => {
+    step(
+      destinations([
+        entry({ destinationId: PAGE_A, parentPageId: PAGE_A }),
+        entry({ destinationId: PAGE_B, parentPageId: PAGE_B, title: '둘째 페이지' }),
+      ]),
+    );
+    await screen.findByTestId('destination-list');
+
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(radios().map((radio) => radio.value)).toEqual([PAGE_A, PAGE_B]);
+  });
+});
+
 describe('preselection', () => {
   it('preselects the last destination when it is listed and readable', async () => {
     const { onChoose } = step(

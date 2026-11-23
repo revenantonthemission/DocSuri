@@ -16,7 +16,7 @@ from backend.modules.plans.guarded_repository import GuardedUsageRepository
 from backend.modules.summarization.admission import AssistanceAdmission
 from backend.modules.summarization.execution import ExecutionClaims
 from backend.modules.summarization.guarded_repository import GuardedAssistanceRepository
-from backend.modules.summarization.payload import ExecutionPayloads
+from backend.modules.summarization.payload import BUILT_RULE, ExecutionPayloads
 from backend.modules.summarization.worker import (
     ExecutionInterrupted,
     PaperWorker,
@@ -26,14 +26,17 @@ from backend.u3_policy import bounded_int
 
 
 class AssistanceDispatch:
-    def __init__(self, transactions, files, executor, *, worker_id: UUID | None = None):
+    def __init__(self, transactions, files, executor, *, worker_id: UUID | None = None,
+                 payload_rule=None):
         self.transactions = transactions
         self.repository = GuardedAssistanceRepository(transactions, files)
         self.usage = GuardedUsageRepository(transactions)
         self.admission = AssistanceAdmission(self.repository, self.usage)
         self.claims = ExecutionClaims(self.repository)
+        # The one seam (U8 plan Step 23): the payload rule, U3's built bound by default.
         self.payloads = ExecutionPayloads(
-            self.claims, CorpusRepository(transactions, files=None)
+            self.claims, CorpusRepository(transactions, files=None),
+            rule=payload_rule or BUILT_RULE,
         )
         self.executor = executor
         self.worker_id = worker_id or uuid4()
@@ -51,16 +54,30 @@ class AssistanceDispatch:
                 self.executor,
                 payloads=self.payloads,
             )
+            self._item(job, "started")
+            state = "error"
             try:
-                worker.run(self.claims.binding(job))
-                executed += 1
-            except ExecutionInterrupted:
-                deferred += 1  # owner recovery decides; the row stays durable
-            except WorkerIntervention:
-                deferred += 1  # executor stop unconfirmed; do not replace work
-            except (ValueError, PermissionError):
-                deferred += 1  # not claimable or authority changed; remains inspectable
+                try:
+                    worker.run(self.claims.binding(job))
+                    executed += 1
+                    state = "executed"
+                except ExecutionInterrupted:
+                    deferred += 1  # owner recovery decides; the row stays durable
+                    state = "deferred"
+                except WorkerIntervention:
+                    deferred += 1  # executor stop unconfirmed; do not replace work
+                    state = "deferred"
+                except (ValueError, PermissionError):
+                    deferred += 1  # not claimable or authority changed; remains inspectable
+                    state = "deferred"
+            finally:
+                self._item(job, state)
         return {"executed": executed, "deferred": deferred}
+
+    def _item(self, job: dict, state: str) -> None:
+        """The per-item hook (U8 plan Step 51(d)): called with the job's row and `started`
+        before its worker runs, then with `executed`, `deferred` or `error`. Does nothing
+        here; a composition may override it."""
 
     def _job(self, job_id: UUID) -> dict:
         return self.transactions.run(

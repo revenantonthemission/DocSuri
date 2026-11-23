@@ -8,6 +8,8 @@ import logging
 
 import httpx
 import pytest
+from docsuri_shared.workspace import wire
+
 from backend.local_host import NAVIGATION, SYNTHETIC_CAPABILITIES, navigation_items
 from backend.local_observation import PROBES, observe_all
 from backend.modules.accounts.services.guarded_entry import GuardedEntryService
@@ -24,8 +26,7 @@ from backend.u6_host import (
     export_contribution,
 )
 from backend.u6_policy import SYNTHETIC_EXPORT, real_activation_export
-from docsuri_shared.workspace import wire
-
+from tests.u6_approved_export import notion_flows as nf
 from tests.u6_approved_export import service_flows as sf
 from tests.u6_approved_export import store_flows as flows
 
@@ -167,6 +168,35 @@ def test_the_contribution_keeps_the_transport_loggers_quiet(transactions):
     finally:
         for logger, level in zip(loggers, levels, strict=True):
             logger.setLevel(level)
+
+
+def test_one_identify_logs_no_transport_or_sdk_record(transactions, connect, authority, caplog):
+    fake = FakeNotion()
+    token = nf.synthetic_token()
+    fake.add_token(
+        token, bot_id=nf.bot_id(), workspace_id=nf.WORKSPACE_ID, workspace_name=nf.WORKSPACE_NAME
+    )
+    built = contribution(transactions, fake=fake)
+    caplog.set_level(logging.DEBUG)  # the root only; the transport loggers stay as kept
+
+    flows.fresh(connect, authority.account_id)
+    slot = built["repository"].reserve_connection(authority, None, now=dt.datetime.now(dt.UTC))
+    try:
+        identified = asyncio.run(
+            built["service"].adapter.identify(CandidateToken(slot.connection_id, token))
+        )
+    finally:
+        built["repository"].release_pending(authority, slot.holder)
+
+    assert identified.category == "ok"
+    assert [entry.path for entry in fake.requests] == ["/v1/users/me"]
+    assert [
+        record.name
+        for record in caplog.records
+        if record.name.startswith("httpx") or record.name.startswith("httpcore")
+    ] == []
+    assert "api.notion.com" not in caplog.text
+    assert logging.getLogger("httpx").level >= logging.WARNING
 
 
 def test_the_shell_names_the_export_route_and_probe(transactions):

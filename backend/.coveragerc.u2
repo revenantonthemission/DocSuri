@@ -4,8 +4,12 @@
 #
 # Source directories discover files that were never imported, so their statements
 # remain missing rather than disappearing from the coverage denominator. The
-# report inventory below includes entire changed production files, including
-# shared owners, the runner and the handwritten contract exporter.
+# report inventory below includes entire changed production files, shared owners
+# included. Test tooling is not product code: by the person's decision of
+# 2026-10-24 ("Move, scope tools, test U2") the runner, the browser fixtures, the
+# browser and transport preparers, the serve script, the cumulative verifier, the
+# shared transport helper and the contract exporter are outside it; U2's own restore
+# code stays in.
 #
 # REFRESH BEFORE FINAL VERIFICATION: reconcile [report] include with the complete
 # new/modified production Python inventory against the recorded develop base,
@@ -13,17 +17,15 @@
 # Fail the inventory gate if an expected path is absent on disk, absent from this
 # list, or absent from the combined JSON report. A report include pattern alone
 # does not make Coverage.py fail when its expected file never existed.
-# Only tests and generated-only binding data may be omitted by the approved U2
-# instructions. Do not remove low-coverage production paths to reach the floor.
+# Beyond those tools, only tests and generated-only binding data are left out.
+# Do not remove low-coverage production paths to reach the floor.
 # Installed .venv dependencies are not workspace production source.
 
 [run]
 branch = False
 source_dirs =
     backend
-    scripts
     ops/src/docsuri_ops
-    shared/python/tools
 omit =
     */tests/*
     */.venv/*
@@ -84,16 +86,8 @@ include =
     backend/modules/summarization/admission.py
     backend/modules/summarization/guarded_repository.py
     backend/transactions.py
-    ops/src/docsuri_ops/local_transport.py
     ops/src/docsuri_ops/u2_restore.py
     ops/src/docsuri_ops/u2_restore_context.py
-    scripts/prepare_docsuri_u2_browser.py
-    scripts/prepare_docsuri_u2_transport.py
-    scripts/serve_docsuri_u2.py
-    scripts/verify_docsuri_u2.py
-    scripts/verify_docsuri_cumulative.py
-    scripts/u2_browser_fixtures.py
-    shared/python/tools/export_workspace_contract.py
 
 [json]
 output = .coverage.u2.json

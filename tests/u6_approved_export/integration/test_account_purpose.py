@@ -6,14 +6,14 @@ send a research result, stay under the research purpose."""
 from uuid import uuid4
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
 from backend.modules.accounts.local_http import ENTRY_POLICY, account_router
 from backend.modules.accounts.services.guarded_entry import GuardedEntryService
 from backend.modules.export.http import PREFIX, export_router
 from backend.modules.personalization.guarded_service import POLICY as SETTINGS_POLICY
 from backend.modules.personalization.local_http import settings_router
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
 from tests.u6_approved_export import service_flows as sf
 
 # A synthetic password that satisfies the local policy; never a real credential.
@@ -25,7 +25,9 @@ def signed_out(realm, transactions, connect, authority_b, tmp_path):
     """A browser for owner B, who can sign in with a synthetic password, with B's
     research consent withdrawn for the test and restored afterwards."""
     entry = GuardedEntryService(transactions)
-    rig = sf.build(transactions, connect, authority_b, tmp_path)
+    rig = sf.build(
+        transactions, connect, authority_b, tmp_path, research=sf.real_research(transactions)
+    )
     app = FastAPI()
     app.include_router(account_router(entry))
     app.include_router(settings_router(transactions, entry=entry))

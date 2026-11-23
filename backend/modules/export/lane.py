@@ -90,6 +90,11 @@ def _unsent_outcome(category: str) -> WriteOutcome:
 
 
 class ExportLane:
+    # The per-item hook (U8 plan Step 51(d)): when set, called with the item and `started`
+    # before its work and with its outcome category after the status record. It may make
+    # one store read, so `item_seconds` counts one more unit while it is set.
+    item_hook = None
+
     def __init__(
         self,
         repository,
@@ -153,13 +158,15 @@ class ExportLane:
         """The longest an item of this kind can take: its reads, pace waits, the write
         deadline and the read-back budget, plus one store unit for each record."""
         policy = self._policy
+        hook = UNIT_SECONDS if self.item_hook is not None else 0
         if kind == "scan":
-            return policy.scan_budget_seconds + 2 * UNIT_SECONDS
+            return policy.scan_budget_seconds + 2 * UNIT_SECONDS + hook
         return (
             2 * policy.page_read_budget_seconds
             + policy.write_deadline_seconds
             + policy.read_back_budget_seconds
             + 6 * UNIT_SECONDS
+            + hook
         )
 
     def offer(self, item: LaneItem) -> bool:
@@ -194,6 +201,9 @@ class ExportLane:
         """Run one item to its record and return its outcome category. Never raises for
         the item's own failures: a store or adapter fault leaves the records as they
         are, for the orphan sweep and the next due time to recover."""
+        hook = self.item_hook
+        if hook is not None:
+            hook(item, "started")
         outcome, failure = FAILED, None
         try:
             outcome = self._dispatch(item)
@@ -202,6 +212,8 @@ class ExportLane:
         if failure is not None:
             LOGGER.warning("export lane %s item ended early (%s)", item.kind, failure)
         self._record_status(outcome)
+        if hook is not None:
+            hook(item, outcome)
         return outcome
 
     def _unit(self, call, *args, **kwargs):

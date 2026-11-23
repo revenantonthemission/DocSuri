@@ -19,6 +19,20 @@ export const PROCESSING_POLICY = { policyId: 'local-research', revision: '1' } a
 export const VOCABULARY = 'u3-paper-options-1';
 
 export type PolicyRef = { policyId: string; revision: string };
+
+// The library policy a citation save sends: the app's own, the one the reading page's
+// save uses (U8, the person's decision of 2026-10-23). The shell sets it from the
+// workspace's catalog; every earlier realm keeps the built synthetic library policy.
+export const BUILT_LIBRARY_POLICY: PolicyRef = {
+  policyId: 'synthetic-local-library',
+  revision: '1',
+};
+let libraryPolicy: PolicyRef = BUILT_LIBRARY_POLICY;
+
+export function setLibraryPolicy(policy: PolicyRef | undefined) {
+  libraryPolicy = policy ?? BUILT_LIBRARY_POLICY;
+}
+
 export type PaperRef = { paperId: string; versionId: string; eligibilityRevision: string };
 export type QueryFilter = { filterId: string; operatorId: string; values: (string | number)[] };
 export type QueryContext = {
@@ -81,13 +95,7 @@ export type ContentRead =
       };
     }
   | {
-      availability:
-        | 'absent'
-        | 'building'
-        | 'unsupported'
-        | 'failed'
-        | 'withdrawn'
-        | 'restricted';
+      availability: 'absent' | 'building' | 'unsupported' | 'failed' | 'withdrawn' | 'restricted';
       paper: PaperRef;
       reasonKey: string;
       retryable: boolean;
@@ -179,7 +187,11 @@ export type Glossary = {
 export type JobEvent = Partial<JobSnapshot> & { sequence?: number; phase?: string };
 
 export const api = {
-  async search(client: Transport, query: QueryContext, page: { limit?: number; cursor?: string } = {}) {
+  async search(
+    client: Transport,
+    query: QueryContext,
+    page: { limit?: number; cursor?: string } = {},
+  ) {
     return client.post<SearchResponse>('/api/v2/c05/search', {
       query,
       page,
@@ -265,7 +277,7 @@ export const api = {
   async savePaper(client: Transport, paper: PaperRef) {
     return client.post('/api/v2/c03/library-save-paper', {
       paper,
-      policyRef: { policyId: 'synthetic-local-library', revision: '1' },
+      policyRef: libraryPolicy,
     });
   },
 };

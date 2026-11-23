@@ -187,3 +187,41 @@ def research_router(transactions, *, entry, service) -> APIRouter:
         "accept-novelty-discussion", wire.ResearchNoveltyDiscussionHttp, "novelty-discussion"
     )
     return router
+
+
+JOB_LIST_LIMIT = 20  # A2: a page holds at most 50; the list reads 20 unless asked
+
+
+def job_list_router(transactions, *, entry, repository, clock) -> APIRouter:
+    """A2 (U8 plan Step 39): `POST /api/v2/c07/list-research-jobs`, the owner's research
+    and novelty jobs, newest first, paged by an opaque cursor. Only the complete assembly
+    mounts it, with a repository that holds the job-list cursor; reading it never starts,
+    retries or cancels work. `research_router` above is unchanged for earlier assemblies."""
+    if repository.job_list_cursor is None:
+        raise ValueError("the job list needs its cursor")
+    origin = transactions.profile.origin
+    router = APIRouter(route_class=boundary_route(origin, missing=(404, "NOT_FOUND")))
+
+    def read(authority, value):
+        return repository.list_owner_jobs(
+            authority, value.get("kind"), value.get("cursor"),
+            value.get("limit") or JOB_LIST_LIMIT, now=clock(),
+        )
+
+    @router.post("/api/v2/c07/list-research-jobs")
+    async def list_research_jobs(request: Request):
+        _, _, authority = await post_context(request, origin=origin, entry=entry, anonymous=None)
+        value = await read_payload(request, wire.ResearchJobListHttp)
+        try:
+            result = await run_in_threadpool(read, authority, value)
+        except ResearchError as exc:
+            if exc.code not in ERROR_STATUS:
+                raise BrowserDenied(500, "INTERNAL_ERROR") from None
+            raise BrowserDenied(ERROR_STATUS[exc.code], exc.code) from None
+        try:
+            return wire.ResearchJobListPage.model_validate(result).model_dump(
+                mode="json", exclude_none=False)
+        except ValidationError:
+            raise BrowserDenied(500, "INTERNAL_ERROR") from None
+
+    return router

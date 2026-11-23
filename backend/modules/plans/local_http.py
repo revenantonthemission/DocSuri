@@ -24,13 +24,17 @@ POLICY = {"policyId": "synthetic-four-no-reset", "revision": "1"}
 def usage_router(transactions, *, entry) -> APIRouter:
     origin = transactions.profile.origin
     repository = GuardedUsageRepository(transactions)
-    controls = transactions.profile.realm == "account-controls"
+    # U2's control path in U2's realm and, by the row "U2's controls in the complete app",
+    # in the composed and production realms, each under its own policy.
+    controls = transactions.profile.realm in ("account-controls", "service-operations",
+                                              "production")
     if controls:
         from backend.modules.accounts.control_cursor import ControlCursor
-        from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
+        from backend.modules.accounts.control_policy import for_realm
         from backend.modules.plans.control_service import ControlUsageService
 
-        control = ControlUsageService(transactions, SYNTHETIC_POLICY)
+        control_policy = for_realm(transactions.profile.realm)
+        control = ControlUsageService(transactions, control_policy)
         cursor = ControlCursor(bytes.fromhex(entry.verifier("cursor", "usage-records")))
     router = APIRouter(route_class=boundary_route(origin))
 
@@ -50,12 +54,12 @@ def usage_router(transactions, *, entry) -> APIRouter:
             value["page"].setdefault("limit", 20)
             if (
                 value["page"].get("cursor")
-                or not 1 <= value["page"]["limit"] <= SYNTHETIC_POLICY.max_page_size
+                or not 1 <= value["page"]["limit"] <= control_policy.max_page_size
             ):
                 raise BrowserDenied(422, "INVALID_ARGUMENT")
             current = await run_in_threadpool(repository.inspect_assignment, authority)
             tick = int(current["periodId"].split(":")[1])
-            start = tick * SYNTHETIC_POLICY.period_seconds
+            start = tick * control_policy.period_seconds
             counts = current["counts"]
             allocated = current["allocation"] if current["disposition"] == "assigned" else 0
             used, reserved = counts.get("committed", 0), counts.get("reserved", 0)
@@ -72,14 +76,14 @@ def usage_router(transactions, *, entry) -> APIRouter:
                             "periodId": current["periodId"],
                             "periodStart": datetime.fromtimestamp(start, UTC).isoformat(),
                             "periodEnd": datetime.fromtimestamp(
-                                start + SYNTHETIC_POLICY.period_seconds, UTC
+                                start + control_policy.period_seconds, UTC
                             ).isoformat(),
-                            "policyRef": SYNTHETIC_POLICY.reference,
+                            "policyRef": control_policy.reference,
                         }
                     ],
                     "page": {"nextCursor": None, "snapshotRevision": current["revision"]},
                     "appliedLimit": value["page"]["limit"],
-                    "policyRef": SYNTHETIC_POLICY.reference,
+                    "policyRef": control_policy.reference,
                 }
             ).model_dump(mode="json", exclude_none=True)
         await run_in_threadpool(repository.ensure_entitlement, authority)
@@ -129,7 +133,7 @@ def usage_router(transactions, *, entry) -> APIRouter:
                 "tierId": "synthetic-free",
                 "revision": snapshot["revision"],
                 "assignmentSource": "administrative_assignment",
-                "policyRef": SYNTHETIC_POLICY.reference,
+                "policyRef": control_policy.reference,
                 "effectiveAt": value["effectiveAt"],
                 "disposition": "revoked" if value["revoked"] else "active",
             }
@@ -149,7 +153,7 @@ def usage_router(transactions, *, entry) -> APIRouter:
         async def grant(request: Request):
             operation, authority = await authenticated(request)
             value = await read_payload(request, wire.UsageGrantInputHttp)
-            require_policy(value, SYNTHETIC_POLICY.reference)
+            require_policy(value, control_policy.reference)
             if value["tierId"] != "synthetic-free":
                 raise BrowserDenied(503, "POLICY_UNRESOLVED")
             result = await run_in_threadpool(
@@ -158,7 +162,7 @@ def usage_router(transactions, *, entry) -> APIRouter:
                 UUID(value["accountId"]),
                 operation,
                 UUID(value["expectedRevision"]),
-                allocation=SYNTHETIC_POLICY.quota,
+                allocation=control_policy.quota,
                 revoked=False,
                 reason=value["reasonKey"],
             )
@@ -168,7 +172,7 @@ def usage_router(transactions, *, entry) -> APIRouter:
         async def revoke(request: Request):
             operation, authority = await authenticated(request)
             value = await read_payload(request, wire.UsageRevokeInputHttp)
-            require_policy(value, SYNTHETIC_POLICY.reference)
+            require_policy(value, control_policy.reference)
             if value["entitlementId"] != value["accountId"]:
                 raise BrowserDenied(403, "FORBIDDEN")
             result = await run_in_threadpool(
@@ -197,7 +201,7 @@ def usage_router(transactions, *, entry) -> APIRouter:
                     if current["disposition"] == "unassigned"
                     else "administrative_assignment",
                     "revision": current["revision"],
-                    "policyRef": SYNTHETIC_POLICY.reference,
+                    "policyRef": control_policy.reference,
                     "paymentOccurred": False,
                 }
             ).model_dump(mode="json")

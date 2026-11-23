@@ -1,9 +1,12 @@
 /** U3 discovery/results states: rendering, degradation, expiry, pagination. */
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { SearchSection } from '../../src/u3-corpus/search-reading';
+import styles from '../../src/u3-corpus/search-reading.module.css';
 import { ContractDouble, apiError, searchResponse } from './helpers';
 
 function build(handler = () => searchResponse()) {
@@ -32,11 +35,49 @@ describe('U3 discovery surface', () => {
     });
   });
 
+  it("sizes each result's source link to at least 24×24 CSS px", async () => {
+    build();
+    await userEvent.type(screen.getByTestId('search-query'), 'attention');
+    await userEvent.click(screen.getByTestId('search-submit'));
+    await waitFor(() => expect(screen.getByTestId('result-row')).toBeInTheDocument());
+    const link = screen.getByRole('link', { name: '원문 링크' });
+    expect(link).toHaveAttribute('data-testid', 'result-source');
+    expect(link).toHaveAttribute('rel', 'noreferrer noopener');
+    // The link stands alone in its row, never inside a sentence, so no exemption applies.
+    expect(link.parentElement?.tagName).toBe('LI');
+    // U3's own CSS module sizes it; no inline style object is set.
+    expect(link.getAttribute('style')).toBeNull();
+    expect(styles.sourceLink).toBeTruthy();
+    expect(link).toHaveClass(styles.sourceLink!);
+    const rule = /\.sourceLink\s*\{([^}]*)\}/.exec(
+      readFileSync(join(__dirname, '../../src/u3-corpus/search-reading.module.css'), 'utf8'),
+    );
+    const declarations = (rule?.[1] ?? '').replace(/\s+/g, ' ').trim();
+    expect(declarations).toBe(
+      'display: inline-flex; align-items: center; min-height: 24px; min-width: 24px;',
+    );
+  });
+
+  it("names each result's open button 논문 열기 with the paper's visible title", async () => {
+    build();
+    await userEvent.type(screen.getByTestId('search-query'), 'attention');
+    await userEvent.click(screen.getByTestId('search-submit'));
+    await waitFor(() => expect(screen.getByTestId('result-row')).toBeInTheDocument());
+    const open = screen.getByRole('button', { name: '논문 열기: 합성 논문 paper-alpha' });
+    expect(open).toHaveAttribute('data-testid', 'result-open');
+    // The visible title stays inside the accessible name (WCAG 2.5.3).
+    expect(open).toHaveTextContent('합성 논문 paper-alpha');
+    expect(open.getAttribute('aria-label')).toContain(open.textContent ?? '\u0000');
+    expect(screen.queryByRole('button', { name: '합성 논문 paper-alpha' })).toBeNull();
+  });
+
   it('distinguishes an empty result from a retrieval failure', async () => {
     build(() => searchResponse({ hits: [] }));
     await userEvent.type(screen.getByTestId('search-query'), 'nothing');
     await userEvent.click(screen.getByTestId('search-submit'));
-    await waitFor(() => expect(screen.getByTestId('search-status')).toHaveTextContent('검색 결과가 없어요'));
+    await waitFor(() =>
+      expect(screen.getByTestId('search-status')).toHaveTextContent('검색 결과가 없어요'),
+    );
   });
 
   it('shows an explicit error state when retrieval fails', async () => {

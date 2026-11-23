@@ -164,10 +164,20 @@ export function AssistanceSection({
   useEffect(() => {
     if (!signedIn) return;
     // A revisit reads the retained job and result; it never starts new work.
+    // An unfinished job is followed with the same watch acceptance starts.
     const jobId = storedJob(paper.paperId);
-    if (jobId) void refreshSnapshot(jobId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, paper.paperId, signedIn]);
+    if (!jobId) return;
+    let active = true;
+    void refreshSnapshot(jobId).then((snapshot) => {
+      const unfinished = snapshot?.state === 'accepted' || snapshot?.state === 'running';
+      // Work accepted while the read was in flight replaced the retained job; keep its watch.
+      if (active && unfinished && storedJob(paper.paperId) === jobId) watch(jobId);
+    });
+    return () => {
+      active = false;
+      stopTransports();
+    };
+  }, [paper.paperId, signedIn, refreshSnapshot, watch, stopTransports]);
 
   const accept = async (optionId: string) => {
     if (!options || !glossaryRevision) return;
@@ -180,7 +190,14 @@ export function AssistanceSection({
     try {
       const receipt = await api.acceptAssistance(
         client,
-        { paper, contentRevision, contentHash, option, optionsRevision: options.revision, glossaryRevision },
+        {
+          paper,
+          contentRevision,
+          contentHash,
+          option,
+          optionsRevision: options.revision,
+          glossaryRevision,
+        },
         key,
       );
       setResult(null);
@@ -278,13 +295,7 @@ export function AssistanceSection({
   );
 }
 
-export function GlossarySection({
-  client,
-  signedIn,
-}: {
-  client: Transport;
-  signedIn: boolean;
-}) {
+export function GlossarySection({ client, signedIn }: { client: Transport; signedIn: boolean }) {
   const [glossary, setGlossary] = useState<Glossary | null>(null);
   const [source, setSource] = useState('');
   const [preferred, setPreferred] = useState('');

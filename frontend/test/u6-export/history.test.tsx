@@ -144,6 +144,141 @@ describe('actions by state', () => {
     history(new ExportDouble(), []);
     expect(screen.getByTestId('history-empty')).toBeInTheDocument();
   });
+
+  it('offers a fresh preview for an export invalidated before its write', async () => {
+    const ended = (
+      approvalId: string,
+      effectId: string,
+      state: 'invalidated' | 'failed',
+      outcomeReason: 'destination-changed' | 'connection-changed' | 'dependency-unavailable',
+    ) =>
+      historyEntry({
+        approvalId,
+        state: 'consumed',
+        continuable: false,
+        endedAt: '2026-10-20T02:00:00+00:00',
+        effect: {
+          effectId,
+          state,
+          revision: '3',
+          possibleDuplicates: [],
+          settlementOffered: false,
+          outcomeReason,
+        },
+      });
+    const api = new ExportDouble();
+    const { announce } = history(api, [
+      ended(
+        '11111111-1111-4111-8111-111111111111',
+        '21111111-1111-4111-8111-111111111111',
+        'invalidated',
+        'destination-changed',
+      ),
+      ended(
+        '12222222-2222-4222-8222-222222222222',
+        '22222222-2222-4222-8222-222222222222',
+        'invalidated',
+        'connection-changed',
+      ),
+      ended(
+        '13333333-3333-4333-8333-333333333333',
+        '23333333-3333-4333-8333-333333333333',
+        'failed',
+        'dependency-unavailable',
+      ),
+    ]);
+    const [destination, connection, failed] = screen.getAllByTestId('history-row');
+    const reasons = ['대상 페이지가 바뀌었거나 읽을 수 없습니다', 'Notion 연결이 바뀌었습니다'];
+    [destination!, connection!].forEach((row, index) => {
+      const scope = within(row);
+      expect(scope.getByTestId('history-status').textContent).toContain(
+        '변경되어 내보내지 않았습니다',
+      );
+      expect(scope.getByTestId('history-reason').textContent).toBe(reasons[index]);
+      expect(scope.getAllByTestId('history-fresh-preview')).toHaveLength(1);
+      expect(scope.getByTestId('history-fresh-preview').textContent).toBe('미리보기 다시 만들기');
+      expect(scope.queryAllByTestId('history-continue')).toHaveLength(0);
+      expect(scope.queryAllByTestId('history-cancel')).toHaveLength(0);
+      expect(scope.queryAllByTestId('history-settle')).toHaveLength(0);
+    });
+    expect(within(failed!).getByTestId('history-reason').textContent).toBe(
+      '확인할 수 없는 상태가 너무 오래 이어졌습니다',
+    );
+    expect(within(failed!).queryByTestId('history-fresh-preview')).toBeNull();
+
+    await userEvent.click(within(destination!).getByTestId('history-fresh-preview'));
+    const guide =
+      '참신성 분석 화면에서 이 결과를 열고 ‘Notion으로 내보내기’를 누르면 새 미리보기를 만들 수 있습니다';
+    expect(screen.getByTestId('history-notice').textContent).toBe(guide);
+    expect(announce).toHaveBeenCalledTimes(1);
+    expect(announce).toHaveBeenCalledWith(guide);
+    expect(api.calls).toEqual([]);
+  });
+
+  it('names an ended session and a withdrawn consent in one text', () => {
+    history(new ExportDouble(), [
+      historyEntry({
+        approvalId: '14444444-4444-4444-8444-444444444444',
+        state: 'invalidated',
+        continuable: false,
+        invalidationReason: 'authority-revoked',
+      }),
+      historyEntry({
+        approvalId: '15555555-5555-4555-8555-555555555555',
+        state: 'consumed',
+        continuable: false,
+        endedAt: '2026-10-20T02:00:00+00:00',
+        effect: {
+          effectId: '25555555-5555-4555-8555-555555555555',
+          state: 'invalidated',
+          revision: '3',
+          possibleDuplicates: [],
+          settlementOffered: false,
+          outcomeReason: 'authority-revoked',
+        },
+      }),
+    ]);
+    const rows = screen.getAllByTestId('history-row');
+    expect(rows).toHaveLength(2);
+    rows.forEach((row) => {
+      const scope = within(row);
+      expect(scope.getByTestId('history-reason').textContent).toBe(
+        '승인한 로그인 세션이 끝났거나 처리 동의가 철회되었습니다',
+      );
+      expect(row.textContent).not.toContain('승인한 로그인 세션이 끝났습니다');
+      expect(scope.getByTestId('history-fresh-preview')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('provider text stays text', () => {
+  it('renders a hostile destination title in a row as text, making no element or link from it', () => {
+    const payload = '<img src=x onerror="x"><a href="javascript:alert(1)">{{x}}</a>';
+    history(new ExportDouble(), [
+      historyEntry({
+        destinationTitle: payload,
+        state: 'consumed',
+        effect: {
+          effectId: EFFECT_ID,
+          state: 'succeeded',
+          revision: '5',
+          possibleDuplicates: [],
+          settlementOffered: false,
+          settledBy: 'provider',
+          remoteUrl: PAGE_URL,
+        },
+      }),
+    ]);
+    const row = screen.getByTestId('history-row');
+    expect(row.querySelector('img')).toBeNull();
+    expect(screen.queryByRole('img')).toBeNull();
+    expect(Array.from(row.querySelectorAll('a'), (link) => link.getAttribute('href'))).toEqual([
+      PAGE_URL,
+    ]);
+    const title = within(row).getByText(payload);
+    expect(title.tagName).toBe('SPAN');
+    expect(title.children).toHaveLength(0);
+  });
 });
 
 describe('continue (BR3.7)', () => {

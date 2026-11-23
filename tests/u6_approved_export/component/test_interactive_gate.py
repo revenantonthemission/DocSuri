@@ -4,6 +4,7 @@ import asyncio
 from uuid import uuid4
 
 import pytest
+
 from backend.modules.export.classification import CAUSE_INTERACTIVE_CAP, COULD_NOT_CHECK, OK
 from backend.modules.export.fake_notion import FakeNotion
 from backend.modules.export.notion_adapter import NotionAdapter
@@ -13,7 +14,6 @@ from backend.modules.export.notion_session import (
     NotionSession,
     StoredConnection,
 )
-
 from tests.u6_approved_export import notion_flows as nf
 
 POLICY = nf.policy()

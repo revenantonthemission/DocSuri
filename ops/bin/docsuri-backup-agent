@@ -1,0 +1,27 @@
+#!/Library/DocSuri/release/.venv/bin/python -I
+"""docsuri-backup-agent: the backup agent's fixed command (Workflow 19, security-design § 5.2, D6).
+
+Run as the backup account through sudo, with one word from its closed set: the
+unattended `status`, `backup`, `ledger-copy`, `verify` and `dispose-due`, granted to the
+scheduler account without a password, and the in-person `snapshot`, `rollback-copy`,
+`stream-back`, `dispose-event`, `set-date`, `dispose-mismatch`, `rebuild-catalogue`,
+`prepare-volume` and `configure`, granted to the operator account only after its
+password. The program checks the word and the caller (`SUDO_UID`) again itself, refuses
+the service account every word, reads any further input as bounded JSON on standard
+input and writes one JSON result to standard output (`ledger-copy` reads a stream and
+`stream-back` writes one, so those two write their result to standard error). It
+refuses to run when the environment holds PYTHON*, DYLD_* or LD_* variables. The
+release's own source roots reach the interpreter through the root-owned
+docsuri-release.pth.
+"""
+
+import sys
+
+if sys.argv[1:] == ["--self-check"]:
+    from docsuri_ops.release import self_check
+
+    raise SystemExit(self_check(__file__))
+
+from docsuri_ops.backup_agent.cli import main_fixed
+
+raise SystemExit(main_fixed(sys.argv[1:]))

@@ -73,6 +73,13 @@ ROLES = frozenset(
 )
 KEY_VERSION = "u2-restore-journal-v1"
 IMAGE = "postgres@sha256:a3b7f434b2dc57ce85a67e171163eb8ab1a1ebcb39d27484661f26b1dfbe30d6"
+# U1's pinned image, or U8's pinned database image so U2's restore tests run on the
+# composed chain (the person's decision of 2026-10-22); each matched exactly. U8's is
+# held here as its value, so no file U2's lane measures imports a U8 module (the
+# person's decision of 2026-10-24); U8's `operations/test_u2_restore_image.py` pins it
+# equal to `docsuri_ops.arrangement.runtimes.DATABASE_IMAGE_TAG`.
+U8_IMAGE = "docsuri/u8-postgres:16.14-pgvector-0.8.7-r2"
+ACCEPTED_IMAGES = (IMAGE, U8_IMAGE)
 
 
 class RestoreRefused(RuntimeError):
@@ -194,7 +201,7 @@ class IsolatedRestore:
         if (
             value.get("container") != self.run
             or value.get("volume") != self.run + "-pgdata"
-            or value.get("databaseImage") != IMAGE
+            or value.get("databaseImage") not in ACCEPTED_IMAGES
         ):
             raise RestoreRefused("U2 container identity differs")
         self.source_digest, self.policy_digest, self.manifest_digest = (
@@ -233,7 +240,7 @@ class IsolatedRestore:
             record["Config"]["Labels"].get("dev.docsuri.u2.run") != self.run
             or record["State"]["Status"] != "running"
             or record["HostConfig"]["Memory"] != 1024**3
-            or record["Config"]["Image"] != IMAGE
+            or record["Config"]["Image"] not in ACCEPTED_IMAGES
         ):
             raise RestoreRefused("owned bounded database container unavailable")
         volume = json.loads(self._docker(["volume", "inspect", self.run + "-pgdata"]))[0]

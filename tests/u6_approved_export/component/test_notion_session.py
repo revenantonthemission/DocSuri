@@ -4,20 +4,24 @@ D10, D15, R-14), through the real SDK over the fake Notion and the real store.""
 import asyncio
 import logging
 
+import httpx
 import notion_client
 import notion_client.helpers
 import pytest
+
 from backend.modules.export import notion_adapter as adapter_module
+from backend.modules.export import notion_session
 from backend.modules.export.classification import (
     CAUSE_BUDGET,
+    CAUSE_TRANSPORT,
     COULD_NOT_CHECK,
+    NOT_READABLE,
     OK,
     RETRYABLE,
     UNCERTAIN,
 )
 from backend.modules.export.fake_notion import HANG, Answer
 from backend.modules.export.notion_adapter import LISTING_INCOMPLETE, ScanRequest
-
 from tests.u6_approved_export import notion_flows as nf
 
 LOGGERS = ("", "httpx", "httpcore", "notion_client", "docsuri.export.notion_sdk")
@@ -250,3 +254,121 @@ async def test_a_spent_session_budget_is_reduced_with_the_budget_cause(setup):
     result = await session.run(setup["target"], 0.3, lambda sdk, ctx: sdk.users.me())
     assert result.category == COULD_NOT_CHECK and result.cause == CAUSE_BUDGET
     assert result.value is None and result.opened.revision == setup["connection"]["revision"]
+
+
+async def test_a_malformed_identifier_is_refused_without_a_request_or_a_slot(setup, connect):
+    adapter = nf.adapter(setup["repo"], setup["vault"], setup["fake"], setup["policy"])
+    target, connection = setup["target"], setup["connection"]
+    before = pace_slot(connect, connection["id"])
+    for destination in ("../v1/users", "0" * 31):
+        read = await adapter.read_destination(target, destination)
+        assert (read.category, read.readable) == (NOT_READABLE, False)
+        back = await adapter.read_back(
+            target,
+            page_id=destination,
+            destination_id=setup["destination"],
+            writer_identity=setup["bot"],
+            marker="m",
+        )
+        assert back.category == COULD_NOT_CHECK
+    assert setup["fake"].requests == []
+    assert pace_slot(connect, connection["id"]) == before
+
+
+async def test_a_path_outside_the_allowlist_reduces_to_transport(setup):
+    session = nf.session(setup["repo"], setup["vault"], setup["fake"], setup["policy"])
+
+    result = await session.run(setup["target"], 5, lambda sdk, ctx: sdk.users.list())
+
+    assert result.category == COULD_NOT_CHECK and result.cause == CAUSE_TRANSPORT
+    assert setup["fake"].requests == []
+    for value in nf.walk(result):
+        assert not isinstance(value, BaseException)
+        assert not isinstance(value, str) or setup["token"] not in value
+
+
+async def test_every_client_carries_the_approved_sdk_settings(setup):
+    session = nf.session(setup["repo"], setup["vault"], setup["fake"], setup["policy"])
+    clients = []
+
+    async def work(sdk, ctx):
+        clients.append(sdk)
+        return await sdk.users.me()
+
+    for _ in range(2):
+        result = await session.run(setup["target"], 5, work)
+        assert result.category == OK
+
+    assert logging.getLogger("notion_client").handlers == []
+    for sdk in clients:
+        assert sdk.logger is notion_session.SDK_LOGGER
+        assert sdk.logger.name == "docsuri.export.notion_sdk"
+        assert sdk.logger.level == logging.WARNING
+        assert sdk.logger.propagate is False
+        design_handlers = [
+            type(handler)
+            for handler in sdk.logger.handlers
+            if not type(handler).__module__.startswith("_pytest")
+        ]
+        assert design_handlers == [logging.NullHandler]
+        assert sdk.options.notion_version == "2026-03-11"
+        assert sdk.options.retry is False
+        assert sdk.options.timeout_ms == 30_000
+        assert sdk.client.headers["Notion-Version"] == "2026-03-11"
+        assert sdk.client.timeout == httpx.Timeout(30.0)
+        assert sdk.client.follow_redirects is False
+        assert sdk.client.trust_env is False
+
+
+async def test_no_sdk_or_transport_record_is_ever_emitted(setup, caplog):
+    sdk_records, surfaced = [], []
+
+    class Capture(logging.Handler):
+        def __init__(self, sink):
+            super().__init__()
+            self.sink = sink
+
+        def emit(self, record):
+            self.sink.append(record)
+
+    sdk_capture, root_capture = Capture(sdk_records), Capture(surfaced)
+    notion_session.SDK_LOGGER.addHandler(sdk_capture)
+    logging.getLogger().addHandler(root_capture)
+    pinned = {
+        name: logging.getLogger(name).level
+        for name in ("", "httpx", "httpcore", "notion_client")
+    }
+    try:
+        for name in ("httpx", "httpcore"):
+            logging.getLogger(name).setLevel(logging.WARNING)
+        for name in ("", "notion_client"):
+            caplog.set_level(logging.DEBUG, logger=name)
+        session = nf.session(setup["repo"], setup["vault"], setup["fake"], setup["policy"])
+        healthy = await session.run(setup["target"], 5, lambda sdk, ctx: sdk.users.me())
+        setup["fake"].queue("users.me", Answer.error(500))
+        failed = await session.run(setup["target"], 5, lambda sdk, ctx: sdk.users.me())
+        assert healthy.category == OK and failed.category == COULD_NOT_CHECK
+        assert notion_session.SDK_LOGGER.level == logging.WARNING  # never lowered
+    finally:
+        notion_session.SDK_LOGGER.removeHandler(sdk_capture)
+        logging.getLogger().removeHandler(root_capture)
+        for name, level in pinned.items():
+            logging.getLogger(name).setLevel(level)
+    # Nothing surfaced to the root: the SDK's own request line stays on the dedicated
+    # logger at WARNING and token-free, and the transports stay silent.
+    assert surfaced == []
+    assert all(record.name == notion_session.SDK_LOGGER_NAME for record in sdk_records)
+    assert all(record.levelno == logging.WARNING for record in sdk_records)
+    assert all(setup["token"] not in record.getMessage() for record in sdk_records)
+    assert "api.notion.com" not in caplog.text
+
+
+async def test_a_lowered_sdk_logger_is_reset_to_warning_by_the_next_client(setup):
+    session = nf.session(setup["repo"], setup["vault"], setup["fake"], setup["policy"])
+    notion_session.SDK_LOGGER.setLevel(logging.DEBUG)
+    try:
+        result = await session.run(setup["target"], 5, lambda sdk, ctx: sdk.users.me())
+        assert result.category == OK
+        assert notion_session.SDK_LOGGER.level == logging.WARNING
+    finally:
+        notion_session.SDK_LOGGER.setLevel(logging.WARNING)

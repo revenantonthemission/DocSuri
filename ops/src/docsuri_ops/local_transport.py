@@ -43,6 +43,7 @@ def _transport_prefix(profile: LocalProfile) -> str:
         ("research-workspace", "https://127.0.0.1:18079", "docsuri_u4"): "research-workspace-tls",
         ("topics-digests", "https://127.0.0.1:18089", "docsuri_u5"): "topics-digests-tls",
         ("approved-export", "https://127.0.0.1:18099", "docsuri_u6"): "approved-export-tls",
+        ("service-operations", "https://127.0.0.1:18110", "docsuri_u8"): "service-operations-tls",
     }
     prefix = bindings.get((profile.realm, profile.origin, profile.database_name))
     if prefix is None:

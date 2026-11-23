@@ -13,6 +13,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import secrets
 import selectors
 import shutil
@@ -602,6 +603,108 @@ def process_rss(pid: int, deadline: float) -> int:
     return sum(rss * 1024 for child, _, rss in rows if child in included)
 
 
+# A phase log carries only the database name where it would carry a connection string
+# (the person's decision of 2026-10-25, "Redact it in U3's tool"): pytest's long tracebacks
+# print a failed connection's arguments, its libpq key=value string, its URI or its
+# keyword dict, each with the password.
+_PG_KEYWORD = (rb"(?:host|hostaddr|port|dbname|user|password|passfile|sslmode|sslrootcert|"
+               rb"sslcert|sslkey|connect_timeout|application_name|options|target_session_attrs)")
+_PG_VALUE = rb"(?:'(?:[^'\\\n]|\\.)*'|[^\s'\",)}\]]+)"
+_PG_URI = re.compile(rb"postgres(?:ql)?://[^\s'\"<>]+")
+_PG_CONNINFO = re.compile(rb"(?:\b" + _PG_KEYWORD + rb"\s*=\s*" + _PG_VALUE + rb"[ \t]*){2,}")
+_PG_DICT = re.compile(rb"\{[^{}\n]*['\"]password['\"]\s*:[^{}\n]*\}")
+_PG_PASSWORD = re.compile(
+    rb"(?i)(password['\"]?\s*[:=]\s*)(?:'[^'\n]*'|\"[^\"\n]*\"|[^\s,)}\]]+)")
+_PG_DBNAME = re.compile(rb"\bdbname\s*=\s*(" + _PG_VALUE + rb")")
+_PG_DICT_DBNAME = re.compile(rb"['\"]dbname['\"]\s*:\s*['\"]([^'\"\n]*)['\"]")
+_UNNAMED = b"[connection]"
+
+
+def _database_of_uri(uri: bytes) -> bytes:
+    parts = uri.split(b"/", 3)  # scheme, '', authority, path
+    name = parts[3].split(b"?", 1)[0] if len(parts) == 4 else b""
+    return name or _UNNAMED
+
+
+def _named(match) -> bytes:
+    if match is None:
+        return _UNNAMED
+    return match.group(1).strip(b"'\"") or _UNNAMED
+
+
+def redact_connection_strings(line: bytes) -> bytes:
+    """One log line with every PostgreSQL connection string replaced by its database name
+    alone (or `[connection]` when it names none), and any password left redacted."""
+    line = _PG_URI.sub(lambda match: _database_of_uri(match.group()), line)
+    line = _PG_DICT.sub(lambda match: _named(_PG_DICT_DBNAME.search(match.group())), line)
+    line = _PG_CONNINFO.sub(lambda match: _named(_PG_DBNAME.search(match.group())), line)
+    return _PG_PASSWORD.sub(rb"\1[redacted]", line)
+
+
+class RedactingLog:
+    """A phase log's writer: each complete line is redacted before it is written; a
+    partial line waits for its end, or for the end of the log."""
+
+    PENDING_LIMIT = 1024**2
+
+    def __init__(self, stream):
+        self.stream, self.pending = stream, b""
+
+    def write(self, chunk: bytes) -> None:
+        *lines, self.pending = (self.pending + chunk).split(b"\n")
+        for line in lines:
+            self.stream.write(redact_connection_strings(line) + b"\n")
+        if len(self.pending) > self.PENDING_LIMIT:
+            self.close()
+
+    def close(self) -> None:
+        if self.pending:
+            self.stream.write(redact_connection_strings(self.pending))
+            self.pending = b""
+
+
+def _redacted_text(value: str | None) -> str | None:
+    if not value:
+        return value
+    lines = value.encode("utf-8", "replace").split(b"\n")
+    return b"\n".join(redact_connection_strings(line) for line in lines).decode(
+        "utf-8", "replace")
+
+
+def redact_report(report: Path) -> str:
+    """Run a phase's JUnit report through the phase log's redaction once its writer (the
+    pytest child) has exited, before anything parses or keeps it: a `<failure>` element
+    holds the same long traceback as the log, a failed connection's arguments included.
+
+    Every text, tail and attribute value is redacted line by line and the report is
+    replaced atomically. A report that cannot be read whole is removed, so no unredacted
+    copy is ever parsed or archived; the phase then reports it missing."""
+    if report.is_symlink():
+        report.unlink()
+        return "removed"
+    if not report.exists():
+        return "absent"
+    try:
+        tree = ET.parse(report)
+    except ET.ParseError:
+        report.unlink()
+        return "removed"
+    for element in tree.iter():
+        element.text = _redacted_text(element.text)
+        element.tail = _redacted_text(element.tail)
+        for name, value in list(element.attrib.items()):
+            element.set(name, _redacted_text(value) or "")
+    pending = report.with_name(report.name + ".redacted")
+    pending.unlink(missing_ok=True)
+    descriptor = os.open(pending, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(descriptor, "wb") as stream:
+        tree.write(stream, encoding="utf-8", xml_declaration=True)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(pending, report)
+    return "redacted"
+
+
 def bounded_process(args: list[str], log: Path, *, seconds: float = 300,
                     rss_limit: int = MAX_RSS) -> dict:
     if not 0 < seconds <= 300 or not 0 < rss_limit <= MAX_RSS:
@@ -644,6 +747,7 @@ def bounded_process(args: list[str], log: Path, *, seconds: float = 300,
             assert process.stdout is not None
             os.set_blocking(process.stdout.fileno(), False)
             selector.register(process.stdout, selectors.EVENT_READ)
+            writer = RedactingLog(stream)
             while time.monotonic() < observation_end:
                 for key, _ in selector.select(timeout=0.05):
                     chunk = os.read(key.fileobj.fileno(), 65536)
@@ -653,7 +757,7 @@ def bounded_process(args: list[str], log: Path, *, seconds: float = 300,
                     count += len(chunk)
                     if count > MAX_LOG:
                         raise Refused("private process log exceeded 16 MiB")
-                    stream.write(chunk)
+                    writer.write(chunk)
                 if time.monotonic() >= observation_end:
                     break
                 peak = max(peak, process_rss(process.pid, observation_end))
@@ -663,6 +767,7 @@ def bounded_process(args: list[str], log: Path, *, seconds: float = 300,
                 if code is not None and not selector.get_map():
                     reason = "process-exit"
                     break
+            writer.close()
             stream.flush()
             os.fsync(stream.fileno())
     finally:
@@ -925,6 +1030,9 @@ def run_phase(phase: str, path: Path) -> dict:
     finally:
         if server is not None:
             stop(server)
+        # The child has exited (bounded_process stops it in every path): its report is
+        # redacted before it is parsed below or kept by archive-owned.
+        report_state = redact_report(report)
     evidence = {
         "phase": phase,
         "runId": value["runId"],
@@ -932,6 +1040,7 @@ def run_phase(phase: str, path: Path) -> dict:
         "exitCode": 1 if failure else process_evidence["exitCode"],
         "supervision": process_evidence,
         "failureCategory": failure,
+        "testReport": report_state,
         "durationSeconds": time.monotonic() - start,
         "source": before,
         "locks": value["locks"],

@@ -12,11 +12,11 @@ from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
+from psycopg.types.json import Jsonb
+
 from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
 from backend.modules.accounts.services.control_lifecycle import ControlLifecycleService
 from backend.modules.export.control_lifecycle import ExportLifecycleParticipant
-from psycopg.types.json import Jsonb
-
 from tests.u6_approved_export import store_flows as flows
 
 EXPORT_SCOPES = ("live_records", "pending_work", "external_copies")

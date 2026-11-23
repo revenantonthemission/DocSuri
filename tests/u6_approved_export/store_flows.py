@@ -8,7 +8,11 @@ injected: every unit receives the test's `now`.
 """
 
 import datetime as dt
+from collections.abc import Iterator
+from contextlib import contextmanager, suppress
 from uuid import UUID, uuid4
+
+import psycopg
 
 from backend.modules.export.repository import (
     ExportRepository,
@@ -21,7 +25,6 @@ from backend.modules.export.repository import (
 from backend.modules.export.store_support import canonical_digest, replay_input_hash
 from backend.transactions import Authority
 from backend.u6_policy import ExportPolicy
-
 from tests.u6_approved_export import export_rows as rows
 
 RENDER_POLICY = {"policyId": "u6-synthetic-export", "revision": "1"}
@@ -64,6 +67,78 @@ def end_session(connect, authority: Authority) -> None:
     with connect("accounts") as conn:
         conn.execute(
             "UPDATE accounts.session SET revoked=true WHERE id=%s", (authority.session_id,)
+        )
+
+
+@contextmanager
+def held_session(connect, authority: Authority) -> Iterator[None]:
+    """Hold the session row `FOR UPDATE` from a second connection while the block runs.
+
+    The real guard `accounts.guard_session` locks the same row `FOR SHARE`, so its own
+    statement waits until the realm's lock bound (`lock_timeout=1000`, 1 s) ends it with
+    55P03 (`LockNotAvailable`), which is not the guard's 42501 answer: the could-not-check
+    path is reached through a real failure, never a replaced unit. The holder rolls back
+    before it closes, so the row is free before the test's next check.
+    """
+    holder = connect("accounts")
+    try:
+        held = holder.execute(
+            "SELECT id FROM accounts.session WHERE id=%s AND account_id=%s FOR UPDATE",
+            (authority.session_id, authority.account_id),
+        ).fetchone()
+        assert held is not None, "the held session must exist"
+        yield
+        holder.execute("SELECT 1")  # the holder was alive for the whole block
+    finally:
+        with suppress(psycopg.Error):
+            holder.rollback()
+        holder.close()
+
+
+PACE_ROW = "SELECT next_slot_at FROM export.connection_pace WHERE connection_id=%s FOR UPDATE"
+EFFECT_ROW = "SELECT id FROM export.effect WHERE id=%s FOR UPDATE"
+LANE_STATUS_ROW = "SELECT outcome FROM export.lane_status WHERE singleton FOR UPDATE"
+
+
+@contextmanager
+def held_rows(connect_raw, *locks: tuple[str, tuple]) -> Iterator[None]:
+    """Hold the named rows `FOR UPDATE` from one administrative session while the block runs.
+
+    A locking or updating statement of the code under test then waits until the realm's
+    lock bound (`lock_timeout=1000`, 1 s) ends it with 55P03 (`LockNotAvailable`), a real
+    fault, never a replaced unit. Plain reads are not blocked. Each hold must stay under
+    the realm's 5 s idle-in-transaction bound (`idle_in_transaction_session_timeout=5000`).
+    """
+    holder = connect_raw()
+    try:
+        for sql, params in locks:
+            assert sql.lstrip().startswith("SELECT") and sql.rstrip().endswith("FOR UPDATE")
+            assert holder.execute(sql, params).fetchone() is not None, "the held row must exist"
+        yield
+        holder.execute("SELECT 1")  # the holder was alive for the whole block
+    finally:
+        with suppress(psycopg.Error):
+            holder.rollback()
+        holder.close()
+
+
+def expire_session(connect, authority: Authority) -> None:
+    """Reach the expiry branch of the session guard on its own."""
+    with connect("accounts") as conn:
+        conn.execute(
+            "UPDATE accounts.session SET expires_at=clock_timestamp()-interval '1 minute' "
+            "WHERE id=%s",
+            (authority.session_id,),
+        )
+
+
+def set_consent(connect, account: UUID, purpose: str, granted: bool) -> None:
+    """Upsert one consent grant, so a test can reach the guard's consent branch."""
+    with connect("accounts") as conn:
+        conn.execute(
+            "INSERT INTO accounts.consent(account_id,purpose,granted) VALUES(%s,%s,%s) "
+            "ON CONFLICT(account_id,purpose) DO UPDATE SET granted=excluded.granted",
+            (account, purpose, granted),
         )
 
 

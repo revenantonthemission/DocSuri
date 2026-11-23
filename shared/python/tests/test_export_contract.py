@@ -285,7 +285,8 @@ def test_operations_keep_frozen_errors_and_add_two_browser_operations_with_heade
     c09 = next(body for kind, body in blocks if kind == "contract" and body["id"] == "C09")
     api = next(body for kind, body in blocks
                if kind == "openapi" and body["info"]["title"].startswith("DocSuri application"))
-    assert (c09["version"], api["info"]["version"]) == ("2.1.0", "3.1.0")
+    # C09 stays at 2.1.0; the release moved from 3.1.0 to 4.0.0 with U8's amendments A1-A8.
+    assert (c09["version"], api["info"]["version"]) == ("2.1.0", "4.0.0")
     operations = {operation["name"]: operation for operation in c09["operations"]}
     for name, errors in FROZEN_ERRORS.items():
         assert operations[name]["errors"] == errors, name
@@ -312,10 +313,10 @@ def test_operations_keep_frozen_errors_and_add_two_browser_operations_with_heade
         assert "context" not in defs(PUBLIC_ID)[f"{request}Http"]["properties"]
 
 
-def test_regenerated_schemas_name_release_3_1_0():
+def test_regenerated_schemas_name_release_4_0_0():
     for name in ("dtos/workspace.schema.json", "events/execution.schema.json"):
         assert load_schema(name)["$comment"].startswith(
-            "Generated canonical contract release 3.1.0; source SHA256:"
+            "Generated canonical contract release 4.0.0; source SHA256:"
         )
 
 

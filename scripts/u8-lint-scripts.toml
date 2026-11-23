@@ -1,0 +1,10 @@
+# U8's scripts (Step 95(l), L1-34): Ruff's default selection, extended with E, F, I, UP
+# and B at 100, with nothing ignored. An exact selection would drop the default rules
+# (BLE001, S102, S110 and the ASYNC rules among them) that apply to these scripts today.
+# Passed by `--config` from the repository root over the paths in u8-lint-targets.txt.
+line-length = 100
+target-version = "py313"
+src = [".", "scripts", "ops/src", "ingestion/src"]
+
+[lint]
+extend-select = ["E", "F", "I", "UP", "B"]

@@ -18,6 +18,7 @@ from backend.local_browser import (
     require_post_headers,
 )
 from backend.modules.accounts.control_cursor import ControlCursor
+from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
 from backend.modules.accounts.control_repository import ControlRepository
 from backend.modules.accounts.preauthentication import Preauthentication
 from backend.modules.accounts.services.control_identity import (
@@ -36,19 +37,27 @@ PROFILE_FIELDS = ("displayName", "affiliation", "biography")
 LIFECYCLE_COOKIE = "docsuri_lifecycle"
 
 
-def control_router(entry, lifecycle) -> APIRouter:
+def control_router(entry, lifecycle, *, identities=None, mfa=None, routes=None) -> APIRouter:
+    """U2's account-control routes. `identities`, `mfa` and `routes` are parts a complete
+    realm's router passes (U8's `d1_control_router`, the person's decision of
+    2026-10-24): their defaults are U2's built parts, and without all three the router
+    serves only U2's realm. `routes` are matched before the built ones."""
+    if identities is None or mfa is None or routes is None:
+        SYNTHETIC_POLICY.require_realm(entry.transactions.profile.realm)
     policy = entry.control_policy
     origin = entry.transactions.profile.origin
     anonymous = Preauthentication(entry)
     repository = ControlRepository(entry.transactions, policy)
-    mfa = ControlMfaService(entry)
+    mfa = mfa or ControlMfaService(entry)
     cursor = ControlCursor(
         bytes.fromhex(entry.verifier("cursor", "accounts-u2")), lifetime=policy.cursor_seconds
     )
-    identities = ControlIdentityService(
+    identities = identities or ControlIdentityService(
         entry, {name: FixtureIdentityProvider(name) for name in ("google", "orcid")}
     )
     router = APIRouter(route_class=boundary_route(origin, missing=(403, "FORBIDDEN")))
+    if routes is not None:
+        router.include_router(routes)
 
     async def context(request, *, guest=False):
         return await post_context(

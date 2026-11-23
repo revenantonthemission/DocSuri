@@ -7,6 +7,7 @@ import json
 import secrets
 from uuid import UUID, uuid4
 
+from backend.local_profile import key_folder, verifier_key_path
 from backend.modules.accounts.control_keys import ControlKeyring
 from backend.modules.accounts.control_policy import ControlPolicy, PolicyUnavailable
 from backend.modules.accounts.control_repository import ControlRepository
@@ -26,7 +27,7 @@ class ControlEntryService(GuardedEntryService):
         self.control_policy = policy
         self.account_limit = policy.max_accounts
         self.verification_seconds = policy.proof_seconds
-        if not (transactions.profile.root / "account-verifier.key").exists():
+        if not verifier_key_path(transactions.profile).exists():
             occupied = transactions.run(
                 "accounts",
                 lambda conn: conn.execute(
@@ -36,10 +37,17 @@ class ControlEntryService(GuardedEntryService):
             if occupied:
                 raise PolicyUnavailable("existing accounts require retained verifier custody")
         super().__init__(transactions)
+        # U2's keyring folder comes from the profile: the run root in U2's realm, the
+        # profile's `control-keys/` folder in the complete realms (U8 plan Step 9).
         self.keyring = ControlKeyring(
-            transactions.profile.root,
+            key_folder(transactions.profile, "control-keys"),
             transactions.profile.run_id,
             bytes.fromhex(self.verifier("encryption", "u2-controls-v1")),
+            production_root=(
+                transactions.profile.root
+                if getattr(transactions.profile, "is_production", False)
+                else None
+            ),
         )
         versions = self.transactions.run(
             "accounts",
@@ -318,6 +326,10 @@ class ControlEntryService(GuardedEntryService):
 
         return self.transactions.run("accounts", write)
 
+    def _password_reset_applied(self, conn, account: dict) -> None:
+        """A seam inside a completed reset's transaction, after the new password is
+        stored; the built reset does nothing more (U8's entry clears its marker)."""
+
     def complete_password_reset(
         self, operation: UUID, challenge: UUID, proof: str, flow_binding: str, new_password: str
     ) -> dict:
@@ -380,6 +392,7 @@ class ControlEntryService(GuardedEntryService):
                 "UPDATE accounts.account SET password_hash=%s,authority_revision=%s WHERE id=%s",
                 (encoded, revision, account["id"]),
             )
+            self._password_reset_applied(conn, account)
             conn.execute(
                 "UPDATE accounts.session SET revoked=true WHERE account_id=%s", (account["id"],)
             )

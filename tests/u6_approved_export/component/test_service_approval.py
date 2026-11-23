@@ -3,9 +3,9 @@ binding, newer succeeded exports, and refusals that record nothing (BR3.1, BR3.2
 
 from uuid import UUID, uuid4
 
-from backend.modules.research.errors import ResearchError
 from docsuri_shared.workspace import wire
 
+from backend.modules.research.errors import ResearchError
 from tests.u6_approved_export import service_flows as sf
 
 

@@ -40,7 +40,10 @@ class GuardedSettingsService:
         self.purpose = (
             "account-control"
             if transactions.profile.realm
-            in ("account-controls", "topics-digests", "approved-export")
+            in (
+                "account-controls", "topics-digests", "approved-export", "service-operations",
+                "production",
+            )
             else "local-research"
         )
 

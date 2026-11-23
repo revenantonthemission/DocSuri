@@ -4,9 +4,9 @@ import datetime as dt
 from uuid import uuid4
 
 import pytest
+
 from backend.modules.export.errors import ExportError
 from backend.modules.export.repository import CheckResult, Claimed, ClaimRefused, WriteOutcome
-
 from tests.u6_approved_export import store_flows as flows
 
 # Due-order runs on an early injected clock, so its items sort ahead of the realm's
@@ -55,6 +55,36 @@ def test_due_items_follow_the_hand_over_order(transactions, connect, authority, 
     assert priorities == sorted(priorities)
     with pytest.raises(ExportError):
         repo.due_items(EPOCH, limit=0)
+
+
+def test_the_older_of_two_accepted_effects_is_due_first_and_the_younger_once_it_is_claimed(
+    transactions, connect, authority, authority_b
+):
+    """Security design §8.1's oldest-first among accepted effects, on a fresh read."""
+    repo = flows.repository(transactions)
+    older_at, younger_at, now = (flows.at(s, base=EPOCH) for s in (10, 20, 30))
+    try:
+        connection = flows.connected(repo, connect, authority, EPOCH)
+        other = flows.connected(repo, connect, authority_b, EPOCH)
+        younger = flows.bound(repo, authority_b, other, younger_at)["effect"]  # bound first
+        older = flows.bound(repo, authority, connection, older_at)["effect"]
+        ids = {older["id"], younger["id"]}
+        due = repo.due_items(now, limit=100)
+        assert [(r["kind"], r["id"], r["due_at"]) for r in due if r["id"] in ids] == [
+            ("execute", older["id"], older_at),
+            ("execute", younger["id"], younger_at),
+        ]
+        priorities = [("resume", "execute", "scan").index(r["kind"]) for r in due]
+        assert priorities == sorted(priorities)
+        accepted = [r["due_at"] for r in due if r["kind"] == "execute"]
+        assert accepted == sorted(accepted)
+        assert isinstance(repo.claim(older["id"], older["revision"], now=now), Claimed)
+        assert [r["id"] for r in repo.due_items(now, limit=100) if r["id"] in ids] == [
+            younger["id"]
+        ]
+    finally:
+        flows.fresh(connect, authority.account_id)
+        flows.fresh(connect, authority_b.account_id)
 
 
 def test_the_claim_and_its_attempt_land_in_one_transaction(transactions, connect, authority):

@@ -22,8 +22,67 @@ def digest(value: dict) -> str:
 
 
 class ResearchRepository:
-    def __init__(self, transactions: OwnerTransactions):
+    def __init__(self, transactions: OwnerTransactions, *, job_list_cursor=None):
         self.transactions = transactions
+        # The complete assembly's job-list cursor (A2); earlier assemblies pass none.
+        self.job_list_cursor = job_list_cursor
+
+    def list_owner_jobs(self, owner: Authority, kind, cursor, limit, *, now) -> dict:
+        """A2: one page of the owner's research and novelty jobs, newest first, on
+        `research.job(owner_id, accepted_at DESC, id)`. Reading it never starts,
+        retries or cancels work; a tampered, foreign or expired cursor is refused."""
+        from .job_list import KINDS, JobListCursorInvalid, item_of
+
+        if self.job_list_cursor is None:
+            raise ResearchError("POLICY_UNRESOLVED")
+        if kind is not None and kind not in KINDS:
+            raise ResearchError("INVALID_ARGUMENT")
+        if type(limit) is not int or not 1 <= limit <= 50:
+            raise ResearchError("INVALID_ARGUMENT")
+        position = None
+        if cursor is not None:
+            try:
+                position = self.job_list_cursor.decode(owner.account_id, kind, cursor)
+            except JobListCursorInvalid:
+                raise ResearchError("INVALID_ARGUMENT") from None
+        kinds = list(KINDS[kind]) if kind else [k for jobs in KINDS.values() for k in jobs]
+
+        def read(conn):
+            snapshot = position["snapshot"] if position else conn.execute(
+                "SELECT max(accepted_at) AS newest FROM research.job WHERE owner_id=%s",
+                (owner.account_id,),
+            ).fetchone()["newest"]
+            if snapshot is None:
+                return [], None
+            rows = conn.execute(
+                "SELECT j.id,j.kind,j.state,j.accepted_at,j.updated_at,s.title AS "
+                "session_title,a.expires_at AS artifact_expires_at,a.availability AS "
+                "artifact_availability FROM research.job j "
+                "LEFT JOIN research.session s ON s.id=j.session_id AND s.owner_id=j.owner_id "
+                "LEFT JOIN research.artifact a ON a.id=j.artifact_id AND a.owner_id=j.owner_id "
+                "WHERE j.owner_id=%s AND j.kind=ANY(%s) AND j.accepted_at<=%s AND "
+                "(%s::timestamptz IS NULL OR (j.accepted_at,j.id)<(%s::timestamptz,%s::uuid)) "
+                "ORDER BY j.accepted_at DESC,j.id DESC LIMIT %s",
+                (
+                    owner.account_id, kinds, snapshot,
+                    position["acceptedAt"] if position else None,
+                    position["acceptedAt"] if position else None,
+                    position["jobId"] if position else None,
+                    limit + 1,
+                ),
+            ).fetchall()
+            return rows, snapshot
+
+        rows, snapshot = self.run(owner, read)
+        more = len(rows) > limit
+        rows = rows[:limit]
+        next_cursor = None
+        if more:
+            last = rows[-1]
+            next_cursor = self.job_list_cursor.encode(
+                owner.account_id, kind, snapshot, last["accepted_at"], last["id"]
+            )
+        return {"items": [item_of(row, now) for row in rows], "nextCursor": next_cursor}
 
     def run(self, authority: Authority, action):
         def guarded(conn):

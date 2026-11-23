@@ -145,6 +145,61 @@ function envelope(value: unknown): ErrorEnvelope {
   };
 }
 
+/** A `Retry-After` header's wait, when it is a whole number of seconds. Up to seven digits,
+ * so account mail's month-long wait (at most 2,678,400 s) reaches the envelope (L1-10). */
+export function retryAfterHeader(value: string | null): number | undefined {
+  if (value === null || !/^\d{1,7}$/.test(value.trim())) return undefined;
+  return Number(value.trim());
+}
+
+/** Account mail refused at the day's or the month's allowance (L1-10). */
+export const ACCOUNT_MAIL_LIMIT_KEY = 'account-mail.allowance-exhausted';
+/** Account mail refused up front while none can be sent: held, Resend unconfigured or
+ * observed down (L1-53). One body answers each. */
+export const ACCOUNT_MAIL_UNAVAILABLE_KEY = 'account-mail.unavailable';
+/** The one sentence for mail that cannot be sent now, shared by the refusal and the
+ * provider notice. Neither a hold nor an outage has a known end, so it names no time. */
+export const MAIL_HELD_TEXT = '지금은 이메일을 보낼 수 없습니다. 나중에 다시 시도해 주세요.';
+
+const DAY_MS = 86_400_000;
+const SEOUL_OFFSET_HOURS = 9;
+const SEOUL_DATE = new Intl.DateTimeFormat('ko-KR', {
+  timeZone: 'Asia/Seoul',
+  month: 'long',
+  day: 'numeric',
+  hour: 'numeric',
+});
+
+/** The moment as '11월 2일 오전 9시'. The day period is written from Seoul's hour, because
+ * newer ICU data spells it 'AM'/'PM' for ko-KR while the text says 오전/오후. */
+function seoulMoment(at: number): string {
+  const hour = (new Date(at).getUTCHours() + SEOUL_OFFSET_HOURS) % 24;
+  return SEOUL_DATE.formatToParts(new Date(at))
+    .map((part) => (part.type === 'dayPeriod' ? (hour < 12 ? '오전' : '오후') : part.value))
+    .join('');
+}
+
+/** When account mail can be sent again. The allowances reset at 00:00 UTC (09:00 in
+ * Korea), so the refusal's time is rounded to the nearest 00:00 UTC, which removes the
+ * request's latency and any clock difference under 12 hours. Without a wait it names no
+ * time. */
+export function accountMailLimitText(retryAfterSeconds?: number, now = Date.now()): string {
+  if (retryAfterSeconds === undefined) {
+    return '지금은 이메일을 보낼 수 없습니다. 이메일 발송 한도에 도달했습니다. 발송 한도가 초기화되면 다시 요청해 주세요.';
+  }
+  const reset = Math.round((now + retryAfterSeconds * 1000) / DAY_MS) * DAY_MS;
+  return `지금은 이메일을 보낼 수 없습니다. ${seoulMoment(reset)}(한국 시간)부터 다시 보낼 수 있습니다.`;
+}
+
+/** A refusal's envelope; a 429 whose body names no wait takes the `Retry-After` header's,
+ * which the boundary sets for the sign-in limits and the provider sign-in starts. */
+function refusal(response: Response, value: unknown): ErrorEnvelope {
+  const parsed = envelope(value);
+  if (response.status !== 429 || parsed.retryAfterSeconds !== undefined) return parsed;
+  const wait = retryAfterHeader(response.headers.get('Retry-After'));
+  return wait === undefined ? parsed : { ...parsed, retryAfterSeconds: wait };
+}
+
 /** Every response is scoped to the authority generation that requested it. */
 export class Transport {
   private csrf = '';
@@ -257,7 +312,7 @@ export class Transport {
     const value = response.status === 204 ? undefined : await safeJson(response);
     if (scoped && generation !== this.epoch) throw staleResponse();
     if (!response.ok) {
-      const error = new ApiError(response.status, envelope(value));
+      const error = new ApiError(response.status, refusal(response, value));
       // A guest's refusal is not an expiry: only a signed-in caller loses authority here.
       if (
         error.envelope.code === 'UNAUTHENTICATED' &&

@@ -4,9 +4,9 @@ second, measured at the fake Notion, with the real 500 ms pace on the database c
 import asyncio
 
 import pytest
+
 from backend.transactions import OwnerTransactions
 from backend.u6_policy import ExportPolicy
-
 from tests.u6_approved_export import notion_flows as nf
 
 REAL_PACE = ExportPolicy()

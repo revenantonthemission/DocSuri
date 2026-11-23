@@ -8,7 +8,7 @@ This policy does not establish a Notion integration or authorize an export.
 """
 
 import re
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 
 # Notion documents an average of 3 requests per second per integration. NFR4.6 keeps
 # every connection at 2 per second (one slot each 500 ms), so a real policy may never
@@ -41,6 +41,12 @@ _EVIDENCE = re.compile(r"[\x21-\x7e]{1,256}")
 _TEXT_FIELDS = frozenset(
     {"policy_id", "revision", "activation_destination_id", "free_terms_reference"}
 )
+# Fields checked by their own rules rather than as finite positive integers.
+_FLAG_FIELDS = frozenset({"production_live", "live_authority"})
+# Held only by `production_live_export`: a live policy built by any other caller is
+# refused (U6's re-check, minor). The complete assembly's production builder is the one
+# caller of that function, behind the provider gate.
+_LIVE_AUTHORITY = object()
 
 
 @dataclass(frozen=True)
@@ -95,10 +101,16 @@ class ExportPolicy:
     # Real activation only (BR8.2, BR8.3; security design §11).
     activation_destination_id: str | None = None
     free_terms_reference: str | None = None
+    # Production-only (U8 plan Step 21; BR7.6): the live policy, whose single
+    # test-destination bound has lifted. Only the complete assembly's production builder
+    # composes it, in live mode, behind the provider gate; it names no destination and
+    # keeps the free-terms evidence and every free limit.
+    production_live: bool = False
+    live_authority: object = field(default=None, repr=False, compare=False)
 
     def __post_init__(self):
         for item in fields(self):
-            if item.name in _TEXT_FIELDS:
+            if item.name in _TEXT_FIELDS or item.name in _FLAG_FIELDS:
                 continue
             value = getattr(self, item.name)
             values = value if isinstance(value, tuple) else (value,)
@@ -113,9 +125,28 @@ class ExportPolicy:
             raise ValueError("waiting lock retry must fit its bound")
         if self.history_page_max > 20:
             raise ValueError("history pages hold at most 20 entries")
+        if type(self.production_live) is not bool:
+            raise ValueError("production_live is a flag")
+        # Each refusal names its field, as every other field's does (U6's policy checks).
+        if self.live_authority is not None and self.live_authority is not _LIVE_AUTHORITY:
+            raise ValueError("live_authority is held only by production_live_export")
+        if (self.live_authority is _LIVE_AUTHORITY) != self.production_live:
+            raise ValueError("production_live is composed only by production_live_export")
+        if self.production_live:
+            self._check_live()
+            return
         if self.activation_destination_id is None and self.free_terms_reference is None:
             return
         self._check_real_activation()
+
+    def _check_live(self) -> None:
+        """The live policy: no test destination, the free-terms evidence, the free limits."""
+        if self.activation_destination_id is not None:
+            raise ValueError("production_live names no test destination")
+        evidence = self.free_terms_reference
+        if not isinstance(evidence, str) or _EVIDENCE.fullmatch(evidence) is None:
+            raise ValueError("production_live requires a free-terms evidence reference")
+        self._check_free_terms()
 
     def _check_schedule(self) -> None:
         offsets = self.check_offsets_seconds
@@ -130,9 +161,12 @@ class ExportPolicy:
 
     def _check_real_activation(self) -> None:
         destination = self.activation_destination_id
-        evidence = self.free_terms_reference
         if not isinstance(destination, str) or _DESTINATION.fullmatch(destination) is None:
             raise ValueError("real activation requires one 32-hex activation destination")
+        self._check_free_terms()
+
+    def _check_free_terms(self) -> None:
+        evidence = self.free_terms_reference
         if not isinstance(evidence, str) or _EVIDENCE.fullmatch(evidence) is None:
             raise ValueError("real activation requires a free-terms evidence reference")
         for name, maximum in REAL_MAXIMA.items():
@@ -144,7 +178,7 @@ class ExportPolicy:
 
     @property
     def synthetic_only(self) -> bool:
-        return self.activation_destination_id is None
+        return self.activation_destination_id is None and not self.production_live
 
     def reference(self) -> dict:
         return {"policyId": self.policy_id, "revision": self.revision}
@@ -170,3 +204,19 @@ def real_activation_export(
 
 # The only way to build the real policy; it cannot exist without its activation inputs.
 REAL_ACTIVATION_EXPORT = real_activation_export
+
+
+def production_live_export(*, free_terms_reference: str) -> ExportPolicy:
+    """The production-only live policy (U8 plan Step 21; BR7.6): U6's single
+    test-destination bound lifts, so owners export to shared pages their own connection
+    can read, under U6's rules and the free-terms evidence and limits.
+
+    Only the complete assembly's production builder composes it, and only in live mode;
+    while Notion is held there nothing is written, so the bound lifts only once Notion
+    is active in live mode. Rehearsal and every synthetic profile keep U6's bound."""
+    return ExportPolicy(
+        policy_id="u6-production-live",
+        free_terms_reference=free_terms_reference,
+        production_live=True,
+        live_authority=_LIVE_AUTHORITY,
+    )

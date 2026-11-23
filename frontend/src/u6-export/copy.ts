@@ -63,7 +63,8 @@ export const OUTCOME_REASON_COPY: Record<OutcomeReason, string> = {
   'source-changed': '분석 결과가 바뀌었습니다',
   'destination-changed': '대상 페이지가 바뀌었거나 읽을 수 없습니다',
   'connection-changed': 'Notion 연결이 바뀌었습니다',
-  'authority-revoked': '승인한 로그인 세션이 끝났습니다',
+  // authority-revoked: session_current refuses an ended session and a withdrawn processing consent alike.
+  'authority-revoked': '승인한 로그인 세션이 끝났거나 처리 동의가 철회되었습니다',
   'account-withdrawn': '계정 사용이 중지되었습니다',
   'owner-cancelled': '직접 취소했습니다',
 };
@@ -73,7 +74,7 @@ export const INVALIDATION_REASON_COPY: Record<InvalidationReason, string> = {
   'source-changed': '분석 결과가 바뀌었습니다',
   'destination-changed': '대상 페이지가 바뀌었거나 읽을 수 없습니다',
   'connection-changed': 'Notion 연결이 바뀌었습니다',
-  'authority-revoked': '승인한 로그인 세션이 끝났습니다',
+  'authority-revoked': '승인한 로그인 세션이 끝났거나 처리 동의가 철회되었습니다',
   'account-withdrawn': '계정 사용이 중지되었습니다',
 };
 

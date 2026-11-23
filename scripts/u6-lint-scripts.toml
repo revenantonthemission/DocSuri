@@ -1,0 +1,11 @@
+# U6's five scripts (Build and Test loop-back 3, L3-9): Ruff's default selection, extended
+# with E, F, I, UP and B at 100, with nothing ignored, so the default rules that apply to the
+# scripts today stay. Passed by `--config` from the repository root over
+# scripts/verify_docsuri_u6.py, scripts/serve_docsuri_u6.py and scripts/u6_*.py; `src` is
+# the paths the scripts set up for themselves.
+line-length = 100
+target-version = "py313"
+src = [".", "scripts", "ops/src"]
+
+[lint]
+extend-select = ["E", "F", "I", "UP", "B"]

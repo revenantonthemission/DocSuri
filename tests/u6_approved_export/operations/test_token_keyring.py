@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 
 import pytest
+
 from backend import key_custody
 from backend.modules.accounts.control_keys import ControlKeyring
 from backend.modules.export import token_keyring
@@ -30,7 +31,6 @@ from backend.modules.export.token_keyring import (
     decide,
 )
 from backend.u6_policy import ExportPolicy
-
 from tests.u6_approved_export import export_rows as rows
 
 REPOSITORY = Path(__file__).resolve().parents[3]
@@ -104,7 +104,7 @@ def test_present_key_without_marker_is_used_and_the_marker_repaired(folder):
     assert ring.store.calls == calls  # the witness is consulted only when both are absent
 
 
-@pytest.mark.parametrize("fault", ["mode", "json", "symlink", "run"])
+@pytest.mark.parametrize("fault", ["mode", "json", "symlink", "run", "directory"])
 def test_broken_key_file_is_unavailable_and_nothing_is_created(folder, fault):
     ring = TokenKeyring(folder, RUN, Witness())
     ring.load()
@@ -116,13 +116,18 @@ def test_broken_key_file_is_unavailable_and_nothing_is_created(folder, fault):
     elif fault == "symlink":
         path.unlink()
         path.symlink_to(folder / "elsewhere")
-    else:
+    elif fault == "run":
         value = json.loads(path.read_text())
         path.write_text(json.dumps({**value, "runId": "another-run"}))
+    elif fault == "directory":
+        path.unlink()
+        path.mkdir(mode=0o700)
     (folder / MARKER_FILE).unlink()
     before = listing(folder)
     error = unavailable(ring.load)
     assert str(error) == "key-custody-broken" and listing(folder) == before
+    if fault == "directory":
+        assert path.is_dir() and list(path.iterdir()) == []
 
 
 def test_absent_key_with_tokens_left_is_a_loss_and_creates_nothing(folder):

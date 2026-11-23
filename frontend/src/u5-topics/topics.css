@@ -1,4 +1,5 @@
-/* U5 topics surface styles; complements the shared workspace palette. */
+/* U5 topics surface styles over the shared workspace tokens (app/globals.css), which
+   carry the light and dark values; this sheet names no colour of its own. */
 
 .topics-view {
   display: flex;
@@ -8,7 +9,7 @@
 
 .topics-intro {
   margin: 0;
-  color: var(--muted, #555);
+  color: var(--color-text-muted);
 }
 
 .topic-list {
@@ -21,7 +22,7 @@
 }
 
 .topic-row {
-  border: 1px solid var(--border, #ccc);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0.75rem;
   display: flex;
@@ -42,7 +43,7 @@
 
 .topic-status,
 .topic-digest {
-  color: var(--muted, #555);
+  color: var(--color-text-muted);
 }
 
 .topic-actions {
@@ -56,7 +57,7 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
-  border-top: 1px dashed var(--border, #ccc);
+  border-top: 1px dashed var(--color-border);
   padding-top: 0.5rem;
 }
 
@@ -83,7 +84,7 @@
 }
 
 .degraded {
-  color: var(--muted, #555);
+  color: var(--color-text-muted);
 }
 
 .dialog-backdrop {
@@ -98,8 +99,8 @@
 }
 
 .dialog {
-  background: var(--surface, #fff);
-  color: var(--text, #111);
+  background: var(--color-surface);
+  color: var(--color-text);
   border-radius: 10px;
   padding: 1rem 1.25rem;
   max-width: 26rem;
@@ -116,7 +117,7 @@
 }
 
 .dialog-note {
-  color: var(--muted, #555);
+  color: var(--color-text-muted);
 }
 
 .dialog-actions {
@@ -143,12 +144,12 @@
 }
 
 .field-error {
-  color: #b3261e;
+  color: var(--color-danger);
   margin: 0;
 }
 
 .inherited-note {
-  color: var(--muted, #555);
+  color: var(--color-text-muted);
   margin: 0;
 }
 
@@ -158,7 +159,7 @@
 }
 
 .stale-offer {
-  border: 1px solid var(--border, #ccc);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
 }
@@ -168,8 +169,8 @@
 }
 
 button.danger {
-  border-color: #b3261e;
-  color: #b3261e;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
 }
 
 button:disabled {

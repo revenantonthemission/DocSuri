@@ -6,11 +6,12 @@ import logging
 from uuid import UUID, uuid4
 
 import pytest
-from backend.modules.export.fake_notion import Answer
 from docsuri_shared.workspace import wire
 
+from backend.modules.export.fake_notion import Answer
 from tests.u6_approved_export import http_flows as hf
 from tests.u6_approved_export import notion_flows as nf
+from tests.u6_approved_export import service_flows as sf
 from tests.u6_approved_export import store_flows as flows
 
 # A short check schedule, so settlement is offered within the test (BR4.5).
@@ -30,7 +31,9 @@ def mount(realm, transactions, connect, authority, authority_b, tmp_path):
     opened = []
 
     def build(**options):
-        mounted = hf.mount(realm, transactions, connect, authority, authority_b, tmp_path, **options)
+        mounted = hf.mount(
+            realm, transactions, connect, authority, authority_b, tmp_path, **options
+        )
         opened.append(mounted)
         return mounted
 
@@ -129,7 +132,9 @@ def test_each_refusal_lies_in_its_operations_list(mount):
             m.refused("prepare_preview", m.rig.preview_value(m.rig.page()), client=m.other)
         },
         "approve": {
-            m.refused("approve", {**m.rig.approval_value(pressed["preview"]), "previewId": str(uuid4())})
+            m.refused(
+                "approve", {**m.rig.approval_value(pressed["preview"]), "previewId": str(uuid4())}
+            )
         },
         "execute": {
             m.refused(
@@ -232,7 +237,7 @@ def test_a_configure_body_that_fails_validation_is_not_echoed(mount):
     responses = [m.post("configure", body) for body in bodies]
     duplicated = m.client.post(
         hf.PREFIX + hf.ROUTE["configure"],
-        content=('{"token":"%s","token":"%s"}' % (secret, secret)).encode(),
+        content=f'{{"token":"{secret}","token":"{secret}"}}'.encode(),
         headers={"Idempotency-Key": str(uuid4()), "Content-Type": "application/json"},
     )
     responses.append(duplicated)
@@ -252,7 +257,9 @@ def test_no_token_appears_in_any_response_or_stored_record_after_failures(
     responses = []
     m.rig.fake.queue("users.me", Answer.error(500))
     responses.append(m.post("configure", m.configure_body()))
-    responses.append(m.post("configure", m.configure_body(token="synthetic-unknown-" + uuid4().hex)))
+    responses.append(
+        m.post("configure", m.configure_body(token="synthetic-unknown-" + uuid4().hex))
+    )
     connection = m.connect_owner()
     replacement, _ = m.rig.new_token()
     m.rig.fake.queue("users.me", Answer.error(503))
@@ -260,16 +267,53 @@ def test_no_token_appears_in_any_response_or_stored_record_after_failures(
     responses.append(m.post("configure", m.configure_body("synthetic-bad-" + uuid4().hex, 1)))
     m.rig.fake.queue("search", Answer.error(401))
     responses.append(m.post("list_destinations", {}))
+    sentinel = "synthetic-sentinel-" + uuid4().hex
+    responses.append(m.post("configure", {**m.configure_body(), "extra": sentinel}))
+    responses.append(m.post("read_effect", {"effectId": str(uuid4())}))
 
     texts = [response.text for response in responses]
-    assert [response.status_code for response in responses] == [503, 422, 503, 422, 404]
+    assert [response.status_code for response in responses] == [503, 422, 503, 422, 404, 422, 404]
     stored = stored_records(connect, m.authority.account_id)
     for token in (m.rig.token, replacement):
         assert all(token not in text for text in texts)
         assert token not in stored
         assert token not in caplog.text
+    assert sentinel not in caplog.text and sentinel not in stored
+    # The dedicated SDK logger alone keeps the SDK's own token-free warning records;
+    # every other export logger logs nothing.
+    assert [
+        record
+        for record in caplog.records
+        if record.name.startswith("docsuri.export")
+        and record.name != "docsuri.export.notion_sdk"
+    ] == []
+    assert all(record.exc_info is None for record in caplog.records)
     revoked = flows.connection_row(connect, UUID(connection["connectionId"]))
     assert (revoked["state"], revoked["revision"]) == ("revoked", 2)
+
+
+def test_an_unlisted_destination_is_conflict_with_no_page_request(mount):
+    m = mount()
+    m.connect_owner()
+    listed = m.rig.page()
+    outside = uuid4().hex
+    body = m.rig.preview_value(outside, m.rig.ready(authority=m.authority))
+
+    response = m.post("prepare_preview", body)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "CONFLICT"
+    assert "CONFLICT" in sf.OPERATION_ERRORS["prepare_preview"]
+    code, error = sf.refusal(
+        lambda: m.rig.service.prepare_preview(m.authority, {**body})
+    )
+    assert code == "CONFLICT" and error.current["field"] == "destination"
+    assert all(outside not in entry.path for entry in m.rig.fake.requests)
+    preview = m.ok(
+        "prepare_preview", m.rig.preview_value(listed, m.rig.ready(authority=m.authority))
+    )
+    assert preview["destination"]["destinationId"] == listed
+    assert m.rig.fake.writes == []
 
 
 def test_a_bad_candidate_while_connected_leaves_the_connection_unchanged(mount, connect):

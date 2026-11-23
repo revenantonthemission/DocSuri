@@ -1,0 +1,28 @@
+#!/Library/DocSuri/release/.venv/bin/python -I
+"""docsuri-production-tool: the production environment tool (BR6.9, D5, D6).
+
+Run as the service account through sudo, in person, against the production profile only,
+with one word from its closed set: `migrate`, `restore-evaluate`, `restore-database`,
+`recreate-database`, `remove-database`, U6's `create-export-key-after-loss`,
+`rotate-export-key`, `retire-export-key` and `export-key-counts`, AccountAccess's
+`replace-verifier-key`, `control-key-start` (the control keyring's start and U8's keyring
+snapshot, while v2 is stopped), U2's `control-key-recovery` (from that snapshot), and
+`readiness-evidence`, among the closed set `production_tool.WORDS` lists. The word is
+checked again by the program; further input is bounded JSON on standard input (`restore-database` reads a JSON
+header line, then the set's archive), with any login the word needs released in person
+by the operator tool and handed on there, never as an argument or a variable. One JSON
+result, naming the owner's consequence, is written to standard output. It refuses to run
+when the environment holds PYTHON*, DYLD_* or LD_* variables, and as any account but the
+service account.
+"""
+
+import sys
+
+if sys.argv[1:] == ["--self-check"]:
+    from docsuri_ops.release import self_check
+
+    raise SystemExit(self_check(__file__))
+
+from docsuri_ops.production_tool import main_fixed
+
+raise SystemExit(main_fixed())

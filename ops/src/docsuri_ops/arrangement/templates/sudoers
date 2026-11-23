@@ -1,0 +1,44 @@
+# /etc/sudoers.d/docsuri-v2 (root, 0440): DocSuri v2's fixed commands
+# (security-design § 5.2-5.3, D4, D6). Arrangement version ${version}.
+#
+# Every rule names one root-owned program in ${bin}, and where its closed set is
+# small, each allowed invocation exactly; a program that takes no argument is
+# written with "" so sudo allows none. Each program checks its word again itself.
+# sudo's defaults on this Mac stay (env_reset, secure_path): no rule carries SETENV
+# and nothing is added to env_keep. The service account, ${service}, holds nothing.
+#
+# In person: every alias your login account, ${operator}, may run asks for your
+# password each time (timestamp_timeout=0), and the operator tool runs each with
+# `sudo -k`. The scheduler, ${scheduler}, holds only its unattended set, without a
+# password, and none of it is in any in-person alias.
+
+# --- In person, as root -------------------------------------------------------------
+Cmnd_Alias DOCSURI_INPERSON_ROOT = \
+${inperson_root}
+
+# --- In person, as the service account ----------------------------------------------
+Cmnd_Alias DOCSURI_INPERSON_SERVICE = \
+${inperson_service}
+
+# --- In person, as the backup account -----------------------------------------------
+Cmnd_Alias DOCSURI_INPERSON_BACKUP = \
+${inperson_backup}
+
+# --- Unattended, the scheduler's standing grants ------------------------------------
+Cmnd_Alias DOCSURI_STANDING_BACKUP = \
+${standing_backup}
+Cmnd_Alias DOCSURI_STANDING_SERVICE = \
+${standing_service}
+Cmnd_Alias DOCSURI_STANDING_ROOT = \
+${standing_root}
+
+Defaults!DOCSURI_INPERSON_ROOT timestamp_timeout=0, umask=077
+Defaults!DOCSURI_INPERSON_SERVICE timestamp_timeout=0, umask=077
+Defaults!DOCSURI_INPERSON_BACKUP timestamp_timeout=0, umask=077
+
+${operator} ALL = (root) DOCSURI_INPERSON_ROOT
+${operator} ALL = (${service}) DOCSURI_INPERSON_SERVICE
+${operator} ALL = (${backup}) DOCSURI_INPERSON_BACKUP
+${scheduler} ALL = (${backup}) NOPASSWD: DOCSURI_STANDING_BACKUP
+${scheduler} ALL = (${service}) NOPASSWD: DOCSURI_STANDING_SERVICE
+${scheduler} ALL = (root) NOPASSWD: DOCSURI_STANDING_ROOT

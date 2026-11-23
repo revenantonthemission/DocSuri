@@ -15,6 +15,11 @@ from backend.transactions import Authority, guard
 
 
 class ControlUsageService:
+    # The accepting owner a reservation is recorded for, bound in the reservation and read
+    # back in the usage records (the column's default, `u2_controls.sql`). U8's research
+    # usage records `ResearchWorkspace` (the person's decision of 2026-10-24).
+    operation_owner = "PaperAssistance"
+
     def __init__(self, transactions, policy: ControlPolicy):
         policy.require_realm(transactions.profile.realm)
         self.transactions, self.policy = transactions, policy
@@ -187,7 +192,7 @@ class ControlUsageService:
                             "accountId": str(row["account_id"]),
                             "operation": {
                                 "operationId": str(row["operation_id"]),
-                                "operationOwner": "PaperAssistance",
+                                "operationOwner": row["operation_owner"],
                                 "inputRevision": row["intent_hash"],
                             },
                             "revision": str(row["revision"]),
@@ -267,8 +272,8 @@ class ControlUsageService:
                 raise UsageQuotaExceeded("finite current period exhausted")
             return conn.execute(
                 "INSERT INTO usage.reservation(id,account_id,operation_id,intent_hash,disposition,"
-                "operation_generation,period_id,policy_ref,quantity) "
-                "VALUES(%s,%s,%s,%s,'reserved',%s,%s,%s,1) RETURNING *",
+                "operation_generation,period_id,policy_ref,quantity,operation_owner) "
+                "VALUES(%s,%s,%s,%s,'reserved',%s,%s,%s,1,%s) RETURNING *",
                 (
                     uuid4(),
                     authority.account_id,
@@ -277,6 +282,7 @@ class ControlUsageService:
                     admission["generation"],
                     admission["period_id"],
                     Jsonb(self.policy.reference),
+                    self.operation_owner,
                 ),
             ).fetchone()
 

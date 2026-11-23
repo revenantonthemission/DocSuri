@@ -27,23 +27,23 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from collections import Counter
 from contextlib import contextmanager
 from pathlib import Path
 
 from defusedxml import ElementTree as ET
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "scripts"))
-sys.path.insert(0, str(ROOT / "ops/src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ops/src"))
 
+from backend.local_profile import LocalProfile, private_bytes
 from bootstrap_docsuri_u1 import SCHEMAS, amend
 from verify_docsuri_u1 import GIB, IMAGE, LOCKS, Refused, command, digest, headroom
 from verify_docsuri_u3 import stop
 from verify_docsuri_u5 import MIGRATIONS as U5_MIGRATIONS
 
-from backend.local_profile import LocalProfile, private_bytes
-
+ROOT = Path(__file__).resolve().parents[1]
 RUN = Path("/tmp/docsuri-u6-run").resolve()
 _RUNNER_OWNED = False
 PYTHON = ROOT / "backend/.venv/bin/python"
@@ -526,14 +526,16 @@ def install_base(conn, value: dict, credentials: dict, hashes: dict) -> None:
     from psycopg.types.json import Jsonb
 
     unexpected = conn.execute(
-        "SELECT nspname FROM pg_namespace WHERE nspname NOT LIKE 'pg_%' AND nspname NOT IN ('public','information_schema')"
+        "SELECT nspname FROM pg_namespace WHERE nspname NOT LIKE 'pg_%' "
+        "AND nspname NOT IN ('public','information_schema')"
     ).fetchall()
     if unexpected:
         raise Refused("unrecognized schema; no migration attempted")
     conn.execute(sql.SQL("REVOKE ALL ON DATABASE {} FROM PUBLIC").format(sql.Identifier(DATABASE)))
     conn.execute("REVOKE ALL ON SCHEMA public FROM PUBLIC")
     conn.execute(
-        "CREATE TABLE public.docsuri_local_identity (singleton boolean PRIMARY KEY CHECK(singleton),run_id text NOT NULL,schema_hashes jsonb NOT NULL)"
+        "CREATE TABLE public.docsuri_local_identity (singleton boolean PRIMARY KEY "
+        "CHECK(singleton),run_id text NOT NULL,schema_hashes jsonb NOT NULL)"
     )
     conn.execute(
         "INSERT INTO public.docsuri_local_identity VALUES(true,%s,%s)",
@@ -545,9 +547,9 @@ def install_base(conn, value: dict, credentials: dict, hashes: dict) -> None:
         role = sql.Identifier(f"docsuri_{name}")
         conn.execute(sql.SQL("GRANT USAGE ON SCHEMA accounts TO {}").format(role))
         conn.execute(
-            sql.SQL("GRANT EXECUTE ON FUNCTION accounts.guard_session(uuid,uuid,text) TO {}").format(
-                role
-            )
+            sql.SQL(
+                "GRANT EXECUTE ON FUNCTION accounts.guard_session(uuid,uuid,text) TO {}"
+            ).format(role)
         )
     for name in CORPUS_GUARD_LOGINS:
         role = sql.Identifier(f"docsuri_{name}")
@@ -558,7 +560,9 @@ def install_base(conn, value: dict, credentials: dict, hashes: dict) -> None:
     conn.execute(
         "GRANT EXECUTE ON FUNCTION accounts.guard_execution(uuid,uuid) TO docsuri_assistance"
     )
-    conn.execute("GRANT SELECT ON corpus.paper,corpus.version,corpus.projection TO docsuri_discovery")
+    conn.execute(
+        "GRANT SELECT ON corpus.paper,corpus.version,corpus.projection TO docsuri_discovery"
+    )
 
 
 def install_owner(conn, name: str, credentials: dict) -> None:
@@ -577,7 +581,8 @@ def install_owner(conn, name: str, credentials: dict) -> None:
     )
     conn.execute(
         sql.SQL(
-            "CREATE ROLE {} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS CONNECTION LIMIT 2 PASSWORD {}"
+            "CREATE ROLE {} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS "
+            "CONNECTION LIMIT 2 PASSWORD {}"
         ).format(runtime, sql.Literal(credentials["roles"][name]))
     )
     conn.execute(
@@ -586,15 +591,19 @@ def install_owner(conn, name: str, credentials: dict) -> None:
     conn.execute(sql.SQL("CREATE SCHEMA {} AUTHORIZATION {}").format(schema, owner))
     conn.execute(sql.SQL("SET LOCAL ROLE {}").format(owner))
     conn.execute(
-        sql.SQL("ALTER DEFAULT PRIVILEGES IN SCHEMA {} REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC").format(
-            schema
-        )
+        sql.SQL(
+            "ALTER DEFAULT PRIVILEGES IN SCHEMA {} REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC"
+        ).format(schema)
     )
     if name in SCHEMAS:
         conn.execute((ROOT / SCHEMAS[name]).read_text(), prepare=False)
         conn.execute(
             sql.SQL(
-                "CREATE TABLE {}.receipt (account_id uuid NOT NULL,kind text NOT NULL,key uuid NOT NULL,intent_hash text NOT NULL CHECK(intent_hash ~ '^[0-9a-f]{{64}}$'),outcome jsonb NOT NULL,created_at timestamptz NOT NULL DEFAULT clock_timestamp(),PRIMARY KEY(account_id,kind,key))"
+                "CREATE TABLE {}.receipt (account_id uuid NOT NULL,kind text NOT NULL,"
+                "key uuid NOT NULL,intent_hash text NOT NULL "
+                "CHECK(intent_hash ~ '^[0-9a-f]{{64}}$'),outcome jsonb NOT NULL,"
+                "created_at timestamptz NOT NULL DEFAULT clock_timestamp(),"
+                "PRIMARY KEY(account_id,kind,key))"
             ).format(schema)
         )
         for statement in (
@@ -614,7 +623,10 @@ def owner_credentials(value: dict) -> dict:
     target = RUN / "owner-credentials.json"
     if target.exists():
         credentials = json.loads(private_bytes(target))
-        if credentials.get("runId") != value["runId"] or set(credentials.get("roles", {})) != OWNERS:
+        if (
+            credentials.get("runId") != value["runId"]
+            or set(credentials.get("roles", {})) != OWNERS
+        ):
             raise Refused("owner credential identity mismatch")
         return credentials
     credentials = {
@@ -672,10 +684,9 @@ def migrate(path: Path, *, base_only: bool = False) -> dict:
                 (Jsonb(known),),
             )
     if not base_only:
-        from docsuri_ops.local_transport import prepare_transport
-
         from backend.modules.accounts.services.guarded_entry import GuardedEntryService
         from backend.transactions import OwnerTransactions
+        from docsuri_ops.local_transport import prepare_transport
 
         transactions = OwnerTransactions(LocalProfile.load(path))
         try:
@@ -734,7 +745,9 @@ def source_identity() -> dict:
 
 def child_environment() -> dict:
     environment = {
-        key: os.environ[key] for key in ("PATH", "HOME", "TMPDIR", "LANG") if key in os.environ
+        key: os.environ[key]
+        for key in ("PATH", "HOME", "TMPDIR", "LANG", "DOCKER_HOST")
+        if key in os.environ
     }
     environment.update(
         PYTHONPATH=str(ROOT),
@@ -1124,11 +1137,14 @@ def junit_counts(report: Path, evidence: dict) -> None:
             evidence["invalidTestReport"] = True
             evidence["exitCode"] = evidence["exitCode"] or 1
     if cases is not None:
+        by_class = Counter(case.get("classname", "") for case in cases)
         evidence.update(
             tests=len(cases),
             failures=sum(c.find("failure") is not None for c in cases),
             errors=sum(c.find("error") is not None for c in cases),
             skipped=sum(c.find("skipped") is not None for c in cases),
+            # The per-class counts L1-8 reads: component counts from a real run's report.
+            testsByClass=dict(sorted(by_class.items())),
         )
         if not cases or evidence["skipped"] or evidence["errors"] or evidence["failures"]:
             evidence["exitCode"] = evidence["exitCode"] or 1
@@ -1400,7 +1416,11 @@ def key_phase(phase: str, path: Path, version: str | None) -> tuple[dict, int]:
         except KeyOperationRefused as error:
             return {"state": "refused", "category": error.category, "counts": error.counts}, 1
         except ProtectionUnavailable as error:
-            return {"state": "refused", "category": "protection-unavailable", "reason": str(error)}, 1
+            return {
+                "state": "refused",
+                "category": "protection-unavailable",
+                "reason": str(error),
+            }, 1
 
 
 def archive_identity(path: Path) -> dict:

@@ -1,0 +1,10 @@
+# U6's tests (Build and Test loop-back 3, L3-9): E, F, I, UP and B at 100, with nothing
+# ignored. Passed by `--config` from the repository root over tests/u6_approved_export;
+# `src` follows the `pythonpath` of backend/pytest.u6-approved-export.ini so that isort's
+# first-party sections match it.
+line-length = 100
+target-version = "py313"
+src = [".", "ingestion/src", "ops/src"]
+
+[lint]
+select = ["E", "F", "I", "UP", "B"]

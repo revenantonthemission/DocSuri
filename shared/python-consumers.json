@@ -218,6 +218,46 @@
       "shadowed": false
     },
     {
+      "file": "backend/modules/accounts/u8_control_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/accounts/u8_control_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "execution",
+      "local": "execution",
+      "generated": [
+        "docsuri_shared._generated.events:execution_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/accounts/u8_lifecycle.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/accounts/u8_local_http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
       "file": "backend/modules/citation_graph/controller.py",
       "module": "docsuri_shared.authz",
       "symbol": "Principal",
@@ -232,6 +272,16 @@
       "local": "wire",
       "generated": [
         "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/corpus/paper_import.py",
+      "module": "docsuri_shared.dtos",
+      "symbol": "DocModel",
+      "local": "DocModel",
+      "generated": [
+        "docsuri_shared._generated.dtos.docmodel_schema:DocModel"
       ],
       "shadowed": false
     },
@@ -705,6 +755,16 @@
     },
     {
       "file": "backend/modules/discovery/u3_search.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/modules/discovery/u8_search.py",
       "module": "docsuri_shared.workspace",
       "symbol": "wire",
       "local": "wire",
@@ -1588,6 +1648,16 @@
       "shadowed": false
     },
     {
+      "file": "backend/modules/operations/http.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
       "file": "backend/modules/ops/controller.py",
       "module": "docsuri_shared.authz",
       "symbol": "AuthorizationGuard",
@@ -2083,6 +2153,46 @@
       "symbol": "private_doc_id",
       "local": "private_doc_id",
       "generated": [],
+      "shadowed": false
+    },
+    {
+      "file": "backend/u8_routes.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/u8_routes.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/u8_routes.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
+      "shadowed": false
+    },
+    {
+      "file": "backend/u8_routes.py",
+      "module": "docsuri_shared.workspace",
+      "symbol": "wire",
+      "local": "wire",
+      "generated": [
+        "docsuri_shared._generated.dtos:workspace_schema"
+      ],
       "shadowed": false
     },
     {
@@ -3357,11 +3467,11 @@
   "sourceDigests": [
     {
       "file": "backend/local_browser.py",
-      "sha256": "21b47418aa92251b357f9bab6a2c50510b3df6791f7427ebefe4db60c4c038ff"
+      "sha256": "6a2903dc89e96d372f3ff9500515db7dddf3c69e265a7c12d296eec4b2c2590f"
     },
     {
       "file": "backend/local_host.py",
-      "sha256": "c19f5a650434d5a38eea6f9acb311f86b2bcafd5123ca40d778fcbdc13ae6c0f"
+      "sha256": "216fe94648547708d587dd5632c433c345f18c99b8f619210cf841e3d717c0ef"
     },
     {
       "file": "backend/middleware/agent_attachments.py",
@@ -3369,7 +3479,7 @@
     },
     {
       "file": "backend/modules/accounts/control_http.py",
-      "sha256": "5d3b8c9991c3337824a536e393f9ae87f506e5e7e599dce5c6a627766c315cb9"
+      "sha256": "bdc1d3a34154f7b671bd186875ff54094ef21d4daccf472bc87ba5ee5bd0b878"
     },
     {
       "file": "backend/modules/accounts/controller.py",
@@ -3381,7 +3491,7 @@
     },
     {
       "file": "backend/modules/accounts/local_http.py",
-      "sha256": "25fb9091f32a82697d64507bfa741d392a2b4368fabd5de511ddc1e7b247a9df"
+      "sha256": "afb1b059adc85da98aeca492bda97dee3e62b0e83fd8fb1d61b7eb3ab432c094"
     },
     {
       "file": "backend/modules/accounts/models.py",
@@ -3397,11 +3507,23 @@
     },
     {
       "file": "backend/modules/accounts/services/control_lifecycle.py",
-      "sha256": "14c1e8dc106c38cccf42750009d9d50e0ae8bb63a7c250f912e2456993c2e613"
+      "sha256": "80170166a284708c758b3e06a570d67e2daa6b5a420eb6b3748fa3cdf71d9411"
     },
     {
       "file": "backend/modules/accounts/services/signup.py",
       "sha256": "6d122a6f87e4f18f46f5572e7892850b8c16a73534cc31c72e4a2cc14517847c"
+    },
+    {
+      "file": "backend/modules/accounts/u8_control_http.py",
+      "sha256": "f0bd028d5a2610d5deb7b5ce32af2c453ca5ca1d110cd4caafa2cc051df0d298"
+    },
+    {
+      "file": "backend/modules/accounts/u8_lifecycle.py",
+      "sha256": "14bf756142fa0425761ec0490658df5116bd5e88bf7cd5c34ea3b1114deb8548"
+    },
+    {
+      "file": "backend/modules/accounts/u8_local_http.py",
+      "sha256": "2f60568bf4a510da56da3f13bf3e1dd7ee0c0cbe16894bee1bb4093d0a6afdf6"
     },
     {
       "file": "backend/modules/citation_graph/controller.py",
@@ -3412,8 +3534,12 @@
       "sha256": "25aec79bd3253051246bb3487f911510de0b1fba335dd2e21e4a2ad6d4ee8dd8"
     },
     {
+      "file": "backend/modules/corpus/paper_import.py",
+      "sha256": "b1dbd8f87d3b33e111be77aa6bd1855caa4632d28418e86cd646f18428552222"
+    },
+    {
       "file": "backend/modules/corpus/source_parser.py",
-      "sha256": "685b7750fb7258d144f9e8eec74b2b7002b43bcc0939acb43c0d7126978df4d3"
+      "sha256": "54525646ee658f2b988b5080fe6ed0369e482ea89fb95b6405d59590348ee8bd"
     },
     {
       "file": "backend/modules/corpus/u3_http.py",
@@ -3425,7 +3551,7 @@
     },
     {
       "file": "backend/modules/discovery/local_search.py",
-      "sha256": "fbacd1d69e4bc57ed4351f071e5cbc9245517ab982da254c8b1e1b8cc148307f"
+      "sha256": "050635d7ffb55145c688dfe468230a01e6f2966f9de09271d1d0cd4ac5953f66"
     },
     {
       "file": "backend/modules/discovery/src/discovery/adapters/bedrock_embedding.py",
@@ -3512,6 +3638,10 @@
       "sha256": "7dda6531824afcd69302f2953936f17429c18a0bc72879313c74a6a3814eddcb"
     },
     {
+      "file": "backend/modules/discovery/u8_search.py",
+      "sha256": "e8c149b0a4d4a0f783b20e48aa4c9d374e25cb64a31cdb39069683c900ab9cc7"
+    },
+    {
       "file": "backend/modules/evidence/assembler.py",
       "sha256": "19bb5154dd1aa017c1bc33ae8971d9832ebb2d88d84dc7fc09908b450d707b81"
     },
@@ -3573,7 +3703,7 @@
     },
     {
       "file": "backend/modules/export/notion_adapter.py",
-      "sha256": "12e8950ba11f8eba8a11fe702f29cf60e374b7d8f74b07798369f23bbbf9c83a"
+      "sha256": "f4599e02a6b29b5b7121c363c277d527d647f9f2679349e9605d7f318a84bd46"
     },
     {
       "file": "backend/modules/library/authz.py",
@@ -3597,7 +3727,7 @@
     },
     {
       "file": "backend/modules/library/local_http.py",
-      "sha256": "a08c9719ffe2ce602fdef94a52f7c7cc1b383088900f62ef18ad509ce79f380b"
+      "sha256": "ed2d02d547245c047a87bf4510fad7de3460994c35fc1f319fc565c8c2f2fae3"
     },
     {
       "file": "backend/modules/library/ports.py",
@@ -3605,7 +3735,7 @@
     },
     {
       "file": "backend/modules/library/repository/guarded.py",
-      "sha256": "b25eebdb6818603f8ce8deb97777e554b5ebc5b6798a1d7c79c1579d31c6154d"
+      "sha256": "82db07ad8ce249499be045e7a2ecb2cdf4179d4ade4347f7ad6d13757b2ab950"
     },
     {
       "file": "backend/modules/library/retraction_consumer.py",
@@ -3672,6 +3802,10 @@
       "sha256": "cffe0028ee3fc9a5f79b138543c54ad1f5c1f1231719b84a11ad211ba5088a97"
     },
     {
+      "file": "backend/modules/operations/http.py",
+      "sha256": "f15f95a89e3d0e8a7ec8356bb046942316c667314710c153a5c399410c5f1ebd"
+    },
+    {
       "file": "backend/modules/ops/controller.py",
       "sha256": "c34982681358dc177d05b7430f53d9dcefd625c71b374c4bd701070018bdafb6"
     },
@@ -3685,11 +3819,11 @@
     },
     {
       "file": "backend/modules/personalization/guarded_service.py",
-      "sha256": "48f190d397b4ccd4e0dbe611c05c49e0ff8e474d5cd8f7729468e139be423a04"
+      "sha256": "26ed65e2b99b5dbc4173098f8e66c775040b945eee8450b98af510f525cfaae0"
     },
     {
       "file": "backend/modules/personalization/local_http.py",
-      "sha256": "2dcba531744ee8b96d0ec4f29ab902afbac1dc9c9482be47e07881ad9a39d135"
+      "sha256": "84ad13bc1dce71a7632d2ec0190a5b97a8e51c4ca7ff4fc6cc5dd13167447545"
     },
     {
       "file": "backend/modules/personalization/models.py",
@@ -3701,7 +3835,7 @@
     },
     {
       "file": "backend/modules/plans/control_service.py",
-      "sha256": "4f2946da09f91b93f7abeffacdb5e6f7e92163cb15ab3964fcc63560bf1963ef"
+      "sha256": "db4066e3c7b1e49e5d88787371cae285c75c70aeb106a64a60a3f362324a4597"
     },
     {
       "file": "backend/modules/plans/controller.py",
@@ -3709,7 +3843,7 @@
     },
     {
       "file": "backend/modules/plans/local_http.py",
-      "sha256": "5b90020ee73a85dd9712773cfce83b2ca9e7ba999b5f48c12b200afdb853ef45"
+      "sha256": "b349a10dcbc9bf52911b4d349b81d7e89317a88fd0e0bf69f2a608451af21f51"
     },
     {
       "file": "backend/modules/plans/models.py",
@@ -3725,7 +3859,7 @@
     },
     {
       "file": "backend/modules/research/http.py",
-      "sha256": "3214c935c77e63351fa3b9d9e09b43704488e9379b83bb5534088d6a26b1141a"
+      "sha256": "f4d9e2742f823417bc14fdc1d131ff48dff4dfdfbf04a1b8046e85a35567e390"
     },
     {
       "file": "backend/modules/summarization/execution.py",
@@ -3733,7 +3867,7 @@
     },
     {
       "file": "backend/modules/summarization/guarded_repository.py",
-      "sha256": "e0c3a956c2d316021c63a2482313db27a15b6614dc77ce80d5c57595d563d7bf"
+      "sha256": "ae9bf802833f095bc59d8a819d8b160be3ae28157736a183e50af129e06fe6cb"
     },
     {
       "file": "backend/modules/summarization/local_catalog.py",
@@ -3749,11 +3883,11 @@
     },
     {
       "file": "backend/modules/summarization/payload.py",
-      "sha256": "fd42280817ec4dfb6f04940ef24bdf7a030152663272f7f462f38903dada9c51"
+      "sha256": "055a1454c96956202fec0ec398bdeabae3ec5086f91ee4058b3fb42bcac2c2cd"
     },
     {
       "file": "backend/modules/summarization/requests.py",
-      "sha256": "60075407a591443d546f1d6cecd989c66d1482061998961bdd23ee27fc3add78"
+      "sha256": "8d9bbeb856c02ac36e3bdb2053b5485e48040bb93b06eb51374e4f8e2f77656a"
     },
     {
       "file": "backend/modules/summarization/src/summarization/adapters/s3_docmodel.py",
@@ -3797,11 +3931,11 @@
     },
     {
       "file": "backend/modules/summarization/u3_catalog.py",
-      "sha256": "7c8fdf12e258adbf7c4bc30cc5b892de1c1f87ff4048140615d7a5ba2137ede3"
+      "sha256": "9e548dc3952dd6efd55f5857720ee4b8fb463a54666cbe3e5d4f500fcc568fbc"
     },
     {
       "file": "backend/modules/summarization/u3_http.py",
-      "sha256": "7ddf418485094485dc8dcfd23de1f2f4c04a0129c410331a16d46fe9bb89d995"
+      "sha256": "79bfa6a8880c5dc17a0a4d8982d5ed536b02b2c6fa173c26ff26906b047dfad7"
     },
     {
       "file": "backend/modules/summarization/worker.py",
@@ -3822,6 +3956,10 @@
     {
       "file": "backend/modules/user_docmodel/coordinator.py",
       "sha256": "9a8eb056df98ca70b932b2ebfdc435fb5d7359b31b9bea44ec0eb3da1a620ce8"
+    },
+    {
+      "file": "backend/u8_routes.py",
+      "sha256": "4cea6c3e2cac9bb63371dfa0802075eeb358bf69df15a5c18b95d6bde3d53de3"
     },
     {
       "file": "ingestion/src/docsuri_ingestion/adapters/arxiv.py",

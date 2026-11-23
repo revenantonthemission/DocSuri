@@ -1,0 +1,21 @@
+#!/Library/DocSuri/release/.venv/bin/python -I
+"""docsuri-ledger: the operations ledger's fixed command (security-design § 5.2, D6).
+
+Run as the service account through sudo, with one word from its closed set: `append`,
+`copy`, `verify`, `read` or `repair`. The word is checked again by the program; further
+input is bounded JSON on standard input; one JSON result is written to standard output
+(`copy` streams the ledger there and writes its result to standard error). It refuses to
+run when the environment holds PYTHON*, DYLD_* or LD_* variables. The release's own
+source roots reach the interpreter through the root-owned docsuri-release.pth.
+"""
+
+import sys
+
+if sys.argv[1:] == ["--self-check"]:
+    from docsuri_ops.release import self_check
+
+    raise SystemExit(self_check(__file__))
+
+from backend.modules.operations.ledger_cli import main_fixed
+
+raise SystemExit(main_fixed(sys.argv[1:]))

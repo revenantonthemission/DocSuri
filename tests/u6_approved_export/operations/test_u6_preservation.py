@@ -1,8 +1,12 @@
 """The destructive archive (D14; cicd-pipeline §4.4) against a controlled context.
 
 Every helper the runner hands in is either the runner's own filesystem helper or a
-recorded stand-in for Docker and the database, so the key unlink, its refusals and the
-first-key staging pair are exercised on real files without touching any environment.
+recorded stand-in for Docker, the port, open files and the database stop, so the key
+unlink, its refusals and the first-key staging pair are exercised on real files without
+touching any environment folder. The database reads run against the realm: the archive's
+identity and client checks read the realm's own identity row and client backends through
+an administrative `connect_raw` session with tuple rows, as the runner's `connect_admin`
+returns them (L3-3).
 """
 
 import dataclasses
@@ -14,6 +18,8 @@ import time
 from pathlib import Path
 
 import pytest
+from psycopg.rows import tuple_row
+
 from backend import local_profile
 from backend.modules.export.token_keyring import (
     KEY_FILE,
@@ -24,8 +30,13 @@ from backend.modules.export.token_keyring import (
 from scripts import u6_preservation as preservation
 from scripts import verify_docsuri_u6 as runner
 
-RUN_ID = "docsuri-u6-0123456789abcdef"
 KEY_BYTES = b'{"synthetic": "key record"}'
+FOREIGN_RUN_ID = "docsuri-u6-fedcba9876543210"
+OTHER_CLIENTS = (
+    "SELECT count(*) FROM pg_stat_activity WHERE pid<>pg_backend_pid() "
+    "AND backend_type='client backend'"
+)
+CLIENT_WAIT_SECONDS = 5
 
 
 def private(path: Path, data: bytes) -> None:
@@ -33,32 +44,8 @@ def private(path: Path, data: bytes) -> None:
     path.chmod(0o600)
 
 
-class Database:
-    """The administrative connection's two preservation reads."""
-
-    def __init__(self, state: dict):
-        self.state = state
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc):
-        return False
-
-    def execute(self, sql):
-        if "docsuri_local_identity" in sql:
-            self.result = (self.state["identity"], runner.DATABASE)
-        else:
-            assert "pg_stat_activity" in sql and "pid<>pg_backend_pid()" in sql
-            self.result = (self.state["clients"],)
-        return self
-
-    def fetchone(self):
-        return self.result
-
-
 @pytest.fixture
-def owned(tmp_path, monkeypatch):
+def owned(tmp_path, monkeypatch, realm, connect_raw):
     """An owned U6 folder with a key file, its marker and lock, and a context over it."""
     monkeypatch.setattr(local_profile, "RUN_PARENT", tmp_path)
     run = tmp_path / "docsuri-u6-run"
@@ -69,17 +56,35 @@ def owned(tmp_path, monkeypatch):
     private(keys / KEY_FILE, KEY_BYTES)
     private(keys / MARKER_FILE, b"")
     private(keys / LOCK_FILE, b"")
-    state = {"identity": RUN_ID, "clients": 0, "stopped": False, "resources": 0}
+    state = {"stopped": False, "resources": 0, "extra_client": False, "admin_reads": 0}
 
-    def write_manifest(*, expired: bool):
+    def connect_admin(value):
+        """The realm's administrative login with tuple rows, once no other client remains."""
+        conn = connect_raw()
+        conn.row_factory = tuple_row
+        deadline = time.monotonic() + CLIENT_WAIT_SECONDS
+        while True:
+            others = conn.execute(OTHER_CLIENTS).fetchone()[0]
+            conn.rollback()  # PostgreSQL keeps one activity snapshot per transaction
+            if others == 0:
+                break
+            if time.monotonic() >= deadline:
+                pytest.fail("another database client stayed connected to the realm")
+            time.sleep(0.1)
+        if state["extra_client"]:
+            connect_raw()
+        state["admin_reads"] += 1
+        return conn
+
+    def write_manifest(*, expired: bool, run_id: str = realm.run_id):
         created = time.time() - (90000 if expired else 60)
         value = {
             "unit": runner.UNIT,
             "profile": "synthetic-local",
             "repository": str(runner.ROOT),
-            "runId": RUN_ID,
-            "container": RUN_ID,
-            "volume": RUN_ID + "-pgdata",
+            "runId": run_id,
+            "container": run_id,
+            "volume": run_id + "-pgdata",
             "databaseImage": runner.IMAGE,
             "database": runner.DATABASE,
             "realm": runner.REALM,
@@ -93,7 +98,9 @@ def owned(tmp_path, monkeypatch):
         private(run / "environment.json", raw)
         private(
             run / "ownership.json",
-            json.dumps({"runId": RUN_ID, "manifestSha256": hashlib.sha256(raw).hexdigest()}).encode(),
+            json.dumps(
+                {"runId": run_id, "manifestSha256": hashlib.sha256(raw).hexdigest()}
+            ).encode(),
         )
         return value
 
@@ -113,12 +120,19 @@ def owned(tmp_path, monkeypatch):
         idle_port=lambda: None,
         open_files=lambda root: subprocess.CompletedProcess(["lsof"], 1, ""),
         inventory=runner.inventory_entries,
-        connect_admin=lambda value: Database(state),
+        connect_admin=connect_admin,
         stop_database=stop_database,
         sync=runner.fsync_directory,
     )
     write_manifest(expired=False)
-    return {"run": run, "keys": keys, "state": state, "context": context, "write": write_manifest}
+    return {
+        "run": run,
+        "keys": keys,
+        "state": state,
+        "context": context,
+        "write": write_manifest,
+        "run_id": realm.run_id,
+    }
 
 
 def archive(owned) -> dict:
@@ -137,13 +151,15 @@ def test_a_completed_archive_leaves_no_key_file(owned):
     destination = Path(result["path"])
     assert result["keyDeleted"] is True and result["keyFileFound"] is True
     assert result["keyFolderRemoved"] is True and result["containerStopped"] is True
-    assert result["runId"] == RUN_ID and result["volumePreserved"] == RUN_ID + "-pgdata"
-    assert destination.name.startswith(f"docsuri-u6-preserved-{RUN_ID}-")
+    run_id = owned["run_id"]
+    assert result["runId"] == run_id and result["volumePreserved"] == run_id + "-pgdata"
+    assert destination.name.startswith(f"docsuri-u6-preserved-{run_id}-")
     assert not owned["run"].exists() and destination.is_dir()
     assert not (destination / runner.KEY_FOLDER).exists()
     assert not list(destination.rglob(KEY_FILE))
     assert (destination / "environment.json").is_file()
     assert owned["state"]["stopped"] is True and owned["state"]["resources"] == 2
+    assert owned["state"]["admin_reads"] == 1
 
 
 def fail(*_args):
@@ -171,6 +187,7 @@ def fail(*_args):
 def test_a_refusal_at_any_check_leaves_the_key_folder_intact(owned, monkeypatch, check):
     context, keys, run, state = owned["context"], owned["keys"], owned["run"], owned["state"]
     staging = keys / (STAGING_PREFIX + "a" * 32)
+    match = None
     if check == "identity":
         (run / "environment.json").write_bytes(b"{}")
     elif check == "resources":
@@ -193,15 +210,18 @@ def test_a_refusal_at_any_check_leaves_the_key_folder_intact(owned, monkeypatch,
         os.link(keys / KEY_FILE, staging)
         os.link(keys / KEY_FILE, keys / (STAGING_PREFIX + "b" * 32))
     elif check == "database-identity":
-        state["identity"] = "docsuri-u6-fedcba9876543210"
+        assert FOREIGN_RUN_ID != owned["run_id"]
+        owned["write"](expired=False, run_id=FOREIGN_RUN_ID)
+        match = "preservation database identity differs"
     elif check == "active-client":
-        state["clients"] = 1
+        state["extra_client"] = True
+        match = "other database clients prevent safe preservation"
     elif check == "destination":
         monkeypatch.setattr(preservation.secrets, "token_hex", lambda size: "deadbeef")
-        run.with_name(f"docsuri-u6-preserved-{RUN_ID}-deadbeef").mkdir()
+        run.with_name(f"docsuri-u6-preserved-{owned['run_id']}-deadbeef").mkdir()
     else:
         context = dataclasses.replace(context, stop_database=fail)
-    with pytest.raises((runner.Refused, ValueError)):
+    with pytest.raises((runner.Refused, ValueError), match=match):
         preservation.archive(run / "environment.json", context)
     if check == "folder-mode":
         keys.chmod(0o700)

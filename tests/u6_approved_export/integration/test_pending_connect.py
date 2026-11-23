@@ -7,11 +7,11 @@ import threading
 from uuid import UUID, uuid4
 
 import pytest
+from psycopg.types.json import Jsonb
+
 from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
 from backend.modules.export.control_lifecycle import ExportLifecycleParticipant
 from backend.modules.export.fake_notion import Answer
-from psycopg.types.json import Jsonb
-
 from tests.u6_approved_export import http_flows as hf
 from tests.u6_approved_export import store_flows as flows
 
@@ -138,7 +138,9 @@ def test_a_second_connect_during_a_fresh_check_is_conflict(m, connect):
         if request.url.path == "/v1/users/me" and not answers:
             # While the first check holds its fresh reservation, a second connect runs.
             worker = threading.Thread(
-                target=lambda: answers.append(m.post("configure", m.configure_body(), client=second))
+                target=lambda: answers.append(
+                    m.post("configure", m.configure_body(), client=second)
+                )
             )
             worker.start()
             worker.join(30)
