@@ -722,3 +722,12 @@ The production services were not touched.
   call reached OrbStack, which had become the default Docker context, and the runner passes no
   context to children. `ruff check` passes on all five files. The Linux runners are the
   verification for the proportional measurement.
+- **Result on CI (commit `992862a4`):** run 39528978363 ("U6 approved export") passed its
+  frontend, backend and browser jobs. Its browser job (118991218911) ran 11 tests with 0
+  failures, at a peak RSS sum of 1,093,373,952 bytes, which the old rule would have stopped,
+  and a peak proportional sum of 839,457,792 bytes, which the 1 GiB budget admits. U5's run
+  39528978335 passed the same way.
+- **Local re-run on 2026-10-21 (macOS, Colima):** after a fresh U6 environment
+  (`docsuri-u6-183b7a5d22d4d22d`, setup then migrate), the recorded verification command's
+  browser phase ran 11 tests with 0 failures and exit 0, at a peak RSS of 801,341,440 bytes.
+  macOS keeps the RSS rule, so `peakPssBytes` is null there.

@@ -16,6 +16,21 @@ amendments A1–A7, A9, A10 and the A6 extension; every frozen C09 property keep
 name, type and requiredness except the two named changes (connectionId optional on
 ExportConnectionRead and ExportConnectionReadHttp; ExportDestinationEntry, a superset
 of ExportDestination, on the two destination response properties).
+Contract release 4.0.0 carries U8's approved amendments A1–A8 (2026-10-22): C01 2.1.0
+(A1), C02 4.0.0 (A3, A4), C03 3.1.0 (A4), C04 2.1.0 (A4), C07 2.1.0 (A2), C10 2.1.0
+(A6), C11 2.1.0 (A5), C12 2.1.0 (A7) and C13's new public documents and routes (A8),
+with A8 also correcting C13's documented identity callback path to the served route
+`/api/v2/identity/callback/{provider}`.
+C02 takes a major step because A3 adds an authority state (the consent-pending
+session) that every guard consumer must handle, so the release is MAJOR. Every frozen
+property keeps its name, type and requiredness; A1's optional `placement` on
+HostNavigationItem is the only new property on an existing type. Every other addition
+is a new definition or operation: an operation whose answer gains fields now answers
+a superset type (OpsDashboardPage, OpsIncidentReadPage, AccessSignInResult), and the
+narrowed recovery vocabulary is a new request type (OpsRecoverySubmission). The internal
+identity answer AccessIdentityResult, which no frozen shape fixes, gains one branch, the
+new AccessIdentityConsentPending, for a migrated account's first provider sign-in
+(decision of 2026-10-22).
 Basis: the [confirmed contract plan](contract-design-questions.md),
 [approved unit catalogue](../units-generation/unit-of-work.md),
 [unit DAG](../units-generation/unit-of-work-dependency.md),
@@ -603,6 +618,99 @@ $defs:
           type: array, items: {$ref: '#/$defs/Id'}, x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.},
         policy: {$ref: '#/$defs/PolicyRef'}}, required: [context, incidentId, ownerComponent, operation, targetId, expectedRevision,
         evidenceRefs, policy], additionalProperties: false}
+  OpsDashboardItem:
+    type: object
+    properties:
+      observationId: {$ref: '#/$defs/Id'}
+      capability: {$ref: '#/$defs/Id'}
+      component: {$ref: '#/$defs/Id'}
+      observedAt: {$ref: '#/$defs/Time'}
+      revision: {$ref: '#/$defs/Revision'}
+      status: {type: string, enum: [available, degraded, unavailable, unknown]}
+      evidenceRef: {$ref: '#/$defs/Id'}
+      limitations: {type: array, items: {$ref: '#/$defs/Id'}, x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.}
+      freshness: {type: string, enum: [current, stale]}
+      ageSeconds: {type: integer, minimum: 0}
+    required: [observationId, capability, component, observedAt, revision, status, evidenceRef, limitations]
+    additionalProperties: false
+    description: 'C11 2.1.0 (A5): an OpsObservation with its derived freshness and age, as readDashboard answers it. Stale is derived at
+      read time and never stored.'
+  OpsDashboardPage:
+    type: object
+    properties:
+      items: {type: array, items: {$ref: '#/$defs/OpsDashboardItem'}, x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.}
+      page: {$ref: '#/$defs/PageInfo'}
+    required: [items, page]
+    additionalProperties: false
+  OpsIncidentResolutionKind: {type: string, enum: [capability-available, abort-reviewed, rollback-copy-settled, environment-stopped]}
+  OpsIncidentRead:
+    type: object
+    properties:
+      incidentId: {$ref: '#/$defs/Id'}
+      revision: {$ref: '#/$defs/Revision'}
+      capabilities: {type: array, items: {$ref: '#/$defs/Id'}, x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.}
+      correlationIds: {type: array, items: {$ref: '#/$defs/Id'}, x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.}
+      state: {type: string, enum: [open, investigating, recovering, resolved]}
+      evidenceRefs: {type: array, items: {$ref: '#/$defs/Id'}, x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.}
+      resolutionKind: {$ref: '#/$defs/OpsIncidentResolutionKind'}
+    required: [incidentId, revision, capabilities, correlationIds, state, evidenceRefs]
+    additionalProperties: false
+    allOf:
+    - if: {properties: {state: {const: resolved}}}
+      then: {required: [resolutionKind]}
+    description: 'C11 2.1.0 (A5): an OpsIncident with its resolutionKind, present exactly when resolved (BR3.7).'
+  OpsIncidentReadPage:
+    type: object
+    properties:
+      items: {type: array, items: {$ref: '#/$defs/OpsIncidentRead'}, x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.}
+      page: {$ref: '#/$defs/PageInfo'}
+    required: [items, page]
+    additionalProperties: false
+  OpsRecoveryOperation:
+    type: string
+    enum: [backup.create, restore.verify, restore.production]
+    description: 'C11 2.1.0 (A5, BR4.1): the only recovery procedures offered. The schedule may request only the first two (BR4.2).'
+  OpsRecoverySubmission:
+    type: object
+    properties:
+      context: {$ref: '#/$defs/CommandContext'}
+      operation: {$ref: '#/$defs/OpsRecoveryOperation'}
+      targetId: {$ref: '#/$defs/Id'}
+      expectedRevision: {$ref: '#/$defs/Revision'}
+      origin: {type: string, enum: [administrator, schedule]}
+      submissionId: {$ref: '#/$defs/Id'}
+      incidentId: {$ref: '#/$defs/Id'}
+      evidenceRefs: {type: array, items: {$ref: '#/$defs/Id'}, maxItems: 16}
+      policy: {$ref: '#/$defs/PolicyRef'}
+    required: [context, operation, targetId, expectedRevision, origin, submissionId, policy]
+    additionalProperties: false
+    description: 'Internal envelope for C11 requestRecovery (A5); context is derived by the trusted boundary. The idempotency key is the
+      digest of origin, requester, operation, target, expected revision and submissionId (BR4.9).'
+  OpsRecoveryStatusRead:
+    type: object
+    properties:
+      context: {$ref: '#/$defs/CommandContext'}
+      recoveryRequestId: {$ref: '#/$defs/Id'}
+    required: [context, recoveryRequestId]
+    additionalProperties: false
+    description: 'Internal envelope for C11 readRecoveryStatus (A5); context is derived by the trusted boundary.'
+  OpsRecoveryStatus:
+    type: object
+    properties:
+      recoveryRequestId: {$ref: '#/$defs/Id'}
+      revision: {$ref: '#/$defs/Revision'}
+      environment: {type: string, enum: [rehearsal, live]}
+      origin: {type: string, enum: [administrator, schedule]}
+      operation: {$ref: '#/$defs/OpsRecoveryOperation'}
+      state: {type: string, enum: [requested, awaiting-operator, running, verifying, post-restore-pending, held, succeeded, failed, unknown,
+          cancelled, refused, expired]}
+      incidentId: {$ref: '#/$defs/Id'}
+      evidenceRefs: {type: array, items: {$ref: '#/$defs/Id'}, maxItems: 16}
+      createdAt: {$ref: '#/$defs/Time'}
+      updatedAt: {$ref: '#/$defs/Time'}
+    required: [recoveryRequestId, revision, environment, origin, operation, state, evidenceRefs, createdAt, updatedAt]
+    additionalProperties: false
+    description: 'C11 2.1.0 (A5): a recovery request as the ledger holds it; reading it never starts or advances work.'
   ProviderRequest: {oneOf: [{type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, adapterId: {$ref: '#/$defs/Id'}, adapterRevision: {
               $ref: '#/$defs/Revision'}, operation: {const: identity.profile}, ownerComponent: {$ref: '#/$defs/Id'}, credentialRef: {
               anyOf: [{$ref: '#/$defs/Id'}, {type: 'null'}]}, requestSchemaId: {const: ProviderIdentityProfileRead}, validatedPayload: {
@@ -846,8 +954,8 @@ $defs:
         boundary, never accepted from a public body.'}
   HostNavigationItem: {type: object, properties: {routeId: {$ref: '#/$defs/Id'}, titleKey: {$ref: '#/$defs/Id'}, path: {type: string, minLength: 1, x-policy-bound: registered
             relative route policy, description: Bound by the named approved policy before processing.}, capabilityId: {$ref: '#/$defs/Id'},
-        available: {type: boolean}, reasonKey: {$ref: '#/$defs/Id'}}, required: [routeId, titleKey, path, capabilityId, available],
-      additionalProperties: false}
+        available: {type: boolean}, reasonKey: {$ref: '#/$defs/Id'}, placement: {type: string, enum: [primary, contextual, footer]}}, required: [
+        routeId, titleKey, path, capabilityId, available], additionalProperties: false}
   HostNavigationResult: {type: object, properties: {manifestRevision: {$ref: '#/$defs/Revision'}, authorityRevision: {$ref: '#/$defs/Revision'}, items: {
           type: array, items: {$ref: '#/$defs/HostNavigationItem'}, x-policy-bound: authorized compiled navigation manifest}, resolvedRouteId: {
           $ref: '#/$defs/Id'}, returnContext: {$ref: '#/$defs/HostReturnContext'}, clearPriorOwnerState: {type: boolean}}, required: [
@@ -859,6 +967,35 @@ $defs:
   HostObservationInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, observation: {$ref: '#/$defs/HostObservation'}}, required: [
         context, observation], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary,
         never accepted from a public body.'}
+  HostNavigationReasonKey:
+    type: string
+    enum: [nav.authenticationRequired, nav.capabilityPending, nav.capabilityDegraded, nav.capabilityUnavailable, nav.capabilityStale,
+      nav.capabilityUnknown, nav.administratorOnly]
+    description: 'C01 2.1.0 (A1): the navigation reason-key vocabulary a HostNavigationItem.reasonKey takes; display vocabulary only,
+      never an authorization state.'
+  HostPublicCapability:
+    type: object
+    properties:
+      capabilityId: {$ref: '#/$defs/Id'}
+      state: {type: string, enum: [available, degraded, unavailable, unknown, stale]}
+      reasonKey: {$ref: '#/$defs/Id'}
+    required: [capabilityId, state, reasonKey]
+    additionalProperties: false
+    description: 'C01 2.1.0 (A1, BR5.9): one capability as a caller with no session sees it: its state and reason key alone, never an
+      age, limitation, evidence reference, count or producer identity.'
+  HostPublicCapabilityPage:
+    type: object
+    properties:
+      manifestRevision: {$ref: '#/$defs/Revision'}
+      items: {type: array, items: {$ref: '#/$defs/HostPublicCapability'}, maxItems: 32}
+    required: [manifestRevision, items]
+    additionalProperties: false
+  HostCapabilityRead:
+    oneOf:
+    - {$ref: '#/$defs/HostCapabilitiesPage'}
+    - {$ref: '#/$defs/HostPublicCapabilityPage'}
+    description: 'C01 2.1.0 (A1): host.listCapabilities answers the full page to an authorized diagnostic caller and the public projection
+      to a caller with no session.'
   AccessSecret: {type: string, minLength: 1, x-policy-bound: credential input policy, description: 'Sensitive proof/credential; never logged, reflected
         or placed in a URL.', writeOnly: true, x-sensitive: true}
   AccessEmail: {type: string, format: email, x-policy-bound: email normalization and size policy}
@@ -929,7 +1066,21 @@ $defs:
       additionalProperties: false}
   AccessIdentityMfa: {type: object, properties: {state: {const: mfa_required}, mfaChallenge: {$ref: '#/$defs/AccessMfaContinuation'}}, required: [state,
         mfaChallenge], additionalProperties: false}
-  AccessIdentityResult: {oneOf: [{$ref: '#/$defs/AccessIdentitySignedIn'}, {$ref: '#/$defs/AccessIdentityLinked'}, {$ref: '#/$defs/AccessIdentityMfa'}]}
+  AccessIdentityConsentPending:
+    type: object
+    properties:
+      state: {const: consent_pending}
+      identityLink: {$ref: '#/$defs/AccessIdentityLink'}
+      session: {$ref: '#/$defs/AccessPublicSession'}
+      consentPurposeIds: {type: array, items: {$ref: '#/$defs/Id'}, maxItems: 16, uniqueItems: true}
+      expiresAt: {$ref: '#/$defs/Time'}
+    required: [state, identityLink, session, consentPurposeIds, expiresAt]
+    additionalProperties: false
+    description: 'C02 4.0.0 (A3, BR8.6, decision of 2026-10-22): a migrated account''s first sign-in through Google or ORCID. As
+      AccessConsentPendingSession on the password path, the session serves only access.listConsents and access.updateConsent until
+      its v2 consents are recorded; a full session follows.'
+  AccessIdentityResult: {oneOf: [{$ref: '#/$defs/AccessIdentitySignedIn'}, {$ref: '#/$defs/AccessIdentityLinked'}, {$ref: '#/$defs/AccessIdentityMfa'},
+      {$ref: '#/$defs/AccessIdentityConsentPending'}]}
   AccessUnlinkIdentityInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, identityLinkId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}},
       required: [context, identityLinkId, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived by the
         trusted boundary, never accepted from a public body.'}
@@ -1086,9 +1237,11 @@ $defs:
         unavailable.', allOf: [{if: {properties: {state: {const: complete}}}, then: {properties: {access: {const: sign_in_required}}}},
         {if: {properties: {state: {type: string, enum: [accepted, running, blocked, failed]}}}, then: {properties: {access: {const: reactivation_pending}}}}]}
   LifecycleScopeDisposition: {type: object, properties: {scope: {$ref: '#/$defs/LifecycleScope'}, disposition: {type: string, enum: [erased, retained_by_policy,
-            revoked, not_applicable, pending, blocked]}, evidenceReference: {$ref: '#/$defs/Id'}, reasonKey: {$ref: '#/$defs/Id'}},
+            revoked, not_applicable, pending, blocked]}, evidenceReference: {$ref: '#/$defs/Id'}, reasonKey: {$ref: '#/$defs/Id'},
+        retainedUntil: {$ref: '#/$defs/Time'}},
       required: [scope, disposition, reasonKey], additionalProperties: false, allOf: [{if: {properties: {disposition: {type: string,
-                enum: [erased, retained_by_policy, revoked, not_applicable]}}}, then: {required: [evidenceReference]}}]}
+                enum: [erased, retained_by_policy, revoked, not_applicable]}}}, then: {required: [evidenceReference]}}, {if: {required: [
+                retainedUntil]}, then: {properties: {disposition: {const: retained_by_policy}}}}]}
   LifecycleParticipantDisposition: {type: object, properties: {participantId: {$ref: '#/$defs/Id'}, revision: {$ref: '#/$defs/Revision'}, state: {type: string, enum: [
             pending, running, acknowledged, failed, blocked]}, scopes: {type: array, items: {$ref: '#/$defs/LifecycleScopeDisposition'},
           maxItems: 7}, observedAt: {$ref: '#/$defs/Time'}}, required: [participantId, revision, state, scopes, observedAt], additionalProperties: false}
@@ -1129,6 +1282,172 @@ $defs:
   LifecycleApplyInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, work: {$ref: '#/$defs/LifecycleWorkTicket'}}, required: [
         context, work], additionalProperties: false, description: 'Internal envelope; context is derived by the trusted boundary, never
         accepted from a public body.'}
+  AccessSessionPurpose:
+    type: string
+    enum: [full_session, primary_mfa_continuation, reactivation_status, preauthentication, mfa, proof, consent_pending]
+    description: 'C02 4.0.0 (A3): the one purpose rule of a session. consent_pending is a purpose-limited session a migrated account''s
+      first sign-in opens; every guard denies it everything but giving consents. An unknown purpose is denied (common rule 7).'
+  AccessAdmission:
+    type: string
+    enum: [maintainer-only, open]
+    description: 'C02 4.0.0 (A3): admission is a policy input read from the profile. maintainer-only admits only administrators; open
+      admits migrated accounts, and registration stays governed by the public-activation evidence policy.'
+  AccessConsentPendingSession:
+    type: object
+    properties:
+      state: {const: consent_pending}
+      session: {$ref: '#/$defs/AccessPublicSession'}
+      consentPurposeIds: {type: array, items: {$ref: '#/$defs/Id'}, maxItems: 16, uniqueItems: true}
+      expiresAt: {$ref: '#/$defs/Time'}
+    required: [state, session, consentPurposeIds, expiresAt]
+    additionalProperties: false
+    description: 'C02 4.0.0 (A3, BR8.6): a migrated account''s first sign-in. The session serves only access.listConsents and
+      access.updateConsent until its v2 consents are recorded; a full session follows.'
+  AccessResetRequired:
+    type: object
+    properties:
+      state: {const: reset_required}
+      delivery: {type: string, enum: [accepted, held, over_allowance]}
+      messageKey: {$ref: '#/$defs/Id'}
+    required: [state, delivery, messageKey]
+    additionalProperties: false
+    description: 'C02 4.0.0 (A3, BR8.6): the reset-required marker. No session is issued; the answer says whether the reset mail was
+      accepted for sending, held, or not sent because the email allowance is spent.'
+  AccessSignInResult:
+    oneOf:
+    - {$ref: '#/$defs/AccessKnownSession'}
+    - {$ref: '#/$defs/AccessMfaContinuation'}
+    - {$ref: '#/$defs/AccessConsentPendingSession'}
+    - {$ref: '#/$defs/AccessResetRequired'}
+    description: 'C02 4.0.0 (A3): access.login''s answer, a superset of AccessLoginResult with the two first-sign-in states.'
+  AccessVerifierKeyReplaceInput:
+    type: object
+    properties:
+      context: {$ref: '#/$defs/CommandContext'}
+      expectedKeyRevision: {$ref: '#/$defs/Revision'}
+      reasonKey: {$ref: '#/$defs/Id'}
+    required: [context, expectedKeyRevision, reasonKey]
+    additionalProperties: false
+    description: 'Internal envelope for the operator''s verifier-key replacement (BR6.2); context is derived by the trusted boundary.'
+  AccessVerifierKeyReplaced:
+    type: object
+    properties:
+      keyRevision: {$ref: '#/$defs/Revision'}
+      sessionsEnded: {type: integer, minimum: 0}
+      proofsEnded: {type: integer, minimum: 0}
+      replacedAt: {$ref: '#/$defs/Time'}
+    required: [keyRevision, sessionsEnded, proofsEnded, replacedAt]
+    additionalProperties: false
+  LifecycleRetentionReasonKey:
+    type: string
+    enum: [external-copies-retained-by-owner, backups-retained-until-disposal]
+    description: 'C02 4.0.0 (A3, U6 A8, BR2.5): a scope reason key AccountAccess reports as retained by policy, never as erased.
+      ServiceOperations reports its backups scope with backups-retained-until-disposal and the latest date by which every backup
+      set and retained copy that may hold the owner''s data is gone (LifecycleScopeDisposition.retainedUntil).'
+  CorpusCanonicalIdentity:
+    type: string
+    pattern: '^(arxiv|doi|key):[^\s@]{1,240}$'
+    description: 'C04 2.1.0 (A4): the one canonical paper identity: an arXiv id without its version, a DOI, or the corpus''s canonical
+      key, each lower-case prefixed.'
+  CorpusVersionIdentity:
+    type: string
+    pattern: '^(arxiv|doi|key):[^\s@]{1,240}@v[1-9][0-9]{0,3}$'
+    description: 'C04 2.1.0 (A4): the one canonical version identity: a canonical paper identity and its version number.'
+  ImportOutcome:
+    type: object
+    properties:
+      sourceKey: {$ref: '#/$defs/Id'}
+      targetId: {$ref: '#/$defs/Id'}
+      disposition: {type: string, enum: [imported, unchanged, updated, refused]}
+      reasonKey: {$ref: '#/$defs/Id'}
+      storedDigest: {$ref: '#/$defs/Hash'}
+    required: [sourceKey, targetId, disposition, storedDigest]
+    additionalProperties: false
+    allOf:
+    - if: {properties: {disposition: {const: refused}}}
+      then: {required: [reasonKey]}
+    description: 'A4: one import''s outcome. targetId is derived from (v1, kind, source id), so a repeated import changes nothing
+      (BR8.3). storedDigest is the SHA-256 of the stored normalized fields.'
+  AccountImport:
+    type: object
+    properties:
+      context: {$ref: '#/$defs/CommandContext'}
+      sourceKey: {$ref: '#/$defs/Id'}
+      email: {anyOf: [{$ref: '#/$defs/AccessEmail'}, {type: 'null'}]}
+      emailVerified: {type: boolean}
+      passwordVerifier: {anyOf: [{$ref: '#/$defs/AccessSecret'}, {type: 'null'}]}
+      state: {type: string, enum: [active, pending, locked, deactivated, pending_deletion]}
+      role: {type: string, enum: [user, admin]}
+      createdAt: {$ref: '#/$defs/Time'}
+    required: [context, sourceKey, email, emailVerified, passwordVerifier, state, role, createdAt]
+    additionalProperties: false
+    description: 'Internal envelope for C02 access.importAccount (A4); trusted composition authority only.'
+  IdentityLinkImport:
+    type: object
+    properties:
+      context: {$ref: '#/$defs/CommandContext'}
+      sourceKey: {$ref: '#/$defs/Id'}
+      accountSourceKey: {$ref: '#/$defs/Id'}
+      provider: {type: string, enum: [google, orcid]}
+      providerSubject: {$ref: '#/$defs/Id'}
+      confirmed: {type: boolean}
+      linkedAt: {$ref: '#/$defs/Time'}
+    required: [context, sourceKey, accountSourceKey, provider, providerSubject, confirmed, linkedAt]
+    additionalProperties: false
+    description: 'Internal envelope for C02 access.importIdentityLink (A4); trusted composition authority only.'
+  SettingsImport:
+    type: object
+    properties:
+      context: {$ref: '#/$defs/CommandContext'}
+      sourceKey: {$ref: '#/$defs/Id'}
+      accountSourceKey: {$ref: '#/$defs/Id'}
+      settings: {type: object, additionalProperties: {$ref: '#/$defs/JsonValue'}, maxProperties: 64}
+    required: [context, sourceKey, accountSourceKey, settings]
+    additionalProperties: false
+    description: 'Internal envelope for C03 settings.importSettings (A4); trusted composition authority only.'
+  SavedPaperImport:
+    type: object
+    properties:
+      context: {$ref: '#/$defs/CommandContext'}
+      sourceKey: {$ref: '#/$defs/Id'}
+      accountSourceKey: {$ref: '#/$defs/Id'}
+      paper: {$ref: '#/$defs/CorpusCanonicalIdentity'}
+      savedAt: {$ref: '#/$defs/Time'}
+    required: [context, sourceKey, accountSourceKey, paper, savedAt]
+    additionalProperties: false
+    description: 'Internal envelope for C03 library.importSavedPaper (A4); trusted composition authority only. Saved papers that differ
+      only by version suffix collapse into one.'
+  PaperImport:
+    type: object
+    properties:
+      context: {$ref: '#/$defs/CommandContext'}
+      sourceKey: {$ref: '#/$defs/Id'}
+      version: {$ref: '#/$defs/CorpusVersionIdentity'}
+      metadata: {type: object, additionalProperties: {$ref: '#/$defs/JsonValue'}, maxProperties: 64}
+      contentRef: {$ref: '#/$defs/Id'}
+      contentHash: {$ref: '#/$defs/Hash'}
+    required: [context, sourceKey, version, metadata, contentRef, contentHash]
+    additionalProperties: false
+    description: 'Internal envelope for C04 importPaper (A4); trusted composition authority only. CorpusContent matches the paper by its
+      canonical identity, converts its content and applies its eligibility and size limits.'
+  ImportParityRead:
+    type: object
+    properties:
+      context: {$ref: '#/$defs/CommandContext'}
+      kind: {type: string, enum: [account, identity-link, settings, saved-paper, paper]}
+    required: [context, kind]
+    additionalProperties: false
+    description: 'Internal envelope for each owner''s parity read (A4); trusted composition authority only.'
+  ImportParityDigest:
+    type: object
+    properties:
+      kind: {type: string, enum: [account, identity-link, settings, saved-paper, paper]}
+      count: {type: integer, minimum: 0}
+      digest: {$ref: '#/$defs/Hash'}
+      observedAt: {$ref: '#/$defs/Time'}
+    required: [kind, count, digest, observedAt]
+    additionalProperties: false
+    description: 'A4: an order-independent digest over the compared normalized fields of every imported record of one kind.'
   LibrarySavedPaper: {type: object, properties: {savedPaperId: {$ref: '#/$defs/Id'}, accountId: {$ref: '#/$defs/Id'}, revision: {$ref: '#/$defs/Revision'},
         savedPaper: {$ref: '#/$defs/PaperRef'}, resolvedPaper: {$ref: '#/$defs/PaperRef'}, savedTitle: {type: string, minLength: 1,
           x-policy-bound: paper metadata display policy, description: Bound by the named approved policy before processing.}, sourceDisposition: {
@@ -1656,6 +1975,45 @@ $defs:
   ResearchJobRead: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, kind: {type: string, enum: [research-turn, novelty-analysis,
             novelty-discussion]}, jobId: {$ref: '#/$defs/Id'}, contextId: {$ref: '#/$defs/Id'}}, required: [context, kind, jobId, contextId],
       additionalProperties: false}
+  ResearchJobList:
+    type: object
+    properties:
+      context: {$ref: '#/$defs/CommandContext'}
+      kind: {$ref: '#/$defs/ResearchJobListKind'}
+      limit: {type: integer, minimum: 1, maximum: 50}
+      cursor: {anyOf: [{type: string, minLength: 1, maxLength: 512}, {type: 'null'}]}
+    required: [context]
+    additionalProperties: false
+    description: 'Internal envelope for C07 listResearchJobs (A2); context is derived by the trusted boundary, never accepted from a
+      public body.'
+  ResearchJobListKind: {type: string, enum: [research, novelty]}
+  ResearchJobListHttp:
+    type: object
+    properties:
+      kind: {$ref: '#/$defs/ResearchJobListKind'}
+      limit: {type: integer, minimum: 1, maximum: 50}
+      cursor: {anyOf: [{type: string, minLength: 1, maxLength: 512}, {type: 'null'}]}
+    required: []
+    additionalProperties: false
+  ResearchJobListItem:
+    type: object
+    properties:
+      jobId: {$ref: '#/$defs/Id'}
+      kind: {$ref: '#/$defs/ResearchJobListKind'}
+      label: {type: string, minLength: 1, maxLength: 200}
+      state: {type: string, enum: [accepted, running, cancel_requested, succeeded, failed, cancelled]}
+      createdAt: {$ref: '#/$defs/Time'}
+      updatedAt: {$ref: '#/$defs/Time'}
+      resultAvailable: {type: boolean}
+    required: [jobId, kind, label, state, createdAt, updatedAt, resultAvailable]
+    additionalProperties: false
+  ResearchJobListPage:
+    type: object
+    properties:
+      items: {type: array, items: {$ref: '#/$defs/ResearchJobListItem'}, maxItems: 50}
+      nextCursor: {anyOf: [{type: string, minLength: 1, maxLength: 512}, {type: 'null'}]}
+    required: [items, nextCursor]
+    additionalProperties: false
   ResearchTurn: {type: object, properties: {turnId: {$ref: '#/$defs/Id'}, sessionId: {$ref: '#/$defs/Id'}, ownerId: {$ref: '#/$defs/Id'}, revision: {
           $ref: '#/$defs/Revision'}, inputMode: {type: string, enum: [question, compare, quote]}, committedText: {type: string, minLength: 1,
           x-policy-limit: Resolve content/input byte and character limits before enabling this operation.}, submittedDraft: {anyOf: [
@@ -2081,6 +2439,25 @@ $defs:
         targetId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}, evidenceRefs: {type: array, items: {$ref: '#/$defs/Id'},
           x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.}, policy: {$ref: '#/$defs/PolicyRef'}},
       required: [incidentId, ownerComponent, operation, targetId, expectedRevision, evidenceRefs, policy], additionalProperties: false}
+  OpsRecoverySubmissionHttp:
+    type: object
+    properties:
+      operation: {$ref: '#/$defs/OpsRecoveryOperation'}
+      targetId: {$ref: '#/$defs/Id'}
+      expectedRevision: {$ref: '#/$defs/Revision'}
+      origin: {const: administrator}
+      submissionId: {$ref: '#/$defs/Id'}
+      incidentId: {$ref: '#/$defs/Id'}
+      evidenceRefs: {type: array, items: {$ref: '#/$defs/Id'}, maxItems: 16}
+      policy: {$ref: '#/$defs/PolicyRef'}
+    required: [operation, targetId, expectedRevision, origin, submissionId, policy]
+    additionalProperties: false
+  OpsRecoveryStatusReadHttp:
+    type: object
+    properties:
+      recoveryRequestId: {$ref: '#/$defs/Id'}
+    required: [recoveryRequestId]
+    additionalProperties: false
   PreparedJobRead: {oneOf: [{$ref: '#/$defs/AssistanceResultRead'}, {$ref: '#/$defs/ResearchArtifactResponse'}]}
   LibraryRemoveSavedPaperInput: {type: object, properties: {context: {$ref: '#/$defs/CommandContext'}, savedPaperId: {$ref: '#/$defs/Id'}, expectedRevision: {$ref: '#/$defs/Revision'}},
       required: [context, savedPaperId, expectedRevision], additionalProperties: false, description: 'Internal envelope; context is derived by the
@@ -2208,7 +2585,7 @@ operations:
   surface: internal
 - name: host.listCapabilities
   input: HostCapabilitiesInput
-  output: HostCapabilitiesPage
+  output: HostCapabilityRead
   auth: Authorized diagnostic caller; any public projection is explicitly filtered by its separate access rule.
   errors:
   - INVALID_INPUT
@@ -2218,7 +2595,10 @@ operations:
   - CONFLICT
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
-  semantics: Paginate capability evidence and label unknown/stale observations. Missing modules cannot produce healthy defaults.
+  semantics: 'Paginate capability evidence and label unknown/stale observations. Missing modules cannot produce healthy defaults. C01 2.1.0
+    (A1, BR5.9): an authorized diagnostic caller receives HostCapabilitiesPage. A caller with no session receives only HostPublicCapabilityPage:
+    the capabilities behind the navigation entries that caller may see, account.entry, provider.google and provider.orcid, each with its
+    state and reason key alone, never an age, limitation, evidence reference, count or producer identity.'
   surface: internal
 - name: host.resolveNavigation
   input: HostNavigationInput
@@ -2230,8 +2610,12 @@ operations:
   - NOT_FOUND
   - INCOMPATIBLE
   - DEPENDENCY_UNAVAILABLE
-  semantics: Return only permitted navigation. Owner changes invalidate prior private rendering state; navigation never submits work. Preserve
-    authorized paper/query context without private drafts in URLs or telemetry.
+  semantics: 'Return only permitted navigation. Owner changes invalidate prior private rendering state; navigation never submits work. Preserve
+    authorized paper/query context without private drafts in URLs or telemetry. C01 2.1.0 (A1): each item may carry placement (primary,
+    contextual or footer), and its reasonKey takes the HostNavigationReasonKey vocabulary: an entry is available only when the caller passes
+    its access rule and its capability''s derived state is available or degraded (nav.capabilityDegraded); unavailable, stale and unknown
+    capabilities answer nav.capabilityUnavailable, nav.capabilityStale and nav.capabilityUnknown, an administrator entry for anyone else
+    answers nav.administratorOnly, and the footer''s legal entries are always available.'
   surface: browser
 - name: host.recordObservation
   input: HostObservationInput
@@ -2265,7 +2649,10 @@ checks:
 - Boot the U1 assembly with no future modules, then each real contribution assembly and U8's full assembly.
 - Account switch/expiry clears private DOM, accessibility and transient cache state; valid search/paper return context remains coherent.
 - A missing execution path is unavailable and a failed observation cannot fabricate success.
-version: 2.0.0
+- 'C01 2.1.0 (A1): host.registerContribution and host.inspectManifest keep their frozen types and stay internal; the complete assembly refuses
+  a manifest that lacks a contribution, repeats one or differs from its digest, and produces no partial application.'
+- 'C01 2.1.0 (A1): a caller with no session reads only the public capability projection.'
+version: 2.1.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -2368,7 +2755,7 @@ operations:
   surface: browser
 - name: access.login
   input: AccessLoginInput
-  output: AccessLoginResult
+  output: AccessSignInResult
   auth: Public credential verification with configured abuse policy.
   errors:
   - INVALID_INPUT
@@ -2379,8 +2766,12 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - EXPIRED
-  semantics: Issue current principal only after verification and required MFA. Session cookie/token issuance travels through trusted transport
-    Set-Cookie handling, never JSON token fields. Failures do not enumerate accounts.
+  semantics: 'Issue current principal only after verification and required MFA. Session cookie/token issuance travels through trusted transport
+    Set-Cookie handling, never JSON token fields. Failures do not enumerate accounts. C02 4.0.0 (A3, BR8.6): admission is a policy input; while
+    it is maintainer-only every account that is not an administrator is refused. A migrated account''s first sign-in answers AccessConsentPendingSession,
+    whose consent_pending session every guard denies except for giving consents, and a full session follows once its v2 consents are recorded.
+    A reset-required account answers AccessResetRequired with no session, saying whether its reset mail was accepted, held or over the allowance.
+    The sign-in limits are checked and counted before any password is checked; a refusal moves no count.'
   surface: browser
 - name: access.logout
   input: AccessLogoutInput
@@ -2510,7 +2901,9 @@ operations:
   - EXPIRED
   - MFA_REQUIRED
   semantics: Validate callback state, issuer, audience, nonce/PKCE where applicable, purpose and single use before exchange/link. Collision or
-    denied consent never silently creates a different owner. Credential material stays protected.
+    denied consent never silently creates a different owner. Credential material stays protected. Under C02 4.0.0 (A3, BR8.6, decision of
+    2026-10-22) a migrated account's first sign-in through a provider answers AccessIdentityConsentPending, the same purpose-limited
+    consent_pending session as the password path's, and a full session follows once its v2 consents are recorded.
   surface: internal
 - name: access.listIdentityLinks
   input: AccessIdentityListInput
@@ -2740,8 +3133,9 @@ operations:
   - CONFLICT
   - INCOMPATIBLE
   - POLICY_UNRESOLVED
-  semantics: Register complete required owners and scope obligations before their data can persist; reject duplicates, missing participants, incompatible
-    contracts or unresolved policy.
+  semantics: 'Register complete required owners and scope obligations before their data can persist; reject duplicates, missing participants, incompatible
+    contracts or unresolved policy. C02 4.0.0 (A3, BR2.1): the complete application configures exactly the lifecycleManifest below (revision
+    u8-owners-v1, ten participants, 21 scope pairs, within the 32-pair bound); a request keeps the manifest revision it started under (BR2.7).'
   surface: internal
 - name: lifecycle.request
   input: LifecycleRequestInput
@@ -2869,7 +3263,64 @@ operations:
   semantics: Compare current authority/tombstones and approved restore policy against snapshot records. Deny revival of erased/prohibited data;
     policy uncertainty blocks restoration. Any allow decision requires a current version guard at actual restore.
   surface: internal
+- name: access.replaceVerifierKey
+  input: AccessVerifierKeyReplaceInput
+  output: AccessVerifierKeyReplaced
+  auth: The operator in person through the production environment tool; never a browser, administrator or service request.
+  errors:
+  - INVALID_INPUT
+  - FORBIDDEN
+  - CONFLICT
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  semantics: 'C02 4.0.0 (A3, BR6.2): replace the verifier key under expectedKeyRevision and, in the same transaction, end every session and
+    every outstanding proof, so nothing signed under the old key verifies again. A stale expectedKeyRevision answers CONFLICT and changes nothing.'
+  surface: internal
+- name: access.importAccount
+  input: AccountImport
+  output: ImportOutcome
+  auth: Trusted application-composition authority for the U8 migration tool only; never browser-reachable.
+  errors:
+  - INVALID_INPUT
+  - FORBIDDEN
+  - CONFLICT
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  semantics: 'C02 4.0.0 (A4, BR8.3): write one v1 account as AccountAccess, its target identity derived from (v1, account, source id). An unchanged
+    source answers unchanged, a changed one updated; an email that clashes by letter case or a missing email answers refused with its misfit
+    reason. The account is marked consent-pending, and reset-required when it has no usable password verifier.'
+  surface: internal
+- name: access.importIdentityLink
+  input: IdentityLinkImport
+  output: ImportOutcome
+  auth: Trusted application-composition authority for the U8 migration tool only; never browser-reachable.
+  errors:
+  - INVALID_INPUT
+  - FORBIDDEN
+  - CONFLICT
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  semantics: 'C02 4.0.0 (A4): write one confirmed identity link to an imported account; an unconfirmed link or a second link of one provider
+    answers refused (unconfirmed-link, duplicate-provider-link).'
+  surface: internal
+- name: access.readImportParity
+  input: ImportParityRead
+  output: ImportParityDigest
+  auth: Trusted application-composition authority for the U8 migration tool only; never browser-reachable.
+  errors:
+  - INVALID_INPUT
+  - FORBIDDEN
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  semantics: 'C02 4.0.0 (A4): an order-independent digest over the compared normalized fields of every imported account or identity link; reading
+    it writes nothing.'
+  surface: internal
 invariants:
+- 'C02 4.0.0 (A3): the lifecycle guard maps ResearchWorkspace, TopicsDigests and ApprovedExport beside the earlier participants, and AccountAccess
+  reports the scope reason keys external-copies-retained-by-owner and backups-retained-until-disposal (LifecycleRetentionReasonKey)
+  as retained by policy, never as erased, with the backups part''s retainedUntil date when ServiceOperations reported one (BR2.5).'
+- 'C02 4.0.0 (A3): the production policy is docsuri-production-v1, bound to the production realm, and the composed realm runs u8-synthetic-v1;
+  each refuses the other''s realm. Admission (AccessAdmission) is a policy input from the profile.'
 - U1 seeds safe initial account contracts; U2 completes the same AccountAccess authority. No second account/session/consent store or shared cross-owner
   writer is created.
 - Read and effect authorization uses current authority and owner context. UserId headers, submitted Principal objects and stale consent snapshots
@@ -2908,7 +3359,28 @@ checks:
 - Reject profile role/email mutation through unknown fields and contradictory/duplicate field patches.
 - Lifecycle request with missing participant/policy fails closed; lost/duplicate/stale ack never fabricates completion.
 - Queued effect after consent revocation and restore after deletion cannot resurrect prohibited owner work.
-version: 3.0.0
+- 'C02 4.0.0 (A3): every guard denies a consent_pending session everything but giving consents; an unknown purpose stays denied.'
+- 'C02 4.0.0 (A3): an erase completes only when all 21 scopes of u8-owners-v1 have evidence.'
+- 'C02 4.0.0 (A3): the verifier-key replacement ends every session and outstanding proof.'
+- 'C02 4.0.0 (A4): a repeated import answers unchanged, and each import refuses a write as any other owner.'
+lifecycleManifest:
+  revision: u8-owners-v1
+  maxPairs: 32
+  participants:
+  - {component: AccountAccess, scopes: [live_records, derived_artifacts]}
+  - {component: Library, scopes: [live_records]}
+  - {component: Personalization, scopes: [live_records, derived_artifacts, pending_work]}
+  - {component: UsageEntitlements, scopes: [live_records]}
+  - {component: PaperAssistance, scopes: [live_records, derived_artifacts, pending_work]}
+  - {component: Discovery, scopes: [live_records]}
+  - {component: ResearchWorkspace, scopes: [live_records, derived_artifacts, pending_work]}
+  - {component: TopicsDigests, scopes: [live_records, pending_work]}
+  - {component: ApprovedExport, scopes: [live_records, pending_work, external_copies]}
+  - {component: ServiceOperations, scopes: [backups, restore_enforcement]}
+policyReferences:
+- {policyId: docsuri-production-v1, realm: production}
+- {policyId: u8-synthetic-v1, realm: service-operations}
+version: 4.0.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -3485,6 +3957,54 @@ operations:
     token and null entitlement without allocating state. Grant CAS compares this token; revoke compares the current entitlement revision; both
     advance the same assignment control boundary. No ordinary self-plan lookup substitutes for this read.
   surface: admin
+- name: settings.importSettings
+  input: SettingsImport
+  output: ImportOutcome
+  auth: Trusted application-composition authority for the U8 migration tool only; never browser-reachable.
+  errors:
+  - INVALID_INPUT
+  - FORBIDDEN
+  - CONFLICT
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  semantics: 'C03 3.1.0 (A4): write one imported account''s settings as Personalization, keeping only the retained vocabulary; an unknown field
+    answers refused with its misfit reason. A repeated import of an unchanged source answers unchanged.'
+  surface: internal
+- name: settings.readImportParity
+  input: ImportParityRead
+  output: ImportParityDigest
+  auth: Trusted application-composition authority for the U8 migration tool only; never browser-reachable.
+  errors:
+  - INVALID_INPUT
+  - FORBIDDEN
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  semantics: 'C03 3.1.0 (A4): the order-independent digest of imported settings; reading it writes nothing.'
+  surface: internal
+- name: library.importSavedPaper
+  input: SavedPaperImport
+  output: ImportOutcome
+  auth: Trusted application-composition authority for the U8 migration tool only; never browser-reachable.
+  errors:
+  - INVALID_INPUT
+  - FORBIDDEN
+  - CONFLICT
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  semantics: 'C03 3.1.0 (A4): write one saved paper as Library against the paper''s canonical identity; saved papers that differ only by version
+    suffix collapse into one, and the others answer refused (duplicate-by-version).'
+  surface: internal
+- name: library.readImportParity
+  input: ImportParityRead
+  output: ImportParityDigest
+  auth: Trusted application-composition authority for the U8 migration tool only; never browser-reachable.
+  errors:
+  - INVALID_INPUT
+  - FORBIDDEN
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  semantics: 'C03 3.1.0 (A4): the order-independent digest of imported saved papers; reading it writes nothing.'
+  surface: internal
 invariants:
 - Library owns saved references/history, Personalization owns explicit settings/permitted projections, and UsageEntitlements owns balances. A
   single C03 bundle does not permit cross-owner data writes.
@@ -3515,7 +4035,7 @@ checks:
 - Onboarding select/skip/resume and ORCID failure remain usable; explicit defaults affect the real next action.
 - Concurrent reserve, duplicate settle, unknown usage, grant/revoke and period rollover reconcile one intended effect without free/zero assumptions.
 - Library, Personalization and UsageEntitlements each acknowledge only their own lifecycle scopes; unresolved backup/restore scope remains incomplete.
-version: 3.0.0
+version: 3.1.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -3715,6 +4235,32 @@ operations:
   semantics: Ordered replayable facts; duplicate delivery is harmless. Facts inform saved-reference dispositions and reconciliation without granting
     direct cross-owner writes.
   surface: internal
+- name: importPaper
+  input: PaperImport
+  output: ImportOutcome
+  auth: Trusted application-composition authority for the U8 migration tool only; never browser-reachable.
+  errors:
+  - INVALID_INPUT
+  - FORBIDDEN
+  - CONFLICT
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  semantics: 'C04 2.1.0 (A4, BR8.7, BR8.8): match the paper by its canonical identity (CorpusCanonicalIdentity) so an existing paper is linked,
+    not duplicated; convert its parsed content into the owner''s content shape, reusing an unchanged artifact; and apply eligibility and the
+    profile''s size limits. A paper that fails them answers refused with ineligible-in-v2, exceeds-v2-limit or content-shape-unconvertible.
+    Every version is named by the one canonical version identity (CorpusVersionIdentity).'
+  surface: internal
+- name: readImportParity
+  input: ImportParityRead
+  output: ImportParityDigest
+  auth: Trusted application-composition authority for the U8 migration tool only; never browser-reachable.
+  errors:
+  - INVALID_INPUT
+  - FORBIDDEN
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  semantics: 'C04 2.1.0 (A4): the order-independent digest of imported papers, their content and embeddings; reading it writes nothing.'
+  surface: internal
 invariants:
 - 'R-01: CorpusContent is the sole logical projection writer and publication/rebuild completion authority; storage adapters act only under that
   owner. Discovery holds no writer capability.'
@@ -3745,7 +4291,7 @@ state_machines:
   authority: CorpusContent
   rule: A new generation is distinct from the currently published generation; only complete verified manifests publish under CAS. Eligibility
     revocation remains independently authoritative.
-version: 2.0.0
+version: 2.1.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -4427,6 +4973,21 @@ operations:
   - DEPENDENCY_UNAVAILABLE
   semantics: Check job kind and context as well as owner; authoritative ordered snapshot for C14 progress recovery.
   surface: browser
+- name: listResearchJobs
+  input: ResearchJobList
+  output: ResearchJobListPage
+  auth: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+  errors:
+  - INVALID_ARGUMENT
+  - UNAUTHENTICATED
+  - FORBIDDEN
+  - NOT_FOUND
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  semantics: 'C07 2.1.0 (A2): page the current owner''s research and novelty jobs, newest first, optionally of one kind, with limit 1 to 50 and
+    an opaque cursor bound to the owner, the kind and the snapshot under common rule 6; a tampered or foreign cursor answers INVALID_ARGUMENT.
+    Each item carries jobId, kind, label, state, createdAt, updatedAt and resultAvailable. Reading the list never starts, retries or cancels work.'
+  surface: browser
 - name: cancelNoveltyAnalysis
   input: ResearchJobRead
   output: JobSnapshot
@@ -4565,7 +5126,7 @@ bindings:
 - artifact.artifact.contentHash == hash of versioned canonical artifact.output
 - submitted draft owner/context/kind/contentHash == accepted input
 - completion lease/input/revision matches active claim and live context tombstone boundary
-version: 2.0.0
+version: 2.1.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -5149,7 +5710,41 @@ checks:
 - Wrong actor/target and changed inputs cannot cause effects.
 - Interrupted effect with unknown outcome is reconciled without duplicate execution.
 - Native filesystem/keyring behavior and every retained command still require actual fixture execution.
-version: 2.0.0
+- 'C10 2.1.0 (A6): every inventory-2 protocol refuses a wrong actor or target and changed input under the same key, and an effect killed
+  at its deadline settles unknown and is reconciled from its receipt without running again.'
+inventory:
+  revision: 2
+  description: 'C10 2.1.0 (A6): the inventory revision adds these retained-local protocols beside the eight of revision 1, which keep their
+    semantics. Each protocol has the authority class and effect kind of PlatformControl''s inventory: U7''s classes routine and
+    destructive-release, and one effect kind, profile-change, for the four profile protocols. A class does not say what the scheduler may
+    run. The scheduler account''s standing authority is three grants: `schedulerRoutine` runs `platform.database.backup`,
+    `platform.isolation.check` and `platform.ledger.copy` on the targets `database-production`, `database-rehearsal`,
+    `database-scratch`, `copies`, `isolation`, `backup-volume` and `ledger-copy`; `schedulerRestore` runs `platform.database.restore` on the targets
+    `database-scratch` only, for the restore verification, so the store itself refuses the scheduler a production restore;
+    `schedulerRemoval` runs `platform.database.remove` on the targets `database-rehearsal`, `database-import` and
+    `database-scratch`, only in the disposal pass, at its backstop. No grant of the scheduler holds platform.copy.dispose: a copy is
+    disposed of through PlatformControl only in person, and a standing actor''s disposal is refused before any receipt is bound. Each
+    protocol''s own preconditions still apply under a grant. A
+    production restore runs only with the operator in person (BR4.7, BR4.2, C11): a standing actor''s restore of production is refused
+    with production-restore-in-person before any receipt is bound. Every other protocol runs only in person, after the operator
+    authenticates at this Mac. inspectEvidence, executeControlled and readReceipt keep their semantics for every protocol.'
+  protocols:
+  - {name: platform.database.backup, authorityClass: routine, effectKind: database-backup}
+  - {name: platform.database.restore, authorityClass: routine, effectKind: database-restore}
+  - {name: platform.database.recreate, authorityClass: destructive-release, effectKind: database-recreate}
+  - {name: platform.database.remove, authorityClass: destructive-release, effectKind: database-remove}
+  - {name: platform.service.control, authorityClass: destructive-release, effectKind: service-control}
+  - {name: platform.tunnel.route, authorityClass: destructive-release, effectKind: tunnel-route}
+  - {name: platform.isolation.check, authorityClass: routine, effectKind: isolation-check}
+  - {name: platform.profile.mode, authorityClass: destructive-release, effectKind: profile-change}
+  - {name: platform.profile.admission, authorityClass: destructive-release, effectKind: profile-change}
+  - {name: platform.profile.rehearsal-database, authorityClass: destructive-release, effectKind: profile-change}
+  - {name: platform.profile.backup-volume, authorityClass: destructive-release, effectKind: profile-change}
+  - {name: platform.copy.dispose, authorityClass: routine, effectKind: copy-dispose}
+  - {name: platform.v1.lifecycle.apply, authorityClass: destructive-release, effectKind: v1-lifecycle-apply}
+  - {name: platform.decision.record, authorityClass: routine, effectKind: decision-record}
+  - {name: platform.ledger.copy, authorityClass: routine, effectKind: ledger-copy}
+version: 2.1.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -5175,7 +5770,7 @@ requirements:
 operations:
 - name: readDashboard
   input: OpsQuery
-  output: OpsObservationPage
+  output: OpsDashboardPage
   auth: administrator with current MFA
   surface: admin
   errors:
@@ -5187,10 +5782,11 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - UNKNOWN_OUTCOME
-  semantics: Return evidence timestamps and unknown/stale conditions; pagination is stable for its snapshot.
+  semantics: 'Return evidence timestamps and unknown/stale conditions; pagination is stable for its snapshot. C11 2.1.0 (A5): each item may carry
+    its derived freshness (current or stale) and ageSeconds, computed at read time against the capability''s freshness bound.'
 - name: listIncidents
   input: OpsQuery
-  output: OpsIncidentPage
+  output: OpsIncidentReadPage
   auth: administrator with current MFA
   surface: admin
   errors:
@@ -5202,9 +5798,10 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - UNKNOWN_OUTCOME
-  semantics: Return authorized incident/correlation references without private source text or secrets.
+  semantics: 'Return authorized incident/correlation references without private source text or secrets. C11 2.1.0 (A5): incidents are read from
+    the operations ledger, and a resolved incident carries its resolutionKind.'
 - name: requestRecovery
-  input: OpsRecoveryRequest
+  input: OpsRecoverySubmission
   output: JobReceipt
   auth: administrator with current MFA plus operation-specific grant
   surface: admin
@@ -5217,7 +5814,22 @@ operations:
   - POLICY_UNRESOLVED
   - DEPENDENCY_UNAVAILABLE
   - UNKNOWN_OUTCOME
-  semantics: Domain owner validates and performs recovery. Platform effects additionally require independent operator authority.
+  semantics: 'Domain owner validates and performs recovery. Platform effects additionally require independent operator authority. C11 2.1.0 (A5,
+    BR4.1, BR4.9): only backup.create, restore.verify and restore.production are offered, with origin and submissionId; a retry of one submission
+    recovers the original request, a new submission creates a new one, and a stale expectedRevision answers CONFLICT.'
+- name: readRecoveryStatus
+  input: OpsRecoveryStatusRead
+  output: OpsRecoveryStatus
+  auth: administrator with current MFA
+  surface: admin
+  errors:
+  - INVALID_INPUT
+  - UNAUTHENTICATED
+  - FORBIDDEN
+  - NOT_FOUND
+  - POLICY_UNRESOLVED
+  - DEPENDENCY_UNAVAILABLE
+  semantics: 'C11 2.1.0 (A5): read one recovery request from the operations ledger. Reading it never starts, advances or cancels work.'
 - name: recordObservation
   input: OpsObservation
   output: Ack
@@ -5242,7 +5854,9 @@ checks:
 - Inject a job failure, correlate to an incident and verify actual domain recovery.
 - Restore cannot resurrect erased data or bypass current authority.
 - Fail observation sink and assert bounded behavior plus truthful unknown indicators.
-version: 2.0.0
+- 'C11 2.1.0 (A5): no C11 operation accepts a decision; your decisions are recorded only through PlatformControl''s platform.decision.record
+  and read from the ledger. Every C11 route is administrator-only with current MFA.'
+version: 2.1.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -5305,7 +5919,43 @@ checks:
 - Reject unknown operation/schema/profile and outbound SSRF attempts.
 - Verify Google/ORCID state, nonce/issuer/audience where applicable and link binding without account takeover.
 - Exercise actual allowed email/model/Notion operation under verified free limits; mocks and a local mail sink do not establish public feasibility.
-version: 2.0.0
+- 'C12 2.1.0 (A7): a model whose reported digest differs from the release''s pin, or that the release does not pin, is never used; every synthetic
+  profile keeps the fixture adapters.'
+providerProfiles:
+- id: google-identity
+  owner: AccountAccess
+  provider: google
+  profiles: [identity.exchange, identity.profile]
+  evidenceGate: 'Selected only by the production profile; held as sign-in-unverified until a real callback succeeds in the maintainer-only window
+    and your decision approves it; links only to verified accounts.'
+- id: orcid-identity
+  owner: AccountAccess
+  provider: orcid
+  profiles: [identity.exchange, identity.profile]
+  evidenceGate: 'As google-identity, with ORCID''s issuer, audience and keys.'
+- id: resend-account-mail
+  owner: AccountAccess
+  provider: resend
+  profiles: [email.send]
+  evidenceGate: 'Every send reserves through the email allowance first; held as first-effect-pending in live mode until your decision approves
+    the first message''s exact preview digest; in rehearsal only the maintainer''s account receives mail.'
+- id: resend-digest-mail
+  owner: TopicsDigests
+  provider: resend
+  profiles: [email.send]
+  evidenceGate: 'As resend-account-mail; U5''s single-test bound lifts only once the provider is active in live mode.'
+- id: local-model-executor
+  owner: PaperAssistance
+  provider: local-model-runtime
+  profiles: [model.generate]
+  evidenceGate: 'Serves assistance only after its readiness evidence is recorded and while the runtime reports the digest the release pins for
+    the model (ModelEvidence, BR6.11).'
+- id: local-query-embedder
+  owner: Discovery
+  provider: local-model-runtime
+  profiles: [model.generate]
+  evidenceGate: 'Embeds only with the pinned model digest and keep_alive -1; past 2 seconds search answers by words only with semantic-search-unavailable.'
+version: 2.1.0
 typeRegistry: urn:docsuri:v2:schemas
 ```
 
@@ -5454,7 +6104,7 @@ Only the operations explicitly listed here are externally mounted. A surface tag
 openapi: 3.1.1
 info:
   title: DocSuri application v2 boundary
-  version: 3.1.0
+  version: 4.0.0
   description: Proposed browser/application contracts; legacy removal requires consumer evidence and approved transition.
 servers:
 - url: /
@@ -5792,7 +6442,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AccessLoginResult'
+                $ref: '#/components/schemas/AccessSignInResult'
         '400':
           $ref: '#/components/responses/E400'
         '401':
@@ -11499,7 +12149,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OpsObservationPage'
+                $ref: '#/components/schemas/OpsDashboardPage'
         '400':
           $ref: '#/components/responses/E400'
         '401':
@@ -11557,7 +12207,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OpsIncidentPage'
+                $ref: '#/components/schemas/OpsIncidentReadPage'
         '400':
           $ref: '#/components/responses/E400'
         '401':
@@ -11608,7 +12258,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpsRecoveryRequestHttp'
+              $ref: '#/components/schemas/OpsRecoverySubmissionHttp'
       responses:
         '200':
           description: Committed outcome or explicitly discriminated pending/conflict/unavailable result
@@ -11644,6 +12294,178 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/JobReceipt'
+  /api/v2/c11/read-recovery-status:
+    post:
+      operationId: C11_readRecoveryStatus
+      summary: 'Privacy-aware operations and domain recovery: readRecoveryStatus'
+      x-contract-operation: C11.readRecoveryStatus
+      x-authorization: administrator with current MFA
+      description: Apply C11.readRecoveryStatus semantic rules. Derive internal context server-side; never accept it in this body.
+      security:
+      - sessionCookie: []
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+        description: Bound to current session or anonymous bootstrap; verify Origin too.
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          $ref: '#/components/schemas/Id'
+        description: Required for mutations; on pure queries it does not create a persistent mutation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpsRecoveryStatusReadHttp'
+      responses:
+        '200':
+          description: Committed outcome or explicitly discriminated pending/conflict/unavailable result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpsRecoveryStatus'
+        '400':
+          $ref: '#/components/responses/E400'
+        '401':
+          $ref: '#/components/responses/E401'
+        '403':
+          $ref: '#/components/responses/E403'
+        '404':
+          $ref: '#/components/responses/E404'
+        '409':
+          $ref: '#/components/responses/E409'
+        '410':
+          $ref: '#/components/responses/E410'
+        '422':
+          $ref: '#/components/responses/E422'
+        '429':
+          $ref: '#/components/responses/E429'
+        '503':
+          $ref: '#/components/responses/E503'
+        '504':
+          $ref: '#/components/responses/E504'
+        default:
+          $ref: '#/components/responses/Edefault'
+  /api/v2/c07/list-research-jobs:
+    post:
+      operationId: C07_listResearchJobs
+      summary: 'Private research, durable drafts and immutable novelty artifacts: listResearchJobs'
+      x-contract-operation: C07.listResearchJobs
+      x-authorization: Current authenticated account; server derives owner from trusted context and checks every referenced resource/context.
+      description: Apply C07.listResearchJobs semantic rules. Derive internal context server-side; never accept it in this body.
+      security:
+      - sessionCookie: []
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+        description: Bound to current session or anonymous bootstrap; verify Origin too.
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          $ref: '#/components/schemas/Id'
+        description: Required for mutations; on pure queries it does not create a persistent mutation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResearchJobListHttp'
+      responses:
+        '200':
+          description: Committed outcome or explicitly discriminated pending/conflict/unavailable result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchJobListPage'
+        '400':
+          $ref: '#/components/responses/E400'
+        '401':
+          $ref: '#/components/responses/E401'
+        '403':
+          $ref: '#/components/responses/E403'
+        '404':
+          $ref: '#/components/responses/E404'
+        '409':
+          $ref: '#/components/responses/E409'
+        '410':
+          $ref: '#/components/responses/E410'
+        '422':
+          $ref: '#/components/responses/E422'
+        '429':
+          $ref: '#/components/responses/E429'
+        '503':
+          $ref: '#/components/responses/E503'
+        '504':
+          $ref: '#/components/responses/E504'
+        default:
+          $ref: '#/components/responses/Edefault'
+  /privacy:
+    get:
+      operationId: publicPrivacyDocument
+      description: 'C13 4.0.0 (A8, BR5.6): the public privacy document, a script-free page from the release''s build, reachable signed out;
+        the maintenance server serves the same file.'
+      parameters: []
+      responses:
+        '200':
+          description: The privacy document.
+          content:
+            text/html:
+              schema:
+                type: string
+        default:
+          $ref: '#/components/responses/Edefault'
+      security: []
+  /terms:
+    get:
+      operationId: publicTermsDocument
+      description: 'C13 4.0.0 (A8, BR5.6): the public terms document, a script-free page from the release''s build, reachable signed out;
+        the maintenance server serves the same file.'
+      parameters: []
+      responses:
+        '200':
+          description: The terms document.
+          content:
+            text/html:
+              schema:
+                type: string
+        default:
+          $ref: '#/components/responses/Edefault'
+      security: []
+  /sign-in/callback/{provider}:
+    get:
+      operationId: identityArrivalShell
+      description: 'C13 4.0.0 (A8, D3): the static workspace shell each identity adapter registers as its callback. It authenticates nothing;
+        the shell hands the provider''s answer to /api/v2/identity/callback/{provider}, whose checks are unchanged.'
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - orcid
+      responses:
+        '200':
+          description: The workspace shell.
+          content:
+            text/html:
+              schema:
+                type: string
+        default:
+          $ref: '#/components/responses/Edefault'
+      security: []
   /api/v2/session:
     get:
       operationId: sessionBootstrap
@@ -12027,12 +12849,13 @@ paths:
           $ref: '#/components/responses/E504'
         default:
           $ref: '#/components/responses/Edefault'
-  /api/v2/identity/{provider}/callback:
+  /api/v2/identity/callback/{provider}:
     get:
       operationId: identityCallback
       description: Google/ORCID one-use callback. Verify pre-established state, redirect binding, issuer/audience/nonce and PKCE as the approved
         provider profile requires; never trust callback email as an account link. Redirect only to stored allowed return target; do not log codes.
-        Exactly one of code/error is required. An error callback is never authenticated success.
+        Exactly one of code/error is required. An error callback is never authenticated success. C13 4.0.0 (A8) documents the path the
+        service serves, /api/v2/identity/callback/{provider}.
       parameters:
       - name: provider
         in: path
@@ -12741,6 +13564,12 @@ components:
           type: boolean
         reasonKey:
           $ref: '#/components/schemas/Id'
+        placement:
+          type: string
+          enum:
+          - primary
+          - contextual
+          - footer
       required:
       - routeId
       - titleKey
@@ -12748,6 +13577,411 @@ components:
       - capabilityId
       - available
       additionalProperties: false
+    HostNavigationReasonKey:
+      type: string
+      enum:
+      - nav.authenticationRequired
+      - nav.capabilityPending
+      - nav.capabilityDegraded
+      - nav.capabilityUnavailable
+      - nav.capabilityStale
+      - nav.capabilityUnknown
+      - nav.administratorOnly
+      description: 'C01 2.1.0 (A1): the navigation reason-key vocabulary a HostNavigationItem.reasonKey takes; display vocabulary only, never an authorization
+        state.'
+    HostPublicCapability:
+      type: object
+      properties:
+        capabilityId:
+          $ref: '#/components/schemas/Id'
+        state:
+          type: string
+          enum:
+          - available
+          - degraded
+          - unavailable
+          - unknown
+          - stale
+        reasonKey:
+          $ref: '#/components/schemas/Id'
+      required:
+      - capabilityId
+      - state
+      - reasonKey
+      additionalProperties: false
+      description: 'C01 2.1.0 (A1, BR5.9): one capability as a caller with no session sees it: its state and reason key alone, never an age, limitation,
+        evidence reference, count or producer identity.'
+    HostPublicCapabilityPage:
+      type: object
+      properties:
+        manifestRevision:
+          $ref: '#/components/schemas/Revision'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/HostPublicCapability'
+          maxItems: 32
+      required:
+      - manifestRevision
+      - items
+      additionalProperties: false
+    ResearchJobListKind:
+      type: string
+      enum:
+      - research
+      - novelty
+    ResearchJobListHttp:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/ResearchJobListKind'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+        cursor:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 512
+          - type: 'null'
+      required: []
+      additionalProperties: false
+    ResearchJobListItem:
+      type: object
+      properties:
+        jobId:
+          $ref: '#/components/schemas/Id'
+        kind:
+          $ref: '#/components/schemas/ResearchJobListKind'
+        label:
+          type: string
+          minLength: 1
+          maxLength: 200
+        state:
+          type: string
+          enum:
+          - accepted
+          - running
+          - cancel_requested
+          - succeeded
+          - failed
+          - cancelled
+        createdAt:
+          $ref: '#/components/schemas/Time'
+        updatedAt:
+          $ref: '#/components/schemas/Time'
+        resultAvailable:
+          type: boolean
+      required:
+      - jobId
+      - kind
+      - label
+      - state
+      - createdAt
+      - updatedAt
+      - resultAvailable
+      additionalProperties: false
+    ResearchJobListPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResearchJobListItem'
+          maxItems: 50
+        nextCursor:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 512
+          - type: 'null'
+      required:
+      - items
+      - nextCursor
+      additionalProperties: false
+    AccessConsentPendingSession:
+      type: object
+      properties:
+        state:
+          const: consent_pending
+        session:
+          $ref: '#/components/schemas/AccessPublicSession'
+        consentPurposeIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Id'
+          maxItems: 16
+          uniqueItems: true
+        expiresAt:
+          $ref: '#/components/schemas/Time'
+      required:
+      - state
+      - session
+      - consentPurposeIds
+      - expiresAt
+      additionalProperties: false
+      description: 'C02 4.0.0 (A3, BR8.6): a migrated account''s first sign-in. The session serves only access.listConsents and access.updateConsent
+        until its v2 consents are recorded; a full session follows.'
+    AccessResetRequired:
+      type: object
+      properties:
+        state:
+          const: reset_required
+        delivery:
+          type: string
+          enum:
+          - accepted
+          - held
+          - over_allowance
+        messageKey:
+          $ref: '#/components/schemas/Id'
+      required:
+      - state
+      - delivery
+      - messageKey
+      additionalProperties: false
+      description: 'C02 4.0.0 (A3, BR8.6): the reset-required marker. No session is issued; the answer says whether the reset mail was accepted for
+        sending, held, or not sent because the email allowance is spent.'
+    AccessSignInResult:
+      oneOf:
+      - $ref: '#/components/schemas/AccessKnownSession'
+      - $ref: '#/components/schemas/AccessMfaContinuation'
+      - $ref: '#/components/schemas/AccessConsentPendingSession'
+      - $ref: '#/components/schemas/AccessResetRequired'
+      description: 'C02 4.0.0 (A3): access.login''s answer, a superset of AccessLoginResult with the two first-sign-in states.'
+    OpsDashboardItem:
+      type: object
+      properties:
+        observationId:
+          $ref: '#/components/schemas/Id'
+        capability:
+          $ref: '#/components/schemas/Id'
+        component:
+          $ref: '#/components/schemas/Id'
+        observedAt:
+          $ref: '#/components/schemas/Time'
+        revision:
+          $ref: '#/components/schemas/Revision'
+        status:
+          type: string
+          enum:
+          - available
+          - degraded
+          - unavailable
+          - unknown
+        evidenceRef:
+          $ref: '#/components/schemas/Id'
+        limitations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Id'
+          x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.
+        freshness:
+          type: string
+          enum:
+          - current
+          - stale
+        ageSeconds:
+          type: integer
+          minimum: 0
+      required:
+      - observationId
+      - capability
+      - component
+      - observedAt
+      - revision
+      - status
+      - evidenceRef
+      - limitations
+      additionalProperties: false
+      description: 'C11 2.1.0 (A5): an OpsObservation with its derived freshness and age, as readDashboard answers it. Stale is derived at read time
+        and never stored.'
+    OpsDashboardPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpsDashboardItem'
+          x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.
+        page:
+          $ref: '#/components/schemas/PageInfo'
+      required:
+      - items
+      - page
+      additionalProperties: false
+    OpsIncidentResolutionKind:
+      type: string
+      enum:
+      - capability-available
+      - abort-reviewed
+      - rollback-copy-settled
+      - environment-stopped
+    OpsIncidentRead:
+      type: object
+      properties:
+        incidentId:
+          $ref: '#/components/schemas/Id'
+        revision:
+          $ref: '#/components/schemas/Revision'
+        capabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Id'
+          x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.
+        correlationIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Id'
+          x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.
+        state:
+          type: string
+          enum:
+          - open
+          - investigating
+          - recovering
+          - resolved
+        evidenceRefs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Id'
+          x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.
+        resolutionKind:
+          $ref: '#/components/schemas/OpsIncidentResolutionKind'
+      required:
+      - incidentId
+      - revision
+      - capabilities
+      - correlationIds
+      - state
+      - evidenceRefs
+      additionalProperties: false
+      allOf:
+      - if:
+          properties:
+            state:
+              const: resolved
+        then:
+          required:
+          - resolutionKind
+      description: 'C11 2.1.0 (A5): an OpsIncident with its resolutionKind, present exactly when resolved (BR3.7).'
+    OpsIncidentReadPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpsIncidentRead'
+          x-limit-policy: AdmissionPolicy bounds length; unresolved policy blocks admission.
+        page:
+          $ref: '#/components/schemas/PageInfo'
+      required:
+      - items
+      - page
+      additionalProperties: false
+    OpsRecoveryOperation:
+      type: string
+      enum:
+      - backup.create
+      - restore.verify
+      - restore.production
+      description: 'C11 2.1.0 (A5, BR4.1): the only recovery procedures offered. The schedule may request only the first two (BR4.2).'
+    OpsRecoverySubmissionHttp:
+      type: object
+      properties:
+        operation:
+          $ref: '#/components/schemas/OpsRecoveryOperation'
+        targetId:
+          $ref: '#/components/schemas/Id'
+        expectedRevision:
+          $ref: '#/components/schemas/Revision'
+        origin:
+          const: administrator
+        submissionId:
+          $ref: '#/components/schemas/Id'
+        incidentId:
+          $ref: '#/components/schemas/Id'
+        evidenceRefs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Id'
+          maxItems: 16
+        policy:
+          $ref: '#/components/schemas/PolicyRef'
+      required:
+      - operation
+      - targetId
+      - expectedRevision
+      - origin
+      - submissionId
+      - policy
+      additionalProperties: false
+    OpsRecoveryStatusReadHttp:
+      type: object
+      properties:
+        recoveryRequestId:
+          $ref: '#/components/schemas/Id'
+      required:
+      - recoveryRequestId
+      additionalProperties: false
+    OpsRecoveryStatus:
+      type: object
+      properties:
+        recoveryRequestId:
+          $ref: '#/components/schemas/Id'
+        revision:
+          $ref: '#/components/schemas/Revision'
+        environment:
+          type: string
+          enum:
+          - rehearsal
+          - live
+        origin:
+          type: string
+          enum:
+          - administrator
+          - schedule
+        operation:
+          $ref: '#/components/schemas/OpsRecoveryOperation'
+        state:
+          type: string
+          enum:
+          - requested
+          - awaiting-operator
+          - running
+          - verifying
+          - post-restore-pending
+          - held
+          - succeeded
+          - failed
+          - unknown
+          - cancelled
+          - refused
+          - expired
+        incidentId:
+          $ref: '#/components/schemas/Id'
+        evidenceRefs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Id'
+          maxItems: 16
+        createdAt:
+          $ref: '#/components/schemas/Time'
+        updatedAt:
+          $ref: '#/components/schemas/Time'
+      required:
+      - recoveryRequestId
+      - revision
+      - environment
+      - origin
+      - operation
+      - state
+      - evidenceRefs
+      - createdAt
+      - updatedAt
+      additionalProperties: false
+      description: 'C11 2.1.0 (A5): a recovery request as the ledger holds it; reading it never starts or advances work.'
     HostNavigationResult:
       type: object
       properties:
@@ -13335,6 +14569,8 @@ components:
           $ref: '#/components/schemas/Id'
         reasonKey:
           $ref: '#/components/schemas/Id'
+        retainedUntil:
+          $ref: '#/components/schemas/Time'
       required:
       - scope
       - disposition
@@ -13353,6 +14589,13 @@ components:
         then:
           required:
           - evidenceReference
+      - if:
+          required:
+          - retainedUntil
+        then:
+          properties:
+            disposition:
+              const: retained_by_policy
     LifecycleParticipantDisposition:
       type: object
       properties:

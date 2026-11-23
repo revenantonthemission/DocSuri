@@ -1,0 +1,37 @@
+{
+  "stage": "functional-design",
+  "unit": "u8-service-operations-integration",
+  "upstream_ids": ["FR1", "FR1.1", "FR1.2", "FR1.3", "FR1.4", "FR1.5", "FR1.6", "FR2", "FR2.1", "FR2.2", "FR2.3", "FR2.4", "FR2.5", "FR3", "FR3.1", "FR3.2", "FR4", "FR4.1", "FR4.2"],
+  "coverage": [
+    {"id": "FR1", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR1.1", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR1.2", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR1.3", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR1.4", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR1.5", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR1.6", "status": "N/A", "target": "assigned to U5 (u5-topics-digests) by the unit story map"},
+    {"id": "FR2", "status": "N/A", "target": "assigned to U6 (u6-approved-export) by the unit story map"},
+    {"id": "FR2.1", "status": "N/A", "target": "assigned to U6 (u6-approved-export) by the unit story map"},
+    {"id": "FR2.2", "status": "N/A", "target": "assigned to U6 (u6-approved-export) by the unit story map"},
+    {"id": "FR2.3", "status": "N/A", "target": "assigned to U6 (u6-approved-export) by the unit story map"},
+    {"id": "FR2.4", "status": "N/A", "target": "assigned to U6 (u6-approved-export) by the unit story map"},
+    {"id": "FR2.5", "status": "N/A", "target": "assigned to U6 (u6-approved-export) by the unit story map"},
+    {"id": "FR3", "status": "N/A", "target": "requirement group heading; covered through FR3.1-FR3.2 below"},
+    {"id": "FR4", "status": "N/A", "target": "requirement group heading; covered through FR4.1-FR4.2 below"},
+    {"id": "FR3.1", "status": "OK", "target": "BR1.1, BR1.2, BR1.3, BR1.4, BR1.5, BR1.6, BR1.7, BR2.1, BR2.2, BR2.3, BR2.4, BR2.7, BR5.1, BR5.2, BR5.3, BR5.4, BR5.6, BR5.7"},
+    {"id": "FR3.2", "status": "OK", "target": "BR10.1, BR10.2, BR10.3, BR10.4"},
+    {"id": "FR4.1", "status": "OK", "target": "BR2.5, BR2.6, BR3.1, BR3.2, BR3.3, BR3.7, BR3.11, BR4.1, BR4.2, BR4.3, BR4.4, BR4.5, BR4.6, BR4.7, BR4.8, BR4.9, BR4.10, BR6.1, BR6.2, BR6.3, BR6.4, BR6.5, BR6.6, BR6.7, BR6.8, BR6.9, BR6.10, BR6.11, BR6.12, BR7.1, BR7.3, BR7.5, BR7.6, BR7.7, BR7.8, BR8.1, BR8.2, BR8.3, BR8.4, BR8.5, BR8.6, BR8.7, BR8.8, BR8.9, BR8.10, BR8.11, BR8.12, BR8.13, BR8.14, BR8.15, BR9.1, BR9.2, BR9.3, BR9.4, BR9.5, BR9.6, BR9.7, BR9.8, BR9.9, BR9.10, BR9.11, BR9.12, BR9.13, BR9.14, BR9.15, BR9.16, BR9.17"},
+    {"id": "FR4.2", "status": "OK", "target": "BR3.4, BR3.5, BR3.6, BR10.5, BR10.7"}
+  ],
+  "reverse": [
+    {"id": "BR3.8", "status": "N/A", "target": "operator surface limited to administrators with current MFA, with safe denial (NFR1; contract C11 authorization)"},
+    {"id": "BR3.9", "status": "N/A", "target": "production logging carries identifiers, states and fixed reasons only (NFR3; U6 logging handoff)"},
+    {"id": "BR3.10", "status": "N/A", "target": "no external error reporter, and U6's rules for any added later (NFR3; U6 error-reporter handoff)"},
+    {"id": "BR5.5", "status": "N/A", "target": "owner transitions clear private state; navigation never submits work (NFR1; contract C01 invariants)"},
+    {"id": "BR5.8", "status": "N/A", "target": "Korean labels and WCAG 2.2 AA on new and changed screens (NFR5)"},
+    {"id": "BR5.9", "status": "N/A", "target": "minimal public capability projection for signed-out callers (NFR1; contract C01 listCapabilities access rule)"},
+    {"id": "BR7.2", "status": "N/A", "target": "honest provider degradation with no paid fallback (NFR6)"},
+    {"id": "BR7.4", "status": "N/A", "target": "email stays within the free tier's allowance (NFR6)"},
+    {"id": "BR10.6", "status": "N/A", "target": "complete-application accessibility evidence (NFR5)"}
+  ]
+}

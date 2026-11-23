@@ -34,9 +34,6 @@
       "path": "backend/modules/accounts/integrations/digest_email.py"
     },
     {
-      "path": "backend/modules/accounts/integrations/email.py"
-    },
-    {
       "path": "backend/modules/accounts/local_http.py"
     },
     {
@@ -395,6 +392,144 @@
     },
     {
       "path": "tests/u5_topics_digests/fetch_origin.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/realm_catalog.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/database/test_owner_grants.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/database/test_migration_digests.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/database/test_chain_upgrade.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/repository/test_lifecycle_isolation.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/real_send.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/source_scan.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_message_content.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_zone_isolation.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_failure_domain.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_no_secrets.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_no_logging.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_owner_observation.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/operations/test_phase_verdicts.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/integration/test_mounted_surface.py"
+    },
+    {
+      "path": "frontend/test/u5-topics/stack.test.ts"
+    },
+    {
+      "path": "frontend/e2e/u5-topics-digests/a11y.ts"
+    },
+    {
+      "path": "frontend/e2e/u5-topics-digests/accessibility.spec.ts"
+    },
+    {
+      "path": "frontend/e2e/u5-topics-digests/settings-accessibility.spec.ts"
+    },
+    {
+      "path": "frontend/e2e/u5-topics-digests/credentials.spec.ts"
+    },
+    {
+      "path": "tests/u5_topics_digests/repository/test_lifecycle_participant.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/operations/test_runner_supervision.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/operations/test_runner_clock.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/operations/test_runner_configuration.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/operations/test_runner_bindings.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/operations/test_runner_serving.py"
+    },
+    {
+      "path": "frontend/test/u5-topics/announcements.test.tsx"
+    },
+    {
+      "path": "tests/u5_topics_digests/http_mount.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/integration/test_http_owner_topics.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/integration/test_http_settings_routes.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/real_composition_kit.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_real_activation.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_real_host_binding.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_cancellation_origin.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/topics_flow.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_topics_delivery_outcomes.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_topics_scheduler.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/component/test_topics_withdraw_and_erase.py"
+    },
+    {
+      "path": "frontend/test/u5-topics/topics-view.test.tsx"
+    },
+    {
+      "path": "frontend/test/u5-topics/digest-settings.test.tsx"
+    },
+    {
+      "path": "frontend/test/u5-topics/cases.ts"
+    },
+    {
+      "path": "frontend/e2e/u5-topics-digests/populated-list-accessibility.spec.ts"
+    },
+    {
+      "path": "backend/modules/topics/u5_scheduled_instant.sql"
+    },
+    {
+      "path": "tests/u5_topics_digests/repository/test_scheduled_instant.py"
+    },
+    {
+      "path": "tests/u5_topics_digests/calendar_flow.py"
+    },
+    {
+      "path": "backend/u8_migrations.py"
     }
   ]
 }

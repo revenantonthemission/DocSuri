@@ -1,1 +1,1 @@
-backend/.venv/bin/python scripts/verify_docsuri_u6.py --phase browser --profile synthetic-local --environment-file /tmp/docsuri-u6-run/environment.json
+DOCKER_HOST=unix://$HOME/.colima/default/docker.sock DOCKER_CONFIG=$HOME/.docsuri-u8/docker-config backend/.venv/bin/python scripts/verify_docsuri_u8.py --phase verification-run --profile synthetic-local --environment-file /tmp/docsuri-u8-run/environment.json

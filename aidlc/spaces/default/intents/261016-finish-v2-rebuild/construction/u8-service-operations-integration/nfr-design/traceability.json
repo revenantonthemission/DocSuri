@@ -1,0 +1,512 @@
+{
+  "stage": "nfr-design",
+  "unit": "u8-service-operations-integration",
+  "upstream_ids": [
+    "NFR1.1",
+    "NFR1.2",
+    "NFR1.3",
+    "NFR1.4",
+    "NFR1.5",
+    "NFR1.6",
+    "NFR1.7",
+    "NFR2.1",
+    "NFR2.2",
+    "NFR2.3",
+    "NFR3.1",
+    "NFR3.2",
+    "NFR3.3",
+    "NFR3.4",
+    "NFR3.5",
+    "NFR3.6",
+    "NFR3.7",
+    "NFR3.8",
+    "NFR3.9",
+    "NFR3.10",
+    "NFR3.11",
+    "NFR3.12",
+    "NFR3.13",
+    "NFR3.14",
+    "NFR4.1",
+    "NFR4.2",
+    "NFR4.3",
+    "NFR4.4",
+    "NFR4.5",
+    "NFR4.6",
+    "NFR5.1",
+    "NFR5.2",
+    "NFR6.1",
+    "NFR6.2",
+    "NFR7.1",
+    "NFR7.2",
+    "NFR7.3",
+    "NFR7.4",
+    "NFR7.5",
+    "NFR7.6",
+    "NFR7.7",
+    "NFR7.8",
+    "NFR7.9",
+    "NFR7.10",
+    "NFR7.11",
+    "NFR7.12",
+    "NFR7.13",
+    "NFR7.14",
+    "NFR7.15",
+    "NFR7.16",
+    "NFR7.17",
+    "NFR7.18",
+    "NFR7.19",
+    "NFR8.1",
+    "NFR8.2",
+    "NFR8.3",
+    "NFR8.4",
+    "NFR8.5",
+    "NFR8.6",
+    "NFR8.7",
+    "NFR8.8",
+    "NFR8.9",
+    "NFR8.10",
+    "NFR8.11",
+    "NFR8.12",
+    "NFR8.13",
+    "NFR8.14",
+    "NFR8.15",
+    "NFR8.16",
+    "NFR8.17",
+    "NFR8.18",
+    "NFR9.1",
+    "NFR9.2",
+    "NFR9.3",
+    "NFR9.4",
+    "NFR9.5",
+    "NFR9.6",
+    "NFR9.7",
+    "NFR9.8",
+    "NFR9.9",
+    "NFR9.10",
+    "NFR9.11",
+    "NFR9.12",
+    "NFR9.13"
+  ],
+  "coverage": [
+    {
+      "id": "NFR1.1",
+      "status": "OK",
+      "target": "security-design.md § 3.6 and § 4: every route guarded or on the public list (route inventory check), navigation resolved on the server, a foreign identifier answering as missing, the signed-out projection, private state cleared on owner change"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "OK",
+      "target": "security-design.md § 3.4: 운영, incidents and recovery requests only for administrators with a completed second factor; 1-hour administrator sessions (D1); the session checked again when the operator starts a request"
+    },
+    {
+      "id": "NFR1.3",
+      "status": "OK",
+      "target": "security-design.md § 3.5, § 3.1 and § 3.2: maintainer-only admission as a policy input, migrated accounts only until public activation, the production policy's cap of 500 (D1), the three sign-in limits (D2)"
+    },
+    {
+      "id": "NFR1.4",
+      "status": "OK",
+      "target": "security-design.md § 5.5: decisions recorded only by platform.decision.record in person, bound to the sudo-authenticated actor, the step, the subject and the digest of the bytes shown; no route writes one"
+    },
+    {
+      "id": "NFR1.5",
+      "status": "OK",
+      "target": "security-design.md § 5.1 and § 5.2: one account per role; the service account has no sudo grant; the scheduler account holds only the unattended set; the database, models and tunnel accounts run their one job"
+    },
+    {
+      "id": "NFR1.6",
+      "status": "OK",
+      "target": "security-design.md § 5.2 (D6): root-owned fixed commands taking one closed-set name, checked again by the program, under sudo's env_reset and secure_path, in /etc/sudoers.d/docsuri-v2 (0440) checked by visudo and by digest"
+    },
+    {
+      "id": "NFR1.7",
+      "status": "OK",
+      "target": "security-design.md § 4 and § 6.8 (D7, D10): listeners on 127.0.0.1:18200 and :18201 tied to their account by the packet filter, two host names, origin and CSRF bound to the public origin, the production headers"
+    },
+    {
+      "id": "NFR2.1",
+      "status": "OK",
+      "target": "security-design.md § 11: the first sign-in opens a consent-pending session that every guard denies for anything but consents (amendment A3)"
+    },
+    {
+      "id": "NFR2.2",
+      "status": "OK",
+      "target": "security-design.md § 11: the Resend and Notion adapters read the profile's mode before every effect and hold any other recipient as not permitted"
+    },
+    {
+      "id": "NFR2.3",
+      "status": "OK",
+      "target": "security-design.md § 11: U5's bound lifts only with Resend active in live mode; withdrawal and revocation stop in-flight work as U5 and U6 designed; the race proven in the complete verification"
+    },
+    {
+      "id": "NFR3.1",
+      "status": "OK",
+      "target": "security-design.md § 6.2: each key in its own owner-only folder under the profile root, outside every dump and Time Machine; a missing key refuses the start and is replaced only through its owner's command"
+    },
+    {
+      "id": "NFR3.2",
+      "status": "OK",
+      "target": "security-design.md § 6.1, § 5.3 and § 5.4 (D4, D5, D8): each secret with the one account that uses it, never in a launch job definition; the operator tool's logins in the System keychain, released onto a pipe after your password"
+    },
+    {
+      "id": "NFR3.3",
+      "status": "OK",
+      "target": "security-design.md § 6.3 (D9, D14): loopback and SCRAM only, the superuser only over the socket, require_auth on every client, disposable databases under their own role, pgvector installed in template1"
+    },
+    {
+      "id": "NFR3.4",
+      "status": "OK",
+      "target": "security-design.md § 6.4: the credentials readable only by the tunnel account, root-owned registered configurations, routing only by the fixed command, no Cloudflare certificate left valid"
+    },
+    {
+      "id": "NFR3.5",
+      "status": "OK",
+      "target": "security-design.md § 6.5: encrypted APFS with ownership enforced, owned by the backup account; the unlock job reads the passphrase from the System keychain; only the backup agent touches U8's folder"
+    },
+    {
+      "id": "NFR3.6",
+      "status": "OK",
+      "target": "security-design.md § 6.6: v1's stores moved into the new encrypted volume with owner-only folders before the first dry run, and recorded with their disposal dates"
+    },
+    {
+      "id": "NFR3.7",
+      "status": "OK",
+      "target": "security-design.md § 6.7: two fixed-path tmutil exclusions set as root, confirmed every 5 minutes as isolation-backups; internal-disk erasure dates plus 24 hours"
+    },
+    {
+      "id": "NFR3.8",
+      "status": "OK",
+      "target": "security-design.md § 6.8 (D10): root-owned programs and files only, the packet filter's listener rules under com.apple/*, the isolation check's items every 5 minutes; performance-design.md § 8 for its 60-second bound"
+    },
+    {
+      "id": "NFR3.9",
+      "status": "OK",
+      "target": "security-design.md § 7.1–§ 7.3 (D11, D13): registered JSON fields only, exceptions without messages, third-party records without arguments, the runtimes' log settings, and the link-safe rotation"
+    },
+    {
+      "id": "NFR3.10",
+      "status": "OK",
+      "target": "security-design.md § 7.4: no external error reporter in this release; only check names and pass or fail reach healthchecks.io"
+    },
+    {
+      "id": "NFR3.11",
+      "status": "OK",
+      "target": "security-design.md § 8: each runtime pinned from its publisher with its checksum, pgvector built from its pinned source, dependencies from the lockfile with their hashes, otool -L checked again every 5 minutes"
+    },
+    {
+      "id": "NFR3.12",
+      "status": "OK",
+      "target": "security-design.md § 9: every copy recorded before it is written, with NFR3.12's disposal points and backstops; the backup agent's catalogue decides deletion; internal-disk dates plus 24 hours"
+    },
+    {
+      "id": "NFR3.13",
+      "status": "OK",
+      "target": "security-design.md § 9: the backup agent refuses a decided date under 14 days and accepts one only with its decision's receipt and subject digest; callers can only extend; the retention floor"
+    },
+    {
+      "id": "NFR3.14",
+      "status": "OK",
+      "target": "security-design.md § 9 and reliability-design.md § 7: completion only with every scope's evidence; the covering verification starts at the next 05:00 within 24 hours and completes within 60 minutes; the backups evidence lists every undisposed copy"
+    },
+    {
+      "id": "NFR4.1",
+      "status": "OK",
+      "target": "security-design.md § 10 and reliability-design.md § 8: one submission identity per request, the ledger's exclusion per environment, 24-hour expiry, unknown outcomes reconciled from receipts first"
+    },
+    {
+      "id": "NFR4.2",
+      "status": "OK",
+      "target": "security-design.md § 10 and § 5.2: every effect a bound PlatformControl operation with a receipt; only the closed set of fixed commands exists"
+    },
+    {
+      "id": "NFR4.3",
+      "status": "OK",
+      "target": "security-design.md § 10: append-only, SHA-256-chained ledger and register, synced before the atomic head replacement, writers under the ledger's lock, crash adoption rules, a copy with every set and at least daily"
+    },
+    {
+      "id": "NFR4.4",
+      "status": "OK",
+      "target": "security-design.md § 10 and performance-design.md § 7.1: deterministic identities and an idempotent second pass, a parity report without private values, every paper embedded again with the pinned model"
+    },
+    {
+      "id": "NFR4.5",
+      "status": "OK",
+      "target": "security-design.md § 10 and § 3.3 (D3): each provider's first live effect waits for your decision on its preview's digest; real sign-in verified through the workspace's callback pages; approvals cleared by an abort or a rollback"
+    },
+    {
+      "id": "NFR4.6",
+      "status": "OK",
+      "target": "security-design.md § 10 and § 13 (D12): U5's and U6's idempotency and reconciliation unchanged, each email reserved in the shared count first"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "security-design.md § 12: Korean labels and WCAG 2.2 AA for every screen U8 adds or changes, one polite live region, focus on route change, 24 px targets, 320 px reflow, contrast tokens, evidence in the complete verification"
+    },
+    {
+      "id": "NFR5.2",
+      "status": "OK",
+      "target": "security-design.md § 12: the maintenance notice and the static legal pages as plain HTML and CSS, readable without scripts"
+    },
+    {
+      "id": "NFR6.1",
+      "status": "OK",
+      "target": "security-design.md § 13: only free or local components, with no paid fallback"
+    },
+    {
+      "id": "NFR6.2",
+      "status": "OK",
+      "target": "security-design.md § 13 and § 16 (D12): one daily count of all mail (digests stop at 60, account mail at 90) and 2,700 a month, reserved in the ledger before each send, released on a definite refusal"
+    },
+    {
+      "id": "NFR7.1",
+      "status": "OK",
+      "target": "reliability-design.md § 2 and observability-design.md § 12: two probes per scheduled 5-minute slot, a missing slot counting as down, the monthly figure from the availability record"
+    },
+    {
+      "id": "NFR7.2",
+      "status": "OK",
+      "target": "reliability-design.md § 3 and § 15: KeepAlive with launchd's 10-second throttle for the long-running jobs, the root jobs without KeepAlive, graceful stops within 30 seconds"
+    },
+    {
+      "id": "NFR7.3",
+      "status": "OK",
+      "target": "reliability-design.md § 3 and performance-design.md § 2.6: authorized restarts come back unattended; unplanned restarts wait at the unlock and alert; the chain ready within 3 minutes of boot"
+    },
+    {
+      "id": "NFR7.4",
+      "status": "OK",
+      "target": "reliability-design.md § 4 (R2, R3): live and not ready while the database does not answer, retrying from 1 to 30 seconds without exiting; refused starts stay up serving only health"
+    },
+    {
+      "id": "NFR7.5",
+      "status": "OK",
+      "target": "reliability-design.md § 5: planned work routed to the independent maintenance server, with no fixed window"
+    },
+    {
+      "id": "NFR7.6",
+      "status": "OK",
+      "target": "reliability-design.md § 6: the 04:00 backup lane with its ledger copy, integrity before it counts, the daily ping, catch-up at start"
+    },
+    {
+      "id": "NFR7.7",
+      "status": "OK",
+      "target": "reliability-design.md § 6: 14 days for daily sets and 8 weeks for Sunday sets, with their ledger copies, and the retention floor"
+    },
+    {
+      "id": "NFR7.8",
+      "status": "OK",
+      "target": "reliability-design.md § 7: Sunday 05:00 and erasure-triggered verifications, the start-bounded 24 hours, scratch restore, checks and drop, catch-up at start"
+    },
+    {
+      "id": "NFR7.9",
+      "status": "OK",
+      "target": "reliability-design.md § 8 and performance-design.md § 7.2: the bound steps with their time bounds shown as they run, the index rebuild sized for the 45 minutes"
+    },
+    {
+      "id": "NFR7.10",
+      "status": "OK",
+      "target": "reliability-design.md § 8: requests not admitted or not started within 24 hours expire through the housekeeping lane"
+    },
+    {
+      "id": "NFR7.11",
+      "status": "OK",
+      "target": "reliability-design.md § 9: volume retirement and replacement on your decision; what a rebuild on another Mac needs survives, keys excepted by design"
+    },
+    {
+      "id": "NFR7.12",
+      "status": "OK",
+      "target": "reliability-design.md § 10 (R5): each provider's capability state as its circuit breaker, with the time limits and retries table, no fallback provider"
+    },
+    {
+      "id": "NFR7.13",
+      "status": "OK",
+      "target": "reliability-design.md § 10: a missing backup volume never stops the start; storage.capacity shows degraded and writes are refused"
+    },
+    {
+      "id": "NFR7.14",
+      "status": "OK",
+      "target": "reliability-design.md § 12: the switch's preconditions checked item by item from their evidence before it starts"
+    },
+    {
+      "id": "NFR7.15",
+      "status": "OK",
+      "target": "reliability-design.md § 12 (R8): 4 hours counted from v1's stop, only the abort allowed at the bound, v1 serving before anything of v2's is removed"
+    },
+    {
+      "id": "NFR7.16",
+      "status": "OK",
+      "target": "reliability-design.md § 12: rollback for 14 days, withdrawals and erasures applied to v1 first, the copy before the database is emptied unless waived"
+    },
+    {
+      "id": "NFR7.17",
+      "status": "OK",
+      "target": "reliability-design.md § 13 and observability-design.md § 3.4: an isolation lapse or an unknown or stale check makes platform.isolation unavailable and opens an incident after 15 minutes, blocking the soak and the switch"
+    },
+    {
+      "id": "NFR7.18",
+      "status": "OK",
+      "target": "reliability-design.md § 13 and scalability-design.md § 3.3: the internal-disk floors protect the write-ahead log's room and stop verifications and imports below the critical floor"
+    },
+    {
+      "id": "NFR7.19",
+      "status": "OK",
+      "target": "reliability-design.md § 13 and security-design.md § 6.8: 14-day stop records renewed in person, listed with their expiry by every check and by the operator tool, a lapse counting as an isolation lapse"
+    },
+    {
+      "id": "NFR8.1",
+      "status": "OK",
+      "target": "performance-design.md § 2.1 (P7): liveness from memory, readiness from the recorded capability state in one short read, no dependency probed during the request"
+    },
+    {
+      "id": "NFR8.2",
+      "status": "OK",
+      "target": "performance-design.md § 2.2 and § 4 (P6): code split by route, a 300 KB script and 50 KB style budget, precompressed hashed files cached a year, later navigation inside the page"
+    },
+    {
+      "id": "NFR8.3",
+      "status": "OK",
+      "target": "performance-design.md § 2.3, § 3.1 and § 10 (P4, P10): short bounded transactions, connections per transaction under the gates, per-owner indexes, the 95th percentile read from the latency summaries"
+    },
+    {
+      "id": "NFR8.4",
+      "status": "OK",
+      "target": "performance-design.md § 2.4 and § 3.3 (P1, P2, P3): the search model resident, a 2-second embedding bound, pgvector HNSW and the stored text indexes returning 200 candidates each, the built ranking over at most 400 rows"
+    },
+    {
+      "id": "NFR8.5",
+      "status": "OK",
+      "target": "performance-design.md § 2.5 and § 5 (P8): the request records the job and answers; the workers do the work"
+    },
+    {
+      "id": "NFR8.6",
+      "status": "OK",
+      "target": "performance-design.md § 2.6 and reliability-design.md § 4: the start chain with bounded crash recovery, the host's 30-second maximum wait, producers observing at once, measured at restarts and crashes"
+    },
+    {
+      "id": "NFR8.7",
+      "status": "OK",
+      "target": "performance-design.md § 6 and § 3: host and workers under 4 GiB with no corpus in memory, PostgreSQL's settings, the model runtime's bounded residency"
+    },
+    {
+      "id": "NFR8.8",
+      "status": "OK",
+      "target": "performance-design.md § 7.1: the dry run's step estimates at the measured 17 chunks a second, about 1.5 hours at 60,000 chunks, each run's durations recorded, and the risk above about 85,000 chunks put to your decision when a run shows it"
+    },
+    {
+      "id": "NFR8.9",
+      "status": "OK",
+      "target": "performance-design.md § 7.2 and scalability-design.md § 5: dump and restore designs within 25, 45 and 60 minutes, the index rebuild measured separately and projected to the budget"
+    },
+    {
+      "id": "NFR8.10",
+      "status": "OK",
+      "target": "performance-design.md § 8: local items, otool results kept per program digest, a time limit per item"
+    },
+    {
+      "id": "NFR8.11",
+      "status": "OK",
+      "target": "performance-design.md § 9: every measurement records its versions; the model timings measured again on the pinned runtime; upgrades measured before production"
+    },
+    {
+      "id": "NFR8.12",
+      "status": "OK",
+      "target": "scalability-design.md § 2 and performance-design.md § 3.1: one host process under the connection gates, work per request independent of the corpus (Q5, Q6), the 500-account cap"
+    },
+    {
+      "id": "NFR8.13",
+      "status": "OK",
+      "target": "scalability-design.md § 3.1 and § 3.2 (S2, S4): one footprint definition with pg_monitor for the WAL size, degraded at 80%, admission closed with 256 MiB of headroom, the WAL bounded at 1 GB"
+    },
+    {
+      "id": "NFR8.14",
+      "status": "OK",
+      "target": "scalability-design.md § 3.3 (S3): statvfs's available space on the data volume, the 20 GiB threshold with each run's expected write, the 10 GiB critical floor, 23 GiB before the first dry run"
+    },
+    {
+      "id": "NFR8.15",
+      "status": "OK",
+      "target": "scalability-design.md § 3.4: at most one production, two rehearsal, one import and one scratch database, enforced by the database operations' name-pattern counts"
+    },
+    {
+      "id": "NFR8.16",
+      "status": "OK",
+      "target": "scalability-design.md § 4: the 64 GiB floor read on the backup volume itself, writes stopped and deletions continuing below it, the retention and set sizes"
+    },
+    {
+      "id": "NFR8.17",
+      "status": "OK",
+      "target": "scalability-design.md § 5 (S6): the 2026-10-22 baseline, what the first dry run records, and the growth signals with their thresholds"
+    },
+    {
+      "id": "NFR8.18",
+      "status": "OK",
+      "target": "scalability-design.md § 6: email within NFR6.2 through the shared count, 3 of healthchecks.io's 20 checks"
+    },
+    {
+      "id": "NFR9.1",
+      "status": "OK",
+      "target": "observability-design.md § 2: one indicator per objective, read from the availability record, the latency summaries and the ledger, with alerts well before a breach"
+    },
+    {
+      "id": "NFR9.2",
+      "status": "OK",
+      "target": "observability-design.md § 3.1–§ 3.3 (O1, O2): one producer per capability on timers in the workers, observing at start, the renewal, staleness and incident timings, bounded buffering"
+    },
+    {
+      "id": "NFR9.3",
+      "status": "OK",
+      "target": "observability-design.md § 3.4 (O3): the tolerance watcher opens one incident per capability and environment in the ledger; resolution only with evidence"
+    },
+    {
+      "id": "NFR9.4",
+      "status": "OK",
+      "target": "observability-design.md § 4: 운영's contents for administrators with a completed second factor, refreshed every 30 seconds and on demand"
+    },
+    {
+      "id": "NFR9.5",
+      "status": "OK",
+      "target": "observability-design.md § 4: 작업 refreshed every 5 seconds while work is unfinished, the event stream with Last-Event-ID, a job's view polling every 2 seconds when the stream fails, with its error boundary and live region"
+    },
+    {
+      "id": "NFR9.6",
+      "status": "OK",
+      "target": "observability-design.md § 5 (O4): three checks pinged by the standing job, a down slot reporting a failure at once, only check names and pass or fail leaving the machine"
+    },
+    {
+      "id": "NFR9.7",
+      "status": "OK",
+      "target": "observability-design.md § 6: one health and one error-rate signal per component, with what each is computed from"
+    },
+    {
+      "id": "NFR9.8",
+      "status": "OK",
+      "target": "observability-design.md § 7 and security-design.md § 7.3: per-account log folders, v2's own logs moved aside and the rest copied then truncated, link-safe and non-blocking opens, 14 days, the run's summary line (R-20, R-21)"
+    },
+    {
+      "id": "NFR9.9",
+      "status": "OK",
+      "target": "observability-design.md § 8: one result file per run in the isolation evidence folder, kept 14 days, the latest in PlatformControl's status"
+    },
+    {
+      "id": "NFR9.10",
+      "status": "OK",
+      "target": "observability-design.md § 9: release tag and commit at start, VerificationRun per commit, the installation log without secrets, the soak's evidence"
+    },
+    {
+      "id": "NFR9.11",
+      "status": "OK",
+      "target": "observability-design.md § 10 (O6): a fresh identifier per request in logs, error answers and observations, carried into the jobs it starts"
+    },
+    {
+      "id": "NFR9.12",
+      "status": "OK",
+      "target": "observability-design.md § 11: probes read liveness, readiness and a signed-out journey only"
+    },
+    {
+      "id": "NFR9.13",
+      "status": "OK",
+      "target": "observability-design.md § 12 (O7): monthly JSON Lines files in the scheduler-owned, readable folder, one synced line per slot, 13 months, the month's figure with a missing slot as down"
+    }
+  ]
+}

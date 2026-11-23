@@ -241,6 +241,16 @@
       "target": "frontend/src/u5-topics/topics-view.tsx"
     },
     {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "frontend/src/u5-topics/topics.css"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "frontend/e2e/u5-topics-digests/settings-accessibility.spec.ts"
+    },
+    {
       "id": "NFR6",
       "status": "OK",
       "target": "backend/u5_real_delivery.py"
@@ -264,6 +274,11 @@
       "id": "BR1.2",
       "status": "OK",
       "target": "backend/modules/topics/scheduler.py"
+    },
+    {
+      "id": "BR1.2",
+      "status": "OK",
+      "target": "backend/modules/topics/u5_scheduled_instant.sql"
     },
     {
       "id": "BR1.3",
@@ -355,8 +370,8 @@
   "real_delivery_evidence": {
     "links": [
       "FR1.4/BR1.4/NFR6/NFR6.1: backend/u5_real_delivery.py assemble_u5_real (operator-only, scripts/serve_docsuri_u5.py --real-delivery, run-bound real-delivery.json activation, Resend credential from the environment only, no fallback)",
-      "FR1.4: backend/modules/accounts/integrations/digest_email.py typed accepted/refused/unknown result with provider receipt; refusal status and error name",
-      "FR1.4: backend/modules/topics/u5_refusal_detail.sql set-once provider_status/provider_error",
+      "FR1.4: backend/modules/accounts/integrations/digest_email.py typed accepted/refused/unknown result with provider receipt; refusal status and error name, kept by decision L1-1; since decision L1-4 removed the unused send_digest_email seam from backend/modules/accounts/integrations/email.py, U5's only digest send path (code-summary.md, Build and Test loop-back 1)",
+      "FR1.4: backend/modules/topics/u5_refusal_detail.sql set-once provider_status/provider_error, kept by decision L1-1 (2026-10-28): a status from the fixed refusing set (400, 401, 403, 404, 413, 422, 429) and an error name matching ^[a-z][a-z0-9_]{0,63}$ or the fixed name-unavailable, beside the plain-language category, never free text, a secret, a payload or an address; this amends the Data Protection wording of security-requirements.md (code-summary.md, Build and Test loop-back 1)",
       "FR1.4: backend/modules/topics/u5_real_send_retention.sql evidence_retain_until (30 days) plus the scheduler retention sweep",
       "FR1.4: scripts/u5_real_delivery.py check/provision/prepare/preview/outcome operator actions (never constructs the adapter)",
       "BR1.4: backend/modules/topics/scheduler.py permitted-recipient filter before the bounded page",
@@ -382,5 +397,95 @@
     ],
     "scheduling": "Real-store consent-stop and earlier-unknown regressions each place51 blocked topics ahead of2 eligible topics;3 finite scheduler passes verify later-owner progress with no new blocked attempts. Consent and outstanding-work predicates precede LIMIT50; cleanup/reconciliation remain separate.",
     "clock_coordination": "7 focused passes and inclusion in155-check full pass. Source-derived absolute helper paths work from root/frontend cwd; private run-bound clock delegation preserves parent lock and refuses unrelated/missing/wrong/foreign/expired/malformed/inactive grants, revoking metadata on success/failure."
+  },
+  "loopback_1_evidence": {
+    "date": "2026-10-28",
+    "nfr5_1_contrast": "Step 25: frontend/src/u5-topics/topics.css takes every colour from the workspace tokens --color-text-muted, --color-border, --color-surface, --color-text and --color-danger (app/globals.css, light and dark values), no fallbacks; checked by frontend/e2e/u5-topics-digests/settings-accessibility.spec.ts (axe wcag2a/wcag2aa/wcag21aa/wcag22aa, 320 CSS px reflow, focus) in four theme settings: zero findings in the Step 27 browser lane",
+    "scope_floor_existing_suite_green": "Step 26: tests/u5_topics_digests/component/test_schedule_preferences.py derives every date from one reading of the realm clock (the clock_timestamp() that stamps the follow, settings and zone boundary), so its 7 tests pass on any run date; no production change; 133 passed in the Step 27 component lane",
+    "collect_only": "322 tests collected (backend/pytest.u5-topics-digests.ini, tests/u5_topics_digests)",
+    "coverage_lane": "realm docsuri-u5-f36e022f36ec0f2d: 322 passed, 0 failures, 0 errors, 0 skipped; 85.02% aggregate (2,097 statements, 314 missed) against the 80% floor; 24.29 s; peak RSS 290.6 MiB; evidence /private/tmp/docsuri-u5-preserved-docsuri-u5-f36e022f36ec0f2d-2d1019cd/coverage-evidence-1793149660736342000.json",
+    "component_lane": "first attempt on the coverage realm refused: 1 failure in 4 run (Busy: local authentication attempt allocation exhausted by the coverage pass), evidence preserved with that realm; fresh realm docsuri-u5-2d32323f00dbc0d7: 133 passed, 0 failures, 0 errors, 0 skipped; 12.64 s; peak RSS 226.7 MiB; preserved at /private/tmp/docsuri-u5-preserved-docsuri-u5-2d32323f00dbc0d7-3cbc464e",
+    "browser_lane": "fresh realm docsuri-u5-128a29a71ec191d0 (setup, migrate, browser, as CI runs it): 7 specs passed, 0 failures, 0 skipped (journey 4, accessibility 1, settings-accessibility 1, credentials 1); 13.06 s; peak RSS 980.3 MiB of the 1,024 MiB bound; evidence /private/tmp/docsuri-u5-preserved-docsuri-u5-128a29a71ec191d0-516d0acd/browser-evidence-1793149828495638000.json",
+    "frontend": "tsc --project tsconfig.u5-topics.json passed; vitest.u5-topics.config.ts 39 passed in 4 files, 97.93% lines of src/u5-topics; ESLint on the CI target list passed",
+    "ruff": "ruff check passed on the CI target list; ruff format --check would reformat 16 pre-existing files none of which this attempt changed (CI runs ruff check only)"
+  },
+  "loopback_2_evidence": {
+    "date": "2026-11-15",
+    "decision_l2_1": "The runner's 28 test functions in tests/u5_topics_digests/operations/test_runner.py are grouped by the runner's five parts into test_runner_supervision.py (8), test_runner_clock.py (5), test_runner_configuration.py (5), test_runner_bindings.py (5) and test_runner_serving.py (5), each test moved byte for byte; none merged, weakened or dropped (code-summary.md, Build and Test loop-back 2)",
+    "strategy_volume": "Target U5:code-generation-plan:testing-contract-strategy-volume (Not Met): Step 29 adds three lifecycle participant tests (repository/test_lifecycle_participant.py; six with the three existing ones), Step 30 two topics probe tests (component/test_owner_observation.py; six with the four existing ones), Step 31 applies L2-1",
+    "nfr5_1": "Target U5:NFR5.1, two unchecked clauses: Step 32 adds frontend/test/u5-topics/announcements.test.tsx, asserting the polite role=status live region for follow, unsubscribe, settings saved and resolve, role=alert for failed requests, and the Korean accessible names of the topic list's and resolve control's controls",
+    "unchanged_targets": {
+      "U5:code-generation-plan:testing-contract-methodology-layers": "Unverified, owned by build-and-test: whether each layer was implemented before its tests shows only in Code Generation's records (the plan's ticked steps in layer order, code-summary.md Step 24); this loop-back adds tests only and changes no record of past order",
+      "U5:code-generation-plan:testing-contract-runner-step": "Unverified, owned by build-and-test: whether the unit-scoped command was recorded before the first test shows only in Code Generation's records (plan Step 2, unit-test-instructions.md); unchanged here",
+      "U5:tech-stack-decisions:verification-notes-real-delivery": "Unverified, owned by deployment-execution: needs a bounded, authorized real send through the configured free adapter; Code Generation's record holds one (real_delivery_evidence), a later stage verifies it, and no change here can"
+    },
+    "production_changes": "none",
+    "step_33": {
+      "withheld_behaviour_checks": "Each new test failed once with its behaviour withheld and passed again after an exact restore, confirmed by SHA-256 (code-summary.md, Withheld-behaviour checks; ~/.docsuri-u8/final-evidence/u5-l2-failchecks.json): frontend F1-F4 over the 10 tests of announcements.test.tsx, backend B1-B5 over the 3 participant and 2 probe tests on scratch realm docsuri-u5-2ba5dd5295f3cb8d",
+      "lanes": "2026-11-15 06:42-06:49 UTC, source digest 0830d80605fff85c06a6bf180e34989bcc3427fef972d72d1402581eff4305c1 (2,033 files): coverage 327 passed at 85.21% (docsuri-u5-70bfabfa1277533c), component 135 (docsuri-u5-0547844164ad5fbf), browser 7 (docsuri-u5-f43279546d0fac71), database 33 (docsuri-u5-0e133fc6c5a62886), each on a fresh realm; Vitest 49 passed, src/u5-topics/** 98.47%; tsc, ESLint and Ruff clean; collect-only 327",
+      "component_counts": "lifecycle participant 6; topics probe 6; runner parts 8, 5, 5, 5 and 5 test functions (9, 11, 5, 5 and 5 collected items); announcements.test.tsx 10, kept as one check per NFR5.1 clause"
+    }
+  },
+  "loopback_3_evidence": {
+    "date": "2026-11-17",
+    "decision_l3_1": "Every changed component holds five to eight tests: (1) a file that checks several components is split, its tests moved unchanged, one file per component; (2) a component still above eight merges its same-rule cases into one test each, keeping every assertion and case (pytest.mark.parametrize over the original bodies; in Vitest one test per rule running every case); (3) a component below five gains tests. No assertion or case dropped or weakened; amending U5's instructions to U8's keep-above-eight rule was rejected as relaxing a defined target (code-summary.md, Build and Test loop-back 3)",
+    "strategy_volume": "Target U5:code-generation-plan:testing-contract-strategy-volume (Not Met): Steps 35 and 38 apply L3-1 to database/test_schema.py, repository/test_repository.py, repository/test_preferences.py, component/test_topics_logic.py, component/test_real_composition.py, integration/test_http.py, operations/test_phase_verdicts.py and frontend/test/u5-topics/ (announcements, topics and settings-dialog tests); per-file counts before and after in code-summary.md",
+    "preference_inheritance": "Target U5:unit-test-instructions:required-repair-preference-inheritance: Step 36 reads usesDefaults through the mounted topic settings route, true with en and standard for an owner with no saved language or level, false with the owner's choice otherwise (integration/test_settings_routes.py)",
+    "nfr5_1": "Target U5:NFR5.1: Step 37 (a) finds the settings form's controls by role and Korean accessible name in jsdom (digest-settings.test.tsx); (b) in Chromium, axe (wcag2a/wcag2aa/wcag21aa/wcag22aa), 320 CSS px reflow and focus over a populated topic list in four theme settings, and the settings form's controls by role and Korean name (frontend/e2e/u5-topics-digests/populated-list-accessibility.spec.ts); remaining gap browser-only: the list's and resolve control's live regions and names in Chromium",
+    "unchanged_targets": {
+      "U5:code-generation-plan:testing-contract-methodology-layers": "Unverified, owned by build-and-test: the order of past work shows only in Code Generation's records (the plan's ticked steps, code-summary.md Step 24); this loop-back changes no record of past order",
+      "U5:code-generation-plan:testing-contract-runner-step": "Unverified, owned by build-and-test: shows only in Code Generation's records (plan Step 2, unit-test-instructions.md); unchanged here",
+      "U5:tech-stack-decisions:verification-notes-real-delivery": "Unverified, owned by deployment-execution: needs a bounded, authorized real send; Code Generation's record holds one (real_delivery_evidence), a later stage verifies it",
+      "U5:unit-test-instructions:required-repair-frontend-states": "browser-only gap: the loading, empty, read-failure, degraded, stale-revision, default-label, late-answer and focus-return clauses stay checked in jsdom; this plan adds no Chromium staging for them"
+    },
+    "production_changes": "none"
+  },
+  "loopback_4_evidence": {
+    "date": "2026-11-22",
+    "origin": "Build and Test run 5 left U8:NFR9.2 and U8:NFR9.2:export-digest-degraded Not Met (group U8-A2): a sending or unknown run whose topic's settings changed after it was prepared cannot be counted from its scheduled time, because U5 recorded no run's scheduled instant. The maintainer chose \"Retry with fix\" on 2026-11-22, beyond the bound of three loop-backs, and approved Steps 40-48 with \"Approve Plan\". The fix is option 2 of L3-3 in U8's plan and reverses the option 1 chosen there. This block is U5's half only",
+    "decisions": {
+      "L4-1": "The maintainer's choice, option 1: a new column topics.digest_run.scheduled_at (timestamptz, nullable, no default, no backfill, no CHECK), added by backend/modules/topics/u5_scheduled_instant.sql, which also replaces topics.guard_preparation_snapshot() with scheduled_at in the compared tuple (same header, message and ERRCODE 23514) and revokes PUBLIC. Option 2, a scheduledAt key in preference_snapshot, was turned down",
+      "L4-2": "The value is the due_at topics.next_occurrence returned for the occurrence whose window_day is the run's window_end, handed from the scheduler through DigestPreparation.prepare to TopicsRepository.prepare_run (keyword scheduled_at, default none). Accepted only with expected_preferences; refused INVALID_ARGUMENT on scheduledAt when it has no zone or is not a date-time. Set once at insert; the replaced guard refuses every later change, none to a value included. A run no due occurrence prepared holds NULL and nothing fills it in later. No CHECK. Not shown to the owner",
+      "L4-3": "The one file of another Unit: backend/u8_migrations.py gains one entry in LATER_UNITS, after u5_refusal_detail.sql and before u6_lifecycle_guard.sql, with a short comment; nothing else in it changes. Seven kept files do not change by a byte: backend/u5_policy.py, backend/modules/topics/delivery.py, backend/u5_real_delivery.py, backend/.coveragerc.u5, frontend/vitest.u5-topics.config.ts, backend/modules/topics/http.py, backend/u5_host.py",
+      "L4-4": "Five to eight tests per changed component, counted as L3-1 counts them: 12 new test functions (18 collected items): 1 database, 8 repository, 3 scheduler; three chain-pinning files extended under their own names; no U5 test for the composed chain's one entry",
+      "L4-5": "Lanes follow the reach rule (U8's L2-18): all of U5's lanes, U6's coverage and browser phases on two fresh U6 environments, U8's database phase once; every other U8 lane runs in U8's reopened build",
+      "L4-6": "The contract U8 consumes and the list owed to U8's plan (code-summary.md, Records (Step 47))",
+      "L4-7": "The maintainer's choice: U5's browser-only checks (U5-C2) are not built in this loop-back; U5:NFR5.1, the frontend states and the defaults label stay Unverified for their browser-only clauses"
+    },
+    "design_correction": "functional-design/entities.md's DigestRun gains scheduledAt (a timestamp, optional: the due instant of the occurrence the run was prepared for; set once; absent for a run no schedule prepared). The approved file is not edited; code-summary.md carries the correction",
+    "not_shown_by_this_build": [
+      "No U8 target changes until U8 is rebuilt",
+      "The bounded real send of Steps 13 and 14 is not repeated, because this plan authorizes no external message; real_delivery_evidence is of the source before this change"
+    ],
+    "kept_files_first_reading": {
+      "taken": "2026-11-22T06:08:31Z, before any edit",
+      "backend/u5_policy.py": "5bb52c4c198035f7de5c6e685c9a0fab8ce246670733dae0571b980a7f91246b",
+      "backend/modules/topics/delivery.py": "16680a8a6cd14d1c881544c1ff760066fe8494151e54c04157d9974e2def0095",
+      "backend/u5_real_delivery.py": "a114e9332910317141d6e16a4066aa17cfbb84189c321e96d404d4a023ebd56b",
+      "backend/.coveragerc.u5": "82719aa662846316da910756c97a255173b39ef00b8fa2e52dcec0f49b8182d5",
+      "frontend/vitest.u5-topics.config.ts": "856a400fc49cf9219812ae3c1b1b2af224d8c91c98c733fcf497311c0ed826d0",
+      "backend/modules/topics/http.py": "a5e172d60c9c535cbcf52578c0413f87483e8fa6f1b5db6a2e4982ea3a34927b",
+      "backend/u5_host.py": "618c859516db4c6a88b784b51625e2180d0786becb6c056049a7bc90c1cf03f2"
+    },
+    "collect_only_before_first_new_test": "331 tests collected, 2026-11-22T06:08:33Z (backend/pytest.u5-topics-digests.ini, tests/u5_topics_digests)",
+    "production_changes": "backend/modules/topics/u5_scheduled_instant.sql (new, SHA-256 49982d27a43cad0bbc9c0e7cf03744bd3fa38ca97d53b9fff9eda38d0c639c12); backend/modules/topics/repository.py (RUN_COLUMNS, prepare_run); backend/modules/topics/preparation.py and scheduler.py (the instant passed on); scripts/verify_docsuri_u5.py (MIGRATIONS, one entry); backend/u8_migrations.py (LATER_UNITS, one entry with its comment: the one file of another Unit, claimed only by U8's manifest until this build)",
+    "trace": "BR1.2 -> backend/modules/topics/u5_scheduled_instant.sql (the column and its set-once guard), repository.py prepare_run, scheduler.py _evaluate_due; BR2.4 and FR1.2 through the same path",
+    "order_of_work": "test-after, UTC 2026-11-22: Step 41 implementation 06:12:59 (realm-free chain read exit 0; 66 migrations applied on a fresh realm 06:13:44), Step 42 tests then database phase 34 passed 06:22:54; Step 43 implementation 06:23:18, Step 44 tests then repository phase 51 passed 06:24:37 (of repository/test_scheduled_instant.py at SHA-256 8883f71e99cae39c326042eb811493d61770122746b8c737a9d3e26c0f4b9fe2; the file changed afterwards, at 06:26:42-43 by two formatter line joins and at 07:04:03 by a review fix, see development_runs); Step 45 implementation 06:24:56, Step 46 tests then component phase 141 passed 06:27:09; collect-only 349 at 06:27:26",
+    "development_runs": "realm docsuri-u5-b46b8e0d42f246aa: setup, migrate (66), fixtures exit 0; database exit 1, 24 run, 1 failed, a defect of the new test's own grant ordering, fixed; preserved as a failed attempt at /private/tmp/docsuri-u5-preserved-docsuri-u5-b46b8e0d42f246aa-6e7dbfb5. Realm docsuri-u5-f469cec76b5b59ce: setup, migrate (66), fixtures exit 0; database 34 passed, repository 51 passed, component 141 passed, each exit 0 with 0 failures, errors and skips. Both containers confirmed through Colima's socket. The three realm-free chain tests: 3 passed. tests/u5_topics_digests/repository/test_scheduled_instant.py changed after its repository phase: the 51-passed run was of SHA-256 8883f71e99cae39c326042eb811493d61770122746b8c737a9d3e26c0f4b9fe2 (the independent review's digest for those bytes); two formatter line joins at 06:26:42-43Z (line 83, the set comprehension in wall_instants; line 87, the first test's signature) gave a10265d372c8db1d7c5a91dc038bf5efd99a2fd098aa925c3485fc61fe78e0a9, the bytes W4, W5 and W6 ran directly; a review fix at 07:04:03Z removed a comment and two always-true assertions from test_a_run_prepared_without_an_instant_holds_none (one compared the stored instant with created_at, against the instructions' Clock rule), giving the final 976e5ef562a99b759a055bfc2c0cb27d7af35b1147d86a8705e0bd6b1cc99ac4. No whole repository phase has run on the final bytes yet; the item names are unchanged (12; collect-only 349; Ruff clean); Step 48(b)'s repository lane on a fresh realm is the first whole run of the final file. These are development runs; the recorded lanes are Step 48(b)'s",
+    "component_counts": "functions [collected items]: database/test_preference_schema.py 6 -> 7; database/test_chain_upgrade.py 5 (2 extended); database/test_migration_digests.py 5 [6] (pins extended); operations/test_runner_bindings.py 5 (1 extended); repository/test_scheduled_instant.py new, 8 [12]; component/test_topics_scheduler.py 5 [6] -> 8 [11]; component/test_schedule_preferences.py 7 (helpers moved to tests/u5_topics_digests/calendar_flow.py); collect-only 331 -> 349",
+    "contract_for_u8": "topics.digest_run.scheduled_at, a timestamptz: the due instant of the occurrence the run was prepared for, set once at insert and never changed. Not NULL for every run U5's scheduler prepared, whatever happens to the topic's settings or the owner's zone afterwards, and whatever state the run is in. NULL for a run no due occurrence prepared and for a row older than the file; production cannot hold one. It may be later than the run's created_at. U8 reads it in its own statement under the topics login and writes nothing; for a NULL row U8 states its own fallback",
+    "owed_to_u8_plan": [
+      "the producer's statement and its comments",
+      "the M and P cases of U8's Step 146 and a NULL case for the fallback",
+      "the withdrawal of U8's correction 184 and record 113",
+      "U8's coverage of the new lines in backend/modules/topics/scheduler.py and repository.py",
+      "U8's records of a chain entry inserted mid-list",
+      "both manifests now claim backend/u8_migrations.py, so any further U8 edit of it stales U5's review",
+      "nothing compares U8's copy of U5's files with U5's MIGRATIONS, so a missing entry fails only in a journey",
+      "every U8 environment set up before U5's build is archived and set up again, none migrated in place",
+      "U6's component and integration phases were not run as lanes of their own in U5's build",
+      "the realm privilege pin did not move: U8's database phase passed on a fresh U8 realm with the new chain entry (Step 48(d)), so nothing is owed for it"
+    ],
+    "step_48": "(a) the nine withheld checks are recorded in code-summary.md, each failing where predicted. (b) U5's lanes on the final source, 2026-11-22 07:05:43-07:19:24Z, each test phase on its own fresh realm, one source digest 677ff8c8ba406225dd30b436a3e3418095806ef96eab6b91bd9952bd6303de92: database 34 tests (docsuri-u5-46db7ef218d872ba), repository 51 (docsuri-u5-358d8b3b8bc2d6d2; the first whole run of repository/test_scheduled_instant.py at its final bytes, 976e5ef562a99b759a055bfc2c0cb27d7af35b1147d86a8705e0bd6b1cc99ac4), component 141 (docsuri-u5-999dbe9bd60477dc), coverage 349 at 85.27% against the 80.0 floor (docsuri-u5-4fb6b608fdbe0be1), browser 9 (docsuri-u5-c51a7a231e4d49c3), each exit 0 with 0 failures, 0 errors and 0 skipped; Vitest 36 passed with src/u5-topics at 98.47% of lines; tsc, ESLint (U5's CI list) and Ruff (U5's CI list, and backend/u8_migrations.py) exit 0; operations/test_archive_expiry.py 31 passed; collect-only 349. (c) U6's own tool on two fresh U6 environments, source digest 1768c2930559e60b85d5463839bb3f5ff2e54b043e5494a641e8beb82bf2ba06: coverage 949 tests at 90.0% (docsuri-u6-95e11476dcb2d837) and browser 14 tests (docsuri-u6-9663859e2188872c), each exit 0 with 0 failures, 0 errors and 0 skipped. (d) U8's database phase on a fresh U8 realm (docsuri-u8-0db0a9d69269e682, 07:20:17-07:20:25Z): migrate applied 138 migrations; 51 tests, 0 failures, 0 errors, 0 skipped, with database/test_composed_chain.py's 15 and the realm privilege pin's test among them; the pin did not move; the realm-free read of the composed chain exits 0 on the final source (07:22:54Z). (e) the seven kept files' SHA-256 at 07:05:43Z equal kept_files_first_reading. Logs: ~/.docsuri-u8/lead-scripts/final-lanes/lb4-run-20261122-160543-47637/ and lb4-u8-database-20261122.log; preserved folders in ~/.docsuri-u8/final-evidence/. An independent read-only check of the build ran before these runs; its four Minor points were fixed at 07:04:03Z."
   }
 }
