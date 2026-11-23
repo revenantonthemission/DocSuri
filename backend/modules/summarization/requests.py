@@ -13,7 +13,7 @@ from uuid import UUID
 from backend.modules.corpus.repository import CorpusRepository, content_revision
 from backend.modules.summarization.admission import AssistanceAdmission
 from backend.modules.summarization.guarded_repository import intent_digest
-from backend.modules.summarization.payload import selected_sections
+from backend.modules.summarization.payload import BUILT_RULE, SelectionRule, selected_sections
 from backend.transactions import Authority
 from docsuri_shared.workspace import wire
 
@@ -25,12 +25,15 @@ class AssistanceUnavailable(RuntimeError):
 
 
 class AssistanceCatalog:
-    def __init__(self, source: dict, definitions: list[dict], *, quality_ready: bool = False):
+    def __init__(self, source: dict, definitions: list[dict], *, quality_ready: bool = False,
+                 rule: SelectionRule = BUILT_RULE):
         if not 1 <= len(definitions) <= 16:
             raise ValueError("finite option catalogue allocation exceeded")
         self.source = deepcopy(source)
         self.definitions = deepcopy(definitions)
         self.quality_ready = quality_ready
+        # The chunk bound and the block grouping (built rule by default; U8 plan Step 23).
+        self.rule = rule
         self.content_revision = content_revision(source)
         seen = set()
         for definition in self.definitions:
@@ -49,7 +52,8 @@ class AssistanceCatalog:
                 or option["presentationLevelId"] != "selected-source"
             ):
                 raise ValueError("unsupported local language or presentation")
-            selected_sections(source, definition["selectedSections"])
+            selected_sections(source, definition["selectedSections"],
+                              max_chunks=rule.max_chunks, blocks=rule.blocks)
             definition["option"] = option
         self.revision = intent_digest(
             {

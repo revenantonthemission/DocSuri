@@ -61,10 +61,19 @@ AMENDMENTS = (
     ("usage", "backend/modules/plans/local_period.sql"),
     ("assistance", "backend/modules/summarization/local_result_revision.sql"),
 )
+# The shared Discovery execution writer records snapshot_revision and
+# degradation for every realm, so U1's realm carries U3's column migration.
+# It is a list of U1's realm alone rather than an entry of AMENDMENTS: the
+# runners of U2 to U6 and U8 import amend and AMENDMENTS, and U8's composed
+# chain must equal U1's own lists, so only bootstrap() passes this one.
+U1_REALM_AMENDMENTS = (("discovery", "backend/modules/discovery/u3_schema.sql"),)
 
 
-def amend(conn, manifest: dict, source_hashes: dict) -> dict:
-    """Apply only explicit append-only schema amendments, within the same DB identity."""
+def amend(conn, manifest: dict, source_hashes: dict, *, extra=()) -> dict:
+    """Apply only explicit append-only schema amendments, within the same DB identity.
+
+    ``extra`` entries are applied after ``AMENDMENTS`` in the same way.
+    """
     row = conn.execute(
         "SELECT run_id,schema_hashes FROM public.docsuri_local_identity FOR UPDATE"
     ).fetchone()
@@ -73,7 +82,7 @@ def amend(conn, manifest: dict, source_hashes: dict) -> dict:
     known = row[1]
     if any(known.get(name) != value for name, value in source_hashes.items()):
         raise Refused("existing base schema bytes differ; new migration required")
-    for owner, path in AMENDMENTS:
+    for owner, path in (*AMENDMENTS, *extra):
         value = hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
         if path in known:
             if known[path] != value:
@@ -269,7 +278,7 @@ def bootstrap(*, database: str = "docsuri_u1") -> dict:
             "SELECT to_regclass('public.docsuri_local_identity')"
         ).fetchone()[0]
         if existing:
-            hashes = amend(conn, manifest, source_hashes)
+            hashes = amend(conn, manifest, source_hashes, extra=U1_REALM_AMENDMENTS)
             return {
                 "schemaState": "verified-with-explicit-amendments",
                 "schemaHashes": hashes,
@@ -404,7 +413,7 @@ def bootstrap(*, database: str = "docsuri_u1") -> dict:
         conn.execute(
             "GRANT SELECT ON corpus.paper,corpus.version,corpus.projection TO docsuri_discovery"
         )
-        hashes = amend(conn, manifest, source_hashes)
+        hashes = amend(conn, manifest, source_hashes, extra=U1_REALM_AMENDMENTS)
     return {"schemaState": "installed", "schemaHashes": hashes}
 
 

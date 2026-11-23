@@ -5,10 +5,10 @@ import re
 from uuid import uuid4
 
 import pytest
+
 from backend.modules.export.errors import ExportError
 from backend.modules.export.repository import Replay, replay_input_hash
 from backend.modules.export.store_support import canonical_digest
-
 from tests.u6_approved_export import store_flows as flows
 
 HEX64 = re.compile(r"[0-9a-f]{64}")

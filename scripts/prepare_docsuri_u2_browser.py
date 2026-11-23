@@ -146,6 +146,22 @@ def process_rss(pid: int, deadline: float) -> int:
     return sum(rss * 1024 for child, _, rss in rows if child in included)
 
 
+def window_rss(pid: int, observation_end: float) -> int | None:
+    """Sample the tree's RSS, or None once the observation window has ended.
+
+    ps gets only the window's remaining time, so at the window's edge it may get
+    about a millisecond; its timeout (or the deadline refusal when the edge passes
+    before ps starts) then ends observation instead of failing the run. Either
+    failure while the window still has time left propagates unchanged.
+    """
+    try:
+        return process_rss(pid, observation_end)
+    except (subprocess.TimeoutExpired, runner.Refused):
+        if time.monotonic() >= observation_end:
+            return None
+        raise
+
+
 def stop(process: subprocess.Popen) -> None:
     """Terminate the process group before reaping its leader; never replace it."""
     try:
@@ -182,7 +198,7 @@ def bounded_process(args: list[str], log: Path, *, seconds: float = 300,
     deadline = beginning + seconds
     observation_end = deadline - min(7, seconds / 2)
     count, peak, reason, code = 0, 0, "deadline", None
-    environment = {key: os.environ[key] for key in ("PATH", "HOME", "TMPDIR", "LANG") if key in os.environ}
+    environment = {key: os.environ[key] for key in ("PATH", "HOME", "TMPDIR", "LANG", "DOCKER_HOST") if key in os.environ}
     environment.update(PYTHONPATH=str(ROOT), DOCSURI_U2_ENVIRONMENT_FILE=str(runner.RUN / "environment.json"),
         CI="true", COREPACK_ENABLE_DOWNLOAD_PROMPT="0", COREPACK_ENABLE_NETWORK="0")
     previous_signals = {value: signal.getsignal(value) for value in (signal.SIGTERM, signal.SIGINT)}
@@ -214,7 +230,10 @@ def bounded_process(args: list[str], log: Path, *, seconds: float = 300,
                     stream.write(chunk)
                 if time.monotonic() >= observation_end:
                     break
-                peak = max(peak, process_rss(process.pid, observation_end))
+                rss = window_rss(process.pid, observation_end)
+                if rss is None:
+                    break
+                peak = max(peak, rss)
                 if peak > rss_limit:
                     raise runner.Refused("process tree exceeded RSS safety budget")
                 code = process.poll()

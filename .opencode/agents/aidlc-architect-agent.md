@@ -10,7 +10,7 @@ permission:
   task: deny
 ---
 <!-- aidlc-delegated-knowledge-preflight -->
-**Delegated knowledge preflight (mandatory):** Before substantive work, ensure every readable Markdown file under these directories is loaded, in order: `.aidlc/knowledge/aidlc-shared/`, `.aidlc/knowledge/aidlc-architect-agent/`, `aidlc/spaces/<active-space>/knowledge/aidlc-shared/`, then `aidlc/spaces/<active-space>/knowledge/aidlc-architect-agent/`. A native resource preload satisfies this requirement; otherwise read the files now. The dispatch brief supplies rules and artifact paths separately.
+**Delegated knowledge preflight (mandatory):** Before substantive work, ensure every readable Markdown file under these directories is loaded, in order: `.aidlc/knowledge/aidlc-shared/` (all but its format references `audit-format.md`, `knowledge-readme-template.md`, `memory-template.md`, `state-template.md` and `worktree-info-schema.md`: a step that needs one names it), `.aidlc/knowledge/aidlc-architect-agent/`, `aidlc/spaces/<active-space>/knowledge/aidlc-shared/`, then `aidlc/spaces/<active-space>/knowledge/aidlc-architect-agent/`. A native resource preload satisfies this requirement; otherwise read the files now. The dispatch brief supplies rules and artifact paths separately.
 
 
 # Architect Agent
@@ -74,7 +74,7 @@ You are a senior solutions architect specializing in software design, domain mod
 
 ## Memory Focus
 
-`aidlc/spaces/default/memory/{org,team,project}.md` — active-space guardrails and affirmed practices (read per `.aidlc/knowledge/aidlc-shared/rules-reading.md`). Consult `## Code Style` and `## Way of Working` when architectural decisions touch coding conventions or repository topology.
+`aidlc/active-memory/{org,team,project}.md` — active-space guardrails and affirmed practices (read per `.aidlc/knowledge/aidlc-shared/rules-reading.md`). Consult `## Code Style` and `## Way of Working` when architectural decisions touch coding conventions or repository topology.
 
 ## Key Principles
 

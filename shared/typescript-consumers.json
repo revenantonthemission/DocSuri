@@ -2138,6 +2138,15 @@
       ]
     },
     {
+      "file": "frontend/src/u8-shell/capabilities.ts",
+      "module": "../../types/wire/dtos",
+      "symbol": "WorkspaceCapabilityCatalog",
+      "local": "WorkspaceCapabilityCatalog",
+      "generated": [
+        "WorkspaceCapabilityCatalog"
+      ]
+    },
+    {
       "file": "frontend/src/usage-controls.tsx",
       "module": "../types/wire/dtos",
       "symbol": "WorkspaceAccessProfile",
@@ -3107,11 +3116,11 @@
     },
     {
       "file": "frontend/src/account-controls.tsx",
-      "sha256": "0193e327ccb148657311b9b42eeadf0edc72cf8e7403334fa00a2e45e1714b68"
+      "sha256": "9d75b5daa0be1b8a3d762379aca80d4f276a0bea6ea321566c77a4a5277e1cae"
     },
     {
       "file": "frontend/src/App.tsx",
-      "sha256": "6ad42b2964a4d4c241bc447b74e6157cc7919b31775435eebdb8610c1c49e91e"
+      "sha256": "75f594370438cd8e2a8337e478c6ce45e29fb2dc3f29e44ed14064ea106e6418"
     },
     {
       "file": "frontend/src/personal-controls.tsx",
@@ -3119,7 +3128,7 @@
     },
     {
       "file": "frontend/src/u4-research/composer.tsx",
-      "sha256": "2867fb9e6aef37e663d7db1b130168be28dd32ed17f124f7b1aa99b613a1c124"
+      "sha256": "b74cd5082f5033108c0cbab7ff64c7545ac9323fd345a9fe828621db9527e66c"
     },
     {
       "file": "frontend/src/u4-research/drafts.tsx",
@@ -3127,7 +3136,7 @@
     },
     {
       "file": "frontend/src/u4-research/evidence.tsx",
-      "sha256": "9f33a5973bba8cf6f08291c2d8feb5749a147ef04fabdd1122a88e6c579f3dbf"
+      "sha256": "73d30c4859459a19514d8986e1dfe95e6d4ca9db3afe22bac8323d74b4ffcd32"
     },
     {
       "file": "frontend/src/u4-research/export-action.tsx",
@@ -3135,7 +3144,7 @@
     },
     {
       "file": "frontend/src/u4-research/jobs.tsx",
-      "sha256": "573bd403c4358f5f134dee3d1e9a78e2c72638c3b4c598db03b6a75f0d3cf64a"
+      "sha256": "0eee41a5d46e3847839806f2902da6a3a1ad959b8eb9f2c616498d2085afafb8"
     },
     {
       "file": "frontend/src/u4-research/research-workspace.tsx",
@@ -3151,7 +3160,7 @@
     },
     {
       "file": "frontend/src/u6-export/copy.ts",
-      "sha256": "ed23b1444e334aa9182a8ec37fe4d88ba087cfe8559c358398a39015b125940c"
+      "sha256": "521b184ebbd09cc34dca6b37120b16bce9b630edd592cc6920a7e860feaccf5c"
     },
     {
       "file": "frontend/src/u6-export/destination-step.tsx",
@@ -3171,7 +3180,7 @@
     },
     {
       "file": "frontend/src/u6-export/history.tsx",
-      "sha256": "fb840a24abb8c43ea46ceaa0caa0e721fd36481a8465c7bfd9e1d403ae64ee36"
+      "sha256": "374bd6b5445d98d27b44bfcdd62c139d570ae9dff20e48c890d4ec1261771a28"
     },
     {
       "file": "frontend/src/u6-export/outcome-step.tsx",
@@ -3180,6 +3189,10 @@
     {
       "file": "frontend/src/u6-export/preview-step.tsx",
       "sha256": "9171c7a1bf26cadaf4be0348a72f04c16ad70a5462a3753c49194f940c94d84d"
+    },
+    {
+      "file": "frontend/src/u8-shell/capabilities.ts",
+      "sha256": "a84cf69be54123485afe2230065cef187f7dd3d1f524764fc0463a15c2655010"
     },
     {
       "file": "frontend/src/usage-controls.tsx",

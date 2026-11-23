@@ -73,17 +73,21 @@ def _saved_paper(row: dict, metadata: dict | None) -> dict:
 
 def library_router(transactions, *, entry, activity=None) -> APIRouter:
     origin = transactions.profile.origin
-    controls = transactions.profile.realm == "account-controls"
+    # U2's library control service in U2's realm and, by the row "U2's controls in the
+    # complete app", in the composed and production realms, each under its own policy.
+    controls = transactions.profile.realm in ("account-controls", "service-operations",
+                                              "production")
     policy = POLICY
     if controls:
         from backend.modules.accounts.control_cursor import ControlCursor
-        from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
+        from backend.modules.accounts.control_policy import for_realm
         from backend.modules.library.control_service import ControlLibraryService
 
-        policy = SYNTHETIC_POLICY.reference
+        control_policy = for_realm(transactions.profile.realm)
+        policy = control_policy.reference
         repository = ControlLibraryService(
             transactions,
-            SYNTHETIC_POLICY,
+            control_policy,
             ControlCursor(bytes.fromhex(entry.verifier("cursor", "u2-controls-v1"))),
         )
     else:

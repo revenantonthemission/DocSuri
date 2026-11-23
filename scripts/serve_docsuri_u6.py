@@ -12,15 +12,15 @@ import argparse
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "ops/src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ops/src"))
 
 import uvicorn
-from docsuri_ops.local_transport import inspect_transport
 
 from backend.local_profile import LocalProfile
+from docsuri_ops.local_transport import inspect_transport
 
+ROOT = Path(__file__).resolve().parents[1]
 REALM = "approved-export"
 DATABASE = "docsuri_u6"
 PORT = 18099

@@ -1,9 +1,5 @@
 ---
 name: aidlc-developer-agent
-display_name: Developer Agent
-examples:
-  - db-conventions.md
-  - error-handling.md
 description: >
   Senior developer responsible for code generation, reverse engineering, and data modelling.
   Leads the Reverse Engineering code scan and Code Generation, and serves as a dispatched

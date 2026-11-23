@@ -2,6 +2,7 @@ from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 import pytest
 
+from backend.modules.accounts.control_cursor import ControlCursor
 from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
 from backend.modules.plans.control_service import ControlUsageService
 from backend.modules.plans.guarded_repository import UsageQuotaExceeded
@@ -116,3 +117,65 @@ def test_revocation_blocks_new_but_preserves_prior_responsibility(usage, authori
     assert usage.reserve(authority, value)['id'] == original['id']
     with pytest.raises(UsageQuotaExceeded):
         usage.reserve(authority, admission(usage, authority))
+
+
+@pytest.mark.parametrize('allocation,revoked,reason', [(4, False, 'over quota'), (-1, False, 'negative'),
+                                                       (1, 'no', 'flag'), (1, False, '   '),
+                                                       (1, False, 'r' * 257)])
+def test_assignment_outside_the_policy_is_refused(usage, authority, allocation, revoked, reason):
+    with pytest.raises(ValueError, match='finite assignment policy'):
+        usage.assign(authority, authority.account_id, uuid4(), usage.initial_revision(authority.account_id),
+                     allocation=allocation, revoked=revoked, reason=reason)
+    assert usage.assignment(authority, authority.account_id)['entitlement'] is None
+
+
+def test_assignment_to_an_unknown_account_is_refused(usage, authority):
+    target = uuid4()
+    with pytest.raises(PermissionError, match='assignment target unavailable'):
+        usage.assign(authority, target, uuid4(), usage.initial_revision(target),
+                     allocation=1, revoked=False, reason='unknown target')
+
+
+def test_assignment_operation_cannot_be_reused_for_another_allocation(usage, authority):
+    operation = uuid4()
+    args = (authority, authority.account_id, operation, usage.initial_revision(authority.account_id))
+    usage.assign(*args, allocation=3, revoked=False, reason='first')
+    with pytest.raises(ValueError, match='assignment operation conflict'):
+        usage.assign(*args, allocation=1, revoked=False, reason='first')
+    assert usage.assignment(authority, authority.account_id)['entitlement']['allocation'] == 3
+
+
+def test_usage_record_pages_are_bounded(usage, authority):
+    for limit in (0, 51, '1'):
+        with pytest.raises(ValueError, match='finite ledger page'):
+            usage.records(authority, {'limit': limit}, ControlCursor(b'u' * 32))
+
+
+def test_reservation_without_a_grant_is_refused(usage, authority, connect):
+    with pytest.raises(UsageQuotaExceeded, match='no allocated entitlement'):
+        usage.reserve(authority, admission(usage, authority))
+    with connect('usage') as conn:
+        assert conn.execute("SELECT count(*) AS n FROM usage.reservation WHERE account_id=%s",
+                            (authority.account_id,)).fetchone()['n'] == 0
+
+
+def test_reservation_identity_cannot_change_on_replay(usage, authority):
+    grant(usage, authority)
+    value = admission(usage, authority)
+    usage.reserve(authority, value)
+    with pytest.raises(ValueError, match='reservation identity conflict'):
+        usage.reserve(authority, dict(value, intent_hash='d' * 64))
+    assert usage.repository.inspect_assignment(authority)['counts'] == {'reserved': 1}
+
+
+def test_reservation_after_the_owner_rejected_the_operation_is_refused(usage, authority, connect):
+    grant(usage, authority)
+    value = admission(usage, authority)
+    with connect('usage') as conn:
+        conn.execute("INSERT INTO usage.rejected_operation(operation_id,account_id,intent_hash,proof_hash) "
+                     "VALUES(%s,%s,%s,%s)", (value['operation_id'], authority.account_id, 'c' * 64, 'e' * 64))
+    with pytest.raises(ValueError, match='accepting owner closed admission'):
+        usage.reserve(authority, value)
+    with connect('usage') as conn:
+        assert conn.execute("SELECT count(*) AS n FROM usage.reservation WHERE account_id=%s",
+                            (authority.account_id,)).fetchone()['n'] == 0

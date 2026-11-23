@@ -1,0 +1,1839 @@
+cluster|database|docsuri_u8_platform|docsuri_u8_platform_operator|CONNECT
+cluster|database|docsuri_u8_platform|docsuri_u8_platform_reader|CONNECT
+cluster|database|docsuri_u8_platform|docsuri_u8_platform_scheduler|CONNECT
+cluster|database|docsuri_u8_platform|platform_control_owner|CONNECT
+cluster|database|docsuri_u8_platform|platform_control_provisioner|CONNECT
+cluster|database|docsuri_u8_platform|platform_control_runtime|CONNECT
+cluster|database|docsuri_u8|docsuri_accounts|CONNECT
+cluster|database|docsuri_u8|docsuri_assistance|CONNECT
+cluster|database|docsuri_u8|docsuri_backup_agent|CONNECT
+cluster|database|docsuri_u8|docsuri_corpus|CONNECT
+cluster|database|docsuri_u8|docsuri_discovery|CONNECT
+cluster|database|docsuri_u8|docsuri_export|CONNECT
+cluster|database|docsuri_u8|docsuri_library|CONNECT
+cluster|database|docsuri_u8|docsuri_operations_owner|CONNECT
+cluster|database|docsuri_u8|docsuri_operations|CONNECT
+cluster|database|docsuri_u8|docsuri_operator|CONNECT
+cluster|database|docsuri_u8|docsuri_personalization|CONNECT
+cluster|database|docsuri_u8|docsuri_research|CONNECT
+cluster|database|docsuri_u8|docsuri_restore|CONNECT
+cluster|database|docsuri_u8|docsuri_topics|CONNECT
+cluster|database|docsuri_u8|docsuri_usage|CONNECT
+cluster|membership|docsuri_accounts_owner|docsuri_restore|admin=f,inherit=t,set=t
+cluster|membership|docsuri_assistance_owner|docsuri_restore|admin=f,inherit=t,set=t
+cluster|membership|docsuri_corpus_owner|docsuri_restore|admin=f,inherit=t,set=t
+cluster|membership|docsuri_discovery_owner|docsuri_restore|admin=f,inherit=t,set=t
+cluster|membership|docsuri_disposable|docsuri_backup_agent|admin=f,inherit=f,set=t
+cluster|membership|docsuri_disposable|docsuri_scheduler|admin=f,inherit=t,set=f
+cluster|membership|docsuri_export_owner|docsuri_restore|admin=f,inherit=t,set=t
+cluster|membership|docsuri_library_owner|docsuri_restore|admin=f,inherit=t,set=t
+cluster|membership|docsuri_operations_owner|docsuri_restore|admin=f,inherit=t,set=t
+cluster|membership|docsuri_personalization_owner|docsuri_restore|admin=f,inherit=t,set=t
+cluster|membership|docsuri_research_owner|docsuri_restore|admin=f,inherit=t,set=t
+cluster|membership|docsuri_topics_owner|docsuri_restore|admin=f,inherit=t,set=t
+cluster|membership|docsuri_usage_owner|docsuri_restore|admin=f,inherit=t,set=t
+cluster|membership|pg_monitor|docsuri_operations|admin=f,inherit=f,set=t
+cluster|membership|pg_read_all_data|docsuri_backup_agent|admin=f,inherit=t,set=f
+cluster|membership|platform_control_runtime|docsuri_u8_platform_operator|admin=f,inherit=t,set=f
+cluster|membership|platform_control_runtime|docsuri_u8_platform_scheduler|admin=f,inherit=t,set=f
+cluster|membership|platform_control_u8_reader|docsuri_u8_platform_reader|admin=f,inherit=t,set=f
+cluster|role|docsuri_accounts_owner|docsuri_accounts_owner|super=f,inherit=f,createrole=f,createdb=f,canlogin=f,replication=f,bypassrls=f
+cluster|role|docsuri_accounts|docsuri_accounts|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_assistance_owner|docsuri_assistance_owner|super=f,inherit=f,createrole=f,createdb=f,canlogin=f,replication=f,bypassrls=f
+cluster|role|docsuri_assistance|docsuri_assistance|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_backup_agent|docsuri_backup_agent|super=f,inherit=t,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_corpus_owner|docsuri_corpus_owner|super=f,inherit=f,createrole=f,createdb=f,canlogin=f,replication=f,bypassrls=f
+cluster|role|docsuri_corpus|docsuri_corpus|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_discovery_owner|docsuri_discovery_owner|super=f,inherit=f,createrole=f,createdb=f,canlogin=f,replication=f,bypassrls=f
+cluster|role|docsuri_discovery|docsuri_discovery|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_disposable|docsuri_disposable|super=f,inherit=f,createrole=f,createdb=t,canlogin=f,replication=f,bypassrls=f
+cluster|role|docsuri_export_owner|docsuri_export_owner|super=f,inherit=f,createrole=f,createdb=f,canlogin=f,replication=f,bypassrls=f
+cluster|role|docsuri_export|docsuri_export|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_library_owner|docsuri_library_owner|super=f,inherit=f,createrole=f,createdb=f,canlogin=f,replication=f,bypassrls=f
+cluster|role|docsuri_library|docsuri_library|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_operations_owner|docsuri_operations_owner|super=f,inherit=f,createrole=f,createdb=f,canlogin=f,replication=f,bypassrls=f
+cluster|role|docsuri_operations|docsuri_operations|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_operator|docsuri_operator|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_personalization_owner|docsuri_personalization_owner|super=f,inherit=f,createrole=f,createdb=f,canlogin=f,replication=f,bypassrls=f
+cluster|role|docsuri_personalization|docsuri_personalization|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_research_owner|docsuri_research_owner|super=f,inherit=f,createrole=f,createdb=f,canlogin=f,replication=f,bypassrls=f
+cluster|role|docsuri_research|docsuri_research|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_restore|docsuri_restore|super=f,inherit=t,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_scheduler|docsuri_scheduler|super=f,inherit=t,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_topics_owner|docsuri_topics_owner|super=f,inherit=f,createrole=f,createdb=f,canlogin=f,replication=f,bypassrls=f
+cluster|role|docsuri_topics|docsuri_topics|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_u8_platform_operator|docsuri_u8_platform_operator|super=f,inherit=t,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_u8_platform_reader|docsuri_u8_platform_reader|super=f,inherit=t,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_u8_platform_scheduler|docsuri_u8_platform_scheduler|super=f,inherit=t,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|docsuri_usage_owner|docsuri_usage_owner|super=f,inherit=f,createrole=f,createdb=f,canlogin=f,replication=f,bypassrls=f
+cluster|role|docsuri_usage|docsuri_usage|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|platform_control_owner|platform_control_owner|super=f,inherit=f,createrole=f,createdb=f,canlogin=f,replication=f,bypassrls=f
+cluster|role|platform_control_provisioner|platform_control_provisioner|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|platform_control_runtime|platform_control_runtime|super=f,inherit=f,createrole=f,createdb=f,canlogin=t,replication=f,bypassrls=f
+cluster|role|platform_control_u8_reader|platform_control_u8_reader|super=f,inherit=f,createrole=f,createdb=f,canlogin=f,replication=f,bypassrls=f
+docsuri_u8_platform|function|platform_control._promote(p_operation uuid, p_reason text)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control._receipt_json(p_receipt platform_control.receipt, p_operation platform_control.operation)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.begin_operation(p_actor text, p_authority uuid, p_operation text, p_target text, p_input_hash text, p_environment text, p_evidence uuid, p_generation bigint, p_idempotency text, p_effect_reference text)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.guard_authority(p_actor text, p_authority uuid, p_class text, p_operation text, p_target text, p_execute boolean)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.latest_evidence(p_actor text, p_authority uuid, p_target text)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.list_unresolved(p_actor text, p_authority uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.mark_executing(p_operation uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.promote_in_flight()|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.provision_authority(p_authority uuid, p_actor text, p_scope jsonb, p_operations jsonb, p_class text, p_binding jsonb)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.provision_authority(p_authority uuid, p_actor text, p_scope jsonb, p_operations jsonb, p_class text, p_binding jsonb)|platform_control_provisioner|EXECUTE
+docsuri_u8_platform|function|platform_control.provision_target(p_target text)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.provision_target(p_target text)|platform_control_provisioner|EXECUTE
+docsuri_u8_platform|function|platform_control.read_authority(p_authority uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.read_authority(p_authority uuid)|platform_control_provisioner|EXECUTE
+docsuri_u8_platform|function|platform_control.read_receipt(p_actor text, p_authority uuid, p_operation uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.read_receipt_named(p_actor text, p_authority uuid, p_operation uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.reader_scope(p_actor text, p_authority uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.reconcile_receipt(p_operation uuid, p_applied boolean, p_evidence jsonb)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.record_evidence(p_target text, p_input_hash text, p_environment text, p_observations jsonb, p_max_age integer)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.revoke_authority(p_authority uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.revoke_authority(p_authority uuid)|platform_control_provisioner|EXECUTE
+docsuri_u8_platform|function|platform_control.settle_operation(p_operation uuid, p_outcome text, p_disposition text, p_effect_refs jsonb)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.status_counts(p_actor text, p_authority uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.supervisor_summary()|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.supervisor_summary()|platform_control_provisioner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_begin_operation(p_actor text, p_authority uuid, p_operation text, p_target text, p_input_hash text, p_environment text, p_evidence uuid, p_generation bigint, p_idempotency text, p_effect_reference text)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_begin_operation(p_actor text, p_authority uuid, p_operation text, p_target text, p_input_hash text, p_environment text, p_evidence uuid, p_generation bigint, p_idempotency text, p_effect_reference text)|platform_control_runtime|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_bind_login(p_login text, p_actor text, p_kind text)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_bind_login(p_login text, p_actor text, p_kind text)|platform_control_provisioner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_calling_actor(p_acting boolean)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_latest_evidence(p_actor text, p_authority uuid, p_target text)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_latest_evidence(p_actor text, p_authority uuid, p_target text)|platform_control_runtime|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_latest_evidence(p_actor text, p_authority uuid, p_target text)|platform_control_u8_reader|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_list_unresolved(p_actor text, p_authority uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_list_unresolved(p_actor text, p_authority uuid)|platform_control_runtime|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_list_unresolved(p_actor text, p_authority uuid)|platform_control_u8_reader|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_login_bindings(p_logins text[])|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_login_bindings(p_logins text[])|platform_control_provisioner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_mark_executing(p_operation uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_mark_executing(p_operation uuid)|platform_control_runtime|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_open_operations(p_actor text, p_authority uuid, p_operations text[])|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_open_operations(p_actor text, p_authority uuid, p_operations text[])|platform_control_runtime|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_open_operations(p_actor text, p_authority uuid, p_operations text[])|platform_control_u8_reader|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_promote_in_flight()|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_promote_in_flight()|platform_control_runtime|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_read_receipt(p_actor text, p_authority uuid, p_operation uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_read_receipt(p_actor text, p_authority uuid, p_operation uuid)|platform_control_runtime|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_read_receipt(p_actor text, p_authority uuid, p_operation uuid)|platform_control_u8_reader|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_read_receipt_named(p_actor text, p_authority uuid, p_operation uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_read_receipt_named(p_actor text, p_authority uuid, p_operation uuid)|platform_control_runtime|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_read_receipt_named(p_actor text, p_authority uuid, p_operation uuid)|platform_control_u8_reader|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_reconcile_receipt(p_operation uuid, p_applied boolean, p_evidence jsonb)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_reconcile_receipt(p_operation uuid, p_applied boolean, p_evidence jsonb)|platform_control_runtime|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_record_evidence(p_target text, p_input_hash text, p_environment text, p_observations jsonb, p_max_age integer)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_record_evidence(p_target text, p_input_hash text, p_environment text, p_observations jsonb, p_max_age integer)|platform_control_runtime|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_require_actor(p_actor text, p_acting boolean)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_require_own_operation(p_operation uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_settle_operation(p_operation uuid, p_outcome text, p_disposition text, p_effect_refs jsonb)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_settle_operation(p_operation uuid, p_outcome text, p_disposition text, p_effect_refs jsonb)|platform_control_runtime|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_status_counts(p_actor text, p_authority uuid)|platform_control_owner|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_status_counts(p_actor text, p_authority uuid)|platform_control_runtime|EXECUTE
+docsuri_u8_platform|function|platform_control.u8_status_counts(p_actor text, p_authority uuid)|platform_control_u8_reader|EXECUTE
+docsuri_u8_platform|schema|platform_control|platform_control_owner|CREATE
+docsuri_u8_platform|schema|platform_control|platform_control_owner|USAGE
+docsuri_u8_platform|schema|platform_control|platform_control_provisioner|USAGE
+docsuri_u8_platform|schema|platform_control|platform_control_runtime|USAGE
+docsuri_u8_platform|schema|platform_control|platform_control_u8_reader|USAGE
+docsuri_u8_platform|table|platform_control.authority|platform_control_owner|DELETE
+docsuri_u8_platform|table|platform_control.authority|platform_control_owner|INSERT
+docsuri_u8_platform|table|platform_control.authority|platform_control_owner|REFERENCES
+docsuri_u8_platform|table|platform_control.authority|platform_control_owner|SELECT
+docsuri_u8_platform|table|platform_control.authority|platform_control_owner|TRIGGER
+docsuri_u8_platform|table|platform_control.authority|platform_control_owner|TRUNCATE
+docsuri_u8_platform|table|platform_control.authority|platform_control_owner|UPDATE
+docsuri_u8_platform|table|platform_control.evidence|platform_control_owner|DELETE
+docsuri_u8_platform|table|platform_control.evidence|platform_control_owner|INSERT
+docsuri_u8_platform|table|platform_control.evidence|platform_control_owner|REFERENCES
+docsuri_u8_platform|table|platform_control.evidence|platform_control_owner|SELECT
+docsuri_u8_platform|table|platform_control.evidence|platform_control_owner|TRIGGER
+docsuri_u8_platform|table|platform_control.evidence|platform_control_owner|TRUNCATE
+docsuri_u8_platform|table|platform_control.evidence|platform_control_owner|UPDATE
+docsuri_u8_platform|table|platform_control.operation|platform_control_owner|DELETE
+docsuri_u8_platform|table|platform_control.operation|platform_control_owner|INSERT
+docsuri_u8_platform|table|platform_control.operation|platform_control_owner|REFERENCES
+docsuri_u8_platform|table|platform_control.operation|platform_control_owner|SELECT
+docsuri_u8_platform|table|platform_control.operation|platform_control_owner|TRIGGER
+docsuri_u8_platform|table|platform_control.operation|platform_control_owner|TRUNCATE
+docsuri_u8_platform|table|platform_control.operation|platform_control_owner|UPDATE
+docsuri_u8_platform|table|platform_control.protocol|platform_control_owner|DELETE
+docsuri_u8_platform|table|platform_control.protocol|platform_control_owner|INSERT
+docsuri_u8_platform|table|platform_control.protocol|platform_control_owner|REFERENCES
+docsuri_u8_platform|table|platform_control.protocol|platform_control_owner|SELECT
+docsuri_u8_platform|table|platform_control.protocol|platform_control_owner|TRIGGER
+docsuri_u8_platform|table|platform_control.protocol|platform_control_owner|TRUNCATE
+docsuri_u8_platform|table|platform_control.protocol|platform_control_owner|UPDATE
+docsuri_u8_platform|table|platform_control.receipt|platform_control_owner|DELETE
+docsuri_u8_platform|table|platform_control.receipt|platform_control_owner|INSERT
+docsuri_u8_platform|table|platform_control.receipt|platform_control_owner|REFERENCES
+docsuri_u8_platform|table|platform_control.receipt|platform_control_owner|SELECT
+docsuri_u8_platform|table|platform_control.receipt|platform_control_owner|TRIGGER
+docsuri_u8_platform|table|platform_control.receipt|platform_control_owner|TRUNCATE
+docsuri_u8_platform|table|platform_control.receipt|platform_control_owner|UPDATE
+docsuri_u8_platform|table|platform_control.target_lease|platform_control_owner|DELETE
+docsuri_u8_platform|table|platform_control.target_lease|platform_control_owner|INSERT
+docsuri_u8_platform|table|platform_control.target_lease|platform_control_owner|REFERENCES
+docsuri_u8_platform|table|platform_control.target_lease|platform_control_owner|SELECT
+docsuri_u8_platform|table|platform_control.target_lease|platform_control_owner|TRIGGER
+docsuri_u8_platform|table|platform_control.target_lease|platform_control_owner|TRUNCATE
+docsuri_u8_platform|table|platform_control.target_lease|platform_control_owner|UPDATE
+docsuri_u8_platform|table|platform_control.target|platform_control_owner|DELETE
+docsuri_u8_platform|table|platform_control.target|platform_control_owner|INSERT
+docsuri_u8_platform|table|platform_control.target|platform_control_owner|REFERENCES
+docsuri_u8_platform|table|platform_control.target|platform_control_owner|SELECT
+docsuri_u8_platform|table|platform_control.target|platform_control_owner|TRIGGER
+docsuri_u8_platform|table|platform_control.target|platform_control_owner|TRUNCATE
+docsuri_u8_platform|table|platform_control.target|platform_control_owner|UPDATE
+docsuri_u8_platform|table|platform_control.u8_login_actor|platform_control_owner|DELETE
+docsuri_u8_platform|table|platform_control.u8_login_actor|platform_control_owner|INSERT
+docsuri_u8_platform|table|platform_control.u8_login_actor|platform_control_owner|REFERENCES
+docsuri_u8_platform|table|platform_control.u8_login_actor|platform_control_owner|SELECT
+docsuri_u8_platform|table|platform_control.u8_login_actor|platform_control_owner|TRIGGER
+docsuri_u8_platform|table|platform_control.u8_login_actor|platform_control_owner|TRUNCATE
+docsuri_u8_platform|table|platform_control.u8_login_actor|platform_control_owner|UPDATE
+docsuri_u8|column|export.connection.account_id|docsuri_export|INSERT
+docsuri_u8|column|export.connection.account_id|docsuri_export|SELECT
+docsuri_u8|column|export.connection.account_id|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.connection_user_id|docsuri_export|INSERT
+docsuri_u8|column|export.connection.connection_user_id|docsuri_export|SELECT
+docsuri_u8|column|export.connection.connection_user_id|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.created_at|docsuri_export|INSERT
+docsuri_u8|column|export.connection.created_at|docsuri_export|SELECT
+docsuri_u8|column|export.connection.created_at|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.creation_capability|docsuri_export|INSERT
+docsuri_u8|column|export.connection.creation_capability|docsuri_export|SELECT
+docsuri_u8|column|export.connection.creation_capability|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.id|docsuri_export|INSERT
+docsuri_u8|column|export.connection.id|docsuri_export|SELECT
+docsuri_u8|column|export.connection.id|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.last_destination_id|docsuri_export|INSERT
+docsuri_u8|column|export.connection.last_destination_id|docsuri_export|SELECT
+docsuri_u8|column|export.connection.last_destination_id|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.limitations|docsuri_export|INSERT
+docsuri_u8|column|export.connection.limitations|docsuri_export|SELECT
+docsuri_u8|column|export.connection.limitations|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.pending_holder|docsuri_export|INSERT
+docsuri_u8|column|export.connection.pending_holder|docsuri_export|SELECT
+docsuri_u8|column|export.connection.pending_holder|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.pending_started_at|docsuri_export|INSERT
+docsuri_u8|column|export.connection.pending_started_at|docsuri_export|SELECT
+docsuri_u8|column|export.connection.pending_started_at|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.provider|docsuri_export|INSERT
+docsuri_u8|column|export.connection.provider|docsuri_export|SELECT
+docsuri_u8|column|export.connection.provider|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.revision|docsuri_export|INSERT
+docsuri_u8|column|export.connection.revision|docsuri_export|SELECT
+docsuri_u8|column|export.connection.revision|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.state|docsuri_export|INSERT
+docsuri_u8|column|export.connection.state|docsuri_export|SELECT
+docsuri_u8|column|export.connection.state|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.updated_at|docsuri_export|INSERT
+docsuri_u8|column|export.connection.updated_at|docsuri_export|SELECT
+docsuri_u8|column|export.connection.updated_at|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.validated_at|docsuri_export|INSERT
+docsuri_u8|column|export.connection.validated_at|docsuri_export|SELECT
+docsuri_u8|column|export.connection.validated_at|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.workspace_id|docsuri_export|INSERT
+docsuri_u8|column|export.connection.workspace_id|docsuri_export|SELECT
+docsuri_u8|column|export.connection.workspace_id|docsuri_export|UPDATE
+docsuri_u8|column|export.connection.workspace_name|docsuri_export|INSERT
+docsuri_u8|column|export.connection.workspace_name|docsuri_export|SELECT
+docsuri_u8|column|export.connection.workspace_name|docsuri_export|UPDATE
+docsuri_u8|column|library.saved_paper.disposition_position|docsuri_library|UPDATE
+docsuri_u8|column|library.saved_paper.disposition_revision|docsuri_library|UPDATE
+docsuri_u8|column|library.saved_paper.disposition|docsuri_library|UPDATE
+docsuri_u8|function|accounts.assignment_target_available(p_account uuid)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.assignment_target_available(p_account uuid)|docsuri_usage|EXECUTE
+docsuri_u8|function|accounts.assistance_effect_authority(p_account uuid)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.assistance_effect_authority(p_account uuid)|docsuri_assistance|EXECUTE
+docsuri_u8|function|accounts.consume_reset_confirmation(p_id uuid, p_account uuid, p_session uuid, p_action text, p_revision uuid, p_policy jsonb, p_operation uuid)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.consume_reset_confirmation(p_id uuid, p_account uuid, p_session uuid, p_action text, p_revision uuid, p_policy jsonb, p_operation uuid)|docsuri_personalization|EXECUTE
+docsuri_u8|function|accounts.digest_recipient(p_account uuid)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.digest_recipient(p_account uuid)|docsuri_topics|EXECUTE
+docsuri_u8|function|accounts.erase_private_controls(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.erase_private_controls(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_accounts|EXECUTE
+docsuri_u8|function|accounts.execution_allowed(p_account uuid, p_revision uuid)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.execution_allowed(p_account uuid, p_revision uuid)|docsuri_assistance|EXECUTE
+docsuri_u8|function|accounts.expire_identity_flows(p_limit integer)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.expire_identity_flows(p_limit integer)|docsuri_accounts|EXECUTE
+docsuri_u8|function|accounts.guard_execution(p_account uuid, p_revision uuid)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.guard_execution(p_account uuid, p_revision uuid)|docsuri_accounts|EXECUTE
+docsuri_u8|function|accounts.guard_execution(p_account uuid, p_revision uuid)|docsuri_assistance|EXECUTE
+docsuri_u8|function|accounts.guard_lifecycle_effect(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.guard_lifecycle_effect(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_accounts|EXECUTE
+docsuri_u8|function|accounts.guard_lifecycle_effect(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_assistance|EXECUTE
+docsuri_u8|function|accounts.guard_lifecycle_effect(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_discovery|EXECUTE
+docsuri_u8|function|accounts.guard_lifecycle_effect(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_export|EXECUTE
+docsuri_u8|function|accounts.guard_lifecycle_effect(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_library|EXECUTE
+docsuri_u8|function|accounts.guard_lifecycle_effect(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_operations|EXECUTE
+docsuri_u8|function|accounts.guard_lifecycle_effect(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_personalization|EXECUTE
+docsuri_u8|function|accounts.guard_lifecycle_effect(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_research|EXECUTE
+docsuri_u8|function|accounts.guard_lifecycle_effect(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_topics|EXECUTE
+docsuri_u8|function|accounts.guard_lifecycle_effect(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_usage|EXECUTE
+docsuri_u8|function|accounts.guard_session(p_account uuid, p_session uuid, p_purpose text)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.guard_session(p_account uuid, p_session uuid, p_purpose text)|docsuri_accounts|EXECUTE
+docsuri_u8|function|accounts.guard_session(p_account uuid, p_session uuid, p_purpose text)|docsuri_assistance|EXECUTE
+docsuri_u8|function|accounts.guard_session(p_account uuid, p_session uuid, p_purpose text)|docsuri_corpus|EXECUTE
+docsuri_u8|function|accounts.guard_session(p_account uuid, p_session uuid, p_purpose text)|docsuri_discovery_owner|EXECUTE
+docsuri_u8|function|accounts.guard_session(p_account uuid, p_session uuid, p_purpose text)|docsuri_discovery|EXECUTE
+docsuri_u8|function|accounts.guard_session(p_account uuid, p_session uuid, p_purpose text)|docsuri_export|EXECUTE
+docsuri_u8|function|accounts.guard_session(p_account uuid, p_session uuid, p_purpose text)|docsuri_library|EXECUTE
+docsuri_u8|function|accounts.guard_session(p_account uuid, p_session uuid, p_purpose text)|docsuri_personalization|EXECUTE
+docsuri_u8|function|accounts.guard_session(p_account uuid, p_session uuid, p_purpose text)|docsuri_research|EXECUTE
+docsuri_u8|function|accounts.guard_session(p_account uuid, p_session uuid, p_purpose text)|docsuri_topics|EXECUTE
+docsuri_u8|function|accounts.guard_session(p_account uuid, p_session uuid, p_purpose text)|docsuri_usage|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_accounts|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_assistance|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_discovery_owner|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_discovery|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_export_owner|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_export|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_library_owner|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_library|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_operations|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_personalization_owner|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_personalization|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_research_owner|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_research|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_topics|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_usage_owner|EXECUTE
+docsuri_u8|function|accounts.lifecycle_effect_action(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_usage|EXECUTE
+docsuri_u8|function|accounts.lifecycle_scope_complete(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text, p_required text)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.lifecycle_scope_complete(p_request uuid, p_account uuid, p_participant text, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text, p_required text)|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|accounts.personalization_consent_revision(p_account uuid, p_session uuid)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.personalization_consent_revision(p_account uuid, p_session uuid)|docsuri_personalization|EXECUTE
+docsuri_u8|function|accounts.personalization_consent_status(p_account uuid, p_session uuid)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.personalization_consent_status(p_account uuid, p_session uuid)|docsuri_personalization|EXECUTE
+docsuri_u8|function|accounts.personalization_effect_authority(p_account uuid)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.personalization_effect_authority(p_account uuid)|docsuri_personalization|EXECUTE
+docsuri_u8|function|accounts.reconcile_restore(c jsonb, f jsonb, d text)|docsuri_accounts_owner|EXECUTE
+docsuri_u8|function|accounts.reconcile_restore(c jsonb, f jsonb, d text)|docsuri_accounts|EXECUTE
+docsuri_u8|function|assistance.acquire_claim(p_job uuid, p_worker uuid)|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|assistance.acquire_claim(p_job uuid, p_worker uuid)|docsuri_assistance|EXECUTE
+docsuri_u8|function|assistance.append_event()|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|assistance.bound_execution_deadline()|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|assistance.erase_private_controls(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|assistance.erase_private_controls(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_assistance|EXECUTE
+docsuri_u8|function|assistance.guard_claim(p_job uuid, p_worker uuid, p_lease uuid, p_fence bigint)|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|assistance.guard_claim(p_job uuid, p_worker uuid, p_lease uuid, p_fence bigint)|docsuri_assistance|EXECUTE
+docsuri_u8|function|assistance.job_touch()|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|assistance.job_touch()|docsuri_assistance|EXECUTE
+docsuri_u8|function|assistance.preserve_admission_binding()|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|assistance.preserve_job_binding()|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|assistance.preserve_job_binding()|docsuri_assistance|EXECUTE
+docsuri_u8|function|assistance.preserve_result_binding()|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|assistance.progress_bound()|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|assistance.progress_bound()|docsuri_assistance|EXECUTE
+docsuri_u8|function|assistance.read_glossary(p_account uuid)|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|assistance.read_glossary(p_account uuid)|docsuri_assistance|EXECUTE
+docsuri_u8|function|assistance.reconcile_restore(c jsonb, f jsonb, d text)|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|assistance.reconcile_restore(c jsonb, f jsonb, d text)|docsuri_assistance|EXECUTE
+docsuri_u8|function|assistance.renew_claim(p_job uuid, p_worker uuid, p_lease uuid, p_fence bigint, p_revision uuid)|docsuri_assistance_owner|EXECUTE
+docsuri_u8|function|assistance.renew_claim(p_job uuid, p_worker uuid, p_lease uuid, p_fence bigint, p_revision uuid)|docsuri_assistance|EXECUTE
+docsuri_u8|function|corpus.current_eligibility(p_version text)|docsuri_assistance|EXECUTE
+docsuri_u8|function|corpus.current_eligibility(p_version text)|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.current_eligibility(p_version text)|docsuri_corpus|EXECUTE
+docsuri_u8|function|corpus.current_eligibility(p_version text)|docsuri_discovery|EXECUTE
+docsuri_u8|function|corpus.current_eligibility(p_version text)|docsuri_library|EXECUTE
+docsuri_u8|function|corpus.execution_eligibility(p_version text)|docsuri_assistance|EXECUTE
+docsuri_u8|function|corpus.execution_eligibility(p_version text)|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.guard_generation_state()|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.guard_generation_state()|docsuri_corpus|EXECUTE
+docsuri_u8|function|corpus.guard_paper_reference(p_paper text, p_version text)|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.guard_paper_reference(p_paper text, p_version text)|docsuri_library|EXECUTE
+docsuri_u8|function|corpus.guard_publication()|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.guard_publication()|docsuri_discovery|EXECUTE
+docsuri_u8|function|corpus.guard_run_state()|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.guard_run_state()|docsuri_corpus|EXECUTE
+docsuri_u8|function|corpus.guard_version(p_version text, p_purpose text)|docsuri_assistance|EXECUTE
+docsuri_u8|function|corpus.guard_version(p_version text, p_purpose text)|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.guard_version(p_version text, p_purpose text)|docsuri_corpus|EXECUTE
+docsuri_u8|function|corpus.guard_version(p_version text, p_purpose text)|docsuri_discovery|EXECUTE
+docsuri_u8|function|corpus.guard_version(p_version text, p_purpose text)|docsuri_library|EXECUTE
+docsuri_u8|function|corpus.guard_version(p_version text, p_purpose text)|docsuri_research|EXECUTE
+docsuri_u8|function|corpus.guard_version(p_version text, p_purpose text)|docsuri_topics|EXECUTE
+docsuri_u8|function|corpus.personalization_source(p_paper text, p_version text)|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.personalization_source(p_paper text, p_version text)|docsuri_personalization|EXECUTE
+docsuri_u8|function|corpus.preserve_change_fact()|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.preserve_change_fact()|docsuri_corpus|EXECUTE
+docsuri_u8|function|corpus.preserve_version_binding()|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.projection_embedding_vector()|PUBLIC|EXECUTE
+docsuri_u8|function|corpus.projection_embedding_vector()|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.projection_embedding_vector()|docsuri_corpus|EXECUTE
+docsuri_u8|function|corpus.projection_lexical_all()|PUBLIC|EXECUTE
+docsuri_u8|function|corpus.projection_lexical_all()|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.projection_lexical_all()|docsuri_corpus|EXECUTE
+docsuri_u8|function|corpus.read_change_facts(p_after bigint, p_limit integer)|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.read_change_facts(p_after bigint, p_limit integer)|docsuri_corpus|EXECUTE
+docsuri_u8|function|corpus.read_change_facts(p_after bigint, p_limit integer)|docsuri_library|EXECUTE
+docsuri_u8|function|corpus.reference_availability(p_version text)|docsuri_assistance|EXECUTE
+docsuri_u8|function|corpus.reference_availability(p_version text)|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.reference_availability(p_version text)|docsuri_library|EXECUTE
+docsuri_u8|function|corpus.reference_metadata(p_version text)|docsuri_assistance|EXECUTE
+docsuri_u8|function|corpus.reference_metadata(p_version text)|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.reference_metadata(p_version text)|docsuri_library|EXECUTE
+docsuri_u8|function|corpus.refresh_lexical_all(p_versions text[])|docsuri_corpus_owner|EXECUTE
+docsuri_u8|function|corpus.refresh_lexical_all(p_versions text[])|docsuri_corpus|EXECUTE
+docsuri_u8|function|discovery.erase_private_controls(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_discovery_owner|EXECUTE
+docsuri_u8|function|discovery.erase_private_controls(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_discovery|EXECUTE
+docsuri_u8|function|discovery.history_checkpoint(p_account uuid, p_session uuid)|docsuri_discovery_owner|EXECUTE
+docsuri_u8|function|discovery.history_checkpoint(p_account uuid, p_session uuid)|docsuri_discovery|EXECUTE
+docsuri_u8|function|discovery.history_checkpoint(p_account uuid, p_session uuid)|docsuri_library|EXECUTE
+docsuri_u8|function|discovery.history_fact(p_account uuid, p_session uuid, p_execution uuid)|docsuri_discovery_owner|EXECUTE
+docsuri_u8|function|discovery.history_fact(p_account uuid, p_session uuid, p_execution uuid)|docsuri_discovery|EXECUTE
+docsuri_u8|function|discovery.history_fact(p_account uuid, p_session uuid, p_execution uuid)|docsuri_library|EXECUTE
+docsuri_u8|function|discovery.reconcile_restore(c jsonb, f jsonb, d text)|docsuri_discovery_owner|EXECUTE
+docsuri_u8|function|discovery.reconcile_restore(c jsonb, f jsonb, d text)|docsuri_discovery|EXECUTE
+docsuri_u8|function|export.clear_token_envelope(p_account uuid, p_connection uuid, p_expected_revision integer, p_next_state text)|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.clear_token_envelope(p_account uuid, p_connection uuid, p_expected_revision integer, p_next_state text)|docsuri_export|EXECUTE
+docsuri_u8|function|export.connection_owner(p_connection uuid)|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.connection_owner(p_connection uuid)|docsuri_operations|EXECUTE
+docsuri_u8|function|export.erase_account_records(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.erase_account_records(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_export|EXECUTE
+docsuri_u8|function|export.guard_approval_insert()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.guard_approval_update()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.guard_attempt_insert()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.guard_attempt_update()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.guard_connection_insert()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.guard_connection_update()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.guard_effect_insert()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.guard_effect_update()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.guard_pair_insert()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.guard_pair_update()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.guard_revision_insert()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.guard_revision_update()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.lifecycle_release_pending(p_request uuid, p_account uuid, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.lifecycle_release_pending(p_request uuid, p_account uuid, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_export|EXECUTE
+docsuri_u8|function|export.open_token_envelope(p_account uuid, p_connection uuid)|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.open_token_envelope(p_account uuid, p_connection uuid)|docsuri_export|EXECUTE
+docsuri_u8|function|export.purge_unapproved_previews(p_now timestamp with time zone, p_retention_days integer, p_limit integer)|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.purge_unapproved_previews(p_now timestamp with time zone, p_retention_days integer, p_limit integer)|docsuri_export|EXECUTE
+docsuri_u8|function|export.refuse_check_update()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.release_pending(p_account uuid, p_holder uuid)|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.release_pending(p_account uuid, p_holder uuid)|docsuri_export|EXECUTE
+docsuri_u8|function|export.require_executing_attempt()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.reseal_token(p_connection uuid, p_expected_envelope_sha256 text, p_new_envelope bytea, p_new_version text)|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.status_counts(p_now timestamp with time zone)|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.status_counts(p_now timestamp with time zone)|docsuri_export|EXECUTE
+docsuri_u8|function|export.store_token_envelope(p_account uuid, p_connection uuid, p_expected_revision integer, p_holder uuid, p_envelope bytea, p_key_version text, p_workspace_name text, p_workspace_id text, p_connection_user_id text, p_validated_at timestamp with time zone)|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.store_token_envelope(p_account uuid, p_connection uuid, p_expected_revision integer, p_holder uuid, p_envelope bytea, p_key_version text, p_workspace_name text, p_workspace_id text, p_connection_user_id text, p_validated_at timestamp with time zone)|docsuri_export|EXECUTE
+docsuri_u8|function|export.sweep_stale_pending(p_now timestamp with time zone, p_older_than_seconds integer, p_limit integer)|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.sweep_stale_pending(p_now timestamp with time zone, p_older_than_seconds integer, p_limit integer)|docsuri_export|EXECUTE
+docsuri_u8|function|export.token_envelopes_for_reseal(p_version text, p_limit integer)|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.token_key_counts()|docsuri_export_owner|EXECUTE
+docsuri_u8|function|export.token_key_counts()|docsuri_export|EXECUTE
+docsuri_u8|function|library.accept_history_fact(p_account uuid, p_session uuid, p_execution uuid, p_generation bigint, p_completed timestamp with time zone, p_query jsonb)|docsuri_library_owner|EXECUTE
+docsuri_u8|function|library.accept_history_fact(p_account uuid, p_session uuid, p_execution uuid, p_generation bigint, p_completed timestamp with time zone, p_query jsonb)|docsuri_library|EXECUTE
+docsuri_u8|function|library.clear_history(p_account uuid, p_session uuid, p_key uuid, p_expected uuid)|docsuri_library_owner|EXECUTE
+docsuri_u8|function|library.clear_history(p_account uuid, p_session uuid, p_key uuid, p_expected uuid)|docsuri_library|EXECUTE
+docsuri_u8|function|library.erase_private_controls(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_library_owner|EXECUTE
+docsuri_u8|function|library.erase_private_controls(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_library|EXECUTE
+docsuri_u8|function|library.guard_saved_reference()|docsuri_library_owner|EXECUTE
+docsuri_u8|function|library.reconcile_restore(p_context jsonb, p_fragment jsonb, p_digest text)|docsuri_library_owner|EXECUTE
+docsuri_u8|function|library.reconcile_restore(p_context jsonb, p_fragment jsonb, p_digest text)|docsuri_library|EXECUTE
+docsuri_u8|function|library.save_paper(p_account uuid, p_session uuid, p_paper text, p_version text, p_key uuid, p_expected uuid)|docsuri_library_owner|EXECUTE
+docsuri_u8|function|library.save_paper(p_account uuid, p_session uuid, p_paper text, p_version text, p_key uuid, p_expected uuid)|docsuri_library|EXECUTE
+docsuri_u8|function|operations.advance_restore_checkpoint(p_context jsonb)|docsuri_operations_owner|EXECUTE
+docsuri_u8|function|operations.capacity_footprint()|docsuri_operations_owner|EXECUTE
+docsuri_u8|function|operations.capacity_footprint()|docsuri_operations|EXECUTE
+docsuri_u8|function|operations.delete_old_observations(p_now timestamp with time zone, p_limit integer)|docsuri_operations_owner|EXECUTE
+docsuri_u8|function|operations.delete_old_observations(p_now timestamp with time zone, p_limit integer)|docsuri_operations|EXECUTE
+docsuri_u8|function|operations.read_restore_checkpoint()|docsuri_operations_owner|EXECUTE
+docsuri_u8|function|operations.u3_capacity_footprint()|docsuri_operations_owner|EXECUTE
+docsuri_u8|function|operations.u3_capacity_footprint()|docsuri_operations|EXECUTE
+docsuri_u8|function|personalization.digest_preferences(p_account uuid)|docsuri_personalization_owner|EXECUTE
+docsuri_u8|function|personalization.digest_preferences(p_account uuid)|docsuri_topics|EXECUTE
+docsuri_u8|function|personalization.erase_private_controls(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_personalization_owner|EXECUTE
+docsuri_u8|function|personalization.erase_private_controls(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_personalization|EXECUTE
+docsuri_u8|function|personalization.guard_digest_preferences()|docsuri_personalization_owner|EXECUTE
+docsuri_u8|function|personalization.preserve_reset_acceptance()|docsuri_personalization_owner|EXECUTE
+docsuri_u8|function|personalization.reconcile_restore(p_context jsonb, p_fragment jsonb, p_digest text)|docsuri_personalization_owner|EXECUTE
+docsuri_u8|function|personalization.reconcile_restore(p_context jsonb, p_fragment jsonb, p_digest text)|docsuri_personalization|EXECUTE
+docsuri_u8|function|pg_catalog.pg_ls_waldir(OUT name text, OUT size bigint, OUT modification timestamp with time zone)|docsuri_operations_owner|EXECUTE
+docsuri_u8|function|research.artifact_retention()|docsuri_research_owner|EXECUTE
+docsuri_u8|function|research.artifact_retention()|docsuri_research|EXECUTE
+docsuri_u8|function|research.erase_account_records(p_request uuid, p_account uuid, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_research_owner|EXECUTE
+docsuri_u8|function|research.erase_account_records(p_request uuid, p_account uuid, p_scope text, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_research|EXECUTE
+docsuri_u8|function|research.guard_artifact_update()|docsuri_research_owner|EXECUTE
+docsuri_u8|function|research.guard_artifact_update()|docsuri_research|EXECUTE
+docsuri_u8|function|research.guard_draft_update()|docsuri_research_owner|EXECUTE
+docsuri_u8|function|research.guard_draft_update()|docsuri_research|EXECUTE
+docsuri_u8|function|research.guard_job_update()|docsuri_research_owner|EXECUTE
+docsuri_u8|function|research.guard_job_update()|docsuri_research|EXECUTE
+docsuri_u8|function|research.guard_tombstone()|docsuri_research_owner|EXECUTE
+docsuri_u8|function|research.guard_tombstone()|docsuri_research|EXECUTE
+docsuri_u8|function|research.job_touch()|docsuri_research_owner|EXECUTE
+docsuri_u8|function|research.job_touch()|docsuri_research|EXECUTE
+docsuri_u8|function|research.keep_admission_deadline()|docsuri_research_owner|EXECUTE
+docsuri_u8|function|research.keep_admission_deadline()|docsuri_research|EXECUTE
+docsuri_u8|function|topics.erase_private_controls(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|topics.erase_private_controls(p_request uuid, p_account uuid, p_generation bigint, p_policy jsonb, p_manifest text)|docsuri_topics|EXECUTE
+docsuri_u8|function|topics.guard_outcome_insert()|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|topics.guard_outcome_insert()|docsuri_topics|EXECUTE
+docsuri_u8|function|topics.guard_outcome_update()|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|topics.guard_outcome_update()|docsuri_topics|EXECUTE
+docsuri_u8|function|topics.guard_preparation_snapshot()|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|topics.guard_preparation_snapshot()|docsuri_topics|EXECUTE
+docsuri_u8|function|topics.guard_run_insert()|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|topics.guard_run_insert()|docsuri_topics|EXECUTE
+docsuri_u8|function|topics.guard_run_update()|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|topics.guard_run_update()|docsuri_topics|EXECUTE
+docsuri_u8|function|topics.guard_send_log_insert()|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|topics.guard_send_log_insert()|docsuri_topics|EXECUTE
+docsuri_u8|function|topics.guard_send_log_update()|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|topics.guard_send_log_update()|docsuri_topics|EXECUTE
+docsuri_u8|function|topics.guard_settings_update()|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|topics.guard_settings_update()|docsuri_topics|EXECUTE
+docsuri_u8|function|topics.guard_topic_update()|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|topics.guard_topic_update()|docsuri_topics|EXECUTE
+docsuri_u8|function|topics.guard_watermark_insert()|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|topics.guard_watermark_insert()|docsuri_topics|EXECUTE
+docsuri_u8|function|topics.next_occurrence(p_topic uuid, p_now timestamp with time zone)|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|topics.next_occurrence(p_topic uuid, p_now timestamp with time zone)|docsuri_topics|EXECUTE
+docsuri_u8|function|topics.revoke_email_unsubscribe()|PUBLIC|EXECUTE
+docsuri_u8|function|topics.revoke_email_unsubscribe()|docsuri_topics_owner|EXECUTE
+docsuri_u8|function|usage.reconcile_restore(c jsonb, f jsonb, d text)|docsuri_usage_owner|EXECUTE
+docsuri_u8|function|usage.reconcile_restore(c jsonb, f jsonb, d text)|docsuri_usage|EXECUTE
+docsuri_u8|schema|accounts|docsuri_accounts_owner|CREATE
+docsuri_u8|schema|accounts|docsuri_accounts_owner|USAGE
+docsuri_u8|schema|accounts|docsuri_accounts|USAGE
+docsuri_u8|schema|accounts|docsuri_assistance_owner|USAGE
+docsuri_u8|schema|accounts|docsuri_assistance|USAGE
+docsuri_u8|schema|accounts|docsuri_corpus|USAGE
+docsuri_u8|schema|accounts|docsuri_discovery_owner|USAGE
+docsuri_u8|schema|accounts|docsuri_discovery|USAGE
+docsuri_u8|schema|accounts|docsuri_export_owner|USAGE
+docsuri_u8|schema|accounts|docsuri_export|USAGE
+docsuri_u8|schema|accounts|docsuri_library_owner|USAGE
+docsuri_u8|schema|accounts|docsuri_library|USAGE
+docsuri_u8|schema|accounts|docsuri_operations|USAGE
+docsuri_u8|schema|accounts|docsuri_personalization_owner|USAGE
+docsuri_u8|schema|accounts|docsuri_personalization|USAGE
+docsuri_u8|schema|accounts|docsuri_research_owner|USAGE
+docsuri_u8|schema|accounts|docsuri_research|USAGE
+docsuri_u8|schema|accounts|docsuri_topics_owner|USAGE
+docsuri_u8|schema|accounts|docsuri_topics|USAGE
+docsuri_u8|schema|accounts|docsuri_usage_owner|USAGE
+docsuri_u8|schema|accounts|docsuri_usage|USAGE
+docsuri_u8|schema|assistance|docsuri_assistance_owner|CREATE
+docsuri_u8|schema|assistance|docsuri_assistance_owner|USAGE
+docsuri_u8|schema|assistance|docsuri_assistance|USAGE
+docsuri_u8|schema|corpus|docsuri_assistance|USAGE
+docsuri_u8|schema|corpus|docsuri_corpus_owner|CREATE
+docsuri_u8|schema|corpus|docsuri_corpus_owner|USAGE
+docsuri_u8|schema|corpus|docsuri_corpus|USAGE
+docsuri_u8|schema|corpus|docsuri_discovery|USAGE
+docsuri_u8|schema|corpus|docsuri_library|USAGE
+docsuri_u8|schema|corpus|docsuri_personalization|USAGE
+docsuri_u8|schema|corpus|docsuri_research|USAGE
+docsuri_u8|schema|corpus|docsuri_topics|USAGE
+docsuri_u8|schema|discovery|docsuri_discovery_owner|CREATE
+docsuri_u8|schema|discovery|docsuri_discovery_owner|USAGE
+docsuri_u8|schema|discovery|docsuri_discovery|USAGE
+docsuri_u8|schema|discovery|docsuri_library|USAGE
+docsuri_u8|schema|export|docsuri_export_owner|CREATE
+docsuri_u8|schema|export|docsuri_export_owner|USAGE
+docsuri_u8|schema|export|docsuri_export|USAGE
+docsuri_u8|schema|export|docsuri_operations|USAGE
+docsuri_u8|schema|library|docsuri_library_owner|CREATE
+docsuri_u8|schema|library|docsuri_library_owner|USAGE
+docsuri_u8|schema|library|docsuri_library|USAGE
+docsuri_u8|schema|operations|docsuri_operations_owner|CREATE
+docsuri_u8|schema|operations|docsuri_operations_owner|USAGE
+docsuri_u8|schema|operations|docsuri_operations|USAGE
+docsuri_u8|schema|personalization|docsuri_personalization_owner|CREATE
+docsuri_u8|schema|personalization|docsuri_personalization_owner|USAGE
+docsuri_u8|schema|personalization|docsuri_personalization|USAGE
+docsuri_u8|schema|personalization|docsuri_topics|USAGE
+docsuri_u8|schema|public|docsuri_accounts_owner|USAGE
+docsuri_u8|schema|public|docsuri_accounts|USAGE
+docsuri_u8|schema|public|docsuri_assistance_owner|USAGE
+docsuri_u8|schema|public|docsuri_assistance|USAGE
+docsuri_u8|schema|public|docsuri_corpus_owner|USAGE
+docsuri_u8|schema|public|docsuri_corpus|USAGE
+docsuri_u8|schema|public|docsuri_discovery_owner|USAGE
+docsuri_u8|schema|public|docsuri_discovery|USAGE
+docsuri_u8|schema|public|docsuri_export_owner|USAGE
+docsuri_u8|schema|public|docsuri_export|USAGE
+docsuri_u8|schema|public|docsuri_library_owner|USAGE
+docsuri_u8|schema|public|docsuri_library|USAGE
+docsuri_u8|schema|public|docsuri_operations_owner|USAGE
+docsuri_u8|schema|public|docsuri_operations|USAGE
+docsuri_u8|schema|public|docsuri_personalization_owner|USAGE
+docsuri_u8|schema|public|docsuri_personalization|USAGE
+docsuri_u8|schema|public|docsuri_research_owner|USAGE
+docsuri_u8|schema|public|docsuri_research|USAGE
+docsuri_u8|schema|public|docsuri_topics_owner|USAGE
+docsuri_u8|schema|public|docsuri_topics|USAGE
+docsuri_u8|schema|public|docsuri_usage_owner|USAGE
+docsuri_u8|schema|public|docsuri_usage|USAGE
+docsuri_u8|schema|research|docsuri_research_owner|CREATE
+docsuri_u8|schema|research|docsuri_research_owner|USAGE
+docsuri_u8|schema|research|docsuri_research|USAGE
+docsuri_u8|schema|topics|docsuri_topics_owner|CREATE
+docsuri_u8|schema|topics|docsuri_topics_owner|USAGE
+docsuri_u8|schema|topics|docsuri_topics|USAGE
+docsuri_u8|schema|usage|docsuri_usage_owner|CREATE
+docsuri_u8|schema|usage|docsuri_usage_owner|USAGE
+docsuri_u8|schema|usage|docsuri_usage|USAGE
+docsuri_u8|sequence|discovery.execution_completion_sequence_seq|docsuri_discovery_owner|SELECT
+docsuri_u8|sequence|discovery.execution_completion_sequence_seq|docsuri_discovery_owner|UPDATE
+docsuri_u8|sequence|discovery.execution_completion_sequence_seq|docsuri_discovery_owner|USAGE
+docsuri_u8|sequence|discovery.execution_completion_sequence_seq|docsuri_discovery|SELECT
+docsuri_u8|sequence|discovery.execution_completion_sequence_seq|docsuri_discovery|USAGE
+docsuri_u8|sequence|library.history_sequence_seq|docsuri_library_owner|SELECT
+docsuri_u8|sequence|library.history_sequence_seq|docsuri_library_owner|UPDATE
+docsuri_u8|sequence|library.history_sequence_seq|docsuri_library_owner|USAGE
+docsuri_u8|table|accounts.account|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.account|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.account|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.account|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.account|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.account|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.account|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.account|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.account|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.account|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.account|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.challenge|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.challenge|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.challenge|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.challenge|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.challenge|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.challenge|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.challenge|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.challenge|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.challenge|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.challenge|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.challenge|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.consent_obligation|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.consent_obligation|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.consent_obligation|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.consent_obligation|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.consent_obligation|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.consent_obligation|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.consent_obligation|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.consent_obligation|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.consent_obligation|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.consent_obligation|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.consent|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.consent|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.consent|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.consent|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.consent|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.consent|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.consent|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.consent|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.consent|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.consent|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.consent|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.control_proof|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.control_proof|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.control_proof|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.control_proof|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.control_proof|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.control_proof|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.control_proof|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.control_proof|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.control_proof|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.control_proof|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.control_receipt|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.control_receipt|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.control_receipt|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.control_receipt|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.control_receipt|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.control_receipt|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.control_receipt|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.control_receipt|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.control_receipt|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.control_receipt|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.current_restriction|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.current_restriction|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.current_restriction|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.current_restriction|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.current_restriction|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.current_restriction|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.current_restriction|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.current_restriction|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.current_restriction|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.current_restriction|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.delivery|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.delivery|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.delivery|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.delivery|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.delivery|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.delivery|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.delivery|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.delivery|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.delivery|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.delivery|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.delivery|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.entry_address_limit|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.entry_address_limit|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.entry_address_limit|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.entry_address_limit|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.entry_address_limit|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.entry_address_limit|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.entry_address_limit|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.entry_address_limit|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.entry_address_limit|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.entry_address_limit|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.entry_address_limit|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.entry_budget|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.entry_budget|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.entry_budget|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.entry_budget|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.entry_budget|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.entry_budget|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.entry_budget|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.entry_budget|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.entry_budget|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.entry_budget|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.entry_budget|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.entry_email_failure|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.entry_email_failure|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.entry_email_failure|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.entry_email_failure|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.entry_email_failure|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.entry_email_failure|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.entry_email_failure|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.entry_email_failure|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.entry_email_failure|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.entry_email_failure|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.entry_email_failure|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.entry_receipt|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.entry_receipt|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.entry_receipt|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.entry_receipt|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.entry_receipt|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.entry_receipt|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.entry_receipt|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.entry_receipt|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.entry_receipt|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.entry_shared_limit|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.entry_shared_limit|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.entry_shared_limit|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.entry_shared_limit|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.entry_shared_limit|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.entry_shared_limit|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.entry_shared_limit|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.entry_shared_limit|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.entry_shared_limit|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.entry_shared_limit|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.entry_shared_limit|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.identity_flow|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.identity_flow|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.identity_flow|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.identity_flow|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.identity_flow|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.identity_flow|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.identity_flow|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.identity_flow|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.identity_flow|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.identity_flow|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.identity_link|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.identity_link|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.identity_link|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.identity_link|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.identity_link|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.identity_link|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.identity_link|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.identity_link|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.identity_link|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.identity_link|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.identity_link|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.lifecycle_evidence|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.lifecycle_evidence|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.lifecycle_evidence|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.lifecycle_evidence|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.lifecycle_evidence|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.lifecycle_evidence|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.lifecycle_evidence|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.lifecycle_evidence|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.lifecycle_evidence|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.lifecycle_evidence|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.lifecycle_request|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.lifecycle_request|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.lifecycle_request|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.lifecycle_request|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.lifecycle_request|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.lifecycle_request|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.lifecycle_request|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.lifecycle_request|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.lifecycle_request|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.lifecycle_request|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.lifecycle_scope|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.lifecycle_scope|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.lifecycle_scope|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.lifecycle_scope|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.lifecycle_scope|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.lifecycle_scope|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.lifecycle_scope|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.lifecycle_scope|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.lifecycle_scope|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.lifecycle_scope|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.lifecycle|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.lifecycle|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.lifecycle|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.lifecycle|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.lifecycle|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.lifecycle|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.lifecycle|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.lifecycle|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.lifecycle|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.lifecycle|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.lifecycle|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.mail_account_limit|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.mail_account_limit|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.mail_account_limit|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.mail_account_limit|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.mail_account_limit|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.mail_account_limit|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.mail_account_limit|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.mail_account_limit|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.mail_account_limit|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.mail_account_limit|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.mail_account_limit|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.mail_outbox|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.mail_outbox|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.mail_outbox|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.mail_outbox|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.mail_outbox|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.mail_outbox|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.mail_outbox|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.mail_outbox|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.mail_outbox|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.mail_outbox|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.mail_outbox|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.mail_sender_beat|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.mail_sender_beat|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.mail_sender_beat|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.mail_sender_beat|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.mail_sender_beat|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.mail_sender_beat|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.mail_sender_beat|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.mail_sender_beat|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.mail_sender_beat|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.mail_sender_beat|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.mail_sender_beat|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.mfa_enrollment|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.mfa_enrollment|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.mfa_enrollment|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.mfa_enrollment|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.mfa_enrollment|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.mfa_enrollment|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.mfa_enrollment|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.mfa_enrollment|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.mfa_enrollment|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.mfa_enrollment|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.mfa_recovery|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.mfa_recovery|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.mfa_recovery|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.mfa_recovery|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.mfa_recovery|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.mfa_recovery|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.mfa_recovery|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.mfa_recovery|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.mfa_recovery|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.mfa_recovery|docsuri_accounts|UPDATE
+docsuri_u8|table|accounts.receipt|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.receipt|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.receipt|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.receipt|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.receipt|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.receipt|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.receipt|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.receipt|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.receipt|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.reset_confirmation|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.reset_confirmation|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.reset_confirmation|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.reset_confirmation|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.reset_confirmation|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.reset_confirmation|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.reset_confirmation|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.reset_confirmation|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.reset_confirmation|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.restore_checkpoint|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.restore_checkpoint|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.restore_checkpoint|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.restore_checkpoint|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.restore_checkpoint|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.restore_checkpoint|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.restore_checkpoint|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.session|docsuri_accounts_owner|DELETE
+docsuri_u8|table|accounts.session|docsuri_accounts_owner|INSERT
+docsuri_u8|table|accounts.session|docsuri_accounts_owner|REFERENCES
+docsuri_u8|table|accounts.session|docsuri_accounts_owner|SELECT
+docsuri_u8|table|accounts.session|docsuri_accounts_owner|TRIGGER
+docsuri_u8|table|accounts.session|docsuri_accounts_owner|TRUNCATE
+docsuri_u8|table|accounts.session|docsuri_accounts_owner|UPDATE
+docsuri_u8|table|accounts.session|docsuri_accounts|DELETE
+docsuri_u8|table|accounts.session|docsuri_accounts|INSERT
+docsuri_u8|table|accounts.session|docsuri_accounts|SELECT
+docsuri_u8|table|accounts.session|docsuri_accounts|UPDATE
+docsuri_u8|table|assistance.admission|docsuri_assistance_owner|DELETE
+docsuri_u8|table|assistance.admission|docsuri_assistance_owner|INSERT
+docsuri_u8|table|assistance.admission|docsuri_assistance_owner|REFERENCES
+docsuri_u8|table|assistance.admission|docsuri_assistance_owner|SELECT
+docsuri_u8|table|assistance.admission|docsuri_assistance_owner|TRIGGER
+docsuri_u8|table|assistance.admission|docsuri_assistance_owner|TRUNCATE
+docsuri_u8|table|assistance.admission|docsuri_assistance_owner|UPDATE
+docsuri_u8|table|assistance.admission|docsuri_assistance|DELETE
+docsuri_u8|table|assistance.admission|docsuri_assistance|INSERT
+docsuri_u8|table|assistance.admission|docsuri_assistance|SELECT
+docsuri_u8|table|assistance.admission|docsuri_assistance|UPDATE
+docsuri_u8|table|assistance.consent_evidence|docsuri_assistance_owner|DELETE
+docsuri_u8|table|assistance.consent_evidence|docsuri_assistance_owner|INSERT
+docsuri_u8|table|assistance.consent_evidence|docsuri_assistance_owner|REFERENCES
+docsuri_u8|table|assistance.consent_evidence|docsuri_assistance_owner|SELECT
+docsuri_u8|table|assistance.consent_evidence|docsuri_assistance_owner|TRIGGER
+docsuri_u8|table|assistance.consent_evidence|docsuri_assistance_owner|TRUNCATE
+docsuri_u8|table|assistance.consent_evidence|docsuri_assistance_owner|UPDATE
+docsuri_u8|table|assistance.consent_evidence|docsuri_assistance|INSERT
+docsuri_u8|table|assistance.consent_evidence|docsuri_assistance|SELECT
+docsuri_u8|table|assistance.erased_admission|docsuri_assistance_owner|DELETE
+docsuri_u8|table|assistance.erased_admission|docsuri_assistance_owner|INSERT
+docsuri_u8|table|assistance.erased_admission|docsuri_assistance_owner|REFERENCES
+docsuri_u8|table|assistance.erased_admission|docsuri_assistance_owner|SELECT
+docsuri_u8|table|assistance.erased_admission|docsuri_assistance_owner|TRIGGER
+docsuri_u8|table|assistance.erased_admission|docsuri_assistance_owner|TRUNCATE
+docsuri_u8|table|assistance.erased_admission|docsuri_assistance_owner|UPDATE
+docsuri_u8|table|assistance.erased_admission|docsuri_assistance|SELECT
+docsuri_u8|table|assistance.event|docsuri_assistance_owner|DELETE
+docsuri_u8|table|assistance.event|docsuri_assistance_owner|INSERT
+docsuri_u8|table|assistance.event|docsuri_assistance_owner|REFERENCES
+docsuri_u8|table|assistance.event|docsuri_assistance_owner|SELECT
+docsuri_u8|table|assistance.event|docsuri_assistance_owner|TRIGGER
+docsuri_u8|table|assistance.event|docsuri_assistance_owner|TRUNCATE
+docsuri_u8|table|assistance.event|docsuri_assistance_owner|UPDATE
+docsuri_u8|table|assistance.event|docsuri_assistance|DELETE
+docsuri_u8|table|assistance.event|docsuri_assistance|INSERT
+docsuri_u8|table|assistance.event|docsuri_assistance|SELECT
+docsuri_u8|table|assistance.event|docsuri_assistance|UPDATE
+docsuri_u8|table|assistance.glossary|docsuri_assistance_owner|DELETE
+docsuri_u8|table|assistance.glossary|docsuri_assistance_owner|INSERT
+docsuri_u8|table|assistance.glossary|docsuri_assistance_owner|REFERENCES
+docsuri_u8|table|assistance.glossary|docsuri_assistance_owner|SELECT
+docsuri_u8|table|assistance.glossary|docsuri_assistance_owner|TRIGGER
+docsuri_u8|table|assistance.glossary|docsuri_assistance_owner|TRUNCATE
+docsuri_u8|table|assistance.glossary|docsuri_assistance_owner|UPDATE
+docsuri_u8|table|assistance.glossary|docsuri_assistance|DELETE
+docsuri_u8|table|assistance.glossary|docsuri_assistance|INSERT
+docsuri_u8|table|assistance.glossary|docsuri_assistance|SELECT
+docsuri_u8|table|assistance.glossary|docsuri_assistance|UPDATE
+docsuri_u8|table|assistance.job|docsuri_assistance_owner|DELETE
+docsuri_u8|table|assistance.job|docsuri_assistance_owner|INSERT
+docsuri_u8|table|assistance.job|docsuri_assistance_owner|REFERENCES
+docsuri_u8|table|assistance.job|docsuri_assistance_owner|SELECT
+docsuri_u8|table|assistance.job|docsuri_assistance_owner|TRIGGER
+docsuri_u8|table|assistance.job|docsuri_assistance_owner|TRUNCATE
+docsuri_u8|table|assistance.job|docsuri_assistance_owner|UPDATE
+docsuri_u8|table|assistance.job|docsuri_assistance|DELETE
+docsuri_u8|table|assistance.job|docsuri_assistance|INSERT
+docsuri_u8|table|assistance.job|docsuri_assistance|SELECT
+docsuri_u8|table|assistance.job|docsuri_assistance|UPDATE
+docsuri_u8|table|assistance.lifecycle_evidence|docsuri_assistance_owner|DELETE
+docsuri_u8|table|assistance.lifecycle_evidence|docsuri_assistance_owner|INSERT
+docsuri_u8|table|assistance.lifecycle_evidence|docsuri_assistance_owner|REFERENCES
+docsuri_u8|table|assistance.lifecycle_evidence|docsuri_assistance_owner|SELECT
+docsuri_u8|table|assistance.lifecycle_evidence|docsuri_assistance_owner|TRIGGER
+docsuri_u8|table|assistance.lifecycle_evidence|docsuri_assistance_owner|TRUNCATE
+docsuri_u8|table|assistance.lifecycle_evidence|docsuri_assistance_owner|UPDATE
+docsuri_u8|table|assistance.lifecycle_evidence|docsuri_assistance|INSERT
+docsuri_u8|table|assistance.lifecycle_evidence|docsuri_assistance|SELECT
+docsuri_u8|table|assistance.lifecycle_evidence|docsuri_assistance|UPDATE
+docsuri_u8|table|assistance.receipt|docsuri_assistance_owner|DELETE
+docsuri_u8|table|assistance.receipt|docsuri_assistance_owner|INSERT
+docsuri_u8|table|assistance.receipt|docsuri_assistance_owner|REFERENCES
+docsuri_u8|table|assistance.receipt|docsuri_assistance_owner|SELECT
+docsuri_u8|table|assistance.receipt|docsuri_assistance_owner|TRIGGER
+docsuri_u8|table|assistance.receipt|docsuri_assistance_owner|TRUNCATE
+docsuri_u8|table|assistance.receipt|docsuri_assistance_owner|UPDATE
+docsuri_u8|table|assistance.receipt|docsuri_assistance|INSERT
+docsuri_u8|table|assistance.receipt|docsuri_assistance|SELECT
+docsuri_u8|table|assistance.restore_checkpoint|docsuri_assistance_owner|DELETE
+docsuri_u8|table|assistance.restore_checkpoint|docsuri_assistance_owner|INSERT
+docsuri_u8|table|assistance.restore_checkpoint|docsuri_assistance_owner|REFERENCES
+docsuri_u8|table|assistance.restore_checkpoint|docsuri_assistance_owner|SELECT
+docsuri_u8|table|assistance.restore_checkpoint|docsuri_assistance_owner|TRIGGER
+docsuri_u8|table|assistance.restore_checkpoint|docsuri_assistance_owner|TRUNCATE
+docsuri_u8|table|assistance.restore_checkpoint|docsuri_assistance_owner|UPDATE
+docsuri_u8|table|assistance.result|docsuri_assistance_owner|DELETE
+docsuri_u8|table|assistance.result|docsuri_assistance_owner|INSERT
+docsuri_u8|table|assistance.result|docsuri_assistance_owner|REFERENCES
+docsuri_u8|table|assistance.result|docsuri_assistance_owner|SELECT
+docsuri_u8|table|assistance.result|docsuri_assistance_owner|TRIGGER
+docsuri_u8|table|assistance.result|docsuri_assistance_owner|TRUNCATE
+docsuri_u8|table|assistance.result|docsuri_assistance_owner|UPDATE
+docsuri_u8|table|assistance.result|docsuri_assistance|DELETE
+docsuri_u8|table|assistance.result|docsuri_assistance|INSERT
+docsuri_u8|table|assistance.result|docsuri_assistance|SELECT
+docsuri_u8|table|assistance.result|docsuri_assistance|UPDATE
+docsuri_u8|table|corpus.asset|docsuri_assistance|SELECT
+docsuri_u8|table|corpus.asset|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.asset|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.asset|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.asset|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.asset|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.asset|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.asset|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.asset|docsuri_corpus|INSERT
+docsuri_u8|table|corpus.asset|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.asset|docsuri_corpus|UPDATE
+docsuri_u8|table|corpus.asset|docsuri_discovery|SELECT
+docsuri_u8|table|corpus.change_fact|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.change_fact|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.change_fact|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.change_fact|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.change_fact|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.change_fact|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.change_fact|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.change_fact|docsuri_corpus|INSERT
+docsuri_u8|table|corpus.change_fact|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.change_fact|docsuri_corpus|UPDATE
+docsuri_u8|table|corpus.change_fact|docsuri_library|SELECT
+docsuri_u8|table|corpus.change_sequence|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.change_sequence|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.change_sequence|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.change_sequence|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.change_sequence|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.change_sequence|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.change_sequence|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.change_sequence|docsuri_corpus|INSERT
+docsuri_u8|table|corpus.change_sequence|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.change_sequence|docsuri_corpus|UPDATE
+docsuri_u8|table|corpus.change_sequence|docsuri_library|SELECT
+docsuri_u8|table|corpus.generation|docsuri_assistance|SELECT
+docsuri_u8|table|corpus.generation|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.generation|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.generation|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.generation|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.generation|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.generation|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.generation|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.generation|docsuri_corpus|INSERT
+docsuri_u8|table|corpus.generation|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.generation|docsuri_corpus|UPDATE
+docsuri_u8|table|corpus.generation|docsuri_discovery|SELECT
+docsuri_u8|table|corpus.maintenance_actor|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.maintenance_actor|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.maintenance_actor|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.maintenance_actor|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.maintenance_actor|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.maintenance_actor|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.maintenance_actor|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.maintenance_actor|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.paper|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.paper|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.paper|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.paper|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.paper|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.paper|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.paper|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.paper|docsuri_corpus|DELETE
+docsuri_u8|table|corpus.paper|docsuri_corpus|INSERT
+docsuri_u8|table|corpus.paper|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.paper|docsuri_corpus|UPDATE
+docsuri_u8|table|corpus.paper|docsuri_discovery|SELECT
+docsuri_u8|table|corpus.paper|docsuri_topics|SELECT
+docsuri_u8|table|corpus.projection_batch|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.projection_batch|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.projection_batch|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.projection_batch|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.projection_batch|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.projection_batch|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.projection_batch|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.projection_batch|docsuri_corpus|INSERT
+docsuri_u8|table|corpus.projection_batch|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.projection_batch|docsuri_corpus|UPDATE
+docsuri_u8|table|corpus.projection|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.projection|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.projection|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.projection|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.projection|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.projection|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.projection|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.projection|docsuri_corpus|DELETE
+docsuri_u8|table|corpus.projection|docsuri_corpus|INSERT
+docsuri_u8|table|corpus.projection|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.projection|docsuri_corpus|UPDATE
+docsuri_u8|table|corpus.projection|docsuri_discovery|SELECT
+docsuri_u8|table|corpus.publication|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.publication|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.publication|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.publication|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.publication|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.publication|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.publication|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.publication|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.publication|docsuri_corpus|UPDATE
+docsuri_u8|table|corpus.publication|docsuri_discovery|SELECT
+docsuri_u8|table|corpus.quarantine|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.quarantine|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.quarantine|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.quarantine|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.quarantine|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.quarantine|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.quarantine|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.quarantine|docsuri_corpus|INSERT
+docsuri_u8|table|corpus.quarantine|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.quarantine|docsuri_corpus|UPDATE
+docsuri_u8|table|corpus.receipt|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.receipt|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.receipt|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.receipt|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.receipt|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.receipt|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.receipt|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.receipt|docsuri_corpus|INSERT
+docsuri_u8|table|corpus.receipt|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.run_effect|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.run_effect|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.run_effect|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.run_effect|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.run_effect|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.run_effect|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.run_effect|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.run_effect|docsuri_corpus|INSERT
+docsuri_u8|table|corpus.run_effect|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.run_effect|docsuri_corpus|UPDATE
+docsuri_u8|table|corpus.run_effect|docsuri_discovery|SELECT
+docsuri_u8|table|corpus.run|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.run|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.run|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.run|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.run|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.run|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.run|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.run|docsuri_corpus|INSERT
+docsuri_u8|table|corpus.run|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.run|docsuri_corpus|UPDATE
+docsuri_u8|table|corpus.run|docsuri_discovery|SELECT
+docsuri_u8|table|corpus.version|docsuri_corpus_owner|DELETE
+docsuri_u8|table|corpus.version|docsuri_corpus_owner|INSERT
+docsuri_u8|table|corpus.version|docsuri_corpus_owner|REFERENCES
+docsuri_u8|table|corpus.version|docsuri_corpus_owner|SELECT
+docsuri_u8|table|corpus.version|docsuri_corpus_owner|TRIGGER
+docsuri_u8|table|corpus.version|docsuri_corpus_owner|TRUNCATE
+docsuri_u8|table|corpus.version|docsuri_corpus_owner|UPDATE
+docsuri_u8|table|corpus.version|docsuri_corpus|DELETE
+docsuri_u8|table|corpus.version|docsuri_corpus|INSERT
+docsuri_u8|table|corpus.version|docsuri_corpus|SELECT
+docsuri_u8|table|corpus.version|docsuri_corpus|UPDATE
+docsuri_u8|table|corpus.version|docsuri_discovery|SELECT
+docsuri_u8|table|corpus.version|docsuri_topics|SELECT
+docsuri_u8|table|discovery.admission|docsuri_discovery_owner|DELETE
+docsuri_u8|table|discovery.admission|docsuri_discovery_owner|INSERT
+docsuri_u8|table|discovery.admission|docsuri_discovery_owner|REFERENCES
+docsuri_u8|table|discovery.admission|docsuri_discovery_owner|SELECT
+docsuri_u8|table|discovery.admission|docsuri_discovery_owner|TRIGGER
+docsuri_u8|table|discovery.admission|docsuri_discovery_owner|TRUNCATE
+docsuri_u8|table|discovery.admission|docsuri_discovery_owner|UPDATE
+docsuri_u8|table|discovery.admission|docsuri_discovery|INSERT
+docsuri_u8|table|discovery.admission|docsuri_discovery|SELECT
+docsuri_u8|table|discovery.citation_snapshot|docsuri_discovery_owner|DELETE
+docsuri_u8|table|discovery.citation_snapshot|docsuri_discovery_owner|INSERT
+docsuri_u8|table|discovery.citation_snapshot|docsuri_discovery_owner|REFERENCES
+docsuri_u8|table|discovery.citation_snapshot|docsuri_discovery_owner|SELECT
+docsuri_u8|table|discovery.citation_snapshot|docsuri_discovery_owner|TRIGGER
+docsuri_u8|table|discovery.citation_snapshot|docsuri_discovery_owner|TRUNCATE
+docsuri_u8|table|discovery.citation_snapshot|docsuri_discovery_owner|UPDATE
+docsuri_u8|table|discovery.citation_snapshot|docsuri_discovery|INSERT
+docsuri_u8|table|discovery.citation_snapshot|docsuri_discovery|SELECT
+docsuri_u8|table|discovery.citation_snapshot|docsuri_discovery|UPDATE
+docsuri_u8|table|discovery.citation_snapshot|docsuri_library|SELECT
+docsuri_u8|table|discovery.execution|docsuri_discovery_owner|DELETE
+docsuri_u8|table|discovery.execution|docsuri_discovery_owner|INSERT
+docsuri_u8|table|discovery.execution|docsuri_discovery_owner|REFERENCES
+docsuri_u8|table|discovery.execution|docsuri_discovery_owner|SELECT
+docsuri_u8|table|discovery.execution|docsuri_discovery_owner|TRIGGER
+docsuri_u8|table|discovery.execution|docsuri_discovery_owner|TRUNCATE
+docsuri_u8|table|discovery.execution|docsuri_discovery_owner|UPDATE
+docsuri_u8|table|discovery.execution|docsuri_discovery|DELETE
+docsuri_u8|table|discovery.execution|docsuri_discovery|INSERT
+docsuri_u8|table|discovery.execution|docsuri_discovery|SELECT
+docsuri_u8|table|discovery.execution|docsuri_discovery|UPDATE
+docsuri_u8|table|discovery.lifecycle_evidence|docsuri_discovery_owner|DELETE
+docsuri_u8|table|discovery.lifecycle_evidence|docsuri_discovery_owner|INSERT
+docsuri_u8|table|discovery.lifecycle_evidence|docsuri_discovery_owner|REFERENCES
+docsuri_u8|table|discovery.lifecycle_evidence|docsuri_discovery_owner|SELECT
+docsuri_u8|table|discovery.lifecycle_evidence|docsuri_discovery_owner|TRIGGER
+docsuri_u8|table|discovery.lifecycle_evidence|docsuri_discovery_owner|TRUNCATE
+docsuri_u8|table|discovery.lifecycle_evidence|docsuri_discovery_owner|UPDATE
+docsuri_u8|table|discovery.lifecycle_evidence|docsuri_discovery|INSERT
+docsuri_u8|table|discovery.lifecycle_evidence|docsuri_discovery|SELECT
+docsuri_u8|table|discovery.lifecycle_evidence|docsuri_discovery|UPDATE
+docsuri_u8|table|discovery.owner_admission|docsuri_discovery_owner|DELETE
+docsuri_u8|table|discovery.owner_admission|docsuri_discovery_owner|INSERT
+docsuri_u8|table|discovery.owner_admission|docsuri_discovery_owner|REFERENCES
+docsuri_u8|table|discovery.owner_admission|docsuri_discovery_owner|SELECT
+docsuri_u8|table|discovery.owner_admission|docsuri_discovery_owner|TRIGGER
+docsuri_u8|table|discovery.owner_admission|docsuri_discovery_owner|TRUNCATE
+docsuri_u8|table|discovery.owner_admission|docsuri_discovery_owner|UPDATE
+docsuri_u8|table|discovery.owner_admission|docsuri_discovery|INSERT
+docsuri_u8|table|discovery.owner_admission|docsuri_discovery|SELECT
+docsuri_u8|table|discovery.owner_admission|docsuri_discovery|UPDATE
+docsuri_u8|table|discovery.provider_budget|docsuri_discovery_owner|DELETE
+docsuri_u8|table|discovery.provider_budget|docsuri_discovery_owner|INSERT
+docsuri_u8|table|discovery.provider_budget|docsuri_discovery_owner|REFERENCES
+docsuri_u8|table|discovery.provider_budget|docsuri_discovery_owner|SELECT
+docsuri_u8|table|discovery.provider_budget|docsuri_discovery_owner|TRIGGER
+docsuri_u8|table|discovery.provider_budget|docsuri_discovery_owner|TRUNCATE
+docsuri_u8|table|discovery.provider_budget|docsuri_discovery_owner|UPDATE
+docsuri_u8|table|discovery.provider_budget|docsuri_discovery|INSERT
+docsuri_u8|table|discovery.provider_budget|docsuri_discovery|SELECT
+docsuri_u8|table|discovery.provider_budget|docsuri_discovery|UPDATE
+docsuri_u8|table|discovery.receipt|docsuri_discovery_owner|DELETE
+docsuri_u8|table|discovery.receipt|docsuri_discovery_owner|INSERT
+docsuri_u8|table|discovery.receipt|docsuri_discovery_owner|REFERENCES
+docsuri_u8|table|discovery.receipt|docsuri_discovery_owner|SELECT
+docsuri_u8|table|discovery.receipt|docsuri_discovery_owner|TRIGGER
+docsuri_u8|table|discovery.receipt|docsuri_discovery_owner|TRUNCATE
+docsuri_u8|table|discovery.receipt|docsuri_discovery_owner|UPDATE
+docsuri_u8|table|discovery.receipt|docsuri_discovery|INSERT
+docsuri_u8|table|discovery.receipt|docsuri_discovery|SELECT
+docsuri_u8|table|discovery.restore_checkpoint|docsuri_discovery_owner|DELETE
+docsuri_u8|table|discovery.restore_checkpoint|docsuri_discovery_owner|INSERT
+docsuri_u8|table|discovery.restore_checkpoint|docsuri_discovery_owner|REFERENCES
+docsuri_u8|table|discovery.restore_checkpoint|docsuri_discovery_owner|SELECT
+docsuri_u8|table|discovery.restore_checkpoint|docsuri_discovery_owner|TRIGGER
+docsuri_u8|table|discovery.restore_checkpoint|docsuri_discovery_owner|TRUNCATE
+docsuri_u8|table|discovery.restore_checkpoint|docsuri_discovery_owner|UPDATE
+docsuri_u8|table|export.approval|docsuri_export_owner|DELETE
+docsuri_u8|table|export.approval|docsuri_export_owner|INSERT
+docsuri_u8|table|export.approval|docsuri_export_owner|REFERENCES
+docsuri_u8|table|export.approval|docsuri_export_owner|SELECT
+docsuri_u8|table|export.approval|docsuri_export_owner|TRIGGER
+docsuri_u8|table|export.approval|docsuri_export_owner|TRUNCATE
+docsuri_u8|table|export.approval|docsuri_export_owner|UPDATE
+docsuri_u8|table|export.approval|docsuri_export|INSERT
+docsuri_u8|table|export.approval|docsuri_export|SELECT
+docsuri_u8|table|export.approval|docsuri_export|UPDATE
+docsuri_u8|table|export.attempt|docsuri_export_owner|DELETE
+docsuri_u8|table|export.attempt|docsuri_export_owner|INSERT
+docsuri_u8|table|export.attempt|docsuri_export_owner|REFERENCES
+docsuri_u8|table|export.attempt|docsuri_export_owner|SELECT
+docsuri_u8|table|export.attempt|docsuri_export_owner|TRIGGER
+docsuri_u8|table|export.attempt|docsuri_export_owner|TRUNCATE
+docsuri_u8|table|export.attempt|docsuri_export_owner|UPDATE
+docsuri_u8|table|export.attempt|docsuri_export|INSERT
+docsuri_u8|table|export.attempt|docsuri_export|SELECT
+docsuri_u8|table|export.attempt|docsuri_export|UPDATE
+docsuri_u8|table|export.connection_pace|docsuri_export_owner|DELETE
+docsuri_u8|table|export.connection_pace|docsuri_export_owner|INSERT
+docsuri_u8|table|export.connection_pace|docsuri_export_owner|REFERENCES
+docsuri_u8|table|export.connection_pace|docsuri_export_owner|SELECT
+docsuri_u8|table|export.connection_pace|docsuri_export_owner|TRIGGER
+docsuri_u8|table|export.connection_pace|docsuri_export_owner|TRUNCATE
+docsuri_u8|table|export.connection_pace|docsuri_export_owner|UPDATE
+docsuri_u8|table|export.connection_pace|docsuri_export|INSERT
+docsuri_u8|table|export.connection_pace|docsuri_export|SELECT
+docsuri_u8|table|export.connection_pace|docsuri_export|UPDATE
+docsuri_u8|table|export.connection|docsuri_export_owner|DELETE
+docsuri_u8|table|export.connection|docsuri_export_owner|INSERT
+docsuri_u8|table|export.connection|docsuri_export_owner|REFERENCES
+docsuri_u8|table|export.connection|docsuri_export_owner|SELECT
+docsuri_u8|table|export.connection|docsuri_export_owner|TRIGGER
+docsuri_u8|table|export.connection|docsuri_export_owner|TRUNCATE
+docsuri_u8|table|export.connection|docsuri_export_owner|UPDATE
+docsuri_u8|table|export.effect|docsuri_export_owner|DELETE
+docsuri_u8|table|export.effect|docsuri_export_owner|INSERT
+docsuri_u8|table|export.effect|docsuri_export_owner|REFERENCES
+docsuri_u8|table|export.effect|docsuri_export_owner|SELECT
+docsuri_u8|table|export.effect|docsuri_export_owner|TRIGGER
+docsuri_u8|table|export.effect|docsuri_export_owner|TRUNCATE
+docsuri_u8|table|export.effect|docsuri_export_owner|UPDATE
+docsuri_u8|table|export.effect|docsuri_export|INSERT
+docsuri_u8|table|export.effect|docsuri_export|SELECT
+docsuri_u8|table|export.effect|docsuri_export|UPDATE
+docsuri_u8|table|export.lane_status|docsuri_export_owner|DELETE
+docsuri_u8|table|export.lane_status|docsuri_export_owner|INSERT
+docsuri_u8|table|export.lane_status|docsuri_export_owner|REFERENCES
+docsuri_u8|table|export.lane_status|docsuri_export_owner|SELECT
+docsuri_u8|table|export.lane_status|docsuri_export_owner|TRIGGER
+docsuri_u8|table|export.lane_status|docsuri_export_owner|TRUNCATE
+docsuri_u8|table|export.lane_status|docsuri_export_owner|UPDATE
+docsuri_u8|table|export.lane_status|docsuri_export|INSERT
+docsuri_u8|table|export.lane_status|docsuri_export|SELECT
+docsuri_u8|table|export.lane_status|docsuri_export|UPDATE
+docsuri_u8|table|export.lifecycle_counts|docsuri_export_owner|DELETE
+docsuri_u8|table|export.lifecycle_counts|docsuri_export_owner|INSERT
+docsuri_u8|table|export.lifecycle_counts|docsuri_export_owner|REFERENCES
+docsuri_u8|table|export.lifecycle_counts|docsuri_export_owner|SELECT
+docsuri_u8|table|export.lifecycle_counts|docsuri_export_owner|TRIGGER
+docsuri_u8|table|export.lifecycle_counts|docsuri_export_owner|TRUNCATE
+docsuri_u8|table|export.lifecycle_counts|docsuri_export_owner|UPDATE
+docsuri_u8|table|export.lifecycle_counts|docsuri_export|INSERT
+docsuri_u8|table|export.lifecycle_counts|docsuri_export|SELECT
+docsuri_u8|table|export.lifecycle_counts|docsuri_export|UPDATE
+docsuri_u8|table|export.lifecycle_evidence|docsuri_export_owner|DELETE
+docsuri_u8|table|export.lifecycle_evidence|docsuri_export_owner|INSERT
+docsuri_u8|table|export.lifecycle_evidence|docsuri_export_owner|REFERENCES
+docsuri_u8|table|export.lifecycle_evidence|docsuri_export_owner|SELECT
+docsuri_u8|table|export.lifecycle_evidence|docsuri_export_owner|TRIGGER
+docsuri_u8|table|export.lifecycle_evidence|docsuri_export_owner|TRUNCATE
+docsuri_u8|table|export.lifecycle_evidence|docsuri_export_owner|UPDATE
+docsuri_u8|table|export.lifecycle_evidence|docsuri_export|INSERT
+docsuri_u8|table|export.lifecycle_evidence|docsuri_export|SELECT
+docsuri_u8|table|export.lifecycle_evidence|docsuri_export|UPDATE
+docsuri_u8|table|export.preview_pair|docsuri_export_owner|DELETE
+docsuri_u8|table|export.preview_pair|docsuri_export_owner|INSERT
+docsuri_u8|table|export.preview_pair|docsuri_export_owner|REFERENCES
+docsuri_u8|table|export.preview_pair|docsuri_export_owner|SELECT
+docsuri_u8|table|export.preview_pair|docsuri_export_owner|TRIGGER
+docsuri_u8|table|export.preview_pair|docsuri_export_owner|TRUNCATE
+docsuri_u8|table|export.preview_pair|docsuri_export_owner|UPDATE
+docsuri_u8|table|export.preview_pair|docsuri_export|INSERT
+docsuri_u8|table|export.preview_pair|docsuri_export|SELECT
+docsuri_u8|table|export.preview_pair|docsuri_export|UPDATE
+docsuri_u8|table|export.preview_revision|docsuri_export_owner|DELETE
+docsuri_u8|table|export.preview_revision|docsuri_export_owner|INSERT
+docsuri_u8|table|export.preview_revision|docsuri_export_owner|REFERENCES
+docsuri_u8|table|export.preview_revision|docsuri_export_owner|SELECT
+docsuri_u8|table|export.preview_revision|docsuri_export_owner|TRIGGER
+docsuri_u8|table|export.preview_revision|docsuri_export_owner|TRUNCATE
+docsuri_u8|table|export.preview_revision|docsuri_export_owner|UPDATE
+docsuri_u8|table|export.preview_revision|docsuri_export|INSERT
+docsuri_u8|table|export.preview_revision|docsuri_export|SELECT
+docsuri_u8|table|export.preview_revision|docsuri_export|UPDATE
+docsuri_u8|table|export.reconciliation_check|docsuri_export_owner|DELETE
+docsuri_u8|table|export.reconciliation_check|docsuri_export_owner|INSERT
+docsuri_u8|table|export.reconciliation_check|docsuri_export_owner|REFERENCES
+docsuri_u8|table|export.reconciliation_check|docsuri_export_owner|SELECT
+docsuri_u8|table|export.reconciliation_check|docsuri_export_owner|TRIGGER
+docsuri_u8|table|export.reconciliation_check|docsuri_export_owner|TRUNCATE
+docsuri_u8|table|export.reconciliation_check|docsuri_export_owner|UPDATE
+docsuri_u8|table|export.reconciliation_check|docsuri_export|INSERT
+docsuri_u8|table|export.reconciliation_check|docsuri_export|SELECT
+docsuri_u8|table|export.reconciliation_check|docsuri_export|UPDATE
+docsuri_u8|table|export.replay_record|docsuri_export_owner|DELETE
+docsuri_u8|table|export.replay_record|docsuri_export_owner|INSERT
+docsuri_u8|table|export.replay_record|docsuri_export_owner|REFERENCES
+docsuri_u8|table|export.replay_record|docsuri_export_owner|SELECT
+docsuri_u8|table|export.replay_record|docsuri_export_owner|TRIGGER
+docsuri_u8|table|export.replay_record|docsuri_export_owner|TRUNCATE
+docsuri_u8|table|export.replay_record|docsuri_export_owner|UPDATE
+docsuri_u8|table|export.replay_record|docsuri_export|INSERT
+docsuri_u8|table|export.replay_record|docsuri_export|SELECT
+docsuri_u8|table|export.replay_record|docsuri_export|UPDATE
+docsuri_u8|table|library.disposition_cursor|docsuri_library_owner|DELETE
+docsuri_u8|table|library.disposition_cursor|docsuri_library_owner|INSERT
+docsuri_u8|table|library.disposition_cursor|docsuri_library_owner|REFERENCES
+docsuri_u8|table|library.disposition_cursor|docsuri_library_owner|SELECT
+docsuri_u8|table|library.disposition_cursor|docsuri_library_owner|TRIGGER
+docsuri_u8|table|library.disposition_cursor|docsuri_library_owner|TRUNCATE
+docsuri_u8|table|library.disposition_cursor|docsuri_library_owner|UPDATE
+docsuri_u8|table|library.disposition_cursor|docsuri_library|INSERT
+docsuri_u8|table|library.disposition_cursor|docsuri_library|SELECT
+docsuri_u8|table|library.disposition_cursor|docsuri_library|UPDATE
+docsuri_u8|table|library.history_boundary|docsuri_library_owner|DELETE
+docsuri_u8|table|library.history_boundary|docsuri_library_owner|INSERT
+docsuri_u8|table|library.history_boundary|docsuri_library_owner|REFERENCES
+docsuri_u8|table|library.history_boundary|docsuri_library_owner|SELECT
+docsuri_u8|table|library.history_boundary|docsuri_library_owner|TRIGGER
+docsuri_u8|table|library.history_boundary|docsuri_library_owner|TRUNCATE
+docsuri_u8|table|library.history_boundary|docsuri_library_owner|UPDATE
+docsuri_u8|table|library.history_boundary|docsuri_library|DELETE
+docsuri_u8|table|library.history_boundary|docsuri_library|INSERT
+docsuri_u8|table|library.history_boundary|docsuri_library|SELECT
+docsuri_u8|table|library.history_boundary|docsuri_library|UPDATE
+docsuri_u8|table|library.history|docsuri_library_owner|DELETE
+docsuri_u8|table|library.history|docsuri_library_owner|INSERT
+docsuri_u8|table|library.history|docsuri_library_owner|REFERENCES
+docsuri_u8|table|library.history|docsuri_library_owner|SELECT
+docsuri_u8|table|library.history|docsuri_library_owner|TRIGGER
+docsuri_u8|table|library.history|docsuri_library_owner|TRUNCATE
+docsuri_u8|table|library.history|docsuri_library_owner|UPDATE
+docsuri_u8|table|library.history|docsuri_library|DELETE
+docsuri_u8|table|library.history|docsuri_library|INSERT
+docsuri_u8|table|library.history|docsuri_library|SELECT
+docsuri_u8|table|library.history|docsuri_library|UPDATE
+docsuri_u8|table|library.lifecycle_evidence|docsuri_library_owner|DELETE
+docsuri_u8|table|library.lifecycle_evidence|docsuri_library_owner|INSERT
+docsuri_u8|table|library.lifecycle_evidence|docsuri_library_owner|REFERENCES
+docsuri_u8|table|library.lifecycle_evidence|docsuri_library_owner|SELECT
+docsuri_u8|table|library.lifecycle_evidence|docsuri_library_owner|TRIGGER
+docsuri_u8|table|library.lifecycle_evidence|docsuri_library_owner|TRUNCATE
+docsuri_u8|table|library.lifecycle_evidence|docsuri_library_owner|UPDATE
+docsuri_u8|table|library.lifecycle_evidence|docsuri_library|INSERT
+docsuri_u8|table|library.lifecycle_evidence|docsuri_library|SELECT
+docsuri_u8|table|library.lifecycle_evidence|docsuri_library|UPDATE
+docsuri_u8|table|library.receipt|docsuri_library_owner|DELETE
+docsuri_u8|table|library.receipt|docsuri_library_owner|INSERT
+docsuri_u8|table|library.receipt|docsuri_library_owner|REFERENCES
+docsuri_u8|table|library.receipt|docsuri_library_owner|SELECT
+docsuri_u8|table|library.receipt|docsuri_library_owner|TRIGGER
+docsuri_u8|table|library.receipt|docsuri_library_owner|TRUNCATE
+docsuri_u8|table|library.receipt|docsuri_library_owner|UPDATE
+docsuri_u8|table|library.receipt|docsuri_library|INSERT
+docsuri_u8|table|library.receipt|docsuri_library|SELECT
+docsuri_u8|table|library.restore_checkpoint|docsuri_library_owner|DELETE
+docsuri_u8|table|library.restore_checkpoint|docsuri_library_owner|INSERT
+docsuri_u8|table|library.restore_checkpoint|docsuri_library_owner|REFERENCES
+docsuri_u8|table|library.restore_checkpoint|docsuri_library_owner|SELECT
+docsuri_u8|table|library.restore_checkpoint|docsuri_library_owner|TRIGGER
+docsuri_u8|table|library.restore_checkpoint|docsuri_library_owner|TRUNCATE
+docsuri_u8|table|library.restore_checkpoint|docsuri_library_owner|UPDATE
+docsuri_u8|table|library.restriction|docsuri_library_owner|DELETE
+docsuri_u8|table|library.restriction|docsuri_library_owner|INSERT
+docsuri_u8|table|library.restriction|docsuri_library_owner|REFERENCES
+docsuri_u8|table|library.restriction|docsuri_library_owner|SELECT
+docsuri_u8|table|library.restriction|docsuri_library_owner|TRIGGER
+docsuri_u8|table|library.restriction|docsuri_library_owner|TRUNCATE
+docsuri_u8|table|library.restriction|docsuri_library_owner|UPDATE
+docsuri_u8|table|library.restriction|docsuri_library|INSERT
+docsuri_u8|table|library.restriction|docsuri_library|SELECT
+docsuri_u8|table|library.restriction|docsuri_library|UPDATE
+docsuri_u8|table|library.saved_paper|docsuri_library_owner|DELETE
+docsuri_u8|table|library.saved_paper|docsuri_library_owner|INSERT
+docsuri_u8|table|library.saved_paper|docsuri_library_owner|REFERENCES
+docsuri_u8|table|library.saved_paper|docsuri_library_owner|SELECT
+docsuri_u8|table|library.saved_paper|docsuri_library_owner|TRIGGER
+docsuri_u8|table|library.saved_paper|docsuri_library_owner|TRUNCATE
+docsuri_u8|table|library.saved_paper|docsuri_library_owner|UPDATE
+docsuri_u8|table|library.saved_paper|docsuri_library|DELETE
+docsuri_u8|table|library.saved_paper|docsuri_library|INSERT
+docsuri_u8|table|library.saved_paper|docsuri_library|SELECT
+docsuri_u8|table|library.saved_paper|docsuri_library|UPDATE
+docsuri_u8|table|library.saved_query|docsuri_library_owner|DELETE
+docsuri_u8|table|library.saved_query|docsuri_library_owner|INSERT
+docsuri_u8|table|library.saved_query|docsuri_library_owner|REFERENCES
+docsuri_u8|table|library.saved_query|docsuri_library_owner|SELECT
+docsuri_u8|table|library.saved_query|docsuri_library_owner|TRIGGER
+docsuri_u8|table|library.saved_query|docsuri_library_owner|TRUNCATE
+docsuri_u8|table|library.saved_query|docsuri_library_owner|UPDATE
+docsuri_u8|table|library.saved_query|docsuri_library|DELETE
+docsuri_u8|table|library.saved_query|docsuri_library|INSERT
+docsuri_u8|table|library.saved_query|docsuri_library|SELECT
+docsuri_u8|table|library.saved_query|docsuri_library|UPDATE
+docsuri_u8|table|operations.incident|docsuri_operations_owner|DELETE
+docsuri_u8|table|operations.incident|docsuri_operations_owner|INSERT
+docsuri_u8|table|operations.incident|docsuri_operations_owner|REFERENCES
+docsuri_u8|table|operations.incident|docsuri_operations_owner|SELECT
+docsuri_u8|table|operations.incident|docsuri_operations_owner|TRIGGER
+docsuri_u8|table|operations.incident|docsuri_operations_owner|TRUNCATE
+docsuri_u8|table|operations.incident|docsuri_operations_owner|UPDATE
+docsuri_u8|table|operations.incident|docsuri_operations|DELETE
+docsuri_u8|table|operations.incident|docsuri_operations|INSERT
+docsuri_u8|table|operations.incident|docsuri_operations|SELECT
+docsuri_u8|table|operations.incident|docsuri_operations|UPDATE
+docsuri_u8|table|operations.observation_record|docsuri_operations_owner|DELETE
+docsuri_u8|table|operations.observation_record|docsuri_operations_owner|INSERT
+docsuri_u8|table|operations.observation_record|docsuri_operations_owner|REFERENCES
+docsuri_u8|table|operations.observation_record|docsuri_operations_owner|SELECT
+docsuri_u8|table|operations.observation_record|docsuri_operations_owner|TRIGGER
+docsuri_u8|table|operations.observation_record|docsuri_operations_owner|TRUNCATE
+docsuri_u8|table|operations.observation_record|docsuri_operations_owner|UPDATE
+docsuri_u8|table|operations.observation_record|docsuri_operations|INSERT
+docsuri_u8|table|operations.observation_record|docsuri_operations|SELECT
+docsuri_u8|table|operations.observation|docsuri_operations_owner|DELETE
+docsuri_u8|table|operations.observation|docsuri_operations_owner|INSERT
+docsuri_u8|table|operations.observation|docsuri_operations_owner|REFERENCES
+docsuri_u8|table|operations.observation|docsuri_operations_owner|SELECT
+docsuri_u8|table|operations.observation|docsuri_operations_owner|TRIGGER
+docsuri_u8|table|operations.observation|docsuri_operations_owner|TRUNCATE
+docsuri_u8|table|operations.observation|docsuri_operations_owner|UPDATE
+docsuri_u8|table|operations.observation|docsuri_operations|DELETE
+docsuri_u8|table|operations.observation|docsuri_operations|INSERT
+docsuri_u8|table|operations.observation|docsuri_operations|SELECT
+docsuri_u8|table|operations.observation|docsuri_operations|UPDATE
+docsuri_u8|table|operations.receipt|docsuri_operations_owner|DELETE
+docsuri_u8|table|operations.receipt|docsuri_operations_owner|INSERT
+docsuri_u8|table|operations.receipt|docsuri_operations_owner|REFERENCES
+docsuri_u8|table|operations.receipt|docsuri_operations_owner|SELECT
+docsuri_u8|table|operations.receipt|docsuri_operations_owner|TRIGGER
+docsuri_u8|table|operations.receipt|docsuri_operations_owner|TRUNCATE
+docsuri_u8|table|operations.receipt|docsuri_operations_owner|UPDATE
+docsuri_u8|table|operations.receipt|docsuri_operations|INSERT
+docsuri_u8|table|operations.receipt|docsuri_operations|SELECT
+docsuri_u8|table|operations.restore_checkpoint|docsuri_operations_owner|DELETE
+docsuri_u8|table|operations.restore_checkpoint|docsuri_operations_owner|INSERT
+docsuri_u8|table|operations.restore_checkpoint|docsuri_operations_owner|REFERENCES
+docsuri_u8|table|operations.restore_checkpoint|docsuri_operations_owner|SELECT
+docsuri_u8|table|operations.restore_checkpoint|docsuri_operations_owner|TRIGGER
+docsuri_u8|table|operations.restore_checkpoint|docsuri_operations_owner|TRUNCATE
+docsuri_u8|table|operations.restore_checkpoint|docsuri_operations_owner|UPDATE
+docsuri_u8|table|personalization.behavior|docsuri_personalization_owner|DELETE
+docsuri_u8|table|personalization.behavior|docsuri_personalization_owner|INSERT
+docsuri_u8|table|personalization.behavior|docsuri_personalization_owner|REFERENCES
+docsuri_u8|table|personalization.behavior|docsuri_personalization_owner|SELECT
+docsuri_u8|table|personalization.behavior|docsuri_personalization_owner|TRIGGER
+docsuri_u8|table|personalization.behavior|docsuri_personalization_owner|TRUNCATE
+docsuri_u8|table|personalization.behavior|docsuri_personalization_owner|UPDATE
+docsuri_u8|table|personalization.behavior|docsuri_personalization|DELETE
+docsuri_u8|table|personalization.behavior|docsuri_personalization|INSERT
+docsuri_u8|table|personalization.behavior|docsuri_personalization|SELECT
+docsuri_u8|table|personalization.behavior|docsuri_personalization|UPDATE
+docsuri_u8|table|personalization.lifecycle_evidence|docsuri_personalization_owner|DELETE
+docsuri_u8|table|personalization.lifecycle_evidence|docsuri_personalization_owner|INSERT
+docsuri_u8|table|personalization.lifecycle_evidence|docsuri_personalization_owner|REFERENCES
+docsuri_u8|table|personalization.lifecycle_evidence|docsuri_personalization_owner|SELECT
+docsuri_u8|table|personalization.lifecycle_evidence|docsuri_personalization_owner|TRIGGER
+docsuri_u8|table|personalization.lifecycle_evidence|docsuri_personalization_owner|TRUNCATE
+docsuri_u8|table|personalization.lifecycle_evidence|docsuri_personalization_owner|UPDATE
+docsuri_u8|table|personalization.lifecycle_evidence|docsuri_personalization|INSERT
+docsuri_u8|table|personalization.lifecycle_evidence|docsuri_personalization|SELECT
+docsuri_u8|table|personalization.lifecycle_evidence|docsuri_personalization|UPDATE
+docsuri_u8|table|personalization.projection|docsuri_personalization_owner|DELETE
+docsuri_u8|table|personalization.projection|docsuri_personalization_owner|INSERT
+docsuri_u8|table|personalization.projection|docsuri_personalization_owner|REFERENCES
+docsuri_u8|table|personalization.projection|docsuri_personalization_owner|SELECT
+docsuri_u8|table|personalization.projection|docsuri_personalization_owner|TRIGGER
+docsuri_u8|table|personalization.projection|docsuri_personalization_owner|TRUNCATE
+docsuri_u8|table|personalization.projection|docsuri_personalization_owner|UPDATE
+docsuri_u8|table|personalization.projection|docsuri_personalization|DELETE
+docsuri_u8|table|personalization.projection|docsuri_personalization|INSERT
+docsuri_u8|table|personalization.projection|docsuri_personalization|SELECT
+docsuri_u8|table|personalization.projection|docsuri_personalization|UPDATE
+docsuri_u8|table|personalization.receipt|docsuri_personalization_owner|DELETE
+docsuri_u8|table|personalization.receipt|docsuri_personalization_owner|INSERT
+docsuri_u8|table|personalization.receipt|docsuri_personalization_owner|REFERENCES
+docsuri_u8|table|personalization.receipt|docsuri_personalization_owner|SELECT
+docsuri_u8|table|personalization.receipt|docsuri_personalization_owner|TRIGGER
+docsuri_u8|table|personalization.receipt|docsuri_personalization_owner|TRUNCATE
+docsuri_u8|table|personalization.receipt|docsuri_personalization_owner|UPDATE
+docsuri_u8|table|personalization.receipt|docsuri_personalization|INSERT
+docsuri_u8|table|personalization.receipt|docsuri_personalization|SELECT
+docsuri_u8|table|personalization.reset_responsibility|docsuri_personalization_owner|DELETE
+docsuri_u8|table|personalization.reset_responsibility|docsuri_personalization_owner|INSERT
+docsuri_u8|table|personalization.reset_responsibility|docsuri_personalization_owner|REFERENCES
+docsuri_u8|table|personalization.reset_responsibility|docsuri_personalization_owner|SELECT
+docsuri_u8|table|personalization.reset_responsibility|docsuri_personalization_owner|TRIGGER
+docsuri_u8|table|personalization.reset_responsibility|docsuri_personalization_owner|TRUNCATE
+docsuri_u8|table|personalization.reset_responsibility|docsuri_personalization_owner|UPDATE
+docsuri_u8|table|personalization.reset_responsibility|docsuri_personalization|INSERT
+docsuri_u8|table|personalization.reset_responsibility|docsuri_personalization|SELECT
+docsuri_u8|table|personalization.reset_responsibility|docsuri_personalization|UPDATE
+docsuri_u8|table|personalization.reset_scope|docsuri_personalization_owner|DELETE
+docsuri_u8|table|personalization.reset_scope|docsuri_personalization_owner|INSERT
+docsuri_u8|table|personalization.reset_scope|docsuri_personalization_owner|REFERENCES
+docsuri_u8|table|personalization.reset_scope|docsuri_personalization_owner|SELECT
+docsuri_u8|table|personalization.reset_scope|docsuri_personalization_owner|TRIGGER
+docsuri_u8|table|personalization.reset_scope|docsuri_personalization_owner|TRUNCATE
+docsuri_u8|table|personalization.reset_scope|docsuri_personalization_owner|UPDATE
+docsuri_u8|table|personalization.reset_scope|docsuri_personalization|INSERT
+docsuri_u8|table|personalization.reset_scope|docsuri_personalization|SELECT
+docsuri_u8|table|personalization.reset_scope|docsuri_personalization|UPDATE
+docsuri_u8|table|personalization.restore_checkpoint|docsuri_personalization_owner|DELETE
+docsuri_u8|table|personalization.restore_checkpoint|docsuri_personalization_owner|INSERT
+docsuri_u8|table|personalization.restore_checkpoint|docsuri_personalization_owner|REFERENCES
+docsuri_u8|table|personalization.restore_checkpoint|docsuri_personalization_owner|SELECT
+docsuri_u8|table|personalization.restore_checkpoint|docsuri_personalization_owner|TRIGGER
+docsuri_u8|table|personalization.restore_checkpoint|docsuri_personalization_owner|TRUNCATE
+docsuri_u8|table|personalization.restore_checkpoint|docsuri_personalization_owner|UPDATE
+docsuri_u8|table|personalization.settings|docsuri_personalization_owner|DELETE
+docsuri_u8|table|personalization.settings|docsuri_personalization_owner|INSERT
+docsuri_u8|table|personalization.settings|docsuri_personalization_owner|REFERENCES
+docsuri_u8|table|personalization.settings|docsuri_personalization_owner|SELECT
+docsuri_u8|table|personalization.settings|docsuri_personalization_owner|TRIGGER
+docsuri_u8|table|personalization.settings|docsuri_personalization_owner|TRUNCATE
+docsuri_u8|table|personalization.settings|docsuri_personalization_owner|UPDATE
+docsuri_u8|table|personalization.settings|docsuri_personalization|DELETE
+docsuri_u8|table|personalization.settings|docsuri_personalization|INSERT
+docsuri_u8|table|personalization.settings|docsuri_personalization|SELECT
+docsuri_u8|table|personalization.settings|docsuri_personalization|UPDATE
+docsuri_u8|table|public.docsuri_local_identity|docsuri_accounts|SELECT
+docsuri_u8|table|public.docsuri_local_identity|docsuri_assistance|SELECT
+docsuri_u8|table|public.docsuri_local_identity|docsuri_corpus|SELECT
+docsuri_u8|table|public.docsuri_local_identity|docsuri_discovery|SELECT
+docsuri_u8|table|public.docsuri_local_identity|docsuri_export|SELECT
+docsuri_u8|table|public.docsuri_local_identity|docsuri_library|SELECT
+docsuri_u8|table|public.docsuri_local_identity|docsuri_operations|SELECT
+docsuri_u8|table|public.docsuri_local_identity|docsuri_personalization|SELECT
+docsuri_u8|table|public.docsuri_local_identity|docsuri_research|SELECT
+docsuri_u8|table|public.docsuri_local_identity|docsuri_topics|SELECT
+docsuri_u8|table|public.docsuri_local_identity|docsuri_usage|SELECT
+docsuri_u8|table|research.admission|docsuri_research_owner|DELETE
+docsuri_u8|table|research.admission|docsuri_research_owner|INSERT
+docsuri_u8|table|research.admission|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.admission|docsuri_research_owner|SELECT
+docsuri_u8|table|research.admission|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.admission|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.admission|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.admission|docsuri_research|INSERT
+docsuri_u8|table|research.admission|docsuri_research|SELECT
+docsuri_u8|table|research.admission|docsuri_research|UPDATE
+docsuri_u8|table|research.artifact|docsuri_research_owner|DELETE
+docsuri_u8|table|research.artifact|docsuri_research_owner|INSERT
+docsuri_u8|table|research.artifact|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.artifact|docsuri_research_owner|SELECT
+docsuri_u8|table|research.artifact|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.artifact|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.artifact|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.artifact|docsuri_research|INSERT
+docsuri_u8|table|research.artifact|docsuri_research|SELECT
+docsuri_u8|table|research.artifact|docsuri_research|UPDATE
+docsuri_u8|table|research.assessment|docsuri_research_owner|DELETE
+docsuri_u8|table|research.assessment|docsuri_research_owner|INSERT
+docsuri_u8|table|research.assessment|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.assessment|docsuri_research_owner|SELECT
+docsuri_u8|table|research.assessment|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.assessment|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.assessment|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.assessment|docsuri_research|INSERT
+docsuri_u8|table|research.assessment|docsuri_research|SELECT
+docsuri_u8|table|research.assessment|docsuri_research|UPDATE
+docsuri_u8|table|research.attachment|docsuri_research_owner|DELETE
+docsuri_u8|table|research.attachment|docsuri_research_owner|INSERT
+docsuri_u8|table|research.attachment|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.attachment|docsuri_research_owner|SELECT
+docsuri_u8|table|research.attachment|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.attachment|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.attachment|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.attachment|docsuri_research|INSERT
+docsuri_u8|table|research.attachment|docsuri_research|SELECT
+docsuri_u8|table|research.attachment|docsuri_research|UPDATE
+docsuri_u8|table|research.context|docsuri_research_owner|DELETE
+docsuri_u8|table|research.context|docsuri_research_owner|INSERT
+docsuri_u8|table|research.context|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.context|docsuri_research_owner|SELECT
+docsuri_u8|table|research.context|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.context|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.context|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.context|docsuri_research|INSERT
+docsuri_u8|table|research.context|docsuri_research|SELECT
+docsuri_u8|table|research.context|docsuri_research|UPDATE
+docsuri_u8|table|research.dispatch|docsuri_research_owner|DELETE
+docsuri_u8|table|research.dispatch|docsuri_research_owner|INSERT
+docsuri_u8|table|research.dispatch|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.dispatch|docsuri_research_owner|SELECT
+docsuri_u8|table|research.dispatch|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.dispatch|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.dispatch|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.dispatch|docsuri_research|INSERT
+docsuri_u8|table|research.dispatch|docsuri_research|SELECT
+docsuri_u8|table|research.dispatch|docsuri_research|UPDATE
+docsuri_u8|table|research.draft_revision|docsuri_research_owner|DELETE
+docsuri_u8|table|research.draft_revision|docsuri_research_owner|INSERT
+docsuri_u8|table|research.draft_revision|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.draft_revision|docsuri_research_owner|SELECT
+docsuri_u8|table|research.draft_revision|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.draft_revision|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.draft_revision|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.draft_revision|docsuri_research|INSERT
+docsuri_u8|table|research.draft_revision|docsuri_research|SELECT
+docsuri_u8|table|research.draft_revision|docsuri_research|UPDATE
+docsuri_u8|table|research.draft|docsuri_research_owner|DELETE
+docsuri_u8|table|research.draft|docsuri_research_owner|INSERT
+docsuri_u8|table|research.draft|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.draft|docsuri_research_owner|SELECT
+docsuri_u8|table|research.draft|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.draft|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.draft|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.draft|docsuri_research|INSERT
+docsuri_u8|table|research.draft|docsuri_research|SELECT
+docsuri_u8|table|research.draft|docsuri_research|UPDATE
+docsuri_u8|table|research.evidence|docsuri_research_owner|DELETE
+docsuri_u8|table|research.evidence|docsuri_research_owner|INSERT
+docsuri_u8|table|research.evidence|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.evidence|docsuri_research_owner|SELECT
+docsuri_u8|table|research.evidence|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.evidence|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.evidence|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.evidence|docsuri_research|INSERT
+docsuri_u8|table|research.evidence|docsuri_research|SELECT
+docsuri_u8|table|research.evidence|docsuri_research|UPDATE
+docsuri_u8|table|research.job|docsuri_research_owner|DELETE
+docsuri_u8|table|research.job|docsuri_research_owner|INSERT
+docsuri_u8|table|research.job|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.job|docsuri_research_owner|SELECT
+docsuri_u8|table|research.job|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.job|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.job|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.job|docsuri_research|INSERT
+docsuri_u8|table|research.job|docsuri_research|SELECT
+docsuri_u8|table|research.job|docsuri_research|UPDATE
+docsuri_u8|table|research.lifecycle_counts|docsuri_research_owner|DELETE
+docsuri_u8|table|research.lifecycle_counts|docsuri_research_owner|INSERT
+docsuri_u8|table|research.lifecycle_counts|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.lifecycle_counts|docsuri_research_owner|SELECT
+docsuri_u8|table|research.lifecycle_counts|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.lifecycle_counts|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.lifecycle_counts|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.lifecycle_counts|docsuri_research|INSERT
+docsuri_u8|table|research.lifecycle_counts|docsuri_research|SELECT
+docsuri_u8|table|research.lifecycle_evidence|docsuri_research_owner|DELETE
+docsuri_u8|table|research.lifecycle_evidence|docsuri_research_owner|INSERT
+docsuri_u8|table|research.lifecycle_evidence|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.lifecycle_evidence|docsuri_research_owner|SELECT
+docsuri_u8|table|research.lifecycle_evidence|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.lifecycle_evidence|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.lifecycle_evidence|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.lifecycle_evidence|docsuri_research|INSERT
+docsuri_u8|table|research.lifecycle_evidence|docsuri_research|SELECT
+docsuri_u8|table|research.lifecycle_evidence|docsuri_research|UPDATE
+docsuri_u8|table|research.receipt|docsuri_research_owner|DELETE
+docsuri_u8|table|research.receipt|docsuri_research_owner|INSERT
+docsuri_u8|table|research.receipt|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.receipt|docsuri_research_owner|SELECT
+docsuri_u8|table|research.receipt|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.receipt|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.receipt|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.receipt|docsuri_research|INSERT
+docsuri_u8|table|research.receipt|docsuri_research|SELECT
+docsuri_u8|table|research.receipt|docsuri_research|UPDATE
+docsuri_u8|table|research.session|docsuri_research_owner|DELETE
+docsuri_u8|table|research.session|docsuri_research_owner|INSERT
+docsuri_u8|table|research.session|docsuri_research_owner|REFERENCES
+docsuri_u8|table|research.session|docsuri_research_owner|SELECT
+docsuri_u8|table|research.session|docsuri_research_owner|TRIGGER
+docsuri_u8|table|research.session|docsuri_research_owner|TRUNCATE
+docsuri_u8|table|research.session|docsuri_research_owner|UPDATE
+docsuri_u8|table|research.session|docsuri_research|INSERT
+docsuri_u8|table|research.session|docsuri_research|SELECT
+docsuri_u8|table|research.session|docsuri_research|UPDATE
+docsuri_u8|table|topics.delivery_outcome|docsuri_topics_owner|DELETE
+docsuri_u8|table|topics.delivery_outcome|docsuri_topics_owner|INSERT
+docsuri_u8|table|topics.delivery_outcome|docsuri_topics_owner|REFERENCES
+docsuri_u8|table|topics.delivery_outcome|docsuri_topics_owner|SELECT
+docsuri_u8|table|topics.delivery_outcome|docsuri_topics_owner|TRIGGER
+docsuri_u8|table|topics.delivery_outcome|docsuri_topics_owner|TRUNCATE
+docsuri_u8|table|topics.delivery_outcome|docsuri_topics_owner|UPDATE
+docsuri_u8|table|topics.delivery_outcome|docsuri_topics|INSERT
+docsuri_u8|table|topics.delivery_outcome|docsuri_topics|SELECT
+docsuri_u8|table|topics.delivery_outcome|docsuri_topics|UPDATE
+docsuri_u8|table|topics.digest_run|docsuri_topics_owner|DELETE
+docsuri_u8|table|topics.digest_run|docsuri_topics_owner|INSERT
+docsuri_u8|table|topics.digest_run|docsuri_topics_owner|REFERENCES
+docsuri_u8|table|topics.digest_run|docsuri_topics_owner|SELECT
+docsuri_u8|table|topics.digest_run|docsuri_topics_owner|TRIGGER
+docsuri_u8|table|topics.digest_run|docsuri_topics_owner|TRUNCATE
+docsuri_u8|table|topics.digest_run|docsuri_topics_owner|UPDATE
+docsuri_u8|table|topics.digest_run|docsuri_topics|INSERT
+docsuri_u8|table|topics.digest_run|docsuri_topics|SELECT
+docsuri_u8|table|topics.digest_run|docsuri_topics|UPDATE
+docsuri_u8|table|topics.digest_settings|docsuri_topics_owner|DELETE
+docsuri_u8|table|topics.digest_settings|docsuri_topics_owner|INSERT
+docsuri_u8|table|topics.digest_settings|docsuri_topics_owner|REFERENCES
+docsuri_u8|table|topics.digest_settings|docsuri_topics_owner|SELECT
+docsuri_u8|table|topics.digest_settings|docsuri_topics_owner|TRIGGER
+docsuri_u8|table|topics.digest_settings|docsuri_topics_owner|TRUNCATE
+docsuri_u8|table|topics.digest_settings|docsuri_topics_owner|UPDATE
+docsuri_u8|table|topics.digest_settings|docsuri_topics|INSERT
+docsuri_u8|table|topics.digest_settings|docsuri_topics|SELECT
+docsuri_u8|table|topics.digest_settings|docsuri_topics|UPDATE
+docsuri_u8|table|topics.email_unsubscribe|docsuri_topics_owner|DELETE
+docsuri_u8|table|topics.email_unsubscribe|docsuri_topics_owner|INSERT
+docsuri_u8|table|topics.email_unsubscribe|docsuri_topics_owner|REFERENCES
+docsuri_u8|table|topics.email_unsubscribe|docsuri_topics_owner|SELECT
+docsuri_u8|table|topics.email_unsubscribe|docsuri_topics_owner|TRIGGER
+docsuri_u8|table|topics.email_unsubscribe|docsuri_topics_owner|TRUNCATE
+docsuri_u8|table|topics.email_unsubscribe|docsuri_topics_owner|UPDATE
+docsuri_u8|table|topics.email_unsubscribe|docsuri_topics|DELETE
+docsuri_u8|table|topics.email_unsubscribe|docsuri_topics|INSERT
+docsuri_u8|table|topics.email_unsubscribe|docsuri_topics|SELECT
+docsuri_u8|table|topics.email_unsubscribe|docsuri_topics|UPDATE
+docsuri_u8|table|topics.followed_topic|docsuri_topics_owner|DELETE
+docsuri_u8|table|topics.followed_topic|docsuri_topics_owner|INSERT
+docsuri_u8|table|topics.followed_topic|docsuri_topics_owner|REFERENCES
+docsuri_u8|table|topics.followed_topic|docsuri_topics_owner|SELECT
+docsuri_u8|table|topics.followed_topic|docsuri_topics_owner|TRIGGER
+docsuri_u8|table|topics.followed_topic|docsuri_topics_owner|TRUNCATE
+docsuri_u8|table|topics.followed_topic|docsuri_topics_owner|UPDATE
+docsuri_u8|table|topics.followed_topic|docsuri_topics|INSERT
+docsuri_u8|table|topics.followed_topic|docsuri_topics|SELECT
+docsuri_u8|table|topics.followed_topic|docsuri_topics|UPDATE
+docsuri_u8|table|topics.lifecycle_evidence|docsuri_topics_owner|DELETE
+docsuri_u8|table|topics.lifecycle_evidence|docsuri_topics_owner|INSERT
+docsuri_u8|table|topics.lifecycle_evidence|docsuri_topics_owner|REFERENCES
+docsuri_u8|table|topics.lifecycle_evidence|docsuri_topics_owner|SELECT
+docsuri_u8|table|topics.lifecycle_evidence|docsuri_topics_owner|TRIGGER
+docsuri_u8|table|topics.lifecycle_evidence|docsuri_topics_owner|TRUNCATE
+docsuri_u8|table|topics.lifecycle_evidence|docsuri_topics_owner|UPDATE
+docsuri_u8|table|topics.lifecycle_evidence|docsuri_topics|INSERT
+docsuri_u8|table|topics.lifecycle_evidence|docsuri_topics|SELECT
+docsuri_u8|table|topics.lifecycle_evidence|docsuri_topics|UPDATE
+docsuri_u8|table|topics.send_log_entry|docsuri_topics_owner|DELETE
+docsuri_u8|table|topics.send_log_entry|docsuri_topics_owner|INSERT
+docsuri_u8|table|topics.send_log_entry|docsuri_topics_owner|REFERENCES
+docsuri_u8|table|topics.send_log_entry|docsuri_topics_owner|SELECT
+docsuri_u8|table|topics.send_log_entry|docsuri_topics_owner|TRIGGER
+docsuri_u8|table|topics.send_log_entry|docsuri_topics_owner|TRUNCATE
+docsuri_u8|table|topics.send_log_entry|docsuri_topics_owner|UPDATE
+docsuri_u8|table|topics.send_log_entry|docsuri_topics|INSERT
+docsuri_u8|table|topics.send_log_entry|docsuri_topics|SELECT
+docsuri_u8|table|topics.send_log_entry|docsuri_topics|UPDATE
+docsuri_u8|table|topics.topic_delivery_watermark|docsuri_topics_owner|DELETE
+docsuri_u8|table|topics.topic_delivery_watermark|docsuri_topics_owner|INSERT
+docsuri_u8|table|topics.topic_delivery_watermark|docsuri_topics_owner|REFERENCES
+docsuri_u8|table|topics.topic_delivery_watermark|docsuri_topics_owner|SELECT
+docsuri_u8|table|topics.topic_delivery_watermark|docsuri_topics_owner|TRIGGER
+docsuri_u8|table|topics.topic_delivery_watermark|docsuri_topics_owner|TRUNCATE
+docsuri_u8|table|topics.topic_delivery_watermark|docsuri_topics_owner|UPDATE
+docsuri_u8|table|topics.topic_delivery_watermark|docsuri_topics|INSERT
+docsuri_u8|table|topics.topic_delivery_watermark|docsuri_topics|SELECT
+docsuri_u8|table|topics.topic_delivery_watermark|docsuri_topics|UPDATE
+docsuri_u8|table|usage.assignment_receipt|docsuri_usage_owner|DELETE
+docsuri_u8|table|usage.assignment_receipt|docsuri_usage_owner|INSERT
+docsuri_u8|table|usage.assignment_receipt|docsuri_usage_owner|REFERENCES
+docsuri_u8|table|usage.assignment_receipt|docsuri_usage_owner|SELECT
+docsuri_u8|table|usage.assignment_receipt|docsuri_usage_owner|TRIGGER
+docsuri_u8|table|usage.assignment_receipt|docsuri_usage_owner|TRUNCATE
+docsuri_u8|table|usage.assignment_receipt|docsuri_usage_owner|UPDATE
+docsuri_u8|table|usage.assignment_receipt|docsuri_usage|INSERT
+docsuri_u8|table|usage.assignment_receipt|docsuri_usage|SELECT
+docsuri_u8|table|usage.assignment_receipt|docsuri_usage|UPDATE
+docsuri_u8|table|usage.entitlement|docsuri_usage_owner|DELETE
+docsuri_u8|table|usage.entitlement|docsuri_usage_owner|INSERT
+docsuri_u8|table|usage.entitlement|docsuri_usage_owner|REFERENCES
+docsuri_u8|table|usage.entitlement|docsuri_usage_owner|SELECT
+docsuri_u8|table|usage.entitlement|docsuri_usage_owner|TRIGGER
+docsuri_u8|table|usage.entitlement|docsuri_usage_owner|TRUNCATE
+docsuri_u8|table|usage.entitlement|docsuri_usage_owner|UPDATE
+docsuri_u8|table|usage.entitlement|docsuri_usage|DELETE
+docsuri_u8|table|usage.entitlement|docsuri_usage|INSERT
+docsuri_u8|table|usage.entitlement|docsuri_usage|SELECT
+docsuri_u8|table|usage.entitlement|docsuri_usage|UPDATE
+docsuri_u8|table|usage.lifecycle_evidence|docsuri_usage_owner|DELETE
+docsuri_u8|table|usage.lifecycle_evidence|docsuri_usage_owner|INSERT
+docsuri_u8|table|usage.lifecycle_evidence|docsuri_usage_owner|REFERENCES
+docsuri_u8|table|usage.lifecycle_evidence|docsuri_usage_owner|SELECT
+docsuri_u8|table|usage.lifecycle_evidence|docsuri_usage_owner|TRIGGER
+docsuri_u8|table|usage.lifecycle_evidence|docsuri_usage_owner|TRUNCATE
+docsuri_u8|table|usage.lifecycle_evidence|docsuri_usage_owner|UPDATE
+docsuri_u8|table|usage.lifecycle_evidence|docsuri_usage|INSERT
+docsuri_u8|table|usage.lifecycle_evidence|docsuri_usage|SELECT
+docsuri_u8|table|usage.lifecycle_evidence|docsuri_usage|UPDATE
+docsuri_u8|table|usage.receipt|docsuri_usage_owner|DELETE
+docsuri_u8|table|usage.receipt|docsuri_usage_owner|INSERT
+docsuri_u8|table|usage.receipt|docsuri_usage_owner|REFERENCES
+docsuri_u8|table|usage.receipt|docsuri_usage_owner|SELECT
+docsuri_u8|table|usage.receipt|docsuri_usage_owner|TRIGGER
+docsuri_u8|table|usage.receipt|docsuri_usage_owner|TRUNCATE
+docsuri_u8|table|usage.receipt|docsuri_usage_owner|UPDATE
+docsuri_u8|table|usage.receipt|docsuri_usage|INSERT
+docsuri_u8|table|usage.receipt|docsuri_usage|SELECT
+docsuri_u8|table|usage.rejected_operation|docsuri_usage_owner|DELETE
+docsuri_u8|table|usage.rejected_operation|docsuri_usage_owner|INSERT
+docsuri_u8|table|usage.rejected_operation|docsuri_usage_owner|REFERENCES
+docsuri_u8|table|usage.rejected_operation|docsuri_usage_owner|SELECT
+docsuri_u8|table|usage.rejected_operation|docsuri_usage_owner|TRIGGER
+docsuri_u8|table|usage.rejected_operation|docsuri_usage_owner|TRUNCATE
+docsuri_u8|table|usage.rejected_operation|docsuri_usage_owner|UPDATE
+docsuri_u8|table|usage.rejected_operation|docsuri_usage|INSERT
+docsuri_u8|table|usage.rejected_operation|docsuri_usage|SELECT
+docsuri_u8|table|usage.reservation|docsuri_usage_owner|DELETE
+docsuri_u8|table|usage.reservation|docsuri_usage_owner|INSERT
+docsuri_u8|table|usage.reservation|docsuri_usage_owner|REFERENCES
+docsuri_u8|table|usage.reservation|docsuri_usage_owner|SELECT
+docsuri_u8|table|usage.reservation|docsuri_usage_owner|TRIGGER
+docsuri_u8|table|usage.reservation|docsuri_usage_owner|TRUNCATE
+docsuri_u8|table|usage.reservation|docsuri_usage_owner|UPDATE
+docsuri_u8|table|usage.reservation|docsuri_usage|DELETE
+docsuri_u8|table|usage.reservation|docsuri_usage|INSERT
+docsuri_u8|table|usage.reservation|docsuri_usage|SELECT
+docsuri_u8|table|usage.reservation|docsuri_usage|UPDATE
+docsuri_u8|table|usage.restore_checkpoint|docsuri_usage_owner|DELETE
+docsuri_u8|table|usage.restore_checkpoint|docsuri_usage_owner|INSERT
+docsuri_u8|table|usage.restore_checkpoint|docsuri_usage_owner|REFERENCES
+docsuri_u8|table|usage.restore_checkpoint|docsuri_usage_owner|SELECT
+docsuri_u8|table|usage.restore_checkpoint|docsuri_usage_owner|TRIGGER
+docsuri_u8|table|usage.restore_checkpoint|docsuri_usage_owner|TRUNCATE
+docsuri_u8|table|usage.restore_checkpoint|docsuri_usage_owner|UPDATE

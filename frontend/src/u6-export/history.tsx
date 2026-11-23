@@ -3,7 +3,11 @@
 Continue completes an interrupted press and is never a second approval (BR3.7); it
 is offered only while the approving session is current. Cancel acts on an approval
 not yet started or an accepted export (BR3.6). Settlement appears only when the
-entry says it is offered (BR4.5). Reads never export (BR2.2). */
+entry says it is offered (BR4.5). Reads never export (BR2.2).
+
+A fresh preview is offered for an approval that can no longer be continued, for an
+invalidated approval, and for an export invalidated before its write (BR3.3; the
+'Changed before the write' flow of U6's frontend components). */
 
 import React, { useRef, useState } from 'react';
 import { ApiError, type Transport } from '../api';
@@ -119,7 +123,10 @@ function HistoryRow({
   const canContinue = notStarted && entry.continuable;
   const canCancel = notStarted || effect?.state === 'accepted';
   const canSettle = effect?.state === 'unknown' && effect.settlementOffered;
-  const needsFreshPreview = (notStarted && !entry.continuable) || entry.state === 'invalidated';
+  const needsFreshPreview =
+    (notStarted && !entry.continuable) ||
+    entry.state === 'invalidated' ||
+    effect?.state === 'invalidated';
   const reason = rowReason(entry);
   return (
     <li className="export-history-row" data-testid="history-row">

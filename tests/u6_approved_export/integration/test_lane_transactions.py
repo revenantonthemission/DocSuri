@@ -7,12 +7,13 @@ shutdown the lane stops taking items and finishes the one in hand (security desi
 import threading
 import time
 
-from backend.control_runtime import ControlLoop
+from backend.control_runtime import ControlLoop, work_budget
 from backend.modules.export.fake_notion import Answer
+from backend.modules.export.lane import UNIT_SECONDS
 from backend.modules.export.worker import ExportWorker
-
 from tests.u6_approved_export import lane_flows as lf
 from tests.u6_approved_export import notion_flows as nf
+from tests.u6_approved_export import service_flows as sf
 
 # The application name every runtime transaction pool of the realm sets.
 RUNTIME_APPLICATIONS = "docsuri-approved-export-%"
@@ -40,7 +41,9 @@ def open_transactions(connect) -> list:
 def test_no_transaction_is_open_while_notion_answers_a_write(
     transactions, connect, authority, tmp_path
 ):
-    lr = lf.build(transactions, connect, authority, tmp_path)
+    lr = lf.build(
+        transactions, connect, authority, tmp_path, research=sf.real_research(transactions)
+    )
     flow = lf.pressed(lr)
     seen: list = []
     lf.on_write(lr.fake, lambda: seen.append(open_transactions(connect)))
@@ -60,7 +63,14 @@ def test_a_pass_returns_within_its_deadline_while_the_lane_runs_a_slow_write(
     transactions, connect, authority, tmp_path
 ):
     policy = nf.policy(write_deadline_seconds=SLOW_WRITE_SECONDS * 3)
-    lr = lf.build(transactions, connect, authority, tmp_path, policy=policy)
+    lr = lf.build(
+        transactions,
+        connect,
+        authority,
+        tmp_path,
+        policy=policy,
+        research=sf.real_research(transactions),
+    )
     flow = lf.pressed(lr)
     writing = threading.Event()
     lf.on_write(lr.fake, writing.set)
@@ -85,10 +95,73 @@ def test_a_pass_returns_within_its_deadline_while_the_lane_runs_a_slow_write(
     assert len(lr.fake.writes) == 1
 
 
+def test_the_lane_holds_one_connection_per_thread_and_one_write(
+    transactions, connect, connect_raw, authority, tmp_path
+):
+    lr = lf.build(
+        transactions, connect, authority, tmp_path, research=sf.real_research(transactions)
+    )
+    flow = lf.pressed(lr)
+    depth = lf.RunDepth(lr.repo.transactions)
+    lr.repo.transactions = depth
+    lr.fake.queue("pages.create", Answer.slow(1))
+    step = lf.own_step(lr, lr.lane, [lf.effect_id(flow["effect"])])
+
+    lr.lane.start()
+    try:
+        with lf.ConnectionSampler(connect_raw) as sampler:
+            assert step.run_once()["handedOver"] == "execute"
+            lf.wait_for(lambda: lf.row(connect, flow["effect"])["state"] == "succeeded")
+    finally:
+        assert lr.lane.stop()
+
+    assert sampler.samples and max(sampler.samples) <= 1
+    assert depth.max_depth == 1
+    assert len([thread for thread in depth.calls if thread == "docsuri-export-lane"]) >= 4
+    assert len(lr.fake.writes) == 1
+    assert transactions.run("export", lambda conn: conn.remaining()) <= UNIT_SECONDS
+    with work_budget(0.5):
+        assert transactions.run("export", lambda conn: conn.remaining()) <= 0.5
+
+
+def test_a_scan_holds_one_connection_and_records_one_check(
+    transactions, connect, connect_raw, authority, tmp_path
+):
+    lr = lf.build(
+        transactions, connect, authority, tmp_path, research=sf.real_research(transactions)
+    )
+    flow = lf.pressed(lr)
+    effect = lr.rig.uncertain(flow["effect"])
+    lr.rig.clock.advance(300)
+    depth = lf.RunDepth(lr.repo.transactions)
+    lr.repo.transactions = depth
+    lr.fake.queue("blocks.children", Answer.slow(0.5))
+    step = lf.own_step(lr, lr.lane, [lf.effect_id(effect)])
+
+    lr.lane.start()
+    try:
+        with lf.ConnectionSampler(connect_raw) as sampler:
+            assert step.run_once()["handedOver"] == "scan"
+            lf.wait_for(
+                lambda: (lf.latest_lane_status(connect) or {})
+                .get("outcome", "")
+                .startswith("scan-")
+            )
+    finally:
+        assert lr.lane.stop()
+
+    assert sampler.samples and max(sampler.samples) <= 1
+    assert depth.max_depth == 1
+    assert len(lf.checks(connect, effect)) == 1
+    assert lf.latest_lane_status(connect)["outcome"].startswith("scan-")
+
+
 def test_shutdown_stops_taking_items_and_finishes_the_one_in_hand(
     transactions, connect, authority, tmp_path
 ):
-    lr = lf.build(transactions, connect, authority, tmp_path)
+    lr = lf.build(
+        transactions, connect, authority, tmp_path, research=sf.real_research(transactions)
+    )
     flow = lf.pressed(lr)
     writing = threading.Event()
     lf.on_write(lr.fake, writing.set)

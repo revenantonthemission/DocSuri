@@ -1,0 +1,108 @@
+{
+  "comment": "The eleven system launch jobs (tech-stack-decisions § launchd, reliability-design § 3). Rendered by render.py into /Library/LaunchDaemons/<label>.plist, root:wheel 0644. No value is a secret: a job finds its secrets only in its own account's folder (security-design § 6.1).",
+  "jobs": [
+    {
+      "label": "org.docsuri.v2.host",
+      "account": "service",
+      "arguments": ["${release}/.venv/bin/python", "-I", "-m", "backend.u8_main", "host", "--profile", "${prefix}/profile/environment.json"],
+      "workingDirectory": "${release}",
+      "keepAlive": true,
+      "logs": "${prefix}/profile/logs/host"
+    },
+    {
+      "label": "org.docsuri.v2.workers",
+      "account": "service",
+      "arguments": ["${release}/.venv/bin/python", "-I", "-m", "backend.u8_main", "workers", "--profile", "${prefix}/profile/environment.json"],
+      "workingDirectory": "${release}",
+      "keepAlive": true,
+      "logs": "${prefix}/profile/logs/workers"
+    },
+    {
+      "label": "org.docsuri.v2.scheduler",
+      "account": "service",
+      "arguments": ["${release}/.venv/bin/python", "-I", "-m", "backend.u8_main", "scheduler", "--profile", "${prefix}/profile/environment.json"],
+      "workingDirectory": "${release}",
+      "keepAlive": true,
+      "logs": "${prefix}/profile/logs/scheduler"
+    },
+    {
+      "label": "org.docsuri.v2.maintenance",
+      "account": "service",
+      "arguments": ["${release}/.venv/bin/python", "-I", "-m", "backend.maintenance_server", "--build", "${release}/frontend/dist", "--port", "18201", "--public-authority", "docsuri.rvnnt.dev", "--log-folder", "${prefix}/profile/logs"],
+      "workingDirectory": "${release}",
+      "keepAlive": true,
+      "logs": "${prefix}/profile/logs/maintenance"
+    },
+    {
+      "label": "org.docsuri.v2.standing",
+      "account": "scheduler",
+      "arguments": ["${release}/ops/bin/docsuri-standing"],
+      "workingDirectory": "${prefix}/scheduler",
+      "keepAlive": true,
+      "logs": "${prefix}/scheduler/logs/standing"
+    },
+    {
+      "label": "org.docsuri.v2.postgres",
+      "account": "database",
+      "arguments": ["${prefix}/runtimes/postgresql-16.14/bin/postgres", "-D", "${prefix}/postgres/data",
+                    "-c", "hba_file=${prefix}/postgres-rules/pg_hba.conf",
+                    "-c", "ident_file=${prefix}/postgres-rules/pg_ident.conf",
+                    "-c", "listen_addresses=127.0.0.1", "-c", "port=15432",
+                    "-c", "unix_socket_directories=${prefix}/postgres/socket",
+                    "-c", "unix_socket_permissions=0700",
+                    "-c", "shared_preload_libraries="],
+      "workingDirectory": "${prefix}/postgres/data",
+      "keepAlive": true,
+      "logs": "${prefix}/postgres/logs/postmaster"
+    },
+    {
+      "label": "org.docsuri.models",
+      "account": "models",
+      "arguments": ["${prefix}/runtimes/ollama-0.40.7/ollama", "serve"],
+      "workingDirectory": "${prefix}/models-state",
+      "environment": {
+        "OLLAMA_HOST": "127.0.0.1:11434",
+        "OLLAMA_MODELS": "${prefix}/models",
+        "HOME": "${prefix}/models-state",
+        "OLLAMA_MAX_LOADED_MODELS": "2",
+        "OLLAMA_NUM_PARALLEL": "1"
+      },
+      "keepAlive": true,
+      "logs": "${prefix}/models-state/logs/ollama"
+    },
+    {
+      "label": "org.docsuri.tunnel",
+      "account": "tunnel",
+      "arguments": ["${prefix}/runtimes/cloudflared-2026.10.3/cloudflared", "tunnel", "--config", "${prefix}/tunnel/config/active.yml", "run"],
+      "workingDirectory": "${prefix}/tunnel/logs",
+      "keepAlive": true,
+      "logs": "${prefix}/tunnel/logs/cloudflared"
+    },
+    {
+      "label": "org.docsuri.v2.pf",
+      "account": "root",
+      "arguments": ["${release}/ops/bin/docsuri-pf-load"],
+      "workingDirectory": "/",
+      "keepAlive": false,
+      "logs": "${prefix}/control/logs/pf-load"
+    },
+    {
+      "label": "org.docsuri.v2.backup-unlock",
+      "account": "root",
+      "arguments": ["${release}/ops/bin/docsuri-backup-unlock"],
+      "workingDirectory": "/",
+      "keepAlive": false,
+      "startInterval": 60,
+      "logs": "${prefix}/control/logs/backup-unlock"
+    },
+    {
+      "label": "org.docsuri.v2.logrotate",
+      "account": "root",
+      "arguments": ["${release}/ops/bin/docsuri-logrotate"],
+      "workingDirectory": "/",
+      "keepAlive": false,
+      "calendar": {"Hour": 3, "Minute": 0},
+      "logs": "${prefix}/control/logs/logrotate"
+    }
+  ]
+}

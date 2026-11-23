@@ -7,8 +7,10 @@ import {
   connectNotion,
   destinationOption,
   ensureDisconnected,
+  expectReflowAt320,
   expectStep,
   fixtures,
+  focused,
   historyRow,
   login,
   openExportView,
@@ -16,6 +18,7 @@ import {
   reopenExportView,
   scrub,
   waitForSettlement,
+  withViewport320,
 } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
@@ -105,22 +108,52 @@ test('an unclear outcome, the history and the settle dialog', async ({ page }) =
   await previewOf(page, names.settle);
   await page.getByTestId('preview-approve').click();
   await expect(page.getByTestId('outcome-status')).toContainText('확인 중', { timeout: 30_000 });
+  await withViewport320(page, async () => {
+    await expect(page.getByTestId('outcome-next-check')).toBeVisible();
+    expect(
+      await expectReflowAt320(page, 'export-flow'),
+      'the unclear outcome reflows at 320 px',
+    ).toEqual({ width: 320, page: false, surface: false, offscreen: false, nested: [] });
+  });
   await expectAccessible(page, 'export-flow');
   advanceExportClock();
   await openExportView(page);
   await waitForSettlement(page, names.settle, () => reopenExportView(page));
   await expectAccessible(page, 'export-view');
+  await withViewport320(page, async () => {
+    expect(
+      await expectReflowAt320(page, 'export-view'),
+      'the view offering settlement reflows at 320 px',
+    ).toEqual({ width: 320, page: false, surface: false, offscreen: false, nested: [] });
+  });
   await historyRow(page, names.settle).getByTestId('history-settle').click();
   const dialog = page.getByTestId('settle-dialog');
   await expectAccessible(page, 'settle-dialog');
-  await dialog.getByTestId('settle-delivered').check();
-  await dialog.getByTestId('settle-link').fill('https://example.invalid/not-a-notion-page');
-  await dialog.getByTestId('settle-confirm').click();
-  await expect(dialog.getByTestId('settle-link-error')).toBeVisible();
-  await expectAccessible(page, 'settle-dialog');
-  await dialog.getByTestId('settle-not-delivered').check();
-  await expectAccessible(page, 'settle-dialog');
-  await dialog.getByTestId('settle-confirm').click();
+  await withViewport320(page, async () => {
+    expect((await focused(page)).inDialog, 'focus stays inside the dialog across the resize').toBe(
+      true,
+    );
+    expect(await expectReflowAt320(page, 'settle-dialog'), 'the settle dialog reflows at 320 px').toEqual(
+      { width: 320, page: false, surface: false, offscreen: false, nested: [] },
+    );
+    await dialog.getByTestId('settle-delivered').check();
+    await dialog.getByTestId('settle-link').fill('https://example.invalid/not-a-notion-page');
+    await dialog.getByTestId('settle-confirm').click();
+    await expect(dialog.getByTestId('settle-link-error')).toBeVisible();
+    await expectAccessible(page, 'settle-dialog');
+    expect(
+      await expectReflowAt320(page, 'settle-dialog'),
+      'the settle dialog with a link error reflows at 320 px',
+    ).toEqual({ width: 320, page: false, surface: false, offscreen: false, nested: [] });
+    await dialog.getByTestId('settle-not-delivered').check();
+    await expect(dialog.getByTestId('settle-assumption')).toBeVisible();
+    await expectAccessible(page, 'settle-dialog');
+    expect(
+      await expectReflowAt320(page, 'settle-dialog'),
+      'the settle dialog with the assumption reflows at 320 px',
+    ).toEqual({ width: 320, page: false, surface: false, offscreen: false, nested: [] });
+    await dialog.getByTestId('settle-confirm').click();
+  });
   await expect(page.getByTestId('history-notice')).toHaveText(
     '직접 확인해 내보내지 않은 것으로 기록했습니다',
   );

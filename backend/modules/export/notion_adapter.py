@@ -553,31 +553,11 @@ class NotionAdapter:
         """Shared pages, searched by hand with `page_size=100` and bounded, plus a direct
         read of `lastDestinationId`, as one operation. The listing is incomplete when
         the pages, the retries or the budget run out; entries found so far are kept."""
-        if creation_capability not in ("unknown", "confirmed", "refused"):
-            raise ValueError("creation capability unknown")
+        self._capability(creation_capability)
         last = normalise_id(last_destination_id) if last_destination_id else None
-        progress = _ListingProgress()
-
-        async def work(sdk, ctx):
-            if last is not None:
-                progress.last_readable = await self._probe_readable(sdk, ctx, last)
-            cursor = None
-            for _ in range(MAX_SEARCH_PAGES):
-                try:
-                    results, cursor, has_more = await self._search_page(sdk, ctx, cursor)
-                except ReducedError as reduced:
-                    if reduced.verdict.category == TOKEN_INVALID:
-                        raise
-                    return
-                progress.entries.extend(results)
-                if not has_more:
-                    progress.finished = True
-                    return
-
-        result = await self._session.run(
-            target, self.policy.listing_budget_seconds, work, gate_key=gate_key
+        progress, result, revoked = await self._listing(
+            target, creation_capability=creation_capability, last=last, gate_key=gate_key
         )
-        revoked = await self._settle_connection(target, result)
         if result.category in (TOKEN_INVALID, NOT_CONNECTED, PROTECTION_UNAVAILABLE):
             return Listing(result.category, revoked=revoked)
         entries = self._entries(progress, creation_capability, last)
@@ -588,6 +568,91 @@ class NotionAdapter:
             last_destination_id=last,
             last_destination_readable=progress.last_readable,
         )
+
+    async def locate_destination(
+        self,
+        target: StoredConnection,
+        destination_id: str,
+        *,
+        creation_capability: str = "unknown",
+        gate_key: UUID | None = None,
+    ) -> Listing:
+        """The requested id as an entry of the connection's current listing (L1-1).
+
+        The bounded search runs first; the direct probe runs only for an id the search
+        itself returned, using that result's own id, so no request path is ever built
+        from the browser value. `last_destination_readable` describes the chosen entry:
+        None when it is not listed, False when the probe was refused, True when it
+        answered. The caller maps completeness to its refusal (BR1.5)."""
+        self._capability(creation_capability)
+        selected = normalise_id(destination_id)
+        if selected is None:
+            return Listing(COULD_NOT_CHECK)
+        progress = _ListingProgress()
+
+        async def work(sdk, ctx):
+            await self._search_into(sdk, ctx, progress)
+            listed = {
+                normalise_id(page.get("id"))
+                for page in progress.entries
+                if page.get("object") == "page"
+            }
+            if selected in listed:
+                progress.last_readable = await self._probe_readable(sdk, ctx, selected)
+
+        result = await self._session.run(
+            target, self.policy.listing_budget_seconds, work, gate_key=gate_key
+        )
+        revoked = await self._settle_connection(target, result)
+        if result.category in (TOKEN_INVALID, NOT_CONNECTED, PROTECTION_UNAVAILABLE):
+            return Listing(result.category, revoked=revoked)
+        entries = self._entries(progress, creation_capability, selected)
+        return Listing(
+            OK if result.ok else COULD_NOT_CHECK,
+            destinations=entries,
+            complete=result.ok and progress.finished,
+            last_destination_id=selected,
+            last_destination_readable=progress.last_readable,
+        )
+
+    async def _listing(
+        self, target, *, creation_capability: str, last: str | None, gate_key: UUID | None
+    ) -> tuple[_ListingProgress, SessionResult, bool]:
+        """The shared one-operation body of the listing: the direct read of the recorded
+        last destination when one is known, then the bounded search (BR1.5, S2)."""
+        progress = _ListingProgress()
+
+        async def work(sdk, ctx):
+            if last is not None:
+                progress.last_readable = await self._probe_readable(sdk, ctx, last)
+            await self._search_into(sdk, ctx, progress)
+
+        result = await self._session.run(
+            target, self.policy.listing_budget_seconds, work, gate_key=gate_key
+        )
+        revoked = await self._settle_connection(target, result)
+        return progress, result, revoked
+
+    async def _search_into(self, sdk, ctx, progress: "_ListingProgress") -> None:
+        """The bounded search pages, shared by the listing and the locate (L1-1)."""
+        cursor = None
+        for _ in range(MAX_SEARCH_PAGES):
+            try:
+                results, cursor, has_more = await self._search_page(sdk, ctx, cursor)
+            except ReducedError as reduced:
+                if reduced.verdict.category == TOKEN_INVALID:
+                    raise
+                return
+            progress.entries.extend(results)
+            if not has_more:
+                progress.finished = True
+                return
+
+    @staticmethod
+    def _capability(creation_capability: str) -> str:
+        if creation_capability not in ("unknown", "confirmed", "refused"):
+            raise ValueError("creation capability unknown")
+        return creation_capability
 
     async def _probe_readable(self, sdk, ctx, destination_id: str) -> bool | None:
         verdict = None

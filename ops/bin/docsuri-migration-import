@@ -1,0 +1,25 @@
+#!/Library/DocSuri/release/.venv/bin/python -I
+"""docsuri-migration-import: the migration's import phases (U8 plan Step 31; BR8.2, D6).
+
+Run as the service account through sudo, in person, with one word from its closed set:
+`import` (the import phases over the run's snapshot, into its target) or `idempotency`
+(the second pass over the same snapshot, which must import and update nothing). The word
+is checked again by the program; further input is one bounded JSON header line naming the
+run's databases (with the operator tool's login, released in person), then the snapshot's
+two tar archives, which it checks against their manifests before use; one JSON result is
+written to standard output. It refuses to run when the environment holds PYTHON*, DYLD_*
+or LD_* variables. The owners' import operations run on the production profile
+(`docsuri_ops.production_wiring.production_import`, U8 plan Step 37).
+"""
+
+import sys
+
+if sys.argv[1:] == ["--self-check"]:
+    from docsuri_ops.release import self_check
+
+    raise SystemExit(self_check(__file__))
+
+from backend.modules.operations.migration.phases import main
+from docsuri_ops.production_wiring import production_import
+
+raise SystemExit(main(sys.argv[1:], run=production_import))

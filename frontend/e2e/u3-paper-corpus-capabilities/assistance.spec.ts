@@ -35,9 +35,9 @@ test('a reload mid-flight recovers the same authoritative job state', async ({ p
   // The session survives the reload; the retained job state is read again.
   await search(page, 'paper-alpha');
   await openFirstResult(page);
-  await expect(
-    page.getByTestId('prepared-result').or(page.getByTestId('activity-card')),
-  ).toBeVisible({ timeout: 60_000 });
+  // The revisit follows an unfinished job until its prepared result appears.
+  await expect(page.getByTestId('activity-card')).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId('prepared-result')).toBeVisible({ timeout: 60_000 });
 });
 
 test('an expired result explains that requesting again is explicit', async ({ page }) => {

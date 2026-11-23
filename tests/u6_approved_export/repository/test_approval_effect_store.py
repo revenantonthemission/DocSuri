@@ -4,9 +4,9 @@ from uuid import uuid4
 
 import psycopg
 import pytest
+
 from backend.modules.export.errors import ExportError
 from backend.modules.export.repository import CheckResult, Replay, replay_input_hash
-
 from tests.u6_approved_export import export_rows as rows
 from tests.u6_approved_export import store_flows as flows
 
@@ -77,7 +77,8 @@ def test_an_approval_needs_the_current_revision_and_no_newer_export(
     with connect("export") as conn:
         assert (
             conn.execute(
-                "SELECT count(*) AS n FROM export.approval WHERE preview_id=%s AND preview_revision<>%s",
+                "SELECT count(*) AS n FROM export.approval "
+                "WHERE preview_id=%s AND preview_revision<>%s",
                 (current["preview_id"], older["preview"]["revision"]),
             ).fetchone()["n"]
             == 0

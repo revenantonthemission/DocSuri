@@ -122,6 +122,42 @@ describe('export view states', () => {
   });
 });
 
+describe('provider text stays text', () => {
+  it('renders a hostile workspace name as text', async () => {
+    const api = new ExportDouble()
+      .on('read-notion-connection', () => connection({ workspaceName: '<svg onload=x>팀</svg>' }))
+      .on('list-export-history', () => historyPage([]));
+    view(api);
+
+    const workspace = await screen.findByTestId('connection-workspace');
+
+    expect(workspace.textContent).toContain('<svg onload=x>팀</svg>');
+    expect(workspace.querySelector('svg')).toBeNull();
+  });
+
+  it('announces a hostile workspace name after a connect as text', async () => {
+    const payload = '<svg onload=x>팀</svg><a href="javascript:alert(1)">{{x}}</a>';
+    let read: () => ReturnType<typeof connection> = notConnected;
+    const api = new ExportDouble()
+      .on('read-notion-connection', () => read())
+      .on('list-export-history', () => historyPage([]))
+      .on('configure-notion-connection', () => {
+        const saved = connection({ workspaceName: payload });
+        read = () => saved;
+        return saved;
+      });
+    view(api);
+    await userEvent.type(await screen.findByTestId('connect-token'), TOKEN);
+    await userEvent.click(screen.getByTestId('connect-submit'));
+
+    const live = screen.getByTestId('export-live');
+    await waitFor(() => expect(live.textContent).toContain(payload));
+    expect(live.querySelector('svg, a')).toBeNull();
+    const workspace = await screen.findByTestId('connection-workspace');
+    expect(workspace.querySelector('svg, a')).toBeNull();
+  });
+});
+
 describe('connection panel', () => {
   it('disconnects only after the dialog names the consequences', async () => {
     let current = connection();

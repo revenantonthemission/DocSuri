@@ -6,6 +6,7 @@ from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
+
 from backend.modules.export.errors import ExportError
 from scripts import serve_docsuri_u6 as serve
 
@@ -82,9 +83,13 @@ def test_main_serves_only_on_the_owned_loopback_listener(realm, monkeypatch):
     monkeypatch.setattr(
         serve,
         "assemble",
-        lambda path, real_export=False: calls.update(path=path, real=real_export) or ("app", transport),
+        lambda path, real_export=False: (
+            calls.update(path=path, real=real_export) or ("app", transport)
+        ),
     )
-    monkeypatch.setattr(serve.uvicorn, "run", lambda app, **options: calls.update(app=app, **options))
+    monkeypatch.setattr(
+        serve.uvicorn, "run", lambda app, **options: calls.update(app=app, **options)
+    )
     monkeypatch.setattr(
         sys, "argv", ["serve", "--environment-file", str(realm.root / "environment.json")]
     )

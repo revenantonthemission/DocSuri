@@ -1,4 +1,4 @@
-/* DO NOT EDIT. Declared public schema closure, offline. SHA256:aa309366c8441099521478c5e5b3e2153463033e0f9c1da7811a71b0db0aced1 */
+/* DO NOT EDIT. Declared public schema closure, offline. SHA256:6f43b3bc2e71ec1829e43e282ccae673ce45be86954b16dc46c42a040b0e7333 */
 
 /**
  * Which rung of the fallback ladder produced this doc-model: native arXiv HTML -> ar5iv -> e-print LaTeX -> (last resort) PDF parse. User-uploaded PDFs also use the "pdf" tier — the user-vs-arXiv origin is carried by the paperId "userdoc:" namespace, not a separate tier. Trace: Q6, BR-29, TD-11.
@@ -219,12 +219,51 @@ export type WorkspaceJobSnapshot = {
 };
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsIncidentResolutionKind".
+ */
+export type WorkspaceOpsIncidentResolutionKind =
+  | "capability-available"
+  | "abort-reviewed"
+  | "rollback-copy-settled"
+  | "environment-stopped";
+/**
+ * C11 2.1.0 (A5): an OpsIncident with its resolutionKind, present exactly when resolved (BR3.7).
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsIncidentRead".
+ */
+export type WorkspaceOpsIncidentRead = {
+  [k: string]: unknown;
+};
+/**
+ * C11 2.1.0 (A5, BR4.1): the only recovery procedures offered. The schedule may request only the first two (BR4.2).
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsRecoveryOperation".
+ */
+export type WorkspaceOpsRecoveryOperation = "backup.create" | "restore.verify" | "restore.production";
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "WorkspaceHostReturnContext".
  */
 export type WorkspaceHostReturnContext =
   | WorkspaceHostPaperReturnContext
   | WorkspaceHostSearchReturnContext
   | WorkspaceHostRouteReturnContext;
+/**
+ * C01 2.1.0 (A1): the navigation reason-key vocabulary a HostNavigationItem.reasonKey takes; display vocabulary only, never an authorization state.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceHostNavigationReasonKey".
+ */
+export type WorkspaceHostNavigationReasonKey =
+  | "nav.authenticationRequired"
+  | "nav.capabilityPending"
+  | "nav.capabilityDegraded"
+  | "nav.capabilityUnavailable"
+  | "nav.capabilityStale"
+  | "nav.capabilityUnknown"
+  | "nav.administratorOnly";
 /**
  * Sensitive proof/credential; never logged, reflected or placed in a URL.
  *
@@ -303,6 +342,17 @@ export type WorkspaceLifecycleRequest = {
   [k: string]: unknown;
 };
 /**
+ * C02 4.0.0 (A3): access.login's answer, a superset of AccessLoginResult with the two first-sign-in states.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessSignInResult".
+ */
+export type WorkspaceAccessSignInResult =
+  | WorkspaceAccessKnownSession
+  | WorkspaceAccessMfaContinuation
+  | WorkspaceAccessConsentPendingSession
+  | WorkspaceAccessResetRequired;
+/**
  * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "WorkspaceUsageMeasure".
  */
@@ -365,6 +415,11 @@ export type WorkspaceDraftRecovery =
       draftId: WorkspaceId;
       reasonKey: string;
     };
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchJobListKind".
+ */
+export type WorkspaceResearchJobListKind = "research" | "novelty";
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "WorkspaceResearchArtifactResponse".
@@ -2512,6 +2567,198 @@ export interface WorkspaceOpsIncidentPage {
   page: WorkspacePageInfo;
 }
 /**
+ * C11 2.1.0 (A5): an OpsObservation with its derived freshness and age, as readDashboard answers it. Stale is derived at read time and never stored.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsDashboardItem".
+ */
+export interface WorkspaceOpsDashboardItem {
+  observationId: WorkspaceId;
+  capability: WorkspaceId;
+  component: WorkspaceId;
+  observedAt: WorkspaceTime;
+  revision: WorkspaceRevision;
+  status: "available" | "degraded" | "unavailable" | "unknown";
+  evidenceRef: WorkspaceId;
+  limitations: WorkspaceId[];
+  freshness?: "current" | "stale";
+  ageSeconds?: number;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsDashboardPage".
+ */
+export interface WorkspaceOpsDashboardPage {
+  items: WorkspaceOpsDashboardItem[];
+  page: WorkspacePageInfo;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsIncidentReadPage".
+ */
+export interface WorkspaceOpsIncidentReadPage {
+  items: WorkspaceOpsIncidentRead[];
+  page: WorkspacePageInfo;
+}
+/**
+ * C11 2.1.0 (A5): a recovery request as the ledger holds it; reading it never starts or advances work.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsRecoveryStatus".
+ */
+export interface WorkspaceOpsRecoveryStatus {
+  recoveryRequestId: WorkspaceId;
+  revision: WorkspaceRevision;
+  environment: "rehearsal" | "live";
+  origin: "administrator" | "schedule";
+  operation: WorkspaceOpsRecoveryOperation;
+  state:
+    | "requested"
+    | "awaiting-operator"
+    | "running"
+    | "verifying"
+    | "post-restore-pending"
+    | "held"
+    | "succeeded"
+    | "failed"
+    | "unknown"
+    | "cancelled"
+    | "refused"
+    | "expired";
+  incidentId?: WorkspaceId;
+  /**
+   * @maxItems 16
+   */
+  evidenceRefs:
+    | []
+    | [WorkspaceId]
+    | [WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ];
+  createdAt: WorkspaceTime;
+  updatedAt: WorkspaceTime;
+}
+/**
  * This interface was referenced by `PublicWire`'s JSON-Schema
  * via the `definition` "WorkspaceLibraryFilter".
  */
@@ -2578,6 +2825,7 @@ export interface WorkspaceHostNavigationItem {
   capabilityId: WorkspaceId;
   available: boolean;
   reasonKey?: WorkspaceId;
+  placement?: "primary" | "contextual" | "footer";
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -2590,6 +2838,28 @@ export interface WorkspaceHostNavigationResult {
   resolvedRouteId: WorkspaceId;
   returnContext?: WorkspaceHostReturnContext;
   clearPriorOwnerState: boolean;
+}
+/**
+ * C01 2.1.0 (A1, BR5.9): one capability as a caller with no session sees it: its state and reason key alone, never an age, limitation, evidence reference, count or producer identity.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceHostPublicCapability".
+ */
+export interface WorkspaceHostPublicCapability {
+  capabilityId: WorkspaceId;
+  state: "available" | "degraded" | "unavailable" | "unknown" | "stale";
+  reasonKey: WorkspaceId;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceHostPublicCapabilityPage".
+ */
+export interface WorkspaceHostPublicCapabilityPage {
+  manifestRevision: WorkspaceRevision;
+  /**
+   * @maxItems 32
+   */
+  items: WorkspaceHostPublicCapability[];
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -2870,6 +3140,157 @@ export interface WorkspaceLifecycleParticipantDisposition {
         WorkspaceLifecycleScopeDisposition
       ];
   observedAt: WorkspaceTime;
+}
+/**
+ * C02 4.0.0 (A3, BR8.6): a migrated account's first sign-in. The session serves only access.listConsents and access.updateConsent until its v2 consents are recorded; a full session follows.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessConsentPendingSession".
+ */
+export interface WorkspaceAccessConsentPendingSession {
+  state: "consent_pending";
+  session: WorkspaceAccessPublicSession;
+  /**
+   * @maxItems 16
+   */
+  consentPurposeIds:
+    | []
+    | [WorkspaceId]
+    | [WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ];
+  expiresAt: WorkspaceTime;
+}
+/**
+ * C02 4.0.0 (A3, BR8.6): the reset-required marker. No session is issued; the answer says whether the reset mail was accepted for sending, held, or not sent because the email allowance is spent.
+ *
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceAccessResetRequired".
+ */
+export interface WorkspaceAccessResetRequired {
+  state: "reset_required";
+  delivery: "accepted" | "held" | "over_allowance";
+  messageKey: WorkspaceId;
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -3582,6 +4003,39 @@ export interface WorkspaceDraftRevision {
   text: string;
   acknowledgedAt: WorkspaceTime;
   policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchJobListHttp".
+ */
+export interface WorkspaceResearchJobListHttp {
+  kind?: WorkspaceResearchJobListKind;
+  limit?: number;
+  cursor?: string | null;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchJobListItem".
+ */
+export interface WorkspaceResearchJobListItem {
+  jobId: WorkspaceId;
+  kind: WorkspaceResearchJobListKind;
+  label: string;
+  state: "accepted" | "running" | "cancel_requested" | "succeeded" | "failed" | "cancelled";
+  createdAt: WorkspaceTime;
+  updatedAt: WorkspaceTime;
+  resultAvailable: boolean;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceResearchJobListPage".
+ */
+export interface WorkspaceResearchJobListPage {
+  /**
+   * @maxItems 50
+   */
+  items: WorkspaceResearchJobListItem[];
+  nextCursor: string | null;
 }
 /**
  * This interface was referenced by `PublicWire`'s JSON-Schema
@@ -5343,6 +5797,155 @@ export interface WorkspaceOpsRecoveryRequestHttp {
   expectedRevision: WorkspaceRevision;
   evidenceRefs: WorkspaceId[];
   policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsRecoverySubmissionHttp".
+ */
+export interface WorkspaceOpsRecoverySubmissionHttp {
+  operation: WorkspaceOpsRecoveryOperation;
+  targetId: WorkspaceId;
+  expectedRevision: WorkspaceRevision;
+  origin: "administrator";
+  submissionId: WorkspaceId;
+  incidentId?: WorkspaceId;
+  /**
+   * @maxItems 16
+   */
+  evidenceRefs?:
+    | []
+    | [WorkspaceId]
+    | [WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId, WorkspaceId]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ]
+    | [
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId,
+        WorkspaceId
+      ];
+  policy: WorkspacePolicyRef;
+}
+/**
+ * This interface was referenced by `PublicWire`'s JSON-Schema
+ * via the `definition` "WorkspaceOpsRecoveryStatusReadHttp".
+ */
+export interface WorkspaceOpsRecoveryStatusReadHttp {
+  recoveryRequestId: WorkspaceId;
 }
 /**
  * Internal envelope; context is derived by the trusted boundary, never accepted from a public body.

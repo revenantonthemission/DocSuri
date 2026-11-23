@@ -44,6 +44,30 @@ describe('U3 corpus workspace', () => {
     expect(screen.getByTestId('result-row')).toBeInTheDocument();
   });
 
+  it("lands focus on the paper's heading when a paper opens from a result", async () => {
+    const client = build();
+    render(<CorpusWorkspace client={client.asTransport()} signedIn />);
+    await userEvent.type(screen.getByTestId('search-query'), 'attention');
+    await userEvent.click(screen.getByTestId('search-submit'));
+    await waitFor(() => expect(screen.getByTestId('result-open')).toBeInTheDocument());
+    await userEvent.click(screen.getByTestId('result-open'));
+    // The clicked result sits in the region that becomes hidden; focus must move on.
+    await waitFor(() => expect(screen.getByTestId('paper-identity')).toHaveFocus());
+    expect(screen.getByTestId('paper-identity').tagName).toBe('H2');
+    expect(screen.getByTestId('paper-identity')).toHaveTextContent('합성 논문 paper-alpha');
+    expect(document.activeElement).not.toBe(document.body);
+  });
+
+  it('lands focus on the heading for a guest too, whose view shows the sign-in prompt', async () => {
+    const client = build();
+    render(<CorpusWorkspace client={client.asTransport()} signedIn={false} />);
+    await userEvent.type(screen.getByTestId('search-query'), 'attention');
+    await userEvent.click(screen.getByTestId('search-submit'));
+    await waitFor(() => expect(screen.getByTestId('result-open')).toBeInTheDocument());
+    await userEvent.click(screen.getByTestId('result-open'));
+    await waitFor(() => expect(screen.getByTestId('paper-identity')).toHaveFocus());
+  });
+
   it('shows guests the session requirement instead of reading content', async () => {
     const client = build();
     render(<CorpusWorkspace client={client.asTransport()} signedIn={false} />);
@@ -62,6 +86,8 @@ describe('U3 corpus workspace', () => {
 
   it('renders the unavailable panel with an announced state', () => {
     render(<CorpusUnavailable />);
-    expect(screen.getByTestId('corpus-unavailable')).toHaveTextContent('코퍼스 기능을 사용할 수 없어요');
+    expect(screen.getByTestId('corpus-unavailable')).toHaveTextContent(
+      '코퍼스 기능을 사용할 수 없어요',
+    );
   });
 });

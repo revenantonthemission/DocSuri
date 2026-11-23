@@ -1,19 +1,20 @@
-# Release — automate commit→release. On every push to main (a merged develop→main promotion PR),
-# compute the next semver from conventional commits, create the vX.Y.Z tag + GitHub Release, then
-# deploy it by calling cd.yml as a reusable workflow. This replaces manual `v*` tagging: merging
-# the promotion PR IS the release. Manual `v*` tag pushes still deploy (cd.yml keeps that trigger).
+# Release — on every push to main (a merged develop→main promotion, or the first v2
+# release's one-off push), compute the next semver from conventional commits, create the
+# annotated vX.Y.Z tag and the GitHub Release, then build the v2 workspace from the tagged
+# commit and attach it with its SHA-256 (U8 plan Step 44; cicd-pipeline § 4). The install
+# on this Mac (`docsuri-release install <tag>`) reads that release; nothing here deploys.
 name: Release
 
 on:
   push:
     branches: [main]
 
+# Only the release and upload jobs hold `contents: write`. `id-token: write` and
+# `actions: read` were left from the removed AWS deploy and are dropped.
 permissions:
-  contents: write # create the tag + GitHub Release
-  id-token: write # propagated to the reusable cd.yml for AWS OIDC assume-role
-  actions: read # cd.yml's require-ci reads the CI run status via the API
+  contents: read
 
-# Never run two releases at once; never cancel an in-flight one (a deploy may be mid-rollout).
+# Never run two releases at once; never cancel one in flight.
 concurrency:
   group: release-main
   cancel-in-progress: false
@@ -23,6 +24,8 @@ jobs:
     name: Version + tag + GitHub Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write # create the tag + GitHub Release
     outputs:
       released: ${{ steps.tag.outputs.new_tag != '' }}
       new_tag: ${{ steps.tag.outputs.new_tag }}
@@ -31,9 +34,19 @@ jobs:
         with:
           fetch-depth: 0 # full history so the tagger can read commits since the last tag
 
-      # Conventional-commit → next semver + tag. Created with GITHUB_TOKEN, which by GitHub's
-      # anti-recursion rule does NOT trigger cd.yml's push:tags — so the deploy below is the ONLY
-      # deploy (no double-run). default_bump: patch → every promotion cuts at least a patch release.
+      # The first v2 release (cicd-pipeline § 4): with no `v2.*` tag on origin, the tag
+      # is v2.0.0 whatever the computed bump, through the tagger's `custom_tag`.
+      - name: Existing v2 tags on origin
+        id: existing
+        run: |
+          count="$(git ls-remote --tags --refs origin 'refs/tags/v2.*' | wc -l | tr -d ' ')"
+          echo "v2_tags=$count" >> "$GITHUB_OUTPUT"
+          if [ "$count" = "0" ]; then
+            echo "custom_tag=2.0.0" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Conventional-commit → next semver + annotated tag (CONVENTIONS.md). Created with
+      # GITHUB_TOKEN; default_bump: patch → every promotion cuts at least a patch release.
       - name: Compute version and create tag
         id: tag
         uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
@@ -42,9 +55,17 @@ jobs:
           release_branches: main
           tag_prefix: v
           default_bump: patch
+          create_annotated_tag: true
+          custom_tag: ${{ steps.existing.outputs.custom_tag }}
 
-      # Auto-generated notes (from merged PRs/commits) — do NOT interpolate commit text into the
-      # shell (injection). Tag string comes via env, not inline expansion.
+      # A wrong first version is never published: this fails the job before the Release.
+      - name: First v2 release guard
+        env:
+          V2_TAGS: ${{ steps.existing.outputs.v2_tags }}
+          NEW_TAG: ${{ steps.tag.outputs.new_tag }}
+        run: python3 scripts/u8_release_guard.py --previous-v2-tags "$V2_TAGS" --created "$NEW_TAG"
+
+      # Auto-generated notes; the tag string comes via env, never inline expansion.
       - name: Publish GitHub Release
         if: steps.tag.outputs.new_tag != ''
         env:
@@ -52,22 +73,68 @@ jobs:
           NEW_TAG: ${{ steps.tag.outputs.new_tag }}
         run: gh release create "$NEW_TAG" --title "$NEW_TAG" --generate-notes --verify-tag
 
-  # The `deploy` job was removed 2026-08-18. It called cd.yml, which deploys to AWS account
-  # 559352512800 — now fully decommissioned (0 stacks, 0 ECR repos, no CDK bootstrap). Left in
-  # place it would make every develop→main promotion fail at sts:AssumeRoleWithWebIdentity,
-  # turning a routine release into a red build for a deployment nobody wants any more.
-  #
-  # Tagging and the GitHub Release above are deliberately KEPT: they are pure GitHub, cost
-  # nothing, and remain the record of what shipped. Promotion to main still cuts vX.Y.Z.
-  #
-  # The service now runs on a single machine (ops/server/README.md) and deploys by pulling
-  # this branch and running `ops/server/docsurictl rebuild` — it does not consume these tags.
-  #
-  # TO RE-ENABLE, restore:
-  #   deploy:
-  #     name: Deploy the release
-  #     needs: release
-  #     if: needs.release.outputs.released == 'true'
-  #     uses: ./.github/workflows/cd.yml
-  #     secrets: inherit
-  # and restore the `push:tags` / `workflow_call` triggers in cd.yml.
+  # The workspace build from the tagged commit, with its lockfile, where no write token
+  # exists: precompressed, its first-load budget checked (`scripts/u8_build_workspace.py`).
+  build:
+    name: Workspace build
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: refs/tags/${{ needs.release.outputs.new_tag }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.14.0'
+      - run: corepack enable
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          version: '0.9.0'
+      - name: Frozen dependencies
+        run: |
+          corepack pnpm@9.15.9 --dir frontend install --frozen-lockfile --ignore-scripts
+          uv sync --project backend --frozen --python 3.13.7
+      - name: Build the workspace
+        run: backend/.venv/bin/python scripts/u8_build_workspace.py
+      - name: Package the build and its digest
+        run: |
+          tar -C frontend/dist -czf docsuri-workspace.tar.gz .
+          sha256sum docsuri-workspace.tar.gz > docsuri-workspace.tar.gz.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: docsuri-workspace
+          path: |
+            docsuri-workspace.tar.gz
+            docsuri-workspace.tar.gz.sha256
+          retention-days: 7
+          if-no-files-found: error
+
+  # A narrow job that only attaches the build and its SHA-256 to the GitHub Release.
+  attach:
+    name: Attach the workspace build
+    needs: [release, build]
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: docsuri-workspace
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          NEW_TAG: ${{ needs.release.outputs.new_tag }}
+        run: >-
+          gh release upload "$NEW_TAG" docsuri-workspace.tar.gz
+          docsuri-workspace.tar.gz.sha256 --clobber
+
+  # The removed AWS `deploy` job (2026-08-18) stays removed: v2 runs on this Mac and is
+  # installed from the release by `docsuri-release install <tag>`.

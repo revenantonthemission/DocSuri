@@ -2,6 +2,7 @@
 
 import httpx
 import pytest
+
 from backend.modules.export.fake_notion import (
     OVERSIZE_DECLARED,
     OVERSIZE_STREAMED,
@@ -15,7 +16,6 @@ from backend.modules.export.notion_session import (
     ResponseTooLarge,
     UnexpectedResponse,
 )
-
 from tests.u6_approved_export import notion_flows as nf
 
 CAP = 2_000_000
@@ -115,3 +115,81 @@ def test_the_guard_refuses_a_bad_configuration(fake):
         GuardedTransport(fake, cap_bytes=0, request_timeout=1)
     with pytest.raises(ValueError):
         GuardedTransport(fake, cap_bytes=CAP, request_timeout=0)
+
+
+class _Recording(httpx.AsyncBaseTransport):
+    """Keeps each request URL the guard passed on, then delegates to the fake."""
+
+    def __init__(self, inner):
+        self._inner = inner
+        self.urls = []
+
+    async def handle_async_request(self, request):
+        self.urls.append(request.url)
+        return await self._inner.handle_async_request(request)
+
+    async def aclose(self):
+        await self._inner.aclose()
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://api.notion.com/v1/users/me",
+        "https://api.notion.com:443/v1/users/me",
+        "https://API.NOTION.COM/v1/users/me",
+    ],
+)
+async def test_the_three_spellings_of_the_one_origin_pass(fake, url):
+    recorder = _Recording(fake)
+    guard = GuardedTransport(recorder, cap_bytes=CAP, request_timeout=5.0)
+    async with httpx.AsyncClient(
+        transport=guard,
+        follow_redirects=False,
+        trust_env=False,
+        headers={"Authorization": f"Bearer {TOKEN}", "Notion-Version": "2026-03-11"},
+    ) as http:
+        response = await http.get(url)
+
+    assert response.status_code == 200
+    assert len(recorder.urls) == 1
+    assert recorder.urls[0].host == "api.notion.com"
+    assert recorder.urls[0].port is None
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://api.notion.com.evil.example/v1/users/me",
+        "https://evil.example/api.notion.com/v1/users/me",
+        "https://api.notion.com./v1/users/me",
+        "https://1.2.3.4/v1/users/me",
+        "https://[::1]/v1/users/me",
+    ],
+)
+async def test_hosts_that_only_contain_or_extend_the_origin_are_refused(fake, url):
+    async with client(fake) as http:
+        with pytest.raises(RequestRefused):
+            await http.get(url)
+    assert fake.requests == []
+
+
+class _Asserting(httpx.AsyncBaseTransport):
+    async def handle_async_request(self, request):
+        raise AssertionError("connected")
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://api.notion.com/v1/users/me",
+        "https://evil.example/v1/users/me",
+        "https://api.notion.com/v1/pages/" + "0" * 31,
+        "https://api.notion.com/v1/users/me?filter=x",
+    ],
+)
+async def test_the_inner_transport_is_never_reached_for_a_refused_request(url):
+    guard = GuardedTransport(_Asserting(), cap_bytes=CAP, request_timeout=5.0)
+    async with httpx.AsyncClient(transport=guard, follow_redirects=False, trust_env=False) as http:
+        with pytest.raises(RequestRefused):
+            await http.get(url)

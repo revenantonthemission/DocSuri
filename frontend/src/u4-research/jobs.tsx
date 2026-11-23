@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { ApiError, type Transport } from '../api';
-import { describeError, StatusLine, type Notice } from '../ui';
+import { describeError, ShellAnnounce, StatusLine, type Notice } from '../ui';
 import { ActionStatus, useResearchAction } from './action';
 import {
   checkedJob,
@@ -66,6 +66,16 @@ export function ResearchJob({
   const request = useRef(0);
   const alive = useRef(true);
   const action = useResearchAction(client);
+  // Under the complete shell the state line is plain and each change of the job's state is
+  // announced once through the shell's one region (L1-9); elsewhere the line keeps its own
+  // status role, as built.
+  const announce = useContext(ShellAnnounce);
+  const announcedState = useRef<Job['state'] | null>(null);
+  useEffect(() => {
+    if (!announce || !job || announcedState.current === job.state) return;
+    announcedState.current = job.state;
+    announce(STATE[job.state]);
+  }, [announce, job]);
   // These controls stay focusable while their read runs (aria-disabled, not disabled): a
   // focused button that becomes disabled drops keyboard focus to the document, and Tab
   // then restarts at the top of the page (WCAG 2.4.3). Their handlers ignore presses.
@@ -134,7 +144,7 @@ export function ResearchJob({
             ? '분석 진행 상태'
             : '결과 토론 진행 상태'}
       </h3>
-      <p role="status">
+      <p {...(announce ? {} : { role: 'status' })} data-testid="research-job-state">
         {loading
           ? '현재 상태를 확인하고 있어요'
           : job

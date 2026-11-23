@@ -23,19 +23,43 @@ def totp(seed: str, step: int) -> str:
 
 
 class ControlMfaService:
+    """U2's MFA flow. Five hooks hold the built statements, so U8's `CompleteMfaService`
+    and `SetupEnrolment` can replace them in the complete realms only (U8 plan Step 44):
+    `_reauthenticate`, `_authorize`, `_confirmed`, `_admit_continuation` and
+    `_full_session`."""
+
     def __init__(self, entry):
         self.entry = entry
         self.transactions, self.policy = entry.transactions, entry.control_policy
 
-    def begin(self, authority: Authority, password: str, operation: UUID) -> dict:
+    def _reauthenticate(self, authority: Authority, password: str) -> None:
         self.entry.reauthenticate(authority, password)
+
+    def _authorize(self, conn, authority: Authority):
+        return guard(conn, authority, purpose="account-control")
+
+    def _confirmed(self, conn, authority: Authority) -> None:
+        """Inside a confirmed enrolment's transaction; the built flow does nothing more."""
+
+    def _admit_continuation(self, account: dict) -> None:
+        """Before the second factor issues a full session; the built flow admits all."""
+
+    def _full_session(self, conn, account: dict, challenge: UUID) -> dict:
+        return conn.execute(
+            "UPDATE accounts.session SET purpose='full_session',mfa_at=clock_timestamp(),"
+            "expires_at=clock_timestamp()+(%s*interval '1 second') WHERE id=%s RETURNING *",
+            (self.policy.session_seconds, challenge),
+        ).fetchone()
+
+    def begin(self, authority: Authority, password: str, operation: UUID) -> dict:
+        self._reauthenticate(authority, password)
         identifier, delivery = uuid4(), uuid4()
         seed = base64.b32encode(secrets.token_bytes(20)).decode()
         codes = [secrets.token_hex(12) for _ in range(8)]
         encrypted = self.entry.protect("mfa:" + str(identifier), {"seed": seed, "codes": codes})
 
         def write(conn):
-            guard(conn, authority, purpose="account-control")
+            self._authorize(conn, authority)
             conn.execute(
                 "SELECT id FROM accounts.account WHERE id=%s FOR UPDATE", (authority.account_id,)
             )
@@ -88,7 +112,7 @@ class ControlMfaService:
 
     def material(self, authority: Authority, identifier: UUID, delivery: str) -> dict:
         def write(conn):
-            guard(conn, authority, purpose="account-control")
+            self._authorize(conn, authority)
             row = conn.execute(
                 "SELECT *,delivery_expires_at>clock_timestamp() AS fresh FROM accounts.mfa_enrollment "
                 "WHERE id=%s AND account_id=%s FOR UPDATE",
@@ -143,7 +167,7 @@ class ControlMfaService:
 
     def confirm(self, authority: Authority, identifier: UUID, code: str, operation: UUID) -> dict:
         def write(conn):
-            guard(conn, authority, purpose="account-control")
+            self._authorize(conn, authority)
             digest, prior = ControlRepository.replay(
                 conn,
                 authority.account_id,
@@ -166,6 +190,7 @@ class ControlMfaService:
                 "UPDATE accounts.mfa_enrollment SET state='active',last_step=%s,revision=%s WHERE id=%s",
                 (step, revision, identifier),
             )
+            self._confirmed(conn, authority)
             return ControlRepository.record(
                 conn,
                 authority.account_id,
@@ -210,6 +235,7 @@ class ControlMfaService:
                 or session["purpose"] != "primary_mfa_continuation"
             ):
                 raise PermissionError("primary continuation unavailable")
+            self._admit_continuation(account)
             row = conn.execute(
                 "SELECT * FROM accounts.mfa_enrollment WHERE account_id=%s AND state='active' FOR UPDATE",
                 (account["id"],),
@@ -220,11 +246,7 @@ class ControlMfaService:
             conn.execute(
                 "UPDATE accounts.mfa_enrollment SET last_step=%s WHERE id=%s", (step, row["id"])
             )
-            session = conn.execute(
-                "UPDATE accounts.session SET purpose='full_session',mfa_at=clock_timestamp(),"
-                "expires_at=clock_timestamp()+(%s*interval '1 second') WHERE id=%s RETURNING *",
-                (self.policy.session_seconds, challenge),
-            ).fetchone()
+            session = self._full_session(conn, account, challenge)
             return self.entry.public_session(session)
 
         return SessionTransport(token, csrf, self.transactions.run("accounts", write))

@@ -28,8 +28,14 @@ class DigestPreparation:
             content_limit=self.policy.digest_items_max,
         )
 
-    def prepare(self, topic_id, window, settings_revision, *, expected_preferences=None):
-        """Select content and create (or adopt) the window's run (BR2.4)."""
+    def prepare(
+        self, topic_id, window, settings_revision, *, expected_preferences=None, scheduled_at=None
+    ):
+        """Select content and create (or adopt) the window's run (BR2.4).
+
+        `scheduled_at`, the due instant of the occurrence the scheduler prepares
+        for, is passed on unchanged; a caller with no due occurrence hands in none.
+        """
         window_start, window_end = window
         items = self.select(topic_id, window_start, window_end)
         return self.repository.prepare_run(
@@ -39,4 +45,5 @@ class DigestPreparation:
             settings_revision,
             items,
             expected_preferences=expected_preferences,
+            scheduled_at=scheduled_at,
         )

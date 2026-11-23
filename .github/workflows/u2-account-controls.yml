@@ -97,3 +97,39 @@ jobs:
           Browser journeys, cumulative completion verification and public-provider
           activation remain separate evidence. Private logs, keys, proofs and
           database backups are never uploaded as CI artifacts."
+
+  # U2's backend coverage under `.coveragerc.u2` (the person's decision of 2026-10-25,
+  # "Run it in U2's CI lane"): after the five owner layers, on a fresh environment of its
+  # own, so a figure below 80.00% fails the lane, as U4's and U5's already do.
+  coverage:
+    needs: [owners]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      DOCSURI_U2_ENVIRONMENT_FILE: /tmp/docsuri-u2-run/environment.json
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          version: '0.9.0'
+      - name: Frozen Python dependencies
+        run: uv sync --project backend --frozen --python 3.13.7
+      - name: Pinned free local database image
+        run: docker pull postgres@sha256:a3b7f434b2dc57ce85a67e171163eb8ab1a1ebcb39d27484661f26b1dfbe30d6
+      - name: Create a fresh isolated synthetic realm
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u2.py
+          --phase setup --profile synthetic-local
+          --environment-file "$DOCSURI_U2_ENVIRONMENT_FILE"
+      - name: Apply verified ordered migrations
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u2.py
+          --phase migrate --profile synthetic-local
+          --environment-file "$DOCSURI_U2_ENVIRONMENT_FILE"
+      - name: Measure the five owner layers against the 80.00% floor
+        run: >-
+          backend/.venv/bin/python scripts/verify_docsuri_u2.py
+          --phase coverage --profile synthetic-local
+          --environment-file "$DOCSURI_U2_ENVIRONMENT_FILE"

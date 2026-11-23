@@ -1,0 +1,10 @@
+# /etc/pf.anchors/org.docsuri.v2 (root, 0644): each of DocSuri v2's loopback addresses
+# answers only while its own account owns the listening socket, and is refused
+# otherwise, including while the service is stopped (security-design § 6.8, D10).
+# Loaded under com.apple/* by org.docsuri.v2.pf; /etc/pf.conf is never edited.
+# Arrangement version ${version}.
+pass in quick on lo0 proto tcp to 127.0.0.1 port 18200 user ${service}
+pass in quick on lo0 proto tcp to 127.0.0.1 port 18201 user ${service}
+pass in quick on lo0 proto tcp to 127.0.0.1 port 11434 user ${models}
+pass in quick on lo0 proto tcp to 127.0.0.1 port 15432 user ${database}
+block return in quick on lo0 proto tcp to 127.0.0.1 port { 18200 18201 11434 15432 }

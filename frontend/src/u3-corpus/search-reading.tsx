@@ -7,7 +7,7 @@
  * exact requested version.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ApiError, Transport, dispositionCopy } from '../api';
 import { Notice, StatusLine, notice } from '../ui';
 import {
@@ -21,6 +21,9 @@ import {
   VOCABULARY,
   api,
 } from './api';
+// Each result's source link stands alone, not inside a sentence, so its box is at least
+// 24×24 CSS px (WCAG 2.2 target size, U8 L1-40): U3's own CSS module sizes it.
+import styles from './search-reading.module.css';
 
 type SearchState = 'idle' | 'loading' | 'results' | 'empty' | 'error' | 'invalid';
 
@@ -160,13 +163,26 @@ export function SearchSection({
           <ul className="result-list">
             {response.hits.map((hit) => (
               <li key={hit.paper.versionId} data-testid="result-row">
-                <button type="button" onClick={() => onOpen(hit)} data-testid="result-open">
+                {/* The name says the action in Korean and keeps the visible title inside it
+                    (WCAG 2.5.3, label in name). */}
+                <button
+                  type="button"
+                  onClick={() => onOpen(hit)}
+                  aria-label={`논문 열기: ${hit.title}`}
+                  data-testid="result-open"
+                >
                   <strong>{hit.title}</strong>
                 </button>
                 <span className="subtle">{hit.authors.join(', ')}</span>
                 <span data-testid="result-availability">{hit.availability}</span>
                 <p>{hit.snippet}</p>
-                <a href={hit.sourceUrl} rel="noreferrer noopener" target="_blank">
+                <a
+                  href={hit.sourceUrl}
+                  rel="noreferrer noopener"
+                  target="_blank"
+                  className={styles.sourceLink}
+                  data-testid="result-source"
+                >
                   원문 링크
                 </a>
               </li>
@@ -198,16 +214,18 @@ export function ReadingSection({
   client,
   hit,
   signedIn,
+  headingRef,
 }: {
   client: Transport;
   hit: SearchHit;
   signedIn: boolean;
+  /** The paper's heading; the workspace focuses it when a paper opens. */
+  headingRef?: React.Ref<HTMLHeadingElement>;
 }) {
   const [read, setRead] = useState<ContentRead | null>(null);
   const [status, setStatus] = useState<Notice | null>(null);
   const [direction, setDirection] = useState<'cited' | 'citing'>('cited');
   const [citations, setCitations] = useState<CitationResponse | null>(null);
-  const headingRef = useRef<HTMLHeadingElement | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -246,9 +264,7 @@ export function ReadingSection({
       setStatus(
         notice(
           'polite',
-          value.coverage === 'partial'
-            ? '일부 인용 정보만 제공됩니다'
-            : '인용 정보를 불러왔어요',
+          value.coverage === 'partial' ? '일부 인용 정보만 제공됩니다' : '인용 정보를 불러왔어요',
         ),
       );
     } catch (error) {

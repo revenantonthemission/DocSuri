@@ -129,10 +129,12 @@ def read_record(settings: CustodySettings, root: Path, run_id: str) -> dict:
     It requires a regular file reached without following a link, owned by this user, at
     mode 0600 and within the size bound; no duplicate JSON field; the run id; one to
     `max_versions` 32-byte keys whose versions match the pattern; and a generation in
-    range. Any fault raises the configured custody error, chained from its cause.
+    range. Any fault raises the configured custody error, chained from its cause. The
+    open never blocks, so the `S_ISREG` check refuses a FIFO instead of waiting for a
+    writer.
     """
     try:
-        fd = os.open(root / settings.filename, os.O_RDONLY | os.O_NOFOLLOW)
+        fd = os.open(root / settings.filename, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
         with os.fdopen(fd) as stream:
             info = os.fstat(stream.fileno())
             if (

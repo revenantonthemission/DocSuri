@@ -263,3 +263,73 @@ def test_process_table_deadline_and_nonzero_command_fail_closed(monkeypatch):
     monkeypatch.setattr(bootstrap.subprocess, "run", lambda *args, **kwargs: (_ for _ in ()).throw(subprocess.CalledProcessError(1, "ps")))
     with pytest.raises(subprocess.CalledProcessError):
         bootstrap.process_rss(os.getpid(), time.monotonic() + 1)
+
+
+SLEEPER = [sys.executable, "-c", "import time; time.sleep(30)"]
+
+
+class SteppedClock:
+    """Real monotonic time plus jumps a stand-in applies, so no test sleeps."""
+
+    def __init__(self):
+        self.real = time.monotonic
+        self.offset = 0.0
+
+    def __call__(self):
+        return self.real() + self.offset
+
+    def jump(self, seconds):
+        self.offset += seconds
+
+
+@pytest.fixture
+def clock(monkeypatch):
+    stepped = SteppedClock()
+    monkeypatch.setattr(bootstrap.time, "monotonic", stepped)
+    return stepped
+
+
+def test_ps_timeout_at_window_edge_ends_observation(tmp_path, monkeypatch, clock):
+    timeouts = []
+
+    def ps_at_window_edge(args, **kwargs):
+        assert args[0] == "ps"
+        timeouts.append(kwargs["timeout"])
+        # seconds=2 gives a 1 s window, under ps's 1 s cap, so ps is handed exactly
+        # what is left of the window; it times out by using all of it, ending at
+        # the window's edge (never seconds past it).
+        clock.jump(kwargs["timeout"])
+        raise subprocess.TimeoutExpired(args, kwargs["timeout"])
+
+    monkeypatch.setattr(bootstrap.subprocess, "run", ps_at_window_edge)
+    result = bootstrap.bounded_process(SLEEPER, tmp_path / "browser-edge.log", seconds=2,
+        expect_running=True)
+    assert len(timeouts) == 1 and 0 < timeouts[0] < 1
+    assert result["reason"] == "deadline" and result["processStopped"]
+    assert result["peakRssBytes"] == 0
+
+
+def test_window_edge_passing_before_ps_starts_ends_observation(tmp_path, monkeypatch, clock):
+    sample = bootstrap.process_rss
+    calls = []
+
+    def edge_passes_first(pid, end):
+        calls.append(end)
+        clock.jump(end - clock())  # the window closes exactly before ps starts
+        return sample(pid, end)
+
+    monkeypatch.setattr(bootstrap, "process_rss", edge_passes_first)
+    result = bootstrap.bounded_process(SLEEPER, tmp_path / "browser-edge.log", seconds=2,
+        expect_running=True)
+    assert len(calls) == 1
+    assert result["reason"] == "deadline" and result["processStopped"]
+
+
+def test_ps_timeout_inside_the_window_still_fails(tmp_path, monkeypatch, clock):
+    def ps_stalls(args, **kwargs):
+        raise subprocess.TimeoutExpired(args, kwargs["timeout"])
+
+    monkeypatch.setattr(bootstrap.subprocess, "run", ps_stalls)
+    with pytest.raises(subprocess.TimeoutExpired):
+        bootstrap.bounded_process(SLEEPER, tmp_path / "browser-stall.log", seconds=4,
+            expect_running=True)

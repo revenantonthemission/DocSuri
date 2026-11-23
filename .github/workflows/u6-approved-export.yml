@@ -9,6 +9,7 @@ on:
       - 'ops/src/docsuri_ops/**'
       - 'scripts/*docsuri_u6*.py'
       - 'scripts/u6_*.py'
+      - 'scripts/u6-lint*.toml'
       # Earlier tool scripts that U6's tool imports, and the regression folders it runs.
       - 'scripts/verify_docsuri_u1.py'
       - 'scripts/bootstrap_docsuri_u1.py'
@@ -103,16 +104,23 @@ jobs:
       - name: Frozen Python dependencies
         run: uv sync --project backend --frozen --python 3.13.7
       - name: Lint export and shared runtime changes
-        run: >-
-          backend/.venv/bin/ruff check backend/modules/export backend/u6_*.py backend/key_custody.py
-          backend/modules/accounts/control_keys.py backend/modules/accounts/services/control_lifecycle.py
-          backend/local_profile.py backend/transactions.py backend/local_browser.py backend/artifacts.py
-          backend/local_host.py backend/u3_host.py backend/modules/accounts/local_http.py
-          backend/modules/accounts/services/guarded_entry.py
-          backend/modules/personalization/guarded_service.py ops/src/docsuri_ops/local_transport.py
-          scripts/verify_docsuri_u6.py scripts/serve_docsuri_u6.py scripts/u6_*.py
-          scripts/u6_real_export.py
-          tests/u6_approved_export
+        run: |
+          set -eu
+          ruff="$PWD/backend/.venv/bin/ruff"
+          # 1. U6's tests: E, F, I, UP and B at 100, nothing ignored.
+          "$ruff" check --no-cache --config scripts/u6-lint.toml tests/u6_approved_export
+          # 2. U6's scripts: Ruff's default selection, extended with the same rules.
+          "$ruff" check --no-cache --config scripts/u6-lint-scripts.toml \
+            scripts/verify_docsuri_u6.py scripts/serve_docsuri_u6.py scripts/u6_*.py
+          # 3. U6's backend files and the shared runtime files, under their own configurations.
+          "$ruff" check --no-cache backend/modules/export backend/u6_*.py backend/key_custody.py \
+            backend/local_profile.py backend/transactions.py backend/local_browser.py \
+            backend/artifacts.py backend/local_host.py backend/u3_host.py \
+            backend/modules/personalization/guarded_service.py ops/src/docsuri_ops/local_transport.py
+          # 4. The U2 files U6 changes (cicd-pipeline §2.3), with nothing ignored.
+          (cd backend/modules/accounts && "$ruff" check --no-cache \
+            --config ../../../scripts/u6-lint-accounts.toml \
+            control_keys.py services/control_lifecycle.py local_http.py services/guarded_entry.py)
       - name: Pinned local database image
         run: docker pull postgres@sha256:a3b7f434b2dc57ce85a67e171163eb8ab1a1ebcb39d27484661f26b1dfbe30d6
       - name: Prior-unit transport, recovery and keyring regressions

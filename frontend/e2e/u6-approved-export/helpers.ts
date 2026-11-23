@@ -78,7 +78,7 @@ export type Fixtures = {
   scenario: {
     practicePage: string;
     sameTitle: string;
-    specs: Record<'journeys' | 'keyboard' | 'accessibility', SpecNames>;
+    specs: Record<'journeys' | 'keyboard' | 'accessibility' | 'reflow', SpecNames>;
   };
 };
 
@@ -205,7 +205,10 @@ export function historyRow(page: Page, title: string) {
 }
 
 /** The current flow step, as the indicator exposes it (never by color). */
-export async function expectStep(page: Page, step: 'destination' | 'preview' | 'outcome') {
+export async function expectStep(
+  page: Page,
+  step: 'connection' | 'destination' | 'preview' | 'outcome',
+) {
   await expect(page.getByTestId(`flow-step-${step}`)).toHaveAttribute('aria-current', 'step');
 }
 
@@ -338,4 +341,50 @@ export async function scrub(page: Page) {
       });
     })
     .catch(() => undefined);
+}
+
+/** WCAG 1.4.10 readings at 320 CSS px: whether the page and the surface scroll
+sideways, whether the surface leaves the viewport, and every descendant scroller that
+does; the visually hidden are skipped, and names come from test ids or tag and class,
+never content. */
+export async function expectReflowAt320(page: Page, testId: string) {
+  const surface = page.getByTestId(testId);
+  await expect(surface).toBeVisible();
+  return surface.evaluate((element) => {
+    const width = window.innerWidth;
+    const box = element.getBoundingClientRect();
+    const nested = Array.from(element.querySelectorAll<HTMLElement>('*'))
+      .filter((child) => {
+        if (child.clientWidth === 0) return false;
+        if (child.closest('.export-visually-hidden, .visually-hidden')) return false;
+        const style = window.getComputedStyle(child);
+        const scrollable =
+          ['auto', 'scroll', 'hidden'].includes(style.overflowX) ||
+          ['auto', 'scroll', 'hidden'].includes(style.overflowY);
+        return scrollable && child.scrollWidth > child.clientWidth + 1;
+      })
+      .map((child) => {
+        const id = child.getAttribute('data-testid');
+        if (id) return id;
+        const first = child.className.trim().split(/\s+/)[0] ?? '';
+        return `${child.tagName.toLowerCase()}${first ? `.${first}` : ''}`;
+      });
+    return {
+      width,
+      page: document.documentElement.scrollWidth > width,
+      surface: element.scrollWidth > element.clientWidth + 1,
+      offscreen: box.left < 0 || box.right > width + 1,
+      nested,
+    };
+  });
+}
+
+/** Runs `body` at 320×640 (WCAG 1.4.10) and restores 1280×720 afterwards. */
+export async function withViewport320(page: Page, body: () => Promise<void>) {
+  await page.setViewportSize({ width: 320, height: 640 });
+  try {
+    await body();
+  } finally {
+    await page.setViewportSize({ width: 1280, height: 720 });
+  }
 }

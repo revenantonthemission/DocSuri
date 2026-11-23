@@ -6,10 +6,13 @@ import sys
 import time
 from dataclasses import replace
 from pathlib import Path
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import pytest
+
 from backend import local_profile as profiles
 from scripts import verify_docsuri_u6 as runner
+from tests.u6_approved_export import conftest as u6_conftest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "ops/src"))
 from docsuri_ops.local_transport import inspect_transport  # noqa: E402
@@ -93,10 +96,47 @@ def test_a_cross_unit_or_unowned_identity_is_refused(manifest, changes):
         profiles.LocalProfile.load(manifest[1](**changes))
 
 
+def count_of(connect, owner: str, sql: str, params: tuple = ()) -> int:
+    with connect(owner) as conn:
+        return conn.execute(sql, params).fetchone()["n"]
+
+
+def test_a_new_owner_past_the_realm_allocation_is_a_failed_prerequisite(
+    realm, connect, authority, monkeypatch
+):
+    """A realm whose synthetic allocation is spent is consumed: a new owner fails as a
+    prerequisite and writes nothing (the allocation lowered on the conftest only)."""
+    accounts = "SELECT count(*) AS n FROM accounts.account"
+    allocated = count_of(connect, "accounts", accounts)
+    monkeypatch.setattr(u6_conftest, "MAX_SYNTHETIC_ACCOUNTS", allocated)
+    suffix = f"allocation-{uuid4().hex}"
+    owner = uuid5(NAMESPACE_URL, realm.run_id + f"u6-owner-{suffix}")
+    session = uuid5(NAMESPACE_URL, realm.run_id + f"u6-session-{suffix}")
+
+    with pytest.raises(
+        pytest.fail.Exception,
+        match=r"^Synthetic account allocation exhausted; a fresh owned realm is required$",
+    ):
+        u6_conftest._make_authority(connect, realm, suffix=suffix)
+
+    assert count_of(connect, "accounts", accounts) == allocated
+    by_id = "SELECT count(*) AS n FROM accounts.account WHERE id=%s"
+    assert count_of(connect, "accounts", by_id, (owner,)) == 0
+    by_session = "SELECT count(*) AS n FROM accounts.session WHERE id=%s"
+    assert count_of(connect, "accounts", by_session, (session,)) == 0
+    by_consent = "SELECT count(*) AS n FROM accounts.consent WHERE account_id=%s"
+    assert count_of(connect, "accounts", by_consent, (owner,)) == 0
+    by_settings = "SELECT count(*) AS n FROM personalization.settings WHERE account_id=%s"
+    assert count_of(connect, "personalization", by_settings, (owner,)) == 0
+    assert u6_conftest._make_authority(connect, realm, suffix="a") == authority
+    assert count_of(connect, "accounts", accounts) == allocated
+
+
 def test_18069_is_still_refused_as_an_unowned_origin(realm):
-    from backend.local_browser import EXPORT_ORIGIN, boundary_route
     from fastapi import APIRouter, FastAPI
     from fastapi.testclient import TestClient
+
+    from backend.local_browser import EXPORT_ORIGIN, boundary_route
 
     assert EXPORT_ORIGIN == "https://127.0.0.1:18099"
     with pytest.raises(ValueError, match="unowned browser origin"):

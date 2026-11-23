@@ -3,7 +3,7 @@ import type { Transport } from '../api';
 import { ActionStatus, useResearchAction } from './action';
 import {
   researchCall,
-  RESEARCH_LIMITS,
+  researchLimits,
   utf8Bytes,
   type Artifact,
   type DraftRef,
@@ -39,8 +39,11 @@ export function ResearchComposer({
   const locked = action.busy || action.unknown;
   const isResearch = purpose === 'research';
   const budgetId = useId();
+  // The policy's own question bound (2,048 bytes in production); the server stays
+  // authoritative.
+  const limits = researchLimits(policy);
   const bytes = utf8Bytes(text);
-  const overLimit = bytes > RESEARCH_LIMITS.textBytes;
+  const overLimit = bytes > limits.textBytes;
   const edit = (value: string) => {
     setText(value);
     setDraft(null);
@@ -128,7 +131,7 @@ export function ResearchComposer({
               value={text}
               onChange={(event) => edit(event.target.value)}
               rows={6}
-              maxLength={RESEARCH_LIMITS.textBytes}
+              maxLength={limits.textBytes}
               aria-invalid={overLimit}
               aria-describedby={budgetId}
               autoComplete="off"
@@ -136,7 +139,7 @@ export function ResearchComposer({
             />
           </label>
           <p id={budgetId} role={overLimit ? 'alert' : undefined}>
-            입력 용량 {bytes} / {RESEARCH_LIMITS.textBytes} UTF-8 바이트
+            입력 용량 {bytes} / {limits.textBytes} UTF-8 바이트
             {overLimit ? ' · 한도를 초과했어요. 입력을 줄여 주세요.' : ''}
           </p>
           <p className="muted">
@@ -181,8 +184,9 @@ export function NoveltyDiscussion({
   const [text, setText] = useState('');
   const action = useResearchAction(client);
   const budgetId = useId();
+  const limits = researchLimits(policy);
   const bytes = utf8Bytes(text);
-  const overLimit = bytes > RESEARCH_LIMITS.textBytes;
+  const overLimit = bytes > limits.textBytes;
   return (
     <section aria-label="분석 결과 토론">
       <h3>이 결과에 이어 질문하기</h3>
@@ -215,7 +219,7 @@ export function NoveltyDiscussion({
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={4}
-              maxLength={RESEARCH_LIMITS.textBytes}
+              maxLength={limits.textBytes}
               aria-invalid={overLimit}
               aria-describedby={budgetId}
               autoComplete="off"
@@ -223,7 +227,7 @@ export function NoveltyDiscussion({
             />
           </label>
           <p id={budgetId} role={overLimit ? 'alert' : undefined}>
-            입력 용량 {bytes} / {RESEARCH_LIMITS.textBytes} UTF-8 바이트
+            입력 용량 {bytes} / {limits.textBytes} UTF-8 바이트
             {overLimit ? ' · 한도를 초과했어요. 입력을 줄여 주세요.' : ''}
           </p>
           <button type="submit" disabled={!text.trim() || overLimit}>

@@ -10,10 +10,13 @@ no test waits in real time.
 
 import copy
 import datetime as dt
+import json
+import os
 from dataclasses import dataclass, field
 from uuid import UUID, uuid4
 
 import psycopg
+
 from backend.modules.export.errors import ExportError
 from backend.modules.export.lane_store import CheckResult, WriteOutcome
 from backend.modules.export.notion_session import InteractiveGate
@@ -24,7 +27,6 @@ from backend.modules.export.token_keyring import TokenKeyring
 from backend.modules.export.token_vault import TokenVault
 from backend.modules.research.errors import ResearchError
 from backend.u6_policy import ExportPolicy
-
 from tests.u6_approved_export import notion_flows as nf
 from tests.u6_approved_export import store_flows as flows
 
@@ -171,6 +173,13 @@ class ResearchDouble:
         return copy.deepcopy(item)
 
 
+def real_research(transactions):
+    """U4's real export read, as the host builds it (`scripts.u6_browser_fixtures`)."""
+    from scripts.u6_browser_fixtures import research_ports
+
+    return research_ports(transactions)[0]
+
+
 class CountingGate(InteractiveGate):
     """The real gate, recording every key it was asked for."""
 
@@ -189,18 +198,25 @@ def vault(tmp_path, name: str = "export-keys") -> TokenVault:
     return TokenVault(TokenKeyring(root, "u6-service-test", nf.NoSealedTokens()))
 
 
+def reference_of(novelty: dict) -> dict:
+    """The three reference fields a browser sends for a novelty artifact: the wire ref
+    (A1), never U4's whole result object, whose extra keys the schema refuses."""
+    return {key: novelty[key] for key in ("artifactId", "revision", "contentHash")}
+
+
 @dataclass
 class Rig:
     service: ExportService
     repo: ExportRepository
     fake: object
-    research: ResearchDouble
+    research: object
     gate: CountingGate
     clock: Clock
     authority: object
     policy: ExportPolicy
     token: str
     bot: str
+    transactions: object = None
     keys: list = field(default_factory=list)
 
     # -- connection ----------------------------------------------------------------------
@@ -221,6 +237,30 @@ class Rig:
         )
         return token, bot
 
+    def ready(self, *, authority=None) -> dict:
+        """A ready novelty source for this rig's port: the double's, or U4's own service
+        through the run-bound cache (`integration-novelty.json`, mode 0600) the
+        integration rigs share; a foreign run is refused, and a stale entry is rebuilt
+        only after U4's artifact expiry."""
+        if isinstance(self.research, ResearchDouble):
+            return self.research.ready()
+        from scripts.u6_browser_fixtures import ready_novelty
+
+        who = authority or self.authority
+        profile = self.transactions.profile
+        path = profile.root / "integration-novelty.json"
+        cached = {"runId": profile.run_id, "accounts": {}}
+        if path.exists():
+            cached = json.loads(path.read_text())
+            if cached.get("runId") != profile.run_id:
+                raise AssertionError("the integration novelty cache belongs to another run")
+        known = cached["accounts"].get(str(who.account_id))
+        reference = ready_novelty(self.transactions, who, known)
+        cached["accounts"][str(who.account_id)] = reference
+        path.write_text(json.dumps(cached))
+        os.chmod(path, 0o600)
+        return reference
+
     # -- destinations and previews --------------------------------------------------------
 
     def page(self, title: str | None = "합성 페이지", **kwargs) -> str:
@@ -233,18 +273,23 @@ class Rig:
             "workspaceId": WORKSPACE_ID,
             "parentPageId": page_id,
             "formatRevision": "1",
+            "destinationId": page_id,
         }
 
-    def preview_value(self, page_id: str, source: dict | None = None) -> dict:
+    def preview_value(
+        self, page_id: str, source: dict | None = None, *, authority=None
+    ) -> dict:
+        ready = source if source is not None else self.ready(authority=authority)
         return {
-            "source": source or self.research.ready(),
+            "source": reference_of(ready),
             "destination": self.destination(page_id),
             "renderPolicy": self.policy.reference(),
         }
 
     def preview(self, page_id: str, source: dict | None = None, *, authority=None) -> dict:
         return self.service.prepare_preview(
-            authority or self.authority, self.preview_value(page_id, source)
+            authority or self.authority,
+            self.preview_value(page_id, source, authority=authority),
         )
 
     @staticmethod
@@ -318,8 +363,12 @@ def build(
     clock: Clock | None = None,
     fresh: bool = True,
     keys: str = "export-keys",
+    research=None,
 ) -> Rig:
-    """A service over the realm and a fake Notion that knows one synthetic token."""
+    """A service over the realm and a fake Notion that knows one synthetic token.
+
+    `research` defaults to the port double; an integration rig passes
+    `real_research(transactions)` so every read runs U4's real export read (L1-2)."""
     chosen = policy or nf.policy()
     clock = clock or Clock()
     repo = ExportRepository(transactions, chosen)
@@ -328,11 +377,23 @@ def build(
     fake = nf.fake_with(token, bot)
     gate = CountingGate(chosen.interactive_per_process, chosen.interactive_per_connection)
     adapter = nf.adapter(repo, opener, fake, chosen, gate=gate, clock=clock)
-    research = ResearchDouble()
-    service = ExportService(transactions, repo, adapter, opener, research, chosen, clock)
+    chosen_research = research or ResearchDouble()
+    service = ExportService(transactions, repo, adapter, opener, chosen_research, chosen, clock)
     if fresh:
         flows.fresh(connect, authority.account_id)
-    return Rig(service, repo, fake, research, gate, clock, authority, chosen, token, bot)
+    return Rig(
+        service,
+        repo,
+        fake,
+        chosen_research,
+        gate,
+        clock,
+        authority,
+        chosen,
+        token,
+        bot,
+        transactions=transactions,
+    )
 
 
 def outcome_created() -> WriteOutcome:

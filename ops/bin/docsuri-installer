@@ -1,0 +1,25 @@
+#!/Library/DocSuri/release/.venv/bin/python -I
+"""docsuri-installer: the arrangement's one idempotent installer (infrastructure-specification
+§ 4, Workflow 20, D8).
+
+Run as root through sudo, in person (`sudo -k`), with one word from its closed set:
+`plan` (every change of the seven phases with its difference; nothing changes), `apply`
+(the phases in order, each checking its own result before the next), `verify` (the
+installation's checks and the isolation check) or `change-password` (one holder's
+production passwords changed together with its roles' SCRAM verifiers, from
+`{"login": <holder>}` on standard input). Its settings are the root-owned
+`/Library/DocSuri/control/installation.json`, which holds no secret. One JSON result is
+written to standard output. It refuses to run when the environment holds PYTHON*, DYLD_*
+or LD_* variables, and when it does not run as root.
+"""
+
+import sys
+
+if sys.argv[1:] == ["--self-check"]:
+    from docsuri_ops.release import self_check
+
+    raise SystemExit(self_check(__file__))
+
+from docsuri_ops.arrangement.installer import main
+
+raise SystemExit(main())

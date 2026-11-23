@@ -43,7 +43,7 @@ def test_two_owners_inherit_distinct_languages(transactions, authority, authorit
     )
 
 
-def test_language_change_discards_unsent_work(transactions, authority):
+def _language_change_discards_unsent_work(transactions, authority):
     change(transactions, authority, assistanceDefaults=dict(ASSISTANCE_DEFAULTS, languageId="en"))
     repository, run = prepare(transactions, authority)
     change(transactions, authority, assistanceDefaults=dict(ASSISTANCE_DEFAULTS, languageId="ko"))
@@ -55,17 +55,41 @@ def test_language_change_discards_unsent_work(transactions, authority):
     assert replacement["preference_snapshot"]["languageId"] == "ko"
 
 
-def test_appearance_only_change_keeps_preparation(transactions, authority):
+def _appearance_only_change_keeps_preparation(transactions, authority):
     repository, run = prepare(transactions, authority)
     change(transactions, authority, appearance="dark")
     assert repository.begin_send(run["id"], "local-sink")["id"] == run["id"]
     repository.finish_send(run["id"], "failed")
 
 
-def test_zone_change_discards_preparation(transactions, authority):
+def _zone_change_discards_preparation(transactions, authority):
     repository, run = prepare(transactions, authority)
     change(transactions, authority, timeZone="America/New_York")
     assert repository.begin_send(run["id"], "local-sink") is None
+
+
+# Plan Step 38 (decision L3-1): three same-rule cases merged into one parametrized test,
+# each original body kept unchanged as a case function, so each case is still its own
+# collected item and its id names the original test.
+@pytest.mark.parametrize(
+    "case",
+    [
+        _language_change_discards_unsent_work,
+        _appearance_only_change_keeps_preparation,
+        _zone_change_discards_preparation,
+    ],
+    ids=[
+        "language_change_discards_unsent_work",
+        "appearance_only_change_keeps_preparation",
+        "zone_change_discards_preparation",
+    ],
+)
+def test_unsent_preparation_follows_the_effective_preference_fingerprint(
+    transactions, authority, case
+):
+    """One rule, the preparation fence: a change to the effective language or zone
+    discards unsent work (re-prepared as a new row), and an appearance-only edit keeps it."""
+    case(transactions, authority)
 
 
 def test_started_attempt_retains_original_evidence(transactions, authority):

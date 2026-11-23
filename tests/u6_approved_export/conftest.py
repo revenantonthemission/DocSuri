@@ -7,10 +7,11 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import psycopg
 import pytest
-from backend.local_profile import LocalProfile, private_bytes
-from backend.transactions import Authority, OwnerTransactions
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
+
+from backend.local_profile import LocalProfile, private_bytes
+from backend.transactions import Authority, OwnerTransactions
 
 # The environment persists across phases; synthetic owners are bounded per realm.
 MAX_SYNTHETIC_ACCOUNTS = 20
@@ -80,6 +81,38 @@ def connect(realm):
 
 
 @pytest.fixture
+def connect_raw(realm):
+    """A raw administrative session: no application name, unlimited, never counted.
+
+    The runtime roles hold `CONNECTION LIMIT 2`, so a sampler polling the realm must
+    not borrow one of them."""
+    secret = json.loads(private_bytes(realm.root / "migration-credentials.json"))
+    opened = []
+
+    def open_connection():
+        conn = psycopg.connect(
+            host="127.0.0.1",
+            port=realm.database_port,
+            dbname=realm.database_name,
+            user="postgres",
+            password=secret["databaseAdminPassword"],
+            connect_timeout=3,
+            row_factory=dict_row,
+        )
+        assert (
+            conn.execute("SELECT run_id FROM public.docsuri_local_identity").fetchone()["run_id"]
+            == realm.run_id
+        )
+        conn.commit()
+        opened.append(conn)
+        return conn
+
+    yield open_connection
+    for conn in opened:
+        conn.close()
+
+
+@pytest.fixture
 def operator(realm):
     """The operator path: the administrative login acting as `docsuri_export_owner`.
 
@@ -123,20 +156,31 @@ def _make_authority(connect, realm, *, suffix):
         ):
             pytest.fail("Synthetic account allocation exhausted; a fresh owned realm is required")
         conn.execute(
-            "INSERT INTO accounts.account(id,email,password_hash,verified,active,authority_revision,display_name) VALUES(%s,%s,'not-login-material',true,true,%s,'synthetic') ON CONFLICT(id) DO UPDATE SET active=true,verified=true,authority_revision=excluded.authority_revision",
+            "INSERT INTO accounts.account(id,email,password_hash,verified,active,"
+            "authority_revision,display_name) "
+            "VALUES(%s,%s,'not-login-material',true,true,%s,'synthetic') "
+            "ON CONFLICT(id) DO UPDATE SET active=true,verified=true,"
+            "authority_revision=excluded.authority_revision",
             (owner, f"{owner}@fixture.invalid", revision),
         )
         conn.execute(
-            "INSERT INTO accounts.consent(account_id,purpose,granted) VALUES(%s,'local-research',true) ON CONFLICT(account_id,purpose) DO UPDATE SET granted=true",
+            "INSERT INTO accounts.consent(account_id,purpose,granted) "
+            "VALUES(%s,'local-research',true) "
+            "ON CONFLICT(account_id,purpose) DO UPDATE SET granted=true",
             (owner,),
         )
         conn.execute(
-            "INSERT INTO accounts.session(id,account_id,token_hash,csrf_hash,authority_revision,expires_at) VALUES(%s,%s,%s,%s,%s,clock_timestamp()+interval '30 minutes') ON CONFLICT(id) DO UPDATE SET revoked=false,authority_revision=excluded.authority_revision,expires_at=excluded.expires_at",
+            "INSERT INTO accounts.session(id,account_id,token_hash,csrf_hash,authority_revision,"
+            "expires_at) VALUES(%s,%s,%s,%s,%s,clock_timestamp()+interval '30 minutes') "
+            "ON CONFLICT(id) DO UPDATE SET revoked=false,"
+            "authority_revision=excluded.authority_revision,expires_at=excluded.expires_at",
             (session, owner, str(uuid4()), str(uuid4()), revision),
         )
     with connect("personalization") as conn:
         conn.execute(
-            "INSERT INTO personalization.settings(account_id,revision,defaults) VALUES(%s,%s,%s) ON CONFLICT(account_id) DO UPDATE SET revision=excluded.revision,defaults=personalization.settings.defaults || excluded.defaults",
+            "INSERT INTO personalization.settings(account_id,revision,defaults) "
+            "VALUES(%s,%s,%s) ON CONFLICT(account_id) DO UPDATE SET revision=excluded.revision,"
+            "defaults=personalization.settings.defaults || excluded.defaults",
             (owner, uuid4(), Jsonb({"timeZone": "UTC"})),
         )
     return Authority(owner, session)

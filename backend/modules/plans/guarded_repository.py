@@ -73,11 +73,21 @@ class GuardedUsageRepository:
         need a live browser session: it completes an existing owner obligation.
         """
         account, operation = UUID(proof["accountId"]), UUID(proof["operationId"])
+        # The person's decision of 2026-10-23 ("U2's controls for all usage"): in the two
+        # complete realms an account holds usage only once granted, so an ungranted
+        # account's refused request has nothing to release. Its closure is recorded by
+        # the accepting owner and no usage row is written. Earlier realms keep U1's rule.
+        ungranted_closes = self.transactions.profile.realm in ("service-operations",
+                                                                "production")
 
         def write(conn):
             if not conn.execute(
                 "SELECT 1 FROM usage.entitlement WHERE account_id=%s FOR UPDATE", (account,)
             ).fetchone():
+                if ungranted_closes and not conn.execute(
+                    "SELECT 1 FROM usage.reservation WHERE operation_id=%s", (operation,)
+                ).fetchone():
+                    return
                 raise ValueError("usage participant not initialized")
             old = conn.execute(
                 "SELECT * FROM usage.rejected_operation WHERE operation_id=%s", (operation,)
@@ -181,16 +191,20 @@ class GuardedUsageRepository:
 
     def inspect_assignment(self, authority: Authority) -> dict:
         """U2 read-only initial assignment; absence never allocates capacity."""
-        if self.transactions.profile.realm != "account-controls":
+        # U2's realm, and the composed and production realms by the row "U2's controls in
+        # the complete app", each with its own policy's period.
+        if self.transactions.profile.realm not in ("account-controls", "service-operations",
+                                                   "production"):
             raise ValueError("U2 assignment profile required")
+        from backend.modules.accounts.control_policy import for_realm
+
+        control_policy = for_realm(self.transactions.profile.realm)
 
         def read(conn):
             guard(conn, authority, purpose="account-control")
-            from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
-
             tick = conn.execute(
                 "SELECT floor(extract(epoch FROM clock_timestamp())/%s)::bigint AS n",
-                (SYNTHETIC_POLICY.period_seconds,),
+                (control_policy.period_seconds,),
             ).fetchone()["n"]
             period = "u2-period:" + str(tick)
             row = conn.execute(

@@ -4,9 +4,9 @@ Unit `u6-approved-export` · branch `feature/u6-approved-export` · scope expres
 
 ## Summary
 
-- Builds: the ApprovedExport module and everything it needs. That is schema `export`, the repository, sealed-token custody, the render policy, a Notion adapter (pinned `notion-client` SDK behind a guarded transport, with a fake Notion), the export service, the worker pass step and export lane, the lifecycle participant, operator key commands and the C09 routes. It also builds the synthetic composition and the operator-only real composition, the Korean export view and stepped flow, and U6's environment tool and CI lane.
-- Touches: U2's keyring (moved onto a shared custody helper, behaviour unchanged) and its lifecycle projection (A8). The shared C09 contract (A1–A7, A9, A10, A6 extension, as an additive minor release), with regenerated bindings, wire types and both consumer inventories. The shared runtime allowlists and composition chain (including U3's topics gate), the application shell, U4's novelty result screen, `frontend/src/api.ts`, U2's cumulative frontend lane, and `notion-client==3.1.0` in `backend/pyproject.toml` and `backend/uv.lock`.
-- Tests: five to eight tests per component across the database, repository, component, integration and operations layers. Shared contract tests, Vitest component tests, and browser journeys with keyboard, reflow and axe checks. Every item of security design §13 and cicd-pipeline §3.2. An 80% line-coverage floor, never lowered, for the backend total (which also measures `backend/u3_host.py`), for `scripts/u6_preservation.py` on its own, and for `frontend/src/u6-export`.
+- Builds: Build and Test loop-back 3 for U6 (Steps 53–63). The four unlisted store doubles are replaced by real database faults and realm rows, and the remaining wrappers and stand-ins are named under Allowed doubles. New checks cover when the lane recorded its last outcome and three hostile provider-text surfaces in jsdom. U6 gets its own Ruff configurations (E,F,I,UP,B at line length 100), every finding they report is fixed, and a lint gate checks them. Twelve decisions (L3-1 to L3-12); three of them, L3-5, L3-8 and L3-10, are yours to make.
+- Touches: U6's tests under `tests/u6_approved_export/`: `store_flows.py`, `component/test_lane_write_path.py`, `operations/test_u6_real_export_checks.py`, `test_u6_preservation.py`, `repository/test_status_counts.py`, `operations/test_u6_test_volume.py`, a new `operations/test_u6_lint_gate.py`, and import order and line wraps across the tree. Three Vitest files in `frontend/test/u6-export/`. U6's five scripts (layout only). `.github/workflows/u6-approved-export.yml` and new `scripts/u6-lint*.toml` files. Under L3-10's default, line wraps in two U2 accounts files plus a regenerated `shared/python-consumers.json`. U6's records, including new Allowed doubles entries in `unit-test-instructions.md`. Steps 1–52 stay as built, and no production behaviour changes.
+- Tests: 4 new backend tests (1 repository, 3 lint gate) and 3 new Vitest cases. 3 tests rewritten, the archive tests' fixture moved onto the realm, and 2 tests changed by lint fixes. Each new or changed test is run once with its behaviour withheld. Coverage phase goes from 945 to 949 tests, U6 Vitest from 120 to 123, and U2's cumulative lane from 728 to 731. Existing suites and the 80% floors stay as they are.
 
 ## Testing Contract
 
@@ -27,6 +27,10 @@ Unit `u6-approved-export` · branch `feature/u6-approved-export` · scope expres
     {
       "layer": "team",
       "text": "**Methodology:** test-after\n**Ordering:** Test-last per component — Implement component fully, then write its tests.\n\n**Scope floors (feature scope):**\n- 80% line-coverage floor for new code\n- CI execution before merge\n- Existing test suites must remain green (473 backend + 356 frontend)\n\n**Evidence from reverse-engineering:**\n- Current coverage: ~65% overall, but Phase 7 target components at 0% (JobStatus, contentJobApi BFF routing)\n- 356 frontend tests passing (Vitest + React Testing Library)\n- 473 backend tests passing\n- Playwright E2E configured (~25 tests, ~30% coverage)\n- CI runs lint, typecheck, test:coverage, test:e2e\n- **Gap:** Phase 7 components (JobStatus, AssetViewer migration, contentJobApi BFF routing) completely untested\n- **Gap:** No Error Boundary tests, no SSE polling fallback tests, no idempotency key tests\n\n**Affirmed posture for Phase 7:**\n- Maintain test-after methodology (team default)\n- Ordering: Test-last per component (implement fully, then test)\n- 80% coverage floor for new code enforced in CI\n- All existing tests must remain green\n\n---"
+    },
+    {
+      "layer": "project",
+      "text": "- U5's component lane needs its own fresh realm: a coverage pass exhausts the realm's authentication-attempt allocation, so the runner refuses a later lane on that realm. Preserve the refused realm as a failed prerequisite and re-run on a fresh one; never relabel it. Ruff format drift in files no step touched is recorded, not fixed, when CI runs ruff check only and a file must keep pinned bytes. (learned 2026-10-28) \n\n- Tick a Code Generation plan box only after the run its own text asks for has passed, including when restoring ticks after a new Plan Approval clears them. A box whose run is owed to ci.yml's macos-filesystem job, an installation or a browser lane stays open, with the owed run named in the code summary, because editing the plan's text voids its approval. Before a checkpoint, check every verified and not-yet-verified line in the code summary against the runs' start times and source digest. (learned 2026-11-14) \n\n- Before U8's realm runs, keep free disk less the realm database above J09's 20 GiB guard and never lower the guard: with the person's approval remove only stopped docsuri-u8-<id> containers and volumes and run Colima's fstrim twice (the second pass releases what the first misses), and if swap still leaves too little, copy the preserved folders out of /tmp and ask the person to restart the Mac. Run realm B (setup, migrate, fixtures --corpus skip, verification-run) without the operations lane, which runs alone on a fresh realm, record that move as a deviation while the approved instructions still put the lane on realm B, and wait about 90 s after each archive before the next setup. (learned 2026-11-14) \n\n- For local runs on this Mac, give every DocSuri test-tool command DOCKER_HOST=unix://$HOME/.colima/default/docker.sock and DOCKER_CONFIG=$HOME/.docsuri-u8/docker-config, and confirm the run's containers through Colima's socket before recording any run or measurement as evidence, because OrbStack holds the default Docker socket after restarts. A test tool or child process that builds its own environment keeps DOCKER_HOST whenever its caller set it, and changing another Unit's tool for that waits for the person's answer. (learned 2026-11-14) \n\n- Before a record says a new or changed test catches its defect, run it once against the old code or with the awaited event withheld (edit, run, restore exactly), outside any recorded verification run, confirm the restore by digest or diff, and record the failure it gave. A test checked only by reading the code is recorded as not run and is not claimed to catch the defect. (learned 2026-11-14) \n\n- In every timing or capacity measurement on synthetic papers, give each run and each paper texts of their own, drawn from a seed derived from the measurement's token, the size and the run number, because repeated text adds no new vector to the HNSW index and makes later runs look fast. Count every run, the first included, and treat a slow first run as a finding to explain, never as a cold start to set aside. (learned 2026-11-14) \n\n- Make a DocSuri test tool's setup wait for PostgreSQL over TCP, the way its bootstrap and migrate connect, not on docker exec pg_isready over the container's Unix socket, which can pass against the image's socket-only init server. Until the U1, U2, U3 and U7 setups wait that way, check a refusal at their bootstrap or base-only migrate against the stopped container's log for the init-server restart, keep it as a failed prerequisite and rerun on a fresh environment, never relabelled. (learned 2026-11-14)"
     }
   ],
   "obligations": {
@@ -70,8 +74,8 @@ Unit `u6-approved-export` · branch `feature/u6-approved-export` · scope expres
       "Documentation and traceability."
     ]
   },
-  "input_sha256": "sha256:feb040c7898e5b924695da36d1e6633e1d2cad660b370bc4d3d863451b5e0cf9",
-  "contract_sha256": "sha256:0b3bdbd990d6def665d447995282ba760f054c761c3ccf40dbbb9fc1b114553b"
+  "input_sha256": "sha256:3990a78e27a36dd2a57fdaaf230108e8f4333f968cfea16c978632bf38e20457",
+  "contract_sha256": "sha256:0aa10a7c0f0951b1d7a42d30f48c9f9dc63f93eef1125959651d5c864e8e6eca"
 }
 ```
 
@@ -1432,10 +1436,782 @@ Each file is applied as the owner of the schema it changes, append-only.
 - Files: none at the workspace root.
 - Traces: R-01, R-02, R-15; A1, A2, A3, A6; BR2.6; cicd §2.1, §2.5, §4.3, §5, §9.
 
+## Build and Test loop-back 1 (2026-10-28)
+
+Build and Test's target check (`construction/build-and-test/test-results.md`, Target Verification Matrix and Loop-Back Log) found 2 of U6's targets Not Met and 19 that no test in a passed lane checks in full. Every U6 suite passed. You chose "Retry with fix" on 2026-10-27. The six targets owned by later stages (the hosted key folder, the error reporter, U8's logger levels, `pip-audit` in CI, the CI gate, U8's metrics) are not part of this loop-back. Steps 1–28 stay as built; Steps 29–43 are new and start unchecked. Each new check was drawn from the design section the target cites and from what the code and tests do today, and each was checked once more by a second reader before it was written here.
+
+**Decisions:**
+
+- **L1-1, the preview's destination is chosen from the current listing.** `ExportService.prepare_preview` (`backend/modules/export/service.py`) takes the request's `destinationId`, or `parentPageId` when A1's optional field is absent, as the *identity* of a listing entry, never as a request path. The server re-lists inside the one gated operation (`NotionAdapter.locate_destination`, `backend/modules/export/notion_adapter.py`: search first, probe only an id that the search returned, using the id from the search result), and the recorded destination, its title, context and the `bindingHash` come from that listing entry. Outside a complete listing answers `CONFLICT` (field `destination`); outside a partial or unavailable listing answers `DEPENDENCY_UNAVAILABLE`, never a definite refusal (BR1.5); `destinationId` and `parentPageId` that differ after normalisation answer `CONFLICT` before any Notion call. `ExportService._read_destination` is deleted (its only caller was this path; `BindingCheck` reads through `adapter.read_destination`, which stays). This amends the plan's A1 line in Step 21 ("`destinationId` is derived from `parentPageId`") to "the request's `destinationId` (or `parentPageId` when absent) names an entry of the connection's current listing; the recorded destination is that entry"; the amendment is recorded in the code summary, not by editing the approved step. Re-listing was chosen over a persisted listing table because it needs no migration and reuses `list_destinations`' search-plus-probe body.
+- **L1-2, integration rigs run U4's real export read.** `tests/u6_approved_export/service_flows.py` gains `real_research(transactions)` (the `ResearchService` the host builds, through `scripts.u6_browser_fixtures.research_ports`) and `Rig.ready(*, authority=None)`, which produces one ready novelty result per conftest owner per realm through `ready_novelty`, cached run-bound in `realm.root / 'integration-novelty.json'` (mode 0600, refused when `runId` differs, rebuilt only after U4's one-hour artifact expiry). `http_flows.mount` and the integration callers of `lane_flows.build` hand the service that real instance; `ResearchDouble` stays reachable only from component rigs, for the five component cases (absent, changed, ineligible, unreachable, policy unresolved). `tests/u6_approved_export/integration/test_export_assembly.py` drops the `ExportRepository.due_items` stub and freshens both conftest owners instead. U4's allocation is four jobs per account, never reset: `UsageQuotaExceeded` on a long-lived development realm is a failed prerequisite, never a skip.
+- **L1-3, the one real export stays operator evidence.** The press to `api.notion.com` (`U6:NFR6.3/real-export-approval`) cannot run in this stage: the conftest guard replaces `network_transport` for the whole run and no real token exists. Its matrix row keeps the vocabulary "Not runnable in this stage", with the runbook's §6–§8 evidence path (`u6-real-export-runbook.md`) and the six tests of `tests/u6_approved_export/component/test_real_export_gates.py` listed as the covering checks of the gating chain (BR8.2's non-human half). If you decline to run it at Build and Test, it moves to deployment-execution, where U8's provider gate and maintainer-only window govern the first real effect. No new status label is introduced.
+- **L1-4, the `pending` connection state is pinned as unwatched today and flagged.** `export.status_counts` (`backend/modules/export/u6_maintenance.sql`) counts four connection states and omits `pending`, so the connection counts do not sum to `count(*)`. The new test pins exactly today's behaviour (`sum(connections) == count(*) - count(state='pending')`) and the gate records the omission. Only if you want `pending` counted does a new migration `backend/modules/export/u6_status_counts.sql` follow (applied files are never edited), appended to `MIGRATIONS` with `test_migrations_are_u5s_chain_then_the_four_u6_files` extended to the five-file tail.
+- **L1-5, the check schedule is pinned as the code reads the design row.** `next_check_time` (`backend/modules/export/store_support.py`) places checks at 3, 10 and 30 minutes after the deadline, then every hour counted from the previous check (1h30 … 5h30, up to `check_hourly_until_seconds = 21600`), then every three hours (8h30 … 23h30), fourteen checks in all, the last at 84,600 s. The tests derive every expected point from the policy fields, so the recorded sequence lets you confirm the cadence. If the design meant on-the-hour points, the change is confined to `store_support.py` (the hourly branch) and these tests' expected lists. `check_hourly_until_seconds = 21600` is a value this plan records for approval at the U6 checkpoint; `test_export_policy.py` now freezes it by name.
+- **L1-6, the oldest-unknown age counts from the latest attempt's deadline.** `status_counts` measures the oldest unknown effect from its latest attempt's `deadline_at` (the §8.6 comment in `u6_maintenance.sql`), while logical-components §8 says only "the age of the oldest unknown effect". The code's reading is pinned; the gate records it for you to accept or redirect to time-since-unknown.
+- **L1-7, the SDK write timeout through the lane is the remaining time to `deadlineAt`.** Tech-stack decisions list `timeout_ms = 90000` for the write; through the lane the SDK's `timeout_ms` is the remaining time to the attempt's `deadlineAt`, at most 90,000 and floored at `MIN_WRITE_SECONDS` (`lane.py`), which the tech stack itself calls the bound that counts. Exactly 90,000 is asserted on `create_page(deadline_seconds=policy.write_deadline_seconds)` and 30,000 on reads; the lane fact (`deadline_at - started_at == 90 s`) is already pinned by `test_lane_write_path.py`.
+- **L1-8, test counts above eight are recorded and kept.** The standard strategy's "five to eight tests per component" is checked by a component → test-file map (`tests/u6_approved_export/operations/test_u6_test_volume.py`) that fails on an unmapped file or a component below five definitions, and by runtime counts per JUnit classname (`testsByClass`, a new key in each phase evidence file of `scripts/verify_docsuri_u6.py`). A component above eight is recorded as above the range and kept; no test is removed or merged, because that would weaken checks and break "existing suites stay green". A file may be mapped under two components when it exercises both (`integration/test_lifecycle_projection.py` under ExportLifecycleParticipant and AccountAccessA8). `shared/python/tests/test_export_contract.py` runs in the shared contract suite, not a runner phase, so its count comes from that suite.
+- **L1-9, the reflow fixtures change is a fixture-identity change.** Adding `reflow` to `SPECS` in `scripts/u6_browser_fixtures.py` changes `SCENARIO_NAMES`, so every environment whose `browser-fixtures.json` predates it is refused ("browser fixture identity differs") in the browser and coverage phases; those environments are archived with `--phase archive-owned` first. `FIXTURE_VERSION` stays `u6-browser-v1`, because the scenario comparison already guards identity. The settle dialog is measured at 320 CSS px inside `accessibility.spec.ts`'s existing settle journey by toggling the viewport to 320×640 for the measurement and restoring it, as U8's `expectReflowMain` does, rather than by a fourth clock-advanced settle under the 300 s browser bound. The measurement helper returns `{width, page, surface, offscreen, nested}` and every call compares it with `toEqual` against `{width: 320, page: false, surface: false, offscreen: false, nested: []}`, so the viewport guard runs on every real measurement and needs no test of its own; the nested walk inspects only descendants whose computed `overflow-x`/`overflow-y` is `auto`, `scroll` or `hidden` (today `.export-rendered`), skipping the visually-hidden boxes.
+- **L1-10, the coverage floor stays a single-source rule.** `backend/.coveragerc.u6` keeps `fail_under = 80` and the fourteen-pattern include list, and the runner keeps passing no `--cov-fail-under`; the new operations tests pin that pytest-cov adopts the rcfile floor and that a shortfall fails the run. No file leaves the list, no `exclude_lines` is added, and the scan that no U6 test or migration names U2-only schema (`control_receipt`, `control_proof`, `current_restriction`, `lifecycle_state`, `flow_id`, `u2_controls.sql`) pins the fact the plan's coverage decision relies on.
+- **L1-11, targets that belong to a later stage are named, not tested here.** `U6:NFR3.9/u8-logger-levels` (the hosted service never lowering `httpx`/`httpcore`) and the hosted key folder and U8's backup exclusion of `profile/export-keys/` belong to `u8-service-operations-integration` and deployment-execution; turning `status_counts` into U8 health and error-rate metrics belongs to U8's Build and Test; the 5-vs-8 worker-connection wording between logical-components §5 and `backend/u8_policy.py` is recorded as a note for U8, not a U6 fault. Nothing in this loop-back invents a test for them.
+- **L1-12, the operator fixture may read export tables for negative assertions only.** `operator` (schema owner, `conftest.py`) reads `export.connection` including the envelope columns in hex and base64, for the key-material and plaintext scans, because the runtime role's column grants exclude `sealed_token` and `token_key_version`. It never seeds rows or bypasses a runtime grant to make a behaviour pass.
+
+**Readings you can change at Plan Approval** (each is built as the decision above says unless you say otherwise):
+
+- L1-1: the server re-lists at preview time inside the one gated operation (not a persisted per-connection listing table), and a `destinationId`/`parentPageId` mismatch answers `CONFLICT` rather than `INVALID_ARGUMENT` (both lie in prepare_preview's frozen list).
+- L1-5: "then hourly, then every 3 h" is read as intervals counted from the previous check (1h30 … 5h30, then 8h30 … 23h30, fourteen checks), not on-the-hour points; `check_hourly_until_seconds = 21600` is frozen.
+- L1-4: the short-lived `pending` reservation stays unwatched in `status_counts` (no new migration).
+- L1-6: the oldest-unknown age is measured from the latest attempt's `deadline_at`.
+- L1-3: the one real export is operator evidence under the runbook, at Build and Test if you run it then, else at deployment-execution; its matrix row stays "Not runnable in this stage".
+- L1-8: a component with more than eight tests is recorded as above the range and never trimmed.
+- L1-9: the settle dialog's 320 CSS px measurement happens inside the existing settle journey by toggling the viewport, not in a fourth clock-advanced settle; every existing U6 environment is archived before the coverage and browser phases because the fixture identity changes.
+- The three optional cases (destination radios in Step 39a, erase during a scan in Step 36d, the `read_payload`-only source check in Step 36e) are built; say so if you want them dropped.
+
+**Steps (test-after):**
+
+- [x] **Step 29 — Record the decisions.** Write L1-1 to L1-12 into `code-summary.md` (deviations) and `traceability.json`, including the A1 restatement of L1-1 and the reading of Step 26's `reflow.spec.ts` bullet as "a 320 CSS px viewport across every U6 view, step state, the history and both dialogs, with a descendant walk for nested scroll containers and a viewport guard". The real-press target cites L1-3. No source changes, and no edit to the approved steps above. Trace: Build and Test loop-back 1.
+
+- [x] **Step 30 — Repository — tests.** Add to `tests/u6_approved_export/repository/` (the realm is used; nothing is mocked):
+  - (a) `test_owner_guard.py`, five tests: every one of the 19 owner-facing units (`read_connection` … `history`, `read_approval`) called with an ended session's `Authority` raises `InsufficientPrivilege` with the text `authority denied` and leaves `count(*)` of connection, preview_revision, approval, effect and replay_record unchanged (one test iterating closures, value objects built directly, snapshot taken once); an expired session and a session behind the account's `authority_revision` are refused and, restored, `transactions.guard` returns the account's revision; `local-research` consent set false refuses while a `personalization` consent granted true does not, and an inactive or unverified account refuses; another owner's session, a swapped pair and a `preauthentication` session never authorise this account while owner b still reads its own connection; a nonexistent account or session is refused with the same text. `store_flows.py` gains `expire_session` and `set_consent` beside `end_session`; rows are altered through `connect("accounts")` and restored in `finally`, the function-scoped `authority` fixture re-upserting them for the next test.
+  - (b) `test_unknown_check_cadence.py`, three tests on a `flows.uncertain` effect (deadline = now + 90 s): `listing-incomplete` checks recorded at deadline+180, +600, +1800, +19800 move `next_check_at` to deadline+600, +1800, +5400, +30600 with the state `unknown` and `scanning_stopped_at` None, and `due_items(now, limit=100)` lists it by id at deadline+5400 but not at +5399; a `listing-incomplete` check at deadline+73800 sets `next_check_at` to deadline+84600, then a `not-found` check at deadline+84600 (no earlier `not-found` on that effect) stops scanning: `next_check_at` None, `scanning_stopped_at` set, `settlementOffered` True from the stop, no later due item, and a further check inserts a row but leaves `next_check_at` None; two `not-found` scans 120 s apart (under `settling_wait_seconds`) keep `unknown`, and a second `not-found` a settling interval later fails the export with `not-found-after-checks`, `settled_by == 'reconciliation'`, `ended_at` equal to that check time and `settlementOffered` False. `window_start` is any aware timestamp; the check time is the recorded `now`.
+  - (c) `test_status_counts.py` (repository layer: every arrangement needs the repository's injected `now`), five tests with an injected clock `EPOCH` earlier than any other test's (1990-01-01) and baselines taken after `flows.connected` and before `bound`/`succeed`: a succeeded and a cancelled effect raise `succeededLast24h` and `cancelledLast24h` by exactly one at EPOCH+24h−1s and by zero at EPOCH+24h+1s; `oldestAcceptedSeconds == 1000` and `oldestUnknownSeconds == 910` at EPOCH+1000 (accepted at EPOCH; the unknown effect's attempt deadline at EPOCH+90); ages are None when no effect is in that state and `SELECT export.status_counts(NULL)` via `connect("export")` raises `InvalidParameterValue` (22023) naming the caller clock; connection counts follow connected → disconnected → revoked → unavailable one by one and `sum(connections.values()) == count(*) - count(state='pending')` with a `reserve_connection` row present (L1-4); the lane block is exactly `{outcome, observedAt}`, `record_lane_status` refuses an empty or 65-character outcome with `INVALID_ARGUMENT`, and the whole JSON holds no UUID, no `Synthetic` title and no account or connection id. Both owners are erased in `finally` so no 1990-dated due item survives.
+
+  Trace: U6:NFR1.1; U6:NFR4.10/check-schedule; U6:logical-components:watch-counts.
+
+- [x] **Step 31 — Business logic — implement.** The preview's destination comes from the listing (L1-1):
+  - (a) `backend/modules/export/notion_adapter.py`: factor `list_destinations`' body into a private `_listing(...)` that runs the bounded search and the direct probe inside one gated `NotionSession.run` under `listing_budget_seconds`; `list_destinations` keeps its behaviour. Add `locate_destination(target, destination_id, *, creation_capability, gate_key) -> Listing`: search first, then probe only when the normalised id is among the search results, using `normalise_id(page["id"])` from the result; `last_destination_id`/`last_destination_readable` describe the chosen destination. No request path is built from the browser value.
+  - (b) `backend/modules/export/service.py` `prepare_preview`: `_destination_identity(destination)` takes `destinationId`, else `parentPageId`, both through `normalise_id`; an unparsable value answers `invalid(<field>)`; both present and different answers `ExportError("CONFLICT", current={"field": "destination"})`. The real-activation `FORBIDDEN` check stays before any request. `_listed_destination` calls `locate_destination` with `StoredConnection(authority.account_id, row["id"])`, `creation_capability=row["creation_capability"]`, `gate_key=row["id"]` and maps: PROTECTION_UNAVAILABLE → `POLICY_UNRESOLVED` (field `credentialProtection`); TOKEN_INVALID or NOT_CONNECTED → `CONFLICT`; not listed and `listing.complete` → `CONFLICT`; not listed and incomplete → `DEPENDENCY_UNAVAILABLE`; listed but `readable is False` → `CONFLICT`; listed but readable None → `DEPENDENCY_UNAVAILABLE`; listed and readable → `destination_entry(...)` built from the listing item. Delete `ExportService._read_destination`. Every code stays inside `prepare_preview`'s frozen list.
+  - (c) `tests/u6_approved_export/service_flows.py` `Rig.destination`: add `"destinationId": page_id`, so fixtures send what the browser's `destinationRequest` sends. No contract, migration or frontend change; the cancel destination's two counted page requests are unchanged because a search is not a page request.
+
+  Trace: U6:security-design:browser-value-not-identifier; A1; BR1.5; BR2.2.
+
+- [x] **Step 32 — Business logic — tests.** Add to `tests/u6_approved_export/component/`:
+  - (a) `test_service_preview.py` (nine functions after the change): a page outside the current listing answers `CONFLICT` (field `destination`) when the listing is complete, with exactly one `/v1/search` entry after `configure()` and no `entry.path` carrying the id in 32-hex or hyphenated form, zero `preview_pair` rows and `fake.writes == []`, and answers `DEPENDENCY_UNAVAILABLE` when `set_search("partial", page_size=1)` or `set_search("unavailable")` hides it; `destinationId=A, parentPageId=B` is `CONFLICT` with no new request, `destinationId=A, parentPageId=A` previews, and the one `parentPageId`-only case previews with the same `previewId` at revision 2; the recorded destination comes from the listing entry (child of `rig.page("연구 노트")`, hyphenated ids and a browser title sent): 32-hex id, `title == "내보낼 곳"`, `context == "상위 페이지: 연구 노트"` (a direct read could only answer `상위 페이지 · <8 hex>`), every `/v1/pages/` and `/v1/blocks/` path in 32-hex form, `binding_hash` recomputed equal to `preview["bindingHash"]`. Extend `test_destination_refusals_and_the_real_allowance`: `rig.gate.asked` grows by exactly `[UUID(connection_id)]` per preview, hidden → `CONFLICT`, busy → `DEPENDENCY_UNAVAILABLE`, the successful preview's log holds `/blocks/<P>/children`, the real arm still `FORBIDDEN` with no request.
+  - (b) `test_export_policy.py` (ten functions): replace the body of `test_the_synthetic_policy_holds_the_approved_operating_values` with a table keyed by the 13 NFR4.10 row names → field(s) and approved value (`len(table) == 13`, every field in `fields(ExportPolicy)`, `pending_takeover_seconds == 120`, `synthetic_only`, `reference()` kept); add the §9.1 budgets (30, 30, 30, 60, 300), D15 caps (2, 1), `key_lock_retry_ms`/`key_lock_wait_ms` (100, 5000), `token_max_length == 512 == TOKEN_MAX_LENGTH`, `pass_batch 10`, `housekeeping_batch 50`, `history_page_max 20`, `read_timeout_seconds <= page_read_budget_seconds`, and the `read budget`/`waiting lock` refusals; a fresh `ExportPolicy()` raises `FrozenInstanceError` on three assignments, `reference()` returns a fresh copy, `hash(SYNTHETIC_EXPORT) == hash(ExportPolicy())`; `real_activation_export(...)` differs from `SYNTHETIC_EXPORT` in exactly `{policy_id, activation_destination_id, free_terms_reference}` and `REAL_ACTIVATION_EXPORT is real_activation_export`; extend `test_inconsistent_values_are_refused` with the `match` text per row and add the positive small schedule `(1, 2, 3) / 4 / 5`.
+  - (c) `test_check_schedule.py` (new, pure): the synthetic walk of `next_check_time` yields exactly `[180, 600, 1800, 5400, 9000, 12600, 16200, 19800, 30600, 41400, 52200, 63000, 73800, 84600]` then None, with gaps 3600 up to `check_hourly_until_seconds` and 10800 after; a late scan skips to the first point strictly after `now` (700 → 1800, 1800 → 5400, 19800 → 30600, 84600 → None, before the deadline → 180); a policy `(60, 120) / 300 / 900 / 600 / 2400` yields `[60, 120, 420, 720, 1320, 1920]` and a `check_total_seconds` equal to the last point still yields it.
+
+  Trace: U6:security-design:browser-value-not-identifier; U6:NFR4.10/policy; U6:NFR4.10/check-schedule.
+
+- [x] **Step 33 — Business logic — tests.** The Notion boundary, SDK settings and logging, in `tests/u6_approved_export/component/`:
+  - (a) `test_guarded_transport.py`: the three spellings of the one origin pass (`https://api.notion.com`, `:443`, uppercase host) with one recorded request whose `url.host == 'api.notion.com'` and `url.port is None`; hosts that only contain or extend the origin (`api.notion.com.evil.example`, `evil.example/api.notion.com/...`, `api.notion.com.`, `1.2.3.4`, `[::1]`) raise `RequestRefused` with `fake.requests == []`; an inner `AsyncBaseTransport` that raises `AssertionError('connected')` is never reached for `http`, a foreign host, a malformed page id and an unexpected query parameter.
+  - (b) `test_notion_session.py`: a malformed destination (`../v1/users`, `'0'*31`) answers `DestinationRead(NOT_READABLE, readable=False)` and a malformed `read_back` page answers `ReadBack(COULD_NOT_CHECK)` with no request and no pace slot; `sdk.users.list()` (GET `/v1/users`, outside `ALLOWED_PATHS`) gives `COULD_NOT_CHECK` with `CAUSE_TRANSPORT`, no request and a plain `Verdict` (walk: no `BaseException`, no token); every client's `sdk.logger is SDK_LOGGER` named `docsuri.export.notion_sdk` at WARNING, `propagate False`, handlers exactly `[NullHandler]` before and after two runs, and `logging.getLogger('notion_client').handlers == []`; a capturing handler attached directly to `SDK_LOGGER` (level untouched) captures nothing across one success and one 500 while the root is at DEBUG, no record named `docsuri.export.notion_sdk` or `notion_client` reaches `caplog`, and `api.notion.com` is absent from `caplog.text`; a `SDK_LOGGER` lowered to DEBUG is reset to WARNING by the next client; every client carries `notion_version == '2026-03-11'`, `retry is False`, `timeout_ms == 30_000`, header `Notion-Version`, `client.timeout == httpx.Timeout(30.0)`, `follow_redirects False`, `trust_env False`.
+  - (c) `test_export_composition.py`: under `contribution(transactions, fake=fake)` one `identify` emits no record whose name starts with `httpx` or `httpcore`, `api.notion.com` is absent from `caplog.text`, `logging.getLogger('httpx').level >= WARNING`, and the fake recorded `/v1/users/me`.
+  - (d) `test_notion_adapter.py`, with a recording transport (an `AsyncBaseTransport` that stores `Notion-Version`, `request.extensions['timeout']` and the JSON body, then delegates to the fake inside `GuardedTransport`): every header is `2026-03-11`, GET `/v1/users/me` carries `{'connect': 30.0, 'read': 30.0, 'write': 30.0, 'pool': 30.0}` and POST `/v1/pages` under `deadline_seconds=policy.write_deadline_seconds` carries 90.0 in all four (L1-7); the create body's top-level keys are exactly `{parent, properties, children}` with `parent == {'page_id': destination}` and the bound content's blocks; with `set_search('complete', page_size=2)` and three pages, each `/v1/search` body has `page_size == 100`, the first no `start_cursor`, each later one the previous `next_cursor`, and `listing.complete is True`.
+  - (e) Lift `walk` and `assert_clean` from `test_token_exposure.py` into `tests/u6_approved_export/notion_flows.py` (the exposure test imports them from there; no `test_*` module is imported). New `test_provider_text.py`, four tests: a hostile title (`<img src=x onerror=alert(1)>{0}{token} ` + 5000 chars) lists as `hostile.strip()[:2000]` unchanged, the child's context is the literal `상위 페이지: {secret}`, the direct read's context `상위 페이지 · <8 hex>`, a non-string title gives `page_title(...) is None`, and the entry validates on the wire through `ExportService.list_destinations`; titles shaped like an id, a URL or a path appear only in `entry.title` and in no request path; `_page_url` returns None for `javascript:`, `http://www.notion.so/x`, `https://notion.so.evil.example/x`, `https://x.notion.site/abc`, `https://www.notion.so/` and `7`, and the string for the four valid hosts, and a successful `create_page`'s `remote_url` fullmatches `_NOTION_URL`; a 500 whose body message is `<script>sentinel</script>` leaves `Verdict`'s fields exactly `{category, refusal, retry_after, request_id, committed_page_id, cause}` with no `sentinel` in `repr`, and after a 403 create `synthetic answer` appears nowhere in `walk(result)`, the provider result, the provider outcome or `to_jsonb(row)::text` of the owner's effect and attempt rows.
+  - (f) New `test_log_content.py`, three tests: a `Faulty(OwnDue)` store whose `sweep_orphans` raises `OperationalError('store down: synthetic-secret-detail')` produces exactly one `docsuri.export.worker` record `export pass step orphans failed (OperationalError)`, no `exc_info`, no exception in `record.args`, and no `synthetic-secret-detail` in `caplog.text`; a rig with `write_deadline_seconds=1, read_timeout_seconds=1, page_read_budget_seconds=1, read_back_budget_seconds=1, in_flight_per_owner=len(FAILURES)` pressing one effect per `test_token_exposure.FAILURES` answer (queued on `pages.create` and four times on `pages.retrieve`) emits no record named `docsuri.export*`, with the token, `synthetic answer`, `api.notion.com` and every fake page id absent from `caplog.text`; the sweep of `export.effect`, `export.attempt JOIN export.effect` and `export.lane_status` by the owner's account holds none of those strings, every `provider_request_id` fullmatches `classification._REQUEST_ID` and every `remote_url` fullmatches `_NOTION_URL`.
+
+  Trace: U6:NFR3.8/origin-and-identifiers; U6:NFR3.8/provider-text; U6:NFR3.9; U6:tech-stack-decisions:sdk-configuration; U6:security-design:log-content.
+
+- [x] **Step 34 — Business logic — tests.** Token custody and the real-export gating chain, in `tests/u6_approved_export/component/`:
+  - (a) New `test_plaintext_lifetime.py`, five tests: after `rig.configure()` and `gc.collect()`, a walk from `rig.service`, `rig.repo`, the adapter, session, vault and keyring that descends only into builtin containers, dataclasses and objects whose type's `__module__` starts with `backend.modules.export` or `backend.u6`, stopping at `FakeNotion`, `OwnerTransactions`, modules and types, finds no string equal to or containing the token, and `view`/`rig.connection()` carry none; one `session.run` records `Authorization == 'Bearer ' + token` while running, the one `httpx.AsyncClient` seen by a wrapped `aclose` is closed afterwards, `assert_clean([result], token)` holds, the session holds no client, and after `replace_token` the next run sends only the new bearer; the stored row's `sealed_token` holds the token in no encoding (`operator` fixture, L1-12), `token_key_version == envelope_version(...)`, the vault opens it with `(account_id, connection_id, revision)` and refuses `revision+1` with `envelope-unopenable`; two refused configures (500 → `DEPENDENCY_UNAVAILABLE`, 401 → `INVALID_TOKEN`) leave no token in the errors, their `__cause__`/`__context__` None, in `export.connection` (operator), `export.replay_record`, `export.connection_pace`, `caplog` or the composition walk; `CandidateToken` and `StoredConnection` omit the value from `repr`/`str` while `asdict` carries it, and an empty value or a non-UUID id raises with a message naming no value.
+  - (b) New `test_free_terms_evidence.py`, four tests: `free_terms_reference` is `notion-free:<checkedOn>:` + sha256 of the canonical JSON, changes with the date, a changed or added limit, is stable under key order, and `real_activation_export(activation_destination_id=..., free_terms_reference=reference)` accepts it (public constructor); `real_export_factory(activation, transport_factory=lambda: fake)(...)` assembled over the realm (never configured; its keyring points at the realm's folder) carries `policy.free_terms_reference == activation.free_terms_reference`, `policy_id == 'u6-real-activation'`, capabilities `modeIds == ['real-bounded']` and `policy == policy.reference()`, and `activation.free_terms` equals the normalised four-key record exactly; a `RealExportActivation` with reference `''`, `'with space'`, `'x'*257` or `'notion-free:2026-10-19:é'` is refused `POLICY_UNRESOLVED` (field `policy`) by `real_policy` and by `assemble_u6_real(stub_profile(tmp_path), ...)` before a monkeypatched `assemble_u5` runs, and `tmp_path` gains no file; `load_activation` reads only the 0600 settings file (a `DOCSURI_FREE_TERMS` decoy is ignored), a deleted file is `settings-absent`, a symlink named `real-export.json` is `settings-custody`.
+  - (c) New `test_real_export_gates.py`, six tests over `lf.build(..., keys='real-keys', policy=real_policy(parse_activation(settings(runId=realm.run_id, activationDestinationId=page), realm, today=TODAY)))` (keys under `tmp_path`, never the realm's folder; each test uses the fewest requests because `REAL_MINIMA` paces at 500 ms): the factory's `keywords['policy'] == lr.rig.policy` and its assembled capabilities equal `[{'modeIds': ['real-bounded'], 'policy': policy.reference(), ...}]`; under the real policy only the activation entry is writable, `destinationScopeIds == [page]`, a preview on another page is `FORBIDDEN` with no request, `fake.writes == []` after listing, preview and approval, and an own-step pass with nothing bound writes nothing; one approved export run through `lr.lane.run_item(lf.item(effect))` writes exactly one page under the activation page (`pages_under(page)` has one entry, `pages_under(other)` none), `writes[0].content_hash == preview['renderedContentHash']`, the attempt row has `path_kind == 'real'` and `response_class == 'created'`, the effect `succeeded`; an execute with a random approvalId is `NOT_FOUND`, with another preview's bindingHash `CONFLICT`, an approve with `explicitApproval False` `INVALID_ARGUMENT`, and approval/effect counts and `fake.writes` are unchanged; a replayed execute returns the original effect, a second approve is `CONFLICT`, a second `run_item` is `skipped`, one write and one attempt remain; `scripts.u6_real_export.outcome(...)` reports `pathKind 'real'`, `outcomeClass 'created'`, `effectState 'succeeded'`, 64-hex digests and no plaintext `remote_url`, request id or token.
+
+  Trace: U6:security-design:plaintext-lifetime; U6:NFR6.2/free-terms-evidence; U6:NFR6.3/real-export-approval (gating chain; the press itself per L1-3).
+
+- [x] **Step 35 — API / endpoint — implement.** Test support only; no file under `backend/` changes (L1-2):
+  - (a) `tests/u6_approved_export/service_flows.py`: `build(..., research=None)` keeps `ResearchDouble` when None; `real_research(transactions)` returns `scripts.u6_browser_fixtures.research_ports(transactions)[0]`; `Rig` gains `transactions` and `ready(*, authority=None)` (double → `self.research.ready()`; real → `ready_novelty(transactions, authority or self.authority, known)` with `known` read from and written to `realm.root / 'integration-novelty.json'`, mode 0600, `{runId, accounts: {accountId: reference}}`, refused on a foreign `runId`); `preview_value(page, source, *, authority=None)` uses it.
+  - (b) `tests/u6_approved_export/http_flows.py` `mount` defaults `options['research']` to `real_research(transactions)`; `lane_flows.build(..., research=...)` passes it through; `integration/test_lane_transactions.py`, `test_session_housekeeping.py` and `test_account_purpose.py` pass `research=sf.real_research(transactions)`; component callers are unchanged.
+  - (c) `integration/test_interactive_admission.py`: `preview_body(m, page, connection, authority)` builds its source with `m.rig.ready(authority=authority)`; B's preview passes `m.other_authority`, A's `m.authority`.
+  - (d) `integration/test_export_assembly.py`: drop the `due_items` monkeypatch and the `ExportRepository` import; take `connect`, `authority`, `authority_b` and run `store_flows.fresh` for both before `assemble_u6`.
+  - (e) `tests/u6_approved_export/export_rows.py`: `participant_tickets(connect, account, action, scopes)` returning the per-scope dicts `ExportLifecycleParticipant.apply` takes (lifted from `component/test_export_lifecycle.py` `seed`; the existing `lifecycle_ticket` is left alone). `lane_flows.py`: `on_write(fake, callback, *, method='POST', path='/v1/pages')`; `RunDepth` (a delegating wrapper around `transactions.run` recording entry/exit depth and thread name); `ConnectionSampler` (a thread polling `pg_stat_activity` for `application_name LIKE 'docsuri-approved-export-%-export'` through a raw `connect('export')` session).
+
+  Trace: U6:unit-test-instructions:never-mocked; L1-2.
+
+- [x] **Step 36 — API / endpoint — tests.** Add to `tests/u6_approved_export/integration/`:
+  - (a) New `test_real_research_rig.py`, five tests: `m.rig.research`, `m.rig.service.research` and the lane rig's pass hold the same `ResearchService` instance, `ready()` yields a reference that `readNoveltyArtifactForExport` answers `ready` with `ownerId == str(m.authority.account_id)`, and a second `ready()` returns the same reference; a press on that result is written by the lane from U4's output (one write, `source_content_hash`/`source_revision` equal to the reference's, `rendered_text` containing text from the prepared output, whose field name is confirmed once against the provider's output before the assertion is written); B posting A's reference is `NOT_FOUND` with no page read afterwards and A's own preview still succeeds; a housekeeping pass reaches the real service for this account's approval (a delegating recorder records `(Authority(account, approving_session), reference)`) and leaves it `approved`, `invalidation_reason` None, its revision untrimmed; the known reference is reused by a second rig without a new job, a stale entry is rebuilt, and a foreign `runId` file is refused. `test_export_assembly.py` keeps its assertions and adds: `export.lane_status.outcome`, when a row exists, is one of the lane's categories, and no connection, preview_pair, approval, effect or replay_record row of either conftest owner remains.
+  - (b) `test_export_http.py`: an unlisted destination (`destinationId == parentPageId == uuid4().hex`) through `prepare-export-preview` is HTTP 409 `CONFLICT`, `current.field == "destination"`, in `OPERATION_ERRORS["prepare_preview"]`, with no fake path carrying the id, a following listed preview answering 200 (slot released) and `fake.writes == []` (source prepared through `Rig.ready()`, never the double). Extend `test_no_token_appears_in_any_response_or_stored_record_after_failures`: a configure body with an unexpected field holding a sentinel (422) and a foreign `effectId` (404) leave no record named `docsuri.export*`, no record with `exc_info`, and the sentinel absent from `caplog.text`.
+  - (c) `test_lane_transactions.py`: with `Answer.slow(1)` on `pages.create`, `max(samples) <= 1` from the sampler and `RunDepth.max_depth == 1` with at least four calls from the thread `docsuri-export-lane`, one write; the same bound during a scan (`blocks.children` slow 0.5 s) with exactly one `reconciliation_check` row and an outcome starting `scan-`; `transactions.run('export', lambda conn: conn.remaining()) <= 5.0`, `<= 0.5` under `work_budget(0.5)`, and `lane.UNIT_SECONDS == 5.0`.
+  - (d) New `test_lifecycle_in_flight.py`, four tests: an erase (`live_records` then `external_copies`) applied from `on_write` while the create is in flight leaves the page in Notion, no effect or attempt row, zero rows in the five account tables, `exports_in_flight == 1` and `pages_possibly_created == 1` in the counts, the status row `skipped` with `observed_at` later than the pre-start baseline, no `ended early` record, the lane `running` and `idle` (wait on `len(fake.writes) == 1 and lr.lane.idle`, never on the singleton status row alone); a `SAVED_BUSY` create with a `withdraw` ticket applied in flight gives one `uncertain` attempt, no read-back request after the ticket (the envelope cannot open), a `disconnected` connection with `open_token_envelope` None, the effect `unknown` with `settlementOffered False`; a plain create with a `withdraw` in flight finishes `succeeded`, `settled_by == 'provider'`, the connection `disconnected` at the withdrawn revision with `creation_capability` unchanged (`last_destination_id` may be set), the approval `consumed`; an erase during an in-flight scan records no check.
+  - (e) New `test_export_body_bounds.py`, four tests: a 65,536-byte body to `read_connection` passes (`NOT_FOUND` before a connection, 200 after) and 65,537 bytes is 422 `INVALID_ARGUMENT` with the frozen `wire.Error` shape and `Cache-Control: no-store`, the fake untouched; on `assemble_u6(realm)` under `TestClient`, 65,537 bytes is 413 `INVALID_ARGUMENT` with `messageKey == 'request.tooLarge'` before routing and 65,536 bytes is 401 `UNAUTHENTICATED`; a raw-ASGI `receive` that waits 5.3 s mid-body is 504 `DEADLINE_EXCEEDED`, no connection is created and `fake.requests == []` (the one real wait this stage allows); `read_payload(` appears once in `backend/modules/export/http.py` and no `request.json/body/stream/form(`.
+
+  Trace: U6:unit-test-instructions:never-mocked; U6:security-design:browser-value-not-identifier; U6:security-design:log-content; U6:logical-components:lane-connection-bound; U6:security-design:lifecycle-in-flight; U6:NFR1.3.
+
+- [x] **Step 37 — Environment/build configuration — implement.**
+  - (a) `scripts/verify_docsuri_u6.py` `junit_counts`: add one evidence key `testsByClass`, a dict sorted by key of `<testcase classname>` → count built with `collections.Counter` over the same cases, in every phase evidence file. `safe_phase_summary`, the exit-code rules and `MAX_LOG` are unchanged.
+  - (b) `scripts/u6_browser_fixtures.py`: add `"reflow": "재배치"` to `SPECS`, so `reflow.spec.ts` gets its own cancel and settle destinations; update the docstring. This is a fixture-identity change (L1-9): existing environments are archived before the coverage or browser phase; `FIXTURE_VERSION` stays `u6-browser-v1`.
+
+  Trace: U6:code-generation-plan:testing-contract-test-volume; U6:NFR5.1/reflow.
+
+- [x] **Step 38 — Environment/build configuration — tests.** Add to `tests/u6_approved_export/operations/`:
+  - (a) New `test_key_never_elsewhere.py`, five tests: after `rig.configure()` and a rotate under `holding()`, no encoding (stored base64, unpadded, urlsafe, hex) of any retained key from the test's own `tmp_path` key file appears in `to_jsonb(t)::text` of any `export` table or in `encode(sealed_token, 'hex'/'base64')` (operator fixture, L1-12), and `token_key_version` values match `token_keyring.VERSION`; across first start, seal, open, two rotates, a retire, a refused rotate and a 0644 key file, no encoding appears in `caplog.text` (every logger at DEBUG), `str(vars(record))`, the rotate/retire dicts, `KeyOperationRefused.counts`, `repr(error)` or `str(vars(error))`, and `str(error)` equals its category (a local two-line witness stub); a key file rewritten to its own text minus the final brace refuses `key-custody-broken` with `__cause__` and `__context__` None, no key encoding in any `tb_frame.f_locals` or `repr(error)`, and the folder listing unchanged; `git ls-files -z` at the repository root lists no path with basename `KEY_FILE`, `LOCK_FILE`, `MARKER_FILE`, matching `STAGING_NAME` or containing `export-keys/`, `RUN.is_relative_to(RUN_PARENT.resolve())` and not `REPOSITORY`, and `(RUN / KEY_FOLDER)` under `RUN_PARENT.resolve()`; after load, four rotates, a retire and `create_after_loss`, the folder lists exactly `[KEY_FILE, LOCK_FILE, MARKER_FILE]`, `st_nlink == 1`, no staging file, and `tmp_path` holds only `export-keys`.
+  - (b) New `test_coverage_contract.py`, five tests, no realm: `coverage.Coverage(config_file='backend/.coveragerc.u6').config` has `fail_under == 80.0`, `source == ['backend', 'scripts']`, `report_include` equal to the fourteen patterns, `report_omit == ['scripts/verify_docsuri_u6.py']`, `show_missing` and default `exclude_lines`; a `tmp_path` package with one uncovered function under an rcfile `fail_under=100` makes `python -m pytest --cov=pkg --cov-config=<rc>` (no `--cov-fail-under`) exit nonzero with `Coverage failure: total of` and `fail_under=1` exits 0; `phase_command('coverage', ...)` carries `--cov`, `--cov-config=backend/.coveragerc.u6`, `--maxfail=1`, the single `TEST_ROOT` and no `--cov-fail-under`, and `preservation_report(time.monotonic())` with `bounded_process` monkeypatched to capture args and `RUN` pointed at a 0o700 `tmp_path` folder passes `--rcfile=backend/.coveragerc.u6`, `--include=scripts/u6_preservation.py`, `--fail-under=80` and reports `linePercent` None without a log; no file under `tests/u6_approved_export` or `backend/pytest.u6-approved-export.ini` names the U2-only identifiers (built from parts), `MIGRATIONS` has no path ending `u2_controls.sql` and every entry is a U5-chain or U6 file; `execute_phase('coverage', ...)` with `exitCode 1` records `coverageTotalPercent` and no `preservationReport`, with `exitCode 0` includes it. A local `owned_root` fixture is defined.
+  - (c) `test_u6_real_export_checks.py` (seven tests after): `operator.outcome(...)['freeTermsReference']` equals `free_terms_reference(json.loads(file)['freeTerms'])` recomputed from the settings file on disk, starts with `notion-free:2026-10-19:`, and `json.dumps(record)` carries no `publishedLimits` string, no `memberCount` and no `plan` key.
+  - (d) `test_u6_runner.py`: `junit_counts` on a 0o600 JUnit file with four cases over two classnames (one failure, one skipped) reports `tests 4, failures 1, skipped 1, errors 0`, `testsByClass == {classA: 3, classB: 1}`, `exitCode 1`, and `safe_phase_summary` carries the totals but not `testsByClass`; an empty `<testsuites/>` gives `tests 0`, `{}`, `exitCode 1`; a missing report sets `missingTestReport`; a malformed one `invalidTestReport`. `test_u6_browser_fixtures.py`: add `reflow` to the spec tuple and `len(seen) == 8`; a record carrying the previous three-spec `scenario` is refused with `identity differs`.
+
+  Trace: U6:NFR3.2/key-never-elsewhere; U6:code-generation-plan:testing-contract-coverage-backend; U6:NFR6.2/free-terms-evidence; U6:code-generation-plan:testing-contract-test-volume; U6:NFR5.1/reflow.
+
+- [x] **Step 39 — Frontend — tests.** In `frontend/test/u6-export/` and `frontend/e2e/u6-approved-export/` (strict TypeScript, no `any`, Korean copy):
+  - (a) One hostile-text case each: `destination-step.test.tsx` renders `entry({ title: '<img src=x onerror="x">', context: '<b>{{x}}</b>' })` as text (`textContent` contains both literals, `queryByRole('img')` and `container.querySelector('img, b')` null); `preview-step.test.tsx` renders `destination = entry({ title: '<svg onload=x>제목</svg>', context: '<i>위치</i>' })` as text under `preview-destination`; `export-view.test.tsx` renders `connection({ workspaceName: '<svg onload=x>팀</svg>' })` as text under `connection-workspace`. `status-accessibility.test.tsx` gains its fifth case: `refusalText` prefers the operation table, then `dispositionCopy('CAPACITY_EXHAUSTED')`, then `문제가 발생했어요`, and `refusalCode` returns `CAPACITY_EXHAUSTED` for the `ApiError` and null for a plain `Error`. `destination-step.test.tsx` also asserts no `textbox` is rendered and every `destination-radio` value is a listing entry's `destinationId`.
+  - (b) `helpers.ts`: widen the `specs` union with `'reflow'`; move `expectReflow` here as `expectReflowAt320(page, testId)` returning `{width, page, surface, offscreen, nested}`, where `nested` names (by `data-testid`, else tag and className, never content) every descendant whose computed `overflow-x`/`overflow-y` is `auto`, `scroll` or `hidden` and whose `scrollWidth > clientWidth + 1`, skipping `.export-visually-hidden`, `.visually-hidden` and `clientWidth === 0`; every caller compares with `toEqual({width: 320, page: false, surface: false, offscreen: false, nested: []})`. Add `withViewport320(page, fn)` (320×640, `try/finally` restore to 1280×720).
+  - (c) `reflow.spec.ts`, three tests at 320×640: the export view disconnected with the connect form, after a field error (`connect-token` = `' '`), connected, and with the disconnect dialog open; the flow at the destination list, the ready preview (`preview-rendered` containing `docsuri-export:v1:`; the `.export-rendered` nested scroller is inspected) and a succeeded outcome with its page link; an accepted outcome on `scenario.specs.reflow.cancel` with `outcome-signout-note` and `outcome-cancel` visible, its cancellation, and the history row (`export-view` and `history`). Only the state needed to reach each surface is asserted; fixture facts are not. `accessibility.spec.ts`'s third test additionally measures, inside `withViewport320`, `export-flow` in `확인 중` with `outcome-next-check`, `export-view` once `history-settle` is offered, and `settle-dialog` with no choice, with `settle-link` holding the invalid link and `settle-link-error` visible, and after `settle-not-delivered` with `settle-assumption` visible, asserting focus stays inside the dialog across the resize.
+  - (d) `frontend/src/u6-export/export.css` changes only if the walk names a sideways scroller, and then by wrapping (`overflow-wrap`, `white-space`), never by hiding overflow.
+
+  Trace: U6:NFR3.8/provider-text; U6:NFR5.1/reflow; U6:code-generation-plan:testing-contract-test-volume; U6:security-design:browser-value-not-identifier.
+
+- [x] **Step 40 — Environment/build configuration — tests.** The last code step: new `tests/u6_approved_export/operations/test_u6_test_volume.py`, no realm, four tests over module-level `COMPONENT_FILES` (the 20 components of logical-components §1 plus an `EnvironmentTool` group → files under `tests/u6_approved_export/<layer>/`, a file allowed under two components when it exercises both), `EXTERNAL_FILES = {'SharedContractAmendments': ['shared/python/tests/test_export_contract.py']}` and `FRONTEND_FILES` (each `src/u6-export` module → its `frontend/test/u6-export/*.test.ts(x)` files; `copy.ts` and `export.css` excluded): every walked `test_*.py` is mapped at least once, every mapped and external path exists, and the shared files are exactly the declared set; every component's `ast` count of `test_` definitions (external included) is `>= 5`, InteractiveGate and ExportWorker asserted by name; the six named key boundaries and the two further integration files exist with `>= 1` test; every frontend module counts `>= 5` `it(`/`test(` lines, every Vitest file is mapped, and the four Playwright specs exist with `>= 1 test(` and no per-component floor. Every file Steps 30–39 added is listed here. Trace: U6:code-generation-plan:testing-contract-test-volume; L1-8.
+
+- [x] **Step 41 — Configuration and measurement.** Confirm the additions already written into `unit-test-instructions.md` (its section "Build and Test loop-back 1") match what Steps 30–40 built, and record any difference in `code-summary.md` rather than editing the approved instructions. Archive every existing U6 environment (`--phase archive-owned`; the fixture identity changed in Step 37). On a fresh realm run `setup`, `migrate`, `coverage` (with the second report) and `frontend`; Steps 30–40's tests keep the backend total, `scripts/u6_preservation.py` and `src/u6-export` at or above 80%. No floor changes, no file leaves `.coveragerc.u6`; record the total and each measured U2 file's percentage beside it. Trace: U6:code-generation-plan:testing-contract-coverage-backend; L1-10.
+
+- [x] **Step 42 — Process evidence.** Record in `code-summary.md`:
+  - each component's test count, file by file, from the collect-only run and from the phase evidence files' `testsByClass` joined with `COMPONENT_FILES`/`FRONTEND_FILES`, against the standard strategy's five to eight, counts above eight marked "above range, kept" (L1-8); `SharedContractAmendments` from the shared suite; Playwright's junit classname confirmed from a real `browser.xml`, with the static count as the fallback for that phase only;
+  - the 19 Unverified and 2 Not Met targets mapped to the tests that close them (the traceability rows of this loop-back), the real press recorded as operator evidence per L1-3;
+  - the collect-only total;
+  - the readings the gate must weigh: the `pending` connection count (L1-4), the check-schedule cadence (L1-5), the oldest-unknown age (L1-6);
+  - the layer order, as the plan's ticked steps show it.
+
+  Trace: Testing Contract (strategy volume, runner step, scope floor, methodology).
+
+- [x] **Step 43 — Run, record and review.** Run U6's lanes on fresh realms:
+  - `coverage` and `frontend` on realm A, then `archive-owned`;
+  - `browser` on its own fresh realm B, every spec passing, as the Construction Verification Command;
+  - `tsc --project tsconfig.u6-export.json --noEmit`, U6's ESLint command (including `e2e/u6-approved-export`), and Ruff on the cicd §2.3 targets plus every U6 script;
+  - the earlier units' regressions and U2's cumulative lane, since `test/u6-export` is registered in it.
+
+  Then update `code-summary.md`, `traceability.json` and `source-manifest.json`, get a fresh architecture review of this attempt, and run U6's checkpoint. Trace: stage Steps 5 and 6.
+
+**Loop-back traceability** (target → the file that closes it → step):
+
+| Target | Closed by | Steps |
+|---|---|---|
+| U6:NFR1.1 | `tests/u6_approved_export/repository/test_owner_guard.py` | 30 |
+| U6:NFR4.10/check-schedule | `tests/u6_approved_export/component/test_check_schedule.py`; `tests/u6_approved_export/repository/test_unknown_check_cadence.py` | 30, 32 |
+| U6:logical-components:watch-counts | `tests/u6_approved_export/repository/test_status_counts.py` | 30 |
+| U6:security-design:browser-value-not-identifier | `backend/modules/export/service.py`; `backend/modules/export/notion_adapter.py`; `tests/u6_approved_export/component/test_service_preview.py`; `tests/u6_approved_export/integration/test_export_http.py` | 31, 32, 36 |
+| U6:NFR4.10/policy | `tests/u6_approved_export/component/test_export_policy.py` | 32 |
+| U6:NFR3.8/origin-and-identifiers | `tests/u6_approved_export/component/test_guarded_transport.py`; `tests/u6_approved_export/component/test_notion_session.py` | 33 |
+| U6:NFR3.8/provider-text | `tests/u6_approved_export/component/test_provider_text.py`; `frontend/test/u6-export/destination-step.test.tsx`; `preview-step.test.tsx`; `export-view.test.tsx` | 33, 39 |
+| U6:NFR3.9 | `tests/u6_approved_export/component/test_notion_session.py`; `tests/u6_approved_export/component/test_export_composition.py` | 33 |
+| U6:tech-stack-decisions:sdk-configuration | `tests/u6_approved_export/component/test_notion_session.py`; `tests/u6_approved_export/component/test_notion_adapter.py` | 33 |
+| U6:security-design:log-content | `tests/u6_approved_export/component/test_log_content.py`; `tests/u6_approved_export/integration/test_export_http.py` | 33, 36 |
+| U6:security-design:plaintext-lifetime | `tests/u6_approved_export/component/test_plaintext_lifetime.py` | 34 |
+| U6:NFR6.2/free-terms-evidence | `tests/u6_approved_export/component/test_free_terms_evidence.py`; `tests/u6_approved_export/operations/test_u6_real_export_checks.py` | 34, 38 |
+| U6:NFR6.3/real-export-approval | `tests/u6_approved_export/component/test_real_export_gates.py` (gating chain); the press itself: operator evidence per `u6-real-export-runbook.md` §6–§8 (L1-3) | 34 |
+| U6:unit-test-instructions:never-mocked | `tests/u6_approved_export/service_flows.py`; `http_flows.py`; `lane_flows.py`; `tests/u6_approved_export/integration/test_real_research_rig.py`; `test_export_assembly.py` | 35, 36 |
+| U6:logical-components:lane-connection-bound | `tests/u6_approved_export/integration/test_lane_transactions.py` | 36 |
+| U6:security-design:lifecycle-in-flight | `tests/u6_approved_export/integration/test_lifecycle_in_flight.py` | 36 |
+| U6:NFR1.3 | `tests/u6_approved_export/integration/test_export_body_bounds.py` | 36 |
+| U6:NFR3.2/key-never-elsewhere | `tests/u6_approved_export/operations/test_key_never_elsewhere.py` | 38 |
+| U6:code-generation-plan:testing-contract-coverage-backend | `tests/u6_approved_export/operations/test_coverage_contract.py`; `backend/.coveragerc.u6` (unchanged, pinned) | 38, 41 |
+| U6:NFR5.1/reflow | `frontend/e2e/u6-approved-export/reflow.spec.ts`; `helpers.ts`; `accessibility.spec.ts`; `scripts/u6_browser_fixtures.py`; `tests/u6_approved_export/operations/test_u6_browser_fixtures.py` | 37, 38, 39 |
+| U6:code-generation-plan:testing-contract-test-volume | `scripts/verify_docsuri_u6.py` (`testsByClass`); `tests/u6_approved_export/operations/test_u6_runner.py`; `test_u6_test_volume.py`; `frontend/test/u6-export/status-accessibility.test.tsx` | 37, 38, 39, 40, 42 |
+
+## Build and Test loop-back 2 (2026-11-15)
+
+Build and Test's re-run of 2026-11-15 (`construction/build-and-test/test-results.md`, Target Verification Matrix and Loop-Back Log) passed every U6 lane but found one U6 target Not Met, the never-mocked rule, and ten clauses that no test checks. You chose "Retry with fix" on 2026-11-15. Steps 1–43 stay as built; Steps 44–52 are new and start unchecked. Each test below was designed from the clause it checks and from the code as it is today, and a second reader checked every design against the code before it was written here. One clause cannot pass without a production change (L2-2); every other step adds or changes tests only.
+
+**Decisions (proposed with this plan):**
+
+- **L2-1, the guard's could-not-check case fails for real.** The two stand-ins (`FaultySessions` in `component/test_binding_check.py`, and the patched `housekeeping_store.session_current` in `component/test_worker_pass.py`) test one path: a session guard that cannot be evaluated leaves the work alone (could-not-check, with the approval kept for the next pass) and is never read as a revocation. A revoked or expired session cannot reach that path: it is the guard's definite "no", already tested beside both stand-ins. A `REVOKE` on `accounts.guard_session` cannot either: it raises SQLSTATE 42501, which `session_current` (`backend/modules/export/store_support.py:204-218`) reads as "no longer current", so the approval would be invalidated. The realm's own lock bound can. The realm's PostgreSQL runs with `lock_timeout=1000` (`scripts/verify_docsuri_u6.py:420`) and the guard locks the session row `FOR SHARE` (`backend/modules/accounts/u3_session_authority.sql:19`), so while a second connection holds that row `FOR UPDATE`, the real guard's statement ends after 1 s with 55P03 (`LockNotAvailable`, a psycopg `OperationalError`, not 42501). Each held guard call costs about 1 s of real time, so the Clock rule names the realm's 1 s lock bound beside the 5 s body read; the existing pace-row test (`repository/test_pace_store.py`) already reaches that bound. The alternatives were (B) cancelling the waiting backend from a raw connection with `pg_cancel_backend`, which needs no wait but adds a watcher thread, and (C) keeping the two stand-ins and listing them under Allowed doubles.
+  - The two `Faulty(OwnDue).sweep_orphans` stubs (`component/test_worker_pass.py:283-287` and `component/test_log_content.py:38-42`) replace one pass step with a raising psycopg fault, to show that a failing step does not stop the others and that its log line carries no error text. Build and Test did not flag them, but the never-mocked rule, read strictly, covers them. They stay, and are listed under Allowed doubles: the log-content test needs a recognisable secret in the error text, which no real database fault carries.
+  - Recorded, not changed: a 42501 from a lost EXECUTE grant also reads as a revoked session, so a deployment that lost the grant would invalidate every open approval. That fails safe (nothing unapproved is written); changing it is a production decision outside this loop-back.
+- **L2-2, the key-file read never blocks (one production change).** `read_record` (`backend/key_custody.py:135`) opens the key file with `O_RDONLY | O_NOFOLLOW`. A FIFO at the key path therefore blocks the open until a writer appears, before the `S_ISREG` check at line 139 can refuse it, so NFR3.2's "a non-regular file" cannot pass today: its test would hang. The fix adds `os.O_NONBLOCK` to that one open; nothing else changes. It brings the shared helper in line with security design §4.2's "a regular file", and departs from §4.2's "moved with no change to U2's behaviour" in one case: U2's keyring, and U8's composed and production keyrings, which read through the same helper, now refuse a FIFO instead of hanging. U2's keyring regression is re-run, and U8's checkpoint verification, the last of loop-back 2, runs over the change. The alternative is to stay tests only: test the directory and socket cases, record the FIFO hang as an open defect, and leave NFR3.2 unverified for a FIFO.
+- **L2-3, the hosted logger levels are checked in U8's lane.** `U6:NFR3.9/u8-logger-levels` asks that U8 never lower the `httpx` and `httpcore` loggers once the hosted service is composed. U6's realm cannot compose the production assembly, and the edit that withholds the behaviour belongs in `backend/u8_host.py`. So, as L1-11 placed it, the check is written and run in U8's reopen, which follows U6's in loop-back 2: `tests/u8_service_operations_integration/integration/test_production_composition.py::test_the_composed_production_roles_keep_the_transport_loggers_at_warning`, parametrized over `backend.u8_main.ROLES`. It configures logging before composing, in `u8_main.main`'s order, runs each role's first use, and asserts in one comparison that every contribution is active, that no `httpx` or `httpcore` logger or child is below WARNING, that one request through `httpx.MockTransport` logs nothing, and that the role's log holds no transport line. U6's matrix row stays open at U6's checkpoint and closes at the Build and Test re-run. The alternative is to write the same test into U8's file during U6's reopen, with one U8 realm run.
+- **L2-4, the connection step is measured after a disconnect.** The flow shows its connection step whenever the owner has no usable connection. No fixture account can open the flow without ever having connected (memberB has no novelty result), so the new reflow test disconnects memberA through the view's dialog and then opens the flow. That needs no fixture change, so the fixture identity and every existing environment stay as they are. Measuring a never-connected owner would need a novelty result for memberB, a fixture-identity change and a U4 job.
+
+**Readings you can change at Plan Approval** (each is built as stated unless you say otherwise):
+
+- L2-1 to L2-4 as above: the could-not-check case through a held session row (A), the two `sweep_orphans` stubs listed as allowed doubles, the FIFO fix made, the hosted logger check built in U8's reopen, and the connection step measured after a disconnect.
+- `export.status_counts` keeps its window edges: an effect that ended exactly 24 h before the caller's clock is outside the window (a strict `>`, `backend/modules/export/u6_maintenance.sql:122-125`), and a terminal effect whose end lies after the caller's clock still counts (no upper bound). Changing either needs a new migration, outside this loop-back.
+- The due order is pinned on a fresh pass: the older of two accepted exports first, the younger once the older is no longer due. The pass's round robin (`backend/modules/export/worker.py:157-184`) may hand over a younger export while an older one, already handed at its current revision, stays due; strict oldest-first on every pass would be a production change in `worker.py`.
+- "Consumed" means an environment holding any `*-evidence-*.json` file, which the browser phase refuses (`scripts/verify_docsuri_u6.py:1255-1258`), or a realm whose 20-account synthetic allocation is spent, which the conftest refuses (`tests/u6_approved_export/conftest.py:151-156`). The coverage phase does not refuse an environment holding evidence; refusing it would be a production change.
+- Phase validity covers the verification phases `run_phase` runs. `serve` records its starting source but never compares it and writes no JUnit report, so it is outside the clause.
+- NFR3.1's AAD fields are read as hyphenated lowercase UUID text and a decimal revision (`backend/modules/export/token_vault.py:41`): the code's reading of §4.1, which names the fields without a format.
+- Recorded, not changed: after a cancellation from outside, the `CancelledError`'s traceback keeps the closed HTTP client and the SDK client, whose options hold the token, reachable until the caller drops the exception. No production path cancels an operation from outside today (`backend/modules/export/service.py:188-191`, `lane.py:138-155`); closing the gap would mean clearing both in `NotionSession._operate`'s `finally`.
+
+**Steps (test-after):**
+
+- [x] **Step 44 — Record the decisions.** Write L2-1 to L2-4 and the readings above into `code-summary.md` (deviations) and `traceability.json`, naming L2-3's test for U8's reopen. No source changes, and no edit to the approved steps above. Trace: Build and Test loop-back 2.
+
+- [x] **Step 45 — Repository — tests.** On the realm, with nothing mocked:
+  - (a) `tests/u6_approved_export/repository/test_status_counts.py`, two tests, using the file's 1990 `EPOCH`, the clocks `INSIDE`, `EDGE` and `OUTSIDE` (`EPOCH + DAY` less one second, exactly, and plus one second) and a `changes(after, before)` helper that asserts both hold exactly the seven effect keys (`accepted`, `executing`, `unknown`, `succeededLast24h`, `failedLast24h`, `cancelledLast24h`, `invalidatedLast24h`) and returns only the keys that moved. `test_executing_and_unknown_move_by_exactly_one_through_a_claim_and_an_uncertain_answer` takes its baseline after `flows.connected`: a bind moves only `accepted`; `repo.claim` (a `Claimed`) moves only `executing`; and `record_write_outcome(..., WriteOutcome('uncertain'))`, after which the effect reads `unknown`, moves only `unknown`. `test_failed_and_invalidated_effects_count_once_inside_24h_and_not_from_the_edge_on` takes one baseline per clock after `flows.connected` and before any bind. It ends one bound effect `failed` (`end_unwritten(..., 'dependency-unavailable')`) and a second, bound after the first ended, `invalidated` (`'authority-revoked'`), and invalidates one open approval (`invalidate_open_approval(..., 'source-changed')` is True). The rows read back as (`failed`, `dependency-unavailable`, `EPOCH`) and (`invalidated`, `authority-revoked`, `EPOCH`), and the approval as (`invalidated`, `source-changed`). At `INSIDE` exactly `{'failedLast24h': 1, 'invalidatedLast24h': 1}` moved, so the invalidated approval counts in no effect key; at `EDGE` and `OUTSIDE` nothing moved. Each test erases its owner in `finally`.
+  - (b) `tests/u6_approved_export/repository/test_lane_store.py`, after `test_due_items_follow_the_hand_over_order`: `test_the_older_of_two_accepted_effects_is_due_first_and_the_younger_once_it_is_claimed`, with both conftest owners on the file's `EPOCH`. Owner b's effect is bound first, at `EPOCH` + 20 s, then owner a's at `EPOCH` + 10 s. At `EPOCH` + 30 s, `due_items(now, limit=100)` lists the two as `[('execute', older, EPOCH+10s), ('execute', younger, EPOCH+20s)]`; over the whole batch the kinds keep the order resume, execute, scan, and the accepted effects' due times ascend (the id tie-breaker and the order inside resume and inside scan, which the clause leaves open, are not asserted). After `repo.claim(older)` (a `Claimed`), only the younger of the two is listed. Both owners are erased in `finally`.
+
+  Trace: U6:logical-components:watch-counts; U6:security-design:due-order.
+
+- [x] **Step 46 — Business logic — implement.** The key-file read never blocks (L2-2). In `backend/key_custody.py`, `read_record`'s open at line 135 becomes `os.open(root / settings.filename, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)`, and its docstring says the open never blocks, so the `S_ISREG` check refuses a FIFO. Nothing else changes. Then run U2's keyring regression (the command under "Runnable before the first test step" in `unit-test-instructions.md`), which must pass unchanged, and record its count beside the last one (75 passed, 1 deselected). Trace: U6:NFR3.2; security design §4.2.
+
+- [x] **Step 47 — Business logic — tests: key custody, the vault and the key commands.** In `tests/u6_approved_export/operations/` (`tmp_path` key folders as these files already use; the key commands on the realm):
+  - (a) `test_token_vault.py`: `test_an_envelope_opens_independently_under_aes_256_gcm_and_the_design_aad`. Seal the token at revision 12; read the key for the envelope's version from the test's own `tmp_path` key file; slice the envelope by §4.1's literal layout (`b'DSE1'`, a one-byte version length, the version, a 12-byte nonce, then the sealed bytes), never by the module's constants or its `_aad`. Assert the magic, a version length of 35 and the version equal to the key file's active one; then `(len(key), len(nonce), len(envelope)) == (32, 12, 4 + 1 + 35 + 12 + len(TOKEN.encode()) + 16)` before any decrypt; then `cryptography`'s `AESGCM(key).decrypt(nonce, sealed, aad)`, with the AAD rebuilt as `u6-notion-token:{version}:{accountId}:{connectionId}:{revision}`, returns the token; and the list of single changes under which it still opens (another version, the prefix `u2-notion-token:`, another account, another connection, revision 13) is empty. No assertion takes key bytes as an operand.
+  - (b) `test_key_custody.py`: `test_guarded_read_refuses_a_fifo_a_directory_and_a_socket_without_blocking`. Each read runs in a daemon thread joined for at most 5 s (`bounded`, as `tests/u8_service_operations_integration/operations/test_drivers.py:135-152` does), and a stalled FIFO read is released through the FIFO's write end before the test fails. A FIFO at the key path (mode 0600, the test's own owner, size within bounds, so only its type is wrong) is refused as `CustodyFault('probe custody unavailable')` caused by `ValueError('private key custody mismatch')`, and stays in place; a directory is refused with the same category (caused by `IsADirectoryError`); a local AF_UNIX socket, bound by relative name inside the key folder and never listened on, is refused with the same category (caused by an `OSError`). The folder listing is unchanged after each.
+  - (c) `test_token_keyring.py::test_broken_key_file_is_unavailable_and_nothing_is_created` gains the case `directory`: the key file replaced by an empty directory after a first load gives `ProtectionUnavailable('key-custody-broken')` with no cause or context, the listing unchanged and the directory still empty.
+  - (d) `test_key_commands.py`. `test_create_key_after_loss_refuses_unless_the_state_is_loss` also asserts that the folder starts empty and that the command creates the marker: the listing is exactly `export-token-keyring.initialized`, `export-token-keyring.json` and `export-token-keyring.lock`, and the marker is a regular file, mode 0600, owned by the test's user, with one link and the run id as its content; after the not-a-loss refusal its content and inode are unchanged. `test_after_a_loss_rotation_skips_and_reports_tokens_under_the_missing_version` rewrites the marker in place with sentinel bytes before the loss (U6 reads only whether the marker exists, and a re-created marker would hold the run id again) and asserts that `create_key_after_loss` and the later rotation leave its bytes, inode and mode unchanged, with one link, a new active version, and a listing of exactly the key, lock and marker files.
+
+  Trace: U6:NFR3.1; U6:NFR3.2; U6:NFR3.3/operator-commands.
+
+- [x] **Step 48 — Business logic — tests: the session guard, the Notion session and the pass.**
+  - (a) `tests/u6_approved_export/store_flows.py` gains `held_session(connect, authority)`, a context manager beside `end_session`: a `connect('accounts')` connection selects the session row `FOR UPDATE` and asserts it exists, then yields; in `finally` it rolls back before closing, so the row is free before the test's next check. Its docstring says that the real guard's own `FOR SHARE` then waits until the realm's 1 s lock bound ends its statement with 55P03, which is not the guard's 42501 answer.
+  - (b) `component/test_binding_check.py::test_the_session_fact` (L2-1): `FaultySessions` is deleted and the ended-session half stays. In the second half, a fresh rig's preview is bound with a second session as its approving session; inside `flows.held_session` on that session, the real repository's `session_is_current` raises `psycopg.errors.LockNotAvailable` and the binding check answers `('could-not-check', 'dependency-unavailable', 'DEPENDENCY_UNAVAILABLE')`; once the hold ends, the same check answers unchanged.
+  - (c) `component/test_worker_pass.py::test_a_session_check_that_could_not_complete_leaves_the_approval_for_the_next_pass` (L2-1): no monkeypatch. One pass inside `flows.held_session(connect, approver)` gives `(sessionInvalidated, sessionUnchecked) == (0, 1)`, leaves the approval `('approved', None)` and keeps its tree; the next pass, with the hold ended, invalidates it as `authority-revoked` and its tree is gone. The `housekeeping_store` import goes.
+  - (d) `component/test_worker_pass.py`, after `test_hand_over_follows_the_due_order_and_never_duplicates_a_scan`: `test_the_pass_hands_over_the_older_of_two_accepted_exports_first`. Owner b, on its own rig with a clock one second later, presses its export first; owner a presses at the earlier time. With both inside one due batch (asserted as a precondition), a fresh own step hands over owner a's export first, and once that export is claimed a second fresh own step hands over owner b's. Each hand-over uses a fresh own step, so the round robin's memory cannot decide it.
+  - (e) `component/test_plaintext_lifetime.py`, two tests, with a module-local `closed_clients` fixture: a delegating wrapper on `httpx.AsyncClient.aclose`, set on the class by monkeypatch, that records each client and awaits the original close. `test_a_failed_operation_still_closes_its_client` is parametrized over a provider 500, a transport error (an oversized streamed answer), a per-request timeout (a hanging answer with `request_timeout=0.2`) and the operation's deadline (a hanging answer under a 1 s budget). Each answers could-not-check with its cause and no value, sends only its own bearer, makes exactly one `/v1/users/me` request, closes its one client, leaves no token in the result, and leaves the session holding no client; a following operation then succeeds on a new client that is closed afterwards. `test_a_cancelled_operation_closes_its_client_before_the_cancellation_passes` runs an operation under a 10 s budget against a hanging answer. Once the request has reached the fake (polled inside `asyncio.timeout(5)` as a hang guard), its client is open and the gate is held; cancelling the task closes that client before the `CancelledError` reaches the caller, releases the gate, and leaves the session holding no client. The cancel and its await sit in `finally`, so a failed assertion never leaves a hanging task.
+
+  Trace: U6:unit-test-instructions:never-mocked; U6:security-design:due-order; U6:NFR3.5.
+
+- [x] **Step 49 — Environment/build configuration — tests: the runner.** In `tests/u6_approved_export/operations/` (no realm, except (c)):
+  - (a) `test_u6_runner.py` gains a `phase_rig` fixture over `owned_root`: a real key folder and manifest file, the policy and the lock digests; the manifest read, resource check, preflight, port check, source identity, a report-writing `bounded_process` and the fixtures setup are stood in and recorded; `require_key_folder`, `require_test_paths`, `preserve_prior_reports`, `junit_counts` and `private_json` stay real. `test_browser_refuses_an_environment_holding_evidence_before_any_child`, parametrized over a development, a coverage, a serve and an earlier browser evidence file: `dispatch('browser', ...)` raises `browser verification requires a fresh realm; preserve this realm before replacement` before any child, host, fixture setup or source read; the evidence file is kept unchanged at mode 0600; a database phase on the same environment still prepares; and with the evidence file gone, the browser phase prepares and sets up its fixtures.
+  - (b) `test_u6_runner.py`, phase validity. `test_a_phase_fails_when_its_source_changes_during_the_run`, parametrized over an unchanged and a changed source after the child: the source is read before and after the one child, and one evidence file at mode 0600 records the starting source and the passing report. The changed case raises `U6 phase failed; evidence preserved`, with `sourceChangedDuringRun` true and exit code 1 in both the evidence and the printed summary; the unchanged case passes with neither. `test_source_identity_sees_a_changed_or_added_listed_file_only` builds a temporary git repository under `tmp_path`, as U8's `git_repository` helper does, with `runner.ROOT` and `runner.command` redirected to it: the inventory lists only the tracked file; changing it changes the digest but not the head; an untracked test file under `tests/u6_approved_export` joins the inventory and changes the digest; an ignored file and a file outside the listed folders change nothing. `test_each_junit_verdict_alone_fails_the_phase` has one case each for a skip, an error and a failure beside a passing case, and one for a passing report at mode 0644: each of the first three sets exit code 1 with its own counts, and the wrongly moded report sets `invalidTestReport`. The existing combined test stays.
+  - (c) `test_u6_profile_binding.py`: `test_a_new_owner_past_the_realm_allocation_is_a_failed_prerequisite`, on the realm. With `MAX_SYNTHETIC_ACCOUNTS` lowered, on the conftest module only, to the realm's current account count, making a new owner fails with `Synthetic account allocation exhausted; a fresh owned realm is required` and writes no account, session, consent or settings row; the existing owner `a` is still returned and the count is unchanged.
+
+  Trace: U6:unit-test-instructions:environment-lifetime; U6:unit-test-instructions:phase-validity.
+
+- [x] **Step 50 — Frontend — tests: the connection step at 320 CSS px (L2-4).** `frontend/e2e/u6-approved-export/reflow.spec.ts` gains a fourth test, last in the file (the browser phase also runs this file last). memberA signs in, is disconnected through the view's dialog (`ensureDisconnected`), opens its ready novelty result and starts the export. With `connection-step`, its `connect-form` and `flow-connection-state` visible and the flow on the connection step, `export-flow` measures `{width: 320, page: false, surface: false, offscreen: false, nested: []}`; after a blank token (`' '`) is submitted and `connect-field-error` shows, it measures the same again. The token field is empty at both measurements, and the test does not connect, export or close the flow. `helpers.ts`: `expectStep` also accepts `'connection'`. No fixture or `SPECS` change, so the fixture identity stays. Each other spec file reaches a connected state in its first test, so leaving memberA disconnected affects no other test. After both edits, run U6's `tsc` command (with `--incremental false`) and its ESLint command, which cover `e2e/u6-approved-export`; the browser phase neither type-checks nor lints. Trace: U6:NFR5.1/reflow.
+
+- [x] **Step 51 — Withheld-behaviour checks.** Before the recorded runs and outside them, run each new or changed test once with the behaviour it awaits withheld. Use development environments set up for this and archived afterwards (`setup` and `migrate`, with `DOCKER_HOST=unix://$HOME/.colima/default/docker.sock` and `DOCKER_CONFIG=$HOME/.docsuri-u8/docker-config`, containers confirmed through Colima's socket), and the direct form scoped to the test's file: `DOCSURI_U6_ENVIRONMENT_FILE=/tmp/docsuri-u6-run/environment.json backend/.venv/bin/python -m pytest -c backend/pytest.u6-approved-export.ini <file> -k <name> -q --tb=short` (the runner tests need no environment). Record each file's sha256 before its edit, make one edit at a time, record the failure the test gave, then restore the exact bytes and confirm the sha256 before anything else runs. The temporary edits, all reverted:
+  - never-mocked: `backend/modules/export/binding.py:234` answers a revocation (`_changed(AUTHORITY_REVOKED, 'UNAUTHENTICATED')`); `housekeeping_store.py:110-112` treats the fault as not current; `store_support.py:216` catches every `psycopg.Error`; and, as a check of the arrangement, each test runs once without its `held_session` line;
+  - NFR3.1: `token_vault.py` builds the AAD without the version (line 41), seals and opens with a 16-byte key (`key[:16]`, lines 90 and 115), and uses a 16-byte nonce (`NONCE_BYTES = 16`, line 29);
+  - NFR3.2: the new test runs on the code before Step 46, where it stalls; then, after Step 46, without `O_NONBLOCK`, without the `S_ISREG` test, and with the `except` at `backend/key_custody.py:148` narrowed to `(ValueError, TypeError, KeyError)`;
+  - NFR3.3: `token_keyring.py`'s `ensure_marker` returns at once, and, separately, always unlinks and re-creates the marker;
+  - NFR3.5: `notion_session.py:557` `finally:` becomes `else:`;
+  - watch counts: `lane_store.py:600` masks `executing`, `unknown`, `failedLast24h` and `invalidatedLast24h` one at a time with `jsonb_set(..., '0')`, and passes `now` less one microsecond (an inclusive edge);
+  - due order: `lane_store.py:193` orders by `due_at DESC`;
+  - runner: `scripts/verify_docsuri_u6.py` without the evidence refusal (lines 1255-1258), without the after-phase source comparison (lines 1312-1314), with a listed file's digest recorded as None (line 728), with `TEST_ROOT` dropped from the inventory (line 722), with each of the three verdict terms dropped from line 1139, and with the report read without its custody check (line 1125); `tests/u6_approved_export/conftest.py` without the allocation refusal (lines 151-156), on a development realm, because that run commits one synthetic owner;
+  - reflow: on its own fresh environment (`setup`, `migrate`, `browser`), `frontend/src/u6-export/export.css` gains `.export-step .export-connect { min-width: 400px; }` before the phase starts; the new test fails at its first measurement while the other 13 pass, and the rule is removed after the phase ends.
+
+  No withheld edit touches an applied migration or the guard's SQL: the difference between a held and a released session stands in for the guard itself. Files that already differ from the last commit are confirmed restored by sha256, never by `git diff`. Trace: the project's rule on withheld checks.
+
+- [x] **Step 52 — Run and record.** Archive every development environment. Then, on fresh realms:
+  - `setup`, `migrate`, `coverage` (with the second report) and `frontend` on realm A, then `archive-owned`; the backend total, `scripts/u6_preservation.py` and `src/u6-export` stay at or above 80%;
+  - `browser` on its own fresh realm B, all 14 journeys passing;
+  - U6's `tsc` command (with `--incremental false`), its ESLint command (including `e2e/u6-approved-export`), and Ruff on the cicd §2.3 targets plus every U6 script;
+  - U2's keyring regression (after Step 46), the earlier Units' regressions, and U2's cumulative lane, since `test/u6-export` is registered in it.
+
+  Then update `code-summary.md` (L2-1 to L2-4; the eleven targets mapped to the tests that close them, with L2-3's row open until U8's reopen; each component's test count, file by file, against the standard strategy's five to eight, counts above eight marked "above range, kept"; the collect-only total; each withheld run's failure and digests), `traceability.json` and `source-manifest.json`. Trace: stage Step 5.
+
+After Step 52, the stage's own review and U6's checkpoint follow (stage Steps 5 and 6). They are not plan steps, so each box above can be ticked on its own run before the review starts. When this attempt's approval clears the boxes of Steps 1–43, their work stands: each is ticked again only after Step 52's runs, which exercise it again, have passed, as the project's rule asks.
+
+**Loop-back 2 traceability** (target → the file that closes it → step):
+
+| Target | Closed by | Steps |
+|---|---|---|
+| U6:unit-test-instructions:never-mocked | `tests/u6_approved_export/store_flows.py` (`held_session`); `component/test_binding_check.py`; `component/test_worker_pass.py` | 48, 51 |
+| U6:NFR3.1 | `tests/u6_approved_export/operations/test_token_vault.py` | 47 |
+| U6:NFR3.2 | `backend/key_custody.py`; `tests/u6_approved_export/operations/test_key_custody.py`; `test_token_keyring.py` | 46, 47 |
+| U6:NFR3.3/operator-commands | `tests/u6_approved_export/operations/test_key_commands.py` | 47 |
+| U6:NFR3.5 | `tests/u6_approved_export/component/test_plaintext_lifetime.py` | 48 |
+| U6:NFR3.9/u8-logger-levels | U8's reopen: `tests/u8_service_operations_integration/integration/test_production_composition.py` (L2-3) | 44 |
+| U6:NFR5.1/reflow | `frontend/e2e/u6-approved-export/reflow.spec.ts`; `helpers.ts` | 50 |
+| U6:logical-components:watch-counts | `tests/u6_approved_export/repository/test_status_counts.py` | 45 |
+| U6:security-design:due-order | `tests/u6_approved_export/repository/test_lane_store.py`; `component/test_worker_pass.py` | 45, 48 |
+| U6:unit-test-instructions:environment-lifetime | `tests/u6_approved_export/operations/test_u6_runner.py`; `test_u6_profile_binding.py` | 49 |
+| U6:unit-test-instructions:phase-validity | `tests/u6_approved_export/operations/test_u6_runner.py` | 49 |
+
+## Build and Test loop-back 3 (2026-11-17)
+
+Build and Test ran a fourth time on 2026-11-17, with its rung-1 fixes (`construction/build-and-test/test-results.md`: the Not Met table, Outcome items 3 to 5, and the Loop-Back Log entry "Loop-back 3 — 2026-11-17T16:07:16Z"). That run found two U6 targets Not Met, the never-mocked rule and the static checks. It also found two clauses that no test checks: when the lane recorded the outcome that the watch counts report, and NFR3.8's provider text on the history rows and the settle dialog. You chose "Retry with fix" on 2026-11-17. Steps 1–52 stay as built; Steps 53–63 are new and start unchecked. Each test below was designed from the clause it checks and from the code as it is today, and a second reader checked every design against the code before it was written here. No step changes production behaviour. Every step adds or changes tests, or, for the static checks, changes lint configuration, import order and line layout; Step 60 shows those changes leave the code's syntax tree as it was, except for two test lines (B007 and UP031). This is loop-back 3 of 3.
+
+**Decisions (proposed with this plan):**
+
+- **L3-1, the lane's store faults are real.** Two stand-ins in `component/test_lane_write_path.py` are replaced by real database faults: `Broken` (lines 402-411) and `Interleaved(pace=False)` (lines 21-41, used at 374).
+  - How the fault arises. A new helper holds named rows `FOR UPDATE` from a raw administrative session. The realm's lock bound (`lock_timeout=1000`, `scripts/verify_docsuri_u6.py:420`) then ends the code's own locking or updating statement with 55P03. psycopg 3.3.6 raises that as `psycopg.errors.LockNotAvailable`, an `OperationalError` (`errors.py:1543-1544`). `OwnerTransactions.run` retries only `SerializationFailure` and `DeadlockDetected` (`backend/transactions.py:363-366`), so the fault reaches the lane.
+  - The unreservable pace slot. The hold runs only around the lane's own reservation, through `Interleaved`, which already runs another actor's step around the claim.
+    - While the pace row is held, the real `reserve_pace_slot` meets the row, ends at the bound and answers None (`backend/modules/export/lane_store.py:586-589`; `repository/test_pace_store.py:52-67` already shows this). The lane then takes its could-not-check path at `lane.py:265`.
+    - A hold over the whole run would not reach that line. The binding check first reads the destination through the adapter (`binding.py:263-276`), and the adapter's pacer reserves a slot on the same row before its request (`notion_session.py:395-405`). The run would end at `lane.py:258-259` instead, and the lane's own reservation would go untested. The adapter's pacer uses the rig's own store, not the `Interleaved` wrapper (`interleaved_lane`, `test_lane_write_path.py:44-51`), so a hold given to the wrapper reaches only the lane's reservation.
+  - The store fault. The effect row and the `export.lane_status` singleton are held from the claim on: `Interleaved`'s step before the claim starts the hold, and the hold ends after `run_item` returns.
+    - The claim's `SELECT … FOR UPDATE` (`lane_store.py:136-143`) and then the status upsert (`:604-613`) each end at the bound. Both of `run_item`'s fault branches (`lane.py:208-213` and `:224-231`) are therefore reached through the real store and the real transaction wrapper.
+    - `effect_binding` only reads (`:213-256`), and a held row blocks no plain read. The fault therefore arrives at the claim, not at the first store call as it did with `Broken`.
+    - The fault's own text is captured from a direct `record_lane_status` call under a short hold of the singleton, and that is the text that must never be logged. L2-1 listed `Faulty` because its test needed a recognisable secret in the error text; that reason does not apply here.
+  - Where the holders connect. Holders open through the conftest's `connect_raw`, the realm's administrative login (`tests/u6_approved_export/conftest.py:82-111`), not through a runtime role. The runtime roles carry `CONNECTION LIMIT 2` (`verify_docsuri_u6.py:581`), and every lane unit opens a fresh `docsuri_export` connection (`NullConnectionPool`, `transactions.py:248-266`). A holder on that role would leave the lane no spare connection.
+  - Every hold stays well inside the realm's `idle_in_transaction_session_timeout=5000` (`verify_docsuri_u6.py:421`): about 1 s for the pace hold and for the capture, and about 2 s for the store fault.
+  - Alternatives:
+    - (B) `LOCK TABLE export.effect IN ACCESS EXCLUSIVE MODE`. It fails `effect_binding` first, as `Broken` did, but blocks every reader of the table.
+    - (C) Keep both stand-ins and list them under Allowed doubles.
+- **L3-2, the operator's outcome reads realm rows.** `Rows` in `operations/test_u6_real_export_checks.py` (lines 187-195) is replaced by two real exports of one owner.
+  - The schema allows one export in flight per owner: the `effect_in_flight` index (`backend/modules/export/u6_schema.sql:163`; BR5.1), refused as `CAPACITY_EXHAUSTED` (`approval_store.py:333-335`).
+  - So the first press is settled with `rig.succeed` before the second press. The second export is claimed with `path_kind="real"` and recorded as refused `no-access` through the store's own units (`lane_store.py:260-312` and `:387-392`). Nothing is left in flight.
+  - The real `operator.outcome` then runs `OUTCOME_QUERY` (`scripts/u6_real_export.py:141-147`). The query's id filter and its `LIMIT 2`, which the double skipped, are now tested too.
+  - Alternative: list `Rows` beside the runner stand-ins.
+- **L3-3, the archive's database check reads the realm.** `Database` in `operations/test_u6_preservation.py` (lines 36-57) is replaced by a `connect_raw` session with tuple rows, which is how the runner's own `connect_admin` returns them (`verify_docsuri_u6.py:491-502`). `check_database` (`scripts/u6_preservation.py:105-117`) therefore reads the realm's real identity and client backends.
+  - The run id. The `tmp_path` manifest carries the realm's own run id (`realm.run_id`), and every name built from the run id follows it, including the destination case's pre-created folder.
+  - Waiting for other clients. Before it hands the session over, the fixture's `connect_admin` waits until no other client backend remains, for at most 5 s. It rolls back after each read, because PostgreSQL keeps one activity snapshot per transaction.
+  - The active-client case opens one more real session.
+  - Zero other clients can be reached. The runner holds no database client while the pytest child runs: it calls `connect_admin` at `:514`, `:663` and `:1401`, in setup, migrate and the key phases, and at `:1453` hands it to the archive context of `archive-owned`, which runs outside any pytest child. A connection that an earlier test leaks shows as a failed prerequisite, never as a pass.
+  - The Docker, port, open-file and stop stand-ins stay recording only, because the runner's real `stop_database` would stop the phase's own database.
+  - Alternative: list `Database`.
+- **L3-4, the remaining wrappers and stand-ins are named under Allowed doubles, by two narrow rules.** None of them replaces anything on the never-mocked list, so no target is relaxed. Alternative: leave them unlisted, as Build and Test judged them.
+  - Delegating wrappers, which call the original or open the real realm session, record the call or run another actor's real step around it, and never answer in its place:
+    - `Interleaved`, with its claim steps and its pace hold;
+    - the `reserve_pace_slot` spy in `integration/test_pending_connect.py:88-96`;
+    - `racing_page` in `operations/test_key_commands.py:165-178`;
+    - `spy_method` in `integration/test_export_assembly.py:22-30`;
+    - the archive fixture's `connect_admin` (L3-3), which opens the realm's administrative login through `connect_raw` with tuple rows, waits for other clients by a bounded poll and counts its reads. Every answer comes from the realm.
+  - Recording stand-ins for what lies outside the database, which answer in place but stand for nothing on the never-mocked list: the archive context's `resources`, `idle_port`, `open_files` and `stop_database` in `operations/test_u6_preservation.py:100-121` (Docker, the port, `lsof` and the database stop).
+- **L3-5, `FakeResearch` (your call; proposed default: list it).** `FakeResearch` in `operations/test_u6_browser_fixtures.py:122-148` stands in for U4's service and execution in `test_a_missing_result_is_produced_through_the_research_service` (line 150), which tests the fixture script's own branches: a missing result is produced in one execution step, and a failed job refuses.
+  - What it stands in for. The test calls `ready_novelty(None, …, None)`. With no known result, `_ready` returns before any export read (`scripts/u6_browser_fixtures.py:263-264`), so `FakeResearch.readNoveltyArtifactForExport` (test lines 130-131) is never called. What it replaces is U4's policy reference, entitlement check, context creation, accept, job read and execution step. The never-mocked list names U4's export read in integration tests and fixtures (`unit-test-instructions.md:204`), not those calls. U4's real service, real execution and real export read run in `test_fixture_setup_is_idempotent_and_its_result_is_exportable` (line 20), in the integration rigs' `Rig.ready` and in the fixtures phase.
+  - (a, proposed) List it under Allowed doubles as a stand-in for U4's service and execution in that one test only, with the reading above written beside it, so a later re-check finds it named. Cost: one bullet in the instructions. Build and Test's Outcome item 3 accepts listing a double by a plan decision you approve.
+  - (b) Reach the produced-result branch through U4's real service and execution on a conftest owner. Cost: one U4 job from that owner's four per realm (`unit-test-instructions.md:276`). No real way was found here to make U4's synthetic execution end a job as failed (`ResearchService` refuses work when execution is disabled, `backend/modules/research/service.py:212`), so the failed-job branch would need its own design, which would come back to you before any build step.
+- **L3-6, the watch counts' time is checked through the lane's real record against the database clock.**
+  - The status record takes no time. On the first insert the row takes the column default, `clock_timestamp()` (`backend/modules/export/u6_schema.sql:244`); every later record updates it with `observed_at=clock_timestamp()` (`lane_store.py:610`). The lane passes it no clock (`lane.py:224-229`).
+  - `export.status_counts` returns that row's time as `lane.observedAt` (`backend/modules/export/u6_maintenance.sql:141-142`). It uses the caller's clock only for the windows and the ages.
+  - The new test therefore records two outcomes through the real repository and brackets the second between two reads of the database clock. It then reads the lane block under two caller clocks, both different from the record time.
+  - `integration/test_lifecycle_in_flight.py:89-92` already shows, through the lane, that the lane's own record moves the row's time.
+  - Alternatives:
+    - (B) Write the row directly with a fixed `observed_at`. That skips the record path.
+    - (C) Give `record_lane_status` the lane's injected clock. That is a production change no clause needs.
+- **L3-7, NFR3.8's remaining jsdom surfaces get one hostile-text case each (U6-C at its minimal scope).**
+  - The history row (`frontend/src/u6-export/history.tsx:137`) and the settle dialog (`dialogs.tsx:183`) show the Notion destination title. The server passes that title through unchanged (`backend/modules/export/views.py:206`), and `api.ts:250-270` checks only that it is non-empty text.
+  - The matrix row missed a third surface. After a configure, `ConnectForm` announces the Notion workspace name (`connect-form.tsx:103-106`), which is provider text (`notion_adapter.py:530`). The announcement renders in the view's `export-live` region (`export-view.tsx:123` and `:241`; `status.tsx:36-41`). The one existing hostile workspace-name case covers only the panel (`export-view.test.tsx:125-139`).
+  - Each surface gets one Vitest case in its existing file. No Vitest file is added, so `FRONTEND_FILES` is unchanged.
+  - Counts: history goes from 17 to 18 cases, dialogs from 8 to 9 and export-view from 15 to 16. Each is recorded as above range, kept (L1-8).
+  - Afterwards NFR3.8 stays Unverified, browser-only: no Chromium run shows hostile provider text, because the browser fixtures' titles are plain. Unless L3-8 is chosen, Build and Test says so at the gate under its Step 12.
+- **L3-8, U6-C in full: the optional Chromium checks (your call; proposed default: not built).** The Loop-Back Log leaves to you whether the browser-only targets' Chromium checks join this loop-back.
+  - What they would be for U6, in `frontend/e2e/u6-approved-export/`:
+    - the connect help: exactly two items, and none of update content, comment access or user information, in Korean and English (`journeys.spec.ts:51` checks only "Insert content");
+    - the token field: its type, autocomplete and spellcheck attributes, its clearing after a refused configure, and the token's absence from storage, the URL, cookies, the console and the page;
+    - the statuses: each badge's words beside its hidden icon, one polite region per surface, and each change announced once;
+    - hostile provider text on all six surfaces.
+  - Cost: half a day to one day (`~/.docsuri-u8/lead-scripts/l2-records/bt4-rung2.json`, U6-C), at $0. The work involves:
+    - New hostile fixture entries. These change `SCENARIO_NAMES` (`scripts/u6_browser_fixtures.py:77-87`), a fixture-identity change that archives every existing environment (L1-9).
+    - A hostile settle destination for the history row and the settle dialog, and possibly a fourth clock-advanced settle journey. That journey must fit under the 300 s phase bound (`verify_docsuri_u6.py:60`); run 4's 14 journeys took 95.8 s.
+    - For a hostile workspace name, a change to `helpers.ts:147`'s `expectConnected`, or a second synthetic bot and token.
+    - A fresh browser environment for each Chromium withheld check.
+  - Gain: D7, NFR3.4/connect-field, NFR5.1/component-checks and NFR3.8/provider-text would become Met. Without these checks, those four are said at the gate as browser-only.
+  - If you choose it, this plan comes back to you with its steps before any build step. As written, no step builds it.
+- **L3-9, U6's own lint configurations, passed with `--config`.**
+  - `scripts/u6-lint.toml`, for the tests:
+    - `select = ["E", "F", "I", "UP", "B"]`, `line-length = 100` and `target-version = "py313"`;
+    - `src = [".", "ingestion/src", "ops/src"]`, which is U6's pytest `pythonpath` (`unit-test-instructions.md:20`; `backend/pytest.u6-approved-export.ini:3`).
+  - `scripts/u6-lint-scripts.toml`, for the five scripts:
+    - `extend-select` with the same rules, added to Ruff's default selection, so the default rules that apply to the scripts today stay, as in `scripts/u8-lint-scripts.toml`;
+    - `src = [".", "scripts", "ops/src"]`, the paths the scripts set up for themselves.
+  - Nothing is ignored, and neither file has per-file ignores or fix settings.
+  - No other lint changes: Ruff discovers only `ruff.toml`, `.ruff.toml` and `pyproject.toml`, and these files are passed only with `--config`.
+  - What stays as it is. U6's own backend files, the shared runtime files and `ops/src/docsuri_ops/local_transport.py` stay under their own configurations, `backend/pyproject.toml` and `ops/pyproject.toml`. Those already select E,F,I,UP,B at 100 with nothing ignored (`backend/pyproject.toml:95-103`, `ops/pyproject.toml:45-49`), and the files pass there today. No folder `ruff.toml` sits between those files and their settings (`ruff check --show-settings` names `backend/pyproject.toml` or `ops/pyproject.toml` for each).
+  - This is U8's L1-34 shape (`scripts/u8-lint.toml`, `u8-lint-scripts.toml`), kept in U6's own files so that U6's CI does not depend on files that U8's gate pins.
+  - Findings under these rules today, with U8's files: tests 113 (70 I001, 41 E501, 1 UP031, 1 B007), in `~/.docsuri-u8/lead-scripts/final-lanes/records-check-20261117-210319-6257/01-u6-tests-u8-lint-config.log`; scripts 38 (19 E501, 16 E402, 3 I001), in `records-check-20261117-220053-52710/11-u6-scripts-u8-lint-scripts-config.log`. Both counts were read again here with the same result.
+  - Alternatives:
+    - (B) Reuse U8's files.
+    - (C) Add a `tests/u6_approved_export/ruff.toml`, which `ci.yml`'s root-suites lint would also pick up.
+- **L3-10, the four U2 accounts files on U6's CI list (your call; proposed default: count them).** The files are `backend/modules/accounts/control_keys.py`, `services/control_lifecycle.py`, `local_http.py` and `services/guarded_entry.py`.
+  - Today they pass under their folder's `ruff.toml`, which ignores B008, E501 and UP042. Under E,F,I,UP,B at 100 they give 30 E501: 29 SQL literals in `control_lifecycle.py` and one call at `local_http.py:129`.
+  - All 30 lines come from U2's commit `a62bb26e`, which predates U6's commit (`records-check-20261117-220053-52710/05-u2-accounts-e-f-i-up-b-100.log` to `10-git-commit-dates.log`).
+  - All four files, and `shared/python-consumers.json`, already carry U8's uncommitted edits.
+  - (A, proposed) Count them.
+    - Why: U6's own design names them as U6's Ruff targets (`infrastructure-design/cicd-pipeline.md` §2.3). This is the last loop-back, so a narrower reading that a later re-check called a relaxation would leave the row Not Met with no loop-back left to repair it.
+    - What it does: wrap the 30 lines in the two files that have them, each wrap leaving the syntax tree unchanged. Lint all four files from `backend/modules/accounts` under a new `scripts/u6-lint-accounts.toml`: the folder's file, with E,F,I,UP,B and `ignore = []`, the shape of `scripts/u8-lint-accounts.toml`. B008 and UP042 add no finding.
+    - Cost: under an hour, plus one regeneration. `shared/python-consumers.json` pins the SHA-256 of `local_http.py` and `control_lifecycle.py` (both match today's bytes), and `ci.yml`'s `shared` job fails on drift (`shared/python/tools/inventory_consumers.py:118-133`, `.github/workflows/ci.yml:73-74`; cicd-pipeline §2.2). Step 59 therefore checks the inventory before the wraps and regenerates it after them, keeping U8's part apart from U6's.
+    - U8's checkpoint verification, which runs last in this loop-back, runs over all four files.
+  - (B) Do not count them.
+    - They stay under the folder's configuration, as U8 kept the U2 file it edited (`local_http.py`) there.
+    - Cost: none in the build. But the row's Met would rest on reading "U6's targets" more narrowly than cicd §2.3 does, and the stage file says relaxing a defined target is never an acceptable fix.
+    - What is not built under (B): `scripts/u6-lint-accounts.toml`, the U2 wraps and the regeneration. The four paths join invocation 3 below.
+- **L3-11, the static-check fixes change no behaviour.**
+  - E402. All 16 findings come from one line, `ROOT = Path(__file__).resolve().parents[1]`, standing above the scripts' imports (`verify_docsuri_u6.py:36`, `serve_docsuri_u6.py:15`, `u6_browser_fixtures.py:38`, `u6_real_export.py:28`).
+    - Ruff allows `sys.path.insert` calls before imports, so `ROOT` moves to right after the import block and each insert writes the path inline.
+    - `sys.path` and `ROOT` end up exactly as before.
+    - No `noqa` is added. A per-file ignore would switch off a rule the target names; U8 used bare line markers instead.
+  - I001. Import order is fixed by the `ruff check --fix --select I` commands named in Step 59.
+    - This plan approves those commands, so they are not a shell edit to record as a deviation, as `code-summary.md:156` once recorded one.
+    - Safe fixes only; never `--unsafe-fixes` or `ruff format`.
+  - Every other finding is fixed by hand:
+    - long literals are split into implicitly joined parts;
+    - calls and conditions are wrapped;
+    - two docstrings are re-wrapped;
+    - B007: the unused loop name is dropped (`repository/test_owner_guard.py:97`);
+    - UP031: the `%` formatting becomes an f-string (`integration/test_export_http.py:236`).
+  - Step 60 compares each changed file's syntax tree with a snapshot taken just before Step 59.
+- **L3-12, a lint gate in U6's own lanes.**
+  - A new `operations/test_u6_lint_gate.py` holds three tests on real Ruff and real files, as U8's `test_lint_gate.py` checks U8's files.
+  - The coverage phase then checks the rules, the no-ignore discipline and the exact CI invocations on every run.
+  - It is mapped under EnvironmentTool, which goes from 72 to 75 definitions, above range, kept. As a component of its own, three tests would fail the five-test floor (`test_u6_test_volume.py:192-204`).
+
+**Readings you can change at Plan Approval** (each is built as stated unless you say otherwise):
+
+- L3-1 to L3-12 as above, with L3-5 (a), L3-8 not built and L3-10 (A).
+- `store_flows.held_session` stays byte-identical, so L2-1's two tests and their withheld runs stand. The new `held_rows` sits beside it.
+- One `path_kind='real'` attempt is written into the synthetic realm through the store's own claim (L3-2). `component/test_real_export_gates.py:127-147` already writes real attempts there.
+- L2-1's listed `Faulty(OwnDue).sweep_orphans` is not reopened.
+- "When it happened" (logical-components §8) is the database clock at the lane's last status write. It is not the lane's injected clock, the caller's clock or the read time.
+  - In production these agree, because the lane's clock is real time (`backend/u6_host.py:131`).
+  - Under the browser realm's fixture clock, the lane status keeps database time. Recorded, not changed.
+- The instructions' Clock line "Only the pace reservation uses the database clock" (`unit-test-instructions.md:213`) is amended to speak only of behaviours a test checks against time:
+  - Two checked behaviours take the database clock: the pace reservation (`lane_store.py:567-593`) and the lane status record (`u6_schema.sql:244`, `lane_store.py:610`), whose test brackets the record with `clock_timestamp()` reads.
+  - Every other checked behaviour takes the injected `now`.
+  - `database/test_export_functions.py:12-18` already reads `clock_timestamp()` as a caller clock.
+- The watch-counts check is a new test, not an extension of `test_the_lane_block_is_a_category_and_the_whole_json_holds_no_identifiers`. ExportStore goes from 91 to 92 definitions; extending the existing test would keep 91.
+- NFR3.8's payloads are shaped as markup and as links only.
+  - NFR3.8 asks that provider text be "escaped wherever it is shown and never interpreted" (`nfr-requirements/security-requirements.md:54`) and names no bidi or control characters. Isolating bidi text would be a production change.
+  - `sourceTitle` stays plain: it is DocSuri's own result title (`views.py:205`).
+  - The settle dialog is rendered directly, as its file's helpers do.
+- The flow's connection step announces through the same `ConnectForm` and the same `LiveRegion` component, into `flow-live` (`export-flow.tsx:100-106`, `:167`). One case through the view is taken to cover both regions; a fourth case in `export-flow.test.tsx` can be added if you ask.
+- L1-8 applies to every count this loop-back raises: dialogs 9 (until now in range), history 18, export-view 16, ExportStore 92 and EnvironmentTool 75.
+- The withheld runs of the Vitest cases and of the lint gate touch no environment, because `vitest run` and the gate need none. The instructions' "on a development environment archived afterwards" (`unit-test-instructions.md:301`) therefore has nothing to set up for them.
+- The existing `# noqa: E731` (`repository/test_connection_store.py:65`) and `# noqa: E402` (`operations/test_u6_profile_binding.py:18`) stay.
+- The scripts' `src` moves three imports.
+  - In the runner, `backend.local_profile` moves ahead of `bootstrap_docsuri_u1`, which imports it too (`scripts/bootstrap_docsuri_u1.py:27-28`).
+  - `docsuri_ops` moves into the first-party block.
+  - Ruff never moves an import across a statement.
+- The two docstring re-wraps change whitespace only.
+  - `database/test_export_schema.py:215`.
+  - `scripts/u6_browser_fixtures.py:12`: this one is the argparse description (`:452`), which argparse re-wraps, so `--help` is unchanged.
+- U6's CI lint step drops its duplicate `scripts/u6_real_export.py` and gains `--no-cache`.
+- The static-check sweep (Steps 58–60) follows the test steps.
+  - One sweep therefore also lints the test steps' new code, and Step 60's snapshot isolates the sweep's own changes.
+  - The withheld runs (Step 62) follow the sweep, so they restore the exact bytes the recorded runs use.
+
+**Steps (test-after):**
+
+- [x] **Step 53 — Record the decisions.** Write L3-1 to L3-12, your answers to L3-5, L3-8 and L3-10, and the readings above into `code-summary.md` (deviations) and `traceability.json`. No source changes, and no edit to the approved steps above. Trace: Build and Test loop-back 3.
+
+- [x] **Step 54 — Repository — tests: when the lane recorded its last outcome (L3-6).** On the realm, with nothing mocked, in `tests/u6_approved_export/repository/test_status_counts.py`:
+  - Imports and helper.
+    - `from tests.u6_approved_export import lane_flows as lf` joins the import block, between `export_rows` and `store_flows`.
+    - A module-local `database_now(connect)` returns `SELECT clock_timestamp() AS now` through `connect("export")`. That is the realm's own clock, the one the status record stamps. No test module imports `database/test_export_functions.py`'s `now`.
+  - The new test, `test_the_lane_block_reports_when_the_lane_recorded_its_last_outcome(transactions, connect)`, goes after `test_the_lane_block_is_a_category_and_the_whole_json_holds_no_identifiers`. It takes no owner, so no synthetic account is allocated.
+    - Arrange:
+      - `repo.record_lane_status("stopped")` makes sure the singleton row exists, so the next record takes the update path;
+      - `first = lf.latest_lane_status(connect)`;
+      - `before = database_now(connect)`;
+      - `repo.record_lane_status("skipped")`;
+      - `after = database_now(connect)`;
+      - `recorded = lf.latest_lane_status(connect)`.
+    - Assert on the row:
+      - it reads `skipped`;
+      - `first["observed_at"] < recorded["observed_at"]`;
+      - `before <= recorded["observed_at"] <= after`.
+    - Assert on the lane block. For each caller clock, the file's `EPOCH` and `after` plus 90 s, `repo.status_counts(clock)["lane"]` has the outcome `skipped`, and `dt.datetime.fromisoformat(lane["observedAt"]) == recorded["observed_at"]`. That is the time the lane recorded: neither caller clock is ever inside `[before, after]`, and the read time falls after `after`.
+  - The module docstring gains one sentence: the lane block's time is the database clock at the status write, and never follows the caller's clock.
+  - Every new line stays within 100 columns.
+  - Run it once on a development environment, in the direct form scoped with `-k`; it passes.
+
+  Trace: U6:logical-components:watch-counts; logical-components §8.
+
+- [x] **Step 55 — Business logic — tests: the lane's store faults are real (L3-1).** On the realm, in the component layer:
+  - (a) `tests/u6_approved_export/store_flows.py` gains `held_rows(connect_raw, *locks)` beside `held_session`, which stays byte-identical. `held_rows` is a context manager:
+    - It opens one administrative session through `connect_raw()`.
+    - For each `(sql, params)` in `locks`, it asserts that the statement is a `SELECT … FOR UPDATE` and that it returns a row. Then it yields.
+    - After the block it runs `SELECT 1`, which shows the holder stayed alive throughout.
+    - In `finally` it rolls back, then closes.
+    - Three constants name the locks:
+      - `PACE_ROW`: `SELECT next_slot_at FROM export.connection_pace WHERE connection_id=%s FOR UPDATE`;
+      - `EFFECT_ROW`: `SELECT id FROM export.effect WHERE id=%s FOR UPDATE`;
+      - `LANE_STATUS_ROW`: `SELECT outcome FROM export.lane_status WHERE singleton FOR UPDATE`.
+    - Its docstring says three things. A locking or updating statement of the code under test then waits until the realm's 1 s lock bound ends it with 55P03, a real fault. Plain reads are not blocked. Each hold must stay under the realm's 5 s idle-in-transaction bound.
+  - (b) `component/test_lane_write_path.py`, the `Interleaved` wrapper:
+    - It loses its `pace` argument and its answering `reserve_pace_slot`.
+    - It gains `pace_hold=None`: a zero-argument callable returning a context manager. When it is given, the real `reserve_pace_slot` runs inside it, and its answer is passed back unchanged.
+    - It keeps the claim's before and after steps.
+    - Its docstring changes to match.
+  - (c) The pace test, `test_an_unopenable_token_at_the_claim_and_an_unreservable_pace_slot_both_wait`, takes `connect_raw`.
+    - Its first run goes through `interleaved_lane(lr, pace_hold=lambda: flows.held_rows(connect_raw, (flows.PACE_ROW, (UUID(connection["connectionId"]),))))`.
+    - The binding check's destination read reserves its slot unheld, through the rig's own store. The lane's own reservation then meets the held row and answers None. The run answers `"waiting"`, and the effect is `accepted` with `waiting_since` set.
+    - The unopenable-token half is unchanged. No attempt and no fake write exist at the end.
+  - (d) The store-fault test, `test_a_store_fault_is_reduced_to_a_category_and_its_text_never_logged`, takes `connect_raw`. `Broken` is deleted.
+    - Arrange:
+      - The test presses one export.
+      - `LaneItem("execute", uuid4(), 1)` runs through the real lane and answers `"skipped"`, which leaves a status row.
+      - `before = lf.latest_lane_status(connect)`.
+    - Capture the fault. Inside `held_rows(connect_raw, (LANE_STATUS_ROW, ()))`, a direct `lr.repo.record_lane_status("error")` raises `psycopg.errors.LockNotAvailable`.
+      - The fault's `sqlstate` is `55P03`.
+      - Its `diag.message_primary` is non-empty and contained in its `str()`.
+      - Both strings are kept.
+    - Act. After `caplog.clear()`, with caplog at DEBUG, the export runs once through an `Interleaved` lane.
+      - Its step before the claim enters `held_rows(connect_raw, (EFFECT_ROW, (effect,)), (LANE_STATUS_ROW, ()))` on a `contextlib.ExitStack`.
+      - The stack closes after `run_item` returns, so the hold lasts about 2 s.
+      - The run answers `"error"`.
+    - Assert:
+      - The `docsuri.export.lane` messages are exactly `export lane execute item ended early (LockNotAvailable)` and `export lane status not recorded (LockNotAvailable)`.
+      - Neither kept string appears in `caplog.text`.
+      - No record has `exc_info` or an exception argument.
+      - The lane status equals `before`, with the same outcome and the same `observed_at`.
+      - The effect is `accepted` at its pressed revision, with no attempt and no fake write.
+    - Recovery. With the hold ended, the same item runs to `"succeeded"`, with one write and the status `succeeded`.
+  - The file keeps its 20 tests.
+  - Run both tests once on a development environment, in the direct form scoped with `-k`; they pass.
+
+  Trace: U6:unit-test-instructions:never-mocked.
+
+- [x] **Step 56 — Frontend — tests: hostile provider text in the history row, the settle dialog and the connect announcement (L3-7).** In `frontend/test/u6-export/`, in strict TypeScript with no `any`. `history.test.tsx` and `dialogs.test.tsx` each gain a `describe('provider text stays text')` block; `export-view.test.tsx`'s case joins its existing block of that name (`export-view.test.tsx:125-139`).
+  - (a) `history.test.tsx`, a new block after `describe('actions by state')`: `renders a hostile destination title in a row as text, making no element or link from it`.
+    - Setup: one `historyEntry` mounted through the file's `history()` helper, with:
+      - `destinationTitle: '<img src=x onerror="x"><a href="javascript:alert(1)">{{x}}</a>'`;
+      - `state: 'consumed'`;
+      - a succeeded effect with `remoteUrl: PAGE_URL`, which gives the row its one real link (`history.tsx:67-76`).
+    - In the row:
+      - `querySelector('img')` and `screen.queryByRole('img')` are null;
+      - the row's link hrefs are exactly `[PAGE_URL]`;
+      - `within(row).getByText(<payload>)` is a `SPAN` with no element children.
+  - (b) `dialogs.test.tsx`: `within` joins the import, and a new block goes after `describe('settle dialog')`. The case is `renders a hostile destination title as text, keeping its name and its first stop`.
+    - Setup: `SettleDialog` rendered with `historyEntry({ destinationTitle: '<svg onload=x>노트</svg><a href="javascript:alert(1)">{{x}}</a>' })`.
+    - Assert:
+      - the dialog is still named `Notion에서 직접 확인`;
+      - `dialog.querySelector('svg, a')` is null;
+      - `document.activeElement` is `settle-delivered`, the dialog's own first stop (`dialogs.tsx:9-10` and `:68`);
+      - `within(dialog).getByText(<payload>)` is a `STRONG` with no element children.
+  - (c) `export-view.test.tsx`, in the existing `describe('provider text stays text')`, after the panel's hostile workspace-name case: `announces a hostile workspace name after a connect as text`.
+    - Setup: `read-notion-connection` answers with the file's `notConnected`, `list-export-history` with `historyPage([])`, and `configure-notion-connection` with `connection({ workspaceName: '<svg onload=x>팀</svg><a href="javascript:alert(1)">{{x}}</a>' })`.
+    - Act: the fixtures' synthetic `TOKEN` is typed into `connect-token` and submitted with `connect-submit`, through the view's real `ConnectForm`.
+    - Assert:
+      - `export-live` contains the payload literally and holds no `svg` or `a`;
+      - once saved, `connection-workspace` holds no `svg` or `a` either.
+  - Run each file:
+    - `corepack pnpm@9.15.9 --dir frontend exec vitest run --config vitest.u6-export.config.ts test/u6-export/<file>`;
+    - then U6's `tsc` command with `--incremental false`;
+    - then U6's ESLint command.
+  - No production file, fixture, Playwright spec or volume map changes.
+
+  Trace: U6:NFR3.8/provider-text.
+
+- [x] **Step 57 — Environment/build configuration — tests: the operator's outcome and the archive read the realm (L3-2, L3-3).** In `tests/u6_approved_export/operations/`, on the realm:
+  - (a) `test_u6_real_export_checks.py`: `Rows` is deleted. `test_the_outcome_names_exactly_one_export` takes `realm, transactions, connect, authority, tmp_path`, and `uuid4` and `WriteOutcome` (from `backend.modules.export.repository`) join the imports.
+    - Arrange:
+      - The test builds the synthetic rig over the research double, so no U4 job is spent and no account is added, and configures it.
+      - It presses export B on a fresh `rig.page()` and settles it with `rig.succeed`. One export in flight per owner (BR5.1, `effect_in_flight`) refuses a second press while the first is accepted.
+      - It then presses export A on another fresh page.
+      - `rig.repo.claim(..., path_kind="real")` returns an attempt with `path_kind` `real`.
+      - `record_write_outcome(..., WriteOutcome("refused", reason="no-access"), now=rig.clock.now)` records the refusal.
+    - Through the real `operator.outcome(transactions, realm, activation, ...)`:
+      - an unknown id and `effect_id=None` each raise `OutcomeRefused` matching `exactly-one`; with at least two exports in the realm, `LIMIT 2` returns two rows;
+      - A's id gives `(requestIdSha256, pageLinkSha256) == (None, None)`, `pathKind` `real`, `outcomeReason` `no-access`, and `(effectState, settledBy, outcomeClass, creatorConfirmed) == ("failed", "provider", "refused", None)`;
+      - an activation for another run id raises `run-differs`.
+    - Nothing is left in flight. The file keeps its 7 tests.
+  - (b) `test_u6_preservation.py`: `Database` and the constant `RUN_ID` are deleted. The `owned` fixture also takes `realm` and `connect_raw`.
+    - The manifest. `write_manifest` takes `run_id`, by default `realm.run_id`, and the fixture returns it as `owned["run_id"]`.
+    - The fixture's `connect_admin`:
+      - opens a `connect_raw()` session and sets `row_factory = tuple_row`;
+      - polls `SELECT count(*) FROM pg_stat_activity WHERE pid<>pg_backend_pid() AND backend_type='client backend'` until it reads 0, for at most 5 s, rolling back after each read; past the bound it fails with "another database client stayed connected to the realm";
+      - opens one more raw session when `state["extra_client"]` is set;
+      - counts `state["admin_reads"]` and returns the polled session idle.
+    - The cases:
+      - `database-identity` writes the manifest with `docsuri-u6-fedcba9876543210`, asserted to differ from the realm's run id, and must refuse with `preservation database identity differs`;
+      - `active-client` sets `extra_client` and must refuse with `other database clients prevent safe preservation`;
+      - `destination` pre-creates `docsuri-u6-preserved-{owned["run_id"]}-deadbeef`;
+      - the other ten cases are unchanged.
+    - `test_a_completed_archive_leaves_no_key_file` asserts `admin_reads == 1`, and that `runId` and `volumePreserved` equal `owned["run_id"]` and `owned["run_id"] + "-pgdata"`.
+    - The Docker, port, open-file and stop stand-ins stay recording only.
+    - The module docstring says that the database reads run against the realm.
+    - The file keeps its 10 tests (23 cases).
+  - Run both files once on a development environment, in the direct form; they pass.
+
+  Trace: U6:unit-test-instructions:never-mocked.
+
+- [x] **Step 58 — Environment/build configuration — implement: U6's lint configurations and its CI step (L3-9, L3-10).**
+  - (a) Create `scripts/u6-lint.toml` and `scripts/u6-lint-scripts.toml`, and under L3-10 (A) `scripts/u6-lint-accounts.toml`, as L3-9 and L3-10 give them. Each has a header comment naming its use.
+  - (b) `.github/workflows/u6-approved-export.yml`:
+    - add `- 'scripts/u6-lint*.toml'` under `on.pull_request.paths`;
+    - replace the step at lines 105-115 (its name at 105, its folded command at 106-115) with:
+    ```yaml
+          - name: Lint export and shared runtime changes
+            run: |
+              set -eu
+              ruff="$PWD/backend/.venv/bin/ruff"
+              # 1. U6's tests: E, F, I, UP and B at 100, nothing ignored.
+              "$ruff" check --no-cache --config scripts/u6-lint.toml tests/u6_approved_export
+              # 2. U6's scripts: Ruff's default selection, extended with the same rules.
+              "$ruff" check --no-cache --config scripts/u6-lint-scripts.toml \
+                scripts/verify_docsuri_u6.py scripts/serve_docsuri_u6.py scripts/u6_*.py
+              # 3. U6's backend files and the shared runtime files, under their own configurations.
+              "$ruff" check --no-cache backend/modules/export backend/u6_*.py backend/key_custody.py \
+                backend/local_profile.py backend/transactions.py backend/local_browser.py \
+                backend/artifacts.py backend/local_host.py backend/u3_host.py \
+                backend/modules/personalization/guarded_service.py ops/src/docsuri_ops/local_transport.py
+              # 4. The U2 files U6 changes (cicd-pipeline §2.3), with nothing ignored.
+              (cd backend/modules/accounts && "$ruff" check --no-cache \
+                --config ../../../scripts/u6-lint-accounts.toml \
+                control_keys.py services/control_lifecycle.py local_http.py services/guarded_entry.py)
+    ```
+    - Under (B), invocation 4 goes and its four paths join invocation 3.
+  - (c) The snapshot. Before any fix, copy the five scripts, every `tests/u6_approved_export/**/*.py` and, under (A), the two U2 files that are wrapped and `shared/python-consumers.json` to `~/.docsuri-u8/lead-scripts/l3-records/u6-d-before/`, with a sha256 manifest. That folder is outside the repository and outside `/tmp`, which a restart empties.
+  - (d) The baseline. Record each invocation's findings under the new files: tests 113, scripts 38, and under (A) the U2 files 30. Any finding beyond these, in a line Steps 54–57 wrote, is recorded beside them and fixed in Step 59.
+
+  Trace: U6:unit-test-instructions:static-checks.
+
+- [x] **Step 59 — Environment/build configuration — implement: fix what the configurations report (L3-11).**
+  - (a) E402, in `verify_docsuri_u6.py`, `serve_docsuri_u6.py`, `u6_browser_fixtures.py` and `u6_real_export.py`:
+    - each `sys.path.insert` writes `Path(__file__).resolve().parents[1]` inline, in the same order;
+    - `ROOT` is defined once, right after the import block.
+  - (b) I001:
+    - `backend/.venv/bin/ruff check --no-cache --config scripts/u6-lint-scripts.toml --select I --fix scripts/verify_docsuri_u6.py scripts/serve_docsuri_u6.py scripts/u6_*.py`;
+    - then `backend/.venv/bin/ruff check --no-cache --config scripts/u6-lint.toml --select I --fix tests/u6_approved_export`.
+  - (c) E501, by hand. Fix every line the two record logs name (`records-check-20261117-210319-6257/01-u6-tests-u8-lint-config.log` for the tests, `records-check-20261117-220053-52710/11-u6-scripts-u8-lint-scripts-config.log` for the scripts), plus any line Step 58(d) added. Under (A), also the 30 U2 lines in `records-check-20261117-220053-52710/05-u2-accounts-e-f-i-up-b-100.log`.
+    - Literals split at existing spaces or commas into implicitly joined parts.
+    - Arguments, conditions and tuples are wrapped in parentheses.
+    - The two docstrings are re-wrapped.
+  - (d) B007: `repository/test_owner_guard.py:97` becomes `for call in units.values():`.
+  - (e) UP031: `integration/test_export_http.py:236` becomes `content=f'{{"token":"{secret}","token":"{secret}"}}'.encode(),`.
+  - (f) Under (A), the consumer inventory, with the local equivalent of `ci.yml:73-74`:
+    - before the U2 wraps, `(cd shared/python && .venv/bin/python tools/inventory_consumers.py)`, and record what it prints, "ok" or the drift U8's uncommitted edits left;
+    - after the U2 wraps, the same command with `--write`, then once more without it, which prints "ok: actual Python shared-contract consumers";
+    - compare the new file with Step 58(c)'s copy. Only the `sourceDigests` entries of `backend/modules/accounts/local_http.py` and `services/control_lifecycle.py` may differ. Any other difference is U8's: record it as U8's and bring it to you before the step goes on.
+  - Done when all of these hold:
+    - the workflow step's invocations, run from the repository root exactly as written, all exit 0;
+    - the root-suites lint still exits 0, run as the local equivalent of `ci.yml:202` (which runs `uv run --project backend ruff check backend/modules/accounts backend/modules/library backend/modules/ops tests`): `backend/.venv/bin/ruff check --no-cache backend/modules/accounts backend/modules/library backend/modules/ops tests`;
+    - U8's folder-level lint of `backend/modules/accounts` under its own configuration still exits 0;
+    - under (A), the inventory check prints "ok".
+
+  Trace: U6:unit-test-instructions:static-checks.
+
+- [x] **Step 60 — Environment/build configuration — check: the fixes leave the syntax tree unchanged (L3-11).** This is a check, not a test. A comparator outside the repository, `~/.docsuri-u8/lead-scripts/l3-records/u6-d-ast-compare.py`, parses each changed file and its Step 58(c) snapshot with `ast` and compares `ast.dump` without positions.
+  - Normalisations:
+    - each run of consecutive imports is compared as a multiset of (module, level, name, asname);
+    - docstrings are compared with whitespace collapsed;
+    - in the four restructured scripts, the earlier tree's `ROOT` assignment is removed, and `ROOT` inside the insert arguments is replaced by `Path(__file__).resolve().parents[1]`; the later tree must hold exactly one `ROOT` assignment, directly after the import block.
+  - Expected differences: exactly two, B007's loop and UP031's expression, each printed. For UP031 it also asserts value equality for `secret` values containing `%`, `{`, `}` and quotes.
+  - Everything else:
+    - every other changed Python file, including the U2 files under (A), must compare equal, including its set of test function names;
+    - any file that changed and is not in the snapshot manifest is a failure, except `shared/python-consumers.json`, which Step 59(f) compared.
+  - Record each file's result and its sha256 before and after.
+
+  Trace: U6:unit-test-instructions:static-checks; no production change.
+
+- [x] **Step 61 — Environment/build configuration — tests: the lint gate (L3-12).** `tests/u6_approved_export/operations/test_u6_lint_gate.py`, with real Ruff 0.16.8 (`backend/uv.lock:1567-1568`), real files and nothing mocked:
+  - `test_u6s_lint_configurations_hold_e_f_i_up_b_at_100_and_ignore_nothing`.
+    - Reads the configurations with `tomllib`:
+      - each has line length 100 and `py313`;
+      - the tests file's `lint.select == ["E", "F", "I", "UP", "B"]`;
+      - the scripts file's `lint.extend-select` is the same list, with no `select`;
+      - under (A), the accounts file has `extend == "../backend/modules/accounts/ruff.toml"`, the same `select` and `ignore == []`;
+      - no `ignore` (except that empty list), `extend-ignore`, `per-file-ignores`, `extend-per-file-ignores`, `fix` or `unsafe-fixes` appears at either level;
+      - `backend/pyproject.toml` and `ops/pyproject.toml` select the same rules at 100 with no ignore.
+    - Through `--show-settings`:
+      - the tests' resolved rules equal those of `--isolated --select E,F,I,UP,B`;
+      - the scripts' resolved rules contain the `--isolated` defaults plus E,F,I,UP,B;
+      - every path of invocation 3 resolves to `backend/pyproject.toml` or `ops/pyproject.toml`.
+    - Planted files in `tmp_path`, run from the repository root. Each planted file uses every name it imports, so F401 never fires and only the named codes do:
+      - under `scripts/u6-lint.toml`, `import sys`, `import os`, a 101-character line (`VALUE = ` and 24 ones joined by ` + `, as U8's gate builds it) and `print(os.sep, sys.argv, VALUE)` give exactly {E501, I001};
+      - under the same file, `import pytest` directly followed by `from docsuri_ops.local_transport import inspect_transport`, then `PAIR = (pytest, inspect_transport)`, gives exactly {I001}. `docsuri_ops` is third-party under Ruff's default `src` and first-party only through `ops/src`, so this finding holds only while the file's `src` is in force;
+      - under `scripts/u6-lint-scripts.toml`, a function with a swallowed `except Exception: pass` gives exactly {S110, BLE001}.
+  - `test_ruff_passes_on_u6s_files_and_writes_nothing`.
+    - `backend/.venv/bin/ruff --version` is `ruff 0.16.8`.
+    - Before and after, it records the sha256 of every linted file and the file listings of `.ruff_cache` under the root, `scripts/`, `tests/`, `backend/`, `ops/` and `backend/modules/accounts`.
+    - Invocations 1–3, and 4 under (A), exit 0, run from their folders with globs expanded as bash expands them. `scripts/u6_*.py` must expand to exactly `u6_browser_fixtures.py`, `u6_preservation.py` and `u6_real_export.py`.
+    - The snapshot is unchanged afterwards.
+  - `test_the_workflow_step_runs_exactly_u6s_lint_invocations`.
+    - `yaml.safe_load` of the workflow has exactly one step named "Lint export and shared runtime changes".
+    - That step's one binary line is `ruff="$PWD/backend/.venv/bin/ruff"`.
+    - Its `"$ruff" check --no-cache` invocations equal the expected list, with folder and argument words parsed as U8's gate parses its own.
+    - `on.pull_request.paths` holds `scripts/u6-lint*.toml`.
+  - `operations/test_u6_test_volume.py`: `"operations/test_u6_lint_gate.py"` joins `COMPONENT_FILES["EnvironmentTool"]`.
+  - Run as exploration, with no environment needed: `backend/.venv/bin/python -m pytest -c backend/pytest.u6-approved-export.ini tests/u6_approved_export/operations/test_u6_lint_gate.py tests/u6_approved_export/operations/test_u6_test_volume.py -q --tb=short`. The box is ticked on Step 63's coverage phase, which writes the evidence.
+
+  Trace: U6:unit-test-instructions:static-checks; U6:code-generation-plan:testing-contract-test-volume.
+
+- [x] **Step 62 — Withheld-behaviour checks.** Before the recorded runs and outside them, run each new or changed test once with the behaviour it awaits withheld.
+  - Environment. The database-backed checks run on a development environment set up for this: `setup` and `migrate`, with `DOCKER_HOST=unix://$HOME/.colima/default/docker.sock` and `DOCKER_CONFIG=$HOME/.docsuri-u8/docker-config`, its containers confirmed through Colima's socket. It is archived afterwards.
+  - Command. The direct form scoped to the test's file: `DOCSURI_U6_ENVIRONMENT_FILE=/tmp/docsuri-u6-run/environment.json backend/.venv/bin/python -m pytest -c backend/pytest.u6-approved-export.ini <file> -k <name> -q --tb=short`. The Vitest cases use the Step 56 command with `-t`, and the lint gate the Step 61 command; neither needs an environment.
+  - Procedure. One shell command per edit:
+    - copy the file to `~/.docsuri-u8/lead-scripts/l3-records/withheld/` and record its sha256;
+    - make the one edit;
+    - run the test and keep its exit code (`; rc=$?`);
+    - copy the file back whatever the result;
+    - confirm an equal sha256 before anything else runs.
+    Keeping all of this in one command means no turn-end formatter or first-edit refusal can leave a temporary edit in place.
+  - Record each run's failure and exit code. Files that already differ from the last commit (`lane.py`, `store_flows.py`, `test_u6_real_export_checks.py`, `history.tsx`, `verify_docsuri_u6.py` and `conftest.py` among them) are confirmed by sha256, never by `git diff`. Test files' digests are recorded only after any formatting.
+  - The temporary edits, all reverted (line numbers are today's):
+    - watch counts (Step 54), in `backend/modules/export/lane_store.py`, never by `CREATE OR REPLACE` in a realm:
+      - (W1) line 600 returns the caller's clock: `SELECT jsonb_set(export.status_counts(%s),'{lane,observedAt}',to_jsonb(%s::timestamptz)) AS status` with `(now, now)`;
+      - (W2) the same line returns the read time, `to_jsonb(clock_timestamp())` with `(now,)`;
+      - (W3) line 610 drops `,observed_at=clock_timestamp()`;
+      - (W4) line 610 stamps `clock_timestamp()+interval '1 second'`.
+      Expected: W1 and W2 fail at the `observedAt` equality, W3 at `first < recorded`, and W4 at the bracket's upper end;
+    - never-mocked, the pace hold (Step 55(c)):
+      - `lane_store.py:588` catches only `Busy`;
+      - `lane.py:265` becomes `if slot is not None and not slot.within_budget:`;
+      - the test once without its `pace_hold`;
+    - never-mocked, the store fault (Step 55(d)):
+      - `lane.py:211` keeps the error's text (`failure = f"{type(error).__name__}: {error}"`);
+      - `lane.py:213` adds `exc_info=True`;
+      - `lane.py:229` keeps the error object (`failure = error`), so line 231 logs it as an argument;
+      - `lane.py:210` catches only `(ValueError, TypeError)`;
+      - the test once without its hold, and once with only the effect row held;
+    - never-mocked, the outcome (Step 57(a)):
+      - `scripts/u6_real_export.py:165` becomes `if not rows:`;
+      - `:146` ends with `LIMIT 1`;
+      - `:146` compares `e.id<>%s::uuid`;
+      - `:138` hashes a missing value as the empty string;
+    - never-mocked, the archive (Step 57(b)):
+      - `scripts/u6_preservation.py:110` compares only the database name;
+      - `:116` becomes `if active > 1:`;
+      - `:114` loses `AND backend_type='client backend'`;
+      - `:113` loses `pid<>pg_backend_pid()`;
+      - the active-client case once without its extra session;
+      - the destination case once with its folder named from the old constant;
+      - the fixture's rollback: `test_a_completed_archive_leaves_no_key_file` with a temporary extra raw session that a `threading.Timer` closes 0.5 s into the poll. With the rollback in place it passes, because the poll sees the session leave. With the rollback removed it must fail with "another database client stayed connected to the realm", because the poll keeps reading its first snapshot;
+    - NFR3.8 (Step 56):
+      - `frontend/src/u6-export/history.tsx:137` renders the title through `dangerouslySetInnerHTML`;
+      - `dialogs.tsx:183`'s first `<strong>` does the same;
+      - `status.tsx:39`'s announcement `<span>` does the same;
+    - static checks (Step 61):
+      - `extend-ignore = ["E501"]`, then separately `line-length = 120`, in `scripts/u6-lint.toml`;
+      - `src` removed from the same file; the `docsuri_ops` planted file then passes, and the test fails;
+      - `select` in place of `extend-select` in `scripts/u6-lint-scripts.toml`;
+      - under (A), `ignore = []` removed from `scripts/u6-lint-accounts.toml`;
+      - one wrapped line of `tests/u6_approved_export/conftest.py` back on one line;
+      - the `ROOT`-first header back in `scripts/serve_docsuri_u6.py`;
+      - under (A), one SQL line in `control_lifecycle.py` back on one line;
+      - `--no-cache` dropped from the gate's Ruff helper; afterwards the cache files that run created are deleted, and the deletion is recorded;
+      - the old folded step back in the workflow;
+      - the `scripts/u6-lint*.toml` path line removed;
+      - the gate's mapping line removed from `test_u6_test_volume.py`;
+    - the two tests the lint fixes change (Step 59(d) and (e)):
+      - `repository/test_owner_guard.py::test_every_owner_unit_refuses_an_ended_session_and_leaves_rows_untouched` once without its `flows.end_session` line. It must fail at its `pytest.raises`. That run may commit rows for the owner on the development realm, which is archived afterwards;
+      - `integration/test_export_http.py::test_a_configure_body_that_fails_validation_is_not_echoed` with the duplicate-key refusal at `backend/local_browser.py:198` answering 400 instead of 422. Only the rewritten duplicated body reaches that refusal, so the test must fail at its status assertion.
+  - No withheld edit touches an applied migration.
+
+  Trace: the project's rule on withheld checks.
+
+- [x] **Step 63 — Run and record.** Archive every development environment. Then, on fresh realms, with Docker only through Colima (`DOCKER_HOST=unix://$HOME/.colima/default/docker.sock`, `DOCKER_CONFIG=$HOME/.docsuri-u8/docker-config`) and containers confirmed through Colima's socket:
+  - Realm A: `setup`, `migrate`, `coverage` (with the second report) and `frontend`, then `archive-owned`.
+    - Coverage: 949 passed (945 plus Step 54's 1 and Step 61's 3).
+    - The backend total, `scripts/u6_preservation.py` and `src/u6-export` each stay at or above 80%.
+    - Frontend: 123 passed.
+  - Realm B: `browser` on its own fresh realm, all 14 journeys passing. Step 59 changes the fixture and serve scripts' layout, so the browser phase runs again.
+  - Static checks:
+    - U6's `tsc` command with `--incremental false`;
+    - its ESLint command, including `e2e/u6-approved-export`;
+    - the CI lint step's invocations exactly as written, from the repository root, each with its own log;
+    - the shared contract's lint, from `shared/python` with its own `.venv/bin/ruff check --no-cache .`, as run 4's step 90 ran it.
+  - Regressions:
+    - the earlier Units' regressions as U6's workflow runs them: U1's two files, U2's two files, and U2's keyring trio, last 75 passed and 1 deselected;
+    - U2's cumulative lane, which has `test/u6-export` registered: 728 becomes 731.
+  - Drift checks, because Step 62's withheld edits touched files both inventories pin (`backend/local_browser.py`; `history.tsx` and `dialogs.tsx`):
+    - `(cd shared/python && .venv/bin/python tools/inventory_consumers.py)` prints "ok", in either case, and under (A) after Step 59's regeneration;
+    - from `frontend`, `node scripts/inventory-consumers.mjs` (`pnpm run check:consumers`).
+  - Then update the records:
+    - `code-summary.md`:
+      - L3-1 to L3-12 with your answers;
+      - the four targets mapped to the tests that close them, with NFR3.8's remaining browser-only gap stated unless L3-8 is built;
+      - each component's test count, file by file, against the standard strategy's five to eight, counts above eight marked "above range, kept": ExportStore 92, ExportLane 35, EnvironmentTool 75, history.tsx 18 (correcting the stale 15 at line 236), dialogs.tsx 9, export-view.tsx 16;
+      - the collect-only total, 949;
+      - each withheld run's failure, exit code and digests;
+      - Step 59(f)'s inventory results under (A), and Step 60's comparator result.
+    - `unit-test-instructions.md`, a new "Build and Test loop-back 3 (2026-11-17)" section:
+      - New files: `operations/test_u6_lint_gate.py`.
+      - New helpers: `store_flows.held_rows` with `PACE_ROW`, `EFFECT_ROW` and `LANE_STATUS_ROW`; `Interleaved`'s pace hold; `database_now` in `repository/test_status_counts.py`.
+      - Lint: a bullet naming the configurations and the rules, and a "Static checks: Ruff" command block identical to the CI step.
+      - Commands: `operations/test_u6_preservation.py` now needs the realm, for reads only, through `connect_raw`; the lint gate needs none.
+      - Never mocked: the lane's store faults, the operator's outcome and the archive's database check are reached only through the realm.
+      - Allowed doubles: L3-4's two rules, the delegating wrappers (`connect_admin` among them) and the recording stand-ins; under L3-5 (a), `FakeResearch` with its reading.
+      - Clock: the 1 s lock-bound waits listed again, adding the one in the pace test and the three in the store-fault test (the capture, the claim and the status record); each hold under the realm's 5 s idle-in-transaction bound; the archive fixture's bounded 5 s poll; the amended database-clock line.
+      - Frontend: the three hostile cases.
+      - Withheld checks: Vitest and gate runs need no environment, and every restore is unconditional.
+    - `traceability.json`:
+      - the never-mocked row gains `component/test_lane_write_path.py`, `operations/test_u6_real_export_checks.py`, `operations/test_u6_preservation.py` and steps 55, 57 and 62;
+      - the watch-counts row's steps string becomes "45, 54, 62";
+      - add rows for NFR3.8/provider-text and the static checks.
+    - `source-manifest.json`: add `scripts/u6-lint.toml`, `scripts/u6-lint-scripts.toml`, under (A) `scripts/u6-lint-accounts.toml`, and `tests/u6_approved_export/operations/test_u6_lint_gate.py`. Every other path is already listed, `shared/python-consumers.json` included.
+  - Tick each box only after the run its own text asks for has passed.
+
+  Trace: stage Step 5.
+
+After Step 63, the architecture review and U6's checkpoint follow through AI-DLC (stage Steps 5 and 6). They are not plan steps, so each box above can be ticked on its own run before the review starts. When this attempt's approval clears the boxes of Steps 1–52, their work stands: each is ticked again only after Step 63's runs, which exercise it again, have passed, as the project's rule asks. U8's reopen follows U6's in this loop-back, and its checkpoint verification runs last, over every Unit's final code, including any U2 lines wrapped under L3-10 (A).
+
+**Loop-back 3 traceability** (target → the file that closes it → step):
+
+| Target | Closed by | Steps |
+|---|---|---|
+| U6:unit-test-instructions:never-mocked | `tests/u6_approved_export/store_flows.py` (`held_rows`); `component/test_lane_write_path.py`; `operations/test_u6_real_export_checks.py`; `operations/test_u6_preservation.py`; Allowed doubles in `unit-test-instructions.md` (L3-4, L3-5) | 55, 57, 62, 63 |
+| U6:logical-components:watch-counts | `tests/u6_approved_export/repository/test_status_counts.py` | 54, 62 |
+| U6:NFR3.8/provider-text | `frontend/test/u6-export/history.test.tsx`; `dialogs.test.tsx`; `export-view.test.tsx` (the jsdom side; the browser side stays open unless L3-8 is built) | 56, 62 |
+| U6:unit-test-instructions:static-checks | `scripts/u6-lint.toml`; `scripts/u6-lint-scripts.toml`; under L3-10 (A) `scripts/u6-lint-accounts.toml` and `shared/python-consumers.json`; `.github/workflows/u6-approved-export.yml`; the fixed tests and scripts; `tests/u6_approved_export/operations/test_u6_lint_gate.py` | 58–61, 62, 63 |
+| U6:code-generation-plan:testing-contract-test-volume | `tests/u6_approved_export/operations/test_u6_test_volume.py` (the gate's mapping) | 61 |
+
 ## Traceability
 
 | ID | Steps |
 |---|---|
+| Build and Test loop-back 1: the 2 Not Met and 19 not fully checked U6 targets; decisions L1-1 to L1-12 | 29–43 |
+| Build and Test loop-back 2: U6's never-mocked rule (Not Met) and its ten unchecked clauses; decisions L2-1 to L2-4 | 44–52 |
+| Build and Test loop-back 3: U6's never-mocked rule and static checks (Not Met), and its two clauses with no test, the watch counts' time and NFR3.8's provider text; decisions L3-1 to L3-12 | 53–63 |
 | FR2.1 | 3–4, 5–6, 7–8, 9–10, 13–14, 15–16, 21–22, 23–24, 26 |
 | FR2.2 | 3–4, 11–12, 15–16, 21–22, 23–24, 26 |
 | FR2.3 | 3–4, 5–6, 7–8, 11–12, 15–16, 21–22, 23–24, 26 |

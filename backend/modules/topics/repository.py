@@ -38,7 +38,7 @@ DEFAULT_SETTINGS = {
 }
 RUN_COLUMNS = (
     "id,topic_id,window_start,window_end,state,digest_content,settings_revision,"
-    "created_at,updated_at,preference_snapshot,presentation,request_key"
+    "created_at,updated_at,preference_snapshot,presentation,request_key,scheduled_at"
 )
 
 
@@ -471,12 +471,19 @@ class TopicsRepository:
         digest_content,
         *,
         expected_preferences=None,
+        scheduled_at=None,
     ):
         """Adopt the window's non-discarded run or create one; empty content is recorded.
 
         Returns (run, adopted). The chronology and revision gates are the
         schema's; their refusals map to typed errors the scheduler treats as
         skip-this-pass signals (BR2.4/BR1.3).
+
+        `scheduled_at` is the due instant of the occurrence the run is prepared
+        for (BR1.2). It is stored once, with a new row only: an adopted run keeps
+        its own, and a call that hands in none stores none. It is accepted only
+        beside `expected_preferences`, the fence that ties it to the zone the due
+        read saw.
         """
         if not isinstance(window_start, dt.date) or not isinstance(window_end, dt.date):
             _invalid("window")
@@ -484,6 +491,12 @@ class TopicsRepository:
             _invalid("settingsRevision")
         if not isinstance(digest_content, list):
             _invalid("digestContent")
+        if scheduled_at is not None and (
+            not isinstance(scheduled_at, dt.datetime)
+            or scheduled_at.utcoffset() is None
+            or expected_preferences is None
+        ):
+            _invalid("scheduledAt")
 
         def prepare(conn):
             topic = conn.execute(
@@ -513,8 +526,8 @@ class TopicsRepository:
                 with conn.transaction():
                     run = conn.execute(
                         "INSERT INTO topics.digest_run(id,topic_id,window_start,window_end,"
-                        "digest_content,settings_revision,preference_snapshot,presentation) "
-                        "VALUES(%s,%s,%s,%s,%s,%s,%s,%s) "
+                        "digest_content,settings_revision,preference_snapshot,presentation,"
+                        "scheduled_at) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s) "
                         "RETURNING " + RUN_COLUMNS,
                         (
                             uuid4(),
@@ -525,6 +538,7 @@ class TopicsRepository:
                             settings_revision,
                             Jsonb(preferences),
                             Jsonb(presentation),
+                            scheduled_at,
                         ),
                     ).fetchone()
             except psycopg.errors.UniqueViolation:
@@ -552,7 +566,10 @@ class TopicsRepository:
 
         return self.system(prepare)
 
-    def begin_send(self, run_id, path_kind, *, real_send_limit=0, evidence_retention_days=None):
+    def begin_send(
+        self, run_id, path_kind, *, real_send_limit=0, evidence_retention_days=None,
+        admission=None,
+    ):
         """Checked prepared->sending with active, consent and pause guards (BR3.1/3.2/4.1/4.2).
 
         Returns the sending run row with its send-log skeleton, or None when
@@ -560,6 +577,11 @@ class TopicsRepository:
         unknown outcome is unreconciled, or another send is in flight. A real
         attempt stamps its evidence-retention bound (at most 30 days, also
         enforced by the database); without a stated period it is refused.
+
+        A real attempt is bounded by the 1–100 allocation unless an `admission`
+        is given, and an admission is accepted only with an allocation of 0. It is
+        called with the locked prepared run, after the discard check and before the
+        sending transition; `False` leaves the run prepared.
         """
         if path_kind not in ("real", "local-sink"):
             _invalid("pathKind")
@@ -571,9 +593,11 @@ class TopicsRepository:
                 raise TopicsError("INVALID_ARGUMENT", current={"field": "evidenceRetention"})
         elif evidence_retention_days not in (None, 0):
             _invalid("evidenceRetention")
+        if admission is not None and (path_kind != "real" or real_send_limit != 0):
+            raise TopicsError("INVALID_ARGUMENT", current={"field": "realSendAllocation"})
 
         def begin(conn):
-            if path_kind == "real":
+            if path_kind == "real" and admission is None:
                 if type(real_send_limit) is not int or not 1 <= real_send_limit <= 100:
                     raise TopicsError("INVALID_ARGUMENT", current={"field": "realSendAllocation"})
                 conn.execute(
@@ -599,6 +623,8 @@ class TopicsRepository:
                 current
             ) != preference_fingerprint(run["preference_snapshot"]):
                 self._transition(conn, run_id, "prepared", "discarded")
+                return None
+            if admission is not None and not admission(run):
                 return None
             try:
                 with conn.transaction():

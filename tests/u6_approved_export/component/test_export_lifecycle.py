@@ -11,14 +11,14 @@ from uuid import UUID, uuid4
 
 import psycopg
 import pytest
+from psycopg.types.json import Jsonb
+
 from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
 from backend.modules.export.control_lifecycle import (
     COUNT_FIELDS,
     EXTERNAL_COPIES_REASON,
     ExportLifecycleParticipant,
 )
-from psycopg.types.json import Jsonb
-
 from tests.u6_approved_export import store_flows as flows
 
 ALL_SCOPES = ("live_records", "pending_work", "external_copies")

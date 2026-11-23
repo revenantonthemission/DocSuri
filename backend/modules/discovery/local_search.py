@@ -63,14 +63,20 @@ class SearchPageBuilder:
         vocabulary: str = VOCABULARY,
         policy: dict = POLICY,
         compatibility: str = COMPATIBILITY,
+        max_candidates: int = 256,
     ):
+        """`max_candidates` bounds the rows that reach ranking: the built 256, or the
+        complete assembly's 400 (U8 plan Step 23, P1)."""
         if len(cursor_key) < 32:
             raise ValueError("cursor signing key must contain at least 32 bytes")
+        if type(max_candidates) is not int or not 1 <= max_candidates <= 400:
+            raise ValueError("candidate bound outside finite allocation")
         self.key = cursor_key
         self.clock = clock
         self.vocabulary = vocabulary
         self.policy = policy
         self.compatibility = compatibility
+        self.max_candidates = max_candidates
 
     def build(
         self,
@@ -91,7 +97,7 @@ class SearchPageBuilder:
         if retrieval not in ("lexical", "semantic"):
             raise ValueError("unknown effective retrieval mode")
         rows = snapshot["candidates"]
-        if len(rows) > 256:
+        if len(rows) > self.max_candidates:
             raise ValueError("projection exceeds finite allocation")
         publication = snapshot["publication"]
         revision = str(publication["revision"])

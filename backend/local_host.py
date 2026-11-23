@@ -27,6 +27,7 @@ from .local_browser import (
     boundary_route,
     post_context,
     read_payload,
+    request_identifier,
 )
 from .local_profile import LocalProfile, private_bytes
 from .transactions import OWNERS
@@ -297,18 +298,37 @@ def journey_capabilities(quality_ready: bool) -> list[dict]:
     ]
 
 
-def assemble(profile: LocalProfile, *, routers=(), lifespan=None) -> FastAPI:
-    app = FastAPI(
+class _BoundedApplication(FastAPI):
+    """An application whose given boundary wraps its whole middleware stack, so it stays
+    outermost whatever middleware the caller adds after `assemble` (D7)."""
+
+    boundary = None
+
+    def build_middleware_stack(self):
+        return self.boundary.wrap(super().build_middleware_stack())
+
+
+def assemble(profile: LocalProfile, *, routers=(), lifespan=None, boundary=None) -> FastAPI:
+    """The shared host. `boundary`, when given (the complete assembly's D7 boundary), is
+    installed outermost and supplies the allowed host names; without it every earlier
+    assembly keeps the built `127.0.0.1` host list and stack unchanged."""
+    application = FastAPI if boundary is None else _BoundedApplication
+    app = application(
         title="DocSuri local research workspace",
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
         lifespan=lifespan,
     )
+    if boundary is not None:
+        app.boundary = boundary
     app.state.profile = profile
     app.state.capabilities = {}
     app.state.capability_catalog = []
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1"])
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["127.0.0.1"] if boundary is None else list(boundary.trusted_hosts),
+    )
 
     @app.middleware("http")
     async def local_boundary(request: Request, call_next):
@@ -317,7 +337,7 @@ def assemble(profile: LocalProfile, *, routers=(), lifespan=None) -> FastAPI:
                 {
                     "code": "FORBIDDEN",
                     "messageKey": "request.origin",
-                    "requestId": "boundary",
+                    "requestId": request_identifier("boundary"),
                     "retryable": False,
                 },
                 status_code=403,
@@ -334,10 +354,17 @@ def assemble(profile: LocalProfile, *, routers=(), lifespan=None) -> FastAPI:
 
     @app.get("/health/live")
     async def live():
-        return {"process": "alive", "profile": "synthetic-local"}
+        return {"process": "alive", "profile": "production"  # absent flag: off (BR1.7)
+                if getattr(profile, "is_production", False) else "synthetic-local"}
 
     @app.get("/health/ready")
     async def ready():
+        readiness = getattr(app.state, "readiness", None)
+        if readiness is not None:
+            # The complete assembly derives readiness from its own registry; its host
+            # runs no control loop (the workers process does).
+            report = await run_in_threadpool(readiness)
+            return JSONResponse(report, status_code=200 if report["ready"] else 503)
         required = getattr(app.state, "required_capabilities", None)
         transactions = getattr(app.state, "transactions", None)
         if required is None or transactions is None:
@@ -346,7 +373,7 @@ def assemble(profile: LocalProfile, *, routers=(), lifespan=None) -> FastAPI:
         loop = getattr(app.state, "control_loop", None)
         if profile.realm in (
             "account-controls", "corpus-maintenance", "research-workspace", "topics-digests",
-            "approved-export",
+            "approved-export", "service-operations", "production",
         ):
             report["backgroundWork"] = (
                 dict(loop.status) if loop is not None else {"state": "stopped"}
@@ -379,7 +406,7 @@ def assemble(profile: LocalProfile, *, routers=(), lifespan=None) -> FastAPI:
                 {
                     "code": "NOT_READY",
                     "messageKey": "capability.notReady",
-                    "requestId": "assembly",
+                    "requestId": request_identifier("assembly"),
                     "retryable": False,
                 },
                 status_code=503,
@@ -390,7 +417,7 @@ def assemble(profile: LocalProfile, *, routers=(), lifespan=None) -> FastAPI:
                 {
                     "code": "NOT_FOUND",
                     "messageKey": "resource.notFound",
-                    "requestId": "assembly",
+                    "requestId": request_identifier("assembly"),
                     "retryable": False,
                 },
                 status_code=404,
@@ -403,7 +430,7 @@ def assemble(profile: LocalProfile, *, routers=(), lifespan=None) -> FastAPI:
                 {
                     "code": "NOT_READY",
                     "messageKey": "build.missing",
-                    "requestId": "assembly",
+                    "requestId": request_identifier("assembly"),
                     "retryable": False,
                 },
                 status_code=503,

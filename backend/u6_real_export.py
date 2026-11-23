@@ -185,12 +185,23 @@ def real_export_factory(activation: RealExportActivation, *, transport_factory=N
     )
 
 
+def install_gate(gate, recipients) -> None:
+    """The complete assembly's provider gate for this process's Notion path (U8, BR7.3,
+    BR7.5): every operation reads it before it opens a token."""
+    from backend.modules.export.notion_session import install_provider_gate
+
+    install_provider_gate(gate, recipients)
+
+
 def assemble_u6_real(
-    profile: LocalProfile, activation: RealExportActivation, *, transport_factory=None
+    profile: LocalProfile, activation: RealExportActivation, *, transport_factory=None,
+    gate=None, recipients=None,
 ):
     """Assemble the owned U6 host with the real export; refuses instead of degrading."""
     if not isinstance(activation, RealExportActivation) or activation.run_id != profile.run_id:
         raise refused("runId")
     require_no_evidence(profile.root)
+    if gate is not None:
+        install_gate(gate, recipients)
     factory = real_export_factory(activation, transport_factory=transport_factory)
     return assemble_u5(profile, export_factory=factory)

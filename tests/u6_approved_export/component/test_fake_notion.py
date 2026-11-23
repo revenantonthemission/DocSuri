@@ -5,6 +5,8 @@ from pathlib import Path
 
 import httpx
 import pytest
+from notion_client.errors import APIErrorCode, APIResponseError, build_request_error
+
 from backend.modules.export.fake_notion import (
     LOST_AFTER_SUCCESS,
     SAVED_BUSY,
@@ -12,8 +14,6 @@ from backend.modules.export.fake_notion import (
     FakeNotion,
 )
 from backend.modules.export.rendering import content_hash
-from notion_client.errors import APIErrorCode, APIResponseError, build_request_error
-
 from tests.u6_approved_export import notion_flows as nf
 
 VECTORS = Path(__file__).resolve().parents[3] / "shared" / "export-hash-vectors.json"
@@ -164,7 +164,11 @@ async def test_the_request_log_holds_method_path_authorization_and_body_hash(fak
         await http.get(f"{API}/users/me")
         await http.post(f"{API}/search", json={"page_size": 100})
     first, second = fake.requests
-    assert (first.method, first.path, first.authorization) == ("GET", "/v1/users/me", f"Bearer {TOKEN}")
+    assert (first.method, first.path, first.authorization) == (
+        "GET",
+        "/v1/users/me",
+        f"Bearer {TOKEN}",
+    )
     assert first.body_hash is None and len(second.body_hash) == 64
 
 

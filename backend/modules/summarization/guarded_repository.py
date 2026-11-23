@@ -67,7 +67,10 @@ class GuardedAssistanceRepository:
             guard(conn, authority, version=payload["versionId"])
             # Serialize the finite global admission count, including absent rows.
             conn.execute("SELECT pg_advisory_xact_lock(741901)")
-            if self.transactions.profile.realm == 'account-controls' and conn.execute(
+            # U2's realm and, by the row "U2's controls in the complete app", the composed
+            # and production realms: an erased acceptance identity never reopens.
+            if self.transactions.profile.realm in (
+                    "account-controls", "service-operations", "production") and conn.execute(
                 'SELECT 1 FROM assistance.erased_admission WHERE operation_id=%s',(operation,)
             ).fetchone():
                 raise PermissionError('erased acceptance identity cannot reopen')
@@ -117,19 +120,23 @@ class GuardedAssistanceRepository:
             ).fetchone()
             if counts["total"] >= 4 or counts["own"] >= 2:
                 raise ValueError("finite admission capacity reached")
-            if self.transactions.profile.realm == "account-controls":
-                from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
+            # U2's period in U2's realm and, by the row "U2's controls in the complete
+            # app", in the composed and production realms, each under its own policy.
+            if self.transactions.profile.realm in (
+                    "account-controls", "service-operations", "production"):
+                from backend.modules.accounts.control_policy import for_realm
 
+                control_policy = for_realm(self.transactions.profile.realm)
                 period = conn.execute(
                     "SELECT floor(extract(epoch FROM clock_timestamp())/%s)::bigint AS value",
-                    (SYNTHETIC_POLICY.period_seconds,),
+                    (control_policy.period_seconds,),
                 ).fetchone()["value"]
                 return conn.execute(
                     "INSERT INTO assistance.admission(operation_id,account_id,intent_hash,intent,"
                     "disposition,"
                     "period_id,policy_ref) VALUES(%s,%s,%s,%s,'open',%s,%s) RETURNING *",
                     (operation, authority.account_id, frozen_hash, Jsonb(payload),
-                     "u2-period:" + str(period), Jsonb(SYNTHETIC_POLICY.reference)),
+                     "u2-period:" + str(period), Jsonb(control_policy.reference)),
                 ).fetchone()
             return conn.execute(
                 "INSERT INTO assistance.admission(operation_id,account_id,intent_hash,intent,"
@@ -344,8 +351,19 @@ class GuardedAssistanceRepository:
 
         return self.transactions.run("assistance", write)
 
-    def history(self, authority: Authority, limit: int = 20) -> list[dict]:
-        if not 1 <= limit <= 100:
+    def history(
+        self,
+        authority: Authority,
+        limit: int = 20,
+        *,
+        bound: int = 100,
+        with_metadata: bool = False,
+    ) -> list[dict]:
+        """The owner's newest jobs, at most `limit` within `bound` (1-100, so no caller
+        raises the built bound). With `with_metadata`, the same transaction reads each
+        distinct version's corpus metadata once and puts it in each row's `metadata`
+        (U8 plan Step 83(b), L1-8); the defaults keep the built behaviour."""
+        if not 1 <= bound <= 100 or not 1 <= limit <= bound:
             raise ValueError("invalid history bound")
 
         def read(conn):
@@ -365,6 +383,15 @@ class GuardedAssistanceRepository:
                     "job_id=%s AND account_id=%s",
                     (row["id"], authority.account_id),
                 ).fetchone()
+            if with_metadata:
+                metadata = {}
+                for row in rows:
+                    version = row["version_id"]
+                    if version not in metadata:
+                        metadata[version] = conn.execute(
+                            "SELECT corpus.reference_metadata(%s) AS value", (version,)
+                        ).fetchone()["value"]
+                    row["metadata"] = metadata[version]
             return rows
 
         return self.transactions.run("assistance", read)

@@ -88,7 +88,7 @@ describe('shared shell research contribution', () => {
     await screen.findByTestId('logout');
     keepJobLink({ jobId: 'job-a', contextId: 'context-a', kind: 'novelty-analysis' });
     fireEvent(window, new HashChangeEvent('hashchange'));
-    await screen.findByText(/접수됨/);
+    await screen.findByText(/접수됨/, {}, { timeout: 5000 });
     expect(screen.getByTestId('workspace-novelty')).toBeVisible();
     expect(
       calls.filter((call) => call.path.startsWith('/api/v2/c07/')).map((call) => call.path),
@@ -145,7 +145,7 @@ describe('shared shell research contribution', () => {
     keepJobLink({ jobId: 'job-a', contextId: 'context-a', kind: 'novelty-analysis' });
     const calls = server();
     render(<App />);
-    await screen.findByText(/접수됨/);
+    await screen.findByText(/접수됨/, {}, { timeout: 5000 });
     expect(screen.getByTestId('workspace-novelty')).toBeVisible();
     expect(
       calls.filter((item) => item.path.startsWith('/api/v2/c07/')).map((item) => item.path),

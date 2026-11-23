@@ -11,12 +11,12 @@ import secrets
 from dataclasses import dataclass
 from uuid import uuid4
 
-from backend.modules.accounts.services.guarded_entry import GuardedEntryService
-from backend.modules.export.http import ERROR_STATUS, PREFIX, export_router
-from backend.transactions import Authority
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from backend.modules.accounts.services.guarded_entry import GuardedEntryService
+from backend.modules.export.http import ERROR_STATUS, PREFIX, export_router
+from backend.transactions import Authority
 from tests.u6_approved_export import service_flows as sf
 from tests.u6_approved_export import store_flows as flows
 
@@ -155,6 +155,7 @@ def mount(realm, transactions, connect, authority, authority_b, tmp_path, **opti
     entry = GuardedEntryService(transactions)
     own = browser_session(transactions, entry, authority.account_id)
     other = browser_session(transactions, entry, authority_b.account_id)
+    options.setdefault("research", sf.real_research(transactions))
     rig = sf.build(transactions, connect, own.authority, tmp_path, **options)
     flows.fresh(connect, other.authority.account_id)
     app = FastAPI()

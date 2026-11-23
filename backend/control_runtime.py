@@ -78,6 +78,12 @@ class ControlCapacity:
         self.last_bytes = None
         self.probes = 0
 
+    def _admits(self, footprint: int) -> bool:
+        """Whether one observed footprint admits work: the built synthetic rule. A seam
+        whose default is U2's built behaviour (U8 plan Step 44)."""
+        # Reserve at least 20% of the live allowance for admitted commits.
+        return footprint < (512 * 1024 * 1024 * 4 // 5)
+
     def refresh(self):
         token = RECOVERY_REQUEST.set(True)
         try:
@@ -92,8 +98,7 @@ class ControlCapacity:
                 raise ValueError("invalid capacity observation")
             self.last_bytes = sum(values)
             self.probes += 1
-            # Reserve at least 20% of the live allowance for admitted commits.
-            self.admitting = self.last_bytes < (512 * 1024 * 1024 * 4 // 5)
+            self.admitting = self._admits(self.last_bytes)
         except Exception:
             self.admitting = False
             raise
@@ -120,11 +125,13 @@ class ControlAdmission:
         self.capacity = capacity
 
     async def reject(self, send, status, code, message):
+        from .local_browser import request_identifier
+
         payload = json.dumps(
             {
                 "code": code,
                 "messageKey": message,
-                "requestId": "capacity",
+                "requestId": request_identifier("capacity"),
                 "retryable": status == 503,
             }
         ).encode()

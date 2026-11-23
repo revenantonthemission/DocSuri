@@ -449,3 +449,15 @@ jobs:
       - name: Ops suite on APFS
         working-directory: ops
         run: uv run --frozen --python 3.13.7 pytest
+      # U8's macOS-only folder (U8 plan Step 44): visudo, plutil and pfctl on the
+      # templates, the release environment and log rotation, as root under a temporary
+      # prefix, then the `.coveragerc.u8-macos` report at its 80% floor.
+      - name: U8 arrangement suite on macOS
+        working-directory: .
+        run: |
+          uv sync --project backend --frozen --python 3.13.7
+          sudo -n env DOCSURI_U8_ARRANGEMENT=1 PYTHONPATH="$PWD" \
+            backend/.venv/bin/python -m pytest -c backend/pytest.u8-service-operations-integration.ini \
+            tests/u8_service_operations_integration/arrangement -q --tb=short \
+            --cov --cov-config=backend/.coveragerc.u8-macos --cov-report=term-missing \
+            --cov-fail-under=80

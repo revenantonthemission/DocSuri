@@ -365,9 +365,7 @@ class ExportService:
         source = self._source_reference(value.get("source"))
         destination = _mapping(value.get("destination"), "destination")
         self._require_policy(value.get("renderPolicy"), "renderPolicy")
-        destination_id = normalise_id(destination.get("parentPageId"))
-        if destination_id is None:
-            invalid("parentPageId")
+        destination_id = self._destination_identity(destination)
         activation = self.policy.activation_destination_id
         if activation is not None and destination_id != activation:
             raise ExportError("FORBIDDEN", current={"field": "destination"})
@@ -375,7 +373,7 @@ class ExportService:
         prepared, verdict = read_source(self.research, authority, source)
         if verdict is not None:
             raise ExportError(verdict.code, current={"field": "source"})
-        entry = self._read_destination(authority, row, destination_id)
+        entry = self._listed_destination(authority, row, destination_id)
         facts, render = self._renderer(authority, source, prepared, row, destination_id, entry)
         stored = self.repository.add_preview_revision(authority, facts, render, now=self._now())
         return preview_view(stored)
@@ -408,28 +406,64 @@ class ExportService:
             raise ExportError("CONFLICT", current={"field": "destination"})
         return row
 
-    def _read_destination(self, authority, row, destination_id: str) -> dict:
-        """The destination read directly, through the gate (BR1.5, D15)."""
-        read = self._run(
-            self.adapter.read_destination(
+    @staticmethod
+    def _destination_identity(destination: Mapping) -> str:
+        """L1-1: the request's `destinationId`, or `parentPageId` when that optional
+        field is absent, through `normalise_id`; a differing pair is CONFLICT before
+        any Notion call, so the browser value never becomes a request path."""
+        identified = None
+        raw_id = destination.get("destinationId")
+        if raw_id is not None:
+            identified = normalise_id(raw_id)
+            if identified is None:
+                invalid("destinationId")
+        raw_parent = destination.get("parentPageId")
+        if raw_parent is not None:
+            parent = normalise_id(raw_parent)
+            if parent is None:
+                invalid("parentPageId")
+            if identified is not None and parent != identified:
+                raise ExportError("CONFLICT", current={"field": "destination"})
+            identified = identified if identified is not None else parent
+        if identified is None:
+            invalid("destinationId")
+        return identified
+
+    def _listed_destination(self, authority, row, destination_id: str) -> dict:
+        """L1-1: the recorded destination is the connection's current listing entry.
+
+        The server re-lists inside the one gated operation and reads the chosen page
+        only when the listing returned it; completeness decides the refusal (BR1.5)."""
+        listing = self._run(
+            self.adapter.locate_destination(
                 StoredConnection(authority.account_id, row["id"]),
                 destination_id,
+                creation_capability=row["creation_capability"],
                 gate_key=row["id"],
             )
         )
-        if read.category == PROTECTION_UNAVAILABLE:
+        if listing.category == PROTECTION_UNAVAILABLE:
             raise ExportError("POLICY_UNRESOLVED", current={"field": "credentialProtection"})
-        if read.category in (NOT_READABLE, TOKEN_INVALID, NOT_CONNECTED):
+        if listing.category in (TOKEN_INVALID, NOT_CONNECTED):
             raise ExportError("CONFLICT", current={"field": "destination"})
-        if read.category != OK or not read.readable:
+        entry = next(
+            (item for item in listing.destinations if item.destination_id == destination_id), None
+        )
+        if entry is None:
+            if listing.complete:
+                raise ExportError("CONFLICT", current={"field": "destination"})
+            raise ExportError("DEPENDENCY_UNAVAILABLE")
+        if entry.readable is False:
+            raise ExportError("CONFLICT", current={"field": "destination"})
+        if entry.readable is None:
             raise ExportError("DEPENDENCY_UNAVAILABLE")
         capability = row["creation_capability"]
         return destination_entry(
             connection_id=str(row["id"]),
             workspace_id=row["workspace_id"],
-            destination_id=destination_id,
-            title=read.title,
-            context=read.context,
+            destination_id=entry.destination_id,
+            title=entry.title,
+            context=entry.context,
             readable=True,
             creation_capability=capability,
             writable=capability != "refused",
@@ -549,8 +583,17 @@ class ExportService:
         return self._effect(authority, bound["effect"]["id"], now)
 
     def _continue(self, authority, approval, revision) -> None:
-        """BR3.7: a continue re-derives the binding under the approving session. A
-        definite change invalidates the approval; could-not-check leaves it approved."""
+        """BR3.7 as amended: a continue re-derives only the binding's local facts under
+        the approving session, as the approve call does (BR3.1): the approving session,
+        the connection revision, the real allowance and the source through U4's export
+        read. A definite change invalidates the approval and refuses; a could-not-check
+        refuses and leaves the approval approved. Otherwise the execute call binds the
+        one effect and consumes the approval, and only that effect's pre-write check
+        reads the destination (BR3.3): a changed destination invalidates the effect
+        (destination-changed) and nothing is written, and a destination that cannot be
+        checked makes the effect wait until it fails at BR3.3's wait bound
+        (dependency-unavailable). The approval stays consumed either way. The continue
+        makes no Notion request and takes no interactive slot (D15)."""
         facts = BoundFacts.of(
             revision,
             account_id=approval["account_id"],
@@ -558,7 +601,7 @@ class ExportService:
             artifact_id=revision["artifact_id"],
             destination_id=revision["destination_id"],
         )
-        verdict = self.binding.check(facts, gate_key=revision["connection_id"])
+        verdict = self.binding.check(facts, destination=False)
         if verdict.unchanged:
             return
         if not verdict.changed:

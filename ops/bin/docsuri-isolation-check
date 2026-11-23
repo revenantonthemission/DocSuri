@@ -1,0 +1,22 @@
+#!/Library/DocSuri/release/.venv/bin/python -I
+"""docsuri-isolation-check: the runtime isolation check (D10, security-design § 6.8).
+
+Run as root with no argument, reached by the scheduler account only through
+PlatformControl's platform.isolation.check. It checks programs, rule and configuration
+files, accounts, the database, the packet filter, the backup volume, the Time Machine
+exclusions and the boot items with their stop records, each within its own time limit,
+ending within 60 seconds; writes one JSON result into evidence/isolation/; deletes its
+own results older than 14 days; and writes one JSON line to standard output. It refuses
+to run when the environment holds PYTHON*, DYLD_* or LD_* variables.
+"""
+
+import sys
+
+if sys.argv[1:] == ["--self-check"]:
+    from docsuri_ops.release import self_check
+
+    raise SystemExit(self_check(__file__))
+
+from docsuri_ops.isolation_check import main
+
+raise SystemExit(main())

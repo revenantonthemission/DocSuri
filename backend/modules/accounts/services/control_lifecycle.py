@@ -12,6 +12,15 @@ from backend.transactions import Authority, guard
 from docsuri_shared.workspace import wire
 from psycopg.types.json import Jsonb
 
+# Scope reason keys reported as retained by policy, never as erased (C02 4.0.0
+# LifecycleRetentionReasonKey): U2's bounded audit identifiers, ApprovedExport's external
+# copies (U6 A8) and ServiceOperations' backups until their disposal (U8, BR2.5).
+RETAINED_BY_POLICY = (
+    "bounded-audit-identifiers-retained",
+    "external-copies-retained-by-owner",
+    "backups-retained-until-disposal",
+)
+
 
 class ControlLifecycleService:
     def __init__(self, entry, manifest: tuple[tuple[str, str], ...], *, revision: str):
@@ -63,7 +72,8 @@ class ControlLifecycleService:
                 raise ValueError("stale lifecycle revision")
             if confirmation is not None:
                 confirmed = conn.execute(
-                    "SELECT *,expires_at>clock_timestamp() AS fresh FROM accounts.control_proof WHERE id=%s AND account_id=%s FOR UPDATE",
+                    "SELECT *,expires_at>clock_timestamp() AS fresh FROM accounts.control_proof "
+                    "WHERE id=%s AND account_id=%s FOR UPDATE",
                     (confirmation, authority.account_id),
                 ).fetchone()
                 if (
@@ -88,8 +98,10 @@ class ControlLifecycleService:
                     raise PermissionError("lifecycle confirmation binding mismatch")
             identifier, revision = uuid4(), uuid4()
             request = conn.execute(
-                "INSERT INTO accounts.lifecycle_request(id,account_id,revision,action,policy_ref,manifest_revision,manifest,disposition,reason_key) "
-                "VALUES(%s,%s,%s,%s,%s,%s,%s,'pending','owner-cleanup-pending') RETURNING accepted_at",
+                "INSERT INTO accounts.lifecycle_request(id,account_id,revision,action,policy_ref,"
+                "manifest_revision,manifest,disposition,reason_key) "
+                "VALUES(%s,%s,%s,%s,%s,%s,%s,'pending','owner-cleanup-pending') "
+                "RETURNING accepted_at",
                 (
                     identifier,
                     authority.account_id,
@@ -102,12 +114,14 @@ class ControlLifecycleService:
             ).fetchone()
             for participant, scope in self.manifest:
                 conn.execute(
-                    "INSERT INTO accounts.lifecycle_scope(request_id,participant,scope) VALUES(%s,%s,%s)",
+                    "INSERT INTO accounts.lifecycle_scope(request_id,participant,scope) "
+                    "VALUES(%s,%s,%s)",
                     (identifier, participant, scope),
                 )
             state = "erased" if action == "erase" else "withdrawn"
             conn.execute(
-                "UPDATE accounts.account SET active=false,lifecycle_state=%s,lifecycle_revision=%s,authority_revision=gen_random_uuid() WHERE id=%s",
+                "UPDATE accounts.account SET active=false,lifecycle_state=%s,lifecycle_revision=%s,"
+                "authority_revision=gen_random_uuid() WHERE id=%s",
                 (state, revision, authority.account_id),
             )
             conn.execute(
@@ -115,12 +129,16 @@ class ControlLifecycleService:
                 (authority.account_id,),
             )
             consents = conn.execute(
-                "SELECT purpose,granted,revision::text FROM accounts.consent WHERE account_id=%s ORDER BY purpose",
+                "SELECT purpose,granted,revision::text FROM accounts.consent "
+                "WHERE account_id=%s ORDER BY purpose",
                 (authority.account_id,),
             ).fetchall()
             conn.execute(
-                "INSERT INTO accounts.current_restriction(account_id,generation,lifecycle_revision,disposition,consent) VALUES(%s,1,%s,%s,%s) "
-                "ON CONFLICT(account_id) DO UPDATE SET generation=accounts.current_restriction.generation+1,lifecycle_revision=excluded.lifecycle_revision,"
+                "INSERT INTO accounts.current_restriction(account_id,generation,lifecycle_revision,"
+                "disposition,consent) VALUES(%s,1,%s,%s,%s) "
+                "ON CONFLICT(account_id) DO UPDATE SET "
+                "generation=accounts.current_restriction.generation+1,"
+                "lifecycle_revision=excluded.lifecycle_revision,"
                 "disposition=excluded.disposition,consent=excluded.consent,updated_at=clock_timestamp()",
                 (authority.account_id, revision, state, Jsonb(consents)),
             )
@@ -133,7 +151,8 @@ class ControlLifecycleService:
             }
             if confirmation is not None:
                 conn.execute(
-                    "UPDATE accounts.control_proof SET consumed_at=clock_timestamp(),operation_id=%s,outcome=%s WHERE id=%s",
+                    "UPDATE accounts.control_proof SET consumed_at=clock_timestamp(),"
+                    "operation_id=%s,outcome=%s WHERE id=%s",
                     (operation, Jsonb(outcome), confirmation),
                 )
             return ControlRepository.record(
@@ -168,8 +187,10 @@ class ControlLifecycleService:
                 raise ValueError("stale lifecycle revision")
             identifier = uuid4()
             row = conn.execute(
-                "INSERT INTO accounts.control_proof(id,account_id,purpose,proof_hash,flow_hash,authority_revision,lifecycle_revision,protected_payload,key_version,expires_at) "
-                "VALUES(%s,%s,'reauthenticate',%s,%s,%s,%s,%s,'u2-v1',clock_timestamp()+(%s*interval '1 second')) RETURNING expires_at",
+                "INSERT INTO accounts.control_proof(id,account_id,purpose,proof_hash,flow_hash,"
+                "authority_revision,lifecycle_revision,protected_payload,key_version,expires_at) "
+                "VALUES(%s,%s,'reauthenticate',%s,%s,%s,%s,%s,'u2-v1',"
+                "clock_timestamp()+(%s*interval '1 second')) RETURNING expires_at",
                 (
                     identifier,
                     authority.account_id,
@@ -203,7 +224,8 @@ class ControlLifecycleService:
         row = self.transactions.run(
             "accounts",
             lambda conn: conn.execute(
-                "SELECT lifecycle_revision FROM accounts.control_proof WHERE id=%s AND account_id=%s",
+                "SELECT lifecycle_revision FROM accounts.control_proof "
+                "WHERE id=%s AND account_id=%s",
                 (confirmation, authority.account_id),
             ).fetchone(),
         )
@@ -281,8 +303,10 @@ class ControlLifecycleService:
             ):
                 raise PermissionError("superseded lifecycle request")
             conn.execute(
-                "INSERT INTO accounts.session(id,account_id,token_hash,csrf_hash,authority_revision,expires_at,purpose,flow_id) "
-                "VALUES(%s,%s,%s,%s,%s,%s+(%s*interval '1 second'),'reactivation_status',%s) ON CONFLICT(id) DO NOTHING",
+                "INSERT INTO accounts.session(id,account_id,token_hash,csrf_hash,"
+                "authority_revision,expires_at,purpose,flow_id) "
+                "VALUES(%s,%s,%s,%s,%s,%s+(%s*interval '1 second'),'reactivation_status',%s) "
+                "ON CONFLICT(id) DO NOTHING",
                 (
                     session_id,
                     account["id"],
@@ -301,7 +325,8 @@ class ControlLifecycleService:
     def inspect_limited(self, token: str, csrf: str, identifier: UUID) -> dict:
         def read(conn):
             session = conn.execute(
-                "SELECT *,expires_at>clock_timestamp() AS fresh FROM accounts.session WHERE token_hash=%s",
+                "SELECT *,expires_at>clock_timestamp() AS fresh FROM accounts.session "
+                "WHERE token_hash=%s",
                 (self.entry.verifier("session", token),),
             ).fetchone()
             if (
@@ -328,7 +353,8 @@ class ControlLifecycleService:
 
     def _status(self, conn, request: dict, account: dict) -> dict:
         rows = conn.execute(
-            "SELECT * FROM accounts.lifecycle_scope WHERE request_id=%s ORDER BY participant,scope LIMIT %s",
+            "SELECT * FROM accounts.lifecycle_scope WHERE request_id=%s "
+            "ORDER BY participant,scope LIMIT %s",
             (request["id"], self.entry.control_policy.max_scopes + 1),
         ).fetchall()
         if not rows or len(rows) > self.entry.control_policy.max_scopes:
@@ -341,11 +367,7 @@ class ControlLifecycleService:
                 "disposition": (
                     "erased"
                     if request["action"] == "erase"
-                    and row["reason_key"]
-                    not in (
-                        "bounded-audit-identifiers-retained",
-                        "external-copies-retained-by-owner",
-                    )
+                    and row["reason_key"] not in RETAINED_BY_POLICY
                     else "retained_by_policy"
                 )
                 if complete
@@ -409,7 +431,8 @@ class ControlLifecycleService:
             ):
                 raise ValueError("superseded lifecycle request")
             ticket = conn.execute(
-                "SELECT *,clock_timestamp() AS now FROM accounts.lifecycle_scope WHERE request_id=%s AND participant=%s AND scope=%s FOR UPDATE",
+                "SELECT *,clock_timestamp() AS now FROM accounts.lifecycle_scope "
+                "WHERE request_id=%s AND participant=%s AND scope=%s FOR UPDATE",
                 (request, participant, scope),
             ).fetchone()
             if (
@@ -420,7 +443,8 @@ class ControlLifecycleService:
             ):
                 raise ValueError("lifecycle scope not claimable")
             ticket = conn.execute(
-                "UPDATE accounts.lifecycle_scope SET generation=generation+1,attempts=attempts+1,lease_until=clock_timestamp()+(%s*interval '1 second') "
+                "UPDATE accounts.lifecycle_scope SET generation=generation+1,attempts=attempts+1,"
+                "lease_until=clock_timestamp()+(%s*interval '1 second') "
                 "WHERE request_id=%s AND participant=%s AND scope=%s RETURNING *",
                 (self.entry.control_policy.lease_seconds, request, participant, scope),
             ).fetchone()
@@ -436,6 +460,13 @@ class ControlLifecycleService:
         return self.transactions.run("accounts", write)
 
     def acknowledge(self, ticket: dict, *, evidence: UUID | None, reason: str) -> dict:
+        return self._acknowledge_in(ticket, evidence, reason)
+
+    def _acknowledge_in(self, ticket: dict, evidence, reason: str, recorded=None) -> dict:
+        """Record one scope's evidence. `recorded`, when given, runs in the same
+        transaction where the scope's first evidence is written, so a replay never runs it
+        (U8's retention date, the person's decision of 2026-10-22); the built write has
+        none."""
         if (ticket["participant"], ticket["scope"]) not in self.manifest or len(
             reason.encode()
         ) > 128:
@@ -451,7 +482,8 @@ class ControlLifecycleService:
                 (ticket["request_id"],),
             ).fetchone()
             current = conn.execute(
-                "SELECT *,clock_timestamp() AS now FROM accounts.lifecycle_scope WHERE request_id=%s AND participant=%s AND scope=%s FOR UPDATE",
+                "SELECT *,clock_timestamp() AS now FROM accounts.lifecycle_scope "
+                "WHERE request_id=%s AND participant=%s AND scope=%s FOR UPDATE",
                 (ticket["request_id"], ticket["participant"], ticket["scope"]),
             ).fetchone()
             if (
@@ -473,7 +505,8 @@ class ControlLifecycleService:
             if not current["lease_until"] or current["lease_until"] <= current["now"]:
                 raise ValueError("expired lifecycle claim")
             conn.execute(
-                "UPDATE accounts.lifecycle_scope SET disposition=%s,evidence_ref=%s,reason_key=%s,updated_at=clock_timestamp() "
+                "UPDATE accounts.lifecycle_scope SET disposition=%s,evidence_ref=%s,reason_key=%s,"
+                "updated_at=clock_timestamp() "
                 "WHERE request_id=%s AND participant=%s AND scope=%s",
                 (
                     "complete" if evidence else "blocked",
@@ -484,21 +517,28 @@ class ControlLifecycleService:
                     ticket["scope"],
                 ),
             )
+            if recorded is not None:
+                recorded(conn)
             remaining = conn.execute(
-                "SELECT count(*) AS n FROM accounts.lifecycle_scope WHERE request_id=%s AND disposition<>'complete'",
+                "SELECT count(*) AS n FROM accounts.lifecycle_scope "
+                "WHERE request_id=%s AND disposition<>'complete'",
                 (ticket["request_id"],),
             ).fetchone()["n"]
             if not remaining and row["action"] == "reactivate":
                 conn.execute(
-                    "UPDATE accounts.account SET active=true,lifecycle_state='active',authority_revision=gen_random_uuid() WHERE id=%s",
+                    "UPDATE accounts.account SET active=true,lifecycle_state='active',"
+                    "authority_revision=gen_random_uuid() WHERE id=%s",
                     (ticket["account_id"],),
                 )
                 conn.execute(
-                    "UPDATE accounts.current_restriction SET disposition='active',lifecycle_revision=%s,generation=generation+1,updated_at=clock_timestamp() WHERE account_id=%s",
+                    "UPDATE accounts.current_restriction SET disposition='active',"
+                    "lifecycle_revision=%s,generation=generation+1,updated_at=clock_timestamp() "
+                    "WHERE account_id=%s",
                     (row["revision"], ticket["account_id"]),
                 )
             return conn.execute(
-                "UPDATE accounts.lifecycle_request SET disposition=%s,reason_key=%s,status_generation=status_generation+1 WHERE id=%s RETURNING *",
+                "UPDATE accounts.lifecycle_request SET disposition=%s,reason_key=%s,"
+                "status_generation=status_generation+1 WHERE id=%s RETURNING *",
                 (
                     "complete" if not remaining else "pending" if evidence else "blocked",
                     "complete" if not remaining else "scope-unresolved",
@@ -552,7 +592,8 @@ class ControlLifecycleService:
                 "SELECT * FROM accounts.account WHERE id=%s FOR UPDATE", (found["account_id"],)
             ).fetchone()
             row = conn.execute(
-                "SELECT *,expires_at>clock_timestamp() AS fresh FROM accounts.control_proof WHERE id=%s FOR UPDATE",
+                "SELECT *,expires_at>clock_timestamp() AS fresh FROM accounts.control_proof "
+                "WHERE id=%s FOR UPDATE",
                 (challenge,),
             ).fetchone()
             if (
@@ -567,7 +608,8 @@ class ControlLifecycleService:
             ):
                 raise PermissionError("reactivation proof unavailable")
             previous = conn.execute(
-                "SELECT * FROM accounts.control_receipt WHERE account_id=%s AND kind='reactivate' AND key=%s",
+                "SELECT * FROM accounts.control_receipt "
+                "WHERE account_id=%s AND kind='reactivate' AND key=%s",
                 (account["id"], operation),
             ).fetchone()
             if previous:
@@ -588,7 +630,8 @@ class ControlLifecycleService:
                 raise PermissionError("reactivation proof unavailable")
             identifier, revision = uuid4(), uuid4()
             conn.execute(
-                "INSERT INTO accounts.lifecycle_request(id,account_id,revision,action,policy_ref,manifest_revision,manifest,disposition,reason_key) "
+                "INSERT INTO accounts.lifecycle_request(id,account_id,revision,action,policy_ref,"
+                "manifest_revision,manifest,disposition,reason_key) "
                 "VALUES(%s,%s,%s,'reactivate',%s,%s,%s,'pending','restoration-evidence-pending')",
                 (
                     identifier,
@@ -601,7 +644,8 @@ class ControlLifecycleService:
             )
             for participant, scope in self.manifest:
                 conn.execute(
-                    "INSERT INTO accounts.lifecycle_scope(request_id,participant,scope) VALUES(%s,%s,%s)",
+                    "INSERT INTO accounts.lifecycle_scope(request_id,participant,scope) "
+                    "VALUES(%s,%s,%s)",
                     (identifier, participant, scope),
                 )
             conn.execute(
@@ -614,7 +658,8 @@ class ControlLifecycleService:
                 "disposition": "reactivation_pending",
             }
             conn.execute(
-                "UPDATE accounts.control_proof SET consumed_at=clock_timestamp(),operation_id=%s,outcome=%s WHERE id=%s",
+                "UPDATE accounts.control_proof SET consumed_at=clock_timestamp(),"
+                "operation_id=%s,outcome=%s WHERE id=%s",
                 (operation, Jsonb(outcome), challenge),
             )
             return ControlRepository.record(

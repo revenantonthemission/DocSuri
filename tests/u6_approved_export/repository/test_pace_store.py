@@ -4,7 +4,6 @@ import datetime as dt
 from uuid import uuid4
 
 from backend.transactions import OwnerTransactions
-
 from tests.u6_approved_export import export_rows as rows
 from tests.u6_approved_export import store_flows as flows
 

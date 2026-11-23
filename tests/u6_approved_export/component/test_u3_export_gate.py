@@ -5,6 +5,7 @@ admitted before any connection is made: an admitted assembly stops at a stand-in
 from types import SimpleNamespace
 
 import pytest
+
 from backend import transactions as transactions_module
 from backend.local_browser import (
     CORPUS_ORIGIN,

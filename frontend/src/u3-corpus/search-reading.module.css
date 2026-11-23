@@ -1,0 +1,9 @@
+/* U3's search results (search-reading.tsx). Each result's source link stands alone in its
+   row, never inside a sentence, so its target is at least 24×24 CSS px (WCAG 2.2 target
+   size, U8 L1-40). */
+.sourceLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  min-width: 24px;
+}

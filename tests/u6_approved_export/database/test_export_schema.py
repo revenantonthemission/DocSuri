@@ -30,7 +30,8 @@ def test_pending_reservation_is_revision_zero_held_and_without_envelope(connect)
         new_holder = uuid4()
         assert (
             conn.execute(
-                "UPDATE export.connection SET pending_holder=%s,pending_started_at=clock_timestamp() "
+                "UPDATE export.connection SET pending_holder=%s,"
+                "pending_started_at=clock_timestamp() "
                 "WHERE id=%s AND state='pending'",
                 (new_holder, connection),
             ).rowcount
@@ -165,7 +166,8 @@ def test_preview_revision_is_immutable_except_one_trim(connect):
                 )
         with pytest.raises(CHECK), conn.transaction():  # half a trim
             conn.execute(
-                "UPDATE export.preview_revision SET rendered_text=NULL,trimmed_at=clock_timestamp() "
+                "UPDATE export.preview_revision SET rendered_text=NULL,"
+                "trimmed_at=clock_timestamp() "
                 "WHERE preview_id=%s AND revision=%s",
                 key,
             )
@@ -212,7 +214,8 @@ def test_preview_revisions_are_consecutive_and_markers_unique(connect):
 
 
 def test_one_approval_per_revision_never_expired_and_never_timed(connect):
-    """BR3.2 and BR3.5: one approval per preview revision; `expired` and `expires_at` never occur."""
+    """BR3.2 and BR3.5: one approval per preview revision; `expired` and `expires_at` never
+    occur."""
     with connect("export") as conn:
         connection, account = rows.connected(conn)
         facts = rows.preview(conn, connection, account)
@@ -275,7 +278,8 @@ def test_failed_effects_carry_a_reason_and_never_return_to_accepted(connect):
         effect = rows.exported(conn)["effect"]
         with pytest.raises(CHECK), conn.transaction():  # an accepted effect has no ended_at
             conn.execute(
-                "UPDATE export.effect SET revision=revision+1,ended_at=clock_timestamp() WHERE id=%s",
+                "UPDATE export.effect SET revision=revision+1,ended_at=clock_timestamp() "
+                "WHERE id=%s",
                 (effect,),
             )
         with pytest.raises(CHECK), conn.transaction():  # failed needs its reason
@@ -285,7 +289,8 @@ def test_failed_effects_carry_a_reason_and_never_return_to_accepted(connect):
                 (effect,),
             )
         conn.execute(
-            "UPDATE export.effect SET state='failed',revision=revision+1,ended_at=clock_timestamp(),"
+            "UPDATE export.effect SET state='failed',revision=revision+1,"
+            "ended_at=clock_timestamp(),"
             "outcome_reason='dependency-unavailable' WHERE id=%s",
             (effect,),
         )
@@ -295,7 +300,9 @@ def test_failed_effects_carry_a_reason_and_never_return_to_accepted(connect):
                 "outcome_reason=NULL WHERE id=%s",
                 (effect,),
             )
-        row = conn.execute("SELECT state,revision FROM export.effect WHERE id=%s", (effect,)).fetchone()
+        row = conn.execute(
+            "SELECT state,revision FROM export.effect WHERE id=%s", (effect,)
+        ).fetchone()
         assert (row["state"], row["revision"]) == ("failed", 2)
 
 
@@ -311,7 +318,8 @@ def test_one_effect_in_flight_per_owner_and_effects_copy_their_binding(connect):
         with pytest.raises(CHECK), conn.transaction():
             conn.execute(
                 "INSERT INTO export.effect(id,approval_id,account_id,artifact_id,destination_id,"
-                "binding_hash,marker,request_key,state) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,'executing')",
+                "binding_hash,marker,request_key,state) "
+                "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,'executing')",
                 (uuid4(), approval, account, second["artifact"], second["destination"],
                  second["binding_hash"], second["marker"], uuid4()),
             )

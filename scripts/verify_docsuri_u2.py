@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import secrets
 import shutil
 import socket
@@ -108,6 +109,7 @@ PHASES = (
     "frontend",
     "browser",
     "operations",
+    "coverage",
     "serve",
     "teardown",
 )
@@ -757,6 +759,204 @@ def run_phase(phase: str, path: Path) -> dict:
     return {"state": "passed", "phase": phase}
 
 
+# The coverage phase (U8 plan Step 44; the person's decision of 2026-10-24, "Add U2's
+# coverage phase"). `.coveragerc.u2` states an 80% floor that no phase measured. This
+# phase measures it across U2's five owner layers on a fresh environment: each layer is
+# its own bounded pytest run in U2's form (`--maxfail=1`, U2's ini unchanged), the first
+# begins one data file in the run root and the rest append to it, and one report of the
+# combined data is judged once. pytest exits 0 below a floor and the report rounds, so
+# the verdict reads the TOTAL row's statements and misses, cut to two decimals.
+# U2's CI gives each layer its own realm. In one realm the component layer must run
+# first: its lifecycle worker test takes the oldest open request in the realm, and the
+# database and repository layers leave such requests behind. The measured lines are a
+# union, so the order changes no figure.
+COVERAGE_LAYERS = ("component", "database", "repository", "integration", "operations")
+COVERAGE_RC = ROOT / "backend/.coveragerc.u2"
+COVERAGE_DATA = RUN / ".coverage-u2"
+COVERAGE_TOTAL = re.compile(r"^TOTAL\s+(\d+)\s+(\d+)\s+\d+(?:\.\d+)?%", re.MULTILINE)
+COVERAGE_ROW = re.compile(r"^(\S+\.py)\s+(\d+)\s+(\d+)\s+(\d+(?:\.\d+)?)%", re.MULTILINE)
+COVERAGE_FLOOR = re.compile(r"^fail_under\s*=\s*(\d+(?:\.\d+)?)\s*$", re.MULTILINE)
+LOWEST_SHOWN = 10
+
+
+def coverage_floor(rc: Path = COVERAGE_RC) -> float:
+    found = COVERAGE_FLOOR.findall(rc.read_text())
+    if len(found) != 1:
+        raise Refused("the coveragerc must state exactly one fail_under")
+    return float(found[0])
+
+
+def coverage_total(report: str) -> float | None:
+    """The last TOTAL row's line coverage, cut (never rounded up) to two decimals."""
+    rows = COVERAGE_TOTAL.findall(report)
+    if not rows:
+        return None
+    statements, missed = (int(value) for value in rows[-1])
+    if statements <= 0 or not 0 <= missed <= statements:
+        return None
+    return (statements - missed) * 10000 // statements / 100
+
+
+def lowest_files(report: str, count: int = LOWEST_SHOWN) -> list[dict]:
+    """The report's least-covered files, lowest first: the figures a shortfall names."""
+    rows = [
+        {"file": name, "statements": int(statements), "missed": int(missed),
+         "percent": float(percent)}
+        for name, statements, missed, percent in COVERAGE_ROW.findall(report)
+        if int(statements) > 0
+    ]
+    return sorted(rows, key=lambda row: (row["percent"], -row["missed"]))[:count]
+
+
+def read_report(log: Path) -> str:
+    try:
+        return log.read_text("utf-8", "replace")
+    except OSError:
+        return ""
+
+
+def judge_coverage(evidence: dict, report: str, rc: Path = COVERAGE_RC) -> dict:
+    """Fail below the floor, or when the report has no total; an earlier failure keeps
+    its own category."""
+    floor = coverage_floor(rc)
+    total = coverage_total(report)
+    evidence.update(coverageTotalPercent=total, coverageFloorPercent=floor,
+                    lowestFiles=lowest_files(report))
+    if total is None or total < floor:
+        if not evidence["exitCode"]:
+            evidence["failureCategory"] = (
+                "coverage-total-missing" if total is None else "coverage-below-floor"
+            )
+        evidence["exitCode"] = evidence["exitCode"] or 1
+    return evidence
+
+
+def with_coverage_file(args: list[str]) -> list[str]:
+    """U2's bounded process passes a fixed environment, so the data file is named on the
+    command line: the run root's file, never the coveragerc's file in the repository."""
+    return ["/usr/bin/env", f"COVERAGE_FILE={COVERAGE_DATA}", *args]
+
+
+def coverage_layer_command(layer: str, report: Path) -> list[str]:
+    args = [
+        str(PYTHON), "-m", "pytest", "-c", "backend/pytest.u2-account-personal-controls.ini",
+        f"tests/u2_account_personal_controls/{layer}", "-q", "--maxfail=1",
+        f"--junitxml={report}", "--cov", f"--cov-config={COVERAGE_RC.relative_to(ROOT)}",
+        "--cov-report=", "--cov-fail-under=0",
+    ]
+    if layer != COVERAGE_LAYERS[0]:
+        args.append("--cov-append")
+    return with_coverage_file(args)
+
+
+def junit_counts(report: Path) -> dict:
+    """A layer's JUnit counts; zero tests, a skip or a missing report is a failure."""
+    if report.is_symlink() or not report.is_file():
+        return {"missingTestReport": True, "passed": False}
+    cases = list(ET.parse(report).getroot().iter("testcase"))
+    counts = {
+        "tests": len(cases),
+        "failures": sum(1 for c in cases if c.find("failure") is not None),
+        "errors": sum(1 for c in cases if c.find("error") is not None),
+        "skipped": sum(1 for c in cases if c.find("skipped") is not None),
+    }
+    counts["passed"] = bool(cases) and not (
+        counts["failures"] or counts["errors"] or counts["skipped"]
+    )
+    return counts
+
+
+def require_fresh_for_coverage() -> None:
+    """The measurement starts from a fresh environment: no layer has run in it yet."""
+    used = [
+        name for layer in (*COVERAGE_LAYERS, "coverage")
+        for name in (f"{layer}.xml", f"{layer}-evidence.json")
+        if (RUN / name).exists() or (RUN / name).is_symlink()
+    ]
+    if used or COVERAGE_DATA.exists() or COVERAGE_DATA.is_symlink():
+        raise Refused("coverage requires a fresh U2 environment; set up a new one")
+
+
+def coverage_layer(layer: str) -> dict:
+    from scripts.prepare_docsuri_u2_browser import bounded_process
+
+    report = RUN / f"coverage-{layer}.xml"
+    args = coverage_layer_command(layer, report)
+    supervision, failure = {}, None
+    try:
+        supervision = bounded_process(
+            args, RUN / f"browser-phase-coverage-{layer}-{time.time_ns()}.log", seconds=300
+        )
+    except (Refused, RuntimeError, OSError) as error:
+        failure = type(error).__name__
+    counts = junit_counts(report)
+    reported = counts.pop("passed")
+    passed = not failure and supervision.get("exitCode") == 0 and reported
+    return {"layer": layer, "command": args, "exitCode": 0 if passed else 1,
+            "supervision": supervision, "failureCategory": failure, **counts}
+
+
+def coverage_report() -> tuple[dict, str]:
+    from scripts.prepare_docsuri_u2_browser import bounded_process
+
+    log = RUN / f"browser-phase-coverage-report-{time.time_ns()}.log"
+    args = with_coverage_file([
+        str(PYTHON), "-m", "coverage", "report",
+        f"--rcfile={COVERAGE_RC.relative_to(ROOT)}", "--precision=2", "--fail-under=0",
+    ])
+    supervision, failure = {}, None
+    try:
+        supervision = bounded_process(args, log, seconds=300)
+    except (Refused, RuntimeError, OSError) as error:
+        failure = type(error).__name__
+    code = 1 if failure else supervision.get("exitCode", 1)
+    return ({"command": args, "exitCode": code, "supervision": supervision,
+             "failureCategory": failure, "log": log.name}, read_report(log))
+
+
+def run_coverage(path: Path) -> dict:
+    _, value = manifest(path)
+    require_resources(value)
+    preflight()
+    if {name: digest(ROOT / name) for name in LOCKS} != value["locks"]:
+        raise Refused(
+            "frozen dependency identity changed; reconcile environment before testing"
+        )
+    require_fresh_for_coverage()
+    before = source_identity()
+    start = time.monotonic()
+    layers = []
+    for layer in COVERAGE_LAYERS:
+        layers.append(coverage_layer(layer))
+        if layers[-1]["exitCode"]:
+            break
+    evidence = {"phase": "coverage", "runId": value["runId"], "layers": layers,
+                "source": before, "locks": value["locks"], "failureCategory": None,
+                "exitCode": 0 if len(layers) == len(COVERAGE_LAYERS)
+                and not any(layer["exitCode"] for layer in layers) else 1}
+    if not evidence["exitCode"]:
+        report, text = coverage_report()
+        evidence.update(report=report, exitCode=report["exitCode"])
+        judge_coverage(evidence, text)
+    if source_identity()["sha256"] != before["sha256"]:
+        evidence["sourceChangedDuringRun"] = True
+        evidence["exitCode"] = evidence["exitCode"] or 1
+    evidence["durationSeconds"] = time.monotonic() - start
+    private_json(RUN / "coverage-evidence.json", evidence)
+    print(json.dumps({
+        "phase": "coverage", "exitCode": evidence["exitCode"],
+        "failureCategory": evidence["failureCategory"],
+        "layers": {item["layer"]: {key: item.get(key) for key in
+                   ("exitCode", "tests", "failures", "errors", "skipped")}
+                   for item in layers},
+        **{key: evidence[key] for key in
+           ("coverageTotalPercent", "coverageFloorPercent", "lowestFiles") if key in evidence},
+    }))
+    if evidence["exitCode"]:
+        raise Refused("U2 coverage failed; evidence preserved")
+    return {"state": "passed", "phase": "coverage"}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--phase", required=True, choices=PHASES)
@@ -784,6 +984,8 @@ def main() -> int:
 
         with exclusive():
             result = serve(args.environment_file, 300)
+    elif args.phase == "coverage":
+        result = run_coverage(args.environment_file)
     elif args.phase == "teardown":
         raise Refused(
             "automatic disposal is disabled; preserve evidence and archive the owned realm explicitly"

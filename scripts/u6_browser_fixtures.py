@@ -7,11 +7,12 @@ fake Notion's run-bound scenario:
 
 - shared pages, including an untitled one and two same-titled ones told apart by their
   parent, plus a shared page the connection cannot read;
-- for each browser spec that cancels or settles (`journeys.spec.ts`, `keyboard.spec.ts`
-  and the dialogs `accessibility.spec.ts` opens) its own cancel destination and settle
-  destination, so no spec depends on another's leftovers. A cancel destination answers
-  its first two page requests normally (the preview's destination read and the approve
-  call's binding read) and every later one with 503, so the lane's pre-write check
+- for each browser spec that cancels or settles (`journeys.spec.ts`, `keyboard.spec.ts`,
+  `reflow.spec.ts` and the dialogs `accessibility.spec.ts` opens) its own cancel
+  destination and settle destination, so no spec depends on another's leftovers. A
+  cancel destination answers its first two page requests normally (the preview's
+  destination read and the approve call's binding read) and every later one with 503,
+  so the lane's pre-write check
   cannot complete and the export waits as accepted until the journey cancels it. A
   settle destination answers its create with 504; from then on its children answer
   503, so every scan records listing-unavailable and settlement is offered once the
@@ -35,10 +36,9 @@ from contextlib import nullcontext
 from pathlib import Path
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "scripts"))
-sys.path.insert(0, str(ROOT / "ops/src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ops/src"))
 
 from psycopg.types.json import Jsonb
 
@@ -46,6 +46,7 @@ from backend.local_profile import private_bytes
 from backend.transactions import Authority, OwnerTransactions
 from scripts import verify_docsuri_u6 as runner
 
+ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_VERSION = "u6-browser-v1"
 SCENARIO_FILE = "fake-notion.json"
 CLOCK_FILE = "export-fixture-clock.json"
@@ -58,16 +59,27 @@ PAPERS = (
         "paperId": "u6-paper-alpha",
         "versionId": "u6-paper-alpha/v1",
         "title": "Synthetic export study alpha",
-        "text": "Synthetic fixture alpha: an approved export writes one page per explicit approval. This text is a test fixture, not a published study.",
+        "text": (
+            "Synthetic fixture alpha: an approved export writes one page per explicit approval. "
+            "This text is a test fixture, not a published study."
+        ),
     },
     {
         "paperId": "u6-paper-beta",
         "versionId": "u6-paper-beta/v1",
         "title": "Synthetic export study beta",
-        "text": "Synthetic fixture beta: an unclear export is checked before the owner settles it. This example is a test fixture.",
+        "text": (
+            "Synthetic fixture beta: an unclear export is checked before the owner settles it. "
+            "This example is a test fixture."
+        ),
     },
 )
-SPECS = {"journeys": "여정", "keyboard": "키보드", "accessibility": "접근성"}
+SPECS = {
+    "journeys": "여정",
+    "keyboard": "키보드",
+    "accessibility": "접근성",
+    "reflow": "재배치",
+}
 WORKSPACE_NAME = "DocSuri 합성 워크스페이스"
 PRACTICE_PAGE = "DocSuri 내보내기 연습장"
 SCENARIO_NAMES = {
@@ -173,7 +185,8 @@ def seed_accounts(conn, fixtures: dict, hashes: dict, run_id: str) -> None:
         raise runner.Refused("existing fixture account identity differs")
     for key, account in fixtures["accounts"].items():
         conn.execute(
-            "INSERT INTO accounts.account(id,email,password_hash,verified,active,authority_revision,display_name) "
+            "INSERT INTO accounts.account(id,email,password_hash,verified,active,"
+            "authority_revision,display_name) "
             "VALUES(%s,%s,%s,true,true,%s,%s) ON CONFLICT(id) DO NOTHING",
             (
                 UUID(account["accountId"]),
@@ -184,7 +197,8 @@ def seed_accounts(conn, fixtures: dict, hashes: dict, run_id: str) -> None:
             ),
         )
         conn.execute(
-            "INSERT INTO accounts.consent(account_id,purpose,granted) VALUES(%s,'local-research',true) "
+            "INSERT INTO accounts.consent(account_id,purpose,granted) "
+            "VALUES(%s,'local-research',true) "
             "ON CONFLICT(account_id,purpose) DO NOTHING",
             (UUID(account["accountId"]),),
         )
@@ -197,9 +211,11 @@ def seed_fixture_session(conn, account_id: UUID, run_id: str) -> UUID:
         "SELECT authority_revision FROM accounts.account WHERE id=%s", (account_id,)
     ).fetchone()["authority_revision"]
     conn.execute(
-        "INSERT INTO accounts.session(id,account_id,token_hash,csrf_hash,authority_revision,expires_at) "
+        "INSERT INTO accounts.session(id,account_id,token_hash,csrf_hash,authority_revision,"
+        "expires_at) "
         "VALUES(%s,%s,%s,%s,%s,clock_timestamp()+interval '30 minutes') ON CONFLICT(id) DO UPDATE "
-        "SET revoked=false,authority_revision=excluded.authority_revision,expires_at=excluded.expires_at",
+        "SET revoked=false,authority_revision=excluded.authority_revision,"
+        "expires_at=excluded.expires_at",
         (session, account_id, secrets.token_hex(32), secrets.token_hex(32), revision),
     )
     return session
@@ -208,11 +224,20 @@ def seed_fixture_session(conn, account_id: UUID, run_id: str) -> UUID:
 def seed_corpus(conn, fixtures: dict) -> None:
     """Two eligible synthetic public papers, inserted once and never rewritten."""
     for paper in PAPERS:
-        metadata = {"fixtureVersion": FIXTURE_VERSION, "runId": fixtures["runId"], "synthetic": True}
+        metadata = {
+            "fixtureVersion": FIXTURE_VERSION,
+            "runId": fixtures["runId"],
+            "synthetic": True,
+        }
         conn.execute(
             "INSERT INTO corpus.paper(id,title,authors,metadata,published_on,withdrawn) "
             "VALUES(%s,%s,%s,%s,CURRENT_DATE,false) ON CONFLICT(id) DO NOTHING",
-            (paper["paperId"], paper["title"], Jsonb(["Synthetic fixture author"]), Jsonb(metadata)),
+            (
+                paper["paperId"],
+                paper["title"],
+                Jsonb(["Synthetic fixture author"]),
+                Jsonb(metadata),
+            ),
         )
         document = {
             "title": paper["title"],
@@ -398,7 +423,9 @@ def setup(path: Path) -> dict:
     runner.require_stopped()
     fixtures = fixture_record(profile)
     novelty = _seed_database(profile, fixtures)
-    runner.private_json(profile.root / SCENARIO_FILE, scenario(profile.run_id, fixtures["notionToken"]))
+    runner.private_json(
+        profile.root / SCENARIO_FILE, scenario(profile.run_id, fixtures["notionToken"])
+    )
     if fixtures["state"] != "ready" or fixtures.get("novelty") != novelty:
         fixtures = {**fixtures, "state": "ready", "novelty": novelty}
         runner.private_json(profile.root / "browser-fixtures.json", fixtures)

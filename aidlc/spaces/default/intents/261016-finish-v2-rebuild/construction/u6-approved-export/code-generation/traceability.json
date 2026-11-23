@@ -1,6 +1,133 @@
 {
   "stage": "code-generation",
   "unit": "u6-approved-export",
+  "loop_back": {
+    "label": "Build and Test loop-back 1 (2026-10-28)",
+    "decisions": [
+      {"id": "L1-1", "text": "the preview's destination is chosen from the connection's current listing; A1 restatement: the request's destinationId, or parentPageId when absent, names an entry of the connection's current listing, and the recorded destination is that entry"},
+      {"id": "L1-2", "text": "integration rigs run U4's real export read; the due_items stub is dropped"},
+      {"id": "L1-3", "text": "the one real export stays operator evidence; the real-press target cites L1-3 and its matrix row stays 'Not runnable in this stage'"},
+      {"id": "L1-4", "text": "the pending connection state is pinned as unwatched in status_counts"},
+      {"id": "L1-5", "text": "the check schedule is pinned as the code reads the design row; intervals counted from the previous check; check_hourly_until_seconds frozen at 21600"},
+      {"id": "L1-6", "text": "the oldest-unknown age counts from the latest attempt's deadline"},
+      {"id": "L1-7", "text": "the SDK write timeout through the lane is the remaining time to deadlineAt, at most 90000 and floored at MIN_WRITE_SECONDS"},
+      {"id": "L1-8", "text": "test counts above eight are recorded and kept"},
+      {"id": "L1-9", "text": "the reflow fixtures change is a fixture-identity change; the reading of Step 26's reflow bullet is a 320 CSS px viewport across every U6 view, step state, the history and both dialogs, with a descendant walk for nested scroll containers and a viewport guard"},
+      {"id": "L1-10", "text": "the coverage floor stays a single-source rule (.coveragerc.u6 fail_under 80; no --cov-fail-under)"},
+      {"id": "L1-11", "text": "targets that belong to a later stage are named, not tested here"},
+      {"id": "L1-12", "text": "the operator fixture may read export tables for negative assertions only"}
+    ],
+    "recorded_in": "code-summary.md (Build and Test loop-back 1; Steps 41-43: configuration and measurement, process evidence, lanes, records and review)"
+  },
+  "loopback_2": {
+    "label": "Build and Test loop-back 2 (2026-11-15)",
+    "steps": "44-52",
+    "decisions": [
+      {"id": "L2-1", "text": "the session guard's could-not-check case fails for real: store_flows.held_session holds the session row FOR UPDATE so the realm's 1 s lock bound ends accounts.guard_session's statement with 55P03; FaultySessions and the patched housekeeping_store.session_current are removed; the two Faulty(OwnDue).sweep_orphans stubs stay as allowed doubles; a 42501 from a lost EXECUTE grant still reads as a revoked session (recorded, not changed)"},
+      {"id": "L2-2", "text": "the key-file read never blocks: read_record in backend/key_custody.py opens with O_RDONLY | O_NOFOLLOW | O_NONBLOCK, so S_ISREG refuses a FIFO; U2's and U8's keyrings now refuse a FIFO instead of hanging; U2's keyring regression is re-run after the change"},
+      {"id": "L2-3", "text": "the hosted logger levels are checked in U8's lane: tests/u8_service_operations_integration/integration/test_production_composition.py::test_the_composed_production_roles_keep_the_transport_loggers_at_warning, parametrized over backend.u8_main.ROLES, is built and run in U8's reopen, not in U6's; U6's matrix row stays open at U6's checkpoint"},
+      {"id": "L2-4", "text": "the connection step is measured after a disconnect: reflow.spec.ts's fourth test disconnects memberA through the view's dialog, then opens the flow; no fixture or SPECS change"}
+    ],
+    "readings": [
+      "export.status_counts keeps its window edges: an end exactly 24 h before the clock is outside (strict >), and an end after the clock still counts (no upper bound)",
+      "the due order is pinned on a fresh pass: the older of two accepted exports first, the younger once the older is no longer due",
+      "consumed means an environment holding any *-evidence-*.json file (refused by the browser phase) or a realm whose 20-account synthetic allocation is spent (refused by the conftest)",
+      "phase validity covers the verification phases run_phase runs; serve is outside the clause",
+      "NFR3.1's AAD fields are hyphenated lowercase UUID text and a decimal revision",
+      "recorded, not changed: after an outside cancellation the CancelledError's traceback keeps the closed clients reachable until the caller drops it"
+    ],
+    "targets": [
+      {"id": "U6:unit-test-instructions:never-mocked", "closed_by": ["tests/u6_approved_export/store_flows.py", "tests/u6_approved_export/component/test_binding_check.py", "tests/u6_approved_export/component/test_worker_pass.py"], "steps": "48, 51"},
+      {"id": "U6:NFR3.1", "closed_by": ["tests/u6_approved_export/operations/test_token_vault.py"], "steps": "47"},
+      {"id": "U6:NFR3.2", "closed_by": ["backend/key_custody.py", "tests/u6_approved_export/operations/test_key_custody.py", "tests/u6_approved_export/operations/test_token_keyring.py"], "steps": "46, 47"},
+      {"id": "U6:NFR3.3/operator-commands", "closed_by": ["tests/u6_approved_export/operations/test_key_commands.py"], "steps": "47"},
+      {"id": "U6:NFR3.5", "closed_by": ["tests/u6_approved_export/component/test_plaintext_lifetime.py"], "steps": "48"},
+      {"id": "U6:NFR3.9/u8-logger-levels", "closed_by": ["U8 reopen: tests/u8_service_operations_integration/integration/test_production_composition.py::test_the_composed_production_roles_keep_the_transport_loggers_at_warning"], "steps": "44", "status": "open until U8's reopen"},
+      {"id": "U6:NFR5.1/reflow", "closed_by": ["frontend/e2e/u6-approved-export/reflow.spec.ts", "frontend/e2e/u6-approved-export/helpers.ts"], "steps": "50"},
+      {"id": "U6:logical-components:watch-counts", "closed_by": ["tests/u6_approved_export/repository/test_status_counts.py"], "steps": "45"},
+      {"id": "U6:security-design:due-order", "closed_by": ["tests/u6_approved_export/repository/test_lane_store.py", "tests/u6_approved_export/component/test_worker_pass.py"], "steps": "45, 48"},
+      {"id": "U6:unit-test-instructions:environment-lifetime", "closed_by": ["tests/u6_approved_export/operations/test_u6_runner.py", "tests/u6_approved_export/operations/test_u6_profile_binding.py"], "steps": "49"},
+      {"id": "U6:unit-test-instructions:phase-validity", "closed_by": ["tests/u6_approved_export/operations/test_u6_runner.py"], "steps": "49"}
+    ],
+    "recorded_in": "code-summary.md (Build and Test loop-back 2)",
+    "step_51": {
+      "withheld_behaviour_checks": "28 checks, each run once with its behaviour withheld outside any recorded run; every test failed as designed and every edited file was restored to its baseline SHA-256",
+      "realms": ["docsuri-u6-df5b163f5c47314c (development, archived)", "docsuri-u6-0f0baa94d0bb595f (reflow, fresh, archived)"],
+      "evidence": "~/.docsuri-u8/final-evidence/u6-l2-failchecks.json (outside the repository)",
+      "note": "the reflow run's sourceChangedDuringRun came from the ECC stop:format-typecheck hook reformatting reflow.spec.ts with Prettier mid-run (formatting only), not from the withheld CSS rule"
+    },
+    "step_52": {
+      "coverage": {"realm": "docsuri-u6-c585aab3e91b8fd5", "tests": 945, "failures": 0, "errors": 0, "skipped": 0, "total_percent": 89.72, "floor": 80, "preservation_percent": 99, "source_sha256_prefix": "23b544af"},
+      "frontend": {"tests": 120, "u6_export_lines_percent": 98.53},
+      "browser": {"realm": "docsuri-u6-db604e7245242307", "tests": 14, "failures": 0},
+      "static": {"tsc": "exit 0 (--incremental false)", "eslint": "exit 0", "ruff_ci_list": "all checks passed"},
+      "regressions": {"u1": "13 passed", "u2_transport_runtime": "39 passed", "u2_keyring": "75 passed, 1 deselected", "shared_suite": "258 passed; both contract checks clean", "u2_cumulative_frontend": "59 files, 711 tests passed, 97.4% lines"},
+      "collect_only": 945
+    }
+  },
+  "loopback_3": {
+    "label": "Build and Test loop-back 3 (2026-11-17)",
+    "steps": "53-63",
+    "approved": "2026-11-18, 'Approve Plan', with the defaults L3-5 (a), L3-8 not built, L3-10 (A)",
+    "decisions": [
+      {"id": "L3-1", "text": "the lane's store faults are real: store_flows.held_rows holds named rows FOR UPDATE from connect_raw so the realm's 1 s lock bound ends the lane's own statement with 55P03 (LockNotAvailable); Broken and Interleaved(pace=False) are removed; the pace row is held only around the lane's own reservation through Interleaved's pace_hold; the effect row and the lane_status singleton are held from the claim on"},
+      {"id": "L3-2", "text": "the operator's outcome reads realm rows: Rows is replaced by two real exports of one owner, the second claimed with path_kind real and recorded refused no-access through the store's own units"},
+      {"id": "L3-3", "text": "the archive's database check reads the realm: Database is replaced by a connect_raw session with tuple rows, a bounded 5 s wait for no other client backend, and the realm's own run id in the manifest; the Docker, port, open-file and stop stand-ins stay recording only"},
+      {"id": "L3-4", "text": "the remaining wrappers and stand-ins are named under Allowed doubles by two rules: delegating wrappers (Interleaved, the reserve_pace_slot spy, racing_page, spy_method, the archive fixture's connect_admin) and recording stand-ins for what lies outside the database (resources, idle_port, open_files, stop_database)"},
+      {"id": "L3-5", "text": "the person's answer (a): FakeResearch is listed under Allowed doubles as a stand-in for U4's service and execution in test_a_missing_result_is_produced_through_the_research_service only; its export read is never called there"},
+      {"id": "L3-6", "text": "the watch counts' time is checked through the lane's real record against the database clock: a new repository test brackets the second record between two clock_timestamp() reads and reads the lane block under two caller clocks"},
+      {"id": "L3-7", "text": "NFR3.8's remaining jsdom surfaces get one hostile-text case each: the history row, the settle dialog and the connect announcement in export-live; NFR3.8 stays Unverified, browser-only"},
+      {"id": "L3-8", "text": "the person's answer: the optional Chromium checks are not built; D7, NFR3.4/connect-field, NFR5.1/component-checks and NFR3.8/provider-text are said at the gate as browser-only"},
+      {"id": "L3-9", "text": "U6's own lint configurations, passed with --config: scripts/u6-lint.toml (tests) and scripts/u6-lint-scripts.toml (scripts), E,F,I,UP,B at 100, nothing ignored"},
+      {"id": "L3-10", "text": "the person's answer (A): the four U2 accounts files are counted under scripts/u6-lint-accounts.toml; the 30 E501 lines are wrapped and shared/python-consumers.json is regenerated"},
+      {"id": "L3-11", "text": "the static-check fixes change no behaviour; Step 60 compares each changed file's syntax tree with the Step 58(c) snapshot, two expected differences (B007, UP031)"},
+      {"id": "L3-12", "text": "a lint gate in U6's own lanes: operations/test_u6_lint_gate.py, three tests on real Ruff and real files, mapped under EnvironmentTool (72 -> 75)"}
+    ],
+    "readings": [
+      "store_flows.held_session stays byte-identical; held_rows sits beside it",
+      "one path_kind real attempt is written into the synthetic realm through the store's own claim",
+      "L2-1's listed Faulty(OwnDue).sweep_orphans is not reopened",
+      "'when it happened' is the database clock at the lane's last status write; under the browser realm's fixture clock the lane status keeps database time (recorded, not changed)",
+      "the Clock line is amended: the pace reservation and the lane status record take the database clock; every other checked behaviour takes the injected now",
+      "the watch-counts check is a new test: ExportStore 91 -> 92",
+      "NFR3.8's payloads are markup and links only; sourceTitle stays plain; the settle dialog is rendered directly",
+      "one export-view case covers both live regions the ConnectForm announcement reaches",
+      "L1-8 applies: dialogs 9, history 18, export-view 16, ExportStore 92, EnvironmentTool 75",
+      "the Vitest and lint-gate withheld runs need no environment",
+      "the existing noqa E731 and E402 markers stay",
+      "the scripts' src moves three imports; Ruff never moves an import across a statement",
+      "the two docstring re-wraps change whitespace only",
+      "U6's CI lint step drops its duplicate scripts/u6_real_export.py and gains --no-cache",
+      "the static-check sweep follows the test steps; the withheld runs follow the sweep"
+    ],
+    "targets": [
+      {"id": "U6:unit-test-instructions:never-mocked", "closed_by": ["tests/u6_approved_export/store_flows.py", "tests/u6_approved_export/component/test_lane_write_path.py", "tests/u6_approved_export/operations/test_u6_real_export_checks.py", "tests/u6_approved_export/operations/test_u6_preservation.py", "unit-test-instructions.md (Allowed doubles, L3-4, L3-5)"], "steps": "55, 57, 62, 63"},
+      {"id": "U6:logical-components:watch-counts", "closed_by": ["tests/u6_approved_export/repository/test_status_counts.py"], "steps": "45, 54, 62"},
+      {"id": "U6:NFR3.8/provider-text", "closed_by": ["frontend/test/u6-export/history.test.tsx", "frontend/test/u6-export/dialogs.test.tsx", "frontend/test/u6-export/export-view.test.tsx"], "steps": "56, 62", "status": "jsdom side only; the browser side stays open (L3-8 not built)"},
+      {"id": "U6:unit-test-instructions:static-checks", "closed_by": ["scripts/u6-lint.toml", "scripts/u6-lint-scripts.toml", "scripts/u6-lint-accounts.toml", "shared/python-consumers.json", ".github/workflows/u6-approved-export.yml", "tests/u6_approved_export/operations/test_u6_lint_gate.py"], "steps": "58-61, 62, 63"},
+      {"id": "U6:code-generation-plan:testing-contract-test-volume", "closed_by": ["tests/u6_approved_export/operations/test_u6_test_volume.py"], "steps": "61"}
+    ],
+    "recorded_in": "code-summary.md (Build and Test loop-back 3)",
+    "steps_54_62": {
+      "development_realm": "docsuri-u6-fe4ff79e96a27ee3 (exploration runs only; no evidence)",
+      "lint_baseline": {"tests": 113, "scripts": 38, "u2_accounts": 30, "invocation_3": 0},
+      "lint_after": "invocations 1-4 exit 0 (run with the literal binary path; the exact-form run is Step 63's), root-suites lint exit 0, accounts folder lint exit 0, U8 accounts invocation exit 0",
+      "consumer_inventory": "ok before the U2 wraps; drift after; regenerated; ok; only the sourceDigests of local_http.py and services/control_lifecycle.py changed",
+      "ast_compare": "exit 0: 80 changed files, 79 equal, consumers json compared in Step 59(f), exactly the B007 and UP031 differences",
+      "withheld_checks": "41 withheld runs plus one control (A7), each run once outside any recorded run; every test failed as designed, the control passed, and every edited file was restored to its baseline SHA-256",
+      "collect_only": 949,
+      "open": "Step 59 (exact-form CI lint run), Step 61 (ticked on Step 63's coverage phase), Step 63"
+    },
+    "step_63": {
+      "realm_a": "docsuri-u6-184aee4a136ca171: component 591, integration 48, coverage 949 (backend 90.0%, preservation report 99.0%), frontend 123 (src/u6-export 98.53%), tsc and ESLint exit 0; source SHA-256 2227fd85...",
+      "realm_b": "docsuri-u6-c97739227a0f260c: browser 14 journeys",
+      "lanes_log": "~/.docsuri-u8/lead-scripts/final-lanes/run-20261118-214238-93212",
+      "without_realm": "the workflow lint step run exactly as written (invocations 1-4 pass), the prior-unit regressions 75 passed 1 deselected, the shared contract lint, both consumer inventories ok, U2's cumulative Vitest 718 passed (728 - 13 from U5's loop-back 3 merges + 3)",
+      "without_realm_log": "~/.docsuri-u8/lead-scripts/final-lanes/u6-step63-extra-20261118-123557",
+      "u5_recheck": "L3-10 (A)'s local_http.py wrap staled U5's review: U5 re-checked READY (iteration 2), re-verified (VerificationRun 339aec71-7bc2-46e6-949d-4e084155f809) and re-approved",
+      "plan_boxes": "every box of Steps 1-63 ticked again after these runs passed"
+    }
+  },
   "upstream_ids": [
     "FR1", "FR1.1", "FR1.2", "FR1.3", "FR1.4", "FR1.5", "FR1.6",
     "FR2", "FR2.1", "FR2.2", "FR2.3", "FR2.4", "FR2.5",

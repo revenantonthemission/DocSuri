@@ -257,3 +257,67 @@ def test_save_existing_reference_converges(library, authority, library_paper):
     first = library.save(authority, paper, version, uuid4(), eligibility=revision)
     assert library.save(authority, paper, version, uuid4(), eligibility=revision) == first
     assert len(library.page(authority, "papers", limit=5)["items"]) == 1
+
+
+def test_clear_history_requires_the_exact_current_boundary(library, authority, discovery):
+    fact = complete(discovery, authority, admit(discovery, authority))
+    assert library.accept_history(authority, fact)
+    with pytest.raises(ValueError, match="exact history revision"):
+        library.clear_history(authority, uuid4(), str(library.history_boundary(authority)["revision"]))
+    with pytest.raises(LibraryConflict, match="history boundary changed"):
+        library.clear_history(authority, uuid4(), uuid4())
+    assert len(library.page(authority, "history", limit=5)["items"]) == 1
+
+
+def test_history_fact_for_another_owner_is_refused(library, authority, discovery, identities):
+    fact = complete(discovery, authority, admit(discovery, authority))
+    with pytest.raises(PermissionError, match="history owner mismatch"):
+        library.accept_history(authority, dict(fact, account_id=identities["b"]))
+    assert library.page(authority, "history", limit=5)["items"] == []
+
+
+@pytest.mark.parametrize("paper,version", [("", "u2-library-version"), ("p" * 161, "v")])
+def test_save_requires_a_bounded_stable_identity(library, authority, paper, version):
+    with pytest.raises(ValueError, match="bounded stable paper identity"):
+        library.save(authority, paper, version, uuid4())
+
+
+def test_save_replay_returns_the_first_outcome(library, authority, library_paper):
+    paper, version, revision = library_paper
+    key = uuid4()
+    first = library.save(authority, paper, version, key, eligibility=revision)
+    assert library.save(authority, paper, version, key, eligibility=revision) == first
+
+
+def test_save_with_an_expected_revision_needs_that_saved_reference(
+    library, authority, library_paper
+):
+    paper, version, revision = library_paper
+    with pytest.raises(LibraryConflict, match="saved reference unavailable"):
+        library.save(authority, paper, version, uuid4(), uuid4(), eligibility=revision)
+    saved = library.save(authority, paper, version, uuid4(), eligibility=revision)
+    with pytest.raises(LibraryConflict, match="saved reference differs"):
+        library.save(authority, paper, version, uuid4(), uuid4(), eligibility=revision)
+    assert library.read_record(authority, "papers", paper)["revision"] == saved["revision"]
+
+
+def test_saved_reference_without_continuity_evidence_is_not_published(
+    library, authority, library_paper, connect
+):
+    paper, version, _ = library_paper
+    with connect("library") as conn:
+        conn.execute(
+            "INSERT INTO library.saved_paper(account_id,paper_id,version_id,eligibility_revision,saved_title) "
+            "VALUES(%s,%s,%s,NULL,'Legacy title')",
+            (authority.account_id, paper, version),
+        )
+    with pytest.raises(ValueError, match="continuity evidence required"):
+        library.read_record(authority, "papers", paper)
+
+
+def test_library_pages_and_reads_are_bounded_and_owned(library, authority):
+    for limit in (0, 51, "5"):
+        with pytest.raises(ValueError, match="invalid bounded library page"):
+            library.page(authority, "queries", limit=limit)
+    with pytest.raises(PermissionError, match="library reference unavailable"):
+        library.read_record(authority, "queries", str(uuid4()))

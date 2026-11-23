@@ -20,6 +20,11 @@ class PendingLifecycleEvidence(RuntimeError):
     """A finite owner pass has more responsibility to reconcile."""
 
 
+# What `ControlWorker._guarded` answers for an item set aside for its turn. The built hook
+# never sets one aside; U8's `CompleteLifecycleWorker` does (U8 plan Step 44).
+SET_ASIDE = object()
+
+
 def purge(conn, owner, ticket):
     # Owner comes only from these installed classes, never browser input.
     from psycopg import sql
@@ -168,7 +173,11 @@ class AssistanceLifecycleParticipant:
 
 
 class ControlWorker:
-    """One finite pass, reusable after process restart; never a public command."""
+    """One finite pass, reusable after process restart; never a public command.
+
+    Three hooks hold U2's built behaviour, so U8's `CompleteLifecycleWorker` can replace
+    them in the complete realms only (U8 plan Step 44): `_open_requests` (the built
+    selection), `_guarded` (calls the work) and `_acknowledgement_options` (none)."""
 
     def __init__(self, entry, lifecycle, personalization, files):
         self.entry, self.transactions, self.lifecycle = entry, entry.transactions, lifecycle
@@ -240,23 +249,54 @@ class ControlWorker:
 
         return self.transactions.run("assistance", write)
 
+    def _open_requests(self, limit):
+        """The open lifecycle requests one pass inspects (the built selection)."""
+        return self.transactions.run(
+            "accounts",
+            lambda conn: conn.execute(
+                "SELECT r.id FROM accounts.lifecycle_request r "
+                "JOIN accounts.account a ON a.id=r.account_id "
+                "WHERE r.revision=a.lifecycle_revision AND r.disposition<>'complete' "
+                "AND r.manifest_revision=%s AND EXISTS (SELECT 1 FROM accounts.lifecycle_scope s "
+                "WHERE s.request_id=r.id AND s.disposition<>'complete' AND s.attempts<3 "
+                "AND (s.lease_until IS NULL OR s.lease_until<=clock_timestamp())) "
+                "ORDER BY r.accepted_at,r.id LIMIT %s",
+                (self.lifecycle.revision, limit),
+            ).fetchall(),
+        )
+
+    def _guarded(self, kind: str, identity, work):
+        """One item's work (the built hook calls it, so a failure ends the pass)."""
+        return work()
+
+    def _acknowledgement_options(self, result) -> dict:
+        """Extra acknowledgement options a participant's result carries (none, as built)."""
+        return {}
+
     def run_once(self, limit=4):
         if type(limit) is not int or not 1 <= limit <= 4:
             raise ValueError("finite control-worker bound required")
-        self.admission.reconcile_admissions(limit=limit)
-        self.admission.recover_execution(limit=limit)
+        self._guarded("assistance-admissions", "reconcile",
+                      lambda: self.admission.reconcile_admissions(limit=limit))
+        self._guarded("assistance-execution", "recover",
+                      lambda: self.admission.recover_execution(limit=limit))
         from backend.modules.accounts.control_repository import ControlRepository
 
         repository = ControlRepository(self.transactions, self.entry.control_policy)
         for purpose in ("personalization", "local-research"):
             for fact in repository.pending_consents(limit=limit, purpose=purpose):
                 try:
-                    evidence = (
-                        UUID(self.personalization.apply_consent_boundary(fact)["evidenceRef"])
-                        if purpose == "personalization"
-                        else self.apply_research_consent(fact)
+                    evidence = self._guarded(
+                        "consent-obligation", fact["id"],
+                        lambda fact=fact, purpose=purpose: (
+                            UUID(self.personalization.apply_consent_boundary(fact)[
+                                "evidenceRef"])
+                            if purpose == "personalization"
+                            else self.apply_research_consent(fact)),
                     )
                 except PendingLifecycleEvidence:
+                    continue
+                if evidence is SET_ASIDE:
                     continue
                 repository.acknowledge_consent(fact["id"], fact["consent_revision"], evidence)
         resets = self.transactions.run(
@@ -272,20 +312,9 @@ class ControlWorker:
             ).fetchall(),
         )
         for row in resets:
-            self.personalization.clean_reset(row["id"])
-        requests = self.transactions.run(
-            "accounts",
-            lambda conn: conn.execute(
-                "SELECT r.id FROM accounts.lifecycle_request r "
-                "JOIN accounts.account a ON a.id=r.account_id "
-                "WHERE r.revision=a.lifecycle_revision AND r.disposition<>'complete' "
-                "AND r.manifest_revision=%s AND EXISTS (SELECT 1 FROM accounts.lifecycle_scope s "
-                "WHERE s.request_id=r.id AND s.disposition<>'complete' AND s.attempts<3 "
-                "AND (s.lease_until IS NULL OR s.lease_until<=clock_timestamp())) "
-                "ORDER BY r.accepted_at,r.id LIMIT %s",
-                (self.lifecycle.revision, limit),
-            ).fetchall(),
-        )
+            self._guarded("personalization-reset", row["id"],
+                          lambda row=row: self.personalization.clean_reset(row["id"]))
+        requests = self._open_requests(limit)
         outcomes = []
         for request in requests:
             for participant, scope in self.lifecycle.manifest:
@@ -300,13 +329,21 @@ class ControlWorker:
                     )
                     continue
                 try:
-                    result = adapter.apply(ticket)
+                    result = self._guarded(
+                        "lifecycle-scope", f"{request['id']}:{participant}:{scope}",
+                        lambda adapter=adapter, ticket=ticket: adapter.apply(ticket))
+                    if result is SET_ASIDE:
+                        continue  # its lease runs out; the next pass claims it again
+                    options = self._acknowledgement_options(result)
                 except PendingLifecycleEvidence as error:
                     self.lifecycle.acknowledge(ticket, evidence=None, reason=str(error))
                     continue
                 outcomes.append(
                     self.lifecycle.acknowledge(
-                        ticket, evidence=UUID(result["evidenceRef"]), reason=result["reasonKey"]
+                        ticket,
+                        evidence=UUID(result["evidenceRef"]),
+                        reason=result["reasonKey"],
+                        **options,
                     )
                 )
         return {"requestsInspected": len(requests), "scopesAcknowledged": len(outcomes)}

@@ -1,0 +1,20 @@
+#!/Library/DocSuri/release/.venv/bin/python -I
+"""docsuri-tunnel-route: route the tunnel to one registered origin (A6, BR6.11, D6).
+
+Run as root through sudo, in person, with one origin's name (v1-web, v2-host or
+maintenance) and the operation's receipt identifier as bounded JSON on standard input.
+It makes that root-owned registered configuration the active one, restarts the tunnel's
+job, and writes one JSON result. It refuses to run when the environment holds PYTHON*,
+DYLD_* or LD_* variables.
+"""
+
+import sys
+
+if sys.argv[1:] == ["--self-check"]:
+    from docsuri_ops.release import self_check
+
+    raise SystemExit(self_check(__file__))
+
+from docsuri_ops.u8_platform.fixed import main_fixed
+
+raise SystemExit(main_fixed("docsuri-tunnel-route"))

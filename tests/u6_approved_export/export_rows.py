@@ -11,6 +11,8 @@ from uuid import uuid4
 
 from psycopg.types.json import Jsonb
 
+from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
+
 ENVELOPE_TAG = b"DSE1"
 NONCE_BYTES = 12
 SYNTHETIC_CIPHERTEXT_BYTES = 48
@@ -180,7 +182,12 @@ def exported(conn, account=None):
     connection, account = connected(conn, account)
     facts = preview(conn, connection, account)
     approval = approve(conn, facts)
-    return {**facts, "connection": connection, "approval": approval, "effect": bind(conn, facts, approval)}
+    return {
+        **facts,
+        "connection": connection,
+        "approval": approval,
+        "effect": bind(conn, facts, approval),
+    }
 
 
 def advance(conn, effect, state, **facts):
@@ -235,6 +242,60 @@ def lifecycle_ticket(connect, account, action, scopes=("live_records",)):
                 (request, scope),
             )
     return (request, account, 1, Jsonb(APPROVAL_POLICY), "u6-store-test")
+
+
+LIFECYCLE_MANIFEST_REVISION = "u6-lifecycle-test"
+
+
+def participant_tickets(
+    connect, account, action, scopes=("live_records", "pending_work", "external_copies")
+) -> dict:
+    """One live lifecycle request, as `component/test_export_lifecycle.py` seeds it;
+
+    returns the per-scope tickets each `ExportLifecycleParticipant.apply` call takes
+    (lifted there from that test's `seed`; `lifecycle_ticket` stays as it is).
+    """
+    request, lifecycle_revision = uuid4(), uuid4()
+    with connect("accounts") as conn:
+        conn.execute(
+            "UPDATE accounts.account SET lifecycle_revision=%s WHERE id=%s",
+            (lifecycle_revision, account),
+        )
+        conn.execute(
+            "INSERT INTO accounts.lifecycle_request(id,account_id,revision,action,policy_ref,"
+            "manifest_revision,manifest,disposition,reason_key) "
+            "VALUES(%s,%s,%s,%s,%s,%s,%s,'pending','pending')",
+            (
+                request,
+                account,
+                lifecycle_revision,
+                action,
+                Jsonb(SYNTHETIC_POLICY.reference),
+                LIFECYCLE_MANIFEST_REVISION,
+                Jsonb([["ApprovedExport", scope] for scope in scopes]),
+            ),
+        )
+        for scope in scopes:
+            conn.execute(
+                "INSERT INTO accounts.lifecycle_scope(request_id,participant,scope,generation,"
+                "lease_until,attempts) VALUES(%s,'ApprovedExport',%s,1,"
+                "clock_timestamp()+interval '1 minute',1)",
+                (request, scope),
+            )
+    return {
+        scope: {
+            "request_id": request,
+            "account_id": account,
+            "lifecycle_revision": lifecycle_revision,
+            "participant": "ApprovedExport",
+            "scope": scope,
+            "generation": 1,
+            "action": action,
+            "policy_ref": SYNTHETIC_POLICY.reference,
+            "manifest_revision": LIFECYCLE_MANIFEST_REVISION,
+        }
+        for scope in scopes
+    }
 
 
 def end_attempt(conn, attempt, response_class, **facts):

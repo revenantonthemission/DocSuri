@@ -1,12 +1,16 @@
 """C02/C03 mounted contract and current-authority checks over the real store."""
 
+import json
 from uuid import uuid4
 from urllib.parse import urlsplit
 import time
 
 import pytest
-from test_library_personal_http import PASSWORD, CONTROL_POLICY
+from test_library_personal_http import PASSWORD, CONTROL_POLICY, ENTRY_POLICY
 from test_library_personal_http import browser as browser
+from backend.local_browser import ENTRY_COOKIE, SESSION_COOKIE
+from backend.modules.accounts.control_policy import SYNTHETIC_POLICY
+from backend.modules.accounts.services.control_entry import ControlEntryService
 from backend.modules.accounts.services.control_mfa import totp
 
 pytestmark = pytest.mark.u2_integration
@@ -426,3 +430,317 @@ def test_control_transport_rejects_wrong_authority(browser, header, value):
         headers={header: value, "Idempotency-Key": str(uuid4())},
     )
     assert result.status_code == 403
+
+
+NEW_PASSWORD = "Reset!Research2026"
+EMAIL = "u2-a@fixture.example.com"
+
+
+@pytest.fixture
+def mail(transactions):
+    """The realm's synthetic verification mailbox: only mail a case itself caused."""
+    root = ControlEntryService(transactions, SYNTHETIC_POLICY).mail.root
+    before = set(root.glob("*.blob"))
+
+    def delivered(purpose):
+        values = [json.loads(path.read_text()) for path in set(root.glob("*.blob")) - before]
+        return [value for value in values if value.get("purpose") == purpose]
+
+    return delivered
+
+
+def refresh_csrf(client):
+    bootstrap = client.get("/api/v2/session").json()
+    client.headers["X-CSRF-Token"] = bootstrap["csrfToken"]
+    return bootstrap
+
+
+def sign_in(client, password):
+    client.cookies.delete(SESSION_COOKIE)
+    refresh_csrf(client)
+    response = post(
+        client, "access-login", {"email": EMAIL, "password": password, "policyRef": ENTRY_POLICY}
+    )
+    refresh_csrf(client)
+    return response
+
+
+def withdraw_over_http(client):
+    before = read_profile(client)
+    prepared = post(
+        client,
+        "access-prepare-lifecycle",
+        {
+            "action": "withdraw",
+            "expectedRevision": before["lifecycleRevision"],
+            "currentProof": PASSWORD,
+            "policyRef": CONTROL_POLICY,
+        },
+    )
+    assert prepared.status_code == 200, prepared.text
+    result = post(
+        client,
+        "lifecycle-request",
+        {
+            "action": "withdraw",
+            "confirmationRef": prepared.json()["confirmationRef"],
+            "policyRef": CONTROL_POLICY,
+        },
+    )
+    assert result.status_code == 200, result.text
+    refresh_csrf(client)
+
+
+def link_over_http(client, provider):
+    begin = post(
+        client,
+        "access-begin-identity-flow",
+        {"provider": provider, "intent": "link", "returnRouteId": "settings", "policyRef": CONTROL_POLICY},
+    )
+    assert begin.status_code == 200, begin.text
+    url = urlsplit(begin.json()["authorizationUrl"])
+    callback = client.get(url.path + "?" + url.query)
+    assert callback.status_code == 200, callback.text
+    return callback.json()["identityLink"]
+
+
+@pytest.fixture
+def unlinked(connect, identities):
+    """Start with no links or open flows; leave none behind for the other layers."""
+    with connect("accounts") as conn:
+        conn.execute("DELETE FROM accounts.identity_link WHERE account_id=%s", (identities["a"],))
+        conn.execute(
+            "UPDATE accounts.identity_flow SET disposition='expired' WHERE disposition IN ('pending','exchanging')"
+        )
+    yield
+    with connect("accounts") as conn:
+        conn.execute("DELETE FROM accounts.identity_link WHERE account_id=%s", (identities["a"],))
+
+
+def test_profile_update_with_another_field_vocabulary_conflicts(browser):
+    before = read_profile(browser)
+    result = post(
+        browser,
+        "access-update-profile",
+        {
+            "expectedRevision": before["revision"],
+            "fieldVocabularyRevision": "another-profile-vocabulary",
+            "changes": [{"fieldId": "displayName", "value": "바뀌면 안 됨"}],
+            "policyRef": CONTROL_POLICY,
+        },
+    )
+    assert result.status_code == 409 and result.json()["code"] == "CONFLICT"
+    assert read_profile(browser) == before
+
+
+def test_consent_page_beyond_the_policy_limit_is_refused(browser):
+    result = post(browser, "access-list-consents", {"page": {"limit": 51}})
+    assert result.status_code == 409
+    assert post(browser, "access-list-consents", {"page": {"limit": 50}}).status_code == 200
+
+
+def test_password_reset_completes_only_for_its_entry_flow(browser, mail):
+    requested = post(
+        browser, "access-request-password-reset", {"email": EMAIL, "policyRef": CONTROL_POLICY}
+    )
+    assert requested.status_code == 200, requested.text
+    (proof,) = mail("password-reset")
+    verification = {
+        "challengeId": proof["challengeId"],
+        "proof": proof["proof"],
+        "flowBinding": "another-entry-flow",
+    }
+    body = {"verification": verification, "newPassword": NEW_PASSWORD}
+    assert post(browser, "access-complete-password-reset", body).status_code == 403
+    verification["flowBinding"] = proof["flowBinding"]
+    done = post(browser, "access-complete-password-reset", body)
+    assert done.status_code == 200, done.text
+    assert set(done.json()) == {"resourceId", "revision", "requestId"}
+    assert not browser.get("/api/v2/session").json()["signedIn"]
+    assert sign_in(browser, PASSWORD).status_code in (401, 403)
+    login = sign_in(browser, NEW_PASSWORD)
+    assert login.status_code == 200, login.text
+    assert login.json()["state"] == "authenticated"
+
+
+def test_email_change_completes_over_http_and_its_lost_ack_reconciles(browser, mail):
+    address = "u2-http-" + uuid4().hex + "@fixture.example.com"
+    requested = post(
+        browser,
+        "access-request-email-change",
+        {"currentProof": PASSWORD, "newEmail": address, "policyRef": CONTROL_POLICY},
+    )
+    assert requested.status_code == 200, requested.text
+    (proof,) = mail("email-change")
+    verification = {
+        "challengeId": proof["challengeId"],
+        "proof": proof["proof"],
+        "flowBinding": proof["flowBinding"],
+    }
+    forged = post(
+        browser,
+        "access-complete-email-change",
+        {"verification": dict(verification, flowBinding="another-entry-flow")},
+    )
+    assert forged.status_code == 403
+    cookies = "; ".join(
+        name + "=" + browser.cookies.get(name) for name in (SESSION_COOKIE, ENTRY_COOKIE)
+    )
+    csrf, key = browser.headers["X-CSRF-Token"], uuid4()
+    done = post(browser, "access-complete-email-change", {"verification": verification}, key=key)
+    assert done.status_code == 200, done.text
+    assert not browser.get("/api/v2/session").json()["signedIn"]
+    replay = browser.post(
+        "/api/v2/c02/access-complete-email-change",
+        json={"verification": verification},
+        headers={"Cookie": cookies, "X-CSRF-Token": csrf, "Idempotency-Key": str(key)},
+    )
+    assert replay.status_code == 200, replay.text
+    assert replay.json() == done.json()
+
+
+def test_withdrawn_owner_reactivates_over_http_with_a_limited_status_cookie(browser, mail):
+    withdraw_over_http(browser)
+    requested = post(
+        browser, "access-request-reactivation", {"email": EMAIL, "policyRef": CONTROL_POLICY}
+    )
+    assert requested.status_code == 200, requested.text
+    (proof,) = mail("reactivate")
+    verification = {
+        "challengeId": proof["challengeId"],
+        "proof": proof["proof"],
+        "flowBinding": proof["flowBinding"],
+    }
+    mismatched = post(
+        browser,
+        "lifecycle-reactivate",
+        {"verification": verification, "confirmationRef": str(uuid4()), "policyRef": CONTROL_POLICY},
+    )
+    assert mismatched.status_code == 403
+    accepted = post(
+        browser,
+        "lifecycle-reactivate",
+        {"verification": verification, "confirmationRef": proof["challengeId"], "policyRef": CONTROL_POLICY},
+    )
+    assert accepted.status_code == 200, accepted.text
+    value = accepted.json()
+    assert value["state"] == "accepted" and value["access"] == "reactivation_pending"
+    status = post(browser, "lifecycle-inspect", {"lifecycleRequestId": value["lifecycleRequestId"]})
+    assert status.status_code == 200, status.text
+    assert status.json()["action"] == "reactivate"
+    assert post(browser, "access-read-profile", {}).status_code == 401
+
+
+def test_mfa_routes_refuse_mismatched_proofs_and_gated_recovery(browser):
+    session = post(browser, "access-inspect-session", {}).json()["session"]
+    mismatched = post(
+        browser,
+        "access-confirm-mfa-enrollment",
+        {
+            "enrollmentId": str(uuid4()),
+            "verification": {"challengeId": str(uuid4()), "flowBinding": session["sessionId"], "proof": "123456"},
+        },
+    )
+    assert mismatched.status_code == 403
+    proof = {"challengeId": str(uuid4()), "flowBinding": str(uuid4()), "proof": "recovery-code"}
+    verified = post(browser, "access-verify-mfa", {"factorKind": "recovery_proof", "verification": proof})
+    assert verified.status_code == 503 and verified.json()["code"] == "POLICY_UNRESOLVED"
+    recovered = post(browser, "access-recover-mfa", {"verification": proof, "policyRef": CONTROL_POLICY})
+    assert recovered.status_code == 503 and recovered.json()["code"] == "POLICY_UNRESOLVED"
+    assert read_profile(browser)["accountId"] == session["accountId"]
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/api/v2/identity/callback/github?flow=x&state=y&code=z",
+        "/api/v2/identity/callback/google?flow=x&state=y",
+        "/api/v2/identity/callback/google?flow=x&state=y&code=z&code=w",
+    ],
+)
+def test_identity_callback_refuses_unknown_providers_and_malformed_queries(browser, path):
+    result = browser.get(path)
+    assert result.status_code == 422 and result.json()["code"] == "INVALID_ARGUMENT"
+
+
+def test_linked_identity_lists_and_signs_in_through_the_provider(browser, unlinked):
+    link = link_over_http(browser, "google")
+    listed = post(browser, "access-list-identity-links", {"page": {"limit": 5}})
+    assert listed.status_code == 200, listed.text
+    assert [item["identityLinkId"] for item in listed.json()["items"]] == [link["identityLinkId"]]
+    post(browser, "access-logout", {})
+    browser.cookies.delete(SESSION_COOKIE)
+    refresh_csrf(browser)
+    begin = post(
+        browser,
+        "access-begin-identity-flow",
+        {"provider": "google", "intent": "sign_in", "returnRouteId": "search", "policyRef": CONTROL_POLICY},
+    )
+    assert begin.status_code == 200, begin.text
+    url = urlsplit(begin.json()["authorizationUrl"])
+    callback = browser.get(url.path + "?" + url.query)
+    assert callback.status_code == 200, callback.text
+    value = callback.json()
+    assert value["state"] == "signed_in"
+    assert value["identityLink"]["identityLinkId"] == link["identityLinkId"]
+    assert browser.get("/api/v2/session").json()["signedIn"]
+
+
+def test_provider_sign_in_with_an_active_factor_asks_for_the_second_factor(browser, unlinked):
+    link_over_http(browser, "google")
+    enrollment = post(
+        browser, "access-begin-mfa-enrollment", {"currentProof": PASSWORD, "policyRef": CONTROL_POLICY}
+    ).json()
+    material = post(
+        browser,
+        "access-retrieve-mfa-enrollment-material",
+        {
+            "enrollmentId": enrollment["enrollmentId"],
+            "deliveryReference": enrollment["deliveryReference"],
+            "currentProof": PASSWORD,
+        },
+    ).json()
+    session = post(browser, "access-inspect-session", {}).json()["session"]
+    confirmed = post(
+        browser,
+        "access-confirm-mfa-enrollment",
+        {
+            "enrollmentId": enrollment["enrollmentId"],
+            "verification": {
+                "challengeId": enrollment["enrollmentId"],
+                "flowBinding": session["sessionId"],
+                "proof": totp(material["seed"], int(time.time()) // 30),
+            },
+        },
+    )
+    assert confirmed.status_code == 200, confirmed.text
+    post(browser, "access-logout", {})
+    browser.cookies.delete(SESSION_COOKIE)
+    refresh_csrf(browser)
+    begin = post(
+        browser,
+        "access-begin-identity-flow",
+        {"provider": "google", "intent": "sign_in", "returnRouteId": "search", "policyRef": CONTROL_POLICY},
+    )
+    assert begin.status_code == 200, begin.text
+    url = urlsplit(begin.json()["authorizationUrl"])
+    callback = browser.get(url.path + "?" + url.query)
+    assert callback.status_code == 200, callback.text
+    assert callback.json()["state"] == "mfa_required"
+    assert not browser.get("/api/v2/session").json()["signedIn"]
+
+
+def test_orcid_profile_reads_only_the_owners_orcid_link(browser, unlinked):
+    absent = post(browser, "access-read-orcid-profile", {"identityLinkId": str(uuid4())})
+    assert absent.status_code == 403
+    google = link_over_http(browser, "google")
+    assert (
+        post(browser, "access-read-orcid-profile", {"identityLinkId": google["identityLinkId"]}).status_code
+        == 403
+    )
+    orcid = link_over_http(browser, "orcid")
+    profile = post(browser, "access-read-orcid-profile", {"identityLinkId": orcid["identityLinkId"]})
+    assert profile.status_code == 200, profile.text
+    value = profile.json()
+    assert value["identityLinkId"] == orcid["identityLinkId"]
+    assert value["provenance"] == "synthetic-orcid-fixture" and value["coverage"] == "partial"

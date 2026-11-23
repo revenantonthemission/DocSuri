@@ -16,6 +16,20 @@
 No exception object is stored, logged or returned, and nothing keeps the token after
 the operation: the value, the SDK client and its `Authorization` header are dropped
 together when the HTTP client closes.
+
+The complete assembly (U8 plan Step 21; BR7.3, BR7.5, NFR2.2) installs its provider gate
+once per process with `install_provider_gate`, as the network transport is one per
+process. Before any token is opened, `NotionSession.run` reads it: while Notion is not
+active, nothing is sent (`provider-held`); in rehearsal mode an operation through any
+connection but the maintainer's own is held as not permitted (`rehearsal-not-permitted`).
+While Notion is held in live mode, a browser-driven read through the maintainer's own
+connection still runs so the first export can be prepared; background work stays held.
+These two causes are this module's own fixed causes, beside classification's. A held read
+answers could-not-check, so the export waits and checks again; a held write answers
+protection-unavailable, so the lane records its claimed attempt as refused before sending
+and never as a page that may exist (`held_result`). With no gate installed (every
+earlier assembly) nothing changes, except that the production live policy is held: it
+fails closed rather than send without the gate.
 """
 
 import asyncio
@@ -37,11 +51,13 @@ from .classification import (
     CAUSE_INTERACTIVE_CAP,
     COULD_NOT_CHECK,
     OK,
+    PROTECTION_UNAVAILABLE,
     BudgetSpent,
     NotConnected,
     PaceUnavailable,
     Verdict,
     classify_read,
+    classify_write,
 )
 
 NOTION_SCHEME = "https"
@@ -65,6 +81,70 @@ ALLOWED_PATHS = (
     ("GET", re.compile(rf"/v1/blocks/{_ID}/children")),
 )
 _ALLOWED_QUERY = frozenset({"page_size", "start_cursor"})
+
+
+CAUSE_PROVIDER_HELD = "provider-held"
+CAUSE_NOT_PERMITTED = "rehearsal-not-permitted"
+_INSTALLED_GATE: dict = {}
+
+
+def install_provider_gate(gate, recipients) -> None:
+    """The complete assembly's provider gate and rehearsal recipients for this process;
+    `None` removes them."""
+    _INSTALLED_GATE.clear()
+    if gate is not None:
+        _INSTALLED_GATE.update(gate=gate, recipients=recipients)
+
+
+def _maintainers(target) -> bool:
+    """The maintainer's own connection: named as such, or owned by the maintainer's
+    account (a stored connection carries its owner)."""
+    recipients = _INSTALLED_GATE.get("recipients")
+    account = getattr(target, "account_id", None)
+    return recipients is not None and (
+        recipients.is_maintainer_connection(target.connection_id)
+        or (account is not None and recipients.is_maintainer_account(account))
+    )
+
+
+def provider_hold(target, *, interactive: bool = False, live: bool = False) -> str | None:
+    """The cause an installed gate holds an operation for, or None.
+
+    While Notion is held in live mode (the maintainer-only window, BR7.3) a
+    browser-driven read through the maintainer's own connection still runs, so you can
+    prepare the first export; no browser-driven operation writes. Every background
+    operation stays held: the lane's binding read answers could-not-check, so the
+    effect waits, and the one write never leaves until your decision is recorded.
+
+    `live` is the session's production live policy (U6's test-destination bound lifted).
+    That policy fails closed: with no gate installed, every operation is held, so a
+    composition that lost its gate can never send a first export before your decision.
+    Every other policy keeps the built behaviour with no gate (every earlier assembly)."""
+    gate = _INSTALLED_GATE.get("gate")
+    if gate is None:
+        return CAUSE_PROVIDER_HELD if live else None
+    from backend.modules.accounts.integrations.provider_gate import require_state
+
+    state = require_state(gate, "notion")
+    if state != "active":
+        if state == "held" and gate.mode == "live" and interactive and _maintainers(target):
+            return None
+        return CAUSE_PROVIDER_HELD
+    if gate.mode == "rehearsal" and not _maintainers(target):
+        return CAUSE_NOT_PERMITTED
+    return None
+
+
+def held_result(cause: str, *, write: bool) -> "SessionResult":
+    """What a held operation answers; it sends nothing and opens no token. A read is
+    could-not-check, so its caller waits and checks again. The one write (the only
+    operation classified by `classify_write`) answers protection-unavailable, the
+    before-sending category the adapter reads as a write that never left: the lane then
+    records the claimed attempt as refused before sending, never as a page that may
+    exist (BR7.3, BR7.5). Either way the verdict keeps the hold's cause, one of this
+    module's two fixed causes."""
+    category = PROTECTION_UNAVAILABLE if write else COULD_NOT_CHECK
+    return SessionResult(category, verdict=Verdict(category, cause=cause))
 
 
 class RequestRefused(httpx.TransportError):
@@ -403,6 +483,12 @@ class NotionSession:
             raise TypeError("a stored connection or a candidate token is required")
         if not budget > 0:
             raise ValueError("a positive budget is required")
+        held = provider_hold(
+            target, interactive=gate_key is not None and classify is not classify_write,
+            live=self._policy.production_live,
+        )
+        if held is not None:
+            return held_result(held, write=classify is classify_write)
         if gate_key is not None and not self.gate.try_acquire(gate_key):
             refused = Verdict(COULD_NOT_CHECK, cause=CAUSE_INTERACTIVE_CAP)
             return SessionResult(COULD_NOT_CHECK, verdict=refused)

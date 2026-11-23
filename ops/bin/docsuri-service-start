@@ -1,0 +1,19 @@
+#!/Library/DocSuri/release/.venv/bin/python -I
+"""docsuri-service-start: start one named launch job (A6 service control, D6).
+
+Run as root through sudo, in person, with one label from its closed set and the
+operation's receipt identifier as bounded JSON on standard input. It enables and loads
+the job and removes its stop record, and writes one JSON result. It refuses to run when
+the environment holds PYTHON*, DYLD_* or LD_* variables.
+"""
+
+import sys
+
+if sys.argv[1:] == ["--self-check"]:
+    from docsuri_ops.release import self_check
+
+    raise SystemExit(self_check(__file__))
+
+from docsuri_ops.u8_platform.fixed import main_fixed
+
+raise SystemExit(main_fixed("docsuri-service-start"))

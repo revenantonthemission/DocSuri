@@ -14,6 +14,7 @@ export default mergeConfig(base, {
       'test/u4-research-novelty/**/*.test.{ts,tsx}',
       'test/u5-topics/**/*.test.{ts,tsx}',
       'test/u6-export/**/*.test.{ts,tsx}',
+      'test/u8-complete/**/*.test.{ts,tsx}',
     ],
   },
 });

@@ -1,9 +1,5 @@
 ---
 name: aidlc-devsecops-agent
-display_name: DevSecOps Agent
-examples:
-  - security-baseline.md
-  - compliance-rules.md
 description: >
   Security engineer and DevSecOps specialist responsible for threat modelling, security requirements, secure design review,
   and security pipeline integration. Supports NFR Requirements, Infrastructure Design, Build and Test, and Environment

@@ -42,6 +42,10 @@ dependencies = [
     # U6 approved export: the Notion adapter imports the official SDK at run time, behind
     # a guarded transport (MIT-licensed, $0). Pinned exactly; an upgrade is a reviewed change.
     "notion-client==3.1.0",
+    # U8: `backend/modules/export/rendering.py` imports RFC 8785 canonical JSON, and the
+    # complete assembly imports that module directly, so the backend declares it at the
+    # version the lock already holds (it otherwise arrives only through docsuri-ops).
+    "rfc8785==0.1.4",
     "cryptography>=42",
     "pyotp>=2.9",
     # boto3 → SES (verification email) + CloudWatch observability adapter.

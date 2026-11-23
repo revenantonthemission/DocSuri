@@ -37,7 +37,10 @@ class GuardedLibraryRepository:
         self.transactions = transactions
         self.purpose = (
             "account-control"
-            if transactions.profile.realm == "account-controls"
+            # U2's purpose in U2's realm and, by the row "U2's controls in the complete
+            # app", in the composed and production realms.
+            if transactions.profile.realm in ("account-controls", "service-operations",
+                                              "production")
             else "local-research"
         )
 

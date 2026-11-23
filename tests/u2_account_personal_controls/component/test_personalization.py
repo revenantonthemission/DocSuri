@@ -448,3 +448,111 @@ def test_superseded_consent_fact_does_not_erase_current_activity(personal, autho
     }
     assert service.apply_consent_boundary(fact)["disposition"] == "superseded"
     assert len(service.recent(authority, limit=5)["items"]) == 1
+
+
+def suggestion(interest):
+    return {
+        "interestId": interest,
+        "labelKey": "interest:" + interest,
+        "source": "orcid",
+        "sourceRevision": "synthetic-orcid-suggestions",
+        "reasonKey": "manual-selection",
+    }
+
+
+def test_service_requires_an_installed_bounded_producer_manifest(transactions):
+    for producers in ((), (ProducerBinding("Uninstalled"),)):
+        with pytest.raises(ValueError, match="installed producer manifest"):
+            PersonalizationControlService(
+                transactions, SYNTHETIC_POLICY, ControlCursor(b"p" * 32), producers=producers
+            )
+
+
+def test_linked_suggestions_are_added_through_the_installed_provider(
+    personal, authority, transactions
+):
+    calls = []
+
+    def provider(owner, link):
+        calls.append((owner.account_id, link))
+        return [suggestion("orcid-linked-topic")]
+
+    service = PersonalizationControlService(
+        transactions, SYNTHETIC_POLICY, ControlCursor(b"p" * 32),
+        producers=(personal[2],), suggestions_provider=provider,
+    )
+    link = str(uuid4())
+    page = service.suggestions(authority, limit=50, identity_link_id=link)
+    assert calls == [(authority.account_id, link)]
+    assert "orcid-linked-topic" in [item["interestId"] for item in page["items"]]
+
+
+def test_suggestions_beyond_the_page_bound_are_refused(personal, authority, transactions):
+    service = PersonalizationControlService(
+        transactions, SYNTHETIC_POLICY, ControlCursor(b"p" * 32), producers=(personal[2],),
+        suggestions_provider=lambda owner, link: [suggestion(f"topic-{n}") for n in range(60)],
+    )
+    with pytest.raises(ValueError, match="bounded suggestion vocabulary"):
+        service.suggestions(authority, limit=5, identity_link_id=str(uuid4()))
+
+
+def test_suggestions_refuse_publication_after_an_authority_change(
+    personal, authority, transactions, connect
+):
+    def provider(owner, link):
+        revision = uuid4()
+        with connect("accounts") as conn:
+            conn.execute("UPDATE accounts.account SET authority_revision=%s WHERE id=%s",
+                         (revision, owner.account_id))
+            conn.execute("UPDATE accounts.session SET authority_revision=%s WHERE id=%s",
+                         (revision, owner.session_id))
+        return []
+
+    service = PersonalizationControlService(
+        transactions, SYNTHETIC_POLICY, ControlCursor(b"p" * 32), producers=(personal[2],),
+        suggestions_provider=provider,
+    )
+    with pytest.raises(PermissionError, match="authority changed during suggestions"):
+        service.suggestions(authority, limit=5, identity_link_id=str(uuid4()))
+
+
+def test_event_from_an_earlier_authority_is_suppressed(personal, authority, event, connect):
+    service, _, producer = personal
+    result = service.record_behavior(producer, authority, dict(event, authorityRevision=str(uuid4())))
+    assert result["disposition"] == "suppressed_by_lifecycle"
+    with connect("personalization") as conn:
+        assert conn.execute("SELECT count(*) AS n FROM personalization.behavior WHERE account_id=%s",
+                            (authority.account_id,)).fetchone()["n"] == 0
+
+
+def test_recent_activity_is_refused_without_consent(personal, authority, connect):
+    with connect("accounts") as conn:
+        conn.execute("UPDATE accounts.consent SET granted=false WHERE account_id=%s "
+                     "AND purpose='personalization'", (authority.account_id,))
+    with pytest.raises(PermissionError, match="personalized activity disabled"):
+        personal[0].recent(authority, limit=5)
+
+
+def test_projection_refuses_another_purpose(personal, authority):
+    service, _, producer = personal
+    with pytest.raises(PermissionError, match="unsupported projection purpose"):
+        service.read_projection(producer, authority, purpose="advertising")
+
+
+def test_consent_boundary_refuses_foreign_facts_and_changed_replays(personal, authority, event):
+    service = personal[0]
+    fact = {
+        "id": uuid4(),
+        "account_id": authority.account_id,
+        "purpose": "personalization",
+        "consent_revision": uuid4(),
+        "authority_revision": UUID(event["authorityRevision"]),
+        "granted": False,
+    }
+    with pytest.raises(ValueError, match="foreign consent purpose"):
+        service.apply_consent_boundary(dict(fact, purpose="local-research"))
+    with pytest.raises(ValueError, match="invalid consent decision"):
+        service.apply_consent_boundary(dict(fact, granted="no"))
+    service.apply_consent_boundary(fact)
+    with pytest.raises(ValueError, match="consent obligation conflict"):
+        service.apply_consent_boundary(dict(fact, granted=True))

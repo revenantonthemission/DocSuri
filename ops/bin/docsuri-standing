@@ -1,0 +1,22 @@
+#!/Library/DocSuri/release/.venv/bin/python -I
+"""docsuri-standing: the standing job (reliability-design § 11, R4).
+
+Run as the scheduler account by its system launch job, holding the standing operator
+authority and nothing in person. It runs one lane per task, never overlapping a task with
+itself: the heartbeat and availability record, the backup agent's status, the runtime
+isolation check, the 04:00 backup with its ledger copy and the disposal pass, the 05:00
+verification, and hourly housekeeping. It reaches the platform only through
+PlatformControl's bound operations and the fixed programs. The release's own source
+roots reach the interpreter through the root-owned docsuri-release.pth.
+"""
+
+import sys
+
+if sys.argv[1:] == ["--self-check"]:
+    from docsuri_ops.release import self_check
+
+    raise SystemExit(self_check(__file__))
+
+from docsuri_ops.standing.main import main
+
+raise SystemExit(main())

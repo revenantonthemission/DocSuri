@@ -11,10 +11,11 @@ import time
 from dataclasses import dataclass
 from uuid import UUID
 
+import psycopg
+
 from backend.modules.export.lane import ExportLane, LaneItem
 from backend.modules.export.repository import ExportRepository
 from backend.modules.export.worker import ExportPass
-
 from tests.u6_approved_export import notion_flows as nf
 from tests.u6_approved_export import service_flows as sf
 from tests.u6_approved_export import store_flows as flows
@@ -119,6 +120,14 @@ def build(transactions, connect, authority, tmp_path, *, lane=None, **options) -
     return LaneRig(rig, real, step)
 
 
+def lane_over(rig: sf.Rig) -> ExportLane:
+    """A lane over an existing rig (the route-mounted one), so its writes reach the
+    same fake, vault and store the routes already use."""
+    return ExportLane(
+        rig.repo, rig.service.adapter, rig.service.binding, policy=rig.policy, clock=rig.clock
+    )
+
+
 def pressed(
     lr: LaneRig, *, page: str | None = None, source: dict | None = None, configure: bool = True
 ) -> dict:
@@ -170,13 +179,14 @@ def connection(connect, rig: sf.Rig) -> dict:
     return flows.connection_row(connect, UUID(rig.connection()["connectionId"]))
 
 
-def on_write(fake, callback) -> None:
-    """Run `callback` in its own thread while the fake answers a create, and wait for it
-    there: the lane's write is in flight and must hold no transaction (D8)."""
+def on_write(fake, callback, *, method="POST", path="/v1/pages") -> None:
+    """Run `callback` in its own thread while the fake answers a `method` request on
+    `path`, and wait for it there: the lane's write (or its children requests) is in
+    flight and must hold no transaction (D8)."""
     original = fake.handle_async_request
 
     async def handle(request):
-        if request.method == "POST" and request.url.path == "/v1/pages":
+        if request.method == method and request.url.path == path:
             failures: list = []
 
             def run():
@@ -193,6 +203,73 @@ def on_write(fake, callback) -> None:
         return await original(request)
 
     fake.handle_async_request = handle
+
+
+class RunDepth:
+    """A delegating wrapper around `transactions.run` recording entry/exit depth per
+    thread and the calling thread: the lane's one connection at a time
+    (logical-components §5). A main-thread pass running beside the lane never raises the
+    lane's own depth, so `max_depth == 1` speaks of a thread."""
+
+    def __init__(self, transactions):
+        self._transactions = transactions
+        self._depth: dict[str, int] = {}
+        self.max_depth = 0
+        self.calls: list[str] = []
+
+    def run(self, owner, action):
+        thread = threading.current_thread().name
+        self.calls.append(thread)
+        depth = self._depth.get(thread, 0) + 1
+        self._depth[thread] = depth
+        self.max_depth = max(self.max_depth, depth)
+        try:
+            return self._transactions.run(owner, action)
+        finally:
+            self._depth[thread] -= 1
+
+    def __getattr__(self, name):
+        return getattr(self._transactions, name)
+
+
+class ConnectionSampler:
+    """Samples the realm for the lane's runtime connections while it runs.
+
+    Polls `pg_stat_activity` for the realm's runtime application names
+    (`docsuri-approved-export-%-export`) through a raw administrative session, which
+    carries no application name and is never counted; the total is recorded per sample.
+    The runtime roles hold `CONNECTION LIMIT 2`, so the sampler may not borrow one.
+    """
+
+    def __init__(self, factory, *, interval: float = 0.02):
+        self._factory = factory
+        self._interval = interval
+        self.samples: list[int] = []
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._poll, daemon=True)
+
+    def _poll(self):
+        while not self._stop.is_set():
+            try:
+                with self._factory() as conn:
+                    row = conn.execute(
+                        "SELECT count(*) AS n FROM pg_stat_activity WHERE application_name "
+                        "LIKE 'docsuri-approved-export-%-export'"
+                    ).fetchone()
+            except psycopg.OperationalError:
+                # A sample that cannot connect is skipped; the sampling never dies.
+                self._stop.wait(self._interval)
+                continue
+            self.samples.append(row["n"])
+            self._stop.wait(self._interval)
+
+    def __enter__(self) -> "ConnectionSampler":
+        self._thread.start()
+        return self
+
+    def __exit__(self, *_exc) -> None:
+        self._stop.set()
+        self._thread.join(10)
 
 
 def latest_lane_status(connect) -> dict | None:

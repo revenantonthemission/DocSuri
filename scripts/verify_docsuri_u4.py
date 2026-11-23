@@ -1159,12 +1159,13 @@ def run_phase(phase: str, path: Path) -> dict:
     started = time.monotonic()
     supervision, failure, server = {}, None, None
     server_log = RUN / f"u4-browser-host-{time.time_ns()}.log"
+    phase_log = RUN / f"u4-phase-{phase}-{time.time_ns()}.log"
     try:
         if phase == "browser":
             server = start_server(path, server_log)
         supervision = bounded_process(
             args,
-            RUN / f"u4-phase-{phase}-{time.time_ns()}.log",
+            phase_log,
             **(
                 {
                     "seconds": max(0.01, 300 - (time.monotonic() - started)),
@@ -1226,14 +1227,67 @@ def run_phase(phase: str, path: Path) -> dict:
     elif "invalidTestReport" not in evidence:
         evidence["missingTestReport"] = True
         evidence["exitCode"] = evidence["exitCode"] or 1
+    if phase == "coverage":
+        judge_coverage(evidence, phase_log)
     if source_identity()["sha256"] != before["sha256"]:
         evidence["sourceChangedDuringRun"] = True
         evidence["exitCode"] = evidence["exitCode"] or 1
     private_json(RUN / f"{phase}-evidence-{time.time_ns()}.json", evidence)
     print(json.dumps(safe_phase_summary(evidence)))
+    if evidence.get("failureCategory") == "coverage-below-floor":
+        raise Refused(
+            f"coverage-below-floor: {evidence['coverageTotalPercent']:.2f}% < "
+            f"{evidence['coverageFloorPercent']:.2f}%; evidence preserved"
+        )
     if evidence["exitCode"]:
         raise Refused("U4 phase failed; evidence preserved")
     return {"state": "passed", "phase": phase}
+
+
+# The coverage phase's verdict (U8 plan Step 44; your decision of 2026-10-24, "Fix the
+# three tools"). pytest exits 0 even when its report ends "Required test coverage ... not
+# reached", and the report rounds its percentage to the coveragerc's precision, so the
+# phase reads the TOTAL row's statements and misses from the report it wrote and judges
+# the figure, cut to two decimals, against `.coveragerc.u4`'s `fail_under`.
+COVERAGE_RC = ROOT / "backend/.coveragerc.u4"
+COVERAGE_TOTAL = re.compile(r"^TOTAL\s+(\d+)\s+(\d+)\s+\d+(?:\.\d+)?%", re.MULTILINE)
+COVERAGE_FLOOR = re.compile(r"^fail_under\s*=\s*(\d+(?:\.\d+)?)\s*$", re.MULTILINE)
+
+
+def coverage_floor(rc: Path = COVERAGE_RC) -> float:
+    found = COVERAGE_FLOOR.findall(rc.read_text())
+    if len(found) != 1:
+        raise Refused("the coveragerc must state exactly one fail_under")
+    return float(found[0])
+
+
+def coverage_total(report: str) -> float | None:
+    """The last TOTAL row's line coverage, cut (never rounded up) to two decimals."""
+    rows = COVERAGE_TOTAL.findall(report)
+    if not rows:
+        return None
+    statements, missed = (int(value) for value in rows[-1])
+    if statements <= 0 or not 0 <= missed <= statements:
+        return None
+    return (statements - missed) * 10000 // statements / 100
+
+
+def judge_coverage(evidence: dict, log: Path, rc: Path = COVERAGE_RC) -> dict:
+    """Fail the phase below the floor, or when the report has no total."""
+    floor = coverage_floor(rc)
+    try:
+        report = private_bytes(log, maximum=MAX_LOG).decode("utf-8", "replace")
+    except (OSError, ValueError):
+        report = ""
+    total = coverage_total(report)
+    evidence.update(coverageTotalPercent=total, coverageFloorPercent=floor)
+    if total is None or total < floor:
+        if not evidence["exitCode"]:  # an earlier failure keeps its own category
+            evidence["failureCategory"] = (
+                "coverage-total-missing" if total is None else "coverage-below-floor"
+            )
+        evidence["exitCode"] = evidence["exitCode"] or 1
+    return evidence
 
 
 def safe_phase_summary(evidence):
@@ -1241,6 +1295,7 @@ def safe_phase_summary(evidence):
     result = {key: evidence[key] for key in (
         "phase", "exitCode", "tests", "failures", "errors", "skipped",
         "failureCategory", "missingTestReport", "invalidTestReport", "sourceChangedDuringRun",
+        "coverageTotalPercent", "coverageFloorPercent",
     ) if key in evidence}
     result["supervision"] = {
         key: evidence.get("supervision", {}).get(key)

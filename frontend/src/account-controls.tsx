@@ -7,28 +7,83 @@ import type {
   WorkspaceAccessMfaMaterial as Material,
 } from '../types/wire/dtos';
 import QRCode from 'qrcode';
-import { PolicyRef, Transport } from './api';
-import { Panel, StatusLine } from './ui';
+import { ApiError, PolicyRef, Transport } from './api';
+import { Notice, Panel, StatusLine, notice } from './ui';
 import { Disclosure, Field, OperationStatus, useOperation, useRead } from './control-ui';
 import { SessionStatus } from './auth';
 
+type LifecycleScope = {
+  scope: string;
+  disposition: string;
+  reasonKey: string;
+  retainedUntil?: string;
+};
 type Lifecycle = {
   lifecycleRequestId: string;
   state: 'accepted' | 'running' | 'complete' | 'blocked' | 'failed';
   revocation: string;
-  participants: { participantId: string; state: string }[];
+  participants: { participantId: string; state: string; scopes?: LifecycleScope[] }[];
 };
+
+const SCOPE_LABELS: Record<string, string> = {
+  live_records: '저장된 기록',
+  derived_artifacts: '만들어진 결과물',
+  pending_work: '진행 중인 작업',
+  caches: '임시 저장 데이터',
+  backups: '백업',
+  restore_enforcement: '복원 시 삭제 유지',
+  external_copies: '외부로 내보낸 사본',
+};
+const RETAINED_DATE = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'long' });
+/** A new password the password policy refuses: the answer's `messageKey` `password.policy`
+ * (U8, your answer of 2026-11-11, "Say the password is too weak"). */
+export const PASSWORD_REFUSED =
+  '이 비밀번호는 사용할 수 없어요. 더 길고 추측하기 어려운 비밀번호를 입력해 주세요.';
+
+// Each part kept by policy (C02 retained_by_policy), with the date it is gone when the
+// participant reported one (BR2.5).
+function retainedParts(lifecycle: Lifecycle) {
+  return lifecycle.participants.flatMap((item) =>
+    (item.scopes ?? [])
+      .filter((scope) => scope.disposition === 'retained_by_policy')
+      .map((scope) => ({ participant: item.participantId, ...scope })),
+  );
+}
+
+function RetainedParts({ lifecycle }: { lifecycle: Lifecycle }) {
+  const parts = retainedParts(lifecycle);
+  if (!parts.length) return null;
+  return (
+    <>
+      <p id="lifecycle-retained-heading">정책에 따라 보관되는 부분이 있어요</p>
+      <ul aria-labelledby="lifecycle-retained-heading">
+        {parts.map((part) => (
+          <li key={`${part.participant}:${part.scope}`}>
+            {part.participant} · {SCOPE_LABELS[part.scope] ?? part.scope}:{' '}
+            {part.retainedUntil
+              ? `${RETAINED_DATE.format(new Date(part.retainedUntil))}까지 보관돼요`
+              : '정해진 보관 기간 동안 보관돼요'}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
 
 export function AccountControls({
   client,
   policy,
   onAuthorityChange,
   onLifecycle,
+  isCompleteApp = false,
 }: {
   client: Transport;
   policy: PolicyRef;
   onAuthorityChange: () => Promise<unknown>;
   onLifecycle: (id: string) => void;
+  /** Only the complete assembly passes it (L1-58): its email and Google · ORCID sections
+   * then say what that app does. No request changes. */
+  isCompleteApp?: boolean;
 }) {
   const profile = useRead<Profile>(client, '/api/v2/c02/access-read-profile');
   const [fields, setFields] = useState<Record<string, string>>({});
@@ -115,8 +170,13 @@ export function AccountControls({
           <p className="muted">
             충돌 시 입력을 유지해요. 서버 값을 다시 읽으면 작성 중인 입력을 바꿔요.
           </p>
-          <Credentials client={client} policy={policy} onAuthorityChange={onAuthorityChange} />
-          <LinkedIdentities client={client} policy={policy} />
+          <Credentials
+            client={client}
+            policy={policy}
+            onAuthorityChange={onAuthorityChange}
+            isCompleteApp={isCompleteApp}
+          />
+          <LinkedIdentities client={client} policy={policy} isCompleteApp={isCompleteApp} />
           <MfaControls client={client} policy={policy} />
           <ConsentControls client={client} policy={policy} />
           <LifecycleControls
@@ -135,18 +195,22 @@ function Credentials({
   client,
   policy,
   onAuthorityChange,
+  isCompleteApp,
 }: {
   client: Transport;
   policy: PolicyRef;
   onAuthorityChange: () => Promise<unknown>;
+  isCompleteApp: boolean;
 }) {
   const [proof, setProof] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
+  // The policy's refusal of a new password, shown in place of the operation's message.
+  const [refusal, setRefusal] = useState<Notice | null>(null);
   const operation = useOperation();
   return (
     <Disclosure title="비밀번호와 이메일">
-      <OperationStatus operation={operation} />
+      <OperationStatus operation={refusal ? { ...operation, message: refusal } : operation} />
       <fieldset disabled={operation.busy || operation.unknown}>
         <Field
           id="current-password"
@@ -168,11 +232,18 @@ function Credentials({
           type="button"
           onClick={() =>
             void operation.run(async (key) => {
-              await client.post(
-                '/api/v2/c02/access-change-password',
-                { currentPassword: proof, newPassword: password },
-                key,
-              );
+              setRefusal(null);
+              try {
+                await client.post(
+                  '/api/v2/c02/access-change-password',
+                  { currentPassword: proof, newPassword: password },
+                  key,
+                );
+              } catch (error) {
+                if (error instanceof ApiError && error.envelope.messageKey === 'password.policy')
+                  setRefusal(notice('alert', PASSWORD_REFUSED));
+                throw error;
+              }
               setProof('');
               setPassword('');
               await onAuthorityChange();
@@ -193,6 +264,7 @@ function Credentials({
           type="button"
           onClick={() =>
             void operation.run(async (key) => {
+              setRefusal(null);
               await client.post(
                 '/api/v2/c02/access-request-email-change',
                 { currentProof: proof, newEmail: email, policyRef: policy },
@@ -204,7 +276,11 @@ function Credentials({
         >
           이메일 변경 인증 요청
         </button>
-        <p>이메일은 전달받은 인증을 완료한 뒤 변경돼요. 실제 이메일 발송은 아직 제공되지 않아요.</p>
+        <p>
+          {isCompleteApp
+            ? '이메일은 전달받은 인증을 완료한 뒤 변경돼요. 메일의 링크는 이 브라우저에서 로그인한 상태에서 열어 주세요.'
+            : '이메일은 전달받은 인증을 완료한 뒤 변경돼요. 실제 이메일 발송은 아직 제공되지 않아요.'}
+        </p>
       </fieldset>
     </Disclosure>
   );
@@ -253,7 +329,15 @@ export function ConsentControls({ client, policy }: { client: Transport; policy:
     </Disclosure>
   );
 }
-function LinkedIdentities({ client, policy }: { client: Transport; policy: PolicyRef }) {
+function LinkedIdentities({
+  client,
+  policy,
+  isCompleteApp,
+}: {
+  client: Transport;
+  policy: PolicyRef;
+  isCompleteApp: boolean;
+}) {
   const links = useRead<Links>(client, '/api/v2/c02/access-list-identity-links', {
     page: { limit: 25 },
   });
@@ -263,8 +347,12 @@ function LinkedIdentities({ client, policy }: { client: Transport; policy: Polic
     <Disclosure title="Google · ORCID 연결">
       <StatusLine value={links.error} />
       <OperationStatus operation={operation} />
-      <p>로컬 시험용 제공자예요. 실제 Google·ORCID 연결은 아직 사용할 수 없어요.</p>
-      {(['google', 'orcid'] as const).map((provider) => (
+      <p>
+        {isCompleteApp
+          ? '새 Google·ORCID 연결은 아직 이 화면에서 할 수 없어요.'
+          : '로컬 시험용 제공자예요. 실제 Google·ORCID 연결은 아직 사용할 수 없어요.'}
+      </p>
+      {(isCompleteApp ? [] : (['google', 'orcid'] as const)).map((provider) => (
         <button
           key={provider}
           type="button"
@@ -622,6 +710,7 @@ export function LifecycleProgress({ client, id }: { client: Transport; id: strin
               </li>
             ))}
           </ul>
+          <RetainedParts lifecycle={result.value} />
         </>
       ) : null}
     </Panel>

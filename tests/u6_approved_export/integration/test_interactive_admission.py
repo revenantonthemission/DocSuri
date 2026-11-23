@@ -7,12 +7,13 @@ import time
 from uuid import UUID
 
 import pytest
+
 from backend.modules.export.fake_notion import HANG, Answer
 from backend.modules.export.lane import ExportLane, LaneItem
-
 from tests.u6_approved_export import http_flows as hf
 from tests.u6_approved_export import lane_flows as lf
 from tests.u6_approved_export import notion_flows as nf
+from tests.u6_approved_export import service_flows as sf
 from tests.u6_approved_export import store_flows as flows
 
 # A hanging answer holds its slot for this long, then its own budget ends it.
@@ -80,9 +81,9 @@ def connect_both(m) -> tuple[dict, dict]:
     return own, other
 
 
-def preview_body(m, page: str, connection: dict) -> dict:
+def preview_body(m, page: str, connection: dict, authority) -> dict:
     return {
-        "source": m.rig.research.ready(),
+        "source": sf.reference_of(m.rig.ready(authority=authority)),
         "destination": m.rig.destination(page, connection),
         "renderPolicy": m.rig.policy.reference(),
     }
@@ -108,11 +109,13 @@ def test_two_owners_hold_the_process_slots_and_a_third_request_is_refused_at_onc
     m.rig.fake.queue("pages.retrieve", Answer.of(HANG), target=other_page)
 
     listing = Background(m, m.own, "list_destinations", {})
-    preview = Background(m, m.other_session, "prepare_preview", preview_body(m, other_page, other))
+    preview = Background(
+        m, m.other_session, "prepare_preview", preview_body(m, other_page, other, m.other_authority)
+    )
     lf.wait_for(lambda: m.rig.gate.held == 2, seconds=HOLD_SECONDS)
 
     third_preview, preview_seconds = timed(
-        lambda: m.post("prepare_preview", preview_body(m, own_page, own))
+        lambda: m.post("prepare_preview", preview_body(m, own_page, own, m.authority))
     )
     third_listing, listing_seconds = timed(
         lambda: m.post("list_destinations", {}, client=m.other)

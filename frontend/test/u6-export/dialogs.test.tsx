@@ -2,7 +2,7 @@
 the trigger; the settle dialog shows its assumption and accepts only a Notion page link. */
 
 import React, { useState } from 'react';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { DisconnectDialog, SettleDialog } from '../../src/u6-export/dialogs';
@@ -177,5 +177,25 @@ describe('settle dialog', () => {
     await userEvent.keyboard('{Escape}');
     await userEvent.click(screen.getByTestId('settle-cancel'));
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('provider text stays text', () => {
+  it('renders a hostile destination title as text, keeping its name and its first stop', () => {
+    const payload = '<svg onload=x>노트</svg><a href="javascript:alert(1)">{{x}}</a>';
+    render(
+      <SettleDialog
+        entry={historyEntry({ destinationTitle: payload })}
+        busy={false}
+        onSubmit={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Notion에서 직접 확인' });
+    expect(dialog.querySelector('svg, a')).toBeNull();
+    expect(document.activeElement).toBe(screen.getByTestId('settle-delivered'));
+    const title = within(dialog).getByText(payload);
+    expect(title.tagName).toBe('STRONG');
+    expect(title.children).toHaveLength(0);
   });
 });

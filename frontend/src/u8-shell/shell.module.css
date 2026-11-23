@@ -1,0 +1,120 @@
+/* The complete workspace's navigation, notices and footer (BR5.1–BR5.8). A desktop rail,
+   a compact rail on tablets and a disclosure menu on phones; every destination stays
+   reachable at 320 CSS px. */
+
+.navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.toggle {
+  display: none;
+  align-self: flex-start;
+  min-height: 2.75rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.button {
+  min-height: 2.75rem;
+  text-align: start;
+}
+
+.button[aria-current='page'] {
+  font-weight: 700;
+  border-inline-start: 0.25rem solid var(--color-accent-text);
+}
+
+.button[aria-disabled='true'] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.reason {
+  font-size: 0.875rem;
+  color: var(--color-text-muted, inherit);
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.notice {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+}
+
+.footer {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Every visible target is at least 24×24 CSS px by its box; only a link inside a sentence
+   is exempt (L1-40). */
+.footer a,
+.target {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 24px;
+  min-inline-size: 24px;
+}
+
+.summary {
+  min-block-size: 24px;
+}
+
+/* The complete shell's wrapper adds no box; inside it a request id takes its line's
+   colour, which meets 4.5:1 where U1's muted id does not (L1-40). Earlier assemblies keep
+   workspace.css as built. */
+.completeShell {
+  display: contents;
+}
+
+.completeShell :global(.status-id) {
+  color: inherit;
+}
+
+.footer a:focus-visible,
+.button:focus-visible,
+.toggle:focus-visible {
+  outline: 0.1875rem solid var(--color-accent-text);
+  outline-offset: 0.125rem;
+}
+
+@media (max-width: 64rem) {
+  .button {
+    font-size: 0.9375rem;
+  }
+}
+
+@media (max-width: 40rem) {
+  .toggle {
+    display: inline-flex;
+  }
+
+  .collapsed {
+    display: none;
+  }
+}

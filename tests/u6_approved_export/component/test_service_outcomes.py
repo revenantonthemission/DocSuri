@@ -4,9 +4,10 @@ the effect and history reads, the error-code matrix and the zero-writes check.""
 from uuid import UUID, uuid4
 
 import pytest
-from backend.modules.export.lane_store import WriteOutcome
 from docsuri_shared.workspace import wire
 
+from backend.modules.export.lane_store import WriteOutcome
+from tests.u6_approved_export import lane_flows as lf
 from tests.u6_approved_export import notion_flows as nf
 from tests.u6_approved_export import service_flows as sf
 from tests.u6_approved_export import store_flows as flows
@@ -47,20 +48,22 @@ def test_execute_replays_and_tells_a_press_from_a_continue(
     rig.configure()
     key = uuid4()
     approval = rig.approve(rig.preview(rig.page()), key=key)
-    reads = page_reads(rig)
+    reads, calls = page_reads(rig), len(rig.research.calls)
 
     effect = rig.execute(approval, key=key)
 
     wire.ExportEffect.model_validate(effect)
     assert (effect["state"], effect["approvalId"]) == ("accepted", approval["approvalId"])
-    assert page_reads(rig) == reads  # a press does not re-derive the binding
+    # A press does not re-derive the binding: no page read and no source read.
+    assert page_reads(rig) == reads and len(rig.research.calls) == calls
     assert rig.execute(approval, key=key) == effect
     rig.succeed(effect)
     later = rig.approve(rig.preview(rig.page()))
     reads, calls = page_reads(rig), len(rig.research.calls)
     continued = rig.execute(later)
     assert continued["state"] == "accepted"
-    assert page_reads(rig) == reads + 1 and len(rig.research.calls) == calls + 1
+    # A continue reads the source through U4 and no page (BR3.7 as amended).
+    assert page_reads(rig) == reads and len(rig.research.calls) == calls + 1
     # The same key on another approval is CONFLICT.
     assert sf.refuse("execute", lambda: rig.execute(later, key=key)) == "CONFLICT"
 
@@ -78,6 +81,68 @@ def test_a_continue_under_a_stale_session_invalidates_and_requires_approval(
     row = flows.approval_row(connect, UUID(approval["approvalId"]))
     assert (row["state"], row["invalidation_reason"]) == ("invalidated", "authority-revoked")
     assert sf.refuse("execute", lambda: rig.execute(approval)) == "APPROVAL_REQUIRED"
+
+
+def effect_rows_of(connect, approval: dict) -> int:
+    with connect("export") as conn:
+        return conn.execute(
+            "SELECT count(*) AS n FROM export.effect WHERE approval_id=%s",
+            (UUID(approval["approvalId"]),),
+        ).fetchone()["n"]
+
+
+def test_a_continue_checks_only_local_facts_and_the_lane_ends_a_changed_destination(
+    transactions, connect, authority, tmp_path
+):
+    lr = lf.build(transactions, connect, authority, tmp_path)
+    rig = lr.rig
+    rig.configure()
+
+    # 1. A changed source refuses the continue at once and invalidates the approval.
+    source = rig.research.ready()
+    changed = rig.approve(rig.preview(rig.page(), source))
+    rig.research.set_eligibility(source, "2")
+    reads = page_reads(rig)
+    assert sf.refuse("execute", lambda: rig.execute(changed)) == "APPROVAL_REQUIRED"
+    row = flows.approval_row(connect, UUID(changed["approvalId"]))
+    assert (row["state"], row["invalidation_reason"]) == ("invalidated", "source-changed")
+    assert effect_rows_of(connect, changed) == 0
+    assert page_reads(rig) == reads
+
+    # 2. An unreadable destination does not refuse the continue; the lane ends the effect.
+    page = rig.page()
+    approval = rig.approve(rig.preview(page))
+    rig.fake.page(page).readable = False
+    reads, asked = page_reads(rig), len(rig.gate.asked)
+    effect = rig.execute(approval)
+    assert effect["state"] == "accepted"
+    assert page_reads(rig) == reads
+    assert rig.gate.asked[asked:] == []
+    row = flows.approval_row(connect, UUID(approval["approvalId"]))
+    assert row["state"] == "consumed"
+    assert lr.lane.run_item(lf.item(effect)) == "invalidated"
+    ended = lf.row(connect, effect)
+    assert (ended["state"], ended["outcome_reason"]) == ("invalidated", "destination-changed")
+    assert rig.fake.writes == []
+    assert lf.attempts(connect, effect) == []
+
+    # 3. The history shows the consumed approval with its invalidated effect.
+    entries = rig.service.history(authority, {"limit": 20})["entries"]
+    entry = next(item for item in entries if item["approvalId"] == approval["approvalId"])
+    assert entry["state"] == "consumed"
+    assert entry["continuable"] is False
+    assert "endedAt" in entry
+    assert "invalidationReason" not in entry
+    assert (entry["effect"]["state"], entry["effect"]["outcomeReason"]) == (
+        "invalidated",
+        "destination-changed",
+    )
+
+    # 4. A further continue returns the same effect and writes no new effect row.
+    again = rig.execute(approval, key=uuid4())
+    assert (again["effectId"], again["state"]) == (effect["effectId"], "invalidated")
+    assert effect_rows_of(connect, approval) == 1
+    assert lf.row(connect, effect)["revision"] == ended["revision"]
 
 
 def test_bind_refusals_leave_the_approval_approved(transactions, connect, authority, tmp_path):

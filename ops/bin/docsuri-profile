@@ -1,0 +1,21 @@
+#!/Library/DocSuri/release/.venv/bin/python -I
+"""docsuri-profile: apply one production profile change (A6, BR9.15, D6).
+
+Run as the service account through sudo, in person, with one field's word (mode,
+admission, rehearsal-database or backup-volume) and the new value with the operation's
+receipt identifier as bounded JSON on standard input. It applies the change atomically
+under the profile's own checks, records the receipt identifier in the manifest, and
+writes one JSON result. It refuses to run when the environment holds PYTHON*, DYLD_* or
+LD_* variables.
+"""
+
+import sys
+
+if sys.argv[1:] == ["--self-check"]:
+    from docsuri_ops.release import self_check
+
+    raise SystemExit(self_check(__file__))
+
+from docsuri_ops.u8_platform.fixed import main_fixed
+
+raise SystemExit(main_fixed("docsuri-profile"))

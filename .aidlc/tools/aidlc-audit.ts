@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { LONG_SUBPROCESS_TIMEOUT_MS } from "./aidlc-runtime-budget.ts";
 import {
@@ -31,6 +32,7 @@ import {
   cloneIdPath,
   entrySkillInvocation,
   errorMessage,
+  GIT_PLATFORM_ARGS,
   hasUnsafeSingleLineCharacter,
   isoTimestamp,
   mergeReviewRecordsFromDelta,
@@ -64,6 +66,13 @@ const VALID_EVENT_TYPES = new Set([
   "STAGE_COMPLETED",
   "STAGE_JUMPED",
   "STAGE_SKIPPED",
+  // A finished stage AI-DLC itself now does differently: the row carries its
+  // receipt for the new definition (aidlc-validity.ts).
+  "STAGE_DEFINITION_CHANGED",
+  // A code-producing stage's source-work check found no new code where it
+  // looked, and what it did: the agent's first report refused, the approval
+  // question put to the person, or Guard Policy off standing aside.
+  "SOURCE_WORK_NOT_FOUND",
   // Phase lifecycle
   "PHASE_STARTED",
   "PHASE_COMPLETED",
@@ -76,6 +85,7 @@ const VALID_EVENT_TYPES = new Set([
   "WORKFLOW_UNPARKED",
   "WORKFLOW_ARCHIVED",
   "WORKFLOW_UNARCHIVED",
+  "INTENT_REPOS_CHANGED",
   // Session events (hook-owned)
   "SESSION_STARTED",
   "SESSION_RESUMED",
@@ -85,6 +95,10 @@ const VALID_EVENT_TYPES = new Set([
   // approval/interview gate requires a HUMAN_TURN appended AFTER the last gate
   // resolution (in ledger order) before it commits.
   "HUMAN_TURN",
+  // Hook-owned, advisory, never a human turn: a prompt the host made for the
+  // agent (a workflow notice, a background task's notice, a brief) reached
+  // the prompt-submit seam and was not counted as the person's turn.
+  "HOST_TURN",
   // Initialization events (fire IN ADDITION TO STAGE_COMPLETED)
   "WORKSPACE_SCAFFOLDED",
   "WORKSPACE_SCANNED",
@@ -146,6 +160,13 @@ const VALID_EVENT_TYPES = new Set([
   // Advisory, never a HUMAN_TURN: a Copilot prompt arrived right after a
   // subagent started in that chat and matched no recorded subagent brief.
   "SUBAGENT_PROMPT_UNMATCHED",
+  // No longer written: earlier releases had the plan-approval guard record a
+  // reviewer dispatch whose brief already carried a rendered verdict line. The
+  // reviewer now says so itself (`**Verdict Dictated:**` in its review file,
+  // recorded on REVIEW_COMPLETED). Kept registered so audits and worktree
+  // deltas written before still read and merge (validateMergeDelta refuses an
+  // unknown event).
+  "REVIEW_VERDICT_DICTATED",
   // Reviewer read-scope enforcement (hook-emitted): a per-unit reviewer's
   // tool call was refused for reaching into sibling units' construction/ paths.
   "REVIEWER_SCOPE_BLOCKED",
@@ -281,6 +302,8 @@ const EVENT_HEADINGS: Record<string, string> = {
   STAGE_AWAITING_APPROVAL: "Stage Awaiting Approval",
   STAGE_REVISING: "Stage Revising",
   STAGE_COMPLETED: "Stage Completion",
+  STAGE_DEFINITION_CHANGED: "Stage Definition Changed",
+  SOURCE_WORK_NOT_FOUND: "Source Work Not Found",
   STAGE_JUMPED: "Stage Jump",
   STAGE_SKIPPED: "Stage Skip",
   PHASE_STARTED: "Phase Start",
@@ -293,11 +316,13 @@ const EVENT_HEADINGS: Record<string, string> = {
   WORKFLOW_UNPARKED: "Workflow Unparked",
   WORKFLOW_ARCHIVED: "Workflow Archived",
   WORKFLOW_UNARCHIVED: "Workflow Unarchived",
+  INTENT_REPOS_CHANGED: "Intent Repos Changed",
   SESSION_STARTED: "Session Start",
   SESSION_RESUMED: "Session Resume",
   SESSION_COMPACTED: "Session Compacted",
   SESSION_ENDED: "Session End",
   HUMAN_TURN: "Human Turn",
+  HOST_TURN: "Host Turn",
   WORKSPACE_SCAFFOLDED: "Workspace Scaffolded",
   WORKSPACE_SCANNED: "Workspace Scanned",
   WORKSPACE_INITIALISED: "Workspace Initialised",
@@ -328,6 +353,7 @@ const EVENT_HEADINGS: Record<string, string> = {
   ARTIFACT_REUSED: "Artifact Reused",
   SUBAGENT_COMPLETED: "Subagent Completed",
   SUBAGENT_PROMPT_UNMATCHED: "Subagent Prompt Unmatched",
+  REVIEW_VERDICT_DICTATED: "Review Verdict Dictated",
   REVIEWER_SCOPE_BLOCKED: "Reviewer Scope Blocked",
   REVIEW_FREEZE_BLOCKED: "Review Freeze Blocked",
   PLAN_APPROVAL_BLOCKED: "Plan Approval Blocked",
@@ -407,12 +433,19 @@ function jsonError(message: string): never {
 
 const CLI_RESERVED_EVENT_TYPES = new Set([
   "HUMAN_TURN",
+  // Hook-owned like HUMAN_TURN: only the hook that saw the host's prompt may
+  // say a turn was the host's.
+  "HOST_TURN",
   // Hook-owned like HUMAN_TURN: it spends a person's turn, so only the hook
   // that saw the empty question box may write it.
   "QUESTION_UNANSWERED",
   // Hook-owned too: it is the person's own reply, so only the hook that saw
   // the question box may write it.
   "QUESTION_REPLIED",
+  // Hook-owned like HUMAN_TURN: it says an agent finished, and a review's
+  // verdict reads its absence as "no reviewer finished" (#2427), so only the
+  // SubagentStop hook that saw the host's completion may write it.
+  "SUBAGENT_COMPLETED",
   "SUMMARY_CONFIRMATION_RECORDED",
   "VERIFICATION_COMMAND_RECORDED",
   "CONSTRUCTION_POLICY_RECORDED",
@@ -476,7 +509,12 @@ export interface AuditEntryInput {
 // idiom as AIDLC_ALLOW_DIRECT_STATE_TRANSITIONS in aidlc-state.ts).
 export const CLI_PROTECTED_EVENT_TYPES = new Set([
   "STAGE_COMPLETED",
+  "STAGE_DEFINITION_CHANGED",
+  // The check's own record of a first refusal opens the gate on the next
+  // report; a forged one would skip the agent's refusal.
+  "SOURCE_WORK_NOT_FOUND",
   "HUMAN_TURN",
+  "HOST_TURN",
   "QUESTION_UNANSWERED",
   "QUESTION_REPLIED",
   "REQUEST_ROUTED",
@@ -587,6 +625,8 @@ const MERGE_PROTECTED_EVENT_TYPES = new Set([
   "PLAN_APPROVAL_RECORDED",
   "PLAN_APPROVAL_OVERRIDDEN",
   "PLAN_APPROVAL_SKIPPED",
+  // The source-work check's own record opens the main checkout's gate.
+  "SOURCE_WORK_NOT_FOUND",
   "AUTONOMY_MODE_SET",
   "UNIT_OWNERSHIP_SET",
   "UNIT_GATE_RHYTHM_SET",
@@ -1360,6 +1400,44 @@ function forksCorrelate(left: AuditForkRecord, right: AuditForkRecord): boolean 
   );
 }
 
+// The commit a Bolt worktree was created from, as `aidlc-worktree create` recorded
+// it beside the worktree; null when the metadata is absent or does not name one.
+function worktreeCreationCommit(wtPath: string): string | null {
+  const metaPath = join(wtPath, ".aidlc", "worktree-meta.json");
+  if (!existsSync(metaPath)) return null;
+  try {
+    const meta = JSON.parse(
+      readRegularFileNoFollowOrThrow(metaPath, "worktree metadata").toString("utf-8"),
+    ) as { baseCommit?: unknown };
+    return typeof meta.baseCommit === "string" && /^[0-9a-f]{40,64}$/.test(meta.baseCommit)
+      ? meta.baseCommit
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+// A worktree checked out from a commit that carries the parent's audit starts
+// with that file. It is the base's copy, not work the worktree did, exactly when
+// the creation commit tracks the path and the checkout has not changed it (git
+// compares after its own line-ending conversion). Anything else is the worktree's
+// own: a row it wrote, a copy committed on its branch (equal to HEAD, not to the
+// creation commit), an untracked file, or no readable creation commit.
+function worktreeAuditInheritedFromBase(wtPath: string, wtAuditPath: string): boolean {
+  const base = worktreeCreationCommit(wtPath);
+  if (base === null) return false;
+  const path = relative(wtPath, wtAuditPath).replaceAll("\\", "/");
+  // The diff walks the checkout, whose nested audit path can pass Windows
+  // MAX_PATH, so these calls opt in to long paths like the create that wrote it.
+  const git = (args: string[]) =>
+    spawnSync("git", [...GIT_PLATFORM_ARGS, "-C", wtPath, ...args], {
+      encoding: "utf-8",
+      timeout: LONG_SUBPROCESS_TIMEOUT_MS,
+    }).status;
+  return git(["cat-file", "-e", `${base}:${path}`]) === 0 &&
+    git(["diff", "--quiet", base, "--", path]) === 0;
+}
+
 function matchingAuditMerge(
   content: string,
   slug: string,
@@ -1532,33 +1610,41 @@ function handleAuditFork(args: string[], projectDir: string): void {
       const existingContent = existing.bytes.toString("utf-8");
       const existingFork = latestAuditFork(existingContent, slug);
       if (existingFork) {
-        if (existingContent.slice(existingFork.end) !== "") {
-          throw new Error(
-            `worktree audit already exists at ${wtAuditPath} with unmerged work after ` +
-              `AUDIT_FORKED; merge the delta with audit-merge, or discard the worktree`,
-          );
-        }
         const mainContent = before.bytes.toString("utf-8");
         const mainFork = latestAuditFork(mainContent, slug);
-        if (!mainFork || !forksCorrelate(existingFork, mainFork)) {
-          throw new Error(
-            `worktree audit already exists at ${wtAuditPath}, but its AUDIT_FORKED row ` +
-              `does not match the authoritative main row; discard the worktree before re-forking`,
-          );
-        }
-        const expected = scopeStamp
-          ? before.bytes.subarray(mainFork.start, mainFork.end)
-          : before.bytes.subarray(0, mainFork.end);
-        if (!existing.bytes.equals(expected)) {
+        const expected = mainFork === null
+          ? null
+          : scopeStamp
+            ? before.bytes.subarray(mainFork.start, mainFork.end)
+            : before.bytes.subarray(0, mainFork.end);
+        const unmergedWork = existingContent.slice(existingFork.end) !== "";
+        if (!unmergedWork && mainFork && forksCorrelate(existingFork, mainFork) &&
+          expected !== null && existing.bytes.equals(expected)) {
+          boundary = existingFork.boundary;
+          sourceHash = existingFork.sourceHash;
+          auditTs = existingFork.timestamp;
+          alreadyCurrent = true;
+        } else if (!worktreeAuditInheritedFromBase(wtPath, wtAuditPath)) {
+          // The worktree's own fork, with work after it or from another attempt.
+          // A copy the checkout inherited from the base commit (a records commit
+          // that already held fork rows for this Bolt) is forked over below instead.
+          if (unmergedWork) {
+            throw new Error(
+              `worktree audit already exists at ${wtAuditPath} with unmerged work after ` +
+                `AUDIT_FORKED; merge the delta with audit-merge, or discard the worktree`,
+            );
+          }
+          if (!mainFork || !forksCorrelate(existingFork, mainFork)) {
+            throw new Error(
+              `worktree audit already exists at ${wtAuditPath}, but its AUDIT_FORKED row ` +
+                `does not match the authoritative main row; discard the worktree before re-forking`,
+            );
+          }
           throw new Error(
             `worktree audit already exists at ${wtAuditPath}, but its fork prefix differs ` +
               `from main; discard the worktree before re-forking`,
           );
         }
-        boundary = existingFork.boundary;
-        sourceHash = existingFork.sourceHash;
-        auditTs = existingFork.timestamp;
-        alreadyCurrent = true;
       }
     }
     if (!alreadyCurrent) {

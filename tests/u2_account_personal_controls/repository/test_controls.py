@@ -293,3 +293,97 @@ def test_profile_conflicting_tab_cannot_overwrite(transactions, authority):
     with pytest.raises(ValueError, match="stale profile"):
         repository.update_profile(authority, uuid4(), revision, {"displayName": "늦게 저장"})
     assert repository.profile(authority)["displayName"] == "먼저 저장"
+
+
+def test_profile_operation_cannot_be_reused_for_another_change(transactions, authority):
+    from uuid import UUID
+
+    repository = ControlRepository(transactions, SYNTHETIC_POLICY)
+    revision = UUID(repository.profile(authority)["revision"])
+    operation = uuid4()
+    repository.update_profile(authority, operation, revision, {"displayName": "처음 이름"})
+    with pytest.raises(ValueError, match="operation identity conflict"):
+        repository.update_profile(authority, operation, revision, {"displayName": "다른 이름"})
+    assert repository.profile(authority)["displayName"] == "처음 이름"
+
+
+def test_consent_change_needs_a_registered_purpose_and_current_revision(transactions, authority):
+    repository = ControlRepository(transactions, SYNTHETIC_POLICY)
+    with pytest.raises(ValueError, match="registered consent purpose"):
+        repository.update_consent(authority, uuid4(), uuid4(), "advertising", False)
+    with pytest.raises(ValueError, match="registered consent purpose"):
+        repository.update_consent(authority, uuid4(), uuid4(), "personalization", "no")
+    with pytest.raises(ValueError, match="stale consent revision"):
+        repository.update_consent(authority, uuid4(), uuid4(), "personalization", False)
+    assert all(row["granted"] for row in repository.consents(authority))
+
+
+def test_consent_obligation_pages_are_bounded_and_known(transactions):
+    repository = ControlRepository(transactions, SYNTHETIC_POLICY)
+    with pytest.raises(ValueError, match="finite consent obligation page"):
+        repository.pending_consents(limit=51)
+    with pytest.raises(ValueError, match="unknown consent obligation purpose"):
+        repository.pending_consents(purpose="advertising")
+
+
+def test_consent_obligation_evidence_is_fenced(transactions, authority):
+    from uuid import UUID
+
+    repository = ControlRepository(transactions, SYNTHETIC_POLICY)
+    with pytest.raises(ValueError, match="evidence conflict"):
+        repository.acknowledge_consent(uuid4(), uuid4(), uuid4())
+    current = next(row for row in repository.consents(authority) if row["purpose"] == "personalization")
+    operation = uuid4()
+    outcome = repository.update_consent(
+        authority, operation, UUID(current["revision"]), "personalization", False
+    )
+    evidence = uuid4()
+    repository.acknowledge_consent(operation, UUID(outcome["revision"]), evidence)
+    repository.acknowledge_consent(operation, UUID(outcome["revision"]), evidence)
+    with pytest.raises(ValueError, match="evidence conflict"):
+        repository.acknowledge_consent(operation, UUID(outcome["revision"]), uuid4())
+
+
+def test_reset_pages_and_manifests_are_bounded(resets, authority):
+    with pytest.raises(ValueError, match="invalid reset page"):
+        resets.list(authority, view="everything", limit=5)
+    with pytest.raises(ValueError, match="complete bounded reset manifest"):
+        resets.accept(authority, uuid4(), uuid4(), "erase_everything",
+                      manifest=(("Personalization", "behavior"),), manifest_revision="installed-u2-v1")
+
+
+def test_profile_reset_clears_interests_and_restarts_onboarding(resets, authority):
+    from uuid import UUID
+
+    settings = GuardedSettingsService(resets.transactions)
+    before = settings.read(authority)
+    chosen = settings.update_onboarding(
+        authority, uuid4(), before["revision"], "complete", ["1706.03762"]
+    )
+    resets.accept(authority, uuid4(), UUID(chosen["revision"]), "reset_profile",
+                  manifest=(("Personalization", "behavior"),), manifest_revision="installed-u2-v1")
+    after = settings.read(authority)
+    assert after["interestIds"] == [] and after["onboarding"] == "not_started"
+
+
+def test_reset_scope_claims_are_fenced(resets, authority):
+    from uuid import UUID
+
+    with pytest.raises(PermissionError, match="reset unavailable"):
+        resets.claim_scope(uuid4(), "Personalization", "behavior")
+    identifier = UUID(accept(resets, authority)["resetId"])
+    claim = resets.claim_scope(identifier, "Personalization", "behavior")
+    with pytest.raises(ValueError, match="not claimable"):
+        resets.claim_scope(identifier, "Personalization", "behavior")
+    with pytest.raises(ValueError, match="bounded reason"):
+        resets.record_scope(identifier, "Personalization", "behavior", claim["generation"],
+                            evidence=uuid4(), reason="")
+    evidence = uuid4()
+    first = resets.record_scope(identifier, "Personalization", "behavior", claim["generation"],
+                                evidence=evidence, reason="done")
+    again = resets.record_scope(identifier, "Personalization", "behavior", claim["generation"],
+                                evidence=evidence, reason="done")
+    assert again["id"] == first["id"] and again["status_revision"] == first["status_revision"]
+    with pytest.raises(ValueError, match="scope evidence conflict"):
+        resets.record_scope(identifier, "Personalization", "behavior", claim["generation"],
+                            evidence=uuid4(), reason="done")

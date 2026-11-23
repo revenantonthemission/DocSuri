@@ -1,0 +1,21 @@
+#!/Library/DocSuri/release/.venv/bin/python -I
+"""docsuri-logrotate: the 03:00 root job that rotates the fixed list of log folders (D11).
+
+Run as root with no argument. It reaches each folder one component at a time without
+following a link, opens files only relative to the folder with O_NOFOLLOW | O_NONBLOCK,
+moves v2's own logs aside, copies and truncates the files launchd holds open, deletes
+PostgreSQL's dated files after 14 days, expires its own copies after 14 days, and writes
+one summary line to control/logs/. It refuses to run when the environment holds PYTHON*,
+DYLD_* or LD_* variables.
+"""
+
+import sys
+
+if sys.argv[1:] == ["--self-check"]:
+    from docsuri_ops.release import self_check
+
+    raise SystemExit(self_check(__file__))
+
+from docsuri_ops.logrotate import main
+
+raise SystemExit(main())

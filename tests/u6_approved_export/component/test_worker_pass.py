@@ -13,12 +13,11 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from backend.modules.export import housekeeping_store
-from backend.modules.export.lane_store import WriteOutcome
+
+from backend.modules.export.lane_store import Claimed, WriteOutcome
 from backend.modules.export.store_support import next_check_time
 from backend.modules.export.worker import ExportPassIncomplete, ExportWorker
 from backend.modules.research.errors import ResearchError
-
 from tests.u6_approved_export import lane_flows as lf
 from tests.u6_approved_export import notion_flows as nf
 from tests.u6_approved_export import service_flows as sf
@@ -144,6 +143,42 @@ def test_hand_over_follows_the_due_order_and_never_duplicates_a_scan(
     assert double.offered[2].revision == pushed["revision"] == unknown["revision"] + 1
 
 
+def test_the_pass_hands_over_the_older_of_two_accepted_exports_first(
+    transactions, connect, authority, authority_b, tmp_path
+):
+    lr, double = pass_rig(transactions, connect, authority, tmp_path)
+    older_at = lr.clock.now
+    other = sf.build(
+        transactions,
+        connect,
+        authority_b,
+        tmp_path,
+        keys="keys-b",
+        clock=sf.Clock(older_at + dt.timedelta(seconds=1)),
+    )
+    other.configure()
+    younger = other.press(other.page())["effect"]  # pressed first, accepted one second later
+    older = lr.rig.press(lr.rig.page())["effect"]
+    lr.clock.advance(2)
+    ids = [UUID(older["effectId"]), UUID(younger["effectId"])]
+    due = {row["id"] for row in lr.repo.due_items(lr.clock.now, limit=lf.DUE_LIMIT)}
+    assert set(ids) <= due, "this test's effects must lie within one due batch"
+
+    def offered() -> list:
+        return [(item.kind, item.effect_id, item.revision) for item in double.offered]
+
+    # Each hand-over uses a fresh own step, so the round robin's memory cannot decide it.
+    assert own_step(lr, double, ids).run_once()["handedOver"] == "execute"
+    assert offered() == [("execute", ids[0], int(older["revision"]))]
+    claimed = lr.rig.claim(older)
+    assert isinstance(claimed, Claimed) and claimed.effect["state"] == "executing"
+    assert own_step(lr, double, ids).run_once()["handedOver"] == "execute"
+    assert offered() == [
+        ("execute", ids[0], int(older["revision"])),
+        ("execute", ids[1], int(younger["revision"])),
+    ]
+
+
 def test_housekeeping_batches_stay_bounded(transactions, connect, authority, tmp_path):
     lr, _ = pass_rig(
         transactions, connect, authority, tmp_path, policy=nf.policy(housekeeping_batch=2)
@@ -216,7 +251,7 @@ def test_a_source_that_could_not_be_checked_stays_approved_until_a_definite_answ
 
 
 def test_a_session_check_that_could_not_complete_leaves_the_approval_for_the_next_pass(
-    transactions, connect, authority, tmp_path, monkeypatch
+    transactions, connect, authority, tmp_path
 ):
     lr, _ = pass_rig(transactions, connect, authority, tmp_path)
     drain(transactions, lr)
@@ -224,17 +259,17 @@ def test_a_session_check_that_could_not_complete_leaves_the_approval_for_the_nex
     flow = open_approval(lr, approver=approver)
     flows.end_session(connect, approver)
 
-    def unreachable(conn, account_id, session_id):
-        raise psycopg.OperationalError("guard unreachable")
-
-    with monkeypatch.context() as patch:
-        patch.setattr(housekeeping_store, "session_current", unreachable)
+    # The real guard fails for real: the held row runs it into the realm's lock bound.
+    with flows.held_session(connect, approver):
         result = lr.step.run_once()
-    assert result["sessionInvalidated"] == 0 and result["sessionUnchecked"] >= 1
+    assert (result["sessionInvalidated"], result["sessionUnchecked"]) == (0, 1)
     assert approval_state(connect, flow) == ("approved", None)
+    assert kept_tree(connect, flow["preview"])
 
-    assert lr.step.run_once()["sessionInvalidated"] == 1
+    after = lr.step.run_once()
+    assert after["sessionInvalidated"] == 1
     assert approval_state(connect, flow) == ("invalidated", "authority-revoked")
+    assert not kept_tree(connect, flow["preview"])
 
 
 def test_revisions_that_can_no_longer_lead_to_a_write_lose_their_tree(

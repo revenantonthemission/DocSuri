@@ -1,4 +1,24 @@
 import { DEFAULT_SUBPROCESS_TIMEOUT_MS } from "./aidlc-runtime-budget.ts";
+import {
+  KIRO_WORKFLOWS_ISSUE_ID,
+  KIRO_WORKFLOWS_UNREADABLE_ISSUE_ID,
+  kiroWorkflowsFix,
+  kiroWorkflowsIssueMessage,
+  kiroWorkflowsUnreadableFix,
+  kiroWorkflowsUnreadableMessage,
+  readKiroIdeWorkflows,
+  readKiroWorkflowsAnswer,
+  type KiroWorkflowsAnswer,
+} from "./aidlc-kiro-ide-workflows.ts";
+import {
+  KIRO_TERMINAL_ISSUE_ID,
+  kiroTerminalApplies,
+  kiroTerminalFix,
+  kiroTerminalIssueMessage,
+  readKiroIdeTerminal,
+  readKiroTerminalAnswer,
+  type KiroTerminalAnswer,
+} from "./aidlc-kiro-ide-terminal.ts";
 import { spawnSync } from "node:child_process";
 import {
   accessSync,
@@ -16,17 +36,25 @@ import { delimiter, dirname, extname, join, relative, resolve } from "node:path"
 import {
   assertProjectionPathHasNoSymlinks,
   isSafeOnboardingPath,
+  jsonEntryHash,
+  jsonEntryId,
   jsonFileText,
   jsoncRootMembers,
   jsoncSettingValue,
+  kiroUpgradedAgentFile,
   managedBlockIsSafe,
   managedBlockMarkers,
   mergeBlock,
+  mergeJsonEntries,
   missingJsonEntries,
+  ownTitleLine,
   readJsonFile,
+  removeJsonEntries,
   type RootIntegration,
   rootBlockPath,
+  rootIntegrationTarget,
   sha256Matching,
+  withSpace,
 } from "./aidlc-distribution.ts";
 import {
   aidlcInvocation,
@@ -36,6 +64,7 @@ import {
 import { AIDLC_VERSION } from "./aidlc-version.ts";
 import { compareVersions, VERSION_ID } from "./aidlc-channel.ts";
 import { installedExecutablePath } from "./aidlc-install-paths.ts";
+import { personaTwinRels } from "./aidlc-plugin.ts";
 import { readBoundedRegularFile } from "./aidlc-inline-context.ts";
 import {
   HARNESS_PRODUCT_NAMES,
@@ -232,6 +261,10 @@ export type DiagnosticFileSetting = {
 export type TrustStatus = {
   files: string[];
   issues: DiagnosticIssue[];
+  /** Kiro IDE only: its Workflows switch and the person's answer on this machine. */
+  kiroWorkflows?: { enabled: boolean; readable: boolean; settingsPath: string; answer: KiroWorkflowsAnswer | null };
+  /** Kiro IDE on Windows only: whether its terminal is Command Prompt, and the person's answer on this machine. */
+  kiroTerminal?: { commandPrompt: boolean; profile: string | null; settingsPath: string; answer: KiroTerminalAnswer | null };
 };
 
 export type DiagnosticDoctorCheck = {
@@ -698,7 +731,6 @@ function pathAssignments(
   return entries;
 }
 
-// systemd environment.d: every *.conf in the directory, sorted, PATH= lines.
 function environmentDirectoryPaths(directory: string, home: string): string[] {
   let files: string[];
   try {
@@ -1442,13 +1474,13 @@ export function hasLegacyCodexProviderConfig(
 }
 
 // The `aws-mcp` region in `.kiro/settings/mcp.json` is plain MCP configuration.
-// Kiro CLI no longer asks a provider question, so no record drives it; but every
+// Kiro CLI does not ask a provider question, so no record drives it; but every
 // refresh restages that file from the release bytes, which would silently move a
 // region the project already carries (set by an earlier build's Bedrock answer,
 // or by hand) back to the shipped one. Carry the project's current endpoint
-// region and `AWS_REGION` metadata into the staged file instead, so the staged
-// bytes equal the current bytes and the refresh preserves the file. Reads only
-// the two aws-mcp arguments; everything else comes from the release.
+// region and `AWS_REGION` metadata into the staged file instead, so the refresh
+// preserves the region. Reads only the two aws-mcp arguments; everything else
+// comes from the release.
 export function preserveKiroMcpRegion(
   projectDir: string,
   stagedRoot: string,
@@ -1500,9 +1532,8 @@ export function preserveKiroMcpRegion(
 }
 
 
-// A staged opencode.json as plain JSON, or null when it is the team's own file
-// with comments (a copy's own tree), which holds no provider block AI-DLC
-// writes or clears here.
+// A staged opencode.json as plain JSON, or null when it cannot be read as an
+// object, including the team's own file with comments (a copy's own tree).
 function openCodeJsonOrNull(path: string): Record<string, unknown> | null {
   try {
     const value = readJsonFile(path);
@@ -1512,14 +1543,72 @@ function openCodeJsonOrNull(path: string): Record<string, unknown> | null {
   }
 }
 
+/**
+ * The entries of the team's opencode.json an explicit Bedrock choice sets:
+ * provider.amazon-bedrock.options.region, and .profile when one is recorded.
+ */
+export function openCodeProviderEntryIds(record: ProvidersRecord): string[] {
+  const options = ["provider", "amazon-bedrock", "options"];
+  return [
+    jsonEntryId([...options, "region"]),
+    ...(record.profile ? [jsonEntryId([...options, "profile"])] : []),
+  ];
+}
+
+// The same entries with the values the record wrote, for removing them while
+// they still hold those values.
+function openCodeProviderEntryHashes(record: ProvidersRecord): Record<string, string> {
+  const options = ["provider", "amazon-bedrock", "options"];
+  return {
+    [jsonEntryId([...options, "region"])]: jsonEntryHash(record.region),
+    ...(record.profile ? { [jsonEntryId([...options, "profile"])]: jsonEntryHash(record.profile) } : {}),
+  };
+}
+
+/**
+ * The Bedrock region and profile the team's opencode.json names itself
+ * (comments allowed); empty when the file is absent, unreadable or names none.
+ */
+export function openCodeFileProvider(projectDir: string): { region?: string; profile?: string } {
+  try {
+    const value = Bun.JSONC.parse(
+      readFileSync(join(projectDir, rootIntegrationTarget(projectDir, "opencode.json")), "utf-8").replace(/^\uFEFF/, ""),
+    );
+    const providers = isRecord(value) && isRecord(value.provider) ? value.provider : {};
+    const bedrock = isRecord(providers["amazon-bedrock"]) ? providers["amazon-bedrock"] : {};
+    const options = isRecord(bedrock.options) ? bedrock.options : {};
+    return {
+      ...(typeof options.region === "string" ? { region: options.region } : {}),
+      ...(typeof options.profile === "string" ? { profile: options.profile } : {}),
+    };
+  } catch {
+    return {};
+  }
+}
+
 function writeOpenCodeProvider(
   projectionRoot: string,
   record: ProvidersRecord,
 ): void {
   if (!record.opencodeDefault) return;
   const path = join(projectionRoot, "opencode.json");
+  if (!existsSync(path)) return;
   const value = openCodeJsonOrNull(path);
-  if (value === null) return;
+  if (value === null) {
+    // The team's own file with comments (a copy's own tree): set the two
+    // leaves in place and keep everything else, comments included.
+    const current = readFileSync(path, "utf-8");
+    const options = { region: record.region, ...(record.profile ? { profile: record.profile } : {}) };
+    const merged = mergeJsonEntries(
+      current,
+      JSON.stringify({ provider: { "amazon-bedrock": { options } } }),
+      { kind: "none" },
+      false,
+      openCodeProviderEntryIds(record),
+    );
+    if (!("conflict" in merged) && merged.text !== current) writeFileSync(path, merged.text);
+    return;
+  }
   const providers = isRecord(value.provider) ? { ...value.provider } : {};
   const existing = isRecord(providers["amazon-bedrock"])
     ? providers["amazon-bedrock"]
@@ -1565,7 +1654,17 @@ function clearOpenCodeProvider(
   const path = join(projectionRoot, "opencode.json");
   if (!existsSync(path)) return;
   const value = openCodeJsonOrNull(path);
-  if (value === null || !isRecord(value.provider)) return;
+  if (value === null) {
+    // The team's own file with comments (a copy's own tree): remove the two
+    // leaves the previous choice wrote, while they still hold its values, the
+    // same comment-keeping way they were set.
+    if (previousProvider?.provider !== "amazon-bedrock" || previousProvider.opencodeDefault !== true || !previousProvider.region) return;
+    const current = readFileSync(path, "utf-8");
+    const next = removeJsonEntries(current, openCodeProviderEntryHashes(previousProvider));
+    if (next !== null && next !== current) writeFileSync(path, next);
+    return;
+  }
+  if (!isRecord(value.provider)) return;
   const providers = { ...value.provider };
   if (!openCodeProviderMatchesRecord(
     providers["amazon-bedrock"],
@@ -1682,7 +1781,7 @@ export function providerFiles(
     } else if (harness === "opencode") {
       files.push({
         setting: "opencode project configuration",
-        file: "opencode.json",
+        file: rootIntegrationTarget(projectDir, "opencode.json"),
       });
     }
     return files.map((entry) => ({
@@ -1705,7 +1804,7 @@ export function providerFiles(
   } else if (harness === "opencode" && record.opencodeDefault) {
     files.push({
       setting: "amazon-bedrock provider options",
-      file: "opencode.json",
+      file: rootIntegrationTarget(projectDir, "opencode.json"),
     });
   }
   return files.map((entry) => ({
@@ -2192,7 +2291,7 @@ export function providerSurfaceIssues(
           }
         }
       } else if (harness === "opencode" && record.provider === "other") {
-        const path = join(projectDir, "opencode.json");
+        const path = join(projectDir, rootIntegrationTarget(projectDir, "opencode.json"));
         const value = readTeamJsonFile(path) as Record<string, unknown>;
         const providers = isRecord(value.provider) ? value.provider : {};
         if (Object.hasOwn(providers, "amazon-bedrock")) {
@@ -2261,7 +2360,7 @@ export function providerSurfaceIssues(
         }
       }
     } else if (harness === "opencode" && record.opencodeDefault) {
-      const path = join(projectDir, "opencode.json");
+      const path = join(projectDir, rootIntegrationTarget(projectDir, "opencode.json"));
       const value = readTeamJsonFile(path) as Record<string, unknown>;
       const providers = isRecord(value.provider) ? value.provider : {};
       const bedrock = isRecord(providers["amazon-bedrock"]) ? providers["amazon-bedrock"] : {};
@@ -2313,6 +2412,79 @@ export function copilotConfigPath(
 ): string {
   const home = (platform === "win32" ? env.USERPROFILE : env.HOME) || homedir();
   return join(env.COPILOT_HOME || join(home, ".copilot"), "config.json");
+}
+
+// The global opencode config files that merge before a project opencode.json,
+// in opencode's own order (v1.18.18 config/config.ts): config.json,
+// opencode.json and opencode.jsonc under its config directory, then the file
+// OPENCODE_CONFIG names. The directory is xdg-basedir's (XDG_CONFIG_HOME, else
+// os.homedir()/.config, on every platform; the home is USERPROFILE on Windows,
+// never APPDATA) plus "opencode" (core/global.ts).
+export function openCodeGlobalConfigFiles(
+  env: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = hostPlatform(),
+): string[] {
+  const home = (platform === "win32" ? env.USERPROFILE : env.HOME) || homedir();
+  const dir = join(env.XDG_CONFIG_HOME || join(home, ".config"), "opencode");
+  return [
+    join(dir, "config.json"),
+    join(dir, "opencode.json"),
+    join(dir, "opencode.jsonc"),
+    ...(env.OPENCODE_CONFIG ? [env.OPENCODE_CONFIG] : []),
+  ];
+}
+
+// opencode deep-merges those files (remeda mergeDeep): plain objects merge key
+// by key, anything else is replaced by the later file's value.
+function mergeLikeOpenCode(base: unknown, next: unknown): unknown {
+  if (!isRecord(base) || !isRecord(next)) return next;
+  const merged: Record<string, unknown> = { ...base };
+  for (const [key, value] of Object.entries(next)) merged[key] = mergeLikeOpenCode(merged[key], value);
+  return merged;
+}
+
+// A project opencode.json replaces a global short form ("bash": "ask") with
+// the bash or edit map AI-DLC writes, so the person's ask or deny for every
+// shell command or file edit is gone in that project. One line says so and
+// names the file; null when the folded value is a map, "allow" (opencode's
+// own default) or absent. Reads only; a file it cannot read or parse is skipped.
+export function openCodeGlobalShortFormNote(
+  env: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = hostPlatform(),
+): string | null {
+  const home = (platform === "win32" ? env.USERPROFILE : env.HOME) || homedir();
+  let permission: unknown;
+  const setBy: Partial<Record<"bash" | "edit", string>> = {};
+  for (const file of openCodeGlobalConfigFiles(env, platform)) {
+    let value: unknown;
+    try {
+      value = Bun.JSONC.parse(readFileSync(file, "utf-8").replace(/^\uFEFF/, ""));
+    } catch {
+      continue;
+    }
+    if (!isRecord(value) || !isRecord(value.permission)) continue;
+    for (const key of ["bash", "edit"] as const) {
+      if (value.permission[key] !== undefined) setBy[key] = file;
+    }
+    permission = mergeLikeOpenCode(permission, value.permission);
+  }
+  if (!isRecord(permission)) return null;
+  const found: Array<{ key: "bash" | "edit"; value: "ask" | "deny"; what: string }> = [];
+  for (const [key, what] of [["bash", "shell command"], ["edit", "file edit"]] as const) {
+    const value = permission[key];
+    if (value === "ask" || value === "deny") found.push({ key, value, what });
+  }
+  if (found.length === 0) return null;
+  const shown = (file: string) =>
+    platform !== "win32" && file.startsWith(`${home}/`) ? `~${file.slice(home.length)}` : file;
+  const where = [...new Set(found.map((entry) => shown(setBy[entry.key] ?? "")))].join(" and ");
+  const rewrites = found.map((entry) => `"${entry.key}": {"*": "${entry.value}"}`);
+  if (found.length === 1) {
+    const [{ value, what }] = found;
+    return `Your opencode setting ${value === "ask" ? "asks before" : "refuses"} every ${what}; in this project AI-DLC's permission rules replace that short form. To keep ${value === "ask" ? "asking" : "refusing"}, write it as ${rewrites[0]} in ${where}.`;
+  }
+  const parts = found.map((entry) => `${entry.value === "ask" ? "ask before" : "refuse"} every ${entry.what}`);
+  return `Your opencode settings ${parts.join(" and ")}; in this project AI-DLC's permission rules replace those short forms. To keep them, write them as ${rewrites.join(" and ")} in ${where}.`;
 }
 
 // True when a trustedFolders entry covers the project the way the CLI judges
@@ -2485,10 +2657,10 @@ export function codexTrustIssues(
 }
 
 // A missing sibling is repaired by the same `--harness` refresh as a missing
-// shell. The old remediation was a bare `aidlc config`, which on a project that
-// already has a harness directory takes the interactive walk and rebuilds
-// nothing. `harnessDir` selects the channel-correct command; callers without one
-// (tests) get the native spelling.
+// shell. A bare `aidlc config` on a project that already has a harness
+// directory takes the interactive walk and rebuilds nothing. `harnessDir`
+// selects the channel-correct command; callers without one (tests) get the
+// native spelling.
 export function workspaceSiblingIssues(
   projectDir: string,
   harness: ModelHarness,
@@ -2584,7 +2756,7 @@ export function trustFilesForHarness(
   if (harness === "copilot") {
     files.push(join(projectDir, ".github", "hooks", "aidlc.json"), copilotConfigPath());
   }
-  if (harness === "opencode") files.push(join(projectDir, "opencode.json"));
+  if (harness === "opencode") files.push(join(projectDir, rootIntegrationTarget(projectDir, "opencode.json")));
   return [...new Set(files)];
 }
 
@@ -2639,9 +2811,63 @@ export function trustStatus(
   if (harness === "copilot") {
     issues.push(...copilotTrustIssues(projectDir, env));
   }
+  // Kiro IDE's Workflows feature keeps AI-DLC's reviews and helpers from
+  // running. It is the person's machine-wide Kiro setting, so it is named only
+  // until they answered once on this machine.
+  let kiroWorkflows: TrustStatus["kiroWorkflows"];
+  if (harness === "kiro-ide") {
+    const state = readKiroIdeWorkflows(env);
+    kiroWorkflows = {
+      enabled: state.enabled,
+      readable: state.readable,
+      settingsPath: state.settingsPath,
+      answer: readKiroWorkflowsAnswer(),
+    };
+    // A file AI-DLC cannot read may hold Workflows on whatever the person
+    // answered before, so it is named while the file stays that way, as doctor does.
+    if (!state.readable) {
+      issues.push({
+        id: KIRO_WORKFLOWS_UNREADABLE_ISSUE_ID,
+        message: kiroWorkflowsUnreadableMessage(),
+        remediation: kiroWorkflowsUnreadableFix(state.settingsPath),
+        severity: "warn",
+      });
+    }
+    if (state.enabled && kiroWorkflows.answer === null) {
+      issues.push({
+        id: KIRO_WORKFLOWS_ISSUE_ID,
+        message: kiroWorkflowsIssueMessage(),
+        remediation: kiroWorkflowsFix(invocationForHarness(harnessDir)),
+        severity: "warn",
+      });
+    }
+  }
+  // Kiro IDE runs its agent's commands in the person's default terminal. In
+  // Command Prompt AI-DLC's commands split the person's words and every command
+  // reports exit code -1, so it is named until they answered once on this machine.
+  let kiroTerminal: TrustStatus["kiroTerminal"];
+  if (harness === "kiro-ide") {
+    const state = readKiroIdeTerminal(env);
+    kiroTerminal = {
+      commandPrompt: state.commandPrompt,
+      profile: state.profile,
+      settingsPath: state.settingsPath,
+      answer: readKiroTerminalAnswer(),
+    };
+    if (state.commandPrompt && kiroTerminal.answer === null) {
+      issues.push({
+        id: KIRO_TERMINAL_ISSUE_ID,
+        message: kiroTerminalIssueMessage(),
+        remediation: kiroTerminalFix(invocationForHarness(harnessDir)),
+        severity: "warn",
+      });
+    }
+  }
   return {
     files: trustFilesForHarness(projectDir, harnessDir, harness),
     issues,
+    ...(kiroWorkflows ? { kiroWorkflows } : {}),
+    ...(kiroTerminal ? { kiroTerminal } : {}),
   };
 }
 
@@ -2683,6 +2909,16 @@ export function shellOnlyRuntimes(
     .map((binary) => binary.name);
 }
 
+// The runtime fixes setup asks the person for, at its top line and its end
+// alike. A runtime found on this shell's PATH needs nothing from a harness
+// started from a terminal; the doctor says what to do if its hooks never run.
+export function runtimeFixesNeeded(diagnostics: RuntimeDiagnostics): DiagnosticIssue[] {
+  return runtimeIssues({
+    ...diagnostics,
+    binaries: diagnostics.binaries.filter((binary) => binary.status !== "interactive-only"),
+  });
+}
+
 export function postApplyOutstandingActions(
   projectDir: string,
   harnessDir: string,
@@ -2701,13 +2937,7 @@ export function postApplyOutstandingActions(
       ...options.runtime,
       includeHarnessCli: false,
     });
-    // A runtime found on this shell's PATH needs nothing from a harness started
-    // from a terminal; the doctor says what to do if its hooks never run.
-    const needed = {
-      ...diagnostics,
-      binaries: diagnostics.binaries.filter((binary) => binary.status !== "interactive-only"),
-    };
-    actions.push(...runtimeIssues(needed).map((issue) => ({
+    actions.push(...runtimeFixesNeeded(diagnostics).map((issue) => ({
       section: "runtime" as const,
       id: issue.id,
       message: issue.message,
@@ -2722,6 +2952,33 @@ export function postApplyOutstandingActions(
       options.env,
     ).issues.map((issue) => {
       const step = codexHookTrustStep(issue.id);
+      if (issue.id === KIRO_WORKFLOWS_ISSUE_ID) {
+        return {
+          section: "trust" as const,
+          id: issue.id,
+          message: issue.message,
+          command: `${invoke} config trust --kiro-workflows off`,
+        };
+      }
+      // No AI-DLC command repairs the file: the step is the person's, and the
+      // command only checks the result.
+      if (issue.id === KIRO_WORKFLOWS_UNREADABLE_ISSUE_ID) {
+        return {
+          section: "trust" as const,
+          id: issue.id,
+          message: issue.message,
+          command: `${invoke} config trust --check`,
+          step: issue.remediation,
+        };
+      }
+      if (issue.id === KIRO_TERMINAL_ISSUE_ID) {
+        return {
+          section: "trust" as const,
+          id: issue.id,
+          message: issue.message,
+          command: `${invoke} config trust --kiro-terminal powershell`,
+        };
+      }
       return step
         ? {
             section: "trust" as const,
@@ -2911,7 +3168,10 @@ function instructionStates(
       state: "missing",
     }];
   }
-  const states: InstructionState[] = tracked.map(({ path, contribution }) => {
+  const states: InstructionState[] = tracked.map(({ path: key, contribution }) => {
+    // The team's file the record's entries live in (the opencode.jsonc a team
+    // keeps, for opencode.json); AI-DLC's shipped part stays under the key.
+    const path = rootIntegrationTarget(projectDir, key);
     if (path === onboardingPath && onboardingConflict) {
       return { path, kind: "whole-file", state: "conflict" };
     }
@@ -2924,11 +3184,21 @@ function instructionStates(
       };
     }
     const content = readFileSync(target);
+    // A line the person wrote in place of the onboarding's title is theirs,
+    // and config keeps it, so it is not a change to AI-DLC's text (#2058).
+    const ownTitleOnly = (text: string, hash: string): boolean =>
+      ownTitleLine(text, (restored) =>
+        // A space switch may also have pointed its include lines elsewhere.
+        [restored, withSpace(restored, "default")].some((form) => sha256Matching(form, [hash]) === hash)
+      ) !== null;
     if (contribution.policy === "whole-file") {
       return {
         path,
         kind: contribution.policy,
-        state: sha256Matching(content, [contribution.hash]) === contribution.hash ? "intact" : "conflict",
+        state: sha256Matching(content, [contribution.hash]) === contribution.hash ||
+            (path === onboardingPath && ownTitleOnly(content.toString("utf-8"), contribution.hash))
+          ? "intact"
+          : "conflict",
       };
     }
     if (contribution.policy === "json-entries") {
@@ -2936,8 +3206,8 @@ function instructionStates(
       // there; everything else in it is theirs.
       let shipped: string;
       try {
-        assertProjectionPathHasNoSymlinks(projectDir, `${harnessDir}/tools/data/root-blocks/${path}`);
-        shipped = readFileSync(join(projectDir, harnessDir, "tools", "data", "root-blocks", path), "utf-8");
+        assertProjectionPathHasNoSymlinks(projectDir, `${harnessDir}/tools/data/root-blocks/${key}`);
+        shipped = readFileSync(join(projectDir, harnessDir, "tools", "data", "root-blocks", key), "utf-8");
       } catch {
         return { path, kind: contribution.policy, state: "intact" };
       }
@@ -2967,7 +3237,12 @@ function instructionStates(
     return {
       path,
       kind: contribution.policy,
-      state: sha256Matching(block, [contribution.hash]) === contribution.hash ? "intact" : "conflict",
+      state: sha256Matching(block, [contribution.hash]) === contribution.hash ||
+          // A space switch pointed its include lines at another space.
+          sha256Matching(withSpace(block, "default"), [contribution.hash]) === contribution.hash ||
+          ownTitleOnly(block, contribution.hash)
+        ? "intact"
+        : "conflict",
     };
   });
   if (onboardingPath && !onboardingHash) {
@@ -3139,6 +3414,63 @@ export function runtimeDoctorChecks(
 const VSCODE_REQUEST_CAP_KEY = "chat.agent.maxRequests";
 const VSCODE_REQUEST_CAP_FLOOR = 100;
 
+// Doctor reads Kiro IDE's Workflows switch like the trust section does, and
+// names the command the agent runs when the person says yes.
+export function kiroIdeWorkflowsDoctorCheck(
+  projectDir: string,
+  harnessDirHint?: string,
+  env: NodeJS.ProcessEnv = process.env,
+): DiagnosticDoctorCheck | null {
+  const selected = selectedHarness(projectDir, harnessDirHint);
+  if (selected?.harness !== "kiro-ide") return null;
+  const state = readKiroIdeWorkflows(env);
+  if (!state.readable) {
+    return {
+      pass: false,
+      severity: "warn",
+      label: kiroWorkflowsUnreadableMessage(),
+      fix: kiroWorkflowsUnreadableFix(state.settingsPath),
+    };
+  }
+  if (!state.enabled) return { pass: true, label: "Kiro Workflows is off" };
+  return {
+    pass: false,
+    severity: "warn",
+    label: "Kiro Workflows is on, so AI-DLC's reviews and helpers do not run in your Kiro IDE chats",
+    fix: kiroWorkflowsFix(invocationForHarness(selected.harnessDir)),
+  };
+}
+
+// Doctor reads Kiro IDE's default terminal like the trust section does, on
+// Windows only (the setting is Kiro's on Windows), and names the command the
+// agent runs when the person says yes.
+export function kiroIdeTerminalDoctorCheck(
+  projectDir: string,
+  harnessDirHint?: string,
+  env: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+): DiagnosticDoctorCheck | null {
+  const selected = selectedHarness(projectDir, harnessDirHint);
+  if (selected?.harness !== "kiro-ide") return null;
+  if (!kiroTerminalApplies(env, platform)) return null;
+  const state = readKiroIdeTerminal(env, platform);
+  if (!state.readable) {
+    return {
+      pass: false,
+      severity: "warn",
+      label: `Kiro terminal: ${state.settingsPath} could not be read as JSONC`,
+      fix: "correct the file, or in Kiro run Terminal: Select Default Profile from the Command Palette and choose PowerShell",
+    };
+  }
+  if (!state.commandPrompt) return { pass: true, label: `Kiro terminal: ${state.profile ?? "PowerShell (Kiro's default)"}` };
+  return {
+    pass: false,
+    severity: "warn",
+    label: `Kiro terminal: ${kiroTerminalIssueMessage()}`,
+    fix: kiroTerminalFix(invocationForHarness(selected.harnessDir)),
+  };
+}
+
 export function vscodeRequestCapDoctorCheck(
   projectDir: string,
   harnessDirHint?: string,
@@ -3224,7 +3556,6 @@ export function vscodeWorkspaceRequestCapDoctorCheck(
 
 const REQUEST_CAP_PAUSES = 'below 100, VS Code stops a long stage to ask "Continue to iterate?" and the chat waits until someone answers';
 
-// The install's added-once record for .vscode/settings.json.
 function requestCapAddedBefore(harnessRoot: string): boolean {
   try {
     const baseline = readJsonFile(join(harnessRoot, "tools", "data", "aidlc-manifest.json")) as {
@@ -3496,11 +3827,13 @@ function changedFrameworkFiles(
 ): string[] {
   const data = join(projectDir, harnessDir, "tools", "data");
   let onboarding = harness === "claude" ? `${harnessDir}/CLAUDE.md` : undefined;
+  let distribution: string = harness;
   try {
     const descriptor: unknown = JSON.parse(readFileSync(join(data, "aidlc-projection.json"), "utf-8"));
     if (isRecord(descriptor) && isSafeOnboardingPath(descriptor.onboarding, harnessDir)) {
       onboarding = descriptor.onboarding;
     }
+    if (isRecord(descriptor) && typeof descriptor.distribution === "string") distribution = descriptor.distribution;
   } catch {
     // The instruction row reports an unreadable descriptor.
   }
@@ -3509,9 +3842,30 @@ function changedFrameworkFiles(
     // The engine writes Kiro IDE's steering copy of the project's memory itself.
     `${harnessDir}/steering/aidlc-active-memory.md`,
   ];
-  // Config takes a plugin's additions to stage files out before it compares.
-  const pluginStages = existsSync(data) &&
-    readdirSync(data).some((name) => /^plugin-contrib-.+\.json$/.test(name));
+  // Config takes a plugin's additions to stage files and personas, and the
+  // personas' per-harness copies, out before it compares. A persona carries
+  // only fragments, so one a plugin composed holds that plugin's marker.
+  const composedBy = existsSync(data)
+    ? readdirSync(data).flatMap((name) => /^plugin-contrib-(.+)\.json$/.exec(name)?.[1] ?? [])
+    : [];
+  const pluginStages = composedBy.length > 0;
+  const carriesFragment = (rel: string): boolean => {
+    try {
+      const text = readFileSync(join(projectDir, rel), "utf-8");
+      return composedBy.some((name) => text.includes(`<!-- plugin:${name}:`));
+    } catch {
+      return false;
+    }
+  };
+  const personas = new Set<string>();
+  const personaDir = `${harnessDir}/agents/`;
+  for (const rel of pluginStages ? Object.keys(baseline.files ?? {}) : []) {
+    const slug = rel.startsWith(personaDir) && rel.endsWith(".md") ? rel.slice(personaDir.length, -3) : "";
+    if (slug === "" || slug.includes("/")) continue;
+    for (const file of [rel, ...personaTwinRels(distribution, harnessDir, slug)]) {
+      if (carriesFragment(file)) personas.add(file);
+    }
+  }
   const changed: string[] = [];
   for (const [rel, hash] of Object.entries(baseline.files ?? {})) {
     if (
@@ -3520,6 +3874,7 @@ function changedFrameworkFiles(
       baseline.entries?.[rel] !== undefined ||
       generated.includes(rel) ||
       (pluginStages && rel.startsWith(`${harnessDir}/aidlc-common/stages/`)) ||
+      personas.has(rel) ||
       rel.startsWith("/") ||
       rel.split("/").includes("..")
     ) continue;
@@ -3532,7 +3887,12 @@ function changedFrameworkFiles(
     }
     if (regular) {
       const content = readFileSync(path);
-      if (sha256Matching(content, [hash]) === hash || content.includes("generated-by: aidlc-runner-gen")) continue;
+      if (
+        sha256Matching(content, [hash]) === hash ||
+        // A space switch pointed its include lines at another space.
+        sha256Matching(withSpace(content.toString("utf-8"), "default"), [hash]) === hash ||
+        content.includes("generated-by: aidlc-runner-gen")
+      ) continue;
     }
     changed.push(rel);
   }
@@ -3555,8 +3915,18 @@ export function frameworkFilesDoctorCheck(
     // The instruction row reports a missing or unreadable record.
     return { pass: true, label: "AI-DLC files: not checked, no record of what AI-DLC wrote" };
   }
-  const changed = changedFrameworkFiles(projectDir, selected.harnessDir, selected.harness, baseline);
-  if (changed.length === 0) return { pass: true, label: "AI-DLC files: unchanged since AI-DLC wrote them" };
+  const differ = changedFrameworkFiles(projectDir, selected.harnessDir, selected.harness, baseline);
+  // An agent file Kiro upgraded for its 3.0 engine is not the person's change.
+  const upgraded = differ.filter((rel) => kiroUpgradedAgentFile(projectDir, rel));
+  const changed = differ.filter((rel) => !upgraded.includes(rel));
+  if (changed.length === 0) {
+    const kept = upgraded.length === 0
+      ? ""
+      : `, apart from ${upgraded.length} agent ${
+        upgraded.length === 1 ? "file" : "files"
+      } Kiro upgraded for its 3.0 engine`;
+    return { pass: true, label: `AI-DLC files: unchanged since AI-DLC wrote them${kept}` };
+  }
   const invoke = invocationForHarness(selected.harnessDir);
   const one = changed.length === 1;
   const shown = changed.slice(0, 10).join(", ");

@@ -86,7 +86,7 @@ def private_json(path: Path, value: object) -> None:
 
 
 def clean_environment() -> dict[str, str]:
-    allowed = ("PATH", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT")
+    allowed = ("PATH", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT", "DOCKER_HOST")
     return {name: os.environ[name] for name in allowed if name in os.environ}
 
 

@@ -1,9 +1,5 @@
 ---
 name: aidlc-aws-platform-agent
-display_name: AWS Platform Agent
-examples:
-  - account-structure.md
-  - service-limits.md
 description: >
   AWS solutions architect responsible for infrastructure design, environment provisioning, and cloud-native architecture.
   Leads Infrastructure Design and Environment Provisioning stages.

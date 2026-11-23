@@ -128,6 +128,19 @@ describe('the prepared preview', () => {
   });
 });
 
+describe('provider text stays text', () => {
+  it('renders a hostile destination title and context as text', async () => {
+    const api = new ExportDouble().on('prepare-export-preview', () => preview());
+    step(api, entry({ title: '<svg onload=x>제목</svg>', context: '<i>위치</i>' }));
+
+    const destination = await screen.findByTestId('preview-destination');
+
+    expect(destination.textContent).toContain('<svg onload=x>제목</svg>');
+    expect(destination.textContent).toContain('<i>위치</i>');
+    expect(destination.querySelector('svg, i')).toBeNull();
+  });
+});
+
 describe('a changed binding', () => {
   it('shows a focused notice and leads to a fresh preview with a new revision', async () => {
     let revision = 1;

@@ -1,12 +1,14 @@
 """Independent, private recovery snapshots with explicit current-version fencing."""
 
+import base64
 import hashlib
 import hmac
+import json
 import os
 
 import pytest
 
-from backend.modules.accounts.control_key_recovery import _recover, capture
+from backend.modules.accounts.control_key_recovery import _recover, capture, recover
 from backend.modules.accounts.control_keys import ControlKeyring
 from backend.modules.accounts.control_policy import PolicyUnavailable
 
@@ -82,3 +84,64 @@ def test_capture_rejects_verifier_keyring_disagreement(ring):
     (ring.root / "account-verifier.key").write_bytes(b"x" * 32)
     with pytest.raises(PolicyUnavailable, match="disagree"):
         capture(ring)
+
+
+def forged_snapshot(ring, change):
+    """A snapshot file whose name is its own digest, with one field changed."""
+    bound = capture(ring)
+    path = ring.root / "account-key-recovery" / (bound["digest"] + ".json")
+    value = json.loads(path.read_bytes())
+    change(value)
+    data = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+    digest = hashlib.sha256(data).hexdigest()
+    forged = path.parent / (digest + ".json")
+    forged.write_bytes(data)
+    forged.chmod(0o600)
+    return digest, bound["generation"]
+
+
+def test_capture_refuses_to_replace_a_divergent_snapshot(ring):
+    bound = capture(ring)
+    path = ring.root / "account-key-recovery" / (bound["digest"] + ".json")
+    path.write_bytes(b"{}")
+    with pytest.raises(PolicyUnavailable, match="divergent"):
+        capture(ring)
+    assert path.read_bytes() == b"{}"
+
+
+def test_capture_refuses_a_marker_from_another_run(ring):
+    (ring.root / "account-control-keyring.initialized").write_bytes(b"another-run")
+    with pytest.raises(PolicyUnavailable, match="run mismatch"):
+        capture(ring)
+    assert not (ring.root / "account-key-recovery").exists() or not any(
+        (ring.root / "account-key-recovery").iterdir()
+    )
+
+
+def test_recovery_accepts_only_u2s_own_run_root(ring):
+    bound = capture(ring)
+    with pytest.raises(ValueError, match="owned recovery root required"):
+        recover(ring.root, ring.run_id, expected_digest=bound["digest"],
+                expected_generation=bound["generation"])
+
+
+@pytest.mark.parametrize("digest,generation", [("not-a-digest", 2), ("a" * 64, 4), ("a" * 64, True)])
+def test_recovery_requires_an_exact_identity(ring, digest, generation):
+    with pytest.raises(PolicyUnavailable, match="exact recovery identity required"):
+        _recover(ring.root, ring.run_id, digest, generation)
+
+
+def test_recovery_refuses_a_keyring_bound_to_another_run(ring):
+    digest, generation = forged_snapshot(ring, lambda value: value["keyring"].update(runId="other-run"))
+    with pytest.raises(PolicyUnavailable, match="material binding mismatch"):
+        _recover(ring.root, ring.run_id, digest, generation)
+
+
+def test_recovery_refuses_a_verifier_that_did_not_derive_the_key(ring):
+    original = ring.read()
+    digest, generation = forged_snapshot(
+        ring, lambda value: value.update(verifier=base64.b64encode(b"y" * 32).decode())
+    )
+    with pytest.raises(PolicyUnavailable, match="verifier binding mismatch"):
+        _recover(ring.root, ring.run_id, digest, generation)
+    assert ring.read() == original

@@ -5,12 +5,12 @@ from uuid import UUID, uuid4
 
 import psycopg
 import pytest
+from docsuri_shared.workspace import wire
+
 from backend.modules.export.fake_notion import Answer
 from backend.modules.export.rendering import binding_hash, content_hash
 from backend.modules.research.errors import ResearchError
 from backend.u6_policy import real_activation_export
-from docsuri_shared.workspace import wire
-
 from tests.u6_approved_export import notion_flows as nf
 from tests.u6_approved_export import service_flows as sf
 
@@ -87,15 +87,139 @@ def test_u4_answers_map_as_br2_1(transactions, connect, authority, tmp_path, ans
     assert [entry.path for entry in rig.fake.requests if "/pages/" in entry.path] == []
 
 
+def test_a_page_outside_a_complete_listing_is_conflict_with_no_page_request(
+    transactions, connect, authority, tmp_path
+):
+    rig = sf.build(transactions, connect, authority, tmp_path)
+    rig.configure()
+    rig.page("목록에 있음")
+    outside = uuid4().hex
+
+    assert sf.refuse("prepare_preview", lambda: rig.preview(outside)) == "CONFLICT"
+
+    searches = [entry for entry in rig.fake.requests if entry.path == "/v1/search"]
+    assert len(searches) == 1
+    hyphenated = str(UUID(hex=outside))
+    assert all(
+        outside not in entry.path and hyphenated not in entry.path
+        for entry in rig.fake.requests
+    )
+    with connect("export") as conn:
+        pairs = conn.execute(
+            "SELECT count(*) AS n FROM export.preview_pair WHERE account_id=%s",
+            (authority.account_id,),
+        ).fetchone()["n"]
+    assert pairs == 0
+    assert rig.fake.writes == []
+
+
+def test_a_page_missing_from_a_partial_or_unavailable_listing_is_could_not_check(
+    transactions, connect, authority, tmp_path
+):
+    rig = sf.build(transactions, connect, authority, tmp_path)
+    rig.configure()
+    rig.page("먼저 온 페이지")
+    page = rig.page("목록 밖으로 밀림")
+    rig.fake.set_search("partial", page_size=1)
+
+    assert sf.refuse("prepare_preview", lambda: rig.preview(page)) == "DEPENDENCY_UNAVAILABLE"
+
+    rig.fake.set_search("unavailable")
+    assert sf.refuse("prepare_preview", lambda: rig.preview(page)) == "DEPENDENCY_UNAVAILABLE"
+    assert rig.fake.writes == []
+
+
+def test_the_request_identity_prefers_destination_id_and_needs_agreement(
+    transactions, connect, authority, tmp_path
+):
+    rig = sf.build(transactions, connect, authority, tmp_path)
+    rig.configure()
+    first = rig.page("A")
+    second = rig.page("B")
+    source = rig.research.ready()
+
+    disagreeing = rig.preview_value(first, source)
+    disagreeing["destination"]["parentPageId"] = second
+    asked = len(rig.fake.requests)
+    assert (
+        sf.refuse("prepare_preview", lambda: rig.service.prepare_preview(authority, disagreeing))
+        == "CONFLICT"
+    )
+    assert len(rig.fake.requests) == asked
+
+    agreeing = rig.preview_value(first, source)
+    assert agreeing["destination"]["destinationId"] == agreeing["destination"]["parentPageId"]
+    preview = rig.service.prepare_preview(authority, agreeing)
+    assert preview["destination"]["destinationId"] == first
+
+    only_parent = rig.preview_value(first, source)
+    only_parent["destination"].pop("destinationId")
+    again = rig.service.prepare_preview(authority, only_parent)
+    assert (again["previewId"], again["revision"]) == (preview["previewId"], "2")
+
+
+def test_the_recorded_destination_comes_from_the_listing_entry(
+    transactions, connect, authority, tmp_path
+):
+    rig = sf.build(transactions, connect, authority, tmp_path)
+    rig.configure()
+    parent = rig.page("연구 노트")
+    child = rig.page("내보낼 곳", parent_id=parent)
+    source = rig.research.ready()
+    value = rig.preview_value(str(UUID(hex=child)), source)
+    value["destination"]["parentPageId"] = str(UUID(hex=child))
+    value["destination"]["title"] = "브라우저가 보낸 제목"
+
+    preview = rig.service.prepare_preview(authority, value)
+
+    destination = preview["destination"]
+    assert destination["destinationId"] == child
+    assert destination["title"] == "내보낼 곳"
+    assert destination["context"] == "상위 페이지: 연구 노트"
+    paths = [
+        entry.path
+        for entry in rig.fake.requests
+        if "/v1/pages/" in entry.path or "/v1/blocks/" in entry.path
+    ]
+    assert paths and all(child in path for path in paths)
+    expected = binding_hash(
+        {
+            "ownerId": str(authority.account_id),
+            "previewId": preview["previewId"],
+            "revision": preview["revision"],
+            "source": source,
+            "sourceEligibilityRevision": "1",
+            "connectionRevision": "1",
+            "destination": destination,
+            "renderedContentHash": preview["renderedContentHash"],
+            "renderPolicy": rig.policy.reference(),
+        }
+    )
+    assert preview["bindingHash"] == expected
+    assert rig.fake.writes == []
+
+
 def test_destination_refusals_and_the_real_allowance(transactions, connect, authority, tmp_path):
     rig = sf.build(transactions, connect, authority, tmp_path)
     rig.configure()
     hidden = rig.page("숨김", readable=False)
     busy = rig.page("바쁨")
     rig.fake.queue("pages.retrieve", Answer.error(503), target=busy)
+    connection_id = UUID(rig.connection()["connectionId"])
 
+    asked = len(rig.gate.asked)
     assert sf.refuse("prepare_preview", lambda: rig.preview(hidden)) == "CONFLICT"
+    assert rig.gate.asked[asked:] == [connection_id]
+    asked = len(rig.gate.asked)
     assert sf.refuse("prepare_preview", lambda: rig.preview(busy)) == "DEPENDENCY_UNAVAILABLE"
+    assert rig.gate.asked[asked:] == [connection_id]
+
+    good = rig.page("성공")
+    asked = len(rig.gate.asked)
+    rig.preview(good)
+    assert rig.gate.asked[asked:] == [connection_id]
+    assert any(entry.path.endswith(f"/blocks/{good}/children") for entry in rig.fake.requests)
+
     stale = rig.preview_value(busy)
     stale["destination"]["connectionId"] = str(uuid4())
     assert (

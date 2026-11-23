@@ -532,6 +532,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyotp" },
     { name = "redis" },
+    { name = "rfc8785" },
     { name = "sqlalchemy" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -569,6 +570,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.7,<3" },
     { name = "pyotp", specifier = ">=2.9" },
     { name = "redis", specifier = ">=5.0" },
+    { name = "rfc8785", specifier = "==0.1.4" },
     { name = "sqlalchemy", specifier = ">=2.0,<3" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.29" },
 ]

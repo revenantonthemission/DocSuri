@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import resource
 import subprocess
 import sys
@@ -23,6 +24,11 @@ DEFAULT_ADDRESS_SPACE_BYTES = 512 * 1024 * 1024
 STATUS_APPLIED = "applied"
 STATUS_NOT_APPLIED = "not-applied"
 STATUS_UNKNOWN = "unknown"
+
+# The bounded child's module. The default is this package's native adapter; a caller
+# may name another module, but only a `docsuri_ops` module name is ever started.
+NATIVE_ADAPTER = "docsuri_ops.platform_control.native_adapter"
+_ADAPTER_MODULE = re.compile(r"docsuri_ops(\.[a-z_][a-z0-9_]*)+")
 
 
 @dataclass(frozen=True)
@@ -61,7 +67,13 @@ def run_effect(
     deadline_seconds: int,
     injected_fault: str | None = None,
     address_space_bytes: int = DEFAULT_ADDRESS_SPACE_BYTES,
+    adapter_module: str = NATIVE_ADAPTER,
 ) -> EffectOutcome:
+    if not isinstance(adapter_module, str) or not _ADAPTER_MODULE.fullmatch(adapter_module):
+        return EffectOutcome(
+            STATUS_NOT_APPLIED,
+            error={"kind": "internal", "message": "bounded child outside docsuri_ops"},
+        )
     request = {
         "operationId": operation_id,
         "operationName": operation_name,
@@ -75,12 +87,12 @@ def run_effect(
         request["injectedFault"] = injected_fault
     environment = {
         name: os.environ[name]
-        for name in ("PATH", "LANG", "LC_ALL", "TMPDIR")
+        for name in ("PATH", "LANG", "LC_ALL", "TMPDIR", "DOCKER_HOST")
         if name in os.environ
     }
     try:
         child = subprocess.Popen(
-            [sys.executable, "-m", "docsuri_ops.platform_control.native_adapter"],
+            [sys.executable, "-m", adapter_module],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

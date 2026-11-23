@@ -1,0 +1,9 @@
+# U8's tests (Step 95(l), L1-34): E, F, I, UP and B at 100, with nothing ignored.
+# Passed by `--config` from the repository root; `src` follows the `pythonpath` of the
+# U8 pytest configuration so that isort's first-party sections match it.
+line-length = 100
+target-version = "py313"
+src = [".", "scripts", "ops/src", "ingestion/src"]
+
+[lint]
+select = ["E", "F", "I", "UP", "B"]

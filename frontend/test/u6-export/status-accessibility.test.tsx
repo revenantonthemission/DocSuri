@@ -10,7 +10,8 @@ import {
   EFFECT_STATE_COPY,
   NOT_CONNECTED,
 } from '../../src/u6-export/copy';
-import { LiveRegion, StatusBadge } from '../../src/u6-export/status';
+import { dispositionCopy } from '../../src/api';
+import { LiveRegion, refusalCode, refusalText, StatusBadge } from '../../src/u6-export/status';
 import { ExportView } from '../../src/u6-export/export-view';
 import { ExportFlow } from '../../src/u6-export/export-flow';
 import {
@@ -44,6 +45,20 @@ describe('status badges', () => {
       expect(status.text.trim().length).toBeGreaterThan(1);
       unmount();
     }
+  });
+});
+
+describe('refusal copy', () => {
+  it('prefers the operation table, then the shared copy, and names the code', () => {
+    const failure = envelope('CAPACITY_EXHAUSTED', 429);
+
+    expect(refusalText(failure, { CAPACITY_EXHAUSTED: '잠시 후 다시 시도해 주세요' })).toBe(
+      '잠시 후 다시 시도해 주세요',
+    );
+    expect(refusalText(failure)).toBe(dispositionCopy('CAPACITY_EXHAUSTED'));
+    expect(refusalText(new Error('boom'))).toBe('문제가 발생했어요');
+    expect(refusalCode(failure)).toBe('CAPACITY_EXHAUSTED');
+    expect(refusalCode(new Error('boom'))).toBeNull();
   });
 });
 

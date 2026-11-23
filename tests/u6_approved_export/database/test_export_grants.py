@@ -54,7 +54,8 @@ def test_runtime_role_holds_no_privilege_on_the_envelope_columns(connect):
         for column in columns:
             for privilege in ("SELECT", "INSERT", "UPDATE", "REFERENCES"):
                 held = conn.execute(
-                    "SELECT has_column_privilege('docsuri_export','export.connection',%s,%s) AS held",
+                    "SELECT has_column_privilege('docsuri_export','export.connection',%s,%s) "
+                    "AS held",
                     (column, privilege),
                 ).fetchone()["held"]
                 if column in ENVELOPE_COLUMNS:
@@ -81,7 +82,9 @@ def test_operator_functions_belong_to_the_schema_owner_alone(connect):
                 "SELECT has_function_privilege('docsuri_export',%s,'EXECUTE') AS held", (function,)
             ).fetchone()["held"], function
         with pytest.raises(psycopg.errors.InsufficientPrivilege), conn.transaction():
-            conn.execute("SELECT * FROM export.token_envelopes_for_reseal('u6-' || repeat('0',32),1)")
+            conn.execute(
+                "SELECT * FROM export.token_envelopes_for_reseal('u6-' || repeat('0',32),1)"
+            )
         with pytest.raises(psycopg.errors.InsufficientPrivilege), conn.transaction():
             conn.execute("SELECT export.reseal_token(%s,repeat('0',64),'\\x00','u6-x')", (uuid4(),))
 
@@ -90,7 +93,8 @@ def test_public_can_execute_no_function_in_schema_export(connect):
     with connect("export") as conn:
         functions = conn.execute(
             "SELECT p.oid::regprocedure::text AS name, has_function_privilege('public',p.oid,"
-            "'EXECUTE') AS public_execute FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace "
+            "'EXECUTE') AS public_execute FROM pg_proc p "
+            "JOIN pg_namespace n ON n.oid=p.pronamespace "
             "WHERE n.nspname='export'"
         ).fetchall()
         for signature in RUNTIME_FUNCTIONS + OPERATOR_FUNCTIONS:

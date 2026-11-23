@@ -5,6 +5,8 @@ from pathlib import Path
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 import pytest
+from docsuri_shared.workspace import wire
+
 from backend.modules.export import rendering
 from backend.modules.export.rendering import (
     BODY_TOO_LARGE,
@@ -26,7 +28,6 @@ from backend.modules.export.rendering import (
     split_text,
 )
 from backend.modules.research.repository import digest
-from docsuri_shared.workspace import wire
 
 VECTORS = Path(__file__).resolve().parents[3] / "shared" / "export-hash-vectors.json"
 ARTIFACT = UUID("5a1d7c3e-9b2f-4e8a-a6c1-0d4b3f2e1a99")
