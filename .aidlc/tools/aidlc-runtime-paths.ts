@@ -1,6 +1,98 @@
-import { type Dirent, existsSync, lstatSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { type Dirent, existsSync, lstatSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
+import { createRequire } from "node:module";
+import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+
+// The environment the engine runs in, settled before anything else in this
+// module or any module that imports it (the dispatcher, aidlc-lib and every
+// adapter import this module first, so every entry evaluates this block before
+// its own body). Bun loads the `.env` files of the folder a process runs in into
+// process.env, and AI-DLC's hooks and tools run in the person's project. A
+// repository the person clones could therefore set any name the engine reads: a
+// check of theirs switched off, records pointed at another folder, a tool run
+// from a directory of the repository's choosing. The installed engine is built
+// with that autoload off, so nothing in its environment came from a file and
+// nothing is dropped there. A Bun-run tree cannot carry a build flag, so here
+// every AI-DLC or host-tool name a `.env` file in the working directory assigns
+// is removed again before any read; a child Bun process loads the files again
+// and runs this again on its first import.
+//
+// Bun never overrides a name the shell already set, and once a file names a
+// variable there is no telling the two apart. So the drop is narrow: the
+// engine's own namespace and the host tools' names that steer where it reads,
+// writes or runs. The person's application names (an AWS profile, a database
+// URL, whatever their tests need) stay as the shell had them, so a command the
+// engine runs for them sees the same environment their terminal does. Two
+// declarations only a host makes are kept even when the file names them: the
+// unattended driver's flag (dropping it would let a driver's turns pass for a
+// person's) and the dispatcher's internal tokens to its own children.
+//
+// ponytail: an AI-DLC name set in both the shell and the repository's .env is
+// dropped too (a lost setting, never a loosened guard); the environment is the
+// documented place for those names, a project .env is not.
+export const BUN_DOTENV_FILES = [
+  ".env",
+  ".env.local",
+  ".env.development",
+  ".env.development.local",
+  ".env.production",
+  ".env.production.local",
+  ".env.test",
+  ".env.test.local",
+];
+
+const DOTENV_ASSIGNMENT = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=/gm;
+// Names the engine reads as its own, or that the host tools use to tell it
+// where the project, the person's settings, a plugin or a git configuration is.
+const DOTENV_GUARDED = /^(?:AIDLC_|AWS_AIDLC_|CLAUDE_|KIRO_|CODEX_|CURSOR_|COPILOT_|XDG_|GIT_CONFIG)/i;
+// Declarations only the host makes: kept even when a file names them.
+const DOTENV_HOST_ONLY = /^AIDLC_(?:UNATTENDED$|INTERNAL_)/i;
+
+/** Whether Bun loaded the folder's dotenv files into this process at all. */
+export function dotenvLoaded(): boolean {
+  return !isCompiledExecutable() && !process.execArgv.includes("--no-env-file");
+}
+
+/** Every name the folder's Bun dotenv files assign, in file order, duplicates included. */
+export function dotenvAssignedNames(dir = process.cwd()): string[] {
+  const names: string[] = [];
+  for (const file of BUN_DOTENV_FILES) {
+    let text: string;
+    try {
+      text = readFileSync(join(dir, file), "utf-8");
+    } catch {
+      continue;
+    }
+    for (const match of text.matchAll(DOTENV_ASSIGNMENT)) names.push(match[1]);
+  }
+  return names;
+}
+
+/** Whether a dotenv file in the folder assigns the name, in any casing (Windows reads names case-insensitively). */
+export function setByDotenvFile(name: string, dir = process.cwd()): boolean {
+  const wanted = name.toUpperCase();
+  return dotenvAssignedNames(dir).some((assigned) => assigned.toUpperCase() === wanted);
+}
+
+/**
+ * Remove from `env` every AI-DLC or host-tool name the folder's dotenv files
+ * assign, host-only declarations excepted; returns what was dropped. Nothing is
+ * dropped when Bun loaded no file (`loaded` false): then everything present
+ * came from the host.
+ */
+export function dropDotenvNames(env: NodeJS.ProcessEnv = process.env, dir = process.cwd(), loaded = dotenvLoaded()): string[] {
+  if (!loaded) return [];
+  const dropped: string[] = [];
+  for (const name of dotenvAssignedNames(dir)) {
+    if (!DOTENV_GUARDED.test(name) || DOTENV_HOST_ONLY.test(name) || !(name in env)) continue;
+    delete env[name];
+    dropped.push(name);
+  }
+  return dropped;
+}
+
+dropDotenvNames();
 
 const MODULE_TOOLS_DIR = dirname(fileURLToPath(import.meta.url));
 const MODULE_HARNESS_ROOT = join(MODULE_TOOLS_DIR, "..");
@@ -142,6 +234,40 @@ export function compiledExecutable(
   return isCompiledExecutable(moduleUrl, executable) ? executable : null;
 }
 
+// A package the project installed itself, as Node resolves it from cwd:
+// node_modules, a link out of it, or NODE_PATH. Bun's resolver can also answer
+// from its own install cache, a copy that cannot run and that the project never
+// chose, so that answer is none. The code sensors run the project's own tool
+// through this.
+export function projectPackage(cwd: string, name: string): { root: string; major: number } | null {
+  try {
+    const manifestPath = createRequire(join(cwd, "package.json")).resolve(`${name}/package.json`);
+    if (inBunInstallCache(manifestPath)) return null;
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+    if (manifest.name !== name || typeof manifest.version !== "string") return null;
+    return { root: dirname(manifestPath), major: Number(manifest.version.split(".")[0]) };
+  } catch {
+    return null;
+  }
+}
+
+function bunInstallCache(): string {
+  const explicit = process.env.BUN_INSTALL_CACHE_DIR?.trim();
+  if (explicit) return explicit;
+  return join(process.env.BUN_INSTALL?.trim() || join(homedir(), ".bun"), "install", "cache");
+}
+
+function inBunInstallCache(path: string): boolean {
+  let cache: string;
+  try {
+    cache = realpathSync(bunInstallCache());
+  } catch {
+    return false;
+  }
+  const rel = relative(cache, realpathSync(path));
+  return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
+}
+
 // Child calls and human-facing command rendering describe the same dispatcher
 // operations. Child calls use argv and an absolute source path so neither cwd
 // changes nor a native executable's process.execPath can turn a script into a
@@ -197,6 +323,15 @@ export function entrySkillInvocation(): string {
 
 export function aidlcDispatcherInvocation(route: string): string {
   return `${aidlcInvocation()} engine ${route}`;
+}
+
+// The command a parallel batch's worker or reviewer runs for the tests the
+// person approved: AI-DLC's own `swarm check` with the command's output shown,
+// run from the project's main folder for the Unit's worktree. It names no
+// folder, so no shell has a path to quote (cmd.exe hands a quoted one on with
+// its quotes).
+export function swarmUnitTestCommand(unit: string): string {
+  return aidlcDispatcherInvocation(`swarm check ${quoteCommandArgument(unit)} --show-output`);
 }
 
 export function aidlcToolInvocation(
@@ -297,7 +432,7 @@ export function kiroTreeLayout(harnessRoot: string): KiroLayout | null {
   } catch {
     // A tree without readable metadata still has its conductor file.
   }
-  if (existsSync(join(harnessRoot, "agents", "aidlc.md"))) return "kas";
+  if (existsSync(join(harnessRoot, "agents", "aidlc-aidlc.md")) || existsSync(join(harnessRoot, "agents", "aidlc.md"))) return "kas";
   if (existsSync(join(harnessRoot, "agents", "aidlc.json"))) return "agent-v1";
   return null;
 }
@@ -443,7 +578,7 @@ const HOST_LABELS: Readonly<Record<string, string>> = {
   copilot: "GitHub Copilot",
   cursor: "Cursor",
   kiro: "Kiro CLI",
-  "kiro-ide": "Kiro IDE",
+  "kiro-ide": "Kiro",
   opencode: "opencode",
 };
 
@@ -558,8 +693,10 @@ export function resolveHarnessRoot(location: HarnessLocation = {}): string {
       ? projectDir
       : join(projectDir, harnessDir);
 
-  // Mutation is project-owned. Explicit/module/packaged roots are read
-  // fallbacks only and must never become a write target.
+  // Mutation goes to the project root when a project dir was named (location,
+  // AIDLC_RUNTIME_PROJECT_DIR or --project-dir), else to this module's own
+  // harness root when it has one, else the project root. Explicit and packaged
+  // roots are read fallbacks only and must never become a write target.
   if (location.mutable) {
     const root = location.projectDir !== undefined || explicitRuntimeProjectDir()
       ? projectRoot

@@ -1,9 +1,5 @@
 ---
 name: aidlc-compliance-agent
-display_name: Compliance Agent
-examples:
-  - data-governance.md
-  - audit-requirements.md
 description: >
   GRC analyst and regulatory specialist responsible for compliance mapping, data classification, and risk assessment.
   Support-only agent for Feasibility & Constraint Analysis and cross-cutting compliance validation.

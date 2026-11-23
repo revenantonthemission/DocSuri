@@ -101,7 +101,7 @@ Based on the approved plan, generate 4 artifacts in `<record>/inception/units-ge
 
 **unit-of-work.md:**
 - Unit definitions (name, description, boundaries)
-- A stable short ID `U{n}` for every Unit and its construction directory name `u{n}-{description}`. Include both in a table (`Unit ID` and `Directory`) so downstream tools can join story-map IDs to filesystem paths.
+- A stable short ID `U{n}` for every Unit and its directory. The directory is the Unit's name from the edge block below: the engine writes the Unit's construction artifacts under `construction/<unit-name>/`, so name each Unit `u{n}-{description}` and the ID reads off its directory. Include both in a table (`Unit ID` and `Directory`) so downstream tools can join story-map IDs to filesystem paths.
 - Unit responsibilities (what each unit owns and delivers)
 - Deployment model per unit (standalone, shared, embedded)
 - Relative complexity estimate per unit (S/M/L/XL)
@@ -130,13 +130,14 @@ units:
 NOTE: This artifact describes topology only. It does NOT pick a single "recommended build order" or identify a critical path — those are economic decisions made in 2.9 (Delivery Planning) using this DAG as input.
 
 **unit-of-work-story-map.md:**
-- One row per upstream item, keyed the way the traceability enumeration below is keyed. When `stories.md` is produced, key every row by `USx.y`; only `USx.y` rows are read. Otherwise key rows by `FR`, and optionally add an `NFR` row for any NFR this scope also traces. Each row names the implementing Unit `U{n}` ID and directory name
+- One row per upstream item, keyed the way the traceability enumeration below is keyed. When `stories.md` is produced, key every row by `USx.y`; only `USx.y` rows are read. Otherwise key rows by `FR`, and optionally add an `NFR` row for any NFR this scope also traces; a requirement with sub-requirements is traced through its `FR{n}.{m}` IDs, so key its rows by those. Each row names the implementing Unit `U{n}` ID and directory name, for example `| US1.1 | U1 | u1-ledger |`; separate several Units in one cell with `;`. Every Unit a row names traces all of that row's acceptance criteria in its Functional Design, so name a Unit on a row only when it implements part of that item
 - Rows that span multiple units (cross-cutting concerns)
 - Implementation order within each unit
 - Coverage verification: every enumerated ID assigned, every unit has rows
 
 Create `<record>/inception/units-generation/traceability.json`. When
-`stories.md` exists, enumerate every `USx.y`; otherwise enumerate every `FR`.
+`stories.md` exists, enumerate every `USx.y`; otherwise enumerate every `FR`,
+a requirement with sub-requirements through its `FR{n}.{m}` IDs.
 Each `OK` target is one Unit ID or construction directory that also appears on
 that ID's row in `unit-of-work-story-map.md`:
 
@@ -162,7 +163,7 @@ That `report` call owns every lifecycle transition and advancement; never perfor
 Use stage-protocol.md completion template with completion emoji: :wrench:
 - Summary of units defined (with each unit's kind), dependencies mapped, stories assigned
 - Review path: `<record>/inception/units-generation/`
-- Structured approval question with options: Approve (continue to Construction phase) / Request Changes
+- Structured approval question with options: Approve (Continue to `<directive.next_stage>`, the stage the engine names) / Request Changes
 
 ## Sensors
 

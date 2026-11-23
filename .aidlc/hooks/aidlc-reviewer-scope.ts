@@ -19,8 +19,8 @@
 //
 // How the hook knows a review is in flight: the conductor writes a dispatch
 // record (reviewerDispatchPath, `<record>/.aidlc-engine/reviewer-dispatch.json`) at
-// stage-protocol-reviewer.md §12a step 1 before invoking a per-unit reviewer, and deletes it at step 3
-// when the verdict is read. The record carries {reviewer, stage, unit,
+// stage-protocol-reviewer.md §12a step 1 before invoking a per-unit reviewer; the engine
+// removes it when `aidlc-log.ts review --verdict` records the verdict (step 3). The record carries {reviewer, stage, unit,
 // exempt[]} - the facts no harness payload delivers. Identity comes from the
 // harness: Claude Code and Codex put the active subagent's name in the
 // payload's agent_type (absent on main-session calls; probe-verified on
@@ -80,9 +80,10 @@ const HOOK_NAME = "reviewer-scope";
 
 // --- The pure matcher --------------------------------------------------------
 //
-// Everything below up to the main section is side-effect free and exported so
-// the decision table is unit-testable without a live session. The hook body
-// only wires stdin, the dispatch record, and the exit code around it.
+// The matcher below, through blockReason, is side-effect free; its entry points
+// (evaluateReviewerScope, parseDispatchRecord, blockReason) are exported so the
+// decision table is unit-testable without a live session. The hook body only
+// wires stdin, the dispatch record, and the exit code around it.
 
 /** The conductor-written dispatch record (stage-protocol-reviewer.md §12a step 1). */
 export interface ReviewerDispatch {
@@ -248,7 +249,7 @@ function judgeOccurrence(
   const seg = suffixComps[1];
   if (seg === undefined || seg.length === 0) return true; // bare construction/ sweep root
   if (WILDCARD_RE.test(seg)) return true; // a pattern spanning siblings
-  if (fold(seg) === unitFolded) return false; // the dispatched unit
+  if (fold(seg) === unitFolded) return false;
   return !exemptSuffixes.has(canonicalSuffix(suffixComps));
 }
 
@@ -467,12 +468,12 @@ interface ShellSegment {
 function shellSegments(command: string): ShellSegment[] {
   const segments: ShellSegment[] = [];
   let current: ShellWord[] = [];
-  let pipedFrom = false; // the first segment is never downstream of a pipe
+  let pipedFrom = false;
   for (const token of shellTokens(command)) {
     if ("sep" in token) {
       if (current.length > 0) segments.push({ words: current, pipedFrom });
       current = [];
-      pipedFrom = token.pipe; // the NEXT segment reads a pipe iff this sep is `|`
+      pipedFrom = token.pipe;
     } else {
       current.push(token);
     }
@@ -1066,7 +1067,7 @@ async function checkScope(input: string, projectDir: string, outside: boolean): 
             recordHookDrop(
               projectDir,
               HOOK_NAME,
-              `${agent} touched construction/ paths with no reviewer dispatch record; enforcement skipped (write the stage-protocol-reviewer.md §12a step-1 dispatch record before invoking a per-unit reviewer)`,
+              `${agent} touched construction/ paths with no reviewer dispatch record; enforcement skipped (write the stage-protocol-reviewer-unit.md dispatch record before invoking a per-unit reviewer)`,
             );
           }
         }

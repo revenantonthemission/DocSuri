@@ -54,13 +54,15 @@ import {
   isModelHarness,
   modelPolicyDoctorIssues,
   modelPolicyIsEmpty,
+  presetsChangeNothing,
   sessionModelsDetail,
-  sessionSetsAgentModels,
   type ModelHarness,
 } from "./aidlc-model-policy.ts";
 import {
   flagsDoctorCheck,
   frameworkFilesDoctorCheck,
+  kiroIdeWorkflowsDoctorCheck,
+  kiroIdeTerminalDoctorCheck,
   providerDoctorCheck,
   settingsDoctorChecks,
   vscodeRequestCapDoctorCheck,
@@ -178,12 +180,17 @@ export function updateCheck(state: UpdateState): DoctorCheck {
   // follows, which may be older, so the fix names both ways.
   const running = versionChannel(state.currentVersion);
   const otherChannel = state.state === "behind" && running !== state.channel;
+  // A machine that has never checked is not behind: doctor refreshes the cache
+  // only in a terminal, so the first doctor from a chat tool would otherwise
+  // warn on every fresh install. The row passes and names the check.
+  const neverChecked = state.state === "absent";
   return {
-    pass: state.state === "current",
-    severity: state.state === "current" || state.state === "invalid-config"
+    pass: state.state === "current" || neverChecked,
+    severity: state.state === "current" || state.state === "invalid-config" || neverChecked
       ? undefined
       : "warn",
-    label: `Update: ${state.message}`,
+    // A passing row prints no fix line, so the hint rides in the label.
+    label: neverChecked ? `Update: not checked yet (run \`${invoke} update --check\` to check)` : `Update: ${state.message}`,
     fix: otherChannel
       ? `run \`${invoke} update\` to go to the newest ${state.channel} release, or ` +
         `\`${invoke} config --channel ${running}\` to keep ${running} releases`
@@ -204,11 +211,16 @@ function pluginCheck(projectDir: string, verbose: boolean): DoctorCheck {
   const detail = verbose && statuses.length > 0
     ? ` - ${statuses.map((status) => `${status.key ?? "host"}:${status.state}`).join(", ")}`
     : "";
+  // A paused plugin is the person's own choice: information, never a fix.
+  const paused = statuses
+    .filter((status) => status.state === "paused")
+    .map((status) => `; ${status.key} ${status.message}`)
+    .join("");
   if (attention.length > 0) {
     return {
       pass: false,
       severity: "warn",
-      label: `Plugins: ${attention.length} need attention${detail}`,
+      label: `Plugins: ${attention.length} need attention${paused}${detail}`,
       fix: attention.map((status) => status.message).join("; "),
     };
   }
@@ -216,28 +228,28 @@ function pluginCheck(projectDir: string, verbose: boolean): DoctorCheck {
     return {
       pass: false,
       severity: "warn",
-      label: `Plugins: ${drift.length} require sync${detail}`,
-      fix: "run `aidlc config`",
+      label: `Plugins: ${drift.length} require sync${paused}${detail}`,
+      fix: `run \`${aidlcInvocation()} engine plugin sync\``,
     };
   }
   if (inventory.capability !== "full-inventory") {
     // No host plugin list to compare against: report what this project has.
     // A warning here could never be cleared by anything the person does.
-    const composed = statuses.map((status) =>
+    const composed = statuses.filter((status) => status.state !== "paused").map((status) =>
       [status.key, status.composedVersion].filter(Boolean).join(" ")
     );
     return {
       pass: true,
       label: composed.length === 0
         ? "Plugins: none in this project"
-        : `Plugins: ${composed.join(", ")} in this project (no host plugin list to compare versions with)${detail}`,
+        : `Plugins: ${composed.join(", ")} in this project (no host plugin list to compare versions with)${paused}${detail}`,
     };
   }
   return {
     pass: true,
     label: statuses.length === 0
       ? "Plugins: no AIDLC plugins installed"
-      : `Plugins: composed state is current${detail}`,
+      : `Plugins: composed state is current${paused}${detail}`,
   };
 }
 
@@ -292,7 +304,7 @@ export function modelsPolicyCheck(projectDir: string, verbose: boolean): DoctorC
   const installed = harnesses
     .map((harness) => harness.distribution)
     .filter((distribution): distribution is ModelHarness => isModelHarness(distribution));
-  const sessionSet = installed.filter((distribution) => sessionSetsAgentModels(distribution));
+  const sessionSet = installed.filter((distribution) => presetsChangeNothing(distribution));
   if (sessionSet.length > 0) {
     const others = installed.filter((distribution) => !sessionSet.includes(distribution));
     const policyFor = (distribution: ModelHarness) =>
@@ -354,7 +366,7 @@ function humanReport(
   const frameworkPattern =
     /^(?:Agent filename|Scope filename|Cycle detection|Orphan stage|Uncompiled stage|Enabled stage compile coverage|Scope validation|Schema validation|Graph references|Keyword overlap|Rule drift|Paired sensor coverage|Stage graph|Scope grid|Sensor |Required sections|Upstream coverage|Traceability|Linter|Type check)/i;
   const machinePattern =
-    /^(?:Update:|Windows uninstall|Windows launcher|Runtime hook PATH|Harness CLI|Installed runtime|Command pointer|Rollback target|Project pin registry|Transaction staging|Transaction recovery|Settings global)/i;
+    /^(?:Update:|Windows uninstall|Windows launcher|Runtime hook PATH|Harness CLI|Installed runtime|Command pointer|Rollback target|Plugin marketplace|Project pin registry|Transaction staging|Transaction recovery|Settings global)/i;
   const machine = report.checks.filter((check) => machinePattern.test(check.label));
   const framework = report.checks.filter((check) => frameworkPattern.test(check.label));
   const project = report.checks.filter((check) =>
@@ -530,10 +542,10 @@ function writeExport(
     mkdirSync(outParent, { recursive: true });
     // Merge the legacy environment/config checks (bun present, hooks wired,
     // settings intact) into the exported analysis so report.md/report.json
-    // carry the SAME findings the live report shows \u2014 the bundle exists so
+    // carry the SAME findings the live report shows - the bundle exists so
     // the maintainer does NOT need the user's project, so a failing env check
     // must reach it. The live render and the exit code are untouched; this
-    // only enriches what buildBundle serializes. (Arden round-3 #1.)
+    // only enriches what buildBundle serializes.
     const analysisForExport = {
       ...analysis,
       findings: mergeFindings(report.checks.map(adaptLegacyResult), analysis.findings),
@@ -595,6 +607,10 @@ export async function main(argv: string[]): Promise<void> {
   checks.push(...settingsDoctorChecks(projectDir));
   checks.push(modelsPolicyCheck(projectDir, flags.verbose === "true"));
   checks.push(...await kiroSessionDoctorChecks(projectDir));
+  const kiroWorkflows = kiroIdeWorkflowsDoctorCheck(projectDir, harnessDir());
+  if (kiroWorkflows) checks.push(kiroWorkflows);
+  const kiroTerminal = kiroIdeTerminalDoctorCheck(projectDir, harnessDir());
+  if (kiroTerminal) checks.push(kiroTerminal);
   checks.push(flagsDoctorCheck(projectDir, harnessDir(), switchesOffLines(projectDir, process.env, "command")));
   checks.push(providerDoctorCheck(projectDir, harnessDir()));
   checks.push(workspaceSiblingDoctorCheck(projectDir, harnessDir()));

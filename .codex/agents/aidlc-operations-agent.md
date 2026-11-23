@@ -1,9 +1,5 @@
 ---
 name: aidlc-operations-agent
-display_name: Operations Agent
-examples:
-  - monitoring.md
-  - incident-response.md
 description: >
   SRE and reliability engineer responsible for observability, incident response, and operational optimization.
   Leads Observability Setup, Incident Response, and Feedback & Optimization stages.

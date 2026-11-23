@@ -64,7 +64,17 @@ generating instructions. Read all applicable stage-level and per-unit sources:
 - every artifact under `nfr-design/`
 - every current `## Testing Contract` in `code-generation-plan.md`, including
   postapproval edits permitted by Code Generation Step 3's lowered-fence rule;
-  do not describe those edits as human-approved
+  do not describe those edits as human-approved.
+  A CI obligation (the contract's "Run the selected tests in CI before merge."
+  line, or a memory note's "CI execution before merge") applies only when the
+  plan runs CI Pipeline: `aidlc-state.md` lists `ci-pipeline` as an `EXECUTE`
+  stage whose checkbox is not `[S]`. When the plan does not run it, record that
+  target `N/A` with the reason "the plan runs no CI Pipeline": it is not
+  applicable, so it is never `Unverified` and never a failure. While CI
+  Pipeline is still ahead (its checkbox is `[ ]`), the target is CI Pipeline's
+  to meet: record Owning Stage `ci-pipeline`, Verdict `N/A`, and the reason "CI
+  Pipeline, later in this plan, sets up CI to run these tests before merge".
+  It is never `Unverified` and never a failure here.
 
 For each target, record a stable target ID (derive one from the source path and
 section when the source has none), source path/section, expected value, the
@@ -117,8 +127,10 @@ Create `<record>/construction/build-and-test/build-and-test-summary.md`:
   Target ID, Source, Expected, Actual, Evidence, Owning Stage, Verdict
 - Each applicable target begins with Actual and Evidence `Pending`, and Verdict
   `Pending`. `N/A` is valid only when the source inventory found no applicable
-  measurable target; in that case write one explanatory `N/A` row. An
-  applicable target may never use `N/A`.
+  measurable target (then write one explanatory `N/A` row), or for a target the
+  plan makes inapplicable here, as Step 1 says for the CI obligation of a plan
+  that runs no CI Pipeline or has it still ahead. An applicable target may never
+  use `N/A`.
 - Readiness assessment (build-ready, test-ready, deployment-ready)
 - Known limitations or outstanding items
 
@@ -190,8 +202,8 @@ quality target is never an acceptable fix.
 3. **Autonomous bounded loop-back** — if `Construction Autonomy Mode:
    autonomous` (in aidlc-state.md), an impact-estimated fix exists, and fewer than
    3 entries exist under `## Loop-Back Log` in test-results.md: follow the
-   construction protocol module
-   (`aidlc-common/protocols/stage-protocol-construction.md`),
+   loop-back protocol module
+   (`aidlc-common/protocols/stage-protocol-loopback.md`),
    "Build-and-Test failure loop-back". Record the diagnosis +
    impact-estimated fix plan, then reopen code-generation for the unit(s) the
    fix names (every unit only when the cause spans them all) and replay
@@ -200,16 +212,16 @@ quality target is never an acceptable fix.
 4. **Halt-and-ask** — if the mode is gated (or unset), the 3-loop-back bound
    is exhausted, or no identifiable fix exists: log the failure in
    test-results.md and present the impact-estimated halt-and-ask question
-   defined in the construction protocol module
-   (`aidlc-common/protocols/stage-protocol-construction.md`),
+   defined in the loop-back protocol module
+   (`aidlc-common/protocols/stage-protocol-loopback.md`),
    "Build-and-Test failure loop-back", listing every candidate fix WITH ITS
    ESTIMATED IMPACT. Giving up is the human's decision to make, never the
    agent's. When rung 2 found no identifiable fix at all, present that
    section's no-fix variant instead — it drops the "Retry with fix" option
    entirely rather than inventing a fix to retry with.
 
-**Loop-back replay invariant** (construction protocol module,
-`aidlc-common/protocols/stage-protocol-construction.md`): artifact-only
+**Loop-back replay invariant** (loop-back protocol module,
+`aidlc-common/protocols/stage-protocol-loopback.md`): artifact-only
 code-generation workflows may
 settle directly to the all-covered gate, while sticky receipt-mode workflows
 re-emit per-unit work. Both routes apply the planned fix and deterministic
@@ -230,23 +242,14 @@ the Build and Test Summary with a successful readiness result.
 
 ### Step 10: Cross-Unit Final Coverage Gate
 
-This is a stage-level gate, not the Construction phase boundary. Enumerate:
-
-- every `FR` and `NFR` from
-  `<record>/inception/requirements-analysis/requirements.md`
-- every three-segment `AC` from
-  `<record>/inception/user-stories/stories.md` when that stage executed
-
-Read both the stage-level
-`<record>/construction/code-generation/traceability.json` file (when present,
-including Express) and every per-unit
-`<record>/construction/*/code-generation/traceability.json` file. Verify each
-enumerated ID is covered with status `OK` in at least one stage-level or Unit
-entry and that its target file exists. Write
-`<record>/construction/build-and-test/cross-unit-traceability.md` with a
-pass/fail verdict, per-ID coverage, owning stage/Unit, target file, and every
-uncovered element. Any uncovered ID is a build-and-test finding that must be
-surfaced at the approval gate.
+This is a stage-level gate, not the Construction phase boundary. Run
+`aidlc engine sensor-traceability --stage build-and-test`: it prints every
+requirement and acceptance criterion this run traced, whether it is built or
+marked `N/A` with its reason, and the Units and files that build it. Write
+`<record>/construction/build-and-test/cross-unit-traceability.md` from that
+output with a pass/fail verdict, per-ID coverage, owning stage/Unit, target
+file, and every uncovered element. Any uncovered ID is a build-and-test finding
+that must be surfaced at the approval gate.
 
 ### Step 11: Completion Handoff
 

@@ -1,9 +1,5 @@
 ---
 name: aidlc-architect-agent
-display_name: Architect Agent
-examples:
-  - tech-stack.md
-  - infrastructure-preferences.md
 description: >
   Solutions architect responsible for domain design, contract design, NFR patterns, and component decomposition.
   Leads Feasibility, Domain Design, Units Generation, Contract Design, Functional Design, NFR Requirements, and NFR Design stages,
